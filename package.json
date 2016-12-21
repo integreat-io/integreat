@@ -2,18 +2,42 @@
   "name": "integreat",
   "version": "0.0.1",
   "description": "Node.js integration layer",
+  "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
+  "license": "ISC",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV=test nyc ava",
+    "test:watch": "NODE_ENV=test ava --watch",
+    "lint": "standard"
+  },
+  "ava": {
+    "files": [
+      "lib/**/*-test.js"
+    ],
+    "source": [
+      "lib/**/!(*-test).js"
+    ],
+    "babel": {
+      "presets": [
+        "babel-preset-node7"
+      ]
+    }
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kjellmorten/integrate.git"
+    "url": "git+https://github.com/kjellmorten/integreat.git"
   },
-  "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
-  "license": "ISC",
   "bugs": {
-    "url": "https://github.com/kjellmorten/integrate/issues"
+    "url": "https://github.com/kjellmorten/integreat/issues"
   },
-  "homepage": "https://github.com/kjellmorten/integrate#readme"
+  "homepage": "https://github.com/kjellmorten/integreat#readme",
+  "engines": {
+    "node": "7.2.x",
+    "npm": ">= 3.10.9"
+  },
+  "devDependencies": {
+    "ava": "^0.17.0",
+    "babel-preset-node7": "^1.4.0",
+    "standard": "^8.6.0"
+  }
 }
