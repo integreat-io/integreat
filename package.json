@@ -39,5 +39,8 @@
     "ava": "^0.17.0",
     "babel-preset-node7": "^1.4.0",
     "standard": "^8.6.0"
+  },
+  "dependencies": {
+    "dot-prop": "^4.1.0"
   }
 }
