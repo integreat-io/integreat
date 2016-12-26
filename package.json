@@ -38,6 +38,7 @@
   "devDependencies": {
     "ava": "^0.17.0",
     "babel-preset-node7": "^1.4.0",
+    "sinon": "^1.17.6",
     "standard": "^8.6.0"
   },
   "dependencies": {

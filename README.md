@@ -20,6 +20,15 @@ attributes and relationships), and the sync (basically when to retrieve):
 ```
 
 ### Source definition
+```
+{
+  type: <string>,
+  endpoint: <uri>,
+  path: <string>,
+  transform: <function>,
+  filter: <function>
+}
+```
 
 ### Target definition
 ```
