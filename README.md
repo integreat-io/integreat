@@ -2,6 +2,28 @@
 
 An integration layer for node.js.
 
+## Install
+
+Install from npm:
+
+`npm install integreat`
+
+## Use
+
+```
+const Integreat = require('integreat')
+
+const great = new Integreat(dbConfig)
+
+great.loadSourceDefsFromDb()
+great.setSourceDef('type', sourceDef)
+
+great.start()
+.then(() => {
+  // Your code
+})
+```
+
 ## Mapping definitions
 
 Mapping definitions are the core of Integreat, as they define the sources to
@@ -20,6 +42,7 @@ attributes and relationships), and the sync (basically when to retrieve):
 ```
 
 ### Source definition
+
 ```
 {
   type: <string>,
@@ -31,6 +54,7 @@ attributes and relationships), and the sync (basically when to retrieve):
 ```
 
 ### Target definition
+
 ```
 {
   type: <string>,
@@ -58,3 +82,17 @@ attributes and relationships), and the sync (basically when to retrieve):
 ```
 
 ### Sync definition
+
+## Adapters
+
+- `retrieve()`
+
+## Map functions
+
+- Source `transform()`
+- Source `filter()`
+- Attribute `parse()`
+- Attribute `transform()`
+- Attribute `format()`
+- Target `transform()`
+- Target `filter()`
