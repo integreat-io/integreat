@@ -15,8 +15,8 @@ const Integreat = require('integreat')
 
 const great = new Integreat(dbConfig)
 
+great.loadDefaults()
 great.loadSourceDefsFromDb()
-great.setSourceDef('type', sourceDef)
 
 great.start()
 .then(() => {
