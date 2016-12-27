@@ -100,3 +100,8 @@ Available adapters:
 - Attribute `format()`
 - Target `transform()`
 - Target `filter()`
+
+Parsers:
+- `date`
+- `float`
+- `integer`
