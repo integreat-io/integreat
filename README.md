@@ -85,7 +85,11 @@ attributes and relationships), and the sync (basically when to retrieve):
 
 ## Adapters
 
+Interface:
 - `retrieve()`
+
+Available adapters:
+- json
 
 ## Map functions
 
