@@ -105,3 +105,9 @@ Parsers:
 - `date`
 - `float`
 - `integer`
+
+## Store api
+
+- `great.storeItem(item)`
+- `great.fetchItem(id, type)`
+- `great.fetchByType(type)`

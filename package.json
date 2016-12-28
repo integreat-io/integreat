@@ -38,11 +38,13 @@
   "devDependencies": {
     "ava": "^0.17.0",
     "babel-preset-node7": "^1.4.0",
+    "dbdbmock": "^1.4.3",
     "nock": "^9.0.2",
     "sinon": "^1.17.6",
     "standard": "^8.6.0"
   },
   "dependencies": {
+    "dbdb": "^1.4.3",
     "dot-prop": "^4.1.0",
     "request": "^2.79.0",
     "uuid": "^3.0.1"
