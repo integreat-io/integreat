@@ -2,11 +2,15 @@
 
 An integration layer for node.js.
 
+Requires node v7.
+
 ## Install
 
 Install from npm:
 
-`npm install integreat`
+```
+npm install integreat
+```
 
 ## Use
 
@@ -106,8 +110,15 @@ Parsers:
 - `float`
 - `integer`
 
-## Store api
+## Storage api
+To get and set items stored in the integration layer, use the Storage interface.
+You get this from the Integreat instance like this:
 
-- `great.storeItem(item)`
-- `great.fetchItem(id, type)`
-- `great.fetchByType(type)`
+```
+const storage = great.getStorage()
+```
+
+The interface has these methods:
+- `storage.storeItem(item)`
+- `storage.fetchItem(id, type)`
+- `storage.fetchByType(type)`
