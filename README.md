@@ -39,25 +39,36 @@ attributes and relationships), and the sync (basically when to retrieve):
 
 ```
 {
-  source: <source definition>,
-  target: <target definition>,
+  sourcetype: <string>,
+  fetch: <fetch definition>,
+  send: <send definition>,
+  item: <item definition>,
   sync: <sync definition>
 }
 ```
 
-### Source definition
+### Fetch definition
 
 ```
 {
-  type: <string>,
   endpoint: <uri>,
+  changelog: <uri>,
   path: <string>,
   transform: <function>,
   filter: <function>
 }
 ```
 
-### Target definition
+### Send definition
+
+```
+{
+  endpoint: <uri>,
+  transform: <function>
+}
+```
+
+### Item definition
 
 ```
 {
@@ -87,10 +98,20 @@ attributes and relationships), and the sync (basically when to retrieve):
 
 ### Sync definition
 
+```
+{
+  schedule: <minutes>,
+  first: <string format>,
+  allowRelay: <boolean>,
+  allowPush: <boolean>
+}
+```
+
 ## Adapters
 
 Interface:
 - `retrieve()`
+- `normalize()`
 
 Available adapters:
 - json
