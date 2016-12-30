@@ -28,14 +28,15 @@ great.start()
 })
 ```
 
-## Mapping definitions
+## Source definitions
 
-Mapping definitions are the core of Integreat, as they define the sources to
+Source definitions are the core of Integreat, as they define the sources to
 retrieve data from, and how to map this data to a set of items to make available
 through Integreat's data api.
 
-A mapping definition object defines the source, the target (mapping to
-attributes and relationships), and the sync (basically when to retrieve):
+A source definition object defines how to fetch from and send to the source, the
+target item (mapping to attributes and relationships), and the sync (basically
+when to retrieve):
 
 ```
 {
@@ -100,8 +101,9 @@ attributes and relationships), and the sync (basically when to retrieve):
 
 ```
 {
-  schedule: <minutes>,
-  first: <string format>,
+  schedule: <seconds>,
+  startHour: <0-23>,
+  startWeekday: <0-6>,
   allowRelay: <boolean>,
   allowPush: <boolean>
 }
