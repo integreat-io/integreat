@@ -146,6 +146,17 @@ The interface has these methods:
 - `storage.fetchItem(id, type)`
 - `storage.fetchByType(type)`
 
+## Events
+
+Call `great.on()` to register listeners. The following events are available:
+
+- `start`: Emitted after Integreat has been started. Listener is called with
+http server (if started).
+- `stop`: Emitted after Integreat has been stopped. Listener is called without
+any arguments.
+- `sync`: Emitted after a source has been synced. Called with source definition,
+and array of the synced items.
+
 ## Debugging
 
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.

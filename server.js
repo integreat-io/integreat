@@ -34,7 +34,15 @@ const sourceFns = {
 }
 great.setSource('fnsaccount', sourceFns)
 
+great.on('sync', (source, items) => {
+  console.log('Synced %d items for source `%s`.', items.length, source.sourcetype)
+})
+
 great.start()
 .then((server) => {
-  console.log('Integreat is running on port %d.', server.address().port)
+  if (server) {
+    console.log('Integreat is running on port %d.', server.address().port)
+  } else {
+    console.log('Integreat is running without a http server')
+  }
 })
