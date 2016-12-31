@@ -17,7 +17,10 @@ great.loadDefaults()
 
 const sourceFns = {
   sourcetype: 'json',
-  fetch: {endpoint: 'http://api.feednstatus.com/1.0/accounts'},
+  fetch: {
+    endpoint: 'http://api.feednstatus.com/1.0/accounts',
+    path: 'data'
+  },
   item: {
     type: 'account',
     attributes: {

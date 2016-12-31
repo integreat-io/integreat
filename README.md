@@ -145,3 +145,9 @@ The interface has these methods:
 - `storage.storeItem(item)`
 - `storage.fetchItem(id, type)`
 - `storage.fetchByType(type)`
+
+## Debugging
+
+Run Integreat with env variable `DEBUG=great`, to receive debug messages.
+
+There are also two other debug namespaces: `great:scheduler` and `great:fetch`.
