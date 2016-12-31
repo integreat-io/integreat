@@ -97,6 +97,11 @@ when to retrieve):
 }
 ```
 
+**Note:** `id`, `createdAt`, or `updatedAt` should be defined as attributes on
+the `attributes` property, but will be moved to the item on mapping. If any of
+these are not defined, default values will be used; a UUID for `id` and the
+current timestamp for `createdAt` and `updatedAt`.
+
 ### Sync definition
 
 ```

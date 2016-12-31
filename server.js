@@ -25,7 +25,9 @@ const sourceFns = {
     type: 'account',
     attributes: {
       id: {path: 'id'},
-      name: {path: 'attributes.name'}
+      name: {path: 'attributes.name'},
+      createdAt: {path: 'attributes.createdAt'},
+      updatedAt: {path: 'attributes.updatedAt'}
     }
   },
   sync: {
