@@ -56,8 +56,8 @@ when to retrieve):
   endpoint: <uri>,
   changelog: <uri>,
   path: <string>,
-  transform: <function>,
-  filter: <function>
+  map: <map pipeline>,
+  filter: <filter pipeline>
 }
 ```
 
@@ -66,9 +66,11 @@ when to retrieve):
 ```
 {
   endpoint: <uri>,
-  transform: <function>
+  map: <map pipeline>
 }
 ```
+
+**Note:** Send functionality is not implemented yet.
 
 ### Item definition
 
@@ -100,6 +102,8 @@ the `attributes` property, but will be moved to the item on mapping. If any of
 these are not defined, default values will be used; a UUID for `id` and the
 current timestamp for `createdAt` and `updatedAt`.
 
+**Note 2:** `relationships` are not implemented yet.
+
 ### Sync definition
 
 ```
@@ -112,24 +116,27 @@ current timestamp for `createdAt` and `updatedAt`.
 }
 ```
 
+**Note:** `startHour` and `startWeekday` are not implemented yet. Neither are
+relay and push functionality.
+
 ## Adapters
 
 Interface:
-- `retrieve()`
-- `normalize()`
+- `retrieve(endpoint)`
+- `normalize(data)`
 
 Available adapters:
-- json
+- `json`
 
-## Map functions
+## Pipeline functions
 
-- Source `map()`
-- Source `filter()`
-- Attribute `map()`
-- Target `map()`
-- Target `filter()`
+- Fetch `map(item)`
+- Fetch `filter(item)`
+- Item `map(item)`
+- Item `filter(item)`
+- Attribute `map(value)`
 
-Parsers:
+Default mappers:
 - `date`
 - `float`
 - `integer`
