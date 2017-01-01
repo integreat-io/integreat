@@ -41,6 +41,7 @@ when to retrieve):
 ```
 {
   sourcetype: <string>,
+  itemtype: <string>,
   fetch: <fetch definition>,
   send: <send definition>,
   item: <item definition>,
@@ -73,13 +74,12 @@ when to retrieve):
 
 ```
 {
-  type: <string>,
   attributes: {
     <attrId>: {
       type: <string>,
       path: <string>,
       defaultValue: <object>,
-      map: <function>
+      map: <map pipeline>
     }
   },
   relationships: {
@@ -90,8 +90,8 @@ when to retrieve):
       map: <function>
     }
   },
-  transform: <function>,
-  filter: <function>
+  map: <map pipeline>,
+  filter: <filter pipeline>
 }
 ```
 
