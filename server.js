@@ -37,7 +37,7 @@ const sourceFns = {
 great.setSource('fnsaccount', sourceFns)
 
 great.on('sync', (source, items) => {
-  console.log('Synced %d items for source `%s`.', items.length, source.sourcetype)
+  console.log('Synced %d items for source `%s` at %s.', items.length, source.sourcetype, new Date())
 })
 
 great.start()
