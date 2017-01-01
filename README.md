@@ -76,20 +76,18 @@ when to retrieve):
   type: <string>,
   attributes: {
     <attrId>: {
+      type: <string>,
       path: <string>,
       defaultValue: <object>,
-      parse: <function>,
-      transform: <function>,
-      format: <function>
+      map: <function>
     }
   },
   relationships: {
     <relId>: {
-      path: <string>,
       type: <string>,
+      path: <string>,
       defaultValue: <string>,
-      parse: <function>,
-      transform: <function>
+      map: <function>
     }
   },
   transform: <function>,
@@ -125,12 +123,10 @@ Available adapters:
 
 ## Map functions
 
-- Source `transform()`
+- Source `map()`
 - Source `filter()`
-- Attribute `parse()`
-- Attribute `transform()`
-- Attribute `format()`
-- Target `transform()`
+- Attribute `map()`
+- Target `map()`
 - Target `filter()`
 
 Parsers:
