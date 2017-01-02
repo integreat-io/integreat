@@ -32,16 +32,8 @@
   },
   "homepage": "https://github.com/kjellmorten/integreat#readme",
   "engines": {
-    "node": "7.2.x",
+    "node": "6.9.x",
     "npm": ">= 3.10.9"
-  },
-  "devDependencies": {
-    "ava": "^0.17.0",
-    "babel-preset-node7": "^1.4.0",
-    "dbdbmock": "^1.4.3",
-    "nock": "^9.0.2",
-    "sinon": "^1.17.6",
-    "standard": "^8.6.0"
   },
   "dependencies": {
     "dbdb": "^1.4.3",
@@ -50,5 +42,14 @@
     "request": "^2.79.0",
     "rx": "^4.1.0",
     "uuid": "^3.0.1"
+  },
+  "devDependencies": {
+    "ava": "^0.17.0",
+    "babel-preset-node7": "^1.4.0",
+    "dbdbmock": "^1.4.3",
+    "nock": "^9.0.2",
+    "nyc": "^10.0.0",
+    "sinon": "^1.17.6",
+    "standard": "^8.6.0"
   }
 }

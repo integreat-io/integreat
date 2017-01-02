@@ -1,5 +1,7 @@
 const Integreat = require('./index')
 
+const lengthMap = (value) => (value) ? value.length : 0
+
 const config = {
   port: 3000,
   db: {
@@ -13,19 +15,21 @@ const config = {
 const great = new Integreat(config)
 
 great.loadDefaults()
+great.setMapper('length', lengthMap)
 // great.loadSourceDefsFromDb()
 
 const sourceFns = {
   sourcetype: 'json',
+  itemtype: 'account',
   fetch: {
     endpoint: 'http://api.feednstatus.com/1.0/accounts',
     path: 'data'
   },
   item: {
-    type: 'account',
     attributes: {
       id: {path: 'id'},
       name: {path: 'attributes.name'},
+      chars: {path: 'attributes.name', map: ['length'], type: 'integer'},
       createdAt: {path: 'attributes.createdAt'},
       updatedAt: {path: 'attributes.updatedAt'}
     }
