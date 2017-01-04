@@ -97,12 +97,16 @@ when to retrieve):
 }
 ```
 
-**Note:** `id`, `createdAt`, or `updatedAt` should be defined as attributes on
+`id`, `createdAt`, or `updatedAt` should be defined as attributes on
 the `attributes` property, but will be moved to the item on mapping. If any of
 these are not defined, default values will be used; a UUID for `id` and the
 current timestamp for `createdAt` and `updatedAt`.
 
-**Note 2:** `relationships` are not implemented yet.
+The `type` of an attribute is added to the end of attribute's map pipeline. All
+standard attribute types have corresponding mappers that ensure the target value
+will be in the right format.
+
+**Note:** `relationships` are not implemented yet.
 
 ### Sync definition
 

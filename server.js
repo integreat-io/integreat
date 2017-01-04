@@ -27,11 +27,11 @@ const sourceFns = {
   },
   item: {
     attributes: {
-      id: {path: 'id'},
-      name: {path: 'attributes.name'},
+      id: {path: 'id', type: 'string'},
+      name: {path: 'attributes.name', type: 'string'},
       chars: {path: 'attributes.name', map: ['length'], type: 'integer'},
-      createdAt: {path: 'attributes.createdAt'},
-      updatedAt: {path: 'attributes.updatedAt'}
+      createdAt: {path: 'attributes.createdAt', type: 'date'},
+      updatedAt: {path: 'attributes.updatedAt', type: 'date'}
     }
   },
   sync: {
