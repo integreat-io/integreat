@@ -2,6 +2,8 @@
 
 An integration layer for node.js.
 
+**Note:** This project is still in a very early stage. Use at own risk. Anything might change.
+
 Requires node v7.
 
 ## Install
