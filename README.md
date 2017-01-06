@@ -20,9 +20,11 @@ const Integreat = require('integreat')
 const great = new Integreat(dbConfig)
 
 great.loadDefaults()
+
 great.loadSourceDefsFromDb()
 
-great.start()
+.then(() => great.start())
+
 .then(() => {
   // Your code
 })

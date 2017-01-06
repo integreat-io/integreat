@@ -14,37 +14,22 @@ const config = {
 
 const great = new Integreat(config)
 
+// Load default mappers and filters
 great.loadDefaults()
+// Add custom mapper
 great.setMapper('length', lengthMap)
-// great.loadSourceDefsFromDb()
-
-const sourceFns = {
-  sourcetype: 'json',
-  itemtype: 'account',
-  fetch: {
-    endpoint: 'http://api.feednstatus.com/1.0/accounts',
-    path: 'data'
-  },
-  item: {
-    attributes: {
-      id: {path: 'id', type: 'string'},
-      name: {path: 'attributes.name', type: 'string'},
-      chars: {path: 'attributes.name', map: ['length'], type: 'integer'},
-      createdAt: {path: 'attributes.createdAt', type: 'date'},
-      updatedAt: {path: 'attributes.updatedAt', type: 'date'}
-    }
-  },
-  sync: {
-    schedule: 60
-  }
-}
-great.setSource('fnsaccount', sourceFns)
 
 great.on('sync', (source, items) => {
   console.log('Synced %d items for source `%s` at %s.', items.length, source.itemtype, new Date())
 })
 
-great.start()
+// Load source definitions from database
+great.loadSourceDefsFromDb()
+
+// Start server
+.then(() => great.start())
+
+// Server is running
 .then((server) => {
   if (server) {
     console.log('Integreat is running on port %d.', server.address().port)
