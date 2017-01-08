@@ -110,8 +110,6 @@ The `type` of an attribute is added to the end of attribute's map pipeline. All
 standard attribute types have corresponding mappers that ensure the target value
 will be in the right format.
 
-**Note:** `relationships` are not implemented yet.
-
 ### Sync definition
 
 ```
