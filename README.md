@@ -22,11 +22,9 @@ const Integreat = require('integreat')
 const great = new Integreat(dbConfig)
 
 great.loadDefaults()
-
-great.loadSourceDefsFromDb()
+great.loadFromStore()
 
 .then(() => great.start())
-
 .then(() => {
   // Your code
 })
@@ -35,8 +33,8 @@ great.loadSourceDefsFromDb()
 ## Source definitions
 
 Source definitions are the core of Integreat, as they define the sources to
-retrieve data from, and how to map this data to a set of items to make available
-through Integreat's data api.
+fetch data from, how to map this data to a set of items to make available
+through Integreat's data api, and how to send data back to the source.
 
 A source definition object defines how to fetch from and send to the source, the
 target item (mapping to attributes and relationships), and the sync (basically
@@ -61,7 +59,8 @@ when to retrieve):
   changelog: <uri>,
   path: <string>,
   map: <map pipeline>,
-  filter: <filter pipeline>
+  filter: <filter pipeline>,
+  auth: <auth id>
 }
 ```
 
@@ -70,7 +69,8 @@ when to retrieve):
 ```
 {
   endpoint: <uri>,
-  map: <map pipeline>
+  map: <map pipeline>,
+  auth: <auth id>
 }
 ```
 
@@ -133,6 +133,35 @@ Interface:
 
 Available adapters:
 - `json`
+
+## Auth schema
+
+An auth schema is represented by a class with the following interface:
+
+```
+class AuthSchema {
+  constructor (options) { ... }
+  isAuthenticated () { ...; return true/false }
+  authenticate () { ...; return tokens }
+  getAuthHeaders () { return {header: '...'} }
+}
+```
+
+`options` is provided by `great.setAuthOptions(schemaId, options)` or loaded from database with `great.loadFromStore()`.
+
+Auth options format:
+
+```
+{
+  id: <id>,
+  strategy: <strategy id>,
+  options: {
+    ...
+  }
+}
+```
+
+Any passcodes, passwords, secret keys, etc. should be named suffixed with `_encrypt` to indicate that the field should be encrypted. The field name without the suffix and with the decoded value will be available on the options object loaded from the store.
 
 ## Pipeline functions
 
