@@ -42,7 +42,7 @@ when to retrieve):
 
 ```
 {
-  sourcetype: <string>,
+  adapter: <string>,
   itemtype: <string>,
   fetch: <fetch definition>,
   send: <send definition>,
