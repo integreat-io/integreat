@@ -42,8 +42,8 @@ when to retrieve):
 
 ```
 {
+  id: <string>,
   adapter: <string>,
-  itemtype: <string>,
   fetch: <fetch definition>,
   send: <send definition>,
   item: <item definition>,
@@ -80,6 +80,7 @@ when to retrieve):
 
 ```
 {
+  type: <string>,
   attributes: {
     <attrId>: {
       type: <string>,

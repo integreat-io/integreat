@@ -20,7 +20,7 @@ great.loadDefaults()
 great.setMapper('length', lengthMap)
 
 great.on('sync', (source, items) => {
-  console.log('Synced %d items for source `%s` at %s.', items.length, source.itemtype, new Date())
+  console.log('Synced %d items for source `%s` at %s.', items.length, source.id, new Date())
 })
 
 // Load source definitions from database
