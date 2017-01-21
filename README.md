@@ -134,23 +134,9 @@ Interface:
 Available adapters:
 - `json`
 
-## Auth schema
+## Auth
 
-An auth schema is represented by a class with the following interface:
-
-```
-class AuthSchema {
-  constructor (options) { ... }
-  isAuthenticated () { ...; return true/false }
-  authenticate () { ...; return tokens }
-  getAuthHeaders () { return {header: '...'} }
-}
-```
-
-`options` is provided by `great.setAuthOptions(schemaId, options)` or loaded from database with `great.loadFromStore()`.
-
-Auth options format:
-
+Options format:
 ```
 {
   id: <id>,
@@ -162,6 +148,17 @@ Auth options format:
 ```
 
 Any passcodes, passwords, secret keys, etc. should be named suffixed with `_encrypt` to indicate that the field should be encrypted. The field name without the suffix and with the decoded value will be available on the options object loaded from the store.
+
+At runtime, a strategy is created and given the options payload. An auth strategy is represented by a class with the following interface:
+
+```
+class AuthStrategy {
+  constructor (options) { ... }
+  isAuthenticated () { ...; return true/false }
+  authenticate () { ...; return tokens }
+  getAuthHeaders () { return {header: '...'} }
+}
+```
 
 ## Pipeline functions
 
