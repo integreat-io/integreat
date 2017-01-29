@@ -156,7 +156,7 @@ At runtime, a strategy is created and given the options payload. An auth strateg
 class AuthStrategy {
   constructor (options) { ... }
   isAuthenticated () { ...; return true/false }
-  authenticate () { ...; return tokens }
+  authenticate () { ...; return true/false }
   getAuthHeaders () { return {header: '...'} }
 }
 ```
