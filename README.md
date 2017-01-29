@@ -57,9 +57,6 @@ when to retrieve):
 {
   endpoint: <uri>,
   changelog: <uri>,
-  path: <string>,
-  map: <map pipeline>,
-  filter: <filter pipeline>,
   auth: <auth id>
 }
 ```
@@ -69,7 +66,6 @@ when to retrieve):
 ```
 {
   endpoint: <uri>,
-  map: <map pipeline>,
   auth: <auth id>
 }
 ```
@@ -81,6 +77,7 @@ when to retrieve):
 ```
 {
   type: <string>,
+  path: <string>,
   attributes: {
     <attrId>: {
       type: <string>,
@@ -163,8 +160,6 @@ class AuthStrategy {
 
 ## Pipeline functions
 
-- Fetch `map(item)`
-- Fetch `filter(item)`
 - Item `map(item)`
 - Item `filter(item)`
 - Attribute `map(value)`
