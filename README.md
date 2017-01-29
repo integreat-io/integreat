@@ -46,7 +46,10 @@ when to retrieve):
   adapter: <string>,
   fetch: <fetch definition>,
   send: <send definition>,
-  item: <item definition>,
+  items: [
+    <item definition>,
+    ...
+  ],
   sync: <sync definition>
 }
 ```
