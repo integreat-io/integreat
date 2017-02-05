@@ -19,6 +19,14 @@ great.loadDefaults()
 // Add custom mapper
 great.setMapper('length', lengthMap)
 
+great.setAuth('testToken', {
+  id: 'testToken',
+  strategy: 'token',
+  options: {
+    token: 'theMagicToken'
+  }
+})
+
 great.on('sync', (source, items) => {
   console.log('Synced %d items for source `%s` at %s.', items.length, source.id, new Date())
 })
