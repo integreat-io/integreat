@@ -19,11 +19,13 @@ great.loadDefaults()
 // Add custom mapper
 great.setMapper('length', lengthMap)
 
-great.setAuth('testToken', {
-  id: 'testToken',
+great.setAuth('cloudant', {
+  id: 'cloudant',
   strategy: 'token',
   options: {
-    token: 'theMagicToken'
+    token: process.env.GREAT_TOKEN1,
+    encode: true,
+    type: 'Basic'
   }
 })
 
