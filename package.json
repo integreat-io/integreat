@@ -7,8 +7,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "test": "NODE_ENV=test nyc ava",
+    "test": "NODE_ENV=test nyc --reporter=text-summary ava",
     "test:watch": "NODE_ENV=test ava --watch",
+    "nyc:report": "nyc report",
     "lint": "standard"
   },
   "ava": {
