@@ -172,18 +172,28 @@ Default mappers:
 - `float`
 - `integer`
 
-## Storage api
-To get and set items stored in the integration layer, use the Storage interface.
+## Connect api
+To get and set items stored in the integration layer, use the Connect interface.
 You get this from the Integreat instance like this:
 
 ```
-const storage = great.getStorage()
+const entries = great.connect(<type>)
 ```
 
-The interface has these methods:
-- `storage.storeItem(item)`
-- `storage.fetchItem(id, type)`
-- `storage.fetchByType(type)`
+The Connect interface has these methods:
+- `get(id)`
+- `all()`
+- `set(item)`
+
+The type is implicit for all these methods, as it is set on connection. All
+methods return a Promise.
+
+Example:
+```
+const entries = great.connect('entry')
+entries.get('ent1')
+.then((entry) => { console.log(entry.attributes.title) })
+```
 
 ## Events
 
