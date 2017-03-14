@@ -44,8 +44,15 @@ when to retrieve):
 {
   id: <string>,
   adapter: <string>,
-  fetch: <fetch definition>,
-  send: <send definition>,
+  baseUri: <uri>,
+  endpoint: <string>,
+  paths: {
+    one: <string>,
+    all: <string>,
+    some: <string>,
+    send: <string>
+  }
+  auth: <auth id>,
   items: [
     <item definition>,
     ...
