@@ -46,7 +46,7 @@ when to retrieve):
   adapter: <string>,
   baseUri: <uri>,
   endpoint: <string>,
-  paths: {
+  endpoints: {
     one: <string>,
     all: <string>,
     some: <string>,
