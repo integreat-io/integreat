@@ -17,9 +17,9 @@ const great = new Integreat(config)
 // Load default mappers and filters
 great.loadDefaults()
 // Add custom mapper
-great.setMapper('length', lengthMap)
+great.mappers.set('length', lengthMap)
 
-great.setAuth('cloudant', {
+great.authConfigs.set('cloudant', {
   id: 'cloudant',
   strategy: 'token',
   options: {

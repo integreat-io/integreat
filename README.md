@@ -45,7 +45,6 @@ when to retrieve):
   id: <string>,
   adapter: <string>,
   baseUri: <uri>,
-  endpoint: <string>,
   endpoints: {
     one: <string>,
     all: <string>,
@@ -56,31 +55,9 @@ when to retrieve):
   items: [
     <item definition>,
     ...
-  ],
-  sync: <sync definition>
+  ]
 }
 ```
-
-### Fetch definition
-
-```
-{
-  endpoint: <uri>,
-  changelog: <uri>,
-  auth: <auth id>
-}
-```
-
-### Send definition
-
-```
-{
-  endpoint: <uri>,
-  auth: <auth id>
-}
-```
-
-**Note:** Send functionality is not implemented yet.
 
 ### Item definition
 
@@ -118,15 +95,24 @@ The `type` of an attribute is added to the end of attribute's map pipeline. All
 standard attribute types have corresponding mappers that ensure the target value
 will be in the right format.
 
+### Route definition
+
+```
+{
+  <type>: <sourceId>,
+  ...
+}
+```
+
 ### Sync definition
 
 ```
 {
+  from: <sourceId>,
+  to: <sourceId>,
   schedule: <seconds>,
   startHour: <0-23>,
-  startWeekday: <0-6>,
-  allowRelay: <boolean>,
-  allowPush: <boolean>
+  startWeekday: <0-6>
 }
 ```
 
