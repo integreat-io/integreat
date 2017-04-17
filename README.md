@@ -84,7 +84,10 @@ when to retrieve):
     }
   },
   map: <map pipeline>,
-  filter: <filter pipeline>
+  filter: {
+    from: <filter pipeline>,
+    to:  <filter pipeline>
+  }
 }
 ```
 
