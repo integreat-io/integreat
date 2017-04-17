@@ -69,7 +69,8 @@ when to retrieve):
     <attrId>: {
       type: <string>,
       path: <string>,
-      defaultValue: <object>,
+      defaultFrom: <object>,
+      defaultTo: <object>,
       map: <map pipeline>
     }
   },
@@ -77,7 +78,8 @@ when to retrieve):
     <relId>: {
       type: <string>,
       path: <string>,
-      defaultValue: <string>,
+      defaultFrom: <string>,
+      defaultTo: <string>,
       map: <function>
     }
   },
