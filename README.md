@@ -1,12 +1,36 @@
 # Integreat
-
 An integration layer for node.js.
 
 **Note:** This project is still in a very early stage. Use at own risk. Anything might change.
 
-Requires node v7.
+The basic idea of Integreat is to make it easy to define a set of data sources and expose them through one interface to abstract away the specifics of each source.
+
+This is done through adapters, that does all the hard work of communicating with the different sources, a definition format, for setting up each source with the right adapter and parameters, and a `dispatch()` function to send actions to the sources.
+
+Integreat has an internal router that will ensure that the right action is directed to the right source(s). This router may be set up to treat one source as a relay for other sources, and there's a sync module for keeping data in sync between selected sources.
+
+Finally, there will be different interface modules available, that will plug into the `dispatch()` function and offer other ways of reaching data from the sources – such as out of the box REST or GraphQL apis.
+
+```
+            ___________________________
+           |         Integreat         |
+           |                           |
+           |                  |-> Adapter <-> Source
+Action -> Dispatch -> Router -|        |
+           |                  |-> Adapter <-> Source
+           |                           |
+           |___________________________|
+```
+
+Data from the sources is retrieved, normalized, and mapped by the adapter, and returned asynchronously back to the code that initiated the action. Actions for fetching data will be executed right away.
+
+Actions that updates data on sources will reversely map and serialize the data before it is sent to a source. These actions may be queued.
+
+Integreat comes with a standard data format, which is the only format that will be exposed to the code dispatching the actions. The mapping, normalizing, and serializing will happing to and from this format.
+
 
 ## Install
+Requires node v7.
 
 Install from npm:
 
