@@ -39,7 +39,7 @@
   },
   "homepage": "https://github.com/kjellmorten/integreat#readme",
   "engines": {
-    "node": "6.9.x",
+    "node": "7.7.x",
     "npm": ">= 3.10.9"
   },
   "dependencies": {
