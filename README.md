@@ -41,22 +41,46 @@ npm install integreat
 ## Use
 
 ```
-const Integreat = require('integreat')
+const integreat = require('integreat')
 
-const great = new Integreat(dbConfig)
+const types = [<typeDef>, <typeDef>]
+const sources = [<sourceDef>, <sourceDef>]
+const great = integreat({types, sources})
 
-great.loadDefaults()
-great.loadFromStore()
+const action = {type: 'GET', payload: {id: 'ent1', type: 'entry'}}
 
-.then(() => great.start())
-.then(() => {
-  // Your code
+great.dispatch(action)
+.then((item) => {
+  ...
 })
 ```
 
-## Source definitions
+## Type definitions
+To do anything with Integreat, you need define one or more types. They describe
+the datatypes you expected to get out of Integreat. A type will be associated
+with a source, which is used to retrieve data for the type.
 
-Source definitions are the core of Integreat, as they define the sources to
+```
+{
+  id: <string>,
+  source: <sourceId>,
+  attributes: {
+    <attrId>: {
+      type: <string>,
+      default: <object>
+    }
+  },
+  relationships: {
+    <relId>: {
+      type: <string>,
+      default: <object>
+    }
+  }
+}
+```
+
+## Source definitions
+Source definitions are at the core of Integreat, as they define the sources to
 fetch data from, how to map this data to a set of items to make available
 through Integreat's data api, and how to send data back to the source.
 
@@ -127,15 +151,6 @@ current timestamp for `createdAt` and `updatedAt`.
 The `type` of an attribute is added to the end of attribute's map pipeline. All
 standard attribute types have corresponding mappers that ensure the target value
 will be in the right format.
-
-### Route definition
-
-```
-{
-  <type>: <sourceId>,
-  ...
-}
-```
 
 ### Sync definition
 
