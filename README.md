@@ -45,7 +45,8 @@ const integreat = require('integreat')
 
 const types = [<typeDef>, <typeDef>]
 const sources = [<sourceDef>, <sourceDef>]
-const great = integreat({types, sources})
+const adapters = {json: require('integreat/adapters/json')}
+const great = integreat({types, sources, adapters})
 
 const action = {type: 'GET', payload: {id: 'ent1', type: 'entry'}}
 
