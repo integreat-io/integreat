@@ -1,32 +1,27 @@
 const integreat = require('./index')
-const jsonAdapter = require('./lib/adapters/json')
-// const optionsAuth = require('./lib/authStrats/options')
-const TokenAuth = require('./lib/authStrats/token')
-
-// const config = {
-//   port: 3000,
-//   db: {
-//     url: process.env.GR8_COUCH_URL,
-//     db: process.env.GR8_COUCH_DB,
-//     key: process.env.GR8_COUCH_KEY,
-//     password: process.env.GR8_COUCH_PASSWORD
-//   }
-// }
+const debug = require('debug')('great')
 
 const lengthMap = (value) => (value) ? value.length : 0
 
-const cloudant = new TokenAuth({
-  token: process.env.GREAT_TOKEN1,
-  encode: true,
-  type: 'Basic'
-})
-
-const sourceDefs = []
-const typeDefs = []
-const adapters = {json: jsonAdapter}
-const mappers = {length: lengthMap}
+const sourceDefs = [
+  require('./examples/accountsSource'),
+  require('./examples/couchdbSource')
+]
+const typeDefs = [
+  require('./examples/accountType')
+]
+const adapters = {
+  json: require('./lib/adapters/json'),
+  couchdb: require('./lib/adapters/couchdb')
+}
+const mappers = {
+  length: lengthMap
+}
 const filters = {}
-const auths = {cloudant}
+const auths = {
+  cloudant: require('./examples/cloudantAuth'),
+  couchdb: require('./examples/couchdbAuth')
+}
 
 const great = integreat(sourceDefs, typeDefs, {
   adapters,
@@ -35,7 +30,9 @@ const great = integreat(sourceDefs, typeDefs, {
   auths
 })
 
-console.log(great.version)
+debug('Integreat v' + great.version)
+
+module.exports = great
 
 // Load default mappers and filters
 // great.loadDefaults()
