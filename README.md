@@ -95,16 +95,25 @@ when to retrieve):
   adapter: <string>,
   baseUri: <uri>,
   endpoints: {
-    one: <string>,
-    all: <string>,
-    some: <string>,
-    send: <string>
+    one: <endpoint|string>,
+    all: <endpoint|string>,
+    some: <endpoint|string>,
+    send: <endpoint|string>
   }
   auth: <auth id>,
   items: [
     <item definition>,
     ...
   ]
+}
+```
+
+### Endpoint definition
+
+```
+{
+  uri: <string>,
+  path: <string>
 }
 ```
 
