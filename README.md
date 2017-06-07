@@ -93,6 +93,7 @@ when to retrieve):
 {
   id: <string>,
   adapter: <string>,
+  auth: <auth id>,
   baseUri: <uri>,
   endpoints: {
     one: <endpoint|string>,
@@ -100,7 +101,6 @@ when to retrieve):
     some: <endpoint|string>,
     send: <endpoint|string>
   }
-  auth: <auth id>,
   items: [
     <item definition>,
     ...
@@ -123,27 +123,23 @@ when to retrieve):
 {
   type: <string>,
   path: <string>,
-  attributes: {
-    <attrId>: {
+  attributes: [
+    {
+      key: <string>,
       type: <string>,
       path: <string>,
-      default: {
-        from: <object>,
-        to: <object>
-      },
-      map: <map pipeline>
+      defaultTo: <object>,
+      transform: <transform pipeline>
     }
-  },
-  relationships: {
-    <relId>: {
+  ],
+  relationships: [
+    {
+      key: <string>,
       type: <string>,
       path: <string>,
-      default: {
-        from: <string>,
-        to: <string>
-      },
-      map: <function>
-    }
+      defaultTo: <object>,
+      transform: <function>
+    ]
   },
   map: <map pipeline>,
   filter: {

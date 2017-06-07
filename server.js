@@ -1,7 +1,7 @@
 const integreat = require('./index')
 const debug = require('debug')('great')
 
-const lengthMap = (value) => (value) ? value.length : 0
+const lengthTransform = (value) => (value) ? value.length : 0
 
 const sourceDefs = [
   require('./examples/accountsSource'),
@@ -14,20 +14,22 @@ const adapters = {
   json: require('./lib/adapters/json'),
   couchdb: require('./lib/adapters/couchdb')
 }
-const mappers = {
-  length: lengthMap
-}
-const filters = {}
 const auths = {
   cloudant: require('./examples/cloudantAuth'),
   couchdb: require('./examples/couchdbAuth')
 }
+const mappers = {}
+const filters = {}
+const transforms = {
+  length: lengthTransform
+}
 
 const great = integreat(sourceDefs, typeDefs, {
   adapters,
+  auths,
   mappers,
   filters,
-  auths
+  transforms
 })
 
 debug('Integreat v' + great.version)

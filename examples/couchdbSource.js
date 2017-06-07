@@ -9,11 +9,11 @@ module.exports = {
   },
   items: [{
     type: 'account',
-    attributes: {
-      id: {},
-      username: {path: 'attributes.username'},
-      createdAt: {},
-      updatedAt: {}
-    }
+    attributes: [
+      {key: 'id'},
+      {key: 'username', path: 'attributes.username'},
+      {key: 'createdAt'},
+      {key: 'updatedAt'}
+    ]
   }]
 }
