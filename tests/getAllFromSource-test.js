@@ -24,11 +24,12 @@ test('should get all entries from source', async (t) => {
   const great = integreat(sources, types, {adapters, transforms})
   const ret = await great.dispatch(action)
 
-  t.true(Array.isArray(ret))
-  t.is(ret.length, 3)
-  t.is(ret[0].id, 'betty')
-  t.is(ret[1].id, 'james')
-  t.is(ret[2].id, 'johnf')
+  t.is(ret.status, 'ok')
+  t.true(Array.isArray(ret.data))
+  t.is(ret.data.length, 3)
+  t.is(ret.data[0].id, 'betty')
+  t.is(ret.data[1].id, 'james')
+  t.is(ret.data[2].id, 'johnf')
 
   nock.restore()
 })

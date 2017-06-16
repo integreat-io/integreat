@@ -4,36 +4,28 @@ import json from '../lib/adapters/json'
 import standardTransforms from '../lib/transforms'
 import userType from './types/user'
 import usersSource from './sources/users'
-import johnfData from './data/userJohnf'
 
 import integreat from '../lib/integreat'
 
-test('should get one entry from source', async (t) => {
+test('should get error object for unknown entry', async (t) => {
   const adapters = {json}
   const transforms = standardTransforms()
   const types = [userType]
   const sources = [usersSource]
   nock('http://some.api')
-    .get('/users/johnf')
-    .reply(200, {data: johnfData})
+    .get('/users/janedoe')
+    .reply(404)
   const action = {
     type: 'GET',
-    payload: {id: 'johnf', type: 'user'}
+    payload: {id: 'janedoe', type: 'user'}
   }
 
   const great = integreat(sources, types, {adapters, transforms})
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok')
-  t.true(Array.isArray(ret.data))
-  t.is(ret.data.length, 1)
-  t.is(ret.data[0].id, 'johnf')
-  const attrs = ret.data[0].attributes
-  t.truthy(attrs)
-  t.is(attrs.username, 'johnf')
-  t.is(attrs.firstname, 'John')
-  t.is(attrs.lastname, 'Fjon')
-  t.is(attrs.yearOfBirth, 1987)
+  t.is(ret.status, 'notfound')
+  t.is(ret.data, undefined)
+  t.is(typeof ret.error, 'string')
 
   nock.restore()
 })

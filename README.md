@@ -109,7 +109,6 @@ when to retrieve):
 ```
 
 ### Endpoint definition
-
 ```
 {
   uri: <string>,
@@ -118,7 +117,6 @@ when to retrieve):
 ```
 
 ### Item definition
-
 ```
 {
   type: <string>,
@@ -155,7 +153,6 @@ standard attribute types have corresponding mappers that ensure the target value
 will be in the right format.
 
 ### Sync definition
-
 ```
 {
   from: <sourceId>,
@@ -170,7 +167,6 @@ will be in the right format.
 relay and push functionality.
 
 ## Adapters
-
 Interface:
 - `retrieve(endpoint)`
 - `normalize(data)`
@@ -179,7 +175,6 @@ Available adapters:
 - `json`
 
 ## Auth
-
 Options format:
 ```
 {
@@ -205,7 +200,6 @@ class AuthStrategy {
 ```
 
 ## Pipeline functions
-
 - Item `map(item)`
 - Item `filter(item)`
 - Attribute `map(value)`
@@ -216,7 +210,6 @@ Default mappers:
 - `integer`
 
 ## Events
-
 Call `great.on()` to register listeners. The following events are available:
 
 - `start`: Emitted after Integreat has been started. Listener is called with
@@ -227,7 +220,59 @@ any arguments.
 and array of the synced items.
 
 ## Debugging
-
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.
 
 There are also two other debug namespaces: `great:scheduler` and `great:fetch`.
+
+## Returned from actions
+Retrieving from a source will return an object of the following format:
+
+```
+{
+  status: <statusCode>,
+  data: <object>
+  error: <string>
+}
+```
+
+The `status` will be one of the following status codes:
+- `ok`
+- `notfound`
+- `timeout`
+- `autherror`
+- `noaccess`
+- `error`
+
+On `ok` status, the retrieved data will be set on the data property. Expect this
+to be an array of items, even when the action implies that one item should be
+returned.
+
+Items will be in the following format:
+
+```
+{
+  id: <string>,
+  type: <typeString>,
+  createdAt: <date>,
+  updatedAt: <date>,
+  attributes: {
+    <attrKey>: <value>,
+    ...
+  },
+  relationships: {
+    <relKey>: {id: <string>, type: <typeString>},
+    <relKey: [{id: <string>, type: <typeString}, ...],
+    ...
+  }
+}
+```
+
+In case of any other status than `ok`, there will be no `data`, but the `error` property
+will be set to an error message, usually returned from the adapter.
+
+`data` and `error` will never be set at the same time.
+
+The same principles applies when an action is sending data or performing an
+action other than receiving data. On success, the returned `status` will be
+`ok`, and the `data` property will hold whatever the adapter returns. There is
+no guaranty on the returned data format in these cases.
