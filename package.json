@@ -14,7 +14,8 @@
   },
   "ava": {
     "files": [
-      "lib/**/*-test.js"
+      "lib/**/*-test.js",
+      "tests/**/*-test.js"
     ],
     "source": [
       "lib/**/!(*-test).js"
