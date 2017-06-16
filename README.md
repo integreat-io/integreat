@@ -123,21 +123,19 @@ when to retrieve):
 {
   type: <string>,
   path: <string>,
-  attributes: [
-    {
-      key: <string>,
+  attributes: {
+    <attrKey>: {
       path: <string>,
       defaultTo: <object>,
       transform: <transform pipeline>
     }
-  ],
-  relationships: [
-    {
-      key: <string>,
+  },
+  relationships: {
+    <relKey>: {
       path: <string>,
       defaultTo: <object>,
       transform: <function>
-    ]
+    }
   },
   map: <map pipeline>,
   filter: {
