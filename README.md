@@ -126,7 +126,6 @@ when to retrieve):
   attributes: [
     {
       key: <string>,
-      type: <string>,
       path: <string>,
       defaultTo: <object>,
       transform: <transform pipeline>
@@ -135,7 +134,6 @@ when to retrieve):
   relationships: [
     {
       key: <string>,
-      type: <string>,
       path: <string>,
       defaultTo: <object>,
       transform: <function>
