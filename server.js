@@ -1,5 +1,6 @@
 const integreat = require('./index')
 const debug = require('debug')('great')
+const defaultTransforms = require('./lib/transforms')
 
 const lengthTransform = (value) => (value) ? value.length : 0
 
@@ -20,9 +21,12 @@ const auths = {
 }
 const mappers = {}
 const filters = {}
-const transforms = {
-  length: lengthTransform
-}
+const transforms = Object.assign(
+  defaultTransforms(),
+  {
+    length: lengthTransform
+  }
+)
 
 const great = integreat(sourceDefs, typeDefs, {
   adapters,
