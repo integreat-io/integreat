@@ -152,20 +152,6 @@ The `type` of an attribute is added to the end of attribute's map pipeline. All
 standard attribute types have corresponding mappers that ensure the target value
 will be in the right format.
 
-### Sync definition
-```
-{
-  from: <sourceId>,
-  to: <sourceId>,
-  schedule: <seconds>,
-  startHour: <0-23>,
-  startWeekday: <0-6>
-}
-```
-
-**Note:** `startHour` and `startWeekday` are not implemented yet. Neither are
-relay and push functionality.
-
 ## Adapters
 Interface:
 - `retrieve(endpoint)`
@@ -173,6 +159,7 @@ Interface:
 
 Available adapters:
 - `json`
+- `couchdb`
 
 ## Auth
 Options format:
@@ -204,12 +191,13 @@ class AuthStrategy {
 - Item `filter(item)`
 - Attribute `map(value)`
 
-Default mappers:
+Default transforms:
 - `date`
 - `float`
 - `integer`
+- `not`
 
-## Events
+## Events - obsolete
 Call `great.on()` to register listeners. The following events are available:
 
 - `start`: Emitted after Integreat has been started. Listener is called with
@@ -238,6 +226,7 @@ Retrieving from a source will return an object of the following format:
 The `status` will be one of the following status codes:
 - `ok`
 - `notfound`
+- `noaction`
 - `timeout`
 - `autherror`
 - `noaccess`
@@ -276,3 +265,55 @@ The same principles applies when an action is sending data or performing an
 action other than receiving data. On success, the returned `status` will be
 `ok`, and the `data` property will hold whatever the adapter returns. There is
 no guaranty on the returned data format in these cases.
+
+## Running jobs
+The jobs interface accepts a job `id` and a `payload` object passed to the job.
+There are a couple of jobs included in Integreat, like `sync` and `expire`.
+
+To schedule jobs, pass the job `id` and the `payload` to the `scheduler` along
+with a `schedule` object.
+
+### Job definition
+```
+{
+  type: <jobId>,
+  payload: {
+    ...
+  }
+}
+```
+
+### Schedule definition
+
+```
+{
+  job: <job definition>,
+  schedule: <seconds>,
+  startHour: <0-23>,
+  startWeekday: <0-6>
+}
+```
+
+### The sync job
+The sync job will retrieve items from one source and set them on another. There
+are different options for how to retrieve items, ranging from a course retrieval
+of all items on every sync, to a more fine grained approach where we're only
+fetching items that have been updated since last sync.
+
+The simplest job definition would look like this, where all items would be
+retrieved from the source and set on the target:
+```
+{
+  type: 'sync',
+  payload: {
+    from: <sourceid>,
+    to: <targetid>,
+    type: <itemtype>,
+    retrieve: 'all'
+  }
+}
+```
+
+To retrieve only new items, change the `retrieve` property to `updated`. In
+this case, the job will get the last retrieved timestamp from the source, and
+get all newer items with a `GET_MANY` action.
