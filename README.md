@@ -225,6 +225,7 @@ Retrieving from a source will return an object of the following format:
 
 The `status` will be one of the following status codes:
 - `ok`
+- `queued`
 - `notfound`
 - `noaction`
 - `timeout`
