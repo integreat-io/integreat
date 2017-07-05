@@ -1,6 +1,7 @@
 const integreat = require('./index')
 const debug = require('debug')('great')
 const defaultTransforms = require('./lib/transforms')
+const queue = require('./lib/queues/memory')
 
 const lengthTransform = (value) => (value) ? value.length : 0
 
@@ -28,15 +29,22 @@ const transforms = Object.assign(
   }
 )
 
+const workers = {
+  sync: require('./lib/workers/sync')
+}
+
 const great = integreat(sourceDefs, typeDefs, {
   adapters,
   auths,
   mappers,
   filters,
-  transforms
+  transforms,
+  workers
 })
-
 debug('Integreat v' + great.version)
+
+queue(great)
+debug('Bound to queue')
 
 module.exports = great
 

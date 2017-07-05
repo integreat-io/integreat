@@ -210,7 +210,7 @@ and array of the synced items.
 ## Debugging
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.
 
-There are also two other debug namespaces: `great:scheduler` and `great:fetch`.
+There are also two other debug namespaces: `great:queue` and `great:fetch`.
 
 ## Returned from actions
 Retrieving from a source will return an object of the following format:
@@ -257,8 +257,9 @@ Items will be in the following format:
 }
 ```
 
-In case of any other status than `ok`, there will be no `data`, but the `error` property
-will be set to an error message, usually returned from the adapter.
+In case of any other status than `ok` or `queued`, there will be no `data`, but
+the `error` property will be set to an error message, usually returned from the
+adapter.
 
 `data` and `error` will never be set at the same time.
 
@@ -268,16 +269,19 @@ action other than receiving data. On success, the returned `status` will be
 no guaranty on the returned data format in these cases.
 
 ## Running jobs
-The jobs interface accepts a job `id` and a `payload` object passed to the job.
-There are a couple of jobs included in Integreat, like `sync` and `expire`.
+The jobs interface accepts a worker `id` and a `payload` object passed to the
+worker. There are a couple of workers included in Integreat, like `sync` and
+`expire`. A job may be dispatched as a `RUN` action.
 
-To schedule jobs, pass the job `id` and the `payload` to the `scheduler` along
-with a `schedule` object.
+To schedule jobs, `schedule` definitions may be passed to the `schedule` method
+of the Integreat instance. Each `schedule` consists of some properties for
+defining the schedule, and an action to be dispatched.
 
 ### Job definition
 ```
 {
-  type: <jobId>,
+  type: 'RUN',
+  worker: <workerId>,
   payload: {
     ...
   }
@@ -288,7 +292,7 @@ with a `schedule` object.
 
 ```
 {
-  job: <job definition>,
+  action: <action definition>,
   schedule: <seconds>,
   startHour: <0-23>,
   startWeekday: <0-6>
@@ -305,7 +309,8 @@ The simplest job definition would look like this, where all items would be
 retrieved from the source and set on the target:
 ```
 {
-  type: 'sync',
+  type: 'RUN',
+  worker: 'sync',
   payload: {
     from: <sourceid>,
     to: <targetid>,
