@@ -269,7 +269,7 @@ action other than receiving data. On success, the returned `status` will be
 no guaranty on the returned data format in these cases.
 
 ## Running jobs
-The jobs interface accepts a worker `id` and a `payload` object passed to the
+The jobs interface accepts a `worker` id and a `params` object passed to the
 worker. There are a couple of workers included in Integreat, like `sync` and
 `expire`. A job may be dispatched as a `RUN` action.
 
@@ -281,9 +281,11 @@ defining the schedule, and an action to be dispatched.
 ```
 {
   type: 'RUN',
-  worker: <workerId>,
   payload: {
-    ...
+    worker: <workerId>,
+    params: {
+      ...
+    }
   }
 }
 ```
@@ -310,12 +312,14 @@ retrieved from the source and set on the target:
 ```
 {
   type: 'RUN',
-  worker: 'sync',
   payload: {
-    from: <sourceid>,
-    to: <targetid>,
-    type: <itemtype>,
-    retrieve: 'all'
+    worker: 'sync',
+    params: {
+      from: <sourceid>,
+      to: <targetid>,
+      type: <itemtype>,
+      retrieve: 'all'
+    }
   }
 }
 ```
