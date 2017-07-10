@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
   "license": "ISC",
@@ -41,10 +41,9 @@
   "homepage": "https://github.com/kjellmorten/integreat#readme",
   "engines": {
     "node": "7.7.x",
-    "npm": ">= 3.10.9"
+    "npm": ">= 4.0.0"
   },
   "dependencies": {
-    "dbdb": "^1.4.3",
     "debug": "^2.6.0",
     "dot-prop": "^4.1.0",
     "later": "^1.2.0",
@@ -56,7 +55,6 @@
   "devDependencies": {
     "ava": "^0.19.0",
     "babel-preset-node7": "^1.4.0",
-    "dbdbmock": "^1.4.3",
     "nock": "^9.0.2",
     "nyc": "^10.0.0",
     "sinon": "^2.3.x",
