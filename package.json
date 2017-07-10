@@ -47,6 +47,7 @@
     "dbdb": "^1.4.3",
     "debug": "^2.6.0",
     "dot-prop": "^4.1.0",
+    "later": "^1.2.0",
     "request": "^2.79.0",
     "request-promise-native": "^1.0.3",
     "rx": "^4.1.0",

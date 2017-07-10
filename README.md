@@ -207,11 +207,6 @@ any arguments.
 - `sync`: Emitted after a source has been synced. Called with source definition,
 and array of the synced items.
 
-## Debugging
-Run Integreat with env variable `DEBUG=great`, to receive debug messages.
-
-There are also two other debug namespaces: `great:queue` and `great:fetch`.
-
 ## Returned from actions
 Retrieving from a source will return an object of the following format:
 
@@ -271,7 +266,8 @@ no guaranty on the returned data format in these cases.
 ## Running jobs
 The jobs interface accepts a `worker` id and a `params` object passed to the
 worker. There are a couple of workers included in Integreat, like `sync` and
-`expire`. A job may be dispatched as a `RUN` action.
+`expire`. A job may be dispatched as a `RUN` action, with the job definition as
+the payload.
 
 To schedule jobs, `schedule` definitions may be passed to the `schedule` method
 of the Integreat instance. Each `schedule` consists of some properties for
@@ -280,12 +276,9 @@ defining the schedule, and an action to be dispatched.
 ### Job definition
 ```
 {
-  type: 'RUN',
-  payload: {
-    worker: <workerId>,
-    params: {
-      ...
-    }
+  worker: <workerId>,
+  params: {
+    ...
   }
 }
 ```
@@ -294,12 +287,55 @@ defining the schedule, and an action to be dispatched.
 
 ```
 {
-  action: <action definition>,
-  schedule: <seconds>,
-  startHour: <0-23>,
-  startWeekday: <0-6>
+  schedule: <schedule>,
+  job: <job definition>,
 }
 ```
+
+The `schedule` format is directly borrowed from
+[Later](http://bunkat.github.io/later/schedules.html) (also accepts the basic or
+composite schedule formats on the `schedule` property, as well as the [text
+format](http://bunkat.github.io/later/parsers.html#text)).
+
+The following time periods are supported:
+- `s`: Seconds in a minute (0-59)
+- `m`: Minutes in an hour (0-59)
+- `h`: Hours in a day (0-23)
+- `t`: Time of the day, as seconds since midnight (0-86399)
+- `D`: Days of the month (1-maximum number of days in the month, 0 to specifies
+last day of month)
+- `d`: Days of the week (1-7, starting with Sunday)
+- `dc`: Days of week count, (1-maximum weeks of the month, 0 specifies last in
+the month). Use together with `d` to get first Wednesday every month, etc.
+- `dy`: Days of year (1 to maximum number of days in the year, 0
+specifies last day of year).
+- `wm`: Weeks of the month (1-maximum number of weeks in the month, 0 for last
+week of the month.). First week of the month is the week containing the 1st, and
+weeks start on Sunday.
+- `wy`: [ISO weeks of the year](http://en.wikipedia.org/wiki/ISO_week_date)
+(1-maximum number of ISO weeks in the year, 0 is the last ISO week of the year).
+- `M`: Months of the year (1-12)
+- `Y`: Years (1970-2099)
+
+See Later's documentation on
+[time periods](http://bunkat.github.io/later/time-periods.html) for more.
+
+Example schedule running a job at 2 am every weekday:
+```
+{
+  schedule: {d: [2,3,4,5,6], h: [2]},
+  job: {
+    worker: 'sync',
+    params: {
+      from: 'src1',
+      to: 'src2',
+      type: 'entry'
+    }
+  }
+}
+```
+
+To run a job every hour, use `{m: [0]}` or simply `'every hour'`.
 
 ### The sync job
 The sync job will retrieve items from one source and set them on another. There
@@ -311,15 +347,12 @@ The simplest job definition would look like this, where all items would be
 retrieved from the source and set on the target:
 ```
 {
-  type: 'RUN',
-  payload: {
-    worker: 'sync',
-    params: {
-      from: <sourceid>,
-      to: <targetid>,
-      type: <itemtype>,
-      retrieve: 'all'
-    }
+  worker: 'sync',
+  params: {
+    from: <sourceid>,
+    to: <targetid>,
+    type: <itemtype>,
+    retrieve: 'all'
   }
 }
 ```
@@ -327,3 +360,8 @@ retrieved from the source and set on the target:
 To retrieve only new items, change the `retrieve` property to `updated`. In
 this case, the job will get the last retrieved timestamp from the source, and
 get all newer items with a `GET_MANY` action.
+
+## Debugging
+Run Integreat with env variable `DEBUG=great`, to receive debug messages.
+
+There are also two other debug namespaces: `great:queue` and `great:fetch`.
