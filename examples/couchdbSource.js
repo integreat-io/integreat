@@ -8,12 +8,6 @@ module.exports = {
     send: '/{type}:{id}'
   },
   items: [{
-    type: 'account',
-    attributes: {
-      id: {},
-      username: {path: 'attributes.username'},
-      createdAt: {},
-      updatedAt: {}
-    }
+    type: '*'
   }]
 }

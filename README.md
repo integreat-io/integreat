@@ -152,6 +152,12 @@ The `type` of an attribute is added to the end of attribute's map pipeline. All
 standard attribute types have corresponding mappers that ensure the target value
 will be in the right format.
 
+There is a special "catch all" item type `*` – the asterisk – that will match
+any item type not represented in regular `items`. If `path`, `map` or `filter`
+are set on an asterisk item, they will be applied as normal, but any
+`attributes` or `relationships` will be disregarded. Instead all `attributes` or
+`relationships` will be mapped as is, unless the item `map` modifies them.
+
 ## Adapters
 Interface:
 - `retrieve(endpoint)`
@@ -189,23 +195,13 @@ class AuthStrategy {
 ## Pipeline functions
 - Item `map(item)`
 - Item `filter(item)`
-- Attribute `map(value)`
+- Attribute `transform(value)`
 
 Default transforms:
 - `date`
 - `float`
 - `integer`
 - `not`
-
-## Events - obsolete
-Call `great.on()` to register listeners. The following events are available:
-
-- `start`: Emitted after Integreat has been started. Listener is called with
-http server (if started).
-- `stop`: Emitted after Integreat has been stopped. Listener is called without
-any arguments.
-- `sync`: Emitted after a source has been synced. Called with source definition,
-and array of the synced items.
 
 ## Returned from actions
 Retrieving from a source will return an object of the following format:
@@ -232,6 +228,7 @@ On `ok` status, the retrieved data will be set on the data property. Expect this
 to be an array of items, even when the action implies that one item should be
 returned.
 
+### Returned data for items
 Items will be in the following format:
 
 ```
