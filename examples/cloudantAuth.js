@@ -1,6 +1,6 @@
-const TokenAuth = require('../lib/authStrats/token')
+const tokenAuth = require('../lib/authStrats/token')
 
-module.exports = new TokenAuth({
+module.exports = tokenAuth({
   token: process.env.GREAT_TOKEN1,
   encode: true,
   type: 'Basic'

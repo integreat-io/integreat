@@ -219,15 +219,15 @@ Options format:
 }
 ```
 
-At runtime, a strategy is created and given the options payload. An auth strategy is represented by a class with the following interface:
+At runtime, a strategy is created and given the options payload. An auth
+strategy is represented by an object with the following interface:
 
 ```javascript
-class AuthStrategy {
-  constructor (options) { ... }
-  isAuthenticated () { ...; return <boolean> }
-  authenticate () { ...; return Promise.resolve(<boolean>) }
-  getAuthHeaders () { return {header: '...'} }
-}
+const auth = authStrat(options)
+
+const isAuthenticated = auth.isAuthenticated()
+const isAuthenticated = await auth.authenticate()
+const headerObject = auth.getAuthHeaders()
 ```
 
 ## Pipeline functions
@@ -399,4 +399,4 @@ get all newer items with a `GET_MANY` action.
 ## Debugging
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.
 
-There are also two other debug namespaces: `great:queue` and `great:fetch`.
+There are also two other debug namespaces: `great:queue` and `great:couchdb`.
