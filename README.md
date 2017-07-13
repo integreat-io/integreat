@@ -40,7 +40,7 @@ npm install integreat
 
 ## Use
 
-```
+```javascript
 const integreat = require('integreat')
 
 const types = [<typeDef>, <typeDef>]
@@ -158,10 +158,50 @@ are set on an asterisk item, they will be applied as normal, but any
 `attributes` or `relationships` will be disregarded. Instead all `attributes` or
 `relationships` will be mapped as is, unless the item `map` modifies them.
 
+### Paths
+Endpoints, items, attributes, and relationships all have an optional `path`
+property, for specifying what part of the data from the source to return in each
+case.
+
+The `path` properties use a dot notation, with the support for array brackets.
+
+For example, with this data returned from the source ...
+```javascript
+const data = {
+  sections: [
+    {
+      title: 'First section',
+      articles: {
+        items: [
+          {id: 'article1', title: 'The title', body: {raw: 'The text'}}
+        ],
+        ...
+      }
+    }
+  ]
+}
+```
+
+... a valid path to retrieve all `items` of the first instance of `sections`
+would be `'sections[0].articles.items[]'` and to get the raw body of each item
+`'body.raw'`.
+
+When mapping data to the source, the paths are used to reconstruct the data
+format the source expects. Only properties included in the paths will be
+created, so any additional properties must be set by a map function or the
+adapter.
+
+**Note:** An open square bracket `[]` is only valid at the end of an endpoint
+`path`, and is used to indicate that the path refers to an array. This is used
+when reconstructing the data format _to_ to a source, and has no effect when
+mapping _from_ a source.
+
 ## Adapters
 Interface:
-- `retrieve(endpoint)`
-- `normalize(data)`
+- `retrieve(url, [auth])`
+- `send(url, data, [auth], [method])`
+- `normalize(data, [path])`
+- `serialize(data, [path])`
 
 Available adapters:
 - `json`
@@ -179,11 +219,9 @@ Options format:
 }
 ```
 
-Any passcodes, passwords, secret keys, etc. should be named suffixed with `_encrypt` to indicate that the field should be encrypted. The field name without the suffix and with the decoded value will be available on the options object loaded from the store.
-
 At runtime, a strategy is created and given the options payload. An auth strategy is represented by a class with the following interface:
 
-```
+```javascript
 class AuthStrategy {
   constructor (options) { ... }
   isAuthenticated () { ...; return <boolean> }
@@ -318,7 +356,7 @@ See Later's documentation on
 [time periods](http://bunkat.github.io/later/time-periods.html) for more.
 
 Example schedule running a job at 2 am every weekday:
-```
+```javascript
 {
   schedule: {d: [2,3,4,5,6], h: [2]},
   job: {
