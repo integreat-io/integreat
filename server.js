@@ -6,12 +6,12 @@ const queue = require('./lib/queues/memory')
 
 const lengthTransform = (value) => (value) ? value.length : 0
 
-const sourceDefs = [
+const sources = [
   require('./examples/accountsSource'),
   require('./examples/nytimesSource'),
   require('./examples/storeSource')
 ]
-const typeDefs = [
+const types = [
   require('./examples/accountType'),
   require('./examples/articleType')
 ]
@@ -36,7 +36,9 @@ const workers = {
   sync: require('./lib/workers/sync')
 }
 
-const great = integreat(sourceDefs, typeDefs, {
+const great = integreat({
+  sources,
+  types,
   adapters,
   auths,
   mappers,

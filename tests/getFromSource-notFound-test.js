@@ -20,7 +20,7 @@ test('should get error object for unknown entry', async (t) => {
     payload: {id: 'janedoe', type: 'user'}
   }
 
-  const great = integreat(sources, types, {adapters, transforms})
+  const great = integreat({sources, types, adapters, transforms})
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'notfound')
