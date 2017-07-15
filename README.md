@@ -124,14 +124,12 @@ when to retrieve):
   attributes: {
     <attrKey>: {
       path: <string>,
-      default: <object>,
       transform: <transform pipeline>
     }
   },
   relationships: {
     <relKey>: {
       path: <string>,
-      default: <object>,
       transform: <function>
     }
   },
