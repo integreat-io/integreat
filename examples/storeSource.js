@@ -1,5 +1,5 @@
 module.exports = {
-  id: 'couchdb',
+  id: 'store',
   adapter: 'couchdb',
   baseUri: `${process.env.GR8_COUCH_URL}/${process.env.GR8_COUCH_DB}`,
   endpoints: {

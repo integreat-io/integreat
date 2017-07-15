@@ -24,3 +24,4 @@ nbproject
 .idea
 .node_history
 .todos
+.env

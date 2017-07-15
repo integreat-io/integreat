@@ -1,3 +1,4 @@
+require('dotenv').config()
 const integreat = require('./index')
 const debug = require('debug')('great')
 const defaultTransforms = require('./lib/transforms')
@@ -7,10 +8,12 @@ const lengthTransform = (value) => (value) ? value.length : 0
 
 const sourceDefs = [
   require('./examples/accountsSource'),
-  require('./examples/couchdbSource')
+  require('./examples/nytimesSource'),
+  require('./examples/storeSource')
 ]
 const typeDefs = [
-  require('./examples/accountType')
+  require('./examples/accountType'),
+  require('./examples/articleType')
 ]
 const adapters = {
   json: require('./lib/adapters/json'),
