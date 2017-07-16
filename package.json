@@ -9,6 +9,7 @@
     "start": "node server.js",
     "test": "NODE_ENV=test nyc --reporter=text-summary ava",
     "dev": "NODE_ENV=test ava --watch",
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
     "nyc:report": "nyc report",
     "lint": "standard"
   },
@@ -57,6 +58,7 @@
   "devDependencies": {
     "ava": "^0.19.0",
     "babel-preset-node7": "^1.4.0",
+    "coveralls": "^2.13.1",
     "dotenv": "^4.0.0",
     "nock": "^9.0.2",
     "nyc": "^10.0.0",

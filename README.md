@@ -2,6 +2,7 @@
 An integration layer for node.js.
 
 [![Build Status](https://travis-ci.org/kjellmorten/integreat.svg?branch=master)](https://travis-ci.org/kjellmorten/integreat)
+[![Coverage Status](https://coveralls.io/repos/github/kjellmorten/integreat/badge.svg?branch=master)](https://coveralls.io/github/kjellmorten/integreat?branch=master)
 
 **Note:** This project is still in a very early stage. Use at own risk. Anything
 might change. At this time, we welcome input on the overall thoughts and
