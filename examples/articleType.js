@@ -4,7 +4,7 @@ module.exports = {
   attributes: {
     title: 'string',
     abstract: 'string',
-    text: {type: 'string', default: null},
+    text: {type: 'string'},
     url: 'string',
     byline: 'string'
   }
