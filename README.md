@@ -43,22 +43,48 @@ Install from npm:
 npm install integreat
 ```
 
-## Use
+## Hello world
+The hello world example of Integreat, would look something like this:
 
 ```javascript
 const integreat = require('integreat')
-
-const types = [<typeDef>, <typeDef>]
-const sources = [<sourceDef>, <sourceDef>]
 const adapters = {json: require('integreat/adapters/json')}
+
+const types = [{
+  id: 'message',
+  source: 'helloworld',
+  attributes: {text: 'string'}
+}]
+const sources = [{
+  id: 'helloworld',
+  adapter: 'json',
+  endpoints: {
+    all: 'https://api.helloworld.io/json'
+  },
+  items: {
+    message: {
+      attributes: {text: {path: 'message'}}
+    }
+  }
+}]
+
 const great = integreat({types, sources, adapters})
+const action = {type: 'GET_ALL', payload: {type: 'message'}}
 
-const action = {type: 'GET', payload: {id: 'ent1', type: 'entry'}}
+great.dispatch(action).then(console.log)
+//--> Hello world
+```
 
-great.dispatch(action)
-.then((item) => {
-  ...
-})
+As most hello world examples, this is a bit too trivial a use case to
+demonstrate the real usefulness of Integreat, but shows the simplest setup
+possible.
+
+The example requires an imagined api at 'https://api.helloworld.io/json',
+returning the following json data:
+```json
+{
+  "message": "Hello world"
+}
 ```
 
 ## Type definitions
