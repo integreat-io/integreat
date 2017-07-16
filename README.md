@@ -106,10 +106,10 @@ when to retrieve):
     some: <endpoint|string>,
     send: <endpoint|string>
   }
-  items: [
-    <item definition>,
+  items: {
+    <type>: <item definition>,
     ...
-  ]
+  }
 }
 ```
 
@@ -124,7 +124,6 @@ when to retrieve):
 ### Item definition
 ```
 {
-  type: <string>,
   path: <string>,
   attributes: {
     <attrKey>: {

@@ -6,9 +6,8 @@ module.exports = {
     one: {uri: '/{id}', path: 'data'},
     all: {uri: '/', path: 'data'}
   },
-  items: [
-    {
-      type: 'user',
+  items: {
+    user: {
       attributes: {
         id: {path: 'user'},
         username: {path: 'user'},
@@ -17,5 +16,5 @@ module.exports = {
         yearOfBirth: {path: 'birthyear'}
       }
     }
-  ]
+  }
 }

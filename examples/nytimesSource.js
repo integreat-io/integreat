@@ -10,9 +10,8 @@ module.exports = {
       path: 'results[]'
     }
   },
-  items: [
-    {
-      type: 'article',
+  items: {
+    article: {
       attributes: {
         id: {path: 'url'},
         title: {},
@@ -23,5 +22,5 @@ module.exports = {
         byline: {}
       }
     }
-  ]
+  }
 }
