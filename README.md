@@ -1,7 +1,11 @@
 # Integreat
 An integration layer for node.js.
 
-**Note:** This project is still in a very early stage. Use at own risk. Anything might change.
+[![Build Status](https://travis-ci.org/kjellmorten/integreat.svg?branch=master)](https://travis-ci.org/kjellmorten/integreat)
+
+**Note:** This project is still in a very early stage. Use at own risk. Anything
+might change. At this time, we welcome input on the overall thoughts and
+interface, but we're not ready for pull requests yet.
 
 The basic idea of Integreat is to make it easy to define a set of data sources and expose them through one interface to abstract away the specifics of each source.
 
