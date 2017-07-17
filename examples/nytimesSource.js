@@ -10,7 +10,7 @@ module.exports = {
       path: 'results[]'
     }
   },
-  items: {
+  mappings: {
     article: {
       attributes: {
         id: {path: 'url'},

@@ -1,16 +1,15 @@
 import test from 'ava'
 import nock from 'nock'
 import json from '../lib/adapters/json'
-import standardTransforms from '../lib/transforms'
 import userType from './types/user'
 import usersSource from './sources/users'
 import usersData from './data/users'
 
-import integreat from '../lib/integreat'
+import integreat from '..'
 
 test('should get all entries from source', async (t) => {
   const adapters = {json}
-  const transforms = standardTransforms()
+  const formatters = integreat.formatters()
   const types = [userType]
   const sources = [usersSource]
   nock('http://some.api')
@@ -21,7 +20,7 @@ test('should get all entries from source', async (t) => {
     payload: {type: 'user'}
   }
 
-  const great = integreat({sources, types, adapters, transforms})
+  const great = integreat({sources, types, adapters, formatters})
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')

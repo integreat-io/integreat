@@ -7,7 +7,7 @@ module.exports = {
     one: '/{type}:{id}',
     send: '/{type}:{id}'
   },
-  items: {
+  mappings: {
     '*': {}
   }
 }

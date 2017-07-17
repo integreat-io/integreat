@@ -5,7 +5,7 @@ module.exports = {
     all: 'http://api.feednstatus.com/1.0/accounts',
     one: 'http://api.feednstatus.com/1.0/accounts/{id}'
   },
-  items: {
+  mappings: {
     account: {
       path: 'data',
       attributes: {

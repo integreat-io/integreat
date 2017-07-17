@@ -6,7 +6,7 @@ module.exports = {
     one: {uri: '/{id}', path: 'data'},
     all: {uri: '/', path: 'data'}
   },
-  items: {
+  mappings: {
     user: {
       attributes: {
         id: {path: 'user'},

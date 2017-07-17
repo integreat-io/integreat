@@ -79,7 +79,7 @@ const sources = [{
   endpoints: {
     all: 'https://api.helloworld.io/json'
   },
-  items: {
+  mappings: {
     message: {
       attributes: {text: {path: 'message'}}
     }
@@ -175,16 +175,16 @@ of a endpoint object.
   attributes: {
     <attrKey>: {
       path: <string>,
-      transform: <transform pipeline>
+      format: <format pipeline>
     }
   },
   relationships: {
     <relKey>: {
       path: <string>,
-      transform: <function>
+      format: <format pipeline>
     }
   },
-  map: <map pipeline>,
+  transform: <transform pipeline>,
   filter: {
     from: <filter pipeline>,
     to:  <filter pipeline>
@@ -197,15 +197,16 @@ the `attributes` property, but will be moved to the item on mapping. If any of
 these are not defined, default values will be used; a UUID for `id` and the
 current timestamp for `createdAt` and `updatedAt`.
 
-The `type` of an attribute is added to the end of attribute's map pipeline. All
-standard attribute types have corresponding mappers that ensure the target value
-will be in the right format.
+The `type` of an attribute is added to the end of attribute's transform
+pipeline. All standard attribute types have corresponding transformers that
+ensure the target value will be in the right format.
 
 There is a special "catch all" item type `*` – the asterisk – that will match
-any datatype not represented as regular mappings. If `path`, `map` or `filter`
-are set on an asterisk item, they will be applied as normal, but any
+any datatype not represented as regular mappings. If `path`, `transform` or
+`filter` are set on an asterisk item, they will be applied as normal, but any
 `attributes` or `relationships` will be disregarded. Instead all `attributes` or
-`relationships` will be mapped as is, unless the `map` pipeline modifies them.
+`relationships` will be mapped as is, unless the `transform` pipeline modifies
+them.
 
 ### Paths
 Endpoints, mappings, attributes, and relationships all have an optional `path`
@@ -237,7 +238,7 @@ would be `'sections[0].articles.items[]'` and to get the raw body of each item
 
 When mapping data to the source, the paths are used to reconstruct the data
 format the source expects. Only properties included in the paths will be
-created, so any additional properties must be set by a map function or the
+created, so any additional properties must be set by a transform function or the
 adapter.
 
 **Note:** An open square bracket `[]` is only valid at the end of an endpoint or
@@ -337,11 +338,11 @@ const headerObject = auth.getAuthHeaders()
 ```
 
 ## Pipeline functions
-- Item `map(item)`
+- Item `transform(item)`
 - Item `filter(item)`
-- Attribute `transform(value)`
+- Attribute `format(value)`
 
-Default transforms:
+Default formats:
 - `date`
 - `float`
 - `integer`

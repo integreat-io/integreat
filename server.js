@@ -2,7 +2,7 @@ require('dotenv').config()
 const integreat = require('.')
 const debug = require('debug')('great')
 
-const lengthTransform = (value) => (value) ? value.length : 0
+const lengthFormat = (value) => (value) ? value.length : 0
 
 const sources = [
   require('./examples/accountsSource'),
@@ -15,11 +15,11 @@ const types = [
 ]
 const adapters = integreat.adapters()
 const auths = integreat.authStrats()
-const mappers = {}
+const transformers = {}
 const filters = {}
-const transforms = Object.assign(
-  {length: lengthTransform},
-  integreat.transforms()
+const formatters = Object.assign(
+  {length: lengthFormat},
+  integreat.formatters()
 )
 const workers = integreat.workers()
 
@@ -28,33 +28,11 @@ const great = integreat({
   types,
   adapters,
   auths,
-  mappers,
+  transformers,
   filters,
-  transforms,
+  formatters,
   workers
 })
 debug('Integreat v' + great.version)
 
 module.exports = great
-
-// Load default mappers and filters
-// great.loadDefaults()
-
-// great.on('sync', (source, items) => {
-//   console.log('Synced %d items for source `%s` at %s.', items.length, source.id, new Date())
-// })
-
-// Load source definitions from database
-// great.loadSourceDefsFromDb()
-
-// Start server
-// .then(() => great.start())
-
-// Server is running
-// .then((server) => {
-//   if (server) {
-//     console.log('Integreat is running on port %d.', server.address().port)
-//   } else {
-//     console.log('Integreat is running without a http server')
-//   }
-// })
