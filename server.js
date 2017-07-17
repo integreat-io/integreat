@@ -1,8 +1,6 @@
 require('dotenv').config()
-const integreat = require('./index')
+const integreat = require('.')
 const debug = require('debug')('great')
-const defaultTransforms = require('./lib/transforms')
-const queue = require('./lib/queues/memory')
 
 const lengthTransform = (value) => (value) ? value.length : 0
 
@@ -15,26 +13,15 @@ const types = [
   require('./examples/accountType'),
   require('./examples/articleType')
 ]
-const adapters = {
-  json: require('./lib/adapters/json'),
-  couchdb: require('./lib/adapters/couchdb')
-}
-const auths = {
-  cloudant: require('./examples/cloudantAuth'),
-  couchdb: require('./examples/couchdbAuth')
-}
+const adapters = integreat.adapters()
+const auths = integreat.authStrats()
 const mappers = {}
 const filters = {}
 const transforms = Object.assign(
-  defaultTransforms(),
-  {
-    length: lengthTransform
-  }
+  {length: lengthTransform},
+  integreat.transforms()
 )
-
-const workers = {
-  sync: require('./lib/workers/sync')
-}
+const workers = integreat.workers()
 
 const great = integreat({
   sources,
@@ -47,9 +34,6 @@ const great = integreat({
   workers
 })
 debug('Integreat v' + great.version)
-
-queue(great)
-debug('Bound to queue')
 
 module.exports = great
 

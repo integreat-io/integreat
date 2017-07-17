@@ -48,7 +48,7 @@ The hello world example of Integreat, would look something like this:
 
 ```javascript
 const integreat = require('integreat')
-const adapters = {json: require('integreat/adapters/json')}
+const adapters = integreat.adapters('json')
 
 const types = [{
   id: 'message',
