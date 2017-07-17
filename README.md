@@ -355,7 +355,7 @@ worker. There are a couple of workers included in Integreat, like `sync` and
 `expire`. A job may be dispatched as a `RUN` action, with the job definition as
 the payload.
 
-To schedule jobs, [schedule definitions](#schedule-definitions) may be passed to
+To schedule jobs, [schedule definitions](#schedule-definition) may be passed to
 the `schedule` method of the Integreat instance. Each schedule consists of some
 properties for defining the schedule, and an action to be dispatched.
 
