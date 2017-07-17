@@ -8,13 +8,25 @@ An integration layer for node.js.
 might change. At this time, we welcome input on the overall thoughts and
 interface, but we're not ready for pull requests yet.
 
-The basic idea of Integreat is to make it easy to define a set of data sources and expose them through one interface to abstract away the specifics of each source.
+The basic idea of Integreat is to make it easy to define a set of data sources
+and expose them through one interface to abstract away the specifics of each
+source, and map their data to defined data types.
 
-This is done through adapters, that does all the hard work of communicating with the different sources, a definition format, for setting up each source with the right adapter and parameters, and a `dispatch()` function to send actions to the sources.
+This is done through adapters, that does all the hard work of communicating with
+the different sources, a definition format, for setting up each source with the
+right adapter and parameters, and a `dispatch()` function to send actions to the
+sources.
 
-Integreat has an internal router that will ensure that the right action is directed to the right source(s). This router may be set up to treat one source as a relay for other sources, and there's a sync module for keeping data in sync between selected sources.
+Integreat has an internal router that will ensure that the action is directed to
+the right source through action handlers, and will also queue actions when
+appropriate.
 
-Finally, there will be different interface modules available, that will plug into the `dispatch()` function and offer other ways of reaching data from the sources – such as out of the box REST or GraphQL apis.
+It is possible to set up Integreat to treat one source as a relay for other
+sources, and schedule syncs between selected sources.
+
+Finally, there will be different interface modules available, that will plug
+into the `dispatch()` function and offer other ways of reaching data from the
+sources – such as out of the box REST or GraphQL apis.
 
 ```
             ___________________________
@@ -27,11 +39,17 @@ Action -> Dispatch -> Router -|        |
            |___________________________|
 ```
 
-Data from the sources is retrieved, normalized, and mapped by the adapter, and returned asynchronously back to the code that initiated the action. Actions for fetching data will be executed right away.
+Data from the sources is retrieved, normalized, and mapped by the adapter, and
+returned asynchronously back to the code that initiated the action. Actions for
+fetching data will be executed right away.
 
-Actions that updates data on sources will reversely map and serialize the data before it is sent to a source. These actions may be queued.
+Actions that updates data on sources will reversely map and serialize the data
+before it is sent to a source. These actions may be queued or scheduled.
 
-Integreat comes with a standard data format, which is the only format that will be exposed to the code dispatching the actions. The mapping, normalizing, and serializing will happing to and from this format.
+Integreat comes with a standard data format, which is the only format that will
+be exposed to the code dispatching the actions. The mapping, normalizing, and
+serializing will happing to and from this format, according to the defined
+types and mapping rules.
 
 
 ## Install
@@ -116,9 +134,9 @@ Source definitions are at the core of Integreat, as they define the sources to
 fetch data from, how to map this data to a set of items to make available
 through Integreat's data api, and how to send data back to the source.
 
-A source definition object defines how to fetch from and send to the source, the
-target item (mapping to attributes and relationships), and the sync (basically
-when to retrieve):
+A source definition object defines the adapter, any authentication method, the
+endpoints for fetching from and sending to the source, and mappings to the
+supported data types (attributes and relationships):
 
 ```
 {
@@ -132,8 +150,8 @@ when to retrieve):
     some: <endpoint|string>,
     send: <endpoint|string>
   }
-  items: {
-    <type>: <item definition>,
+  mappings: {
+    <datatype>: <mapping definition>,
     ...
   }
 }
@@ -147,7 +165,10 @@ when to retrieve):
 }
 ```
 
-### Item definition
+If only the `uri` property is needed, it may simply be given as a string instead
+of a endpoint object.
+
+### Mapping definition
 ```
 {
   path: <string>,
@@ -181,13 +202,13 @@ standard attribute types have corresponding mappers that ensure the target value
 will be in the right format.
 
 There is a special "catch all" item type `*` – the asterisk – that will match
-any item type not represented in regular `items`. If `path`, `map` or `filter`
+any datatype not represented as regular mappings. If `path`, `map` or `filter`
 are set on an asterisk item, they will be applied as normal, but any
 `attributes` or `relationships` will be disregarded. Instead all `attributes` or
-`relationships` will be mapped as is, unless the item `map` modifies them.
+`relationships` will be mapped as is, unless the `map` pipeline modifies them.
 
 ### Paths
-Endpoints, items, attributes, and relationships all have an optional `path`
+Endpoints, mappings, attributes, and relationships all have an optional `path`
 property, for specifying what part of the data from the source to return in each
 case.
 
@@ -219,55 +240,10 @@ format the source expects. Only properties included in the paths will be
 created, so any additional properties must be set by a map function or the
 adapter.
 
-**Note:** An open square bracket `[]` is only valid at the end of an endpoint
-`path`, and is used to indicate that the path refers to an array. This is used
-when reconstructing the data format _to_ to a source, and has no effect when
-mapping _from_ a source.
-
-## Adapters
-Interface:
-- `retrieve(url, [auth])`
-- `send(url, data, [auth], [method])`
-- `normalize(data, [path])`
-- `serialize(data, [path])`
-
-Available adapters:
-- `json`
-- `couchdb`
-
-## Auth
-Options format:
-```
-{
-  id: <id>,
-  strategy: <strategy id>,
-  options: {
-    ...
-  }
-}
-```
-
-At runtime, a strategy is created and given the options payload. An auth
-strategy is represented by an object with the following interface:
-
-```javascript
-const auth = authStrat(options)
-
-const isAuthenticated = auth.isAuthenticated()
-const isAuthenticated = await auth.authenticate()
-const headerObject = auth.getAuthHeaders()
-```
-
-## Pipeline functions
-- Item `map(item)`
-- Item `filter(item)`
-- Attribute `transform(value)`
-
-Default transforms:
-- `date`
-- `float`
-- `integer`
-- `not`
+**Note:** An open square bracket `[]` is only valid at the end of an endpoint or
+mapping `path`, and is used to indicate that the path refers to an array. This
+is used when reconstructing the data format _to_ to a source, and has no effect
+when mapping _from_ a source.
 
 ## Returned from actions
 Retrieving from a source will return an object of the following format:
@@ -290,34 +266,13 @@ The `status` will be one of the following status codes:
 - `noaccess`
 - `error`
 
-On `ok` status, the retrieved data will be set on the data property. Expect this
-to be an array of items, even when the action implies that one item should be
-returned.
+On `ok` status, [the retrieved data](#returned-data-for-items) will be set on
+the `data` property. Expect this to be an array of items, even when the action
+implies that only one item should be returned.
 
-### Returned data for items
-Items will be in the following format:
-
-```
-{
-  id: <string>,
-  type: <typeString>,
-  createdAt: <date>,
-  updatedAt: <date>,
-  attributes: {
-    <attrKey>: <value>,
-    ...
-  },
-  relationships: {
-    <relKey>: {id: <string>, type: <typeString>},
-    <relKey: [{id: <string>, type: <typeString}, ...],
-    ...
-  }
-}
-```
-
-In case of any other status than `ok` or `queued`, there will be no `data`, but
-the `error` property will be set to an error message, usually returned from the
-adapter.
+In case of any other status than `ok` or `queued`, there will be no `data`, and
+instead the `error` property will be set to an error message, usually returned
+from the adapter.
 
 `data` and `error` will never be set at the same time.
 
@@ -326,15 +281,81 @@ action other than receiving data. On success, the returned `status` will be
 `ok`, and the `data` property will hold whatever the adapter returns. There is
 no guaranty on the returned data format in these cases.
 
+### Returned data for items
+Items will be in the following format:
+
+```
+{
+  id: <string>,
+  type: <datatype>,
+  createdAt: <date>,
+  updatedAt: <date>,
+  attributes: {
+    <attrKey>: <value>,
+    ...
+  },
+  relationships: {
+    <relKey>: {id: <string>, type: <datatype>},
+    <relKey: [{id: <string>, type: <datatype>, ...],
+    ...
+  }
+}
+```
+
+## Adapters
+Interface:
+- `retrieve(url, [auth])`
+- `send(url, data, [auth], [method])`
+- `normalize(data, [path])`
+- `serialize(data, [path])`
+
+Available adapters:
+- `json`
+- `couchdb`
+
+## Authentication
+Options format:
+```
+{
+  id: <id>,
+  strategy: <strategy id>,
+  options: {
+    ...
+  }
+}
+```
+
+At runtime, a strategy is created and given the `options` payload. An auth
+strategy is represented by an object with the following interface:
+
+```javascript
+const auth = authStrat(options)
+
+const isAuthenticated = auth.isAuthenticated()
+const isAuthenticated = await auth.authenticate()
+const headerObject = auth.getAuthHeaders()
+```
+
+## Pipeline functions
+- Item `map(item)`
+- Item `filter(item)`
+- Attribute `transform(value)`
+
+Default transforms:
+- `date`
+- `float`
+- `integer`
+- `not`
+
 ## Running jobs
-The jobs interface accepts a `worker` id and a `params` object passed to the
+The jobs interface accepts id of a `worker` and a `params` object passed to the
 worker. There are a couple of workers included in Integreat, like `sync` and
 `expire`. A job may be dispatched as a `RUN` action, with the job definition as
 the payload.
 
-To schedule jobs, `schedule` definitions may be passed to the `schedule` method
-of the Integreat instance. Each `schedule` consists of some properties for
-defining the schedule, and an action to be dispatched.
+To schedule jobs, [schedule definitions](#schedule-definitions) may be passed to
+the `schedule` method of the Integreat instance. Each schedule consists of some
+properties for defining the schedule, and an action to be dispatched.
 
 ### Job definition
 ```
@@ -402,9 +423,9 @@ To run a job every hour, use `{m: [0]}` or simply `'every hour'`.
 
 ### The sync job
 The sync job will retrieve items from one source and set them on another. There
-are different options for how to retrieve items, ranging from a course retrieval
-of all items on every sync, to a more fine grained approach where we're only
-fetching items that have been updated since last sync.
+are different options for how to retrieve items, ranging from a crude retrieval
+of all items on every sync, to a more fine grained approach where only items
+that have been updated since last sync, will be synced.
 
 The simplest job definition would look like this, where all items would be
 retrieved from the source and set on the target:
@@ -420,11 +441,12 @@ retrieved from the source and set on the target:
 }
 ```
 
-To retrieve only new items, change the `retrieve` property to `updated`. In
-this case, the job will get the last retrieved timestamp from the source, and
-get all newer items with a `GET_MANY` action.
+*Not implemented yet:* To retrieve only new items, change the `retrieve`
+property to `updated`. In this case, the job will get the last retrieved
+timestamp from the source, and get all newer items with a `GET_MANY` action.
+
+### The expire job
+Not implemented yet.
 
 ## Debugging
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.
-
-There are also two other debug namespaces: `great:queue` and `great:couchdb`.
