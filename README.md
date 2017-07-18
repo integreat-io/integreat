@@ -11,7 +11,7 @@ interface, but we're not ready for pull requests yet.
 
 The basic idea of Integreat is to make it easy to define a set of data sources
 and expose them through one interface to abstract away the specifics of each
-source, and map their data to defined data types.
+source, and map their data to defined datatypes.
 
 This is done through adapters, that does all the hard work of communicating with
 the different sources, a definition format, for setting up each source with the
@@ -50,7 +50,7 @@ before it is sent to a source. These actions may be queued or scheduled.
 Integreat comes with a standard data format, which is the only format that will
 be exposed to the code dispatching the actions. The mapping, normalizing, and
 serializing will happing to and from this format, according to the defined
-types and mapping rules.
+datatypes and mapping rules.
 
 
 ## Install
@@ -69,7 +69,7 @@ The hello world example of Integreat, would look something like this:
 const integreat = require('integreat')
 const adapters = integreat.adapters('json')
 
-const types = [{
+const datatypes = [{
   id: 'message',
   source: 'helloworld',
   attributes: {text: 'string'}
@@ -87,8 +87,8 @@ const sources = [{
   }
 }]
 
-const great = integreat({types, sources, adapters})
-const action = {type: 'GET_ALL', payload: {type: 'message'}}
+const great = integreat({datatypes, sources, adapters})
+const action = {type: 'GET_ALL', payload: {datatype: 'message'}}
 
 great.dispatch(action).then(console.log)
 //--> Hello world
@@ -106,10 +106,10 @@ returning the following json data:
 }
 ```
 
-## Type definitions
-To do anything with Integreat, you need define one or more types. They describe
-the datatypes you expected to get out of Integreat. A type will be associated
-with a source, which is used to retrieve data for the type.
+## Datatype definitions
+To do anything with Integreat, you need define one or more datatypes. They
+describe the data you expected to get out of Integreat. A type will be
+associated with a source, which is used to retrieve data for the type.
 
 ```
 {
@@ -137,7 +137,7 @@ through Integreat's data api, and how to send data back to the source.
 
 A source definition object defines the adapter, any authentication method, the
 endpoints for fetching from and sending to the source, and mappings to the
-supported data types (attributes and relationships):
+supported datatypes (attributes and relationships):
 
 ```
 {
@@ -200,7 +200,7 @@ The `type` of an attribute is added to the end of attribute's transform
 pipeline. All standard attribute types have corresponding transformers that
 ensure the target value will be in the right format.
 
-There is a special "catch all" item type `*` – the asterisk – that will match
+There is a special "catch all" datatype `*` – the asterisk – that will match
 any datatype not represented as regular mappings. If `path`, `transform`,
 `filterFrom`, or `filterTo` are set on an asterisk item, they will be applied as
 normal, but any `attributes` or `relationships` will be disregarded. Instead all
@@ -413,7 +413,7 @@ Example schedule running a job at 2 am every weekday:
     params: {
       from: 'src1',
       to: 'src2',
-      type: 'entry'
+      datatype: 'entry'
     }
   }
 }
@@ -435,7 +435,7 @@ retrieved from the source and set on the target:
   params: {
     from: <sourceid>,
     to: <targetid>,
-    type: <itemtype>,
+    datatype: <itemtype>,
     retrieve: 'all'
   }
 }

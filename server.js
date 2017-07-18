@@ -9,7 +9,7 @@ const sources = [
   require('./examples/nytimesSource'),
   require('./examples/storeSource')
 ]
-const types = [
+const datatypes = [
   require('./examples/accountType'),
   require('./examples/articleType')
 ]
@@ -25,7 +25,7 @@ const workers = integreat.workers()
 
 const great = integreat({
   sources,
-  types,
+  datatypes,
   adapters,
   auths,
   transformers,
