@@ -186,10 +186,8 @@ of a endpoint object.
     }
   },
   transform: <transform pipeline>,
-  filter: {
-    from: <filter pipeline>,
-    to:  <filter pipeline>
-  }
+  filterFrom: <filter pipeline>,
+  filterTo: <filter pipeline>
 }
 ```
 
@@ -203,11 +201,11 @@ pipeline. All standard attribute types have corresponding transformers that
 ensure the target value will be in the right format.
 
 There is a special "catch all" item type `*` – the asterisk – that will match
-any datatype not represented as regular mappings. If `path`, `transform` or
-`filter` are set on an asterisk item, they will be applied as normal, but any
-`attributes` or `relationships` will be disregarded. Instead all `attributes` or
-`relationships` will be mapped as is, unless the `transform` pipeline modifies
-them.
+any datatype not represented as regular mappings. If `path`, `transform`,
+`filterFrom`, or `filterTo` are set on an asterisk item, they will be applied as
+normal, but any `attributes` or `relationships` will be disregarded. Instead all
+`attributes` or `relationships` will be mapped as is, unless the `transform`
+pipeline modifies them.
 
 ### Paths
 Endpoints, mappings, attributes, and relationships all have an optional `path`
