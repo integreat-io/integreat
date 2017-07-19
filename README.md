@@ -88,7 +88,7 @@ const sources = [{
 }]
 
 const great = integreat({datatypes, sources, adapters})
-const action = {type: 'GET_ALL', payload: {datatype: 'message'}}
+const action = {type: 'GET_ALL', payload: {type: 'message'}}
 
 great.dispatch(action).then(console.log)
 //--> Hello world
@@ -413,7 +413,7 @@ Example schedule running a job at 2 am every weekday:
     params: {
       from: 'src1',
       to: 'src2',
-      datatype: 'entry'
+      type: 'entry'
     }
   }
 }
@@ -435,7 +435,7 @@ retrieved from the source and set on the target:
   params: {
     from: <sourceid>,
     to: <targetid>,
-    datatype: <itemtype>,
+    type: <itemtype>,
     retrieve: 'all'
   }
 }
