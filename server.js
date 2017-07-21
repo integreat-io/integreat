@@ -31,8 +31,7 @@ const great = integreat({
   transformers,
   filters,
   formatters,
-  workers,
-  queue
+  workers
 })
 debug('Integreat v' + great.version)
 

@@ -2,3 +2,9 @@ language: node_js
 node_js:
   - "7"
 after_success: npm run coverage
+notifications:
+  email:
+    recipients:
+      - post@kjellmorten.no
+    on_success: never # default: change
+    on_failure: always # default: always
