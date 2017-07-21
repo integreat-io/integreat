@@ -289,9 +289,10 @@ The `status` will be one of the following status codes:
 - `noaccess`
 - `error`
 
-On `ok` status, [the retrieved data](#returned-data-for-items) will be set on
-the `data` property. Expect this to be an array of items, even when the action
-implies that only one item should be returned.
+On `ok` status, the retrieved data will be set on the `data` property. This will
+usually be mapped data in
+[Integreat's internal data format](#returned-data-for-items), but essentially,
+the data format depends on which action it comes from.
 
 In case of any other status than `ok` or `queued`, there will be no `data`, and
 instead the `error` property will be set to an error message, usually returned

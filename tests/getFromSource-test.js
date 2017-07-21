@@ -24,10 +24,9 @@ test('should get one entry from source', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')
-  t.true(Array.isArray(ret.data))
-  t.is(ret.data.length, 1)
-  t.is(ret.data[0].id, 'johnf')
-  const attrs = ret.data[0].attributes
+  t.truthy(ret.data)
+  t.is(ret.data.id, 'johnf')
+  const attrs = ret.data.attributes
   t.truthy(attrs)
   t.is(attrs.username, 'johnf')
   t.is(attrs.firstname, 'John')
