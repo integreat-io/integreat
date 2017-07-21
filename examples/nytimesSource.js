@@ -5,7 +5,7 @@ module.exports = {
   adapter: 'json',
   baseUri: 'http://api.nytimes.com/svc/',
   endpoints: {
-    'all': {
+    get: {
       uri: `topstories/v2/technology.json?api-key=${process.env.NYTIMES_API_KEY}`,
       path: 'results[]'
     }

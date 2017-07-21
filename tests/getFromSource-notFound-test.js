@@ -15,7 +15,7 @@ test('should get error object for unknown entry', async (t) => {
     .get('/users/janedoe')
     .reply(404)
   const action = {
-    type: 'GET',
+    type: 'GET_ONE',
     payload: {id: 'janedoe', type: 'user'}
   }
 

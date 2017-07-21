@@ -2,8 +2,8 @@ module.exports = {
   id: 'accounts',
   adapter: 'json',
   endpoints: {
-    all: 'http://api.feednstatus.com/1.0/accounts',
-    one: 'http://api.feednstatus.com/1.0/accounts/{id}'
+    get: 'http://api.feednstatus.com/1.0/accounts',
+    getone: 'http://api.feednstatus.com/1.0/accounts/{id}'
   },
   mappings: {
     account: {

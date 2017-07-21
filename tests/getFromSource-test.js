@@ -16,7 +16,7 @@ test('should get one entry from source', async (t) => {
     .get('/users/johnf')
     .reply(200, {data: johnfData})
   const action = {
-    type: 'GET',
+    type: 'GET_ONE',
     payload: {id: 'johnf', type: 'user'}
   }
 

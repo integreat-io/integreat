@@ -16,7 +16,7 @@ test('should get all entries from source', async (t) => {
     .get('/users/')
     .reply(200, {data: usersData})
   const action = {
-    type: 'GET_ALL',
+    type: 'GET',
     payload: {type: 'user'}
   }
 

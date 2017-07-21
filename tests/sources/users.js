@@ -3,8 +3,8 @@ module.exports = {
   adapter: 'json',
   baseUri: 'http://some.api/users',
   endpoints: {
-    one: {uri: '/{id}', path: 'data'},
-    all: {uri: '/', path: 'data'}
+    get: {uri: '/', path: 'data'},
+    getone: {uri: '/{id}', path: 'data'}
   },
   mappings: {
     user: {

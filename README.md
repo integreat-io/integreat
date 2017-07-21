@@ -74,11 +74,12 @@ const datatypes = [{
   source: 'helloworld',
   attributes: {text: 'string'}
 }]
+
 const sources = [{
   id: 'helloworld',
   adapter: 'json',
   endpoints: {
-    all: 'https://api.helloworld.io/json'
+    get: 'https://api.helloworld.io/json'
   },
   mappings: {
     message: {
@@ -88,9 +89,9 @@ const sources = [{
 }]
 
 const great = integreat({datatypes, sources, adapters})
-const action = {type: 'GET_ALL', payload: {type: 'message'}}
+const action = {type: 'GET_ONE', payload: {type: 'message'}}
 
-great.dispatch(action).then(console.log)
+great.dispatch(action).then((data) => console.log(data.attributes.text))
 //--> Hello world
 ```
 
@@ -146,10 +147,10 @@ supported datatypes (attributes and relationships):
   auth: <auth id>,
   baseUri: <uri>,
   endpoints: {
-    one: <endpoint|string>,
-    all: <endpoint|string>,
-    some: <endpoint|string>,
-    send: <endpoint|string>
+    get: <endpoint|string>,
+    getone: <endpoint|string>,
+    send: <endpoint|string>,
+    sendOne: <endpoint|string>
   }
   mappings: {
     <datatype>: <mapping definition>,
@@ -222,7 +223,7 @@ const data = {
       title: 'First section',
       articles: {
         items: [
-          {id: 'article1', title: 'The title', body: {raw: 'The text'}}
+          {id: 'article1', title: 'The title', body: {content: 'The text'}}
         ],
         ...
       }
@@ -232,8 +233,8 @@ const data = {
 ```
 
 ... a valid path to retrieve all `items` of the first instance of `sections`
-would be `'sections[0].articles.items[]'` and to get the raw body of each item
-`'body.raw'`.
+would be `'sections[0].articles.items[]'` and to get the content of each item
+`'body.content'`.
 
 When mapping data to the source, the paths are used to reconstruct the data
 format the source expects. Only properties included in the paths will be
@@ -329,8 +330,8 @@ Items will be in the following format:
 ### Available actions
 
 #### `GET`
-Gets one item from a source, using the `one` endpoint. Returned in the `data`
-property is a mapped object, in
+Gets items from a source, using the `get` endpoint. Returned in the `data`
+property is an array of mapped object, in
 [Integreat's internal data format](#returned_data_for_items).
 
 Example GET action:
@@ -338,7 +339,6 @@ Example GET action:
 {
   type: 'GET',
   payload: {
-    id: 'ent1',
     type: 'entry'
   }
 }
@@ -347,16 +347,17 @@ Example GET action:
 In the example above, the source is inferred from the payload `type` property.
 Override this by supplying the id of a source as a `source` property.
 
-#### `GET_ALL`
-Gets all items from a source, using the `all` endpoint. Returned in the `data`
-property is an array of mapped object, in
+#### `GET_ONE`
+Gets one item from a source, using the `getone` endpoint. Returned in the `data`
+property is a mapped object, in
 [Integreat's internal data format](#returned_data_for_items).
 
-Example GET_ALL action:
+Example GET_ONE action:
 ```javascript
 {
-  type: 'GET_ALL',
+  type: 'GET_ONE',
   payload: {
+    id: 'ent1',
     type: 'entry'
   }
 }
@@ -576,7 +577,7 @@ retrieved from the source and set on the target:
 
 *Not implemented yet:* To retrieve only new items, change the `retrieve`
 property to `updated`. In this case, the job will get the last retrieved
-timestamp from the source, and get all newer items with a `GET_MANY` action.
+timestamp from the source, and get only newer items.
 
 ### The expire job
 Not implemented yet.
