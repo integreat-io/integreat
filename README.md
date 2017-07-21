@@ -149,8 +149,8 @@ supported datatypes (attributes and relationships):
   endpoints: {
     get: <endpoint|string>,
     getone: <endpoint|string>,
-    send: <endpoint|string>,
-    sendOne: <endpoint|string>
+    set: <endpoint|string>,
+    setone: <endpoint|string>
   }
   mappings: {
     <datatype>: <mapping definition>,
@@ -385,17 +385,17 @@ Example GET_RAW action:
 In the example above, the source is specified by the payload `source` property.
 GET_RAW does not support inferring source from type.
 
-#### `SET`
-Sends data for one item to a source, using the `send` endpoint. Returned in the
+#### `SET_ONE`
+Sends data for one item to a source, using the `setone` endpoint. Returned in the
 `data` property is whatever the adapter returns.
 
 The data to send is provided in the payload `data` property, and must given in
 [Integreat's internal data format](#returned_data_for_items).
 
-Example SET action:
+Example SET_ONE action:
 ```javascript
 {
-  type: 'SET',
+  type: 'SET_ONE',
   payload: {
     data: {
       id: 'ent1',

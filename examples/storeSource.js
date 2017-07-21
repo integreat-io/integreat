@@ -5,7 +5,7 @@ module.exports = {
   endpoints: {
     get: {uri: '/_all_docs', path: 'rows'},
     getone: '/{type}:{id}',
-    send: '/{type}:{id}'
+    setone: '/{type}:{id}'
   },
   mappings: {
     '*': {}
