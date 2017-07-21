@@ -47,10 +47,10 @@ fetching data will be executed right away.
 Actions that updates data on sources will reversely map and serialize the data
 before it is sent to a source. These actions may be queued or scheduled.
 
-Integreat comes with a standard data format, which is the only format that will
-be exposed to the code dispatching the actions. The mapping, normalizing, and
-serializing will happing to and from this format, according to the defined
-datatypes and mapping rules.
+Integreat comes with a [standard data format](#the-data-format), which is the
+only format that will be exposed to the code dispatching the actions. The
+mapping, normalizing, and serializing will happing to and from this format,
+according to the defined datatypes and mapping rules.
 
 
 ## Install
@@ -263,10 +263,10 @@ An action looks like this:
 }
 ```
 
-`type` is one [of the action types](#available_actions) that comes with
+`type` is one [of the action types](#available-actions) that comes with
 Integreat and `payload` are data for this action. If the `queue` is true, this
 action _may_ be queued, and finally `schedule` is a
-[schedule definition](#schedule_definition) (the fully parsed format from
+[schedule definition](#schedule-definition) (the fully parsed format from
 Later).
 
 ### Returned from actions
@@ -291,9 +291,8 @@ The `status` will be one of the following status codes:
 - `error`
 
 On `ok` status, the retrieved data will be set on the `data` property. This will
-usually be mapped data in
-[Integreat's internal data format](#returned-data-for-items), but essentially,
-the data format depends on which action it comes from.
+usually be mapped data in [Integreat's data format](#the-data-format), but
+essentially, the data format depends on which action it comes from.
 
 In case of any other status than `ok` or `queued`, there will be no `data`, and
 instead the `error` property will be set to an error message, usually returned
@@ -306,7 +305,7 @@ action other than receiving data. On success, the returned `status` will be
 `ok`, and the `data` property will hold whatever the adapter returns. There is
 no guaranty on the returned data format in these cases.
 
-### Returned data for items
+### The data format
 Items will be in the following format:
 
 ```
@@ -332,7 +331,7 @@ Items will be in the following format:
 #### `GET`
 Gets items from a source, using the `get` endpoint. Returned in the `data`
 property is an array of mapped object, in
-[Integreat's internal data format](#returned_data_for_items).
+[Integreat's data format](#the-data-format).
 
 Example GET action:
 ```javascript
@@ -349,8 +348,7 @@ Override this by supplying the id of a source as a `source` property.
 
 #### `GET_ONE`
 Gets one item from a source, using the `getone` endpoint. Returned in the `data`
-property is a mapped object, in
-[Integreat's internal data format](#returned_data_for_items).
+property is a mapped object, in [Integreat's data format](#the-data-format).
 
 Example GET_ONE action:
 ```javascript
@@ -390,7 +388,7 @@ Sends data for one item to a source, using the `setone` endpoint. Returned in th
 `data` property is whatever the adapter returns.
 
 The data to send is provided in the payload `data` property, and must given in
-[Integreat's internal data format](#returned_data_for_items).
+[Integreat's data format](#the-data-format).
 
 Example SET_ONE action:
 ```javascript
@@ -414,7 +412,7 @@ This action runs a job with a specified `worker`, giving it a `params` object.
 Everything from there on, is up to the worker, including what will be returned
 as `data` if the worker runs without errors.
 
-Currently, Integreat comes with one worker, named [`sync`](#the_sync_job).
+Currently, Integreat comes with one worker, named [`sync`](#the-sync-job).
 
 Example RUN action:
 ```javascript
