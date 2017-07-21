@@ -1,7 +1,6 @@
 require('dotenv').config()
 const integreat = require('.')
 const debug = require('debug')('great')
-const memory = require('./lib/queues/memory')
 
 const lengthFormat = (value) => (value) ? value.length : 0
 
@@ -23,8 +22,6 @@ const formatters = Object.assign(
   integreat.formatters()
 )
 const workers = integreat.workers()
-
-const queue = memory()
 
 const great = integreat({
   sources,
