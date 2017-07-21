@@ -245,7 +245,30 @@ mapping `path`, and is used to indicate that the path refers to an array. This
 is used when reconstructing the data format _to_ to a source, and has no effect
 when mapping _from_ a source.
 
-## Returned from actions
+## Actions
+
+Actions are serializable objects that are dispatched to Integreat, and may be
+queued when appropriate. It is a key point that they are serializable, as they
+allows them to be put in a database persisted queue and be picked up of another
+Intergreat instance in another process.
+
+An action looks like this:
+```
+{
+  type: <actionType>,
+  payload: <payload>,
+  queue: <boolean>,
+  schedule: <schedule object>
+}
+```
+
+`type` is one [of the action types](#available_actions) that comes with
+Integreat and `payload` are data for this action. If the `queue` is true, this
+action _may_ be queued, and finally `schedule` is a
+[schedule definition](#schedule_definition) (the fully parsed format from
+Later).
+
+### Returned from actions
 Retrieving from a source will return an object of the following format:
 
 ```
@@ -301,6 +324,115 @@ Items will be in the following format:
   }
 }
 ```
+
+### Available actions
+
+#### `GET`
+Gets one item from a source, using the `one` endpoint. Returned in the `data`
+property is a mapped object, in
+[Integreat's internal data format](#returned_data_for_items).
+
+Example GET action:
+```javascript
+{
+  type: 'GET',
+  payload: {
+    id: 'ent1',
+    type: 'entry'
+  }
+}
+```
+
+In the example above, the source is inferred from the payload `type` property.
+Override this by supplying the id of a source as a `source` property.
+
+#### `GET_ALL`
+Gets all items from a source, using the `all` endpoint. Returned in the `data`
+property is an array of mapped object, in
+[Integreat's internal data format](#returned_data_for_items).
+
+Example GET_ALL action:
+```javascript
+{
+  type: 'GET_ALL',
+  payload: {
+    type: 'entry'
+  }
+}
+```
+
+In the example above, the source is inferred from the payload `type` property.
+Override this by supplying the id of a source as a `source` property.
+
+#### `GET_RAW`
+Gets any data returned from the source, using the given `uri` in the `payload`.
+Returned in the `data` property is whatever is returned from the adapter,
+without any mapping at all.
+
+Example GET_RAW action:
+```javascript
+{
+  type: 'GET_RAW',
+  payload: {
+    uri: 'http://api.com/entries',
+    source: 'entries'
+  }
+}
+```
+
+In the example above, the source is specified by the payload `source` property.
+GET_RAW does not support inferring source from type.
+
+#### `SET`
+Sends data for one item to a source, using the `send` endpoint. Returned in the
+`data` property is whatever the adapter returns.
+
+The data to send is provided in the payload `data` property, and must given in
+[Integreat's internal data format](#returned_data_for_items).
+
+Example SET action:
+```javascript
+{
+  type: 'SET',
+  payload: {
+    data: {
+      id: 'ent1',
+      type: 'entry'
+    }
+  }
+}
+```
+
+In the example above, the source is inferred from the `type` property of `data`
+in the payload. This may be overridden  by supplying the id of a source as a
+`source` property on the `payload` object.
+
+#### `RUN`
+This action runs a job with a specified `worker`, giving it a `params` object.
+Everything from there on, is up to the worker, including what will be returned
+as `data` if the worker runs without errors.
+
+Currently, Integreat comes with one worker, named [`sync`](#the_sync_job).
+
+Example RUN action:
+```javascript
+{
+  type: 'RUN',
+  payload: {
+    worker: 'sync',
+    params: {
+      from: 'entries',
+      to: 'store',
+      type: 'entry',
+      retrieve: 'all'
+    }
+  }
+}
+```
+
+In the example above, the `sync` job is run, with the `params` it needs to sync
+from one source to another. The format of the `params` object varies from worker
+to worker.
 
 ## Adapters
 Interface:
