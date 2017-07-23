@@ -213,7 +213,7 @@ Endpoints, mappings, attributes, and relationships all have an optional `path`
 property, for specifying what part of the data from the source to return in each
 case.
 
-The `path` properties use a dot notation, with the support for array brackets.
+The `path` properties use a dot notation with array brackets.
 
 For example, with this data returned from the source ...
 ```javascript
@@ -236,15 +236,20 @@ const data = {
 would be `'sections[0].articles.items[]'` and to get the content of each item
 `'body.content'`.
 
-When mapping data to the source, the paths are used to reconstruct the data
+The bracket notation offers some possibilities for filtering arrays:
+- `[]` - Matches _all_ items in an array
+- `[0]` - Matches the item at index 0
+- `[1:3]` - Matches all items from index 1 to 3, not including 3.
+- `[-1]` - Matches the last item in the array.
+- `[id="ent1"]` - Matches the item with an id equal to `'ent1'`
+
+When mapping data _to_ the source, the paths are used to reconstruct the data
 format the source expects. Only properties included in the paths will be
 created, so any additional properties must be set by a transform function or the
 adapter.
 
-**Note:** An open square bracket `[]` is only valid at the end of an endpoint or
-mapping `path`, and is used to indicate that the path refers to an array. This
-is used when reconstructing the data format _to_ to a source, and has no effect
-when mapping _from_ a source.
+Arrays are reconstructing with any object or value at the first index, unless a
+single, non-negative index is specified in the path.
 
 ## Actions
 
