@@ -14,7 +14,7 @@ const datatypes = [
   require('./examples/articleType')
 ]
 const adapters = integreat.adapters()
-const auths = integreat.authStrats()
+const auths = integreat.auths()
 const transformers = {}
 const filters = {}
 const formatters = Object.assign(
