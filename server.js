@@ -24,7 +24,7 @@ const resources = {
     integreat.formatters()
   ),
   workers: integreat.workers(),
-  authstrats: integreat.auths()
+  authstrats: integreat.authstrats()
 }
 
 const great = integreat(defs, resources)

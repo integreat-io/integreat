@@ -451,7 +451,7 @@ Available adapters:
 - `couchdb`
 
 ## Authentication
-Options format:
+Definition format:
 ```
 {
   id: <id>,
@@ -462,15 +462,17 @@ Options format:
 }
 ```
 
-At runtime, a strategy is created and given the `options` payload. An auth
-strategy is represented by an object with the following interface:
+At runtime, the specified strategy is used to authenticate requests. The
+strategy is given the `options` payload and returns an object with the
+following interface:
 
 ```javascript
-const auth = authStrat(options)
-
-const isAuthenticated = auth.isAuthenticated()
-const isAuthenticated = await auth.authenticate()
-const headerObject = auth.getAuthHeaders()
+{
+  isAuthenticated () {},    // Returns true when authenticated
+  await authenticate () {}, // Returns true when authenticated
+  getAuthObject () {},      // Returns auth information as an object
+  getAuthHeaders () {}      // Returns auth headers as an object
+}
 ```
 
 ## Pipeline functions
