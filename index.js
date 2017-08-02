@@ -7,6 +7,8 @@ integreat.authstrats = require('./lib/authstrats')
 integreat.formatters = require('./lib/formatters')
 integreat.workers = require('./lib/workers')
 
+integreat.resources = require('./lib/resources')
+
 // Utils
 integreat.action = require('./lib/utils/createAction')
 

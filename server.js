@@ -2,8 +2,6 @@ require('dotenv').config()
 const integreat = require('.')
 const debug = require('debug')('great')
 
-const lengthFormat = (value) => (value) ? value.length : 0
-
 const defs = {
   sources: [
     require('./examples/accountsSource'),
@@ -15,17 +13,7 @@ const defs = {
     require('./examples/articleType')
   ]
 }
-const resources = {
-  adapters: integreat.adapters(),
-  transformers: {},
-  filters: {},
-  formatters: Object.assign(
-    {length: lengthFormat},
-    integreat.formatters()
-  ),
-  workers: integreat.workers(),
-  authstrats: integreat.authstrats()
-}
+const resources = integreat.resources()
 
 const great = integreat(defs, resources)
 debug('Integreat v' + great.version)
