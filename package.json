@@ -1,13 +1,13 @@
 {
   "name": "integreat",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
   "license": "ISC",
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "test": "NODE_ENV=test nyc --reporter=text-summary ava",
+    "test": "npm run lint && NODE_ENV=test nyc --reporter=text-summary ava",
     "dev": "NODE_ENV=test ava --watch",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "nyc:report": "nyc report",
