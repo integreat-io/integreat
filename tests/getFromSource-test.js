@@ -20,7 +20,7 @@ test('should get one entry from source', async (t) => {
     payload: {id: 'johnf', type: 'user'}
   }
 
-  const great = integreat({sources, datatypes, adapters, formatters})
+  const great = integreat({sources, datatypes}, {adapters, formatters})
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')
