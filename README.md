@@ -88,7 +88,7 @@ const sources = [{
   }
 }]
 
-const great = integreat({datatypes, sources, adapters})
+const great = integreat({datatypes, sources}, {adapters})
 const action = {type: 'GET_ONE', payload: {type: 'message'}}
 
 great.dispatch(action).then((data) => console.log(data.attributes.text))
