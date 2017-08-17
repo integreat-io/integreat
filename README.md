@@ -263,14 +263,12 @@ An action looks like this:
 {
   type: <actionType>,
   payload: <payload>,
-  queue: <boolean>,
   schedule: <schedule object>
 }
 ```
 
 `type` is one [of the action types](#available-actions) that comes with
-Integreat and `payload` are data for this action. If the `queue` is true, this
-action _may_ be queued, and finally `schedule` is a
+Integreat and `payload` are data for this action. `schedule` is a
 [schedule definition](#schedule-definition) (the fully parsed format from
 Later).
 
