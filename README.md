@@ -420,10 +420,8 @@ GET_RAW does not support inferring source from type.
 #### `GET_META`
 Gets metadata for a source, using the `getMeta` endpoint.
 
-The returned object has a `data` object with the following properties:
-- `source`: The id of the source to store metadata for
-- `key`: The key of the metadata
-- `value`: The retrieved value
+The action returns an object with a `data` property, which contains the `source`
+(the source id) and `meta` object with the metadata set as properties.
 
 Example GET_META action:
 ```javascript
@@ -431,10 +429,28 @@ Example GET_META action:
   type: 'GET_META',
   payload: {
     source: 'entries',
-    key: 'lastSyncedAt'
+    keys: ['lastSyncedAt', 'status']
   }
 }
 ```
+
+This will return data in the following form:
+```javascript
+{
+  status: 'ok',
+  data: {
+    source: 'entries',
+    meta: {
+      lastSyncedAt: 1503164431861,
+      status: 'ready'
+    }
+  }
+}
+```
+
+If the action has no `keys`, all metadata set on the source will be retrieved.
+The `keys` property may be an array of keys to retrieve several in one request,
+or a single key.
 
 Note that the source must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
@@ -467,10 +483,8 @@ in the payload. This may be overridden  by supplying the id of a source as a
 Sets metadata on a source, using the `setMeta` endpoint. Returned in the `data`
 property is whatever the adapter returns.
 
-The payload should contain the following properties:
-- `source`: The id of the source to store metadata for
-- `key`: The key of the metadata
-- `value`: The value to store
+The payload should contain the `source` to get metadata for (the source id), and
+a `meta` object, with all metadata to set as properties.
 
 Example SET_META action:
 ```javascript
@@ -478,8 +492,9 @@ Example SET_META action:
   type: 'SET_META',
   payload: {
     source: 'entries',
-    key: 'lastSyncedAt',
-    value: Date.now()
+    meta: {
+      lastSyncedAt: Date.now()
+    }
   }
 }
 ```
