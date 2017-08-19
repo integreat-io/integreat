@@ -145,13 +145,16 @@ supported datatypes (attributes and relationships):
   id: <string>,
   adapter: <string>,
   auth: <auth id>,
+  handleMeta: <boolean|sourceId>,
   baseUri: <uri>,
   endpoints: {
     get: <endpoint|string>,
-    getone: <endpoint|string>,
+    getOne: <endpoint|string>,
     set: <endpoint|string>,
-    setone: <endpoint|string>
-  }
+    setOne: <endpoint|string>,
+    getMeta: <endpoint|string>,
+    setMeta: <endpoint|string>
+  },
   mappings: {
     <datatype>: <mapping definition>,
     ...
@@ -251,8 +254,36 @@ adapter.
 Arrays are reconstructing with any object or value at the first index, unless a
 single, non-negative index is specified in the path.
 
-## Actions
+### Configuring metadata
+If a source may receive metadata, set the `handleMeta` property to `true` and
+include the `getMeta` and `setMeta` endpoints.
 
+You may define a `meta` [mapping](#mapping-definition) to define how to map
+metadata from and to the source, or you may let the asterisk type handle it.
+If you define neither, it will be assumed that the source will provide and
+accept metadata in the same format as Integreat:
+
+```
+{
+  id: <sourceId>,
+  type: 'meta',
+  createdAt: <date>,
+  updatedAt: <date>,
+  attributes: {
+    <key>: <value>
+  }
+}
+```
+
+A source may also delegate metadata to another source. This is useful, as it
+allows for storing metadata for sources that have no support for it. In this
+case, set the `handleMeta` property to the id of the source handling metadata.
+Any mapping should be defined on the handling source.
+
+Finally, you may set `handleMeta` to `false` to signal that no metadata should
+be stored for this source.
+
+## Actions
 Actions are serializable objects that are dispatched to Integreat, and may be
 queued when appropriate. It is a key point that they are serializable, as they
 allows them to be put in a database persisted queue and be picked up of another
@@ -350,7 +381,7 @@ In the example above, the source is inferred from the payload `type` property.
 Override this by supplying the id of a source as a `source` property.
 
 #### `GET_ONE`
-Gets one item from a source, using the `getone` endpoint. Returned in the `data`
+Gets one item from a source, using the `getOne` endpoint. Returned in the `data`
 property is a mapped object, in [Integreat's data format](#the-data-format).
 
 Example GET_ONE action:
@@ -387,7 +418,7 @@ In the example above, the source is specified by the payload `source` property.
 GET_RAW does not support inferring source from type.
 
 #### `SET_ONE`
-Sends data for one item to a source, using the `setone` endpoint. Returned in the
+Sends data for one item to a source, using the `setOne` endpoint. Returned in the
 `data` property is whatever the adapter returns.
 
 The data to send is provided in the payload `data` property, and must given in
@@ -409,6 +440,29 @@ Example SET_ONE action:
 In the example above, the source is inferred from the `type` property of `data`
 in the payload. This may be overridden  by supplying the id of a source as a
 `source` property on the `payload` object.
+
+#### `SET_META`
+Sets metadata on a source, using the `setMeta` endpoint. Returned in the `data`
+property is whatever the adapter returns.
+
+The payload should contain the following properties:
+- `source`: The id of the source to store metadata for
+- `key`: The key of the metadata
+- `value`: The value to store
+
+Example SET_META action:
+```javascript
+{
+  type: 'SET_META',
+  payload: {
+    source: 'entries',
+    key: 'lastSyncedAt',
+    value: Date.now()
+  }
+}
+```
+
+Note that the source must be set up to handle metadata. See [Configuring metadata](#configuring-metadata).
 
 #### `RUN`
 This action runs a job with a specified `worker`, giving it a `params` object.
@@ -505,7 +559,6 @@ properties for defining the schedule, and an action to be dispatched.
 ```
 
 ### Schedule definition
-
 ```
 {
   schedule: <schedule>,
