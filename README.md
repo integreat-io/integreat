@@ -661,13 +661,18 @@ retrieved from the source and set on the target:
 {
   worker: 'sync',
   params: {
-    from: <sourceid>,
+    from: <sourceId>,
     to: <targetid>,
-    type: <itemtype>,
+    type: <itemType>,
     retrieve: 'all'
   }
 }
 ```
+
+The job will dispatch a 'GET' action right away, and then immediately dispatch
+a 'SET_META' action to update the `lastSyncedAt` date on the source. The
+actions to update the target is added to the queue, and may be handled by other
+workers, depending on your setup.
 
 *Not implemented yet:* To retrieve only new items, change the `retrieve`
 property to `updated`. In this case, the job will get the last retrieved
