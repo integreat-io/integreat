@@ -417,6 +417,28 @@ Example GET_RAW action:
 In the example above, the source is specified by the payload `source` property.
 GET_RAW does not support inferring source from type.
 
+#### `GET_META`
+Gets metadata for a source, using the `getMeta` endpoint.
+
+The returned object has a `data` object with the following properties:
+- `source`: The id of the source to store metadata for
+- `key`: The key of the metadata
+- `value`: The retrieved value
+
+Example GET_META action:
+```javascript
+{
+  type: 'GET_META',
+  payload: {
+    source: 'entries',
+    key: 'lastSyncedAt'
+  }
+}
+```
+
+Note that the source must be set up to handle metadata. See
+[Configuring metadata](#configuring-metadata) for more.
+
 #### `SET_ONE`
 Sends data for one item to a source, using the `setOne` endpoint. Returned in the
 `data` property is whatever the adapter returns.
@@ -462,7 +484,8 @@ Example SET_META action:
 }
 ```
 
-Note that the source must be set up to handle metadata. See [Configuring metadata](#configuring-metadata).
+Note that the source must be set up to handle metadata. See
+[Configuring metadata](#configuring-metadata) for more.
 
 #### `RUN`
 This action runs a job with a specified `worker`, giving it a `params` object.
