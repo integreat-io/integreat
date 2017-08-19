@@ -4,7 +4,7 @@ module.exports = {
   baseUri: 'http://some.api/users',
   endpoints: {
     get: {uri: '/', path: 'data[]'},
-    getone: {uri: '/{id}', path: 'data'}
+    getOne: {uri: '/{id}', path: 'data'}
   },
   mappings: {
     user: {

@@ -3,7 +3,7 @@ module.exports = {
   adapter: 'json',
   endpoints: {
     get: 'http://api.feednstatus.com/1.0/accounts',
-    getone: 'http://api.feednstatus.com/1.0/accounts/{id}'
+    getOne: 'http://api.feednstatus.com/1.0/accounts/{id}'
   },
   mappings: {
     account: {
