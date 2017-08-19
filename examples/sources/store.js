@@ -9,6 +9,8 @@ module.exports = {
     setone: '/{type}:{id}'
   },
   mappings: {
-    '*': {}
+    '*': {
+      transform: ['removeTypePrefixOnId']
+    }
   }
 }
