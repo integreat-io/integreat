@@ -674,9 +674,10 @@ a 'SET_META' action to update the `lastSyncedAt` date on the source. The
 actions to update the target is added to the queue, and may be handled by other
 workers, depending on your setup.
 
-*Not implemented yet:* To retrieve only new items, change the `retrieve`
-property to `updated`. In this case, the job will get the last retrieved
-timestamp from the source, and get only newer items.
+To retrieve only new items, change the `retrieve` property to `updated`. In
+this case, the job will get the `lastSyncedAt` from the `from` source, and get
+only newer items, by passing it the `updatedAfter` param. The job will also
+filter out older items, in case the source does not support `updatedAfter`.
 
 ### The expire job
 Not implemented yet.
