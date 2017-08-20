@@ -166,12 +166,22 @@ supported datatypes (attributes and relationships):
 ```
 {
   uri: <string>,
-  path: <string>
+  path: <string>,
+  method: <string>
 }
 ```
 
 If only the `uri` property is needed, it may simply be given as a string instead
 of a endpoint object.
+
+The `path` is a path into the data, specific for this endpoint. It will usually
+point to an array, in which the items can be found, but as mappings may have
+their own `path`, the endpoint path may point to an object from where the
+different mapping paths point to different arrays.
+
+`method` is an adapter specific keyword, to tell the adapter which method of
+transportation to use. For adapters based on http, the options will typically
+be `PUT`, `POST`, etc.
 
 ### Mapping definition
 ```
