@@ -221,6 +221,11 @@ normal, but any `attributes` or `relationships` will be disregarded. Instead all
 `attributes` or `relationships` will be mapped as is, unless the `transform`
 pipeline modifies them.
 
+Most of the time, your `attributes` and `relationships` definitions will only
+have the `path` property, so providing the `path` string instead of an object
+is a useful shorthand for this. I.e. `{title: 'article.headline'}` translates to
+`{title: {path: 'article.headline'}}`.
+
 ### Paths
 Endpoints, mappings, attributes, and relationships all have an optional `path`
 property, for specifying what part of the data from the source to return in each
@@ -263,6 +268,10 @@ adapter.
 
 Arrays are reconstructing with any object or value at the first index, unless a
 single, non-negative index is specified in the path.
+
+You may optionally supply alternative paths by joining several paths with the
+pipe character `|`. If the first path does not match any properties in the data,
+the next path will be tried, and so on.
 
 ### Configuring metadata
 If a source may receive metadata, set the `handleMeta` property to `true` and
