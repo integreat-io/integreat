@@ -167,7 +167,8 @@ supported datatypes (attributes and relationships):
 {
   uri: <string>,
   path: <string>,
-  method: <string>
+  method: <string>,
+  defaults: <endpointId|boolean>
 }
 ```
 
