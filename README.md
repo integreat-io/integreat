@@ -190,12 +190,14 @@ be `PUT`, `POST`, etc.
   attributes: {
     <attrKey>: {
       path: <string>,
+      param: <string>,
       format: <format pipeline>
     }
   },
   relationships: {
     <relKey>: {
       path: <string>,
+      param: <string>,
       format: <format pipeline>
     }
   },
@@ -220,6 +222,12 @@ any datatype not represented as regular mappings. If `path`, `transform`,
 normal, but any `attributes` or `relationships` will be disregarded. Instead all
 `attributes` or `relationships` will be mapped as is, unless the `transform`
 pipeline modifies them.
+
+The `param` property is an alternative to specifying a `path`, and referes to a
+param passed to the `retreive` method. Instead of retrieving a value in the
+source data, an attribute or relationship with `param` will get its value from
+the corresponding parameter. When setting data to a source, this
+attribute/relationship will be disregarded.
 
 Most of the time, your `attributes` and `relationships` definitions will only
 have the `path` property, so providing the `path` string instead of an object
