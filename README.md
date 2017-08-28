@@ -213,9 +213,12 @@ the `attributes` property, but will be moved to the item on mapping. If any of
 these are not defined, default values will be used; a UUID for `id` and the
 current timestamp for `createdAt` and `updatedAt`.
 
-The `type` of an attribute is added to the end of attribute's transform
-pipeline. All standard attribute types have corresponding transformers that
-ensure the target value will be in the right format.
+Data from the source will be casted to the right datatype after all mapping,
+transforming, and formatting is done. The value of each attribute or
+relationship should be in a format that can be coerced to the specified data.
+The `format` pipeline may be used to accomplish this, but it is sufficient to
+return something that can be cast to the right type. E.g. returning `'3'` for
+an integer is okay, as Integreat will cast it with `parseInt()`.
 
 There is a special "catch all" datatype `*` – the asterisk – that will match
 any datatype not represented as regular mappings. If `path`, `transform`,
