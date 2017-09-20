@@ -602,7 +602,7 @@ been mapped. The `response` object consists of `status`, `data`, and any
 `error`.
 
 ### `beforeSerialize (request, resources)`
-Called just before the data going to a source is serialized, but after is has
+Called just before the data going to a source is serialized, but after it has
 been mapped. The `request` object consists of `uri`, `method`, `path`, and
 `data`.
 
