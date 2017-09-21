@@ -46,10 +46,10 @@
   },
   "dependencies": {
     "debug": "^2.6.0",
+    "great-uri-template": "^0.1.1",
     "later": "^1.2.0",
-    "request": "^2.79.0",
+    "request": "^2.82.0",
     "request-promise-native": "^1.0.3",
-    "urijs": "^1.18.12",
     "uuid": "^3.0.1"
   },
   "devDependencies": {
@@ -57,7 +57,7 @@
     "babel-preset-node7": "^1.4.0",
     "coveralls": "^2.13.1",
     "dotenv": "^4.0.0",
-    "nock": "^9.0.16",
+    "nock": "^9.0.18",
     "nyc": "^11.2.1",
     "sinon": "^2.4.1",
     "standard": "^9.0.2"

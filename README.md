@@ -175,8 +175,15 @@ supported datatypes (attributes and relationships):
 }
 ```
 
+The `uri` property is a uri template, where e.g. `{id}` will be placed with the
+value of the parameter `id`. All parameters in a template are required, unless
+they are suffixed with a question mark: `{id?}`. Missing required parameters
+will result in an error, and the endpoint will not be called.
+
+For a full specification of the template format, see [Integreat URI Template](https://github.com/kjellmorten/great-uri-template).
+
 If only the `uri` property is needed, it may simply be given as a string instead
-of a endpoint object.
+of an endpoint object.
 
 The `path` is a path into the data, specific for this endpoint. It will usually
 point to an array, in which the items can be found, but as mappings may have
