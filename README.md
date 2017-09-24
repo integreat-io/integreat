@@ -468,7 +468,7 @@ Returned in the `data` property is whatever is returned from the adapter,
 without any mapping at all.
 
 Note that the data is not normalized, so there is no guaranty that the data
-will even be a JavaScript object. In most cases, (`GET_UNMAPPED`)[#get_unmapped]
+will even be a JavaScript object. In most cases, [`GET_UNMAPPED`](#get_unmapped)
 is a better choice, as it will normalize the data first. In fact, `GET_RAW` may
 be removed in future versions of Integreat.
 
@@ -535,7 +535,7 @@ This will return data in the following form:
   data: {
     source: 'entries',
     meta: {
-      lastSyncedAt: 1503164431861,
+      lastSyncedAt: '2017-08-19T17:40:31.861Z',
       status: 'ready'
     }
   }
