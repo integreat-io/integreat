@@ -46,11 +46,11 @@
     "npm": ">= 4.0.0"
   },
   "dependencies": {
-    "debug": "^2.6.0",
-    "great-uri-template": "^0.1.1",
+    "debug": "^2.6.9",
+    "great-uri-template": "^0.1.2",
     "later": "^1.2.0",
     "request": "^2.82.0",
-    "request-promise-native": "^1.0.3",
+    "request-promise-native": "^1.0.5",
     "uuid": "^3.0.1"
   },
   "devDependencies": {
@@ -58,7 +58,7 @@
     "babel-preset-node7": "^1.4.0",
     "coveralls": "^2.13.1",
     "dotenv": "^4.0.0",
-    "nock": "^9.0.18",
+    "nock": "^9.0.20",
     "nyc": "^11.2.1",
     "sinon": "^2.4.1",
     "standard": "^9.0.2"
