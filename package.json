@@ -19,6 +19,7 @@
       "tests/**/*-test.js"
     ],
     "source": [
+      "./index.js",
       "lib/**/!(*-test).js"
     ],
     "babel": {
