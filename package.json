@@ -24,9 +24,14 @@
     ],
     "babel": {
       "presets": [
-        "babel-preset-node7"
+        ["env", {
+          "targets": {
+            "node": "8.4"
+          }
+        }]
       ]
     }
+
   },
   "nyc": {
     "exclude": [
@@ -42,7 +47,7 @@
   },
   "homepage": "https://github.com/kjellmorten/integreat#readme",
   "engines": {
-    "node": "7.7.x",
+    "node": "8.4.x",
     "npm": ">= 4.0.0"
   },
   "dependencies": {
@@ -54,8 +59,8 @@
     "uuid": "^3.0.1"
   },
   "devDependencies": {
-    "ava": "^0.21.0",
-    "babel-preset-node7": "^1.4.0",
+    "ava": "^0.22.0",
+    "babel-preset-env": "^1.6.0",
     "coveralls": "^2.13.1",
     "dotenv": "^4.0.0",
     "nock": "^9.0.20",
