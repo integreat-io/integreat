@@ -316,6 +316,23 @@ accept metadata in the same format as Integreat:
 }
 ```
 
+You also need to define a datatype for the type `meta`, where the metadata is
+defined as attributes. This type is used across all sources, so skip the
+`source` property on the type. It will usually make no sense to specify default
+values for metadata.
+
+```
+{
+  id: 'meta',
+  attributes: {
+    <metadataKey>: {
+      type: <string>,
+      default: <object>
+    }
+  }
+}
+```
+
 A source may also delegate metadata to another source. This is useful, as it
 allows for storing metadata for sources that have no support for it. In this
 case, set the `handleMeta` property to the id of the source handling metadata.
@@ -421,6 +438,9 @@ Example GET action:
 In the example above, the source is inferred from the payload `type` property.
 Override this by supplying the id of a source as a `source` property.
 
+The endpoint may also be overridden by providing an `endpoint` id in the
+`payload`.
+
 #### `GET_ONE`
 Gets one item from a source, using the `getOne` endpoint. Returned in the `data`
 property is a mapped object, in [Integreat's data format](#the-data-format).
@@ -439,10 +459,18 @@ Example GET_ONE action:
 In the example above, the source is inferred from the payload `type` property.
 Override this by supplying the id of a source as a `source` property.
 
+The endpoint may also be overridden by providing an `endpoint` id in the
+`payload`.
+
 #### `GET_RAW`
 Gets any data returned from the source, using the given `uri` in the `payload`.
 Returned in the `data` property is whatever is returned from the adapter,
 without any mapping at all.
+
+Note that the data is not normalized, so there is no guaranty that the data
+will even be a JavaScript object. In most cases, (`GET_UNMAPPED`)[#get_unmapped]
+is a better choice, as it will normalize the data first. In fact, `GET_RAW` may
+be removed in future versions of Integreat.
 
 Example GET_RAW action:
 ```javascript
@@ -457,6 +485,31 @@ Example GET_RAW action:
 
 In the example above, the source is specified by the payload `source` property.
 GET_RAW does not support inferring source from type.
+
+#### `GET_UNMAPPED`
+Gets items from a source, using the `get` endpoint, or any other endpoint
+specified in the `payload`. Returned in the `data` property is an array of
+normalized objects in the format retrieved from the source. The data is not
+mapped in any way, and the only thing guarantied, is that this is a JavaScript
+object.
+
+This action does not require a `type`, unlike the `GET` and `GET_ONE` actions,
+as it won't lookup mappings for any given type. The only reason to include a
+`type` in the payload, would be if the endpoint uri requires a `type` parameter.
+
+Furthermore, a `source` property is required, as there is no `type` to infer
+from.
+
+Example GET action:
+```javascript
+{
+  type: 'GET_UNMAPPED',
+  payload: {
+    source: 'store',
+    endpoint: 'get'
+  }
+}
+```
 
 #### `GET_META`
 Gets metadata for a source, using the `getMeta` endpoint.
@@ -496,6 +549,34 @@ or a single key.
 Note that the source must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
+#### `SET`
+Sends data for several items to a source, using the `set` endpoint. Returned in
+the `data` property is whatever the adapter returns.
+
+The data to send is provided in the payload `data` property, and must given as
+an array of objects in [Integreat's data format](#the-data-format).
+
+Example SET action:
+```javascript
+{
+  type: 'SET',
+  payload: {
+    source: 'store',
+    data: [
+      {id: 'ent1', type: 'entry'},
+      {id: 'ent5', type: 'entry'}
+    ]
+  }
+}
+```
+
+In the example above, the `source` is specified in the payload. Specifying a
+`type` to infer the source from is also possible, but not recommended, as it
+may be removed in future versions of Integreat.
+
+The endpoint may also be overridden by providing an `endpoint` id in the
+`payload`.
+
 #### `SET_ONE`
 Sends data for one item to a source, using the `setOne` endpoint. Returned in the
 `data` property is whatever the adapter returns.
@@ -517,8 +598,11 @@ Example SET_ONE action:
 ```
 
 In the example above, the source is inferred from the `type` property of `data`
-in the payload. This may be overridden  by supplying the id of a source as a
+in the payload. This may be overridden by supplying the id of a source as a
 `source` property on the `payload` object.
+
+The endpoint may also be overridden by providing an `endpoint` id in the
+`payload`.
 
 #### `SET_META`
 Sets metadata on a source, using the `setMeta` endpoint. Returned in the `data`
