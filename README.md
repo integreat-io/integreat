@@ -54,7 +54,7 @@ according to the defined datatypes and mapping rules.
 
 
 ## Install
-Requires node v7.
+Requires node v8.
 
 Install from npm:
 
