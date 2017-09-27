@@ -6,5 +6,8 @@ module.exports = {
     firstname: 'string',
     lastname: 'string',
     yearOfBirth: 'integer'
+  },
+  relationships: {
+    feeds: 'feed'
   }
 }

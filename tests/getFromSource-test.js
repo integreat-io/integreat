@@ -32,6 +32,8 @@ test('should get one entry from source', async (t) => {
   t.is(attrs.firstname, 'John')
   t.is(attrs.lastname, 'Fjon')
   t.is(attrs.yearOfBirth, 1987)
+  const rels = ret.data.relationships
+  t.deepEqual(rels.feeds, [{id: 'news', type: 'feed'}, {id: 'social', type: 'feed'}])
 
   nock.restore()
 })

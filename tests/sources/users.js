@@ -9,11 +9,14 @@ module.exports = {
   mappings: {
     user: {
       attributes: {
-        id: {path: 'user'},
-        username: {path: 'user'},
-        firstname: {path: 'forename'},
-        lastname: {path: 'surname'},
-        yearOfBirth: {path: 'birthyear'}
+        id: 'user',
+        username: 'user',
+        firstname: 'forename',
+        lastname: 'surname',
+        yearOfBirth: 'birthyear'
+      },
+      relationships: {
+        feeds: 'feeds[]'
       }
     }
   }
