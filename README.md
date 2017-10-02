@@ -166,6 +166,11 @@ supported datatypes (attributes and relationships):
 }
 ```
 
+Source definitions are passed to Integreat on creation through the `integreat()`
+function. To add sources after creation, pass a source definition to the
+`great.setSource()` method. There is also a `great.removeSource()` method, that
+accepts the id of a source to remove.
+
 ### Endpoint definition
 ```
 {
@@ -291,9 +296,9 @@ adapter.
 Arrays are reconstructing with any object or value at the first index, unless a
 single, non-negative index is specified in the path.
 
-You may optionally supply alternative paths by joining several paths with the
-pipe character `|`. If the first path does not match any properties in the data,
-the next path will be tried, and so on.
+You may optionally supply alternative paths by providing an array of paths. If
+the first one does not match any properties in the data, the next path is tried,
+and so on.
 
 ### Configuring metadata
 If a source may receive metadata, set the `handleMeta` property to `true` and
