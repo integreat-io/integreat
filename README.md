@@ -197,7 +197,9 @@ different mapping paths point to different arrays.
 
 `method` is an adapter specific keyword, to tell the adapter which method of
 transportation to use. For adapters based on http, the options will typically
-be `PUT`, `POST`, etc.
+be `PUT`, `POST`, etc. The method specified on the endpoint will override any
+method provided elsewhere. As an example, the `SET` action will use the `PUT`
+method as default, but only if no method is specified on the endpoint.
 
 ### Mapping definition
 ```
@@ -228,12 +230,15 @@ the `attributes` property, but will be moved to the item on mapping. If any of
 these are not defined, default values will be used; a UUID for `id` and the
 current timestamp for `createdAt` and `updatedAt`.
 
-Data from the source will be casted to the right datatype after all mapping,
-transforming, and formatting is done. The value of each attribute or
-relationship should be in a format that can be coerced to the specified data.
-The `format` pipeline may be used to accomplish this, but it is sufficient to
-return something that can be cast to the right type. E.g. returning `'3'` for
-an integer is okay, as Integreat will cast it with `parseInt()`.
+Data from the source may come in a different format than what is
+[required by Integreat]((#the-data-format)), so specify [a `path`](#paths) to
+point to the right value for each attribute and relationship. These values will
+be cast to the right datatype after all mapping, transforming, and formatting is
+done. The value of each attribute or relationship should be in a format that can
+be coerced to the type defined in the datatype. The `format` pipeline may be
+used to accomplish this, but it is sufficient to return something that can be
+cast to the right type. E.g. returning `'3'` for an integer is okay, as
+Integreat will cast it with `parseInt()`.
 
 There is a special "catch all" datatype `*` – the asterisk – that will match
 any datatype not represented as regular mappings. If `path`, `transform`,
@@ -242,7 +247,7 @@ normal, but any `attributes` or `relationships` will be disregarded. Instead all
 `attributes` or `relationships` will be mapped as is, unless the `transform`
 pipeline modifies them.
 
-The `param` property is an alternative to specifying a `path`, and referes to a
+The `param` property is an alternative to specifying a `path`, and refers to a
 param passed to the `retreive` method. Instead of retrieving a value in the
 source data, an attribute or relationship with `param` will get its value from
 the corresponding parameter. When setting data to a source, this
@@ -632,6 +637,67 @@ Example SET_META action:
 Note that the source must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
+#### `DELETE`
+Delete data for several items from a source, using the `delete` endpoint.
+Returned in the `data` property is whatever the adapter returns.
+
+The data for the items to delete, is provided in the payload `data` property,
+and must given as an array of objects in
+[Integreat's data format](#the-data-format), but note that the attributes and
+relationships are not required.
+
+Example DELETE action:
+```javascript
+{
+  type: 'DELETE',
+  payload: {
+    source: 'store',
+    data: [
+      {id: 'ent1', type: 'entry'},
+      {id: 'ent5', type: 'entry'}
+    ]
+  }
+}
+```
+
+In the example above, the `source` is specified in the payload. Specifying a
+`type` to infer the source from is also possible, but not recommended, as it
+may be removed in future versions of Integreat.
+
+The endpoint may also be overridden by providing an `endpoint` id in the
+`payload`.
+
+The method used for the request defaults to `POST`, but may be overridden on
+the endpoint.
+
+#### `DELETE_ONE`
+Deletes one item from a source, using the `deleteOne` endpoint. Returned in the
+`data` property is whatever the adapter returns.
+
+The item to delete is identified by `id` and `type` property on the payload.
+
+Example DELETE_ONE action:
+```javascript
+{
+  type: 'DELETE_ONE',
+  payload: {
+    id: 'ent1',
+    type: 'entry'
+  }
+}
+```
+
+In the example above, the source is inferred from the `type` property in the
+payload. This may be overridden by supplying the id of a source as a `source`
+property on the `payload` object.
+
+The endpoint may also be overridden by providing an `endpoint` id in the
+`payload`.
+
+The method used for the request defaults to `DELETE`, but may be overridden on
+the endpoint. No body is sent with the request, thus the id needs to be
+specified in the endpoint uri for this action to work.
+
 #### `RUN`
 This action runs a job with a specified `worker`, giving it a `params` object.
 Everything from there on, is up to the worker, including what will be returned
@@ -667,8 +733,10 @@ Interface:
 - `serialize(data, [path])`
 
 Available adapters:
-- `json`
-- `couchdb`
+- `json` (built in)
+
+There's also a package for using the json adapter with a CouchDB/Cloudant db:
+[`integreat-source-couchdb`](https://github.com/kjellmorten/integreat-source-couchdb).
 
 ## Hooks
 Hooks are functions that will be called on specific occasions, as a chance to
