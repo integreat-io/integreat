@@ -219,6 +219,7 @@ method as default, but only if no method is specified on the endpoint.
       format: <format pipeline>
     }
   },
+  qualifier: <string>,
   transform: <transform pipeline>,
   filterFrom: <filter pipeline>,
   filterTo: <filter pipeline>
@@ -304,6 +305,40 @@ single, non-negative index is specified in the path.
 You may optionally supply alternative paths by providing an array of paths. If
 the first one does not match any properties in the data, the next path is tried,
 and so on.
+
+### Qualifiers
+When a source returns data for several datatypes, Integreat needs a way to
+recognize which datatype to use for each item in the data. For some sources,
+the different datatypes may be find on different paths in the data, so
+specifying different paths on each mapping is sufficient. But when all items
+are returned in one array, for instance, you need to specify qualifiers for
+the mappings.
+
+A qualifier is simply a path with an expression that will evaluate to true or
+false. If a mapping has qualifiers, it will only be applied to data that
+satisfies all its qualifiers. Qualifiers are applied to the data at the
+mapping's path, before it is mapped and transformed.
+
+An example of two mappings with qualifiers:
+```
+...
+mappings: {
+  entry: {
+    attributes: {...},
+    qualifier: 'type="entry"'
+  },
+  admin: {
+    attributes: {...},
+    qualifier: [
+      'type="account"',
+      'permissions.roles[]="admin"'
+    ]
+  }
+}
+```
+
+When a qualifier points to an array, the qualifier returns true when at least
+one of the items in the array satisfies the condition.
 
 ### Configuring metadata
 If a source may receive metadata, set the `handleMeta` property to `true` and
