@@ -762,8 +762,7 @@ to worker.
 
 ## Adapters
 Interface:
-- `retrieve(url, [auth])`
-- `send(url, data, [auth], [method])`
+- `send({uri, [data], [auth], [method], [headers]})`
 - `normalize(data, [path])`
 - `serialize(data, [path])`
 
