@@ -852,7 +852,7 @@ Default formats:
 ## Running jobs
 The jobs interface accepts id of a `worker` and a `params` object passed to the
 worker. There are a couple of workers included in Integreat, like `sync` and
-`expire`. A job may be dispatched as a `RUN` action, with the job definition as
+`deleteExpired`. A job may be dispatched as a `RUN` action, with the job definition as
 the payload.
 
 To schedule jobs, [schedule definitions](#schedule-definition) may be passed to
@@ -923,7 +923,7 @@ Example schedule running a job at 2 am every weekday:
 To run a job every hour, use `{m: [0]}` or simply `'every hour'`.
 
 ### The sync job
-The sync job will retrieve items from one source and set them on another. There
+The `sync` job will retrieve items from one source and set them on another. There
 are different options for how to retrieve items, ranging from a crude retrieval
 of all items on every sync, to a more fine grained approach where only items
 that have been updated since last sync, will be synced.
@@ -952,8 +952,41 @@ this case, the job will get the `lastSyncedAt` from the `from` source, and get
 only newer items, by passing it the `updatedAfter` param. The job will also
 filter out older items, in case the source does not support `updatedAfter`.
 
-### The expire job
-Not implemented yet.
+### The deleteExpired job
+With a endpoint for getting expired items, the `deleteExpired` job will fetch
+these and delete them from the source. The endpoint may include param for the
+current time, either as microseconds since Januar 1, 1970 UTC with param
+`{timestamp}` or as the current time in the extended ISO 8601 format
+(`YYYY-MM-DDThh:mm:ss.sssZ`) with the `{isodate}` param. To get a time in the
+future instead, set `msFromNow` to a positive number of milliseconds to add
+to the current time, or set `msFromNow` to a negative number to a time in the
+past.
+
+Here's a typical job definition:
+```
+{
+  worker: 'deleteExpired',
+  params: {
+    source: 'store',
+    type: 'entry',
+    endpoint: 'getExpired',
+    msFromNow: 0
+  }
+}
+```
+
+This will get and map items of type `entry` from the `getExpired` endpoint on
+the source `store`, and delete them from the same source. There is no default
+`endpoint` for this worker, as the consequence of delete all items received
+from the wrong endpoint could be quite severe.
+
+Example endpoint uri template for `getExpired` (from a CouchDB source):
+```
+{
+  uri: '/_design/fns/_view/expired?include_docs=true{&endkey=timestamp}',
+  path: 'rows[].doc'
+}
+```
 
 ## Debugging
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.
