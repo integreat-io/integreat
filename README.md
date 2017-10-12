@@ -1,13 +1,15 @@
 # Integreat
 An integration layer for node.js.
 
+[![npm Version](https://img.shields.io/npm/v/integreat.svg)](https://www.npmjs.com/package/integreat)
 [![Build Status](https://travis-ci.org/kjellmorten/integreat.svg?branch=master)](https://travis-ci.org/kjellmorten/integreat)
 [![Coverage Status](https://coveralls.io/repos/github/kjellmorten/integreat/badge.svg?branch=master)](https://coveralls.io/github/kjellmorten/integreat?branch=master)
 [![Dependency Status](https://dependencyci.com/github/kjellmorten/integreat/badge)](https://dependencyci.com/github/kjellmorten/integreat)
 
-**Note:** This project is still in a very early stage. Use at own risk. Anything
-might change. At this time, we welcome input on the overall thoughts and
-interface, but we're not ready for pull requests yet.
+**Note:** This project is still in a very early stage. We encourage trying it
+out and experimenting with it, and we highly appreciapte feedback, but know that
+anything might change. At this time, we welcome input on the overall thoughts
+and interface, but we're not ready for pull requests yet.
 
 The basic idea of Integreat is to make it easy to define a set of data sources
 and expose them through one interface to abstract away the specifics of each
