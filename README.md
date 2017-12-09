@@ -12,7 +12,7 @@ anything might change. At this time, we welcome input on the overall thoughts
 and interface, but we're not ready for pull requests yet.
 
 The basic idea of Integreat is to make it easy to define a set of data sources
-and expose them through one interface to abstract away the specifics of each
+and expose them through one interface, to abstract away the specifics of each
 source, and map their data to defined datatypes.
 
 This is done through adapters, that does all the hard work of communicating with
@@ -22,10 +22,11 @@ sources.
 
 Integreat has an internal router that will ensure that the action is directed to
 the right source through action handlers, and will also queue actions when
-appropriate.
+appropriate. The queueing features will probably be extracted as a middleware at
+some point, but the functionality will stay the same.
 
-It is possible to set up Integreat to treat one source as a relay for other
-sources, and schedule syncs between selected sources.
+It is possible to set up Integreat to treat one source as a store/buffer for
+other sources, and schedule syncs between the store and the other sources.
 
 Finally, there will be different interface modules available, that will plug
 into the `dispatch()` function and offer other ways of reaching data from the
@@ -110,7 +111,7 @@ returning the following json data:
 ```
 
 ## Datatype definitions
-To do anything with Integreat, you need define one or more datatypes. They
+To do anything with Integreat, you need to define one or more datatypes. They
 describe the data you expected to get out of Integreat. A type will be
 associated with a source, which is used to retrieve data for the type.
 
@@ -260,6 +261,11 @@ Most of the time, your `attributes` and `relationships` definitions will only
 have the `path` property, so providing the `path` string instead of an object
 is a useful shorthand for this. I.e. `{title: 'article.headline'}` translates to
 `{title: {path: 'article.headline'}}`.
+
+Right now, mappings are part of the source definition. They may be separated in
+the future, as they belong to both datatypes and sources, and this will also
+simplify source definitions, but the format of the mapping definition will
+probably not change much.
 
 ### Paths
 Endpoints, mappings, attributes, and relationships all have an optional `path`
@@ -464,6 +470,11 @@ Items will be in the following format:
   }
 }
 ```
+
+`id`, `type`, `createdAt`, and `updatedAt` are mandatory and created by
+Integreat even when there are no mappings to these fields. In the future,
+`createdAt` and `updatedAt` may become properties of `attributes`, but will
+still be treated in the same way as now.
 
 ### Available actions
 
@@ -991,3 +1002,6 @@ Example endpoint uri template for `getExpired` (from a CouchDB source):
 
 ## Debugging
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.
+
+Some sub modules sends debug messages with the `great:` prefix, so use
+`DEBUG=great,great:*` to catch these as well.
