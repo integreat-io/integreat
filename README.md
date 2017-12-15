@@ -7,7 +7,7 @@ An integration layer for node.js.
 [![Dependency Status](https://dependencyci.com/github/kjellmorten/integreat/badge)](https://dependencyci.com/github/kjellmorten/integreat)
 
 **Note:** This project is still in a very early stage. We encourage trying it
-out and experimenting with it, and we highly appreciapte feedback, but know that
+out and experimenting with it, and we highly appreciate feedback, but know that
 anything might change. At this time, we welcome input on the overall thoughts
 and interface, but we're not ready for pull requests yet.
 
@@ -74,6 +74,7 @@ const adapters = integreat.adapters('json')
 
 const datatypes = [{
   id: 'message',
+  plural: 'messages',
   source: 'helloworld',
   attributes: {text: 'string'}
 }]
@@ -118,6 +119,7 @@ associated with a source, which is used to retrieve data for the type.
 ```
 {
   id: <string>,
+  plural: <string>,
   source: <sourceId>,
   attributes: {
     <attrId>: {
@@ -133,6 +135,13 @@ associated with a source, which is used to retrieve data for the type.
   }
 }
 ```
+
+The convention is to use singular mode for the `id`. The `plural` property is
+optional, but it's good practice to set it to the plural mode of the `id`, as
+some interfaces may use it. For instance,
+[`integreat-api-json`](https://github.com/integreat-io/integreat-api-json) uses
+it to build a RESTful endpoint structure, and will append an _s_ to `id` if
+`plural` is not set – which may be weird in some cases.
 
 ## Source definitions
 Source definitions are at the core of Integreat, as they define the sources to
