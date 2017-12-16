@@ -435,14 +435,14 @@ Retrieving from a source will return an object of the following format:
 ```
 
 The `status` will be one of the following status codes:
-- `ok`
-- `queued`
-- `notfound`
-- `noaction`
-- `timeout`
-- `autherror`
-- `noaccess`
-- `error`
+- `ok`: Everything is well, data is returned as expected
+- `queued`: The action has been queued
+- `notfound`: Tried to access a resource/endpoint that does not exist
+- `noaction`: The action did nothing
+- `timeout`: The attempt to perform the action timed out
+- `autherror`: An authentication request failed
+- `noaccess`: Authentication is required or the provided auth is not enough
+- `error`: Any other error
 
 On `ok` status, the retrieved data will be set on the `data` property. This will
 usually be mapped data in [Integreat's data format](#the-data-format), but
