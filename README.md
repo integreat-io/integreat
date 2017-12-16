@@ -7,7 +7,7 @@ An integration layer for node.js.
 [![Dependency Status](https://dependencyci.com/github/kjellmorten/integreat/badge)](https://dependencyci.com/github/kjellmorten/integreat)
 
 **Note:** This project is still in a very early stage. We encourage trying it
-out and experimenting with it, and we highly appreciapte feedback, but know that
+out and experimenting with it, and we highly appreciate feedback, but know that
 anything might change. At this time, we welcome input on the overall thoughts
 and interface, but we're not ready for pull requests yet.
 
@@ -74,6 +74,7 @@ const adapters = integreat.adapters('json')
 
 const datatypes = [{
   id: 'message',
+  plural: 'messages',
   source: 'helloworld',
   attributes: {text: 'string'}
 }]
@@ -92,7 +93,7 @@ const sources = [{
 }]
 
 const great = integreat({datatypes, sources}, {adapters})
-const action = {type: 'GET_ONE', payload: {type: 'message'}}
+const action = {type: 'GET', payload: {type: 'message'}}
 
 great.dispatch(action).then((data) => console.log(data.attributes.text))
 //--> Hello world
@@ -118,6 +119,7 @@ associated with a source, which is used to retrieve data for the type.
 ```
 {
   id: <string>,
+  plural: <string>,
   source: <sourceId>,
   attributes: {
     <attrId>: {
@@ -133,6 +135,13 @@ associated with a source, which is used to retrieve data for the type.
   }
 }
 ```
+
+The convention is to use singular mode for the `id`. The `plural` property is
+optional, but it's good practice to set it to the plural mode of the `id`, as
+some interfaces may use it. For instance,
+[`integreat-api-json`](https://github.com/integreat-io/integreat-api-json) uses
+it to build a RESTful endpoint structure, and will append an _s_ to `id` if
+`plural` is not set – which may be weird in some cases.
 
 ## Source definitions
 Source definitions are at the core of Integreat, as they define the sources to
@@ -426,14 +435,14 @@ Retrieving from a source will return an object of the following format:
 ```
 
 The `status` will be one of the following status codes:
-- `ok`
-- `queued`
-- `notfound`
-- `noaction`
-- `timeout`
-- `autherror`
-- `noaccess`
-- `error`
+- `ok`: Everything is well, data is returned as expected
+- `queued`: The action has been queued
+- `notfound`: Tried to access a resource/endpoint that does not exist
+- `noaction`: The action did nothing
+- `timeout`: The attempt to perform the action timed out
+- `autherror`: An authentication request failed
+- `noaccess`: Authentication is required or the provided auth is not enough
+- `error`: Any other error
 
 On `ok` status, the retrieved data will be set on the `data` property. This will
 usually be mapped data in [Integreat's data format](#the-data-format), but
@@ -479,9 +488,9 @@ still be treated in the same way as now.
 ### Available actions
 
 #### `GET`
-Gets items from a source, using the `get` endpoint. Returned in the `data`
-property is an array of mapped object, in
-[Integreat's data format](#the-data-format).
+Gets items from a source, using the `get` endpoint, or – if `id` is specified on
+`payload` – the `getOne` endpoint. Returned in the `data` property is an array
+of mapped object, in [Integreat's data format](#the-data-format).
 
 Example GET action:
 ```javascript
@@ -496,26 +505,8 @@ Example GET action:
 In the example above, the source is inferred from the payload `type` property.
 Override this by supplying the id of a source as a `source` property.
 
-The endpoint may also be overridden by providing an `endpoint` id in the
-`payload`.
-
-#### `GET_ONE`
-Gets one item from a source, using the `getOne` endpoint. Returned in the `data`
-property is a mapped object, in [Integreat's data format](#the-data-format).
-
-Example GET_ONE action:
-```javascript
-{
-  type: 'GET_ONE',
-  payload: {
-    id: 'ent1',
-    type: 'entry'
-  }
-}
-```
-
-In the example above, the source is inferred from the payload `type` property.
-Override this by supplying the id of a source as a `source` property.
+By providing an `id` property on `payload`, the item with the given id and type
+is fetched, if it exists.
 
 The endpoint may also be overridden by providing an `endpoint` id in the
 `payload`.
@@ -551,9 +542,9 @@ normalized objects in the format retrieved from the source. The data is not
 mapped in any way, and the only thing guarantied, is that this is a JavaScript
 object.
 
-This action does not require a `type`, unlike the `GET` and `GET_ONE` actions,
-as it won't lookup mappings for any given type. The only reason to include a
-`type` in the payload, would be if the endpoint uri requires a `type` parameter.
+This action does not require a `type`, unlike the `GET` action, as it won't
+lookup mappings for any given type. The only reason to include a `type` in the
+payload, would be if the endpoint uri requires a `type` parameter.
 
 Furthermore, a `source` property is required, as there is no `type` to infer
 from.
@@ -608,7 +599,8 @@ Note that the source must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
 #### `SET`
-Sends data for several items to a source, using the `set` endpoint. Returned in
+Sends data for several items to a source, using the `set` endpoint. If `data` is
+one item, and not an array, the `setOne` endpoint is used instead. Returned in
 the `data` property is whatever the adapter returns.
 
 The data to send is provided in the payload `data` property, and must given as
@@ -631,33 +623,6 @@ Example SET action:
 In the example above, the `source` is specified in the payload. Specifying a
 `type` to infer the source from is also possible, but not recommended, as it
 may be removed in future versions of Integreat.
-
-The endpoint may also be overridden by providing an `endpoint` id in the
-`payload`.
-
-#### `SET_ONE`
-Sends data for one item to a source, using the `setOne` endpoint. Returned in the
-`data` property is whatever the adapter returns.
-
-The data to send is provided in the payload `data` property, and must given in
-[Integreat's data format](#the-data-format).
-
-Example SET_ONE action:
-```javascript
-{
-  type: 'SET_ONE',
-  payload: {
-    data: {
-      id: 'ent1',
-      type: 'entry'
-    }
-  }
-}
-```
-
-In the example above, the source is inferred from the `type` property of `data`
-in the payload. This may be overridden by supplying the id of a source as a
-`source` property on the `payload` object.
 
 The endpoint may also be overridden by providing an `endpoint` id in the
 `payload`.
@@ -686,8 +651,9 @@ Note that the source must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
 #### `DELETE`
-Delete data for several items from a source, using the `delete` endpoint.
-Returned in the `data` property is whatever the adapter returns.
+Delete data for several items from a source, using the `delete` endpoint. If
+an `id` is set iand not the `data` array, the `deleteOne` endpoint is used
+instead. Returned in the `data` property is whatever the adapter returns.
 
 The data for the items to delete, is provided in the payload `data` property,
 and must given as an array of objects in
@@ -709,25 +675,12 @@ Example DELETE action:
 ```
 
 In the example above, the `source` is specified in the payload. Specifying a
-`type` to infer the source from is also possible, but not recommended, as it
-may be removed in future versions of Integreat.
+`type` to infer the source from is also possible.
 
-The endpoint may also be overridden by providing an `endpoint` id in the
-`payload`.
-
-The method used for the request defaults to `POST`, but may be overridden on
-the endpoint.
-
-#### `DELETE_ONE`
-Deletes one item from a source, using the `deleteOne` endpoint. Returned in the
-`data` property is whatever the adapter returns.
-
-The item to delete is identified by `id` and `type` property on the payload.
-
-Example DELETE_ONE action:
+Example DELETE action for one item:
 ```javascript
 {
-  type: 'DELETE_ONE',
+  type: 'DELETE',
   payload: {
     id: 'ent1',
     type: 'entry'
@@ -735,16 +688,11 @@ Example DELETE_ONE action:
 }
 ```
 
-In the example above, the source is inferred from the `type` property in the
-payload. This may be overridden by supplying the id of a source as a `source`
-property on the `payload` object.
-
 The endpoint may also be overridden by providing an `endpoint` id in the
 `payload`.
 
-The method used for the request defaults to `DELETE`, but may be overridden on
-the endpoint. No body is sent with the request, thus the id needs to be
-specified in the endpoint uri for this action to work.
+The method used for the request defaults to `POST` when `data` is set, and
+`DELETE` for the `id` and `type` option, but may be overridden on the endpoint.
 
 #### `RUN`
 This action runs a job with a specified `worker`, giving it a `params` object.

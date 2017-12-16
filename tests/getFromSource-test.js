@@ -16,7 +16,7 @@ test('should get one entry from source', async (t) => {
     .get('/users/johnf')
     .reply(200, {data: johnfData})
   const action = {
-    type: 'GET_ONE',
+    type: 'GET',
     payload: {id: 'johnf', type: 'user'}
   }
 
@@ -24,15 +24,16 @@ test('should get one entry from source', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')
-  t.truthy(ret.data)
-  t.is(ret.data.id, 'johnf')
-  const attrs = ret.data.attributes
+  t.true(Array.isArray(ret.data))
+  const item = ret.data[0]
+  t.is(item.id, 'johnf')
+  const attrs = item.attributes
   t.truthy(attrs)
   t.is(attrs.username, 'johnf')
   t.is(attrs.firstname, 'John')
   t.is(attrs.lastname, 'Fjon')
   t.is(attrs.yearOfBirth, 1987)
-  const rels = ret.data.relationships
+  const rels = item.relationships
   t.deepEqual(rels.feeds, [{id: 'news', type: 'feed'}, {id: 'social', type: 'feed'}])
 
   nock.restore()
