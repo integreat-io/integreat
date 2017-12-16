@@ -35,12 +35,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kjellmorten/integreat.git"
+    "url": "git+https://github.com/integreat-io/integreat.git"
   },
   "bugs": {
-    "url": "https://github.com/kjellmorten/integreat/issues"
+    "url": "https://github.com/integreat-io/integreat/issues"
   },
-  "homepage": "https://github.com/kjellmorten/integreat#readme",
+  "homepage": "https://github.com/integreat-io/integreat#readme",
   "engines": {
     "node": "8.6.x",
     "npm": ">= 5.6.0"
