@@ -47,10 +47,9 @@
   },
   "dependencies": {
     "debug": "^3.1.0",
+    "got": "^8.0.1",
     "great-uri-template": "^0.1.2",
     "later": "^1.2.0",
-    "request": "^2.83.0",
-    "request-promise-native": "^1.0.5",
     "uuid": "^3.0.1"
   },
   "devDependencies": {
