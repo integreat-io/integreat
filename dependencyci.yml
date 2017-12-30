@@ -1,0 +1,5 @@
+# don't run deprecated test on any development dependencies
+type:
+  development:
+    tests:
+      deprecated: skip
