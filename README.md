@@ -2,12 +2,12 @@
 An integration layer for node.js.
 
 [![npm Version](https://img.shields.io/npm/v/integreat.svg)](https://www.npmjs.com/package/integreat)
-[![Build Status](https://travis-ci.org/kjellmorten/integreat.svg?branch=master)](https://travis-ci.org/kjellmorten/integreat)
-[![Coverage Status](https://coveralls.io/repos/github/kjellmorten/integreat/badge.svg?branch=master)](https://coveralls.io/github/kjellmorten/integreat?branch=master)
-[![Dependency Status](https://dependencyci.com/github/kjellmorten/integreat/badge)](https://dependencyci.com/github/kjellmorten/integreat)
+[![Build Status](https://travis-ci.org/integreat-io/integreat.svg?branch=master)](https://travis-ci.org/integreat-io/integreat)
+[![Coverage Status](https://coveralls.io/repos/github/integreat-io/integreat/badge.svg?branch=master)](https://coveralls.io/github/integreat-io/integreat?branch=master)
+[![Dependency Status](https://dependencyci.com/github/integreat-io/integreat/badge)](https://dependencyci.com/github/integreat-io/integreat)
 
-**Note:** This project is still in a very early stage. We encourage trying it
-out and experimenting with it, and we highly appreciate feedback, but know that
+**Note:** This project is still in an early stage. We encourage trying it out
+and experimenting with it, and we highly appreciate feedback, but know that
 anything might change. At this time, we welcome input on the overall thoughts
 and interface, but we're not ready for pull requests yet.
 
@@ -55,6 +55,10 @@ only format that will be exposed to the code dispatching the actions. The
 mapping, normalizing, and serializing will happing to and from this format,
 according to the defined datatypes and mapping rules.
 
+Planned changes:
+- Rewritten endpoint definitions
+- Move mappings out of source definitions
+- Extract queue functionality out of Integreat core package
 
 ## Install
 Requires node v8.
