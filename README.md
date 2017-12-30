@@ -86,9 +86,9 @@ const datatypes = [{
 const sources = [{
   id: 'helloworld',
   adapter: 'json',
-  endpoints: {
-    get: 'https://api.helloworld.io/json'
-  },
+  endpoints: [
+    {options: {uri: 'https://api.helloworld.io/json'}}
+  ],
   mappings: {
     message: {
       attributes: {text: {path: 'message'}}
@@ -163,14 +163,10 @@ supported datatypes (attributes and relationships):
   auth: <auth id>,
   handleMeta: <boolean|sourceId>,
   baseUri: <uri>,
-  endpoints: {
-    get: <endpoint|string>,
-    getOne: <endpoint|string>,
-    set: <endpoint|string>,
-    setOne: <endpoint|string>,
-    getMeta: <endpoint|string>,
-    setMeta: <endpoint|string>
-  },
+  endpoints: [
+    <endpoint definition>,
+    ...
+  ],
   mappings: {
     <datatype>: <mapping definition>,
     ...
@@ -190,28 +186,42 @@ accepts the id of a source to remove.
 ### Endpoint definition
 ```
 {
-  uri: <string>,
-  path: <string>,
-  method: <string>
+  id: <string>,
+  match: {
+    action: <GET|SET|DELETE>,
+    collection: <boolean>,
+    member: <boolean>,
+    meta: <boolean>,
+    type: <string>
+  }
+  options: {...}
 }
 ```
 
-The `uri` property is a uri template, where e.g. `{id}` will be placed with the
-value of the parameter `id`. All parameters in a template are required, unless
-they are suffixed with a question mark: `{id?}`. Missing required parameters
-will result in an error, and the endpoint will not be called.
+The `match` object specifies what requests this endpoint supports, and is used
+to find the right endpoint for a request. All properties of the `match` object
+are optional, as is the `match` object itself. The match algorithm picks the
+endpoint that matches a request with the highest level of specificity.
 
-For a full specification of the template format, see [Integreat URI Template](https://github.com/kjellmorten/great-uri-template).
+The `id` is optional, but may used to specify which endpoint to use for a
+request, which will bypass the matching algorithm.
 
-If only the `uri` property is needed, it may simply be given as a string instead
-of an endpoint object.
+Finally, the `options` object will be passed to the adapter as part of a
+request. The props are completely adapter specific, so that each adapter can
+dictate what kind of information it will need, but there are a set of
+recommended props to use when they are relevant:
 
-The `path` is a path into the data, specific for this endpoint. It will usually
+- `uri`: A uri template, where e.g. `{id}` will be placed with the value of the
+parameter `id` from the request. For a full specification of the template
+format, see
+[Integreat URI Template](https://github.com/kjellmorten/great-uri-template).
+
+- `path`: A path into the data, specific for this endpoint. It will usually
 point to an array, in which the items can be found, but as mappings may have
 their own `path`, the endpoint path may point to an object from where the
 different mapping paths point to different arrays.
 
-`method` is an adapter specific keyword, to tell the adapter which method of
+- `method`: An adapter specific keyword, to tell the adapter which method of
 transportation to use. For adapters based on http, the options will typically
 be `PUT`, `POST`, etc. The method specified on the endpoint will override any
 method provided elsewhere. As an example, the `SET` action will use the `PUT`
