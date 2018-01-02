@@ -23,7 +23,7 @@ test('should get one entry from source', async (t) => {
   const great = integreat({sources, datatypes}, {adapters, formatters})
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.true(Array.isArray(ret.data))
   const item = ret.data[0]
   t.is(item.id, 'johnf')

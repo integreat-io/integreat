@@ -22,7 +22,7 @@ test('should get error object for unknown entry', async (t) => {
   const great = integreat({sources, datatypes}, {adapters, formatters})
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'notfound')
+  t.is(ret.status, 'notfound', ret.error)
   t.is(ret.data, undefined)
   t.is(typeof ret.error, 'string')
 

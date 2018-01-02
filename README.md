@@ -56,7 +56,6 @@ mapping, normalizing, and serializing will happing to and from this format,
 according to the defined datatypes and mapping rules.
 
 Planned changes:
-- Rewritten endpoint definitions
 - Move mappings out of source definitions
 - Extract queue functionality out of Integreat core package
 
@@ -187,29 +186,44 @@ accepts the id of a source to remove.
 ```
 {
   id: <string>,
-  match: {
-    action: <GET|SET|DELETE>,
-    collection: <boolean>,
-    member: <boolean>,
-    meta: <boolean>,
-    type: <string>
-  }
+  type: <string>,
+  scope: <'collection'|'member'>,
+  action: <action type>,
   options: {...}
 }
 ```
 
-The `match` object specifies what requests this endpoint supports, and is used
-to find the right endpoint for a request. All properties of the `match` object
-are optional, as is the `match` object itself. The match algorithm picks the
-endpoint that matches a request with the highest level of specificity.
+An endpoint may specify none or more of the following match properties:
+- `id`: A request may include an `endpoint` property, that will be matched
+  against this `id`. For request with an endpoint id, no other matching
+  properties will be considered
+- `type`: When set, the endpoint will only be used for requests for the
+  specified item type
+- `scope`: May be `member` or `collection`, to specify that the endpoint should
+  be used to request one item (member) or an entire collection of items.
+  Setting this to `member` will require an `id` property in the request.
+  Not setting this property signals an endpoint that will work for both
+- `action`: May be set to the type string of an action. The endpoint will match
+  only actions of this type
 
-The `id` is optional, but may used to specify which endpoint to use for a
-request, which will bypass the matching algorithm.
+Endpoints are matched to a request by picking the matching endpoint with highest
+level of specificity. E.g., for a GET request asking for resources of type
+`entry`, an endpoint with `action: 'GET'` and `type: 'entry'` is picked over an
+endpoint matching all GET requests.
 
-Finally, the `options` object will be passed to the adapter as part of a
-request. The props are completely adapter specific, so that each adapter can
-dictate what kind of information it will need, but there are a set of
-recommended props to use when they are relevant:
+Properties are matched in the order they are listed above, so that when two
+endpoints matches – e.g. one with a scope and the other with an action, the one
+matching with scope is picked. When two endpoints are equally specified with the
+same match properties specified, the first one is used.
+
+When no match properties are set, the endpoint will match any requests, as long
+as no other endpoints match.
+
+Unlike the match properties, the `options` property is required. This should be
+an object with properties to be passed to the adapter as part of a request. The
+props are completely adapter specific, so that each adapter can dictate what
+kind of information it will need, but there are a set of recommended props to
+use when they are relevant:
 
 - `uri`: A uri template, where e.g. `{id}` will be placed with the value of the
 parameter `id` from the request. For a full specification of the template
@@ -291,9 +305,9 @@ simplify source definitions, but the format of the mapping definition will
 probably not change much.
 
 ### Paths
-Endpoints, mappings, attributes, and relationships all have an optional `path`
-property, for specifying what part of the data from the source to return in each
-case.
+Mappings, attributes, and relationships all have an optional `path` property,
+for specifying what part of the data from the source to return in each case.
+(Endpoints may also have a `path` property, but not all adapters support this.)
 
 The `path` properties use a dot notation with array brackets.
 
@@ -373,7 +387,7 @@ one of the items in the array satisfies the condition.
 
 ### Configuring metadata
 If a source may receive metadata, set the `handleMeta` property to `true` and
-include the `getMeta` and `setMeta` endpoints.
+include endpoints matching the `GET_META` and `SET_META` actions.
 
 You may define a `meta` [mapping](#mapping-definition) to define how to map
 metadata from and to the source, or you may let the asterisk type handle it.
@@ -502,9 +516,8 @@ still be treated in the same way as now.
 ### Available actions
 
 #### `GET`
-Gets items from a source, using the `get` endpoint, or – if `id` is specified on
-`payload` – the `getOne` endpoint. Returned in the `data` property is an array
-of mapped object, in [Integreat's data format](#the-data-format).
+Get items from a source. Returned in the `data` property is an array of mapped
+object, in [Integreat's data format](#the-data-format).
 
 Example GET action:
 ```javascript
@@ -522,8 +535,8 @@ Override this by supplying the id of a source as a `source` property.
 By providing an `id` property on `payload`, the item with the given id and type
 is fetched, if it exists.
 
-The endpoint may also be overridden by providing an `endpoint` id in the
-`payload`.
+The endpoint will be picked according to the matching properties, unless an
+endpoint id is supplied as an `endpoint` property of `payload`.
 
 #### `GET_RAW`
 Gets any data returned from the source, using the given `uri` in the `payload`.
@@ -550,11 +563,10 @@ In the example above, the source is specified by the payload `source` property.
 GET_RAW does not support inferring source from type.
 
 #### `GET_UNMAPPED`
-Gets items from a source, using the `get` endpoint, or any other endpoint
-specified in the `payload`. Returned in the `data` property is an array of
-normalized objects in the format retrieved from the source. The data is not
-mapped in any way, and the only thing guarantied, is that this is a JavaScript
-object.
+Get data from a source without applying the mapping rules. Returned in the
+`data` property is an array of normalized objects in the format retrieved from
+the source. The data is not mapped in any way, and the only thing guarantied, is
+that this is a JavaScript object.
 
 This action does not require a `type`, unlike the `GET` action, as it won't
 lookup mappings for any given type. The only reason to include a `type` in the
@@ -574,8 +586,12 @@ Example GET action:
 }
 ```
 
+The endpoint will be picked according to the matching properties, unless an
+endpoint id is supplied as an `endpoint` property of `payload`.
+
 #### `GET_META`
-Gets metadata for a source, using the `getMeta` endpoint.
+Get metadata for a source. Normal endpoint matching is applied, but it's
+common practice to define an endpoint matching the `GET_META` action.
 
 The action returns an object with a `data` property, which contains the `source`
 (the source id) and `meta` object with the metadata set as properties.
@@ -613,9 +629,8 @@ Note that the source must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
 #### `SET`
-Sends data for several items to a source, using the `set` endpoint. If `data` is
-one item, and not an array, the `setOne` endpoint is used instead. Returned in
-the `data` property is whatever the adapter returns.
+Send data to a source. Returned in the `data` property is whatever the adapter
+returns.
 
 The data to send is provided in the payload `data` property, and must given as
 an array of objects in [Integreat's data format](#the-data-format).
@@ -638,12 +653,13 @@ In the example above, the `source` is specified in the payload. Specifying a
 `type` to infer the source from is also possible, but not recommended, as it
 may be removed in future versions of Integreat.
 
-The endpoint may also be overridden by providing an `endpoint` id in the
-`payload`.
+The endpoint will be picked according to the matching properties, unless an
+endpoint id is supplied as an `endpoint` property of `payload`.
 
 #### `SET_META`
-Sets metadata on a source, using the `setMeta` endpoint. Returned in the `data`
-property is whatever the adapter returns.
+Set metadata on a source. Returned in the `data` property is whatever the
+adapter returns. Normal endpoint matching is used, but it's common practice to
+set up an endpoint matching the `SET_META` action.
 
 The payload should contain the `source` to get metadata for (the source id), and
 a `meta` object, with all metadata to set as properties.
@@ -665,9 +681,8 @@ Note that the source must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
 #### `DELETE`
-Delete data for several items from a source, using the `delete` endpoint. If
-an `id` is set iand not the `data` array, the `deleteOne` endpoint is used
-instead. Returned in the `data` property is whatever the adapter returns.
+Delete data for several items from a source. Returned in the `data` property is
+whatever the adapter returns.
 
 The data for the items to delete, is provided in the payload `data` property,
 and must given as an array of objects in
@@ -702,8 +717,8 @@ Example DELETE action for one item:
 }
 ```
 
-The endpoint may also be overridden by providing an `endpoint` id in the
-`payload`.
+The endpoint will be picked according to the matching properties, unless an
+endpoint id is supplied as an `endpoint` property of `payload`.
 
 The method used for the request defaults to `POST` when `data` is set, and
 `DELETE` for the `id` and `type` option, but may be overridden on the endpoint.
@@ -927,7 +942,7 @@ only newer items, by passing it the `updatedAfter` param. The job will also
 filter out older items, in case the source does not support `updatedAfter`.
 
 ### The deleteExpired job
-With a endpoint for getting expired items, the `deleteExpired` job will fetch
+With an endpoint for getting expired items, the `deleteExpired` job will fetch
 these and delete them from the source. The endpoint may include param for the
 current time, either as microseconds since Januar 1, 1970 UTC with param
 `{timestamp}` or as the current time in the extended ISO 8601 format
