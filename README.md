@@ -216,6 +216,11 @@ endpoints matches – e.g. one with a scope and the other with an action, the on
 matching with scope is picked. When two endpoints are equally specified with the
 same match properties specified, the first one is used.
 
+All match properties except `id` may be specified with an array of matching
+values, so that an endpoint may match more cases. However, when two endpoints
+match on a property specified as an array on one and as a single value on the
+other, the one with the single value is picked.
+
 When no match properties are set, the endpoint will match any requests, as long
 as no other endpoints match.
 
