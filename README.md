@@ -170,6 +170,12 @@ supported datatypes (attributes and relationships):
     <datatype>: <mapping definition>,
     ...
   },
+  params: {
+    <param>: {
+      type: <string>,
+      default: <object>
+    }
+  },
   beforeRetrieve: <hook>,
   afterRetrieve: <hook>,
   beforeSend: <hook>,
@@ -189,10 +195,12 @@ accepts the id of a source to remove.
   type: <string>,
   scope: <'collection'|'member'>,
   action: <action type>,
+  params: {...},
   options: {...}
 }
 ```
 
+#### Match properties
 An endpoint may specify none or more of the following match properties:
 - `id`: A request may include an `endpoint` property, that will be matched
   against this `id`. For request with an endpoint id, no other matching
@@ -224,6 +232,47 @@ other, the one with the single value is picked.
 When no match properties are set, the endpoint will match any requests, as long
 as no other endpoints match.
 
+#### Params property
+An endpoint may accept properties, and indicate this by listing them on the
+`params` object, with the value set to `true` for required params. All
+properties are treated as strings.
+
+An endpoint is only used for requests where all the required parameters are
+present.
+
+Example source definition with endpoint parameters:
+```
+{
+  id: 'entries',
+  adapter: 'json',
+  endpoints: [
+    {
+      params: {
+        author: true,
+        archive: false
+      },
+      options: {
+        uri: 'https://example.api.com/1.0/{author}/{type}_log{?archive}'
+      }
+    }
+  ],
+  ...
+}
+```
+
+Some params are always available and does not need to be specified in `params`,
+unless to define them as required:
+- `id`: The item id from the request object or from the data property (if it is
+  an object and not an array). Required in endpoints with `scope: 'member'`, not
+  included for `scope: 'collection'`, and optional when scope is not set.
+- `type`: The item type from the request object or from the data property (if it
+  is an object and not an array).
+- `source`: The id of the current source.
+- `action`: The type of the action that triggered the request, e.g. `SET`.
+- `method`: The adapter specific method string for the request. E.g. `POST` in
+  http requests.
+
+#### Options property
 Unlike the match properties, the `options` property is required. This should be
 an object with properties to be passed to the adapter as part of a request. The
 props are completely adapter specific, so that each adapter can dictate what
@@ -233,7 +282,7 @@ use when they are relevant:
 - `uri`: A uri template, where e.g. `{id}` will be placed with the value of the
 parameter `id` from the request. For a full specification of the template
 format, see
-[Integreat URI Template](https://github.com/kjellmorten/great-uri-template).
+[Integreat URI Template](https://github.com/integreat-io/great-uri-template).
 
 - `path`: A path into the data, specific for this endpoint. It will usually
 point to an array, in which the items can be found, but as mappings may have
