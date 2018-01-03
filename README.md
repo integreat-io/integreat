@@ -170,12 +170,6 @@ supported datatypes (attributes and relationships):
     <datatype>: <mapping definition>,
     ...
   },
-  params: {
-    <param>: {
-      type: <string>,
-      default: <object>
-    }
-  },
   beforeRetrieve: <hook>,
   afterRetrieve: <hook>,
   beforeSend: <hook>,
@@ -267,7 +261,6 @@ unless to define them as required:
   included for `scope: 'collection'`, and optional when scope is not set.
 - `type`: The item type from the request object or from the data property (if it
   is an object and not an array).
-- `source`: The id of the current source.
 - `action`: The type of the action that triggered the request, e.g. `SET`.
 - `method`: The adapter specific method string for the request. E.g. `POST` in
   http requests.
@@ -343,9 +336,9 @@ normal, but any `attributes` or `relationships` will be disregarded. Instead all
 pipeline modifies them.
 
 The `param` property is an alternative to specifying a `path`, and refers to a
-param passed to the `retreive` method. Instead of retrieving a value in the
+param passed to the `retreive` method. Instead of retrieving a value from the
 source data, an attribute or relationship with `param` will get its value from
-the corresponding parameter. When setting data to a source, this
+the corresponding parameter. When sending data _to_ a source, this
 attribute/relationship will be disregarded.
 
 Most of the time, your `attributes` and `relationships` definitions will only
@@ -355,8 +348,8 @@ is a useful shorthand for this. I.e. `{title: 'article.headline'}` translates to
 
 Right now, mappings are part of the source definition. They may be separated in
 the future, as they belong to both datatypes and sources, and this will also
-simplify source definitions, but the format of the mapping definition will
-probably not change much.
+simplify source definitions. The format of the mapping definition will probably
+not change much.
 
 ### Paths
 Mappings, attributes, and relationships all have an optional `path` property,
