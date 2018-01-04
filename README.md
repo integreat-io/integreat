@@ -133,7 +133,8 @@ associated with a source, which is used to retrieve data for the type.
   relationships: {
     <relId>: {
       type: <string>,
-      default: <object>
+      default: <object>,
+      query: <query params>
     }
   }
 }
@@ -145,6 +146,53 @@ some interfaces may use it. For instance,
 [`integreat-api-json`](https://github.com/integreat-io/integreat-api-json) uses
 it to build a RESTful endpoint structure, and will append an _s_ to `id` if
 `plural` is not set – which may be weird in some cases.
+
+### Attributes
+Each attribute is defined with an id, which may contain only alphanumeric
+characters, and may not start with a digit. This id is used to reference the
+attribute.
+
+The `type` defaults to `string`. Other options are `integer`, `float`,
+`boolean`, and `date`. Data from Integreat will be cast to corresponding
+JavaScript types.
+
+The `default` value will be used when a data source does not provide this value.
+Default is `null`.
+
+### Relationships
+Relationship is defined in the same way as attributes, but with one important
+difference: The `type` property refers to other Integreat datatypes. E.g. a
+datatype for an article may have a relationship called `author`, with
+`type: 'user'`, referring to the datatype with id `user`. `type` is required on
+relationships.
+
+The `default` property sets a default value for the relationship, in the same
+way as for attributes, but note that this value should be a valid id for an item
+of the type the relationship refers to.
+
+Finally, relationships have a `query` property, which is used to retrieve items
+for this relationship. In many cases, a source may not have data that maps to
+id(s) for a relationship directly, and this is the typical use case for this
+property.
+
+The `query` property is an object with key/value pairs, where the key is the id
+of a field (an attribute, a relationship, or `id`) on the datatype the relationship
+refers to, and the value is the id of field on this datatype.
+
+Example datatype with a query definition:
+```
+{
+  id: 'user',
+  ...
+  relationships: {
+    articles: {type: 'article', query: {author: 'id'}}
+  }
+}
+```
+
+In this case, the `articles` relationship on the `user` datatype may be fetched by
+querying for all items of type `article`, where the `author` field equals the
+`id` of the `user` item in question.
 
 ## Source definitions
 Source definitions are at the core of Integreat, as they define the sources to
