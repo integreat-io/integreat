@@ -309,6 +309,9 @@ unless to define them as required:
   included for `scope: 'collection'`, and optional when scope is not set.
 - `type`: The item type from the request object or from the data property (if it
   is an object and not an array).
+- `typePlural`: The plural form of the type, gotten from the corresponding
+  datatype's `plural` prop – or by adding an 's' to the type is `plural` is not
+  set.
 - `action`: The type of the action that triggered the request, e.g. `SET`.
 - `method`: The adapter specific method string for the request. E.g. `POST` in
   http requests.
