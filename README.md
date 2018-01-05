@@ -312,9 +312,10 @@ unless to define them as required:
 - `typePlural`: The plural form of the type, gotten from the corresponding
   datatype's `plural` prop – or by adding an 's' to the type is `plural` is not
   set.
-- `action`: The type of the action that triggered the request, e.g. `SET`.
-- `method`: The adapter specific method string for the request. E.g. `POST` in
+- `$action`: The type of the action that triggered the request, e.g. `SET`.
+- `$method`: The adapter specific method string for the request. E.g. `POST` in
   http requests.
+- `$source`: The id of the source that will get the request.
 
 #### Options property
 Unlike the match properties, the `options` property is required. This should be
