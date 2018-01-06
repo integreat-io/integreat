@@ -1031,7 +1031,7 @@ retrieved from the source and set on the target:
 ```
 
 The job will dispatch a 'GET' action right away, and then immediately dispatch
-a 'SET_META' action to update the `lastSyncedAt` date on the source. The
+a `SET_META` action to update the `lastSyncedAt` date on the source. The
 actions to update the target is added to the queue, and may be handled by other
 workers, depending on your setup.
 
@@ -1039,6 +1039,12 @@ To retrieve only new items, change the `retrieve` property to `updated`. In
 this case, the job will get the `lastSyncedAt` from the `from` source, and get
 only newer items, by passing it the `updatedAfter` param. The job will also
 filter out older items, in case the source does not support `updatedAfter`.
+
+Two other params to the sync job might come in handy: The `paramsFrom` and
+`paramsTo`. Each may be set to an object with params, that will be included in
+the action to get from the `from` source and set to the `to` source,
+respectively. This allows you to set params on these actions through the sync
+job action.
 
 ### The deleteExpired job
 With an endpoint for getting expired items, the `deleteExpired` job will fetch
