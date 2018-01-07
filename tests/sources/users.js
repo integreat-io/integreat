@@ -5,19 +5,5 @@ module.exports = {
   endpoints: [
     {action: 'GET', scope: 'collection', options: {uri: '/', path: 'data[]'}},
     {action: 'GET', scope: 'member', options: {uri: '/{id}', path: 'data'}}
-  ],
-  mappings: {
-    user: {
-      attributes: {
-        id: 'user',
-        username: 'user',
-        firstname: 'forename',
-        lastname: 'surname',
-        yearOfBirth: 'birthyear'
-      },
-      relationships: {
-        feeds: 'feeds[]'
-      }
-    }
-  }
+  ]
 }

@@ -3,6 +3,7 @@ import nock from 'nock'
 import json from '../lib/adapters/json'
 import userType from './datatypes/user'
 import usersSource from './sources/users'
+import usersMapping from './mappings/users-user'
 import johnfData from './data/userJohnf'
 
 import integreat from '..'
@@ -12,6 +13,7 @@ test('should get one entry from source', async (t) => {
   const formatters = integreat.formatters()
   const datatypes = [userType]
   const sources = [usersSource]
+  const mappings = [usersMapping]
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, {data: johnfData})
@@ -20,7 +22,7 @@ test('should get one entry from source', async (t) => {
     payload: {id: 'johnf', type: 'user'}
   }
 
-  const great = integreat({sources, datatypes}, {adapters, formatters})
+  const great = integreat({sources, datatypes, mappings}, {adapters, formatters})
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

@@ -87,13 +87,16 @@ const sources = [{
   adapter: 'json',
   endpoints: [
     {options: {uri: 'https://api.helloworld.io/json'}}
-  ],
-  mappings: {
-    message: {
-      attributes: {text: {path: 'message'}}
-    }
-  }
+  ]
 }]
+
+const mappings = [
+  {
+    type: 'message',
+    source: 'helloworld',
+    attributes: {text: {path: 'message'}}
+  }
+]
 
 const great = integreat({datatypes, sources}, {adapters})
 const action = {type: 'GET', payload: {type: 'message'}}
@@ -214,10 +217,6 @@ supported datatypes (attributes and relationships):
     <endpoint definition>,
     ...
   ],
-  mappings: {
-    <datatype>: <mapping definition>,
-    ...
-  },
   beforeRetrieve: <hook>,
   afterRetrieve: <hook>,
   beforeSend: <hook>,
@@ -340,9 +339,11 @@ be `PUT`, `POST`, etc. The method specified on the endpoint will override any
 method provided elsewhere. As an example, the `SET` action will use the `PUT`
 method as default, but only if no method is specified on the endpoint.
 
-### Mapping definition
+## Mapping definition
 ```
 {
+  type: <typeId>,
+  source: <sourcId|array>
   path: <string>,
   attributes: {
     <attrKey>: {
@@ -380,13 +381,6 @@ used to accomplish this, but it is sufficient to return something that can be
 cast to the right type. E.g. returning `'3'` for an integer is okay, as
 Integreat will cast it with `parseInt()`.
 
-There is a special "catch all" datatype `*` – the asterisk – that will match
-any datatype not represented as regular mappings. If `path`, `transform`,
-`filterFrom`, or `filterTo` are set on an asterisk item, they will be applied as
-normal, but any `attributes` or `relationships` will be disregarded. Instead all
-`attributes` or `relationships` will be mapped as is, unless the `transform`
-pipeline modifies them.
-
 The `param` property is an alternative to specifying a `path`, and refers to a
 param passed to the `retreive` method. Instead of retrieving a value from the
 source data, an attribute or relationship with `param` will get its value from
@@ -398,10 +392,12 @@ have the `path` property, so providing the `path` string instead of an object
 is a useful shorthand for this. I.e. `{title: 'article.headline'}` translates to
 `{title: {path: 'article.headline'}}`.
 
-Right now, mappings are part of the source definition. They may be separated in
-the future, as they belong to both datatypes and sources, and this will also
-simplify source definitions. The format of the mapping definition will probably
-not change much.
+Mappings does, by definition, relate to both sources and datatypes, as the thing
+that binds them together. By stating which `type` and which `source` this
+mapping is intended for, Integreat will connect the dots. In some cases you may
+even be able to reuse a mapping for several sources, in which case you can
+specify an array of source ids on `source`. Each mapping can only be used for
+on datatype, however, but this may change in the future.
 
 ### Paths
 Mappings, attributes, and relationships all have an optional `path` property,
