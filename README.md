@@ -342,7 +342,7 @@ method as default, but only if no method is specified on the endpoint.
 ## Mapping definition
 ```
 {
-  type: <typeId>,
+  type: <typeId|array>,
   source: <sourcId|array>
   path: <string>,
   attributes: {
@@ -395,9 +395,9 @@ is a useful shorthand for this. I.e. `{title: 'article.headline'}` translates to
 Mappings does, by definition, relate to both sources and datatypes, as the thing
 that binds them together. By stating which `type` and which `source` this
 mapping is intended for, Integreat will connect the dots. In some cases you may
-even be able to reuse a mapping for several sources, in which case you can
-specify an array of source ids on `source`. Each mapping can only be used for
-on datatype, however, but this may change in the future.
+even be able to reuse a mapping for several sources or several types, in which
+case you can specify an array of source ids on `source` or an array of types on
+`type`.
 
 ### Paths
 Mappings, attributes, and relationships all have an optional `path` property,
