@@ -211,7 +211,7 @@ supported datatypes (attributes and relationships):
   id: <string>,
   adapter: <string>,
   auth: <auth id>,
-  handleMeta: <boolean|sourceId>,
+  meta: <type id>,
   baseUri: <uri>,
   endpoints: [
     <endpoint definition>,
@@ -481,18 +481,45 @@ When a qualifier points to an array, the qualifier returns true when at least
 one of the items in the array satisfies the condition.
 
 ### Configuring metadata
-If a source may receive metadata, set the `handleMeta` property to `true` and
-include endpoints matching the `GET_META` and `SET_META` actions.
+If a source may send and receive metadata, set the `meta` property to the id of
+a datatype defining the metadata as attributes.
 
-You may define a `meta` [mapping](#mapping-definition) to define how to map
-metadata from and to the source, or you may let the asterisk type handle it.
-If you define neither, it will be assumed that the source will provide and
-accept metadata in the same format as Integreat:
+```
+{
+  id: 'meta',
+  source: <id of source handling the metadata>,
+  attributes: {
+    <metadataKey>: {
+      type: <string>
+    }
+  }
+}
+```
+
+The `source` property on the type defines the source that holds metadata for
+this type. In some cases the source you're defining metadata for and the source
+handling these metadata will be the same, but it is possible to let a source
+handle other sources' metadata. If you're getting data from a read-only source,
+but need to, for instance, set the `lastSyncedAt` metadata for this store,
+you'll set up a source as a store for this (the store may also hold other types
+of data). Then the read-only store will be defined with `meta='meta'`, and the
+`meta` datatype will have `source='store'`.
+
+It will usually make no sense to specify default values for metadata.
+
+As with other data received and sent to sources, make sure to include endpoints
+for the source that will hold the metadata, matching the `GET_META` and
+`SET_META` actions, or the datatype defining the metadata. The way you set up
+these endpoints will depend on your source.
+
+Also define a [mapping](#mapping-definition) between this datatype and the
+source. You may leave out `attributes` and `relationships` definitions and the
+source will receive the metadata in Integreat's standard format:
 
 ```
 {
   id: <sourceId>,
-  type: 'meta',
+  type: <meta type>,
   createdAt: <date>,
   updatedAt: <date>,
   attributes: {
@@ -501,30 +528,8 @@ accept metadata in the same format as Integreat:
 }
 ```
 
-You also need to define a datatype for the type `meta`, where the metadata is
-defined as attributes. This type is used across all sources, so skip the
-`source` property on the type. It will usually make no sense to specify default
-values for metadata.
-
-```
-{
-  id: 'meta',
-  attributes: {
-    <metadataKey>: {
-      type: <string>,
-      default: <object>
-    }
-  }
-}
-```
-
-A source may also delegate metadata to another source. This is useful, as it
-allows for storing metadata for sources that have no support for it. In this
-case, set the `handleMeta` property to the id of the source handling metadata.
-Any mapping should be defined on the handling source.
-
-Finally, you may set `handleMeta` to `false` to signal that no metadata should
-be stored for this source.
+Finally, if a source will not have metadata, simply set `meta` to null or skip
+it all together.
 
 ## Actions
 Actions are serializable objects that are dispatched to Integreat, and may be
