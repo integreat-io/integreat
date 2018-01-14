@@ -56,7 +56,6 @@ mapping, normalizing, and serializing will happing to and from this format,
 according to the defined datatypes and mapping rules.
 
 Planned changes:
-- Move mappings out of source definitions
 - Extract queue functionality out of Integreat core package
 
 ## Install
@@ -217,6 +216,7 @@ supported datatypes (attributes and relationships):
     <endpoint definition>,
     ...
   ],
+  mappings: <array of map ids>,
   beforeRetrieve: <hook>,
   afterRetrieve: <hook>,
   beforeSend: <hook>,
@@ -228,6 +228,9 @@ Source definitions are passed to Integreat on creation through the `integreat()`
 function. To add sources after creation, pass a source definition to the
 `great.setSource()` method. There is also a `great.removeSource()` method, that
 accepts the id of a source to remove.
+
+See [mapping definition](#mapping-definition) for a description of the
+relationship between sources and mappings, and the `mappings` property.
 
 ### Endpoint definition
 ```
@@ -342,6 +345,7 @@ method as default, but only if no method is specified on the endpoint.
 ## Mapping definition
 ```
 {
+  id: <string>,
   type: <typeId|array>,
   source: <sourcId|array>
   path: <string>,
@@ -398,6 +402,11 @@ mapping is intended for, Integreat will connect the dots. In some cases you may
 even be able to reuse a mapping for several sources or several types, in which
 case you can specify an array of source ids on `source` or an array of types on
 `type`.
+
+Note that it is also possible to define on a source which mappings it will need.
+The source will then reference the mapping `id`. You may combine these two ways
+of connecting a source with mappings, but know that mappings defined by id on
+the source will "win" if there's a conflict.
 
 ### Paths
 Mappings, attributes, and relationships all have an optional `path` property,
