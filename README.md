@@ -50,9 +50,6 @@ only format that will be exposed to the code dispatching the actions. The
 mapping, normalizing, and serializing will happing to and from this format,
 according to the defined datatypes and mapping rules.
 
-Planned changes:
-- Extract queue functionality out of Integreat core package
-
 ## Install
 Requires node v8.
 
@@ -546,17 +543,26 @@ An action looks like this:
 {
   type: <actionType>,
   payload: <payload>,
-  schedule: <schedule object>
+  meta: <meta properties>
 }
 ```
 
 `type` is one [of the action types](#available-actions) that comes with
-Integreat and `payload` are data for this action. `schedule` is a
-[schedule definition](#schedule-definition) (the fully parsed format from
-Later).
+Integreat and `payload` are data for this action.
 
-### Returned from actions
-Retrieving from a source will return an object of the following format:
+The `meta` object is for properties that does not belong in the payload. You may
+add your own properties here, but be aware that some properties are already
+used by Integreat, and more may be added in the future.
+
+Current meta properties reserved by Integreat:
+- `id`: Assigning the action an id. Will be picked up when queueing.
+- `queue`: Signals that an action may be queued. May be `true` or a timestamp
+- `queuedAt`: Timestamp for when the action was pushed to the queue
+- `schedule`: A [schedule definition](#schedule-definition)
+
+### Returned responses from actions
+Retrieving from a source will return an Intgreat response object of the
+following format:
 
 ```
 {
@@ -579,6 +585,10 @@ The `status` will be one of the following status codes:
 On `ok` status, the retrieved data will be set on the `data` property. This will
 usually be mapped data in [Integreat's data format](#the-data-format), but
 essentially, the data format depends on which action it comes from.
+
+When the status is `queued`, the id of the queued action may found in
+`response.data.id`. This is the id assigned by the queue, but it is expected
+that queues will use `action.meta.id` when present.
 
 In case of any other status than `ok` or `queued`, there will be no `data`, and
 instead the `error` property will be set to an error message, usually returned
