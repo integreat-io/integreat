@@ -17,13 +17,8 @@ source, and map their data to defined datatypes.
 
 This is done through adapters, that does all the hard work of communicating with
 the different sources, a definition format, for setting up each source with the
-right adapter and parameters, and a `dispatch()` function to send actions to the
-sources.
-
-Integreat has an internal router that will ensure that the action is directed to
-the right source through action handlers, and will also queue actions when
-appropriate. The queueing features will probably be extracted as a middleware at
-some point, but the functionality will stay the same.
+right adapter and parameters, and a `dispatch()` function that sends actions to
+the right adapters via internal action handlers.
 
 It is possible to set up Integreat to treat one source as a store/buffer for
 other sources, and schedule syncs between the store and the other sources.
@@ -33,14 +28,14 @@ into the `dispatch()` function and offer other ways of reaching data from the
 sources – such as out of the box REST or GraphQL apis.
 
 ```
-            ___________________________
-           |         Integreat         |
-           |                           |
-           |                  |-> Adapter <-> Source
-Action -> Dispatch -> Router -|        |
-           |                  |-> Adapter <-> Source
-           |                           |
-           |___________________________|
+            _________________
+           |    Integreat    |
+           |                 |
+           |        |-> Adapter <-> Source
+Action -> Dispatch -|        |
+           |        |-> Adapter <-> Source
+           |                 |
+           |_________________|
 ```
 
 Data from the sources is retrieved, normalized, and mapped by the adapter, and
@@ -1089,6 +1084,28 @@ Example endpoint uri template for `getExpired` (from a CouchDB source):
 {
   uri: '/_design/fns/_view/expired?include_docs=true{&endkey=timestamp}',
   path: 'rows[].doc'
+}
+```
+
+## Writing middleware
+
+You may write middleware to intercept dispatched actions. This may be useful
+for logging, debugging, and features like action replay. Also, Integreat's
+queue feature is written as a middleware.
+
+A middleware is a function that accepts a `next()` function as only argument,
+and returns an async function that will be called with the action on dispatch.
+The returned function is expected to call `next()` with the action, and return
+the result from the `next()` function, but is not required to do so. The only
+requirement is that the functions returns a valid Integreat response object.
+
+Example implementation of a very simple logger middleware:
+```javascript
+const logger = (next) => async (action) => {
+  console.log('Dispatch was called with action', action)
+  const response = await next(action)
+  console.log('Dispatch completed with response', response)
+  return response
 }
 ```
 
