@@ -14,10 +14,10 @@ module.exports = () => ({
   subscribe (handler) {
     handlerFn = handler
     return 'handle1'
+  },
+  unsubscribe (handle) {
+    if (handle === 'handle1') {
+      handlerFn = null
+    }
   }
-  // unsubscribe (handle) {
-  //   if (handle === 'handle1') {
-  //     handlerFn = null
-  //   }
-  // }
 })

@@ -30,7 +30,8 @@
   },
   "nyc": {
     "exclude": [
-      "**/*-test.js"
+      "**/*-test.js",
+      "tests/helpers/**.js"
     ]
   },
   "repository": {
