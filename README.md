@@ -1119,6 +1119,31 @@ const logger = (next) => async (action) => {
 }
 ```
 
+## Queue
+
+Integreat comes with a generic queue interface at `integreat.queue`, that must
+be setup with a specific queue implementation, for instance
+[`integreat-queue-redis`](https://github.com/integreat-io/integreat-queue-redis).
+
+The queue interface is a middleware, that will intercept any dispatched action
+with `action.meta.queue` set to `true` or a timestamp, and direct it to the
+queue. When the action is later pulled from the queue, it will be dispatched
+again, but without the `action.meta.queue` property.
+
+If a dispatched action has a schedule definition at `action.meta.schedule`, it
+will be queued for the next timestamp defined by the schedule.
+
+To setup Integreat with a queue:
+
+```javascript
+const queue = integreat.queue(redisQueue(options))
+const great = integreat(defs, resources, [queue.fromDispatch])
+queue.setDispatch(great.dispatch)
+```
+
+`queue.fromDispatch` is the middleware, while `queue.setDispatch` must be called
+to tell the queue interface where to dispatch actions pulled from the queue.
+
 ## Debugging
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.
 
