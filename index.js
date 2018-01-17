@@ -13,5 +13,6 @@ integreat.resources = require('./lib/resources')
 
 // Utils
 integreat.action = require('./lib/utils/createAction')
+integreat.queue = require('./lib/queue')
 
 module.exports = integreat
