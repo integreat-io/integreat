@@ -6,7 +6,9 @@ module.exports = {
     username: 'user',
     firstname: 'forename',
     lastname: 'surname',
-    yearOfBirth: 'birthyear'
+    yearOfBirth: 'birthyear',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
   },
   relationships: {
     feeds: 'feeds[]'

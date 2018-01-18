@@ -1,18 +1,13 @@
 import test from 'ava'
 import nock from 'nock'
 import json from '../lib/adapters/json'
-import userType from './datatypes/user'
-import usersSource from './sources/users'
-import usersMapping from './mappings/users-user'
+import defs from './defs'
 
 import integreat from '..'
 
 test('should get error object for unknown entry', async (t) => {
   const adapters = {json}
   const formatters = integreat.formatters()
-  const datatypes = [userType]
-  const sources = [usersSource]
-  const mappings = [usersMapping]
   nock('http://some.api')
     .get('/users/janedoe')
     .reply(404)
@@ -21,7 +16,7 @@ test('should get error object for unknown entry', async (t) => {
     payload: {id: 'janedoe', type: 'user'}
   }
 
-  const great = integreat({sources, datatypes, mappings}, {adapters, formatters})
+  const great = integreat(defs, {adapters, formatters})
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'notfound', ret.error)
