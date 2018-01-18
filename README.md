@@ -323,9 +323,9 @@ parameter `id` from the request. For a full specification of the template
 format, see
 [Integreat URI Template](https://github.com/integreat-io/great-uri-template).
 
-- `path`: A path into the data, specific for this endpoint. It will usually
-point to an array, in which the items can be found, but as mappings may have
-their own `path`, the endpoint path may point to an object from where the
+- `path`: A [path](#paths) into the data, specific for this endpoint. It will
+usually point to an array, in which the items can be found, but as mappings may
+have their own `path`, the endpoint path may point to an object from where the
 different mapping paths point to different arrays.
 
 - `method`: An adapter specific keyword, to tell the adapter which method of
@@ -368,7 +368,7 @@ these are not defined, default values will be used; a UUID for `id` and the
 current timestamp for `createdAt` and `updatedAt`.
 
 Data from the source may come in a different format than what is
-[required by Integreat]((#the-data-format)), so specify [a `path`](#paths) to
+[required by Integreat]((#the-data-format)), so specify a [`path`](#paths) to
 point to the right value for each attribute and relationship. These values will
 be cast to the right datatype after all mapping, transforming, and formatting is
 done. The value of each attribute or relationship should be in a format that can
@@ -434,6 +434,10 @@ The bracket notation offers some possibilities for filtering arrays:
 - `[1:3]` - Matches all items from index 1 to 3, not including 3.
 - `[-1]` - Matches the last item in the array.
 - `[id="ent1"]` - Matches the item with an id equal to `'ent1'`
+
+The bracket notation also offers two options for objects:
+- `[keys]` - Matches all keys on an object
+- `[values]` - Matches all values for the object's keys
 
 When mapping data _to_ the source, the paths are used to reconstruct the data
 format the source expects. Only properties included in the paths will be
@@ -950,7 +954,8 @@ intention is not to replace an existing action handler.
 
 ## Adapters
 Interface:
-- `send({uri, [data], [auth], [method], [headers]})`
+- `prepareEndpoint(endpointOptions, [sourceOptions])`
+- `send(request)`
 - `normalize(data, [path])`
 - `serialize(data, [path])`
 
