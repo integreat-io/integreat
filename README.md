@@ -794,7 +794,7 @@ Example SET_META action:
 Note that the source must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
-#### `DELETE`
+#### `DELETE` / `DEL`
 Delete data for several items from a source. Returned in the `data` property is
 whatever the adapter returns.
 
@@ -837,32 +837,116 @@ endpoint id is supplied as an `endpoint` property of `payload`.
 The method used for the request defaults to `POST` when `data` is set, and
 `DELETE` for the `id` and `type` option, but may be overridden on the endpoint.
 
-#### `RUN`
-This action runs a job with a specified `worker`, giving it a `params` object.
-Everything from there on, is up to the worker, including what will be returned
-as `data` if the worker runs without errors.
+`DEL` is a shorthand for `DELETE`.
 
-Currently, Integreat comes with one worker, named [`sync`](#the-sync-job).
+#### `SYNC`
+The `SYNC` action will retrieve items from one source and set them on another.
+There are different options for how to retrieve items, ranging from a crude
+retrieval of all items on every sync, to a more fine grained approach where only
+items that have been updated since last sync, will be synced.
 
-Example RUN action:
-```javascript
+The simplest action definition would look like this, where all items would be
+retrieved from the source and set on the target:
+```
 {
-  type: 'RUN',
+  type: 'SYNC',
   payload: {
-    worker: 'sync',
-    params: {
-      from: 'entries',
-      to: 'store',
-      type: 'entry',
-      retrieve: 'all'
-    }
+    from: <sourceId>,
+    to: <targetid>,
+    type: <itemType>,
+    retrieve: 'all'
   }
 }
 ```
 
-In the example above, the `sync` job is run, with the `params` it needs to sync
-from one source to another. The format of the `params` object varies from worker
-to worker.
+The action will dispatch a 'GET' action right away, and then immediately
+dispatch a `SET_META` action to update the `lastSyncedAt` date on the source.
+The actions to update the target is added to the queue.
+
+To retrieve only new items, change the `retrieve` property to `updated`. In
+this case, the action will get the `lastSyncedAt` from the `from` source, and
+get only newer items, by passing it the `updatedAfter` param. The action will
+also filter out older items, in case the source does not support `updatedAfter`.
+
+Two other payload props might come in handy: The `paramsFrom` and `paramsTo`.
+Each may be set to an object with params, that will be included in the action to
+get from the `from` source and set to the `to` source, respectively. This allows
+you to set params on these actions through the `SYNC` action.
+
+#### `EXPIRE`
+With an endpoint for getting expired items, the `EXPIRE` action will fetch
+these and delete them from the source. The endpoint may include param for the
+current time, either as microseconds since Januar 1, 1970 UTC with param
+`{timestamp}` or as the current time in the extended ISO 8601 format
+(`YYYY-MM-DDThh:mm:ss.sssZ`) with the `{isodate}` param. To get a time in the
+future instead, set `msFromNow` to a positive number of milliseconds to add
+to the current time, or set `msFromNow` to a negative number to a time in the
+past.
+
+Here's a typical action definition:
+```
+{
+  type: 'EXPIRE',
+  payload: {
+    source: 'store',
+    type: 'entry',
+    endpoint: 'getExpired',
+    msFromNow: 0
+  }
+}
+```
+
+This will get and map items of type `entry` from the `getExpired` endpoint on
+the source `store`, and delete them from the same source. Only an endpoint
+specified with an id is allowed, as the consequence of delete all items received
+from the wrong endpoint could be quite severe.
+
+Example endpoint uri template for `getExpired` (from a CouchDB source):
+```javascript
+{
+  uri: '/_design/fns/_view/expired?include_docs=true{&endkey=timestamp}',
+  path: 'rows[].doc'
+}
+```
+
+### Custom actions
+
+You may write your own action handlers to handle dispatched actions just like
+the built-in types.
+
+Action handler signature:
+```javascript
+function (payload, {dispatch, sources, datatypes, getSource}) { ... }
+```
+
+An action handler may dispatch new actions with the `dispatch()` method. These
+will be passed through the middleware chain just like any other action, so it's
+for instance possible to queue actions from an action handler by setting
+`action.meta.queue = true`.
+
+The `sources` and `datatypes` arguments provide all sources and datatypes set on
+objects with their ids as keys.
+
+Finally, `getSource()` is a convenience method that will return the relevant
+source object when you provide it with a type. An optional second argument may
+be set to a source id, in which case the source object with this id will be
+returned.
+
+Custom actions are supplied to an Integreat instance on setup, by providing an
+object with the key set to the action type your handler will be responsible for,
+and the handler function as the value.
+
+```javascript
+const actions = {
+  `MYACTION`: function (payload, {dispatch}) { ... }
+}
+const great = integreat(defs, {datatypes, sources, mappings, actions})
+```
+
+Note that if a custom action handler is added with an action type that is
+already use by one of Integreat's built-in action handlers, the custom handler
+will have precedence. So be careful when you choose an action type, if your
+intention is not to replace an existing action handler.
 
 ## Adapters
 Interface:
@@ -952,31 +1036,11 @@ Default formats:
 - `integer`
 - `not`
 
-## Running jobs
-The jobs interface accepts id of a `worker` and a `params` object passed to the
-worker. There are a couple of workers included in Integreat, like `sync` and
-`deleteExpired`. A job may be dispatched as a `RUN` action, with the job definition as
-the payload.
-
-To schedule jobs, [schedule definitions](#schedule-definition) may be passed to
-the `schedule` method of the Integreat instance. Each schedule consists of some
-properties for defining the schedule, and an action to be dispatched.
-
-### Job definition
-```
-{
-  worker: <workerId>,
-  params: {
-    ...
-  }
-}
-```
-
 ### Schedule definition
 ```
 {
   schedule: <schedule>,
-  job: <job definition>,
+  action: <action definition>,
 }
 ```
 
@@ -1008,13 +1072,13 @@ weeks start on Sunday.
 See Later's documentation on
 [time periods](http://bunkat.github.io/later/time-periods.html) for more.
 
-Example schedule running a job at 2 am every weekday:
+Example schedule running an action at 2 am every weekday:
 ```javascript
 {
   schedule: {d: [2,3,4,5,6], h: [2]},
-  job: {
-    worker: 'sync',
-    params: {
+  action: {
+    type: 'SYNC',
+    payload: {
       from: 'src1',
       to: 'src2',
       type: 'entry'
@@ -1023,79 +1087,7 @@ Example schedule running a job at 2 am every weekday:
 }
 ```
 
-To run a job every hour, use `{m: [0]}` or simply `'every hour'`.
-
-### The sync job
-The `sync` job will retrieve items from one source and set them on another. There
-are different options for how to retrieve items, ranging from a crude retrieval
-of all items on every sync, to a more fine grained approach where only items
-that have been updated since last sync, will be synced.
-
-The simplest job definition would look like this, where all items would be
-retrieved from the source and set on the target:
-```
-{
-  worker: 'sync',
-  params: {
-    from: <sourceId>,
-    to: <targetid>,
-    type: <itemType>,
-    retrieve: 'all'
-  }
-}
-```
-
-The job will dispatch a 'GET' action right away, and then immediately dispatch
-a `SET_META` action to update the `lastSyncedAt` date on the source. The
-actions to update the target is added to the queue, and may be handled by other
-workers, depending on your setup.
-
-To retrieve only new items, change the `retrieve` property to `updated`. In
-this case, the job will get the `lastSyncedAt` from the `from` source, and get
-only newer items, by passing it the `updatedAfter` param. The job will also
-filter out older items, in case the source does not support `updatedAfter`.
-
-Two other params to the sync job might come in handy: The `paramsFrom` and
-`paramsTo`. Each may be set to an object with params, that will be included in
-the action to get from the `from` source and set to the `to` source,
-respectively. This allows you to set params on these actions through the sync
-job action.
-
-### The deleteExpired job
-With an endpoint for getting expired items, the `deleteExpired` job will fetch
-these and delete them from the source. The endpoint may include param for the
-current time, either as microseconds since Januar 1, 1970 UTC with param
-`{timestamp}` or as the current time in the extended ISO 8601 format
-(`YYYY-MM-DDThh:mm:ss.sssZ`) with the `{isodate}` param. To get a time in the
-future instead, set `msFromNow` to a positive number of milliseconds to add
-to the current time, or set `msFromNow` to a negative number to a time in the
-past.
-
-Here's a typical job definition:
-```
-{
-  worker: 'deleteExpired',
-  params: {
-    source: 'store',
-    type: 'entry',
-    endpoint: 'getExpired',
-    msFromNow: 0
-  }
-}
-```
-
-This will get and map items of type `entry` from the `getExpired` endpoint on
-the source `store`, and delete them from the same source. There is no default
-`endpoint` for this worker, as the consequence of delete all items received
-from the wrong endpoint could be quite severe.
-
-Example endpoint uri template for `getExpired` (from a CouchDB source):
-```
-{
-  uri: '/_design/fns/_view/expired?include_docs=true{&endkey=timestamp}',
-  path: 'rows[].doc'
-}
-```
+To run an action every hour, use `{m: [0]}` or simply `'every hour'`.
 
 ## Writing middleware
 
