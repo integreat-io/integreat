@@ -652,6 +652,10 @@ is fetched, if it exists.
 The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
 
+By default, the returned data will be cast with default values, but set
+`useDefaults: false` on the action payload to get only values mapped from the
+source data.
+
 #### `GET_RAW`
 Gets any data returned from the source, using the given `uri` in the `payload`.
 Returned in the `data` property is whatever is returned from the adapter,
@@ -743,8 +747,8 @@ Note that the source must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
 #### `SET`
-Send data to a source. Returned in the `data` property is whatever the adapter
-returns.
+Send data to a source. Returned in the `data` property is the data that was sent
+to the source – casted, but not mapped to the source.
 
 The data to send is provided in the payload `data` property, and must given as
 an array of objects in [Integreat's data format](#the-data-format).
@@ -769,6 +773,10 @@ may be removed in future versions of Integreat.
 
 The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
+
+By default, only fields mapped from the action data will be sent to the source,
+but set `useDefaults: true` to cast the data going to the source with default
+values. This will also affect the data coming back from the action.
 
 #### `SET_META`
 Set metadata on a source. Returned in the `data` property is whatever the
