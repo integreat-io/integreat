@@ -9,11 +9,11 @@ test('should get error object for unknown entry', async (t) => {
   const adapters = {json}
   const formatters = integreat.formatters()
   nock('http://some.api')
-    .get('/users/janedoe')
+    .get('/entries/ent0')
     .reply(404)
   const action = {
     type: 'GET',
-    payload: {id: 'janedoe', type: 'user'}
+    payload: {id: 'ent0', type: 'entry'}
   }
 
   const great = integreat(defs, {adapters, formatters})

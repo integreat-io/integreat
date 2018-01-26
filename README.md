@@ -6,26 +6,28 @@ An integration layer for node.js.
 [![Coverage Status](https://coveralls.io/repos/github/integreat-io/integreat/badge.svg?branch=master)](https://coveralls.io/github/integreat-io/integreat?branch=master)
 [![Dependency Status](https://dependencyci.com/github/integreat-io/integreat/badge)](https://dependencyci.com/github/integreat-io/integreat)
 
-**Note:** This project is still in an early stage. We encourage trying it out
-and experimenting with it, and we highly appreciate feedback, but know that
-anything might change. At this time, we welcome input on the overall thoughts
-and interface, but we're not ready for pull requests yet.
+**Note:** We're still in an early stage, although some parts are approaching a
+stable state. We encourage trying it out and experimenting with Integreat, and
+we highly appreciate feedback, but know that anything might change.
 
 The basic idea of Integreat is to make it easy to define a set of data sources
-and expose them through one interface, to abstract away the specifics of each
-source, and map their data to defined datatypes.
+and expose them through a well defined interface, to abstract away the specifics
+of each source, and map their data to defined datatypes.
 
-This is done through adapters, that does all the hard work of communicating with
-the different sources, a definition format, for setting up each source with the
-right adapter and parameters, and a `dispatch()` function that sends actions to
-the right adapters via internal action handlers.
+This is done through:
+- adapters, that does all the hard work of communicating with the different
+  sources
+- a definition format, for setting up each source with the right adapter and
+  parameters
+- a `dispatch()` function that sends actions to the right adapters via internal
+  action handlers
 
 It is possible to set up Integreat to treat one source as a store/buffer for
 other sources, and schedule syncs between the store and the other sources.
 
 Finally, there will be different interface modules available, that will plug
 into the `dispatch()` function and offer other ways of reaching data from the
-sources – such as out of the box REST or GraphQL apis.
+sources – such as out of the box REST or GraphQL APSs.
 
 ```
             _________________
@@ -42,13 +44,21 @@ Data from the sources is retrieved, normalized, and mapped by the adapter, and
 returned asynchronously back to the code that initiated the action. Actions for
 fetching data will be executed right away.
 
-Actions that updates data on sources will reversely map and serialize the data
-before it is sent to a source. These actions may be queued or scheduled.
+Actions that update data on sources will reversely map and serialize the data
+before it is sent to a source. These actions may be queued or scheduled, by
+setting up Integreat with the supplied queue middleware.
 
 Integreat comes with a [standard data format](#the-data-format), which is the
 only format that will be exposed to the code dispatching the actions. The
 mapping, normalizing, and serializing will happing to and from this format,
 according to the defined datatypes and mapping rules.
+
+To deal with security and permissions, Integreat has a built-in concept of an
+ident. Other authentication schemes may be mapped to Integreat's ident scheme,
+to provide data security from a source to another source or to the dispatched
+action. A ground principle is that nothing that enters Integreat from an
+authenticated source, will leave Integreat unauthenticated. What this means,
+though, depends on how you define your sources.
 
 ## Install
 Requires node v8.
@@ -111,7 +121,8 @@ returning the following json data:
 ## Datatype definitions
 To do anything with Integreat, you need to define one or more datatypes. They
 describe the data you expected to get out of Integreat. A type will be
-associated with a source, which is used to retrieve data for the type.
+associated with a source, which is used to retrieve data for the type, unless
+another source is specified.
 
 ```
 {
@@ -130,7 +141,8 @@ associated with a source, which is used to retrieve data for the type.
       default: <object>,
       query: <query params>
     }
-  }
+  },
+  auth: <auth def>
 }
 ```
 
@@ -187,6 +199,35 @@ Example datatype with a query definition:
 In this case, the `articles` relationship on the `user` datatype may be fetched by
 querying for all items of type `article`, where the `author` field equals the
 `id` of the `user` item in question.
+
+### Authorization
+
+Set the `access` property to enforce permission checking on the datatype. This
+applies to any source that provides this datatype.
+
+The simplest access type `auth`, which means that anyone can do anything with
+the data of this datatype, as long as they are authenticated.
+
+Example of a datatype with an access scheme:
+```javascript
+{
+  id: 'entry',
+  attributes: {...},
+  relationships: {...},
+  access: 'auth'
+}
+```
+
+To signal that the datatype really has no need for authorization, use `all`.
+This is not the same as not setting the `auth` prop, as `all` will override
+Integreat's principle of not letting authorized data out of Integreat without
+an authorization scheme. In a way, you can say that `all` is an authorization
+scheme, but it allows anybody to access the data, even the unauthenticated.
+
+The last of the simpler access types, is `none`, which will simly give no one
+access, no matter who they are.
+
+For a more fine-grained scheme, set `access` to an access definition.
 
 ## Source definitions
 Source definitions are at the core of Integreat, as they define the sources to
@@ -532,6 +573,176 @@ source will receive the metadata in Integreat's standard format:
 Finally, if a source will not have metadata, simply set `meta` to null or skip
 it all together.
 
+## Idents and security schemes
+An ident in Integreat is basically an id unique to one participant in the
+security scheme. It is represented by an object, that may also have other
+properties to describe the ident's permissions, or to make it possible to map
+identities in other systems, to an Integreat ident.
+
+Example ident:
+```javascript
+{
+  id: 'ident1',
+  tokens: ['facebook|12345', 'twitter|23456'],
+  roles: ['admin']
+}
+```
+
+The actual value of the `id` is irrelevant to Integreat, as long as it is a
+string with A-Z, a-z, 0-9, \_, and -, and it's unique within one Integreat
+configuration. This means that mapped value from sources may be used as ident
+ids, but be careful to set this up right.
+
+`tokens` are other values that may identify this ident. E.g., an api that uses
+Twitter OAuth to identify it's users, may provide the `'twitter|23456'` token in
+the example above, which will be replaced with this ident when it enters
+Integreat.
+
+`roles` are an example of how idents are given permissions. The roles are
+custom defined per setup, and may be mapped to roles from other systems. When
+setting the auth scheme for a datasource, roles may be used to require that
+the request to get data of this datatype, an ident with the role `admin` must
+be provided.
+
+Idents may be supplied with an action on the `meta.ident` property. It's up to
+the code dispatching an action to get hold of the properties of an ident in a
+secure way. Once Integreat receives an ident, it will assume this is accurate
+information and uphold its part of the security agreement and only return data
+and execute actions that the ident have permissions for.
+
+### Access schemes
+An access scheme is defined with properties telling Integreat which rights to
+require when performing actions with a given datatype. It may be set across all
+actions, or be specified per action.
+
+An access definition for letting all authorized idents to GET, but requiring the
+role `admin` to SET:
+
+```javascript
+{
+  id: 'scheme1',
+  actions: {
+    GET: {access: 'auth'},
+    SET: {role: 'admin'}
+  }
+}
+```
+
+To use this scheme, set the definition object directly on the `access` property,
+of an datatype, or set `access: 'scheme1'` on the relevant datatype(s). The `id`
+is only needed in the latter case.
+
+**Note:** Referring to access schemes by id is not implemented yet.
+
+For schemes that treat every action the same, set the props on the scheme object
+directly. This will also define a default for actions not defined specifically.
+
+In the example above, no one will be allowed to DELETE. A better scheme to
+achieve what we aimed for above, could be:
+
+```javascript
+{
+  id: 'scheme2',
+  role: 'admin',
+  actions: {
+    GET: {access: 'auth'}
+  }
+}
+```
+
+In this example, all actions are allowed for admins, but anyone else that is
+authenticated may GET.
+
+Available scheme props:
+- `role` - Authorize only idents with this role. May be an array of strings
+  (array is not implemented).
+- `ident` - Authorize only idents with this precise id. May be an array (array
+  is not implemented).
+- `roleFromField` - Specify the field name (attribute or relationship) on
+  the datatype, that will hold the role value. When authorizing a data item with
+  an ident, the field value on the item must match a role on the ident.
+- `identFromField` - The same as `roleFromField`, but for an ident id.
+- `access` - Set to `all`, `auth`, or `none`, to give access to everybody, only
+  the authenticated, or no one at all. This is also available in short form –
+  use this string instead of a access scheme object.
+
+Another example, intended for authorizing only the ident matching an account:
+```javascript
+{
+  id: 'accountScheme',
+  identFromField: 'id'
+}
+```
+
+When used with e.g. an `account` datatype, given that the id of the account is
+used as ident id, only an ident with the same id as the account, will have
+access to it.
+
+### Persisting idents
+A security scheme with no way of storing the permissions given to each ident,
+is of little value. (The only case where this would suffice, is when every
+relevant source provided the same ident id, and authorization where done on the
+ident id only.)
+
+Unsurprisingly, Integreat uses datatypes and sources to store idents. In the
+definition object passed to `integreat()`, set the id of the datatype to use
+with idents, on `ident.datatype`.
+
+In addition, you may define what fields (attributes or relationships) will
+match the different props on an ident:
+
+```javascript
+{
+  ...,
+  ident: {
+    datatype: 'account',
+    props: {
+      id: 'id',
+      roles: 'groups',
+      tokens: 'tokens'
+    }
+  }
+}
+```
+
+When the prop and the field has the same name, it may be omitted, though it
+doesn't hurt to specify it anyway – for clarity. The datasource still have the
+final word, as any field that is not defined on the datatype, will not survive
+casting.
+
+Note that in the example above, the `id` of the data will be used as the ident
+`id`. When the id is not suited for this, you will need another field on the
+datatype that may act as the ident id. In cases where you need to transform the
+id from the data in some way, this must be set up as a separate field and the
+mapping definition will dictate how to transform it. In most cases, the `id`
+will do, though.
+
+The `source` specified on the datatype, will be where the ident are stored,
+although that's not a precise way of putting it. The ident is never stored, but
+a data item of the specified datatype is. The point is just that the ident
+system will get the relevant data item and get the relevant fields from it. In
+the same way, when storing an ident, a data item of the specified type is
+updated with props from the ident – and then sent to the source.
+
+For some setups, this requires certain endpoints to be defined on the source.
+To match a token with an ident, the source must have an endpoint that matches
+actions like this:
+
+```javascript
+{
+  type: 'GET',
+  payload: {
+    type: 'account',
+    params: {tokens: 'twitter|23456'}
+  }
+}
+```
+
+In this case, `account` is the datatype mapped to idents, and the `tokens`
+property on the ident is mapped to the `tokens` field on the datatype.
+
+**Note**: Ident persistence is not implemented yet.
+
 ## Actions
 Actions are serializable objects that are dispatched to Integreat, and may be
 queued when appropriate. It is a key point that they are serializable, as they
@@ -559,6 +770,7 @@ Current meta properties reserved by Integreat:
 - `queue`: Signals that an action may be queued. May be `true` or a timestamp
 - `queuedAt`: Timestamp for when the action was pushed to the queue
 - `schedule`: A [schedule definition](#schedule-definition)
+- `ident`: The ident to authorize the action with
 
 ### Returned responses from actions
 Retrieving from a source will return an Intgreat response object of the
@@ -1009,8 +1221,8 @@ normalized. The `request` object consists of `uri`, `method`, and `data`.
 Called just after data has been sent to a source, with the `response` containing
 `status`, `data`, and any `error` returned from the source.
 
-## Authentication
-Definition format:
+## Source authentication
+This definition format is used to authenticate with a source:
 ```
 {
   id: <id>,
@@ -1039,11 +1251,10 @@ following interface:
 - Item `filter(item)`
 - Attribute `format(value)`
 
-Default formats:
-- `date`
-- `float`
-- `integer`
-- `not`
+Built in formatters:
+- `not` - inverts a boolean value going from or to a source
+- `hash` - converts any string(ish) value to a SHA256 hash in base64 (with the
+  url-unfriendly characters +, /, and = replaced with -, \_, and ~)
 
 ### Schedule definition
 ```

@@ -9,5 +9,11 @@ module.exports = {
   },
   relationships: {
     feeds: 'feed'
+  },
+  access: {
+    access: 'auth',
+    actions: {
+      SET: {identFromField: 'id'}
+    }
   }
 }

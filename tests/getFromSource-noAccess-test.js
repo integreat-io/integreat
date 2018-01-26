@@ -18,31 +18,13 @@ test('should get one entry from source', async (t) => {
     type: 'GET',
     payload: {id: 'johnf', type: 'user'}
   }
-  const expected = {
-    id: 'johnf',
-    type: 'user',
-    attributes: {
-      username: 'johnf',
-      firstname: 'John',
-      lastname: 'Fjon',
-      yearOfBirth: 1987,
-      createdAt: new Date(createdAt),
-      updatedAt: new Date(updatedAt)
-    },
-    relationships: {
-      feeds: [
-        {id: 'news', type: 'feed'},
-        {id: 'social', type: 'feed'}
-      ]
-    }
-  }
 
   const great = integreat(defs, {adapters, formatters})
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.true(Array.isArray(ret.data))
-  t.deepEqual(ret.data[0], expected)
+  t.is(ret.status, 'noaccess', ret.error)
+  t.is(typeof ret.error, 'string')
+  t.falsy(ret.data)
 
   nock.restore()
 })
