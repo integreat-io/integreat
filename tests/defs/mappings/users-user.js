@@ -8,7 +8,9 @@ module.exports = {
     lastname: 'surname',
     yearOfBirth: 'birthyear',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    roles: 'roles[]',
+    tokens: 'tokens[]'
   },
   relationships: {
     feeds: 'feeds[]'

@@ -5,7 +5,9 @@ module.exports = {
     username: 'string',
     firstname: 'string',
     lastname: 'string',
-    yearOfBirth: 'integer'
+    yearOfBirth: 'integer',
+    roles: 'string[]',
+    tokens: 'string[]'
   },
   relationships: {
     feeds: 'feed'

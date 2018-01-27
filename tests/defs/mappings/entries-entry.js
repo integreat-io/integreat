@@ -7,6 +7,7 @@ module.exports = {
     text: 'body'
   },
   relationships: {
-    author: 'authorId'
+    author: 'authorId',
+    sections: 'sections[]'
   }
 }

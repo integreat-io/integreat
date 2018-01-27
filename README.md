@@ -695,7 +695,7 @@ match the different props on an ident:
 {
   ...,
   ident: {
-    datatype: 'account',
+    type: 'account',
     props: {
       id: 'id',
       roles: 'groups',

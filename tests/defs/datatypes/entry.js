@@ -6,7 +6,8 @@ module.exports = {
     text: 'string'
   },
   relationships: {
-    author: 'user'
+    author: 'user',
+    sections: 'section'
   },
   access: {
     access: 'all',

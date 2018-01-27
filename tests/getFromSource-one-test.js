@@ -12,7 +12,7 @@ test('should get one entry from source', async (t) => {
   const adapters = {json}
   const formatters = integreat.formatters()
   nock('http://some.api')
-    .get('/users/johnf')
+    .get('/users/johnf').times(2)
     .reply(200, {data: {...johnfData, createdAt, updatedAt}})
   const action = {
     type: 'GET',
@@ -28,7 +28,9 @@ test('should get one entry from source', async (t) => {
       lastname: 'Fjon',
       yearOfBirth: 1987,
       createdAt: new Date(createdAt),
-      updatedAt: new Date(updatedAt)
+      updatedAt: new Date(updatedAt),
+      roles: ['editor'],
+      tokens: ['twitter|23456', 'facebook|12345']
     },
     relationships: {
       feeds: [

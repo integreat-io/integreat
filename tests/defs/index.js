@@ -10,5 +10,8 @@ module.exports = {
   mappings: [
     require('./mappings/entries-entry'),
     require('./mappings/users-user')
-  ]
+  ],
+  ident: {
+    type: 'user'
+  }
 }
