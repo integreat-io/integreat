@@ -741,7 +741,18 @@ actions like this:
 In this case, `account` is the datatype mapped to idents, and the `tokens`
 property on the ident is mapped to the `tokens` field on the datatype.
 
-**Note**: Ident persistence is not implemented yet.
+To make Integreat complete idents on actions with the persisted data, set it up
+with the `completeIdent` middleware:
+
+```javascript
+const great = integreat(defs, resources, [integreat.middleware.completeIdent])
+```
+
+This middleware will intercept any action with `meta.ident` and replace it with
+the ident item loaded from the designated datatype. If the ident has an `id`,
+the ident with this id is loaded, otherwise a `withToken` is used to load the
+ident with the specified token. If no ident is found, the original ident is
+kept.
 
 ## Actions
 Actions are serializable objects that are dispatched to Integreat, and may be

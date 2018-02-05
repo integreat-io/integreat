@@ -1,6 +1,7 @@
 import test from 'ava'
 import nock from 'nock'
 import json from '../lib/adapters/json'
+import completeIdent from '../lib/middleware/completeIdent'
 import defs from './defs'
 import johnfData from './data/userJohnf'
 
@@ -18,10 +19,10 @@ test('should get with ident token', async (t) => {
   const action = {
     type: 'GET',
     payload: {id: 'johnf', type: 'user'},
-    meta: {ident: {token: 'twitter|23456'}}
+    meta: {ident: {withToken: 'twitter|23456'}}
   }
 
-  const great = integreat(defs, {adapters, formatters})
+  const great = integreat(defs, {adapters, formatters}, [completeIdent])
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

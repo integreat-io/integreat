@@ -10,6 +10,9 @@ integreat.transformers = require('./lib/transformers')
 
 integreat.resources = require('./lib/resources')
 
+// Middleware
+integreat.middleware = require('./lib/middleware')
+
 // Utils
 integreat.action = require('./lib/utils/createAction')
 integreat.queue = require('./lib/queue')
