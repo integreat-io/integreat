@@ -1,10 +1,10 @@
 import test from 'ava'
 import nock from 'nock'
-import json from '../lib/adapters/json'
-import defs from './defs'
-import johnfData from './data/userJohnf'
+import json from '../../lib/adapters/json'
+import defs from '../helpers/defs'
+import johnfData from '../helpers/data/userJohnf'
 
-import integreat from '..'
+import integreat from '../..'
 
 test('should get one entry from source', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'

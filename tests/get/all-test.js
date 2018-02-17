@@ -1,10 +1,10 @@
 import test from 'ava'
 import nock from 'nock'
-import json from '../lib/adapters/json'
-import defs from './defs'
-import entriesData from './data/entries'
+import json from '../../lib/adapters/json'
+import defs from '../helpers/defs'
+import entriesData from '../helpers/data/entries'
 
-import integreat from '..'
+import integreat from '../..'
 
 test('should get all entries from source', async (t) => {
   const adapters = {json}
