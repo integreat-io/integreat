@@ -47,6 +47,7 @@
     "npm": ">= 5.6.0"
   },
   "dependencies": {
+    "@sindresorhus/is": "^0.7.0",
     "debug": "^3.1.0",
     "got": "^8.0.1",
     "great-uri-template": "^0.1.2",

@@ -10,7 +10,6 @@ test('should get one entry from source', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
   const adapters = {json}
-  const formatters = integreat.formatters()
   nock('http://some.api')
     .get('/users/johnf').times(2)
     .reply(200, {data: {...johnfData, createdAt, updatedAt}})
@@ -19,7 +18,7 @@ test('should get one entry from source', async (t) => {
     payload: {id: 'johnf', type: 'user'},
     meta: {ident: {id: 'johnf'}}
   }
-  const expected = {
+  const expected = [{
     id: 'johnf',
     type: 'user',
     attributes: {
@@ -38,14 +37,13 @@ test('should get one entry from source', async (t) => {
         {id: 'social', type: 'feed'}
       ]
     }
-  }
+  }]
 
-  const great = integreat(defs, {adapters, formatters})
+  const great = integreat(defs, {adapters})
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-  t.true(Array.isArray(ret.data))
-  t.deepEqual(ret.data[0], expected)
+  t.deepEqual(ret.data, expected)
 
   nock.restore()
 })

@@ -4,7 +4,9 @@ module.exports = {
   attributes: {
     id: 'key',
     title: {path: 'heading', default: 'An entry'},
-    text: 'body'
+    text: 'body',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
   },
   relationships: {
     author: 'authorId',
