@@ -13,9 +13,6 @@ module.exports = {
     feeds: 'feed'
   },
   access: {
-    access: 'auth',
-    actions: {
-      SET: {identFromField: 'id'}
-    }
+    access: {identFromField: 'id'}
   }
 }

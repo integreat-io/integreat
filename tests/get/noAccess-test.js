@@ -32,7 +32,7 @@ test('should respond with noaccess when no ident', async (t) => {
   t.falsy(ret.data)
 })
 
-test.failing('should respond with only authorized data', async (t) => {
+test('should respond with only authorized data', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
   const adapters = {json}
@@ -51,14 +51,14 @@ test.failing('should respond with only authorized data', async (t) => {
   const expectedAccess = {
     status: 'partially',
     ident: {id: 'johnf'},
-    scheme: {ident: 'johnf'}
+    scheme: 'data'
   }
 
   const great = integreat(defs, {adapters, formatters})
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.access, expectedAccess)
   t.is(ret.data.length, 1)
   t.is(ret.data[0].id, 'johnf')
-  t.deepEqual(ret.access, expectedAccess)
 })
