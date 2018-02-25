@@ -249,11 +249,7 @@ supported datatypes (attributes and relationships):
     <endpoint definition>,
     ...
   ],
-  mappings: <array of map ids>,
-  beforeRetrieve: <hook>,
-  afterRetrieve: <hook>,
-  beforeSend: <hook>,
-  afterSend: <hook>
+  mappings: <array of map ids>
 }
 ```
 
@@ -1167,46 +1163,6 @@ Available adapters:
 
 There's also a package for using the json adapter with a CouchDB/Cloudant db:
 [`integreat-source-couchdb`](https://github.com/kjellmorten/integreat-source-couchdb).
-
-## Hooks
-Hooks are functions that will be called on specific occasions, as a chance to
-modify the inner workings of Integreat. You may for instance set up a
-`beforeSend` hook, to alter the data sent to a source.
-
-A hook function will be passed either a `request` or a `response` object, and
-any changes to these will have an effect. All hooks will receive a `resources`
-object as the second argument, which will hold the `source` in question.
-
-Any return values from hook functions will by disregarded.
-
-Available hooks:
-
-### `beforeRetrieve (request, resources)`
-Called just before data is retrieved from a source. The `request` object will
-consist of `uri` and `path`.
-
-### `afterRetrieve (response, resources)`
-Called just after data has been retrieved from a source, but before it is
-serialized and mapped. The `response` object consists of `status`, `data`, and
-any `error` returned from the source.
-
-### `afterNormalize (response, resources)`
-Called just after data from a source has been normalized, but before it has
-been mapped. The `response` object consists of `status`, `data`, and any
-`error`.
-
-### `beforeSerialize (request, resources)`
-Called just before the data going to a source is serialized, but after it has
-been mapped. The `request` object consists of `uri`, `method`, `path`, and
-`data`.
-
-### `beforeSend (request, resources)`
-Called just before data is sent to a source, after it has been mapped and
-normalized. The `request` object consists of `uri`, `method`, and `data`.
-
-### `afterSend (response, resources)`
-Called just after data has been sent to a source, with the `response` containing
-`status`, `data`, and any `error` returned from the source.
 
 ## Source authentication
 This definition format is used to authenticate with a source:
