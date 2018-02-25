@@ -879,30 +879,6 @@ By default, the returned data will be cast with default values, but set
 `useDefaults: false` on the action payload to get only values mapped from the
 source data.
 
-#### `GET_RAW`
-Gets any data returned from the source, using the given `uri` in the `payload`.
-Returned in the `data` property is whatever is returned from the adapter,
-without any mapping at all.
-
-Note that the data is not normalized, so there is no guaranty that the data
-will even be a JavaScript object. In most cases, [`GET_UNMAPPED`](#get_unmapped)
-is a better choice, as it will normalize the data first. In fact, `GET_RAW` may
-be removed in future versions of Integreat.
-
-Example GET_RAW action:
-```javascript
-{
-  type: 'GET_RAW',
-  payload: {
-    uri: 'http://api.com/entries',
-    source: 'entries'
-  }
-}
-```
-
-In the example above, the source is specified by the payload `source` property.
-GET_RAW does not support inferring source from type.
-
 #### `GET_UNMAPPED`
 Get data from a source without applying the mapping rules. Returned in the
 `data` property is an array of normalized objects in the format retrieved from
