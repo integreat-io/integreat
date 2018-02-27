@@ -22,7 +22,7 @@ test('should get with ident token', async (t) => {
     meta: {ident: {withToken: 'twitter|23456'}}
   }
 
-  const great = integreat(defs, {adapters, formatters}, [completeIdent])
+  const great = integreat(defs, {adapters, formatters, middlewares: [completeIdent]})
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

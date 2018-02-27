@@ -52,7 +52,7 @@ test('should set new entry', async (t) => {
     }
   }]
 
-  const great = integreat(defs, {adapters}, [completeIdent])
+  const great = integreat(defs, {adapters, middlewares: [completeIdent]})
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
