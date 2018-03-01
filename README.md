@@ -1154,15 +1154,13 @@ intention is not to replace an existing action handler.
 ## Adapters
 Interface:
 - `prepareEndpoint(endpointOptions, [sourceOptions])`
-- `send(request)`
-- `normalize(data, [path])`
-- `serialize(data, [path])`
+- `async send(request)`
+- `async normalize(data, request)`
+- `async serialize(data, request)`
 
 Available adapters:
 - `json` (built in)
-
-There's also a package for using the json adapter with a CouchDB/Cloudant db:
-[`integreat-source-couchdb`](https://github.com/kjellmorten/integreat-source-couchdb).
+- [`couchdb`](https://github.com/integreat-io/integreat-adapter-couchdb)
 
 ## Source authentication
 This definition format is used to authenticate with a source:
