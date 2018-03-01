@@ -12,10 +12,10 @@ test('should get with ident token', async (t) => {
   const formatters = integreat.formatters()
   nock('http://some.api')
     .get('/users')
-      .query({tokens: 'twitter|23456'})
-      .reply(200, {data: {...johnfData}})
+    .query({tokens: 'twitter|23456'})
+    .reply(200, {data: {...johnfData}})
     .get('/users/johnf')
-      .reply(200, {data: {...johnfData}})
+    .reply(200, {data: {...johnfData}})
   const action = {
     type: 'GET',
     payload: {id: 'johnf', type: 'user'},

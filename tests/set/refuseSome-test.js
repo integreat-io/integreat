@@ -30,7 +30,7 @@ test('should refuse to set entries where ident has no access', async (t) => {
   const adapters = {json}
   nock('http://some.api')
     .post('/users/')
-      .reply(201, {ok: true})
+    .reply(201, {ok: true})
   const action = {
     type: 'SET',
     payload: {type: 'user', data: [johnfItem, bettyItem]},

@@ -28,9 +28,9 @@ test('should set new entry', async (t) => {
   const adapters = {json}
   nock('http://some.api')
     .get('/users/johnf')
-      .reply(200, {data: {...johnfData}})
+    .reply(200, {data: {...johnfData}})
     .put('/entries/ent1')
-      .reply(201, {id: 'ent1', ok: true, rev: '1-12345'})
+    .reply(201, {id: 'ent1', ok: true, rev: '1-12345'})
   const action = {
     type: 'SET',
     payload: {type: 'entry', data: entry1Item},
