@@ -52,6 +52,7 @@
     "got": "^8.2.0",
     "great-uri-template": "^0.1.2",
     "later": "^1.2.0",
+    "npm": "^5.7.1",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
