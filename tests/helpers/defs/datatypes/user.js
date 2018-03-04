@@ -13,6 +13,6 @@ module.exports = {
     feeds: 'feed'
   },
   access: {
-    access: {identFromField: 'id'}
+    identFromField: 'id'
   }
 }

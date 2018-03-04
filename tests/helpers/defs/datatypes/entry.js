@@ -10,7 +10,7 @@ module.exports = {
     sections: 'section'
   },
   access: {
-    access: 'all',
+    allow: 'all',
     actions: {
       SET: {role: 'editor'}
     }

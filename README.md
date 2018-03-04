@@ -5,6 +5,7 @@ An integration layer for node.js.
 [![Build Status](https://travis-ci.org/integreat-io/integreat.svg?branch=master)](https://travis-ci.org/integreat-io/integreat)
 [![Coverage Status](https://coveralls.io/repos/github/integreat-io/integreat/badge.svg?branch=master)](https://coveralls.io/github/integreat-io/integreat?branch=master)
 [![Dependency Status](https://dependencyci.com/github/integreat-io/integreat/badge)](https://dependencyci.com/github/integreat-io/integreat)
+[![Maintainability](https://api.codeclimate.com/v1/badges/a5bd9841a47ff9f74577/maintainability)](https://codeclimate.com/github/integreat-io/integreat/maintainability)
 
 **Note:** We're still in an early stage, although some parts are approaching a
 stable state. We encourage trying it out and experimenting with Integreat, and
@@ -61,7 +62,7 @@ authenticated source, will leave Integreat unauthenticated. What this means,
 though, depends on how you define your sources.
 
 ## Install
-Requires node v8.
+Requires node v8.6.
 
 Install from npm:
 
@@ -208,7 +209,7 @@ applies to any source that provides this datatype.
 The simplest access type `auth`, which means that anyone can do anything with
 the data of this datatype, as long as they are authenticated.
 
-Example of a datatype with an access scheme:
+Example of a datatype with an access rule:
 ```javascript
 {
   id: 'entry',
@@ -221,13 +222,13 @@ Example of a datatype with an access scheme:
 To signal that the datatype really has no need for authorization, use `all`.
 This is not the same as not setting the `auth` prop, as `all` will override
 Integreat's principle of not letting authorized data out of Integreat without
-an authorization scheme. In a way, you can say that `all` is an authorization
-scheme, but it allows anybody to access the data, even the unauthenticated.
+an authorization rule. In a way, you can say that `all` is an authorization
+rule, but it allows anybody to access the data, even the unauthenticated.
 
 The last of the simpler access types, is `none`, which will simly give no one
 access, no matter who they are.
 
-For a more fine-grained scheme, set `access` to an access definition.
+For a more fine-grained rules, set `access` to an access definition.
 
 ## Source definitions
 Source definitions are at the core of Integreat, as they define the sources to
@@ -569,7 +570,7 @@ source will receive the metadata in Integreat's standard format:
 Finally, if a source will not have metadata, simply set `meta` to null or skip
 it all together.
 
-## Idents and security schemes
+## Idents and security rules
 An ident in Integreat is basically an id unique to one participant in the
 security scheme. It is represented by an object, that may also have other
 properties to describe the ident's permissions, or to make it possible to map
@@ -596,7 +597,7 @@ Integreat.
 
 `roles` are an example of how idents are given permissions. The roles are
 custom defined per setup, and may be mapped to roles from other systems. When
-setting the auth scheme for a datasource, roles may be used to require that
+setting the auth rules for a datasource, roles may be used to require that
 the request to get data of this datatype, an ident with the role `admin` must
 be provided.
 
@@ -606,8 +607,8 @@ secure way. Once Integreat receives an ident, it will assume this is accurate
 information and uphold its part of the security agreement and only return data
 and execute actions that the ident have permissions for.
 
-### Access schemes
-An access scheme is defined with properties telling Integreat which rights to
+### Access rules
+Access rules are defined with properties telling Integreat which rights to
 require when performing actions with a given datatype. It may be set across all
 actions, or be specified per action.
 
@@ -616,32 +617,32 @@ role `admin` to SET:
 
 ```javascript
 {
-  id: 'scheme1',
+  id: 'access1',
   actions: {
-    GET: {access: 'auth'},
+    GET: {allow: 'auth'},
     SET: {role: 'admin'}
   }
 }
 ```
 
-To use this scheme, set the definition object directly on the `access` property,
-of an datatype, or set `access: 'scheme1'` on the relevant datatype(s). The `id`
+To use these access rules, set the definition object directly on the `access` property,
+of an datatype, or set `access: 'access1'` on the relevant datatype(s). The `id`
 is only needed in the latter case.
 
-**Note:** Referring to access schemes by id is not implemented yet.
+**Note:** Referring to access rules by id is not implemented yet.
 
-For schemes that treat every action the same, set the props on the scheme object
+For rules that treat every action the same, set the props on the access object
 directly. This will also define a default for actions not defined specifically.
 
-In the example above, no one will be allowed to DELETE. A better scheme to
+In the example above, no one will be allowed to DELETE. A better way to
 achieve what we aimed for above, could be:
 
 ```javascript
 {
-  id: 'scheme2',
+  id: 'access2',
   role: 'admin',
   actions: {
-    GET: {access: 'auth'}
+    GET: {allow: 'auth'}
   }
 }
 ```
@@ -649,7 +650,7 @@ achieve what we aimed for above, could be:
 In this example, all actions are allowed for admins, but anyone else that is
 authenticated may GET.
 
-Available scheme props:
+Available rule props:
 - `role` - Authorize only idents with this role. May be an array of strings
   (array is not implemented).
 - `ident` - Authorize only idents with this precise id. May be an array (array
@@ -658,14 +659,14 @@ Available scheme props:
   the datatype, that will hold the role value. When authorizing a data item with
   an ident, the field value on the item must match a role on the ident.
 - `identFromField` - The same as `roleFromField`, but for an ident id.
-- `access` - Set to `all`, `auth`, or `none`, to give access to everybody, only
+- `allow` - Set to `all`, `auth`, or `none`, to give access to everybody, only
   the authenticated, or no one at all. This is also available in short form –
-  use this string instead of a access scheme object.
+  use this string instead of a access rule object.
 
 Another example, intended for authorizing only the ident matching an account:
 ```javascript
 {
-  id: 'accountScheme',
+  id: 'accountAccess',
   identFromField: 'id'
 }
 ```
