@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
   "license": "ISC",
@@ -44,15 +44,14 @@
   "homepage": "https://github.com/integreat-io/integreat#readme",
   "engines": {
     "node": ">= 8.6",
-    "npm": ">= 5.6.0"
+    "npm": ">= 5.6"
   },
   "dependencies": {
     "@sindresorhus/is": "^0.7.0",
     "debug": "^3.1.0",
-    "got": "^8.2.0",
+    "got": "^8.3.0",
     "great-uri-template": "^0.1.2",
     "later": "^1.2.0",
-    "npm": "^5.7.1",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
@@ -61,8 +60,8 @@
     "coveralls": "^3.0.0",
     "dotenv": "^5.0.1",
     "nock": "^9.2.3",
-    "nyc": "^11.4.1",
-    "sinon": "^4.4.2",
-    "standard": "^11.0.0"
+    "nyc": "^11.6.0",
+    "sinon": "^4.4.9",
+    "standard": "^11.0.1"
   }
 }
