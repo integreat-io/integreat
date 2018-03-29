@@ -261,6 +261,12 @@ accepts the id of a source to remove.
 See [mapping definition](#mapping-definition) for a description of the
 relationship between sources and mappings, and the `mappings` property.
 
+The `auth` property should normally be set to the id of an
+[auth definition](#source-authentication) if the source requires authentication.
+In cases where the source is authenticated by other means, e.g. by including
+username and password in the uri, set the `auth` property to `true` to signal
+that this is an authenticated source.
+
 ### Endpoint definition
 ```
 {
