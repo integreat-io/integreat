@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
   "license": "ISC",
