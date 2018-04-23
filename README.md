@@ -1,4 +1,5 @@
-# Integreat
+# ![Integreat](media/logo.png)
+
 An integration layer for node.js.
 
 [![npm Version](https://img.shields.io/npm/v/integreat.svg)](https://www.npmjs.com/package/integreat)
