@@ -47,21 +47,22 @@
     "npm": ">= 5.6"
   },
   "dependencies": {
-    "@sindresorhus/is": "^0.7.0",
+    "@sindresorhus/is": "^0.9.0",
     "debug": "^3.1.0",
-    "got": "^8.3.0",
+    "got": "^8.3.1",
     "great-uri-template": "^0.1.2",
     "later": "^1.2.0",
+    "map-transform": "^0.1.0",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
     "ava": "^0.25.0",
-    "babel-preset-env": "^1.6.1",
-    "coveralls": "^3.0.0",
-    "dotenv": "^5.0.1",
-    "nock": "^9.2.3",
-    "nyc": "^11.6.0",
-    "sinon": "^4.4.9",
+    "babel-preset-env": "^1.7.0",
+    "coveralls": "^3.0.1",
+    "dotenv": "^6.0.0",
+    "nock": "^9.3.2",
+    "nyc": "^12.0.2",
+    "sinon": "^5.1.1",
     "standard": "^11.0.1"
   }
 }
