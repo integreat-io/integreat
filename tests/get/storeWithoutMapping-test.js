@@ -8,18 +8,18 @@ const defs = {
   datatypes: [
     require('../helpers/defs/datatypes/entry')
   ],
-  sources: [
-    require('../helpers/defs/sources/entries')
+  services: [
+    require('../helpers/defs/services/entries')
   ],
   mappings: [
     {
       type: 'entry',
-      source: 'entries'
+      service: 'entries'
     }
   ]
 }
 
-test('should get one entry from source', async (t) => {
+test('should get one entry from service', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
   const adapters = {json}

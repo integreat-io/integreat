@@ -23,7 +23,7 @@
       "lib/**/*-test.js",
       "tests/**/*-test.js"
     ],
-    "source": [
+    "service": [
       "./index.js",
       "lib/**/!(*-test).js"
     ]

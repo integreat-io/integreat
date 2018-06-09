@@ -1,6 +1,6 @@
 module.exports = {
   type: 'user',
-  source: 'users',
+  service: 'users',
   attributes: {
     id: 'user',
     username: 'user',

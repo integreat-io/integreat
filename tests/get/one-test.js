@@ -6,7 +6,7 @@ import johnfData from '../helpers/data/userJohnf'
 
 import integreat from '../..'
 
-test('should get one entry from source', async (t) => {
+test('should get one entry from service', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
   const adapters = {json}

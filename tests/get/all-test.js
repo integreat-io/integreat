@@ -6,7 +6,7 @@ import entriesData from '../helpers/data/entries'
 
 import integreat from '../..'
 
-test('should get all entries from source', async (t) => {
+test('should get all entries from service', async (t) => {
   const adapters = {json}
   const formatters = integreat.formatters()
   nock('http://some.api')

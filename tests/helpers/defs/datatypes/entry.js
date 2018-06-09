@@ -1,6 +1,6 @@
 module.exports = {
   id: 'entry',
-  source: 'entries',
+  service: 'entries',
   attributes: {
     title: 'string',
     text: 'string'

@@ -3,9 +3,9 @@ module.exports = {
     require('./datatypes/entry'),
     require('./datatypes/user')
   ],
-  sources: [
-    require('./sources/entries'),
-    require('./sources/users')
+  services: [
+    require('./services/entries'),
+    require('./services/users')
   ],
   mappings: [
     require('./mappings/entries-entry'),

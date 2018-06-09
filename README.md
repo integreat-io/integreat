@@ -11,42 +11,42 @@ An integration layer for node.js.
 stable state. We encourage trying it out and experimenting with Integreat, and
 we highly appreciate feedback, but know that anything might change.
 
-The basic idea of Integreat is to make it easy to define a set of data sources
+The basic idea of Integreat is to make it easy to define a set of data services
 and expose them through a well defined interface, to abstract away the specifics
-of each source, and map their data to defined datatypes.
+of each service, and map their data to defined datatypes.
 
 This is done through:
 - adapters, that does all the hard work of communicating with the different
-  sources
-- a definition format, for setting up each source with the right adapter and
+  services
+- a definition format, for setting up each service with the right adapter and
   parameters
 - a `dispatch()` function that sends actions to the right adapters via internal
   action handlers
 
-It is possible to set up Integreat to treat one source as a store/buffer for
-other sources, and schedule syncs between the store and the other sources.
+It is possible to set up Integreat to treat one service as a store/buffer for
+other services, and schedule syncs between the store and the other services.
 
 Finally, there will be different interface modules available, that will plug
 into the `dispatch()` function and offer other ways of reaching data from the
-sources – such as out of the box REST or GraphQL APSs.
+services – such as out of the box REST or GraphQL APSs.
 
 ```
             _________________
            |    Integreat    |
            |                 |
-           |        |-> Adapter <-> Source
+           |        |-> Adapter <-> Service
 Action -> Dispatch -|        |
-           |        |-> Adapter <-> Source
+           |        |-> Adapter <-> Service
            |                 |
            |_________________|
 ```
 
-Data from the sources is retrieved, normalized, and mapped by the adapter, and
+Data from the services is retrieved, normalized, and mapped by the adapter, and
 returned asynchronously back to the code that initiated the action. Actions for
 fetching data will be executed right away.
 
-Actions that update data on sources will reversely map and serialize the data
-before it is sent to a source. These actions may be queued or scheduled, by
+Actions that update data on services will reversely map and serialize the data
+before it is sent to a service. These actions may be queued or scheduled, by
 setting up Integreat with the supplied queue middleware.
 
 Integreat comes with a [standard data format](#the-data-format), which is the
@@ -56,10 +56,10 @@ according to the defined datatypes and mapping rules.
 
 To deal with security and permissions, Integreat has a built-in concept of an
 ident. Other authentication schemes may be mapped to Integreat's ident scheme,
-to provide data security from a source to another source or to the dispatched
+to provide data security from a service to another service or to the dispatched
 action. A ground principle is that nothing that enters Integreat from an
-authenticated source, will leave Integreat unauthenticated. What this means,
-though, depends on how you define your sources.
+authenticated service, will leave Integreat unauthenticated. What this means,
+though, depends on how you define your services.
 
 ## Install
 Requires node v8.6.
@@ -80,11 +80,11 @@ const adapters = integreat.adapters('json')
 const datatypes = [{
   id: 'message',
   plural: 'messages',
-  source: 'helloworld',
+  service: 'helloworld',
   attributes: {text: 'string'}
 }]
 
-const sources = [{
+const services = [{
   id: 'helloworld',
   adapter: 'json',
   endpoints: [
@@ -95,12 +95,12 @@ const sources = [{
 const mappings = [
   {
     type: 'message',
-    source: 'helloworld',
+    service: 'helloworld',
     attributes: {text: {path: 'message'}}
   }
 ]
 
-const great = integreat({datatypes, sources}, {adapters})
+const great = integreat({datatypes, services}, {adapters})
 const action = {type: 'GET', payload: {type: 'message'}}
 
 great.dispatch(action).then((data) => console.log(data.attributes.text))
@@ -122,14 +122,14 @@ returning the following json data:
 ## Datatype definitions
 To do anything with Integreat, you need to define one or more datatypes. They
 describe the data you expected to get out of Integreat. A type will be
-associated with a source, which is used to retrieve data for the type, unless
-another source is specified.
+associated with a service, which is used to retrieve data for the type, unless
+another service is specified.
 
 ```
 {
   id: <string>,
   plural: <string>,
-  source: <sourceId>,
+  service: <serviceId>,
   attributes: {
     <attrId>: {
       type: <string>,
@@ -163,7 +163,7 @@ The `type` defaults to `string`. Other options are `integer`, `float`,
 `boolean`, and `date`. Data from Integreat will be cast to corresponding
 JavaScript types.
 
-The `default` value will be used when a data source does not provide this value.
+The `default` value will be used when a data service does not provide this value.
 Default is `null`.
 
 ### Relationships
@@ -178,7 +178,7 @@ way as for attributes, but note that this value should be a valid id for an item
 of the type the relationship refers to.
 
 Finally, relationships have a `query` property, which is used to retrieve items
-for this relationship. In many cases, a source may not have data that maps to
+for this relationship. In many cases, a service may not have data that maps to
 id(s) for a relationship directly, and this is the typical use case for this
 property.
 
@@ -204,7 +204,7 @@ querying for all items of type `article`, where the `author` field equals the
 ### Authorization
 
 Set the `access` property to enforce permission checking on the datatype. This
-applies to any source that provides this datatype.
+applies to any service that provides this datatype.
 
 The simplest access type `auth`, which means that anyone can do anything with
 the data of this datatype, as long as they are authenticated.
@@ -230,13 +230,13 @@ access, no matter who they are.
 
 For a more fine-grained rules, set `access` to an access definition.
 
-## Source definitions
-Source definitions are at the core of Integreat, as they define the sources to
+## Service definitions
+Service definitions are at the core of Integreat, as they define the services to
 fetch data from, how to map this data to a set of items to make available
-through Integreat's data api, and how to send data back to the source.
+through Integreat's data api, and how to send data back to the service.
 
-A source definition object defines the adapter, any authentication method, the
-endpoints for fetching from and sending to the source, and mappings to the
+A service definition object defines the adapter, any authentication method, the
+endpoints for fetching from and sending to the service, and mappings to the
 supported datatypes (attributes and relationships):
 
 ```
@@ -254,19 +254,19 @@ supported datatypes (attributes and relationships):
 }
 ```
 
-Source definitions are passed to Integreat on creation through the `integreat()`
-function. To add sources after creation, pass a source definition to the
-`great.setSource()` method. There is also a `great.removeSource()` method, that
-accepts the id of a source to remove.
+Service definitions are passed to Integreat on creation through the `integreat()`
+function. To add services after creation, pass a service definition to the
+`great.setService()` method. There is also a `great.removeService()` method, that
+accepts the id of a service to remove.
 
 See [mapping definition](#mapping-definition) for a description of the
-relationship between sources and mappings, and the `mappings` property.
+relationship between services and mappings, and the `mappings` property.
 
 The `auth` property should normally be set to the id of an
-[auth definition](#source-authentication) if the source requires authentication.
-In cases where the source is authenticated by other means, e.g. by including
+[auth definition](#service-authentication) if the service requires authentication.
+In cases where the service is authenticated by other means, e.g. by including
 username and password in the uri, set the `auth` property to `true` to signal
-that this is an authenticated source.
+that this is an authenticated service.
 
 ### Endpoint definition
 ```
@@ -320,7 +320,7 @@ properties are treated as strings.
 An endpoint is only used for requests where all the required parameters are
 present.
 
-Example source definition with endpoint parameters:
+Example service definition with endpoint parameters:
 ```
 {
   id: 'entries',
@@ -379,7 +379,7 @@ method as default, but only if no method is specified on the endpoint.
 {
   id: <string>,
   type: <typeId|array>,
-  source: <sourcId|array>
+  service: <sourcId|array>
   path: <string>,
   attributes: {
     <attrKey>: {
@@ -407,7 +407,7 @@ the `attributes` property, but will be moved to the item on mapping. If any of
 these are not defined, default values will be used; a UUID for `id` and the
 current timestamp for `createdAt` and `updatedAt`.
 
-Data from the source may come in a different format than what is
+Data from the service may come in a different format than what is
 [required by Integreat]((#the-data-format)), so specify a [`path`](#paths) to
 point to the right value for each attribute and relationship. These values will
 be cast to the right datatype after all mapping, transforming, and formatting is
@@ -419,8 +419,8 @@ Integreat will cast it with `parseInt()`.
 
 The `param` property is an alternative to specifying a `path`, and refers to a
 param passed to the `retreive` method. Instead of retrieving a value from the
-source data, an attribute or relationship with `param` will get its value from
-the corresponding parameter. When sending data _to_ a source, this
+service data, an attribute or relationship with `param` will get its value from
+the corresponding parameter. When sending data _to_ a service, this
 attribute/relationship will be disregarded.
 
 Most of the time, your `attributes` and `relationships` definitions will only
@@ -428,26 +428,26 @@ have the `path` property, so providing the `path` string instead of an object
 is a useful shorthand for this. I.e. `{title: 'article.headline'}` translates to
 `{title: {path: 'article.headline'}}`.
 
-Mappings does, by definition, relate to both sources and datatypes, as the thing
-that binds them together. By stating which `type` and which `source` this
+Mappings does, by definition, relate to both services and datatypes, as the thing
+that binds them together. By stating which `type` and which `service` this
 mapping is intended for, Integreat will connect the dots. In some cases you may
-even be able to reuse a mapping for several sources or several types, in which
-case you can specify an array of source ids on `source` or an array of types on
+even be able to reuse a mapping for several services or several types, in which
+case you can specify an array of service ids on `service` or an array of types on
 `type`.
 
-Note that it is also possible to define on a source which mappings it will need.
-The source will then reference the mapping `id`. You may combine these two ways
-of connecting a source with mappings, but know that mappings defined by id on
-the source will "win" if there's a conflict.
+Note that it is also possible to define on a service which mappings it will need.
+The service will then reference the mapping `id`. You may combine these two ways
+of connecting a service with mappings, but know that mappings defined by id on
+the service will "win" if there's a conflict.
 
 ### Paths
 Mappings, attributes, and relationships all have an optional `path` property,
-for specifying what part of the data from the source to return in each case.
+for specifying what part of the data from the service to return in each case.
 (Endpoints may also have a `path` property, but not all adapters support this.)
 
 The `path` properties use a dot notation with array brackets.
 
-For example, with this data returned from the source ...
+For example, with this data returned from the service ...
 ```javascript
 const data = {
   sections: [
@@ -479,8 +479,8 @@ The bracket notation also offers two options for objects:
 - `[keys]` - Matches all keys on an object
 - `[values]` - Matches all values for the object's keys
 
-When mapping data _to_ the source, the paths are used to reconstruct the data
-format the source expects. Only properties included in the paths will be
+When mapping data _to_ the service, the paths are used to reconstruct the data
+format the service expects. Only properties included in the paths will be
 created, so any additional properties must be set by a transform function or the
 adapter.
 
@@ -492,8 +492,8 @@ the first one does not match any properties in the data, the next path is tried,
 and so on.
 
 ### Qualifiers
-When a source returns data for several datatypes, Integreat needs a way to
-recognize which datatype to use for each item in the data. For some sources,
+When a service returns data for several datatypes, Integreat needs a way to
+recognize which datatype to use for each item in the data. For some services,
 the different datatypes may be find on different paths in the data, so
 specifying different paths on each mapping is sufficient. But when all items
 are returned in one array, for instance, you need to specify qualifiers for
@@ -526,13 +526,13 @@ When a qualifier points to an array, the qualifier returns true when at least
 one of the items in the array satisfies the condition.
 
 ### Configuring metadata
-If a source may send and receive metadata, set the `meta` property to the id of
+If a service may send and receive metadata, set the `meta` property to the id of
 a datatype defining the metadata as attributes.
 
 ```
 {
   id: 'meta',
-  source: <id of source handling the metadata>,
+  service: <id of service handling the metadata>,
   attributes: {
     <metadataKey>: {
       type: <string>
@@ -541,29 +541,29 @@ a datatype defining the metadata as attributes.
 }
 ```
 
-The `source` property on the type defines the source that holds metadata for
-this type. In some cases the source you're defining metadata for and the source
-handling these metadata will be the same, but it is possible to let a source
-handle other sources' metadata. If you're getting data from a read-only source,
+The `service` property on the type defines the service that holds metadata for
+this type. In some cases the service you're defining metadata for and the service
+handling these metadata will be the same, but it is possible to let a service
+handle other services' metadata. If you're getting data from a read-only service,
 but need to, for instance, set the `lastSyncedAt` metadata for this store,
-you'll set up a source as a store for this (the store may also hold other types
+you'll set up a service as a store for this (the store may also hold other types
 of data). Then the read-only store will be defined with `meta='meta'`, and the
-`meta` datatype will have `source='store'`.
+`meta` datatype will have `service='store'`.
 
 It will usually make no sense to specify default values for metadata.
 
-As with other data received and sent to sources, make sure to include endpoints
-for the source that will hold the metadata, matching the `GET_META` and
+As with other data received and sent to services, make sure to include endpoints
+for the service that will hold the metadata, matching the `GET_META` and
 `SET_META` actions, or the datatype defining the metadata. The way you set up
-these endpoints will depend on your source.
+these endpoints will depend on your service.
 
 Also define a [mapping](#mapping-definition) between this datatype and the
-source. You may leave out `attributes` and `relationships` definitions and the
-source will receive the metadata in Integreat's standard format:
+service. You may leave out `attributes` and `relationships` definitions and the
+service will receive the metadata in Integreat's standard format:
 
 ```
 {
-  id: <sourceId>,
+  id: <serviceId>,
   type: <meta type>,
   createdAt: <date>,
   updatedAt: <date>,
@@ -573,7 +573,7 @@ source will receive the metadata in Integreat's standard format:
 }
 ```
 
-Finally, if a source will not have metadata, simply set `meta` to null or skip
+Finally, if a service will not have metadata, simply set `meta` to null or skip
 it all together.
 
 ## Idents and security rules
@@ -593,7 +593,7 @@ Example ident:
 
 The actual value of the `id` is irrelevant to Integreat, as long as it is a
 string with A-Z, a-z, 0-9, \_, and -, and it's unique within one Integreat
-configuration. This means that mapped value from sources may be used as ident
+configuration. This means that mapped value from services may be used as ident
 ids, but be careful to set this up right.
 
 `tokens` are other values that may identify this ident. E.g., an api that uses
@@ -603,7 +603,7 @@ Integreat.
 
 `roles` are an example of how idents are given permissions. The roles are
 custom defined per setup, and may be mapped to roles from other systems. When
-setting the auth rules for a datasource, roles may be used to require that
+setting the auth rules for a service, roles may be used to require that
 the request to get data of this datatype, an ident with the role `admin` must
 be provided.
 
@@ -684,10 +684,10 @@ access to it.
 ### Persisting idents
 A security scheme with no way of storing the permissions given to each ident,
 is of little value. (The only case where this would suffice, is when every
-relevant source provided the same ident id, and authorization where done on the
+relevant service provided the same ident id, and authorization where done on the
 ident id only.)
 
-Unsurprisingly, Integreat uses datatypes and sources to store idents. In the
+Unsurprisingly, Integreat uses datatypes and services to store idents. In the
 definition object passed to `integreat()`, set the id of the datatype to use
 with idents, on `ident.datatype`.
 
@@ -709,7 +709,7 @@ match the different props on an ident:
 ```
 
 When the prop and the field has the same name, it may be omitted, though it
-doesn't hurt to specify it anyway – for clarity. The datasource still have the
+doesn't hurt to specify it anyway – for clarity. The service still have the
 final word, as any field that is not defined on the datatype, will not survive
 casting.
 
@@ -720,15 +720,15 @@ id from the data in some way, this must be set up as a separate field and the
 mapping definition will dictate how to transform it. In most cases, the `id`
 will do, though.
 
-The `source` specified on the datatype, will be where the ident are stored,
+The `service` specified on the datatype, will be where the ident are stored,
 although that's not a precise way of putting it. The ident is never stored, but
 a data item of the specified datatype is. The point is just that the ident
 system will get the relevant data item and get the relevant fields from it. In
 the same way, when storing an ident, a data item of the specified type is
-updated with props from the ident – and then sent to the source.
+updated with props from the ident – and then sent to the service.
 
-For some setups, this requires certain endpoints to be defined on the source.
-To match a token with an ident, the source must have an endpoint that matches
+For some setups, this requires certain endpoints to be defined on the service.
+To match a token with an ident, the service must have an endpoint that matches
 actions like this:
 
 ```javascript
@@ -787,7 +787,7 @@ Current meta properties reserved by Integreat:
 - `ident`: The ident to authorize the action with
 
 ### Returned responses from actions
-Retrieving from a source will return an Intgreat response object of the
+Retrieving from a service will return an Intgreat response object of the
 following format:
 
 ```
@@ -856,7 +856,7 @@ still be treated in the same way as now.
 ### Available actions
 
 #### `GET`
-Get items from a source. Returned in the `data` property is an array of mapped
+Get items from a service. Returned in the `data` property is an array of mapped
 object, in [Integreat's data format](#the-data-format).
 
 Example GET action:
@@ -869,8 +869,8 @@ Example GET action:
 }
 ```
 
-In the example above, the source is inferred from the payload `type` property.
-Override this by supplying the id of a source as a `source` property.
+In the example above, the service is inferred from the payload `type` property.
+Override this by supplying the id of a service as a `service` property.
 
 By providing an `id` property on `payload`, the item with the given id and type
 is fetched, if it exists.
@@ -880,19 +880,19 @@ endpoint id is supplied as an `endpoint` property of `payload`.
 
 By default, the returned data will be cast with default values, but set
 `useDefaults: false` on the action payload to get only values mapped from the
-source data.
+service data.
 
 #### `GET_UNMAPPED`
-Get data from a source without applying the mapping rules. Returned in the
+Get data from a service without applying the mapping rules. Returned in the
 `data` property is an array of normalized objects in the format retrieved from
-the source. The data is not mapped in any way, and the only thing guarantied, is
+the service. The data is not mapped in any way, and the only thing guarantied, is
 that this is a JavaScript object.
 
 This action does not require a `type`, unlike the `GET` action, as it won't
 lookup mappings for any given type. The only reason to include a `type` in the
 payload, would be if the endpoint uri requires a `type` parameter.
 
-Furthermore, a `source` property is required, as there is no `type` to infer
+Furthermore, a `service` property is required, as there is no `type` to infer
 from.
 
 Example GET action:
@@ -900,7 +900,7 @@ Example GET action:
 {
   type: 'GET_UNMAPPED',
   payload: {
-    source: 'store',
+    service: 'store',
     endpoint: 'get'
   }
 }
@@ -910,18 +910,18 @@ The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
 
 #### `GET_META`
-Get metadata for a source. Normal endpoint matching is applied, but it's
+Get metadata for a service. Normal endpoint matching is applied, but it's
 common practice to define an endpoint matching the `GET_META` action.
 
-The action returns an object with a `data` property, which contains the `source`
-(the source id) and `meta` object with the metadata set as properties.
+The action returns an object with a `data` property, which contains the `service`
+(the service id) and `meta` object with the metadata set as properties.
 
 Example GET_META action:
 ```javascript
 {
   type: 'GET_META',
   payload: {
-    source: 'entries',
+    service: 'entries',
     keys: ['lastSyncedAt', 'status']
   }
 }
@@ -932,7 +932,7 @@ This will return data in the following form:
 {
   status: 'ok',
   data: {
-    source: 'entries',
+    service: 'entries',
     meta: {
       lastSyncedAt: '2017-08-19T17:40:31.861Z',
       status: 'ready'
@@ -941,16 +941,16 @@ This will return data in the following form:
 }
 ```
 
-If the action has no `keys`, all metadata set on the source will be retrieved.
+If the action has no `keys`, all metadata set on the service will be retrieved.
 The `keys` property may be an array of keys to retrieve several in one request,
 or a single key.
 
-Note that the source must be set up to handle metadata. See
+Note that the service must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
 #### `SET`
-Send data to a source. Returned in the `data` property is the data that was sent
-to the source – casted, but not mapped to the source.
+Send data to a service. Returned in the `data` property is the data that was sent
+to the service – casted, but not mapped to the service.
 
 The data to send is provided in the payload `data` property, and must given as
 an array of objects in [Integreat's data format](#the-data-format).
@@ -960,7 +960,7 @@ Example SET action:
 {
   type: 'SET',
   payload: {
-    source: 'store',
+    service: 'store',
     data: [
       {id: 'ent1', type: 'entry'},
       {id: 'ent5', type: 'entry'}
@@ -969,23 +969,23 @@ Example SET action:
 }
 ```
 
-In the example above, the `source` is specified in the payload. Specifying a
-`type` to infer the source from is also possible, but not recommended, as it
+In the example above, the `service` is specified in the payload. Specifying a
+`type` to infer the service from is also possible, but not recommended, as it
 may be removed in future versions of Integreat.
 
 The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
 
-By default, only fields mapped from the action data will be sent to the source,
-but set `useDefaults: true` to cast the data going to the source with default
+By default, only fields mapped from the action data will be sent to the service,
+but set `useDefaults: true` to cast the data going to the service with default
 values. This will also affect the data coming back from the action.
 
 #### `SET_META`
-Set metadata on a source. Returned in the `data` property is whatever the
+Set metadata on a service. Returned in the `data` property is whatever the
 adapter returns. Normal endpoint matching is used, but it's common practice to
 set up an endpoint matching the `SET_META` action.
 
-The payload should contain the `source` to get metadata for (the source id), and
+The payload should contain the `service` to get metadata for (the service id), and
 a `meta` object, with all metadata to set as properties.
 
 Example SET_META action:
@@ -993,7 +993,7 @@ Example SET_META action:
 {
   type: 'SET_META',
   payload: {
-    source: 'entries',
+    service: 'entries',
     meta: {
       lastSyncedAt: Date.now()
     }
@@ -1001,11 +1001,11 @@ Example SET_META action:
 }
 ```
 
-Note that the source must be set up to handle metadata. See
+Note that the service must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
 #### `DELETE` / `DEL`
-Delete data for several items from a source. Returned in the `data` property is
+Delete data for several items from a service. Returned in the `data` property is
 whatever the adapter returns.
 
 The data for the items to delete, is provided in the payload `data` property,
@@ -1018,7 +1018,7 @@ Example DELETE action:
 {
   type: 'DELETE',
   payload: {
-    source: 'store',
+    service: 'store',
     data: [
       {id: 'ent1', type: 'entry'},
       {id: 'ent5', type: 'entry'}
@@ -1027,8 +1027,8 @@ Example DELETE action:
 }
 ```
 
-In the example above, the `source` is specified in the payload. Specifying a
-`type` to infer the source from is also possible.
+In the example above, the `service` is specified in the payload. Specifying a
+`type` to infer the service from is also possible.
 
 Example DELETE action for one item:
 ```javascript
@@ -1050,18 +1050,18 @@ The method used for the request defaults to `POST` when `data` is set, and
 `DEL` is a shorthand for `DELETE`.
 
 #### `SYNC`
-The `SYNC` action will retrieve items from one source and set them on another.
+The `SYNC` action will retrieve items from one service and set them on another.
 There are different options for how to retrieve items, ranging from a crude
 retrieval of all items on every sync, to a more fine grained approach where only
 items that have been updated since last sync, will be synced.
 
 The simplest action definition would look like this, where all items would be
-retrieved from the source and set on the target:
+retrieved from the service and set on the target:
 ```
 {
   type: 'SYNC',
   payload: {
-    from: <sourceId>,
+    from: <serviceId>,
     to: <targetid>,
     type: <itemType>,
     retrieve: 'all'
@@ -1070,22 +1070,22 @@ retrieved from the source and set on the target:
 ```
 
 The action will dispatch a 'GET' action right away, and then immediately
-dispatch a `SET_META` action to update the `lastSyncedAt` date on the source.
+dispatch a `SET_META` action to update the `lastSyncedAt` date on the service.
 The actions to update the target is added to the queue.
 
 To retrieve only new items, change the `retrieve` property to `updated`. In
-this case, the action will get the `lastSyncedAt` from the `from` source, and
+this case, the action will get the `lastSyncedAt` from the `from` service, and
 get only newer items, by passing it the `updatedAfter` param. The action will
-also filter out older items, in case the source does not support `updatedAfter`.
+also filter out older items, in case the service does not support `updatedAfter`.
 
 Two other payload props might come in handy: The `paramsFrom` and `paramsTo`.
 Each may be set to an object with params, that will be included in the action to
-get from the `from` source and set to the `to` source, respectively. This allows
+get from the `from` service and set to the `to` service, respectively. This allows
 you to set params on these actions through the `SYNC` action.
 
 #### `EXPIRE`
 With an endpoint for getting expired items, the `EXPIRE` action will fetch
-these and delete them from the source. The endpoint may include param for the
+these and delete them from the service. The endpoint may include param for the
 current time, either as microseconds since Januar 1, 1970 UTC with param
 `{timestamp}` or as the current time in the extended ISO 8601 format
 (`YYYY-MM-DDThh:mm:ss.sssZ`) with the `{isodate}` param. To get a time in the
@@ -1098,7 +1098,7 @@ Here's a typical action definition:
 {
   type: 'EXPIRE',
   payload: {
-    source: 'store',
+    service: 'store',
     type: 'entry',
     endpoint: 'getExpired',
     msFromNow: 0
@@ -1107,11 +1107,11 @@ Here's a typical action definition:
 ```
 
 This will get and map items of type `entry` from the `getExpired` endpoint on
-the source `store`, and delete them from the same source. Only an endpoint
+the service `store`, and delete them from the same service. Only an endpoint
 specified with an id is allowed, as the consequence of delete all items received
 from the wrong endpoint could be quite severe.
 
-Example endpoint uri template for `getExpired` (from a CouchDB source):
+Example endpoint uri template for `getExpired` (from a CouchDB service):
 ```javascript
 {
   uri: '/_design/fns/_view/expired?include_docs=true{&endkey=timestamp}',
@@ -1126,7 +1126,7 @@ the built-in types.
 
 Action handler signature:
 ```javascript
-function (payload, {dispatch, sources, datatypes, getSource}) { ... }
+function (payload, {dispatch, services, datatypes, getService}) { ... }
 ```
 
 An action handler may dispatch new actions with the `dispatch()` method. These
@@ -1134,12 +1134,12 @@ will be passed through the middleware chain just like any other action, so it's
 for instance possible to queue actions from an action handler by setting
 `action.meta.queue = true`.
 
-The `sources` and `datatypes` arguments provide all sources and datatypes set on
+The `services` and `datatypes` arguments provide all services and datatypes set on
 objects with their ids as keys.
 
-Finally, `getSource()` is a convenience method that will return the relevant
-source object when you provide it with a type. An optional second argument may
-be set to a source id, in which case the source object with this id will be
+Finally, `getService()` is a convenience method that will return the relevant
+service object when you provide it with a type. An optional second argument may
+be set to a service id, in which case the service object with this id will be
 returned.
 
 Custom actions are supplied to an Integreat instance on setup, by providing an
@@ -1150,7 +1150,7 @@ and the handler function as the value.
 const actions = {
   `MYACTION`: function (payload, {dispatch}) { ... }
 }
-const great = integreat(defs, {datatypes, sources, mappings, actions})
+const great = integreat(defs, {datatypes, services, mappings, actions})
 ```
 
 Note that if a custom action handler is added with an action type that is
@@ -1160,7 +1160,7 @@ intention is not to replace an existing action handler.
 
 ## Adapters
 Interface:
-- `prepareEndpoint(endpointOptions, [sourceOptions])`
+- `prepareEndpoint(endpointOptions, [serviceOptions])`
 - `async send(request)`
 - `async normalize(data, request)`
 - `async serialize(data, request)`
@@ -1169,8 +1169,8 @@ Available adapters:
 - `json` (built in)
 - [`couchdb`](https://github.com/integreat-io/integreat-adapter-couchdb)
 
-## Source authentication
-This definition format is used to authenticate with a source:
+## Service authentication
+This definition format is used to authenticate with a service:
 ```
 {
   id: <id>,
@@ -1200,7 +1200,7 @@ following interface:
 - Attribute `format(value)`
 
 Built in formatters:
-- `not` - inverts a boolean value going from or to a source
+- `not` - inverts a boolean value going from or to a service
 - `hash` - converts any string(ish) value to a SHA256 hash in base64 (with the
   url-unfriendly characters +, /, and = replaced with -, \_, and ~)
 
