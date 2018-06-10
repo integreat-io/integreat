@@ -3,9 +3,9 @@ module.exports = {
   adapter: 'json',
   baseUri: 'http://some.api/entries',
   endpoints: [
-    {action: 'GET', scope: 'collection', options: {uri: '/', path: 'data[]'}},
-    {action: 'SET', scope: 'collection', options: {uri: '/', path: 'data[]', method: 'POST'}},
-    {scope: 'member', options: {uri: '/{id}', path: 'data'}},
-    {action: 'GET', params: {author: true}, options: {uri: '{?author}', path: 'data'}}
+    {match: {action: 'GET', scope: 'collection'}, options: {uri: '/', path: 'data[]'}},
+    {match: {action: 'SET', scope: 'collection'}, options: {uri: '/', path: 'data[]', method: 'POST'}},
+    {match: {scope: 'member'}, options: {uri: '/{id}', path: 'data'}},
+    {match: {action: 'GET', params: {author: true}}, options: {uri: '{?author}', path: 'data'}}
   ]
 }
