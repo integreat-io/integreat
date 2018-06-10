@@ -13,7 +13,7 @@ we highly appreciate feedback, but know that anything might change.
 
 The basic idea of Integreat is to make it easy to define a set of data services
 and expose them through a well defined interface, to abstract away the specifics
-of each service, and map their data to defined datatypes.
+of each service, and map their data to defined schemas.
 
 This is done through:
 - adapters, that does all the hard work of communicating with the different
@@ -52,7 +52,7 @@ setting up Integreat with the supplied queue middleware.
 Integreat comes with a [standard data format](#the-data-format), which is the
 only format that will be exposed to the code dispatching the actions. The
 mapping, normalizing, and serializing will happing to and from this format,
-according to the defined datatypes and mapping rules.
+according to the defined schemas and mapping rules.
 
 To deal with security and permissions, Integreat has a built-in concept of an
 ident. Other authentication schemes may be mapped to Integreat's ident scheme,
@@ -77,7 +77,7 @@ The hello world example of Integreat, would look something like this:
 const integreat = require('integreat')
 const adapters = integreat.adapters('json')
 
-const datatypes = [{
+const schemas = [{
   id: 'message',
   plural: 'messages',
   service: 'helloworld',
@@ -100,7 +100,7 @@ const mappings = [
   }
 ]
 
-const great = integreat({datatypes, services}, {adapters})
+const great = integreat({schemas, services}, {adapters})
 const action = {type: 'GET', payload: {type: 'message'}}
 
 great.dispatch(action).then((data) => console.log(data.attributes.text))
@@ -119,8 +119,8 @@ returning the following json data:
 }
 ```
 
-## Datatype definitions
-To do anything with Integreat, you need to define one or more datatypes. They
+## Schema definitions
+To do anything with Integreat, you need to define one or more schemas. They
 describe the data you expected to get out of Integreat. A type will be
 associated with a service, which is used to retrieve data for the type, unless
 another service is specified.
@@ -168,9 +168,9 @@ Default is `null`.
 
 ### Relationships
 Relationship is defined in the same way as attributes, but with one important
-difference: The `type` property refers to other Integreat datatypes. E.g. a
-datatype for an article may have a relationship called `author`, with
-`type: 'user'`, referring to the datatype with id `user`. `type` is required on
+difference: The `type` property refers to other Integreat schemas. E.g. a
+schema for an article may have a relationship called `author`, with
+`type: 'user'`, referring to the schema with id `user`. `type` is required on
 relationships.
 
 The `default` property sets a default value for the relationship, in the same
@@ -183,10 +183,10 @@ id(s) for a relationship directly, and this is the typical use case for this
 property.
 
 The `query` property is an object with key/value pairs, where the key is the id
-of a field (an attribute, a relationship, or `id`) on the datatype the relationship
-refers to, and the value is the id of field on this datatype.
+of a field (an attribute, a relationship, or `id`) on the schema the relationship
+refers to, and the value is the id of field on this schema.
 
-Example datatype with a query definition:
+Example schema with a query definition:
 ```
 {
   id: 'user',
@@ -197,19 +197,19 @@ Example datatype with a query definition:
 }
 ```
 
-In this case, the `articles` relationship on the `user` datatype may be fetched by
+In this case, the `articles` relationship on the `user` schema may be fetched by
 querying for all items of type `article`, where the `author` field equals the
 `id` of the `user` item in question.
 
 ### Authorization
 
-Set the `access` property to enforce permission checking on the datatype. This
-applies to any service that provides this datatype.
+Set the `access` property to enforce permission checking on the schema. This
+applies to any service that provides this schema.
 
 The simplest access type `auth`, which means that anyone can do anything with
-the data of this datatype, as long as they are authenticated.
+the data of this schema, as long as they are authenticated.
 
-Example of a datatype with an access rule:
+Example of a schema with an access rule:
 ```javascript
 {
   id: 'entry',
@@ -219,7 +219,7 @@ Example of a datatype with an access rule:
 }
 ```
 
-To signal that the datatype really has no need for authorization, use `all`.
+To signal that the schema really has no need for authorization, use `all`.
 This is not the same as not setting the `auth` prop, as `all` will override
 Integreat's principle of not letting authorized data out of Integreat without
 an authorization rule. In a way, you can say that `all` is an authorization
@@ -237,7 +237,7 @@ through Integreat's data api, and how to send data back to the service.
 
 A service definition object defines the adapter, any authentication method, the
 endpoints for fetching from and sending to the service, and mappings to the
-supported datatypes (attributes and relationships):
+supported schemas (attributes and relationships):
 
 ```
 {
@@ -348,7 +348,7 @@ unless to define them as required:
 - `type`: The item type from the request object or from the data property (if it
   is an object and not an array).
 - `typePlural`: The plural form of the type, gotten from the corresponding
-  datatype's `plural` prop – or by adding an 's' to the type is `plural` is not
+  schema's `plural` prop – or by adding an 's' to the type is `plural` is not
   set.
 
 #### Options property
@@ -410,9 +410,9 @@ current timestamp for `createdAt` and `updatedAt`.
 Data from the service may come in a different format than what is
 [required by Integreat]((#the-data-format)), so specify a [`path`](#paths) to
 point to the right value for each attribute and relationship. These values will
-be cast to the right datatype after all mapping, transforming, and formatting is
+be cast to the right schema after all mapping, transforming, and formatting is
 done. The value of each attribute or relationship should be in a format that can
-be coerced to the type defined in the datatype. The `format` pipeline may be
+be coerced to the type defined in the schema. The `format` pipeline may be
 used to accomplish this, but it is sufficient to return something that can be
 cast to the right type. E.g. returning `'3'` for an integer is okay, as
 Integreat will cast it with `parseInt()`.
@@ -428,7 +428,7 @@ have the `path` property, so providing the `path` string instead of an object
 is a useful shorthand for this. I.e. `{title: 'article.headline'}` translates to
 `{title: {path: 'article.headline'}}`.
 
-Mappings does, by definition, relate to both services and datatypes, as the thing
+Mappings does, by definition, relate to both services and schemas, as the thing
 that binds them together. By stating which `type` and which `service` this
 mapping is intended for, Integreat will connect the dots. In some cases you may
 even be able to reuse a mapping for several services or several types, in which
@@ -492,9 +492,9 @@ the first one does not match any properties in the data, the next path is tried,
 and so on.
 
 ### Qualifiers
-When a service returns data for several datatypes, Integreat needs a way to
-recognize which datatype to use for each item in the data. For some services,
-the different datatypes may be find on different paths in the data, so
+When a service returns data for several schemas, Integreat needs a way to
+recognize which schema to use for each item in the data. For some services,
+the different schemas may be find on different paths in the data, so
 specifying different paths on each mapping is sufficient. But when all items
 are returned in one array, for instance, you need to specify qualifiers for
 the mappings.
@@ -527,7 +527,7 @@ one of the items in the array satisfies the condition.
 
 ### Configuring metadata
 If a service may send and receive metadata, set the `meta` property to the id of
-a datatype defining the metadata as attributes.
+a schema defining the metadata as attributes.
 
 ```
 {
@@ -548,16 +548,16 @@ handle other services' metadata. If you're getting data from a read-only service
 but need to, for instance, set the `lastSyncedAt` metadata for this store,
 you'll set up a service as a store for this (the store may also hold other types
 of data). Then the read-only store will be defined with `meta='meta'`, and the
-`meta` datatype will have `service='store'`.
+`meta` schema will have `service='store'`.
 
 It will usually make no sense to specify default values for metadata.
 
 As with other data received and sent to services, make sure to include endpoints
 for the service that will hold the metadata, matching the `GET_META` and
-`SET_META` actions, or the datatype defining the metadata. The way you set up
+`SET_META` actions, or the schema defining the metadata. The way you set up
 these endpoints will depend on your service.
 
-Also define a [mapping](#mapping-definition) between this datatype and the
+Also define a [mapping](#mapping-definition) between this schema and the
 service. You may leave out `attributes` and `relationships` definitions and the
 service will receive the metadata in Integreat's standard format:
 
@@ -604,7 +604,7 @@ Integreat.
 `roles` are an example of how idents are given permissions. The roles are
 custom defined per setup, and may be mapped to roles from other systems. When
 setting the auth rules for a service, roles may be used to require that
-the request to get data of this datatype, an ident with the role `admin` must
+the request to get data of this schema, an ident with the role `admin` must
 be provided.
 
 Idents may be supplied with an action on the `meta.ident` property. It's up to
@@ -615,7 +615,7 @@ and execute actions that the ident have permissions for.
 
 ### Access rules
 Access rules are defined with properties telling Integreat which rights to
-require when performing actions with a given datatype. It may be set across all
+require when performing actions with a given schema. It may be set across all
 actions, or be specified per action.
 
 An access definition for letting all authorized idents to GET, but requiring the
@@ -632,7 +632,7 @@ role `admin` to SET:
 ```
 
 To use these access rules, set the definition object directly on the `access` property,
-of an datatype, or set `access: 'access1'` on the relevant datatype(s). The `id`
+of an schema, or set `access: 'access1'` on the relevant schema(s). The `id`
 is only needed in the latter case.
 
 **Note:** Referring to access rules by id is not implemented yet.
@@ -662,7 +662,7 @@ Available rule props:
 - `ident` - Authorize only idents with this precise id. May be an array (array
   is not implemented).
 - `roleFromField` - Specify the field name (attribute or relationship) on
-  the datatype, that will hold the role value. When authorizing a data item with
+  the schema, that will hold the role value. When authorizing a data item with
   an ident, the field value on the item must match a role on the ident.
 - `identFromField` - The same as `roleFromField`, but for an ident id.
 - `allow` - Set to `all`, `auth`, or `none`, to give access to everybody, only
@@ -677,7 +677,7 @@ Another example, intended for authorizing only the ident matching an account:
 }
 ```
 
-When used with e.g. an `account` datatype, given that the id of the account is
+When used with e.g. an `account` schema, given that the id of the account is
 used as ident id, only an ident with the same id as the account, will have
 access to it.
 
@@ -687,9 +687,9 @@ is of little value. (The only case where this would suffice, is when every
 relevant service provided the same ident id, and authorization where done on the
 ident id only.)
 
-Unsurprisingly, Integreat uses datatypes and services to store idents. In the
-definition object passed to `integreat()`, set the id of the datatype to use
-with idents, on `ident.datatype`.
+Unsurprisingly, Integreat uses schemas and services to store idents. In the
+definition object passed to `integreat()`, set the id of the schema to use
+with idents, on `ident.schema`.
 
 In addition, you may define what fields (attributes or relationships) will
 match the different props on an ident:
@@ -710,19 +710,19 @@ match the different props on an ident:
 
 When the prop and the field has the same name, it may be omitted, though it
 doesn't hurt to specify it anyway – for clarity. The service still have the
-final word, as any field that is not defined on the datatype, will not survive
+final word, as any field that is not defined on the schema, will not survive
 casting.
 
 Note that in the example above, the `id` of the data will be used as the ident
 `id`. When the id is not suited for this, you will need another field on the
-datatype that may act as the ident id. In cases where you need to transform the
+schema that may act as the ident id. In cases where you need to transform the
 id from the data in some way, this must be set up as a separate field and the
 mapping definition will dictate how to transform it. In most cases, the `id`
 will do, though.
 
-The `service` specified on the datatype, will be where the ident are stored,
+The `service` specified on the schema, will be where the ident are stored,
 although that's not a precise way of putting it. The ident is never stored, but
-a data item of the specified datatype is. The point is just that the ident
+a data item of the specified schema is. The point is just that the ident
 system will get the relevant data item and get the relevant fields from it. In
 the same way, when storing an ident, a data item of the specified type is
 updated with props from the ident – and then sent to the service.
@@ -741,8 +741,8 @@ actions like this:
 }
 ```
 
-In this case, `account` is the datatype mapped to idents, and the `tokens`
-property on the ident is mapped to the `tokens` field on the datatype.
+In this case, `account` is the schema mapped to idents, and the `tokens`
+property on the ident is mapped to the `tokens` field on the schema.
 
 To make Integreat complete idents on actions with the persisted data, set it up
 with the `completeIdent` middleware:
@@ -752,7 +752,7 @@ const great = integreat(defs, resources, [integreat.middleware.completeIdent])
 ```
 
 This middleware will intercept any action with `meta.ident` and replace it with
-the ident item loaded from the designated datatype. If the ident has an `id`,
+the ident item loaded from the designated schema. If the ident has an `id`,
 the ident with this id is loaded, otherwise a `withToken` is used to load the
 ident with the specified token. If no ident is found, the original ident is
 kept.
@@ -833,7 +833,7 @@ Items will be in the following format:
 ```
 {
   id: <string>,
-  type: <datatype>,
+  type: <schema>,
   createdAt: <date>,
   updatedAt: <date>,
   attributes: {
@@ -841,8 +841,8 @@ Items will be in the following format:
     ...
   },
   relationships: {
-    <relKey>: {id: <string>, type: <datatype>},
-    <relKey: [{id: <string>, type: <datatype>, ...],
+    <relKey>: {id: <string>, type: <schema>},
+    <relKey: [{id: <string>, type: <schema>, ...],
     ...
   }
 }
@@ -1126,7 +1126,7 @@ the built-in types.
 
 Action handler signature:
 ```javascript
-function (payload, {dispatch, services, datatypes, getService}) { ... }
+function (payload, {dispatch, services, schemas, getService}) { ... }
 ```
 
 An action handler may dispatch new actions with the `dispatch()` method. These
@@ -1134,7 +1134,7 @@ will be passed through the middleware chain just like any other action, so it's
 for instance possible to queue actions from an action handler by setting
 `action.meta.queue = true`.
 
-The `services` and `datatypes` arguments provide all services and datatypes set on
+The `services` and `schemas` arguments provide all services and schemas set on
 objects with their ids as keys.
 
 Finally, `getService()` is a convenience method that will return the relevant
@@ -1150,7 +1150,7 @@ and the handler function as the value.
 const actions = {
   `MYACTION`: function (payload, {dispatch}) { ... }
 }
-const great = integreat(defs, {datatypes, services, mappings, actions})
+const great = integreat(defs, {schemas, services, mappings, actions})
 ```
 
 Note that if a custom action handler is added with an action type that is

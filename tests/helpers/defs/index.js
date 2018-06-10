@@ -1,7 +1,7 @@
 module.exports = {
-  datatypes: [
-    require('./datatypes/entry'),
-    require('./datatypes/user')
+  schemas: [
+    require('./schemas/entry'),
+    require('./schemas/user')
   ],
   services: [
     require('./services/entries'),

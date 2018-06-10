@@ -5,8 +5,8 @@ import json from '../../lib/adapters/json'
 import integreat from '../..'
 
 const defs = {
-  datatypes: [
-    require('../helpers/defs/datatypes/entry')
+  schemas: [
+    require('../helpers/defs/schemas/entry')
   ],
   services: [
     require('../helpers/defs/services/entries')
