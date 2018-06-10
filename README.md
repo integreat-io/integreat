@@ -245,7 +245,7 @@ supported schemas (attributes and relationships):
   adapter: <string>,
   auth: <auth id>,
   meta: <type id>,
-  baseUri: <uri>,
+  options: {...},
   endpoints: [
     <endpoint definition>,
     ...

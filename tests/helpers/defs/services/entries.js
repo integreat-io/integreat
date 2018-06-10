@@ -1,7 +1,7 @@
 module.exports = {
   id: 'entries',
   adapter: 'json',
-  baseUri: 'http://some.api/entries',
+  options: {baseUri: 'http://some.api/entries'},
   endpoints: [
     {match: {action: 'GET', scope: 'collection'}, options: {uri: '/', path: 'data[]'}},
     {match: {action: 'SET', scope: 'collection'}, options: {uri: '/', path: 'data[]', method: 'POST'}},
