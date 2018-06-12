@@ -89,16 +89,13 @@ const services = [{
   adapter: 'json',
   endpoints: [
     {options: {uri: 'https://api.helloworld.io/json'}}
-  ]
-}]
-
-const mappings = [
-  {
-    type: 'message',
-    service: 'helloworld',
-    attributes: {text: {path: 'message'}}
+  ],
+  mappings: {
+    message: {
+      attributes: {text: {path: 'message'}}
+    }
   }
-]
+}]
 
 const great = integreat({schemas, services}, {adapters})
 const action = {type: 'GET', payload: {type: 'message'}}
@@ -250,7 +247,10 @@ supported schemas (attributes and relationships):
     <endpoint definition>,
     ...
   ],
-  mappings: <array of map ids>
+  mappings: {
+    <schema id>: <mapping definition | mapping id>,
+    ...
+  }
 }
 ```
 
@@ -378,8 +378,7 @@ method as default, but only if no method is specified on the endpoint.
 ```
 {
   id: <string>,
-  type: <typeId|array>,
-  service: <sourcId|array>
+  type: <typeId>,
   path: <string>,
   attributes: {
     <attrKey>: {
@@ -428,17 +427,15 @@ have the `path` property, so providing the `path` string instead of an object
 is a useful shorthand for this. I.e. `{title: 'article.headline'}` translates to
 `{title: {path: 'article.headline'}}`.
 
-Mappings does, by definition, relate to both services and schemas, as the thing
-that binds them together. By stating which `type` and which `service` this
-mapping is intended for, Integreat will connect the dots. In some cases you may
-even be able to reuse a mapping for several services or several types, in which
-case you can specify an array of service ids on `service` or an array of types on
-`type`.
+Mappings relate to both services and schemas, as the thing that binds them
+together, but it is the service definition that "owns" them. The `mappings`
+object on a service definition contains the ids of all relevant schemas as keys,
+and the value for these keys are either a mapping definition object or a mapping
+id. The `type` property of a mapping definition is optional when defined
+directly in a service definition, but should match the key if it is set.
 
-Note that it is also possible to define on a service which mappings it will need.
-The service will then reference the mapping `id`. You may combine these two ways
-of connecting a service with mappings, but know that mappings defined by id on
-the service will "win" if there's a conflict.
+In some cases you may be able to reuse a mapping for several services or several
+types, by referring to the mapping id from several service definitions.
 
 ### Paths
 Mappings, attributes, and relationships all have an optional `path` property,
