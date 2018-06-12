@@ -13,6 +13,7 @@ const defs = {
   ],
   mappings: [
     {
+      id: 'entries-entry',
       type: 'entry',
       service: 'entries'
     }

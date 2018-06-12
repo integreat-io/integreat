@@ -7,5 +7,8 @@ module.exports = {
     {match: {action: 'SET', scope: 'collection'}, options: {uri: '/', path: 'data[]', method: 'POST'}},
     {match: {action: 'GET', scope: 'member'}, options: {uri: '/{id}', path: 'data'}},
     {match: {action: 'GET', params: {tokens: true}}, options: {uri: '{?tokens}', path: 'data'}}
-  ]
+  ],
+  mappings: {
+    user: 'users-user'
+  }
 }

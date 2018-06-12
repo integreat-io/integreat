@@ -1,4 +1,5 @@
 module.exports = {
+  id: 'entries-entry',
   type: 'entry',
   service: 'entries',
   attributes: {
