@@ -12,7 +12,7 @@ module.exports = {
   access: {
     allow: 'all',
     actions: {
-      SET: {role: 'editor'}
+      SET: { role: 'editor' }
     }
   }
 }

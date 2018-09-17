@@ -17,24 +17,24 @@ const entry1Item = {
     text: 'The text of entry 1'
   },
   relationships: {
-    author: {id: 'johnf', type: 'user'},
-    sections: [{id: 'news', type: 'section'}, {id: 'sports', type: 'section'}]
+    author: { id: 'johnf', type: 'user' },
+    sections: [{ id: 'news', type: 'section' }, { id: 'sports', type: 'section' }]
   }
 }
 
 // Tests
 
 test('should set new entry', async (t) => {
-  const adapters = {json}
+  const adapters = { json }
   nock('http://some.api')
     .get('/users/johnf')
-    .reply(200, {data: {...johnfData}})
+    .reply(200, { data: { ...johnfData } })
     .put('/entries/ent1')
-    .reply(201, {id: 'ent1', ok: true, rev: '1-12345'})
+    .reply(201, { id: 'ent1', ok: true, rev: '1-12345' })
   const action = {
     type: 'SET',
-    payload: {type: 'entry', data: entry1Item},
-    meta: {ident: {id: 'johnf'}}
+    payload: { type: 'entry', data: entry1Item },
+    meta: { ident: { id: 'johnf' } }
   }
   const expected = [{
     id: 'ent1',
@@ -44,15 +44,15 @@ test('should set new entry', async (t) => {
       text: 'The text of entry 1'
     },
     relationships: {
-      author: {id: 'johnf', type: 'user'},
+      author: { id: 'johnf', type: 'user' },
       sections: [
-        {id: 'news', type: 'section'},
-        {id: 'sports', type: 'section'}
+        { id: 'news', type: 'section' },
+        { id: 'sports', type: 'section' }
       ]
     }
   }]
 
-  const great = integreat(defs, {adapters, middlewares: [completeIdent]})
+  const great = integreat(defs, { adapters, middlewares: [completeIdent] })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

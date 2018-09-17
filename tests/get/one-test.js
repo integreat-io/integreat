@@ -9,14 +9,14 @@ import integreat from '../..'
 test('should get one entry from service', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
-  const adapters = {json}
+  const adapters = { json }
   nock('http://some.api')
     .get('/users/johnf').times(2)
-    .reply(200, {data: {...johnfData, createdAt, updatedAt}})
+    .reply(200, { data: { ...johnfData, createdAt, updatedAt } })
   const action = {
     type: 'GET',
-    payload: {id: 'johnf', type: 'user'},
-    meta: {ident: {id: 'johnf'}}
+    payload: { id: 'johnf', type: 'user' },
+    meta: { ident: { id: 'johnf' } }
   }
   const expected = [{
     id: 'johnf',
@@ -33,13 +33,13 @@ test('should get one entry from service', async (t) => {
     },
     relationships: {
       feeds: [
-        {id: 'news', type: 'feed'},
-        {id: 'social', type: 'feed'}
+        { id: 'news', type: 'feed' },
+        { id: 'social', type: 'feed' }
       ]
     }
   }]
 
-  const great = integreat(defs, {adapters})
+  const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

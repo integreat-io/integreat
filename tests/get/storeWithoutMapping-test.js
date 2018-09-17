@@ -23,10 +23,10 @@ const defs = {
 test('should get one entry from service', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
-  const adapters = {json}
+  const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
-    .reply(200, {data: {
+    .reply(200, { data: {
       id: 'ent1',
       type: 'entry',
       attributes: {
@@ -36,12 +36,12 @@ test('should get one entry from service', async (t) => {
         updatedAt
       },
       relationships: {
-        author: {id: 'johnf', type: 'user'}
+        author: { id: 'johnf', type: 'user' }
       }
-    }})
+    } })
   const action = {
     type: 'GET',
-    payload: {id: 'ent1', type: 'entry'}
+    payload: { id: 'ent1', type: 'entry' }
   }
   const expected = [{
     id: 'ent1',
@@ -53,11 +53,11 @@ test('should get one entry from service', async (t) => {
       updatedAt: new Date(updatedAt)
     },
     relationships: {
-      author: {id: 'johnf', type: 'user'}
+      author: { id: 'johnf', type: 'user' }
     }
   }]
 
-  const great = integreat(defs, {adapters})
+  const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
