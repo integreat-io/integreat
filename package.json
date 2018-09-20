@@ -52,7 +52,7 @@
     "got": "^9.2.2",
     "great-uri-template": "^0.1.2",
     "later": "^1.2.0",
-    "map-transform": "^0.1.6",
+    "map-transform": "integreat-io/map-transform",
     "ramda": "^0.25.0",
     "uuid": "^3.2.2"
   },
@@ -63,7 +63,7 @@
     "dotenv": "^6.0.0",
     "nock": "^10.0.0",
     "nyc": "^13.0.1",
-    "sinon": "^6.3.3",
+    "sinon": "^6.3.4",
     "standard": "^12.0.1"
   }
 }
