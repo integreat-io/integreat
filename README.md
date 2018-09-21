@@ -395,7 +395,7 @@ method as default, but only if no method is specified on the endpoint.
     }
   },
   qualifier: <string>,
-  transform: <transform pipeline>,
+  mutate: <mutate pipeline>,
   filterFrom: <filter pipeline>,
   filterTo: <filter pipeline>
 }
@@ -409,7 +409,7 @@ current timestamp for `createdAt` and `updatedAt`.
 Data from the service may come in a different format than what is
 [required by Integreat]((#the-data-format)), so specify a [`path`](#paths) to
 point to the right value for each attribute and relationship. These values will
-be cast to the right schema after all mapping, transforming, and formatting is
+be cast to the right schema after all mapping, mutating, and formatting is
 done. The value of each attribute or relationship should be in a format that can
 be coerced to the type defined in the schema. The `format` pipeline may be
 used to accomplish this, but it is sufficient to return something that can be
@@ -478,7 +478,7 @@ The bracket notation also offers two options for objects:
 
 When mapping data _to_ the service, the paths are used to reconstruct the data
 format the service expects. Only properties included in the paths will be
-created, so any additional properties must be set by a transform function or the
+created, so any additional properties must be set by a mutate function or the
 adapter.
 
 Arrays are reconstructing with any object or value at the first index, unless a
@@ -499,7 +499,7 @@ the mappings.
 A qualifier is simply a path with an expression that will evaluate to true or
 false. If a mapping has qualifiers, it will only be applied to data that
 satisfies all its qualifiers. Qualifiers are applied to the data at the
-mapping's path, before it is mapped and transformed.
+mapping's path, before it is mapped and mutated.
 
 An example of two mappings with qualifiers:
 ```
@@ -712,9 +712,9 @@ casting.
 
 Note that in the example above, the `id` of the data will be used as the ident
 `id`. When the id is not suited for this, you will need another field on the
-schema that may act as the ident id. In cases where you need to transform the
+schema that may act as the ident id. In cases where you need to mutate the
 id from the data in some way, this must be set up as a separate field and the
-mapping definition will dictate how to transform it. In most cases, the `id`
+mapping definition will dictate how to mutate it. In most cases, the `id`
 will do, though.
 
 The `service` specified on the schema, will be where the ident are stored,
@@ -1192,7 +1192,7 @@ following interface:
 ```
 
 ## Pipeline functions
-- Item `transform(item)`
+- Item `mutate(item)`
 - Item `filter(item)`
 - Attribute `format(value)`
 
