@@ -4,7 +4,7 @@ const integreat = require('./lib/integreat')
 // Resources
 integreat.adapters = require('./lib/adapters')
 integreat.authstrats = require('./lib/authstrats')
-integreat.formatters = require('./lib/formatters')
+integreat.transformers = require('./lib/transformers')
 integreat.mutators = require('./lib/mutators')
 
 integreat.resources = require('./lib/resources')

@@ -7,7 +7,7 @@ import integreat from '../..'
 
 test('should get error object for unknown entry', async (t) => {
   const adapters = { json }
-  const formatters = integreat.formatters()
+  const transformers = integreat.transformers()
   nock('http://some.api')
     .get('/entries/ent0')
     .reply(404)
@@ -16,7 +16,7 @@ test('should get error object for unknown entry', async (t) => {
     payload: { id: 'ent0', type: 'entry' }
   }
 
-  const great = integreat(defs, { adapters, formatters })
+  const great = integreat(defs, { adapters, transformers })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'notfound', ret.error)

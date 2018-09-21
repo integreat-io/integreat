@@ -384,14 +384,14 @@ method as default, but only if no method is specified on the endpoint.
     <attrKey>: {
       path: <string>,
       param: <string>,
-      format: <format pipeline>
+      transform: <transform pipeline>
     }
   },
   relationships: {
     <relKey>: {
       path: <string>,
       param: <string>,
-      format: <format pipeline>
+      transform: <transform pipeline>
     }
   },
   qualifier: <string>,
@@ -409,9 +409,9 @@ current timestamp for `createdAt` and `updatedAt`.
 Data from the service may come in a different format than what is
 [required by Integreat]((#the-data-format)), so specify a [`path`](#paths) to
 point to the right value for each attribute and relationship. These values will
-be cast to the right schema after all mapping, mutating, and formatting is
+be cast to the right schema after all mapping, mutating, and transforming is
 done. The value of each attribute or relationship should be in a format that can
-be coerced to the type defined in the schema. The `format` pipeline may be
+be coerced to the type defined in the schema. The `transform` pipeline may be
 used to accomplish this, but it is sufficient to return something that can be
 cast to the right type. E.g. returning `'3'` for an integer is okay, as
 Integreat will cast it with `parseInt()`.
@@ -1194,9 +1194,9 @@ following interface:
 ## Pipeline functions
 - Item `mutate(item)`
 - Item `filter(item)`
-- Attribute `format(value)`
+- Attribute `transform(value)`
 
-Built in formatters:
+Built in transformers:
 - `not` - inverts a boolean value going from or to a service
 - `hash` - converts any string(ish) value to a SHA256 hash in base64 (with the
   url-unfriendly characters +, /, and = replaced with -, \_, and ~)

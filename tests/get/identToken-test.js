@@ -9,7 +9,7 @@ import integreat from '../..'
 
 test('should get with ident token', async (t) => {
   const adapters = { json }
-  const formatters = integreat.formatters()
+  const transformers = integreat.transformers()
   nock('http://some.api')
     .get('/users')
     .query({ tokens: 'twitter|23456' })
@@ -22,7 +22,7 @@ test('should get with ident token', async (t) => {
     meta: { ident: { withToken: 'twitter|23456' } }
   }
 
-  const great = integreat(defs, { adapters, formatters, middlewares: [completeIdent] })
+  const great = integreat(defs, { adapters, transformers, middlewares: [completeIdent] })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

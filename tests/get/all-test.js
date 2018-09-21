@@ -8,7 +8,7 @@ import integreat from '../..'
 
 test('should get all entries from service', async (t) => {
   const adapters = { json }
-  const formatters = integreat.formatters()
+  const transformers = integreat.transformers()
   nock('http://some.api')
     .get('/entries/')
     .reply(200, { data: entriesData })
@@ -17,7 +17,7 @@ test('should get all entries from service', async (t) => {
     payload: { type: 'entry' }
   }
 
-  const great = integreat(defs, { adapters, formatters })
+  const great = integreat(defs, { adapters, transformers })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')
