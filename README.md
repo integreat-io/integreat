@@ -876,8 +876,8 @@ The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
 
 By default, the returned data will be cast with default values, but set
-`useDefaults: false` on the action payload to get only values mapped from the
-service data.
+`onlyMappedValues: true` on the action payload to get only values mapped from
+the service data.
 
 #### `GET_UNMAPPED`
 Get data from a service without applying the mapping rules. Returned in the
@@ -974,8 +974,8 @@ The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
 
 By default, only fields mapped from the action data will be sent to the service,
-but set `useDefaults: true` to cast the data going to the service with default
-values. This will also affect the data coming back from the action.
+but set `onlyMappedValues: false` to cast the data going to the service with
+default values. This will also affect the data coming back from the action.
 
 #### `SET_META`
 Set metadata on a service. Returned in the `data` property is whatever the
