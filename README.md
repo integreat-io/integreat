@@ -612,25 +612,33 @@ and execute actions that the ident have permissions for.
 
 ### Access rules
 Access rules are defined with properties telling Integreat which rights to
-require when performing actions with a given schema. It may be set across all
-actions, or be specified per action.
+require when performing different actions with a given schema. It may be set
+as a overall right to do anything with a schema, or it may be specified on the
+different methods available: QUERY, MUTATION, and EXTINCTION. These are directly
+infered from GET, SET, or DELETE actions, including actions that start with
+these verbs.
 
-An access definition for letting all authorized idents to GET, but requiring the
-role `admin` to SET:
+Note that this applies to the actual actions being sent to a service – some
+actions will never reach a service, but will trigger other actions, and access
+will be granted or refused to each of these actions as they reach the service
+interface, but not to the triggering action.
+
+An access definition for letting all authorized idents to QUERY, but requiring
+the role `admin` for MUTATIONs:
 
 ```javascript
 {
   id: 'access1',
-  actions: {
-    GET: {allow: 'auth'},
-    SET: {role: 'admin'}
+  methods: {
+    QUERY: {allow: 'auth'},
+    MUTATION: {role: 'admin'}
   }
 }
 ```
 
-To use these access rules, set the definition object directly on the `access` property,
-of an schema, or set `access: 'access1'` on the relevant schema(s). The `id`
-is only needed in the latter case.
+To use these access rules, set the definition object directly on the `access`
+property, of an schema, or set `access: 'access1'` on the relevant schema(s).
+The `id` is only needed in the latter case.
 
 **Note:** Referring to access rules by id is not implemented yet.
 
@@ -644,14 +652,14 @@ achieve what we aimed for above, could be:
 {
   id: 'access2',
   role: 'admin',
-  actions: {
-    GET: {allow: 'auth'}
+  methods: {
+    QUERY: {allow: 'auth'}
   }
 }
 ```
 
 In this example, all actions are allowed for admins, but anyone else that is
-authenticated may GET.
+authenticated may QUERY.
 
 Available rule props:
 - `role` - Authorize only idents with this role. May be an array of strings
