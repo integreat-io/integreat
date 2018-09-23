@@ -15,7 +15,7 @@
     "test": "npm run lint && NODE_ENV=test nyc --reporter=text-summary ava",
     "dev": "NODE_ENV=test ava --watch",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "nyc:report": "nyc report --reporter=html",
+    "nyc:report": "nyc report --reporter=text --reporter=html",
     "lint": "standard"
   },
   "ava": {

@@ -3,3 +3,4 @@ exclude_patterns:
 - "**/*-test.js"
 - "tests/"
 - "node_modules/"
+- "coverage/"
