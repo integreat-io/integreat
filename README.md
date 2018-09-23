@@ -282,22 +282,22 @@ that this is an authenticated service.
 
 #### Match properties
 An endpoint may specify none or more of the following match properties:
-- `id`: A request may include an `endpoint` property, that will be matched
-  against this `id`. For request with an endpoint id, no other matching
+- `id`: An action payload may include an `endpoint` property, that will be
+  matched against this `id`. For actions with an endpoint id, no other matching
   properties will be considered
-- `type`: When set, the endpoint will only be used for requests for the
-  specified item type
+- `type`: When set, the endpoint will only be used for actions with the
+  specified schema type (not to be confused with the action type)
 - `scope`: May be `member` or `collection`, to specify that the endpoint should
   be used to request one item (member) or an entire collection of items.
-  Setting this to `member` will require an `id` property in the request.
+  Setting this to `member` will require an `id` property in the action payload.
   Not setting this property signals an endpoint that will work for both
 - `action`: May be set to the type string of an action. The endpoint will match
   only actions of this type
 
-Endpoints are matched to a request by picking the matching endpoint with highest
-level of specificity. E.g., for a GET request asking for resources of type
+Endpoints are matched to an action by picking the matching endpoint with highest
+level of specificity. E.g., for a GET action asking for resources of type
 `entry`, an endpoint with `action: 'GET'` and `type: 'entry'` is picked over an
-endpoint matching all GET requests.
+endpoint matching all GET actions.
 
 Properties are matched in the order they are listed above, so that when two
 endpoints matches – e.g. one with a scope and the other with an action, the one
@@ -309,7 +309,7 @@ values, so that an endpoint may match more cases. However, when two endpoints
 match on a property specified as an array on one and as a single value on the
 other, the one with the single value is picked.
 
-When no match properties are set, the endpoint will match any requests, as long
+When no match properties are set, the endpoint will match any actions, as long
 as no other endpoints match.
 
 #### Params property
@@ -317,7 +317,7 @@ An endpoint may accept properties, and indicate this by listing them on the
 `params` object, with the value set to `true` for required params. All
 properties are treated as strings.
 
-An endpoint is only used for requests where all the required parameters are
+An endpoint is only used for actions where all the required parameters are
 present.
 
 Example service definition with endpoint parameters:
@@ -342,10 +342,10 @@ Example service definition with endpoint parameters:
 
 Some params are always available and does not need to be specified in `params`,
 unless to define them as required:
-- `id`: The item id from the request object or from the data property (if it is
+- `id`: The item id from the action payload or from the data property (if it is
   an object and not an array). Required in endpoints with `scope: 'member'`, not
   included for `scope: 'collection'`, and optional when scope is not set.
-- `type`: The item type from the request object or from the data property (if it
+- `type`: The item type from the action payload or from the data property (if it
   is an object and not an array).
 - `typePlural`: The plural form of the type, gotten from the corresponding
   schema's `plural` prop – or by adding an 's' to the type is `plural` is not
@@ -359,7 +359,7 @@ kind of information it will need, but there are a set of recommended props to
 use when they are relevant:
 
 - `uri`: A uri template, where e.g. `{id}` will be placed with the value of the
-parameter `id` from the request. For a full specification of the template
+parameter `id` from the action payload. For a full specification of the template
 format, see
 [Integreat URI Template](https://github.com/integreat-io/great-uri-template).
 
