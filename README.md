@@ -1179,25 +1179,15 @@ This definition format is used to authenticate with a service:
 ```
 {
   id: <id>,
-  strategy: <strategy id>,
+  authenticator: <authenticator id>,
   options: {
     ...
   }
 }
 ```
 
-At runtime, the specified strategy is used to authenticate requests. The
-strategy is given the `options` payload and returns an object with the
-following interface:
-
-```javascript
-{
-  isAuthenticated () {},    // Returns true when authenticated
-  await authenticate () {}, // Returns true when authenticated
-  getAuthObject () {},      // Returns auth information as an object
-  getAuthHeaders () {}      // Returns auth headers as an object
-}
-```
+At runtime, the specified authenticator is used to authenticate requests. The
+authenticator is given the `options` payload.
 
 ## Pipeline functions
 - Item `mutate(item)`
