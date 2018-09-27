@@ -383,17 +383,19 @@ method as default, but only if no method is specified on the endpoint.
   attributes: {
     <attrKey>: {
       path: <string>,
-      param: <string>,
       transform: <transform pipeline>
     }
   },
   relationships: {
     <relKey>: {
       path: <string>,
-      param: <string>,
       transform: <transform pipeline>
     }
   },
+  toService: {
+    path: <string>,
+    transform: <transform pipeline>
+  }
   qualifier: <string>,
   mutate: <mutate pipeline>,
   filterFrom: <filter pipeline>,
@@ -426,6 +428,11 @@ Most of the time, your `attributes` and `relationships` definitions will only
 have the `path` property, so providing the `path` string instead of an object
 is a useful shorthand for this. I.e. `{title: 'article.headline'}` translates to
 `{title: {path: 'article.headline'}}`.
+
+The `toService` section behaves just like `attributes` and `relationships`,
+except that it is only used when mapping _to_ a service. This is where you'll
+put mappings that don't have a corresponding field in the schema you map
+to/from, e.g. root paths like `$params.service`.
 
 Mappings relate to both services and schemas, as the thing that binds them
 together, but it is the service definition that "owns" them. The `mappings`
@@ -481,8 +488,11 @@ format the service expects. Only properties included in the paths will be
 created, so any additional properties must be set by a mutate function or the
 adapter.
 
-Arrays are reconstructing with any object or value at the first index, unless a
+Arrays are reconstructed with any object or value at the first index, unless a
 single, non-negative index is specified in the path.
+
+Prefix a path with `$` to map with values from the request object, e.g.
+`$params.service`.
 
 You may optionally supply alternative paths by providing an array of paths. If
 the first one does not match any properties in the data, the next path is tried,
