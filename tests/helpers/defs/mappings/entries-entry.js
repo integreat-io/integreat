@@ -4,7 +4,7 @@ module.exports = {
   service: 'entries',
   attributes: {
     id: 'key',
-    title: { path: 'heading', default: 'An entry' },
+    title: { path: 'headline', default: 'An entry' },
     text: 'body',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
