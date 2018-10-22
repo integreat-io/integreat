@@ -24,7 +24,8 @@ test('should map with response mapping', async (t) => {
     status: 'reponseValue',
     data: {
       path: 'responseContent.articles[]'
-    }
+    },
+    error: 'responseMessage'
   }
   const defs = {
     schemas: [entrySchema],
@@ -47,6 +48,48 @@ test('should map with response mapping', async (t) => {
   const item = ret.data[0]
   t.is(item.id, 'ent1')
   t.is(item.attributes.title, 'Entry 1')
+
+  nock.restore()
+})
+
+test('should use status code mapped from data', async (t) => {
+  const adapters = { json }
+  nock('http://some.api')
+    .get('/entries/ent2')
+    .reply(200, {
+      responseContent: { articles: [entry1] },
+      reponseValue: 'error',
+      responseMessage: 'Oh no!'
+    })
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent2' }
+  }
+  const responseMapping = {
+    status: 'reponseValue',
+    data: {
+      path: 'responseContent.articles[]'
+    },
+    error: 'responseMessage'
+  }
+  const defs = {
+    schemas: [entrySchema],
+    services: [{
+      ...entriesService,
+      endpoints: [{
+        responseMapping,
+        options: { uri: '/{id}' }
+      }]
+    }],
+    mappings: [entriesMapping]
+  }
+
+  const great = integreat(defs, { adapters })
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'error')
+  t.is(ret.error, 'Oh no!')
+  t.falsy(ret.data)
 
   nock.restore()
 })
