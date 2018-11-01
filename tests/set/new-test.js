@@ -36,21 +36,7 @@ test('should set new entry', async (t) => {
     payload: { type: 'entry', data: entry1Item },
     meta: { ident: { id: 'johnf' } }
   }
-  const expected = [{
-    id: 'ent1',
-    type: 'entry',
-    attributes: {
-      title: 'Entry 1',
-      text: 'The text of entry 1'
-    },
-    relationships: {
-      author: { id: 'johnf', type: 'user' },
-      sections: [
-        { id: 'news', type: 'section' },
-        { id: 'sports', type: 'section' }
-      ]
-    }
-  }]
+  const expected = [entry1Item]
 
   const great = integreat(defs, { adapters, middlewares: [completeIdent] })
   const ret = await great.dispatch(action)
