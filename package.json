@@ -52,7 +52,7 @@
     "got": "^9.3.0",
     "great-uri-template": "^0.1.2",
     "later": "^1.2.0",
-    "map-transform": "^0.2.2",
+    "map-transform": "integreat-io/map-transform",
     "ramda": "^0.25.0",
     "uuid": "^3.2.2"
   },
