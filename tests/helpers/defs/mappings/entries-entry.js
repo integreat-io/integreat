@@ -10,7 +10,7 @@ module.exports = {
     updatedAt: 'updatedAt'
   },
   relationships: {
-    author: 'authorId',
-    sections: 'sections[]'
+    'author.id': 'authorId',
+    'sections.id': 'sections[]'
   }
 }
