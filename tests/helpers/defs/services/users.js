@@ -3,10 +3,10 @@ module.exports = {
   adapter: 'json',
   options: { baseUri: 'http://some.api/users' },
   endpoints: [
-    { match: { action: 'GET', scope: 'collection' }, options: { uri: '/', path: 'data[]' } },
-    { match: { action: 'SET', scope: 'collection' }, options: { uri: '/', path: 'data[]', method: 'POST' } },
-    { match: { action: 'GET', scope: 'member' }, options: { uri: '/{id}', path: 'data' } },
-    { match: { action: 'GET', params: { tokens: true } }, options: { uri: '{?tokens}', path: 'data' } }
+    { match: { action: 'GET', scope: 'collection' }, responseMapping: 'data[]', options: { uri: '/' } },
+    { match: { action: 'SET', scope: 'collection' }, responseMapping: 'data[]', options: { uri: '/', method: 'POST' } },
+    { match: { action: 'GET', scope: 'member' }, responseMapping: 'data', options: { uri: '/{id}' } },
+    { match: { action: 'GET', params: { tokens: true } }, responseMapping: 'data', options: { uri: '{?tokens}' } }
   ],
   mappings: {
     user: 'users-user'
