@@ -50,6 +50,7 @@ test.after.always(() => {
 
 test('should set new entry', async (t) => {
   const adapters = { json }
+  const middlewares = [completeIdent]
   const putData = {
     data: {
       key: 'ent1',
@@ -73,7 +74,7 @@ test('should set new entry', async (t) => {
   }
   const expected = [entry1Item]
 
-  const great = integreat(defs, { adapters, middlewares: [completeIdent] })
+  const great = integreat(defs, { adapters }, middlewares)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
