@@ -1302,11 +1302,11 @@ To setup Integreat with a queue:
 
 ```javascript
 const queue = integreat.queue(redisQueue(options))
-const great = integreat(defs, resources, [queue.fromDispatch])
+const great = integreat(defs, resources, [queue.middleware])
 queue.setDispatch(great.dispatch)
 ```
 
-`queue.fromDispatch` is the middleware, while `queue.setDispatch` must be called
+`queue.middleware` is the middleware, while `queue.setDispatch` must be called
 to tell the queue interface where to dispatch actions pulled from the queue.
 
 ## Debugging
