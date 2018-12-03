@@ -28,7 +28,7 @@ test('should emit request and response before mapping from service', async (t) =
   t.is(handler.args[0][0].method, 'QUERY')
   const response = handler.args[0][1]
   t.truthy(response.data)
-  t.is(response.data.key, 'ent1')
+  t.is(response.data.data.key, 'ent1')
 
   nock.restore()
 })

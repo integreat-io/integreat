@@ -10,7 +10,7 @@ module.exports = {
       responseMapping: 'data[]',
       options: { uri: '/', method: 'POST' }
     },
-    { match: { scope: 'member' }, options: { uri: '/{id}', path: 'data' } },
+    { match: { scope: 'member' }, responseMapping: 'data', options: { uri: '/{id}' } },
     { match: { action: 'GET', params: { author: true } }, responseMapping: 'data', options: { uri: '{?author}' } }
   ],
   mappings: {
