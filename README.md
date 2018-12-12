@@ -1076,8 +1076,8 @@ retrieved from the service and set on the target:
 {
   type: 'SYNC',
   payload: {
-    from: <serviceId>,
-    to: <targetid>,
+    from: <serviceId | params>,
+    to: <serviceId | params>,
     type: <itemType>,
     retrieve: 'all'
   }
@@ -1093,10 +1093,9 @@ this case, the action will get the `lastSyncedAt` from the `from` service, and
 get only newer items, by passing it the `updatedAfter` param. The action will
 also filter out older items, in case the service does not support `updatedAfter`.
 
-Two other payload props might come in handy: The `paramsFrom` and `paramsTo`.
-Each may be set to an object with params, that will be included in the action to
-get from the `from` service and set to the `to` service, respectively. This allows
-you to set params on these actions through the `SYNC` action.
+If you need to include more params in the actions to get from the `from` service
+or set to the `to` service, you may provide a params object for the `from` or
+`to` props, with the service id set as a `service` param.
 
 #### `EXPIRE`
 With an endpoint for getting expired items, the `EXPIRE` action will fetch
