@@ -14,6 +14,7 @@ module.exports = {
     { match: { action: 'GET', params: { author: true } }, responseMapping: 'data', options: { uri: '{?author}' } }
   ],
   mappings: {
-    entry: 'entries-entry'
+    entry: 'entries-entry',
+    user: 'users-user'
   }
 }

@@ -14,6 +14,6 @@ module.exports = {
     tokens: 'tokens[]'
   },
   relationships: {
-    feeds: 'feeds[]'
+    'feeds.id': 'feeds[]'
   }
 }
