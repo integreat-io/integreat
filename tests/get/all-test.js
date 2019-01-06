@@ -19,7 +19,7 @@ test('should get all entries from service', async (t) => {
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.true(Array.isArray(ret.data))
   t.is(ret.data.length, 3)
   t.is(ret.data[0].id, 'ent1')

@@ -3,7 +3,24 @@ module.exports = {
   adapter: 'json',
   options: { baseUri: 'http://some.api/entries' },
   endpoints: [
-    { match: { action: 'GET', scope: 'collection' }, responseMapping: 'data[]', options: { uri: '/' } },
+    {
+      match: { action: 'GET', scope: 'collection', params: { offset: true } },
+      responseMapping: {
+        data: 'data[]',
+        'paging.next.type': { path: 'none1', default: 'entry' },
+        'paging.next.offset': 'offset'
+      },
+      options: { uri: '/{?offset=offset?}' }
+    },
+    {
+      match: { action: 'GET', scope: 'collection' },
+      responseMapping: {
+        data: 'data[]',
+        'paging.next.type': { path: 'none1', default: 'entry' },
+        'paging.next.offset': 'offset'
+      },
+      options: { uri: '/' }
+    },
     {
       match: { action: 'SET', scope: 'collection' },
       requestMapping: 'data[]',
