@@ -1,6 +1,6 @@
 import test from 'ava'
 import nock from 'nock'
-import json from '../../lib/adapters/json'
+import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import entry1Data from '../helpers/data/entry1'
 import entry2Data from '../helpers/data/entry2'

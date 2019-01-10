@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import json from '../../lib/adapters/json'
+import json from 'integreat-adapter-json'
 import tokenAuth from '../../lib/authenticators/token'
 import defs from '../helpers/defs'
 import entriesData from '../helpers/data/entries'

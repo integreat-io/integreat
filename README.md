@@ -821,6 +821,8 @@ The `status` will be one of the following status codes:
 - `timeout`: The attempt to perform the action timed out
 - `autherror`: An authentication request failed
 - `noaccess`: Authentication is required or the provided auth is not enough
+- `badrequest`: Request data is not as expected
+- `badresponse`: Response data is not as expected
 - `error`: Any other error
 
 On `ok` status, the retrieved data will be set on the `data` property. This will

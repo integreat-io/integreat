@@ -1,5 +1,5 @@
 import test from 'ava'
-import json from '../../lib/adapters/json'
+import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
 import integreat from '../..'
