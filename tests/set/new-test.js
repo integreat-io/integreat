@@ -54,6 +54,7 @@ test('should set new entry', async (t) => {
   const putData = {
     key: 'ent1',
     headline: 'Entry 1',
+    originalTitle: 'Entry 1',
     body: 'The text of entry 1',
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),

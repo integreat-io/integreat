@@ -5,6 +5,7 @@ module.exports = {
   attributes: {
     id: 'key',
     title: { path: 'headline', default: 'An entry' },
+    'title/1': 'originalTitle',
     text: 'body',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'

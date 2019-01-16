@@ -20,7 +20,8 @@ const entry1Item = {
 
 const entry1Mapped = {
   key: 'ent1',
-  headline: 'Entry 1'
+  headline: 'Entry 1',
+  originalTitle: 'Entry 1'
 }
 
 // Tests
