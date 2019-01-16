@@ -37,7 +37,7 @@ test('should set data with request mapping', async (t) => {
   }
   const requestMapping = {
     'content.items[]': 'data',
-    'content.footnote': { path: 'unknown', default: '' }
+    'content.footnote': { const: '' }
   }
   const defs = {
     schemas: [entrySchema],

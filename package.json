@@ -49,15 +49,15 @@
   "dependencies": {
     "@sindresorhus/is": "^0.14.0",
     "debug": "^4.1.1",
-    "got": "^9.5.0",
+    "got": "^9.5.1",
     "later": "^1.2.0",
     "map-any": "^0.1.2",
-    "map-transform": "^0.2.3",
+    "map-transform": "^0.3.0",
     "ramda": "^0.26.1",
     "uuid": "^3.2.2"
   },
   "devDependencies": {
-    "ava": "1.0.1",
+    "ava": "1.1.0",
     "babel-preset-env": "^1.7.0",
     "coveralls": "^3.0.2",
     "dotenv": "^6.2.0",
