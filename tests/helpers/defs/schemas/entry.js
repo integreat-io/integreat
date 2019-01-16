@@ -11,8 +11,8 @@ module.exports = {
   },
   access: {
     allow: 'all',
-    methods: {
-      MUTATION: { role: 'editor' }
+    actions: {
+      SET: { role: 'editor' }
     }
   }
 }

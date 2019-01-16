@@ -624,24 +624,23 @@ and execute actions that the ident have permissions for.
 Access rules are defined with properties telling Integreat which rights to
 require when performing different actions with a given schema. It may be set
 as a overall right to do anything with a schema, or it may be specified on the
-different methods available: QUERY, MUTATION, and EXTINCTION. These are directly
-infered from GET, SET, or DELETE actions, including actions that start with
-these verbs.
+different action types available: GET, SET, and DELETE, including actions that
+start with these verbs.
 
 Note that this applies to the actual actions being sent to a service – some
 actions will never reach a service, but will trigger other actions, and access
 will be granted or refused to each of these actions as they reach the service
 interface, but not to the triggering action.
 
-An access definition for letting all authorized idents to QUERY, but requiring
-the role `admin` for MUTATIONs:
+An access definition for letting all authorized idents to GET, but requiring
+the role `admin` for SETs:
 
 ```javascript
 {
   id: 'access1',
-  methods: {
-    QUERY: {allow: 'auth'},
-    MUTATION: {role: 'admin'}
+  actions: {
+    GET: {allow: 'auth'},
+    SET: {role: 'admin'}
   }
 }
 ```
@@ -662,14 +661,14 @@ achieve what we aimed for above, could be:
 {
   id: 'access2',
   role: 'admin',
-  methods: {
-    QUERY: {allow: 'auth'}
+  actions: {
+    GET: {allow: 'auth'}
   }
 }
 ```
 
 In this example, all actions are allowed for admins, but anyone else that is
-authenticated may QUERY.
+authenticated may GET.
 
 Available rule props:
 - `role` - Authorize only idents with this role. May be an array of strings
