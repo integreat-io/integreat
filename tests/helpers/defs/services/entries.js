@@ -28,7 +28,15 @@ module.exports = {
       options: { uri: '/', method: 'POST' }
     },
     { match: { scope: 'member' }, responseMapping: 'data', options: { uri: '/{id}' } },
-    { match: { action: 'GET', params: { author: true } }, responseMapping: 'data', options: { uri: '{?author}' } }
+    { match: { action: 'GET', params: { author: true } }, responseMapping: 'data', options: { uri: '{?author}' } },
+    {
+      match: { action: 'REQUEST', filters: { data: { type: 'object', required: ['key'] } } },
+      responseMapping: {
+        'params.id': 'key'
+      },
+      incoming: true,
+      options: { actionType: 'GET', actionPayload: { type: 'entry' } }
+    }
   ],
   mappings: {
     entry: 'entries-entry',

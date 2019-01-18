@@ -13,6 +13,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run lint && NODE_ENV=test nyc --reporter=text-summary ava",
+    "test:inspect": "node --inspect node_modules/ava/profile.js",
     "dev": "NODE_ENV=test ava --watch",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "nyc:report": "nyc report --reporter=text --reporter=html",

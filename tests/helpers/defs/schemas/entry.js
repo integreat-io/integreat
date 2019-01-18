@@ -1,5 +1,6 @@
 module.exports = {
   id: 'entry',
+  plural: 'entries',
   service: 'entries',
   attributes: {
     title: 'string',
