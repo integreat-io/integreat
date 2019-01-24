@@ -21,27 +21,38 @@ test.after.always(() => {
 
 // Tests
 
-test('should dispatch get action and return respons', async (t) => {
+test('should dispatch set action and return respons', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok', data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }) })
   const resources = { adapters: { json: { ...json, send } } }
   const action = {
     type: 'REQUEST',
-    payload: { type: 'entry', data: '{"key":"ent1"}', requestMethod: 'GET' },
-    meta: { ident: { id: 'johnf' } }
+    payload: {
+      type: 'entry',
+      data: `{"key":"ent1","headline":"Entry 1","createdAt":"${createdAt}","updatedAt":"${updatedAt}"}`,
+      requestMethod: 'POST'
+    },
+    meta: { ident: { root: true } }
   }
-  const expectedRequestParams = { type: 'entry', id: 'ent1', onlyMappedValues: false }
+  const expectedRequestParams = {
+    type: 'entry',
+    onlyMappedValues: true,
+    id: undefined
+  }
+  const expectedRequestData = `{"data":[{"key":"ent1","headline":"Entry 1","originalTitle":"Entry 1","createdAt":"${createdAt}","updatedAt":"${updatedAt}","sections":[]}]}`
   const expectedResponse = {
     status: 'ok',
     data: serializeData({ ...ent1Data, createdAt, updatedAt }),
-    access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
+    access: { status: 'granted', ident: { root: true }, scheme: 'data' }
   }
 
   const great = integreat(defs, resources)
   const ret = await great.dispatch(action)
 
+  t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)
   const sentRequest = send.args[0][0]
-  t.is(sentRequest.action, 'GET')
+  t.is(sentRequest.action, 'SET')
   t.deepEqual(sentRequest.params, expectedRequestParams)
+  t.is(sentRequest.data, expectedRequestData)
   t.deepEqual(ret, expectedResponse)
 })
