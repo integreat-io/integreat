@@ -31,7 +31,7 @@ test('should set data with request mapping', async (t) => {
     content: {
       items: [ entry1Mapped ],
       footnote: '',
-      meta: { datatype: 'entry' }
+      meta: '{"datatype":"entry"}'
     }
   }
   nock('http://some.api')
@@ -42,11 +42,16 @@ test('should set data with request mapping', async (t) => {
     payload: { type: 'entry', data: entry1Item },
     meta: { ident: { root: true } }
   }
-  const adapters = { json }
+  const resources = {
+    adapters: { json },
+    transformers: {
+      stringify: (value) => JSON.stringify(value)
+    }
+  }
   const requestMapping = {
     'content.items[]': 'data',
     'content.footnote': { const: '' },
-    'content.meta': { path: 'params.type', sub: 'datatype' }
+    'content.meta': { path: 'params.type', transformTo: 'stringify', sub: 'datatype' }
   }
   const defs = {
     schemas: [entrySchema],
@@ -60,7 +65,7 @@ test('should set data with request mapping', async (t) => {
     mappings: [entriesMapping]
   }
 
-  const great = integreat(defs, { adapters })
+  const great = integreat(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
