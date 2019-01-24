@@ -27,18 +27,26 @@ const entry1Mapped = {
 // Tests
 
 test('should set data with request mapping', async (t) => {
-  const adapters = { json }
+  const requestData = {
+    content: {
+      items: [ entry1Mapped ],
+      footnote: '',
+      meta: { datatype: 'entry' }
+    }
+  }
   nock('http://some.api')
-    .put('/entries/ent1', { content: { items: [ entry1Mapped ], footnote: '' } })
+    .put('/entries/ent1', requestData)
     .reply(201, { id: 'ent1', ok: true, rev: '1-12345' })
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
     meta: { ident: { root: true } }
   }
+  const adapters = { json }
   const requestMapping = {
     'content.items[]': 'data',
-    'content.footnote': { const: '' }
+    'content.footnote': { const: '' },
+    'content.meta': { path: 'params.type', sub: 'datatype' }
   }
   const defs = {
     schemas: [entrySchema],
