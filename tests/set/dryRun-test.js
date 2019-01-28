@@ -46,7 +46,9 @@ test('should set new entry', async (t) => {
       authorId: 'johnf',
       sections: ['news', 'sports']
     }),
-    headers: {}
+    headers: {
+      'Content-Type': 'application/json'
+    }
   }
 
   const great = integreat(defs, { adapters })
