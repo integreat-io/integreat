@@ -30,12 +30,6 @@ const entryMapping = {
   }
 }
 
-const userMapping = {
-  ...usersUserMapping,
-  id: 'entries-user',
-  path: 'author'
-}
-
 // Tests
 
 test('should get all entries from service', async (t) => {
@@ -44,7 +38,11 @@ test('should get all entries from service', async (t) => {
     .reply(200, { data: [{ ...entry1Data, author: { ...johnfData, createdAt, updatedAt } }] })
   const adapters = { json }
   defs.mappings[0] = entryMapping
-  defs.mappings.push(userMapping)
+  defs.mappings.push({
+    ...usersUserMapping,
+    id: 'entries-user',
+    path: 'author'
+  })
   const action = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' }
@@ -77,6 +75,35 @@ test('should get all entries from service', async (t) => {
   t.is(ret.data.length, 1)
   t.is(ret.data[0].id, 'ent1')
   t.deepEqual(ret.data[0].relationships.author, expectedRel)
+
+  nock.restore()
+})
+
+test.skip('should map relationship on self referring type', async (t) => {
+  nock('http://some.api')
+    .get('/users/johnf')
+    .reply(200, { data: [{ ...johnfData, creator: 'betty' }] })
+  const adapters = { json }
+  defs.mappings.push({
+    ...usersUserMapping,
+    id: 'entries-user',
+    relationships: {
+      ...usersUserMapping.relationships,
+      createdBy: { path: 'creator', mapping: 'entries-user' }
+    }
+  })
+  const action = {
+    type: 'GET',
+    payload: { type: 'user', id: 'johnf' }
+  }
+
+  const great = integreat(defs, { adapters })
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.data.length, 1)
+  t.is(ret.data[0].id, 'johnf')
+  t.is(ret.data[0].relationships.createdBy.id, 'betty')
 
   nock.restore()
 })

@@ -44,7 +44,6 @@ test('should emit request before mapping to service', async (t) => {
   t.is(handler.callCount, 1)
   const request = handler.args[0][0]
   t.is(request.action, 'SET')
-  t.is(request.method, 'MUTATION')
   t.deepEqual(request.data, expectedData)
 
   nock.restore()
@@ -70,7 +69,6 @@ test('should emit request after mapping to service', async (t) => {
   t.is(handler.callCount, 1)
   const request = handler.args[0][0]
   t.is(request.action, 'SET')
-  t.is(request.method, 'MUTATION')
   t.is(request.data.key, 'ent2')
 
   nock.restore()

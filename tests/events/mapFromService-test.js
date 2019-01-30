@@ -25,7 +25,6 @@ test('should emit request and response before mapping from service', async (t) =
 
   t.is(ret.status, 'ok', ret.error)
   t.is(handler.callCount, 1)
-  t.is(handler.args[0][0].method, 'QUERY')
   const response = handler.args[0][1]
   t.truthy(response.data)
   t.is(response.data.data.key, 'ent1')
@@ -51,7 +50,6 @@ test('should emit request and response after mapping from service', async (t) =>
 
   t.is(ret.status, 'ok', ret.error)
   t.is(handler.callCount, 1)
-  t.is(handler.args[0][0].method, 'QUERY')
   const response = handler.args[0][1]
   t.truthy(response.data)
   t.is(response.data[0].id, 'ent1')

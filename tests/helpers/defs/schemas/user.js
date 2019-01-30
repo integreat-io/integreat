@@ -10,7 +10,8 @@ module.exports = {
     tokens: 'string[]'
   },
   relationships: {
-    feeds: 'feed'
+    feeds: 'feed',
+    createdBy: 'user'
   },
   access: {
     identFromField: 'id'
