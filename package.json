@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.7.0-alpha.9",
+  "version": "0.7.0-alpha.10",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
   "license": "ISC",
@@ -58,7 +58,7 @@
     "uuid": "^3.2.2"
   },
   "devDependencies": {
-    "ava": "1.1.0",
+    "ava": "1.2.0",
     "babel-preset-env": "^1.7.0",
     "coveralls": "^3.0.2",
     "dotenv": "^6.2.0",
