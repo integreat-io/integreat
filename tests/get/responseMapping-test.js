@@ -102,6 +102,47 @@ test('should use status code mapped from data', async (t) => {
   nock.restore()
 })
 
+test('should not override adater error with data status', async (t) => {
+  const adapters = { json }
+  nock('http://some.api')
+    .get('/entries/ent2')
+    .reply(404, {
+      responseContent: null,
+      reponseValue: 'ok'
+    })
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent2' }
+  }
+  const responseMapping = {
+    status: 'reponseValue',
+    data: {
+      path: 'responseContent.articles[]'
+    },
+    error: 'responseMessage'
+  }
+  const defs = {
+    schemas: [entrySchema],
+    services: [{
+      ...entriesService,
+      endpoints: [{
+        responseMapping,
+        options: { uri: '/{id}' }
+      }]
+    }],
+    mappings: [entriesMapping]
+  }
+
+  const great = integreat(defs, { adapters })
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'notfound')
+  t.is(typeof ret.error, 'string')
+  t.falsy(ret.data)
+
+  nock.restore()
+})
+
 test('should map with sub mapping', async (t) => {
   const adapters = { json }
   nock('http://some.api')
