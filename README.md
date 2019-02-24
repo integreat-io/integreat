@@ -272,10 +272,14 @@ that this is an authenticated service.
 ```
 {
   id: <string>,
-  type: <string>,
-  scope: <'collection'|'member'>,
-  action: <action type>,
-  params: {...},
+  match: {
+    type: <string>,
+    scope: <'collection'|'member'>,
+    action: <action type>,
+    params: {...},
+    filters: []
+  },
+  validate: [],
   options: {...}
 }
 ```
