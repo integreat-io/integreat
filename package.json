@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.7.0-beta.2",
+  "version": "0.7.0-beta.3",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
   "license": "ISC",
@@ -60,12 +60,12 @@
   "devDependencies": {
     "ava": "1.2.1",
     "babel-preset-env": "^1.7.0",
-    "coveralls": "^3.0.2",
+    "coveralls": "^3.0.3",
     "dotenv": "^6.2.0",
     "integreat-adapter-json": "^0.1.4",
     "nock": "^10.0.6",
     "nyc": "^13.3.0",
-    "sinon": "^7.2.3",
+    "sinon": "^7.2.4",
     "standard": "^12.0.1"
   }
 }
