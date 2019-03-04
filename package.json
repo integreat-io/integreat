@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.7.0-beta.4",
+  "version": "0.7.0-beta.5",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
   "license": "ISC",
@@ -65,7 +65,7 @@
     "integreat-adapter-json": "^0.1.4",
     "nock": "^10.0.6",
     "nyc": "^13.3.0",
-    "sinon": "^7.2.4",
+    "sinon": "^7.2.7",
     "standard": "^12.0.1"
   }
 }
