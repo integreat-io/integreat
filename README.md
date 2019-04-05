@@ -7,9 +7,9 @@ An integration layer for node.js.
 [![Coverage Status](https://coveralls.io/repos/github/integreat-io/integreat/badge.svg?branch=master)](https://coveralls.io/github/integreat-io/integreat?branch=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a5bd9841a47ff9f74577/maintainability)](https://codeclimate.com/github/integreat-io/integreat/maintainability)
 
-**Note:** We're still in an early stage, although some parts are approaching a
-stable state. We encourage trying it out and experimenting with Integreat, and
-we highly appreciate feedback, but know that anything might change.
+**Note:** We're still changing the api rather drastically from release to
+release. We encourage trying it out and experimenting with Integreat, and we
+highly appreciate feedback, but know that anything might change.
 
 The basic idea of Integreat is to make it easy to define a set of data services
 and expose them through a well defined interface, to abstract away the specifics
@@ -1241,6 +1241,8 @@ Built in transformers:
   url-unfriendly characters +, /, and = replaced with -, \_, and ~)
 
 ### Schedule definition
+**Note:** This will likely be removed in version 0.8.
+
 ```
 {
   schedule: <schedule>,
