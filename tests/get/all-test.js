@@ -1,26 +1,25 @@
 import test from 'ava'
 import nock from 'nock'
-import json from '../../lib/adapters/json'
+import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import entriesData from '../helpers/data/entries'
 
 import integreat from '../..'
 
-test('should get all entries from source', async (t) => {
-  const adapters = {json}
-  const formatters = integreat.formatters()
+test('should get all entries from service', async (t) => {
+  const adapters = { json }
   nock('http://some.api')
     .get('/entries/')
-    .reply(200, {data: entriesData})
+    .reply(200, { data: entriesData })
   const action = {
     type: 'GET',
-    payload: {type: 'entry'}
+    payload: { type: 'entry' }
   }
 
-  const great = integreat(defs, {adapters, formatters})
+  const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.true(Array.isArray(ret.data))
   t.is(ret.data.length, 3)
   t.is(ret.data[0].id, 'ent1')

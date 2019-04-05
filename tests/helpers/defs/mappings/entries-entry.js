@@ -1,15 +1,17 @@
 module.exports = {
+  id: 'entries-entry',
   type: 'entry',
-  source: 'entries',
+  service: 'entries',
   attributes: {
     id: 'key',
-    title: {path: 'heading', default: 'An entry'},
+    title: { path: 'headline', default: 'An entry' },
+    'title/1': 'originalTitle',
     text: 'body',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   },
   relationships: {
-    author: 'authorId',
-    sections: 'sections[]'
+    'author.id': 'authorId',
+    'sections.id': 'sections[]'
   }
 }

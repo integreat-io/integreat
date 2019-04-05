@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.6.4",
+  "version": "0.7.0",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
   "license": "ISC",
@@ -11,11 +11,13 @@
     "api"
   ],
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "npm run lint && NODE_ENV=test nyc --reporter=text-summary ava",
+    "test:inspect": "node --inspect node_modules/ava/profile.js",
     "dev": "NODE_ENV=test ava --watch",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "nyc:report": "nyc report",
+    "nyc:report": "nyc report --reporter=text --reporter=html",
     "lint": "standard"
   },
   "ava": {
@@ -23,7 +25,7 @@
       "lib/**/*-test.js",
       "tests/**/*-test.js"
     ],
-    "source": [
+    "service": [
       "./index.js",
       "lib/**/!(*-test).js"
     ]
@@ -47,21 +49,24 @@
     "npm": ">= 5.6"
   },
   "dependencies": {
-    "@sindresorhus/is": "^0.7.0",
-    "debug": "^3.2.6",
-    "got": "^8.3.2",
-    "great-uri-template": "^0.1.2",
+    "@sindresorhus/is": "^0.15.0",
+    "debug": "^4.1.1",
+    "got": "^9.6.0",
     "later": "^1.2.0",
-    "uuid": "^3.3.2"
+    "map-any": "^0.1.2",
+    "map-transform": "^0.3.3",
+    "ramda": "^0.26.1",
+    "uuid": "^3.2.2"
   },
   "devDependencies": {
-    "ava": "^0.25.0",
+    "ava": "1.4.1",
     "babel-preset-env": "^1.7.0",
-    "coveralls": "^3.0.2",
-    "dotenv": "^5.0.1",
-    "nock": "^9.6.1",
-    "nyc": "^11.9.0",
-    "sinon": "^4.5.0",
-    "standard": "^11.0.1"
+    "coveralls": "^3.0.3",
+    "dotenv": "^7.0.0",
+    "integreat-adapter-json": "^0.1.4",
+    "nock": "^10.0.6",
+    "nyc": "^13.3.0",
+    "sinon": "^7.3.1",
+    "standard": "^12.0.1"
   }
 }

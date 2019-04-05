@@ -1,6 +1,6 @@
 import test from 'ava'
 import nock from 'nock'
-import json from '../../lib/adapters/json'
+import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
 import integreat from '../..'
@@ -27,17 +27,17 @@ const bettyItem = {
 // Tests
 
 test('should refuse to set entries where ident has no access', async (t) => {
-  const adapters = {json}
+  const adapters = { json }
   nock('http://some.api')
     .post('/users/')
-    .reply(201, {ok: true})
+    .reply(201, { ok: true })
   const action = {
     type: 'SET',
-    payload: {type: 'user', data: [johnfItem, bettyItem]},
-    meta: {ident: {id: 'johnf'}}
+    payload: { type: 'user', data: [johnfItem, bettyItem] },
+    meta: { ident: { id: 'johnf' } }
   }
 
-  const great = integreat(defs, {adapters})
+  const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

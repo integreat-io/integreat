@@ -1,11 +1,11 @@
 module.exports = {
-  datatypes: [
-    require('./datatypes/entry'),
-    require('./datatypes/user')
+  schemas: [
+    require('./schemas/entry'),
+    require('./schemas/user')
   ],
-  sources: [
-    require('./sources/entries'),
-    require('./sources/users')
+  services: [
+    require('./services/entries'),
+    require('./services/users')
   ],
   mappings: [
     require('./mappings/entries-entry'),

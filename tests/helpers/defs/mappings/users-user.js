@@ -1,6 +1,7 @@
 module.exports = {
+  id: 'users-user',
   type: 'user',
-  source: 'users',
+  service: 'users',
   attributes: {
     id: 'user',
     username: 'user',
@@ -13,6 +14,6 @@ module.exports = {
     tokens: 'tokens[]'
   },
   relationships: {
-    feeds: 'feeds[]'
+    'feeds.id': 'feeds[]'
   }
 }
