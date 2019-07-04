@@ -3,4 +3,4 @@ const appendToAction = (action, payloadProps) => ({
   payload: { ...action.payload, ...payloadProps }
 })
 
-module.exports = appendToAction
+export default appendToAction

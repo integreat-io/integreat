@@ -1,16 +1,17 @@
 import test from 'ava'
-import sinon from 'sinon'
+import sinon = require('sinon')
 import json from 'integreat-adapter-json'
-import tokenAuth from '../../lib/authenticators/token'
+import tokenAuth from '../../src/authenticators/token'
 import defs from '../helpers/defs'
 import entriesData from '../helpers/data/entries'
 
-import integreat from '../..'
+import integreat = require('../..')
 
-test('should connect to service and reuse connection', async (t) => {
+test('should connect to service and reuse connection', async t => {
   let count = 1
   const send = sinon.stub().resolves({ status: 'ok', data: entriesData })
-  const connect = async (options, args, conn) => conn || { status: 'ok', value: `Call ${count++}` }
+  const connect = async (options, args, conn) =>
+    conn || { status: 'ok', value: `Call ${count++}` }
   const adapters = { json: { ...json, send, connect } }
   const authenticators = { token: tokenAuth }
   const action = {

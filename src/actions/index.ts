@@ -1,14 +1,14 @@
-const deleteFn = require('./delete')
+import deleteFn from './delete'
 
-module.exports = {
-  'GET': require('./get'),
-  'GET_META': require('./getMeta'),
-  'GET_IDENT': require('./getIdent'),
-  'SET': require('./set'),
-  'SET_META': require('./setMeta'),
-  'DELETE': deleteFn,
-  'DEL': deleteFn,
-  'REQUEST': require('./request'),
-  'SYNC': require('./sync'),
-  'EXPIRE': require('./expire')
+export default {
+  GET: require('./get').default,
+  GET_META: require('./getMeta').default,
+  GET_IDENT: require('./getIdent').default,
+  SET: require('./set').default,
+  SET_META: require('./setMeta').default,
+  DELETE: deleteFn,
+  DEL: deleteFn,
+  REQUEST: require('./request').default,
+  SYNC: require('./sync').default,
+  EXPIRE: require('./expire').default
 }

@@ -1,31 +1,41 @@
-const EventEmitter = require('events')
+import EventEmitter = require('events')
 const { compose, identity } = require('ramda')
-const prepareEndpoints = require('../endpoints')
-const requestFromAction = require('./requestFromAction')
-const { beforeService, sendToService, afterService, respondToUnknownAction } = require('./send')
-const createError = require('../utils/createError')
+import prepareEndpoints from '../endpoints'
+import requestFromAction from './requestFromAction'
+import {
+  beforeService,
+  sendToService,
+  afterService,
+  respondToUnknownAction
+} from './send'
+import createError from '../utils/createError'
 
-const lookup = (id, resource) => (typeof id === 'string') ? resource[id] : id
+const lookup = (id, resource) => (typeof id === 'string' ? resource[id] : id)
 
 const normalizeAction = async (action, adapter) => {
-  const normalized = await adapter.normalize({ status: 'ok', data: action.payload.data }, { endpoint: {} })
+  const normalized = await adapter.normalize(
+    { status: 'ok', data: action.payload.data },
+    { endpoint: {} }
+  )
   return { ...action, payload: { ...action.payload, data: normalized.data } }
 }
 
-const receiveRequestFromAction = ({ type, payload: { data, ...params }, meta: { ident } }, endpoint) =>
-  ({
-    action: type,
-    params: {
-      ...endpoint.options.actionPayload,
-      ...params
-    },
-    endpoint: endpoint.options,
-    access: { ident }
-  })
+const receiveRequestFromAction = (
+  { type, payload: { data, ...params }, meta: { ident } },
+  endpoint
+) => ({
+  action: type,
+  params: {
+    ...endpoint.options.actionPayload,
+    ...params
+  },
+  endpoint: endpoint.options,
+  access: { ident }
+})
 
 const receiveAfterArgs = (action, request, endpoint) => ({
   request,
-  response: ({ status: 'ok', data: action.payload.data }),
+  response: { status: 'ok', data: action.payload.data },
   requestMapper: endpoint.requestMapper,
   responseMapper: endpoint.responseMapper,
   mappings: endpoint.mappings
@@ -44,12 +54,12 @@ const createNextAction = (action, { options }, mappedResponse) => ({
     type: action.payload.type,
     ...options.actionPayload,
     ...mappedResponse.params,
-    ...((mappedResponse.data) ? { data: mappedResponse.data } : {})
+    ...(mappedResponse.data ? { data: mappedResponse.data } : {})
   },
   meta: { ...action.meta, ...options.actionMeta }
 })
 
-const wrapResponse = (response) => ({ response })
+const wrapResponse = response => ({ response })
 
 /**
  * Create a service with the given id and adapter.
@@ -78,10 +88,15 @@ const service = ({
 
   adapter = lookup(adapter, adapters)
   if (!adapter) {
-    throw new TypeError(`Can't create service '${serviceId}' without an adapter.`)
+    throw new TypeError(
+      `Can't create service '${serviceId}' without an adapter.`
+    )
   }
 
-  endpoints = prepareEndpoints({ endpoints, options, mappings: mappingsDef }, { adapter, transformers, setupMapping })
+  endpoints = prepareEndpoints(
+    { endpoints, options, mappings: mappingsDef },
+    { adapter, transformers, setupMapping }
+  )
   auth = lookup(auth, auths) || {}
   let connection = null
   const emitter = new EventEmitter()
@@ -92,8 +107,12 @@ const service = ({
     adapter,
     authenticator: auth.authenticator,
     authOptions: auth.options,
-    setAuthentication: (authentication) => { auth.authentication = authentication },
-    setConnection: (conn) => { connection = conn },
+    setAuthentication: authentication => {
+      auth.authentication = authentication
+    },
+    setConnection: conn => {
+      connection = conn
+    },
     serviceOptions: options,
     emit: emitter.emit.bind(emitter)
   }
@@ -126,10 +145,15 @@ const service = ({
      * @param {Object} action - Action object to map and send to the service
      * @returns {Object} Object with the sent request and the received response
      */
-    async send (action) {
+    async send(action) {
       const endpoint = endpoints.match(action)
       if (!endpoint) {
-        return { response: createError(`No endpoint matching request to service '${serviceId}'.`, 'noaction') }
+        return {
+          response: createError(
+            `No endpoint matching request to service '${serviceId}'.`,
+            'noaction'
+          )
+        }
       }
 
       const validateRes = endpoint.validate(action)
@@ -157,11 +181,16 @@ const service = ({
      * @param {Object} dispatch - A dispatch function
      * @returns {Object} Object with the received response
      */
-    async receive (action, dispatch) {
+    async receive(action, dispatch) {
       action = await normalizeAction(action, adapter)
       const endpoint = endpoints.match(action)
       if (!endpoint) {
-        return wrapResponse(createError(`No endpoint matching request to service '${serviceId}'.`, 'noaction'))
+        return wrapResponse(
+          createError(
+            `No endpoint matching request to service '${serviceId}'.`,
+            'noaction'
+          )
+        )
       }
 
       const validateRes = endpoint.validate(action)
@@ -170,24 +199,33 @@ const service = ({
       }
 
       if (!endpoint.options || !endpoint.options.actionType) {
-        return wrapResponse(createError(`The matching endpoint on service '${serviceId}' did not specify an action type`, 'noaction'))
+        return wrapResponse(
+          createError(
+            `The matching endpoint on service '${serviceId}' did not specify an action type`,
+            'noaction'
+          )
+        )
       }
 
       const request = receiveRequestFromAction(action, endpoint)
-      const mapped = await afterServiceFn(receiveAfterArgs(action, request, endpoint))
+      const mapped = await afterServiceFn(
+        receiveAfterArgs(action, request, endpoint)
+      )
       const nextAction = createNextAction(action, endpoint, mapped.response)
 
       const response = await dispatch(nextAction)
 
-      const serialized = await beforeServiceFn(receiveBeforeArgs(response, request, endpoint))
+      const serialized = await beforeServiceFn(
+        receiveBeforeArgs(response, request, endpoint)
+      )
 
       return wrapResponse({
         ...response,
-        ...((serialized.request.data) ? { data: serialized.request.data } : {}),
+        ...(serialized.request.data ? { data: serialized.request.data } : {}),
         access: serialized.request.access
       })
     }
   }
 }
 
-module.exports = service
+export default service

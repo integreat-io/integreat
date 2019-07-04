@@ -1,4 +1,7 @@
-*-test.js
+src/
+coverage/
+tests/
+*.test*
 .*
-tests
-coverage
+tsconfig.json
+tslint.json

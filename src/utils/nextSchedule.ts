@@ -26,4 +26,4 @@ function nextSchedule (schedule, allowNow = false) {
   return null
 }
 
-module.exports = nextSchedule
+export default nextSchedule

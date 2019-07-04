@@ -17,4 +17,4 @@ function createAction (type, payload = {}, meta) {
   return action
 }
 
-module.exports = createAction
+export default createAction

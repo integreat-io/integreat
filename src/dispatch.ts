@@ -1,5 +1,5 @@
 const debug = require('debug')('great')
-const setupGetService = require('./utils/getService')
+import setupGetService from './utils/getService'
 
 const compose = (...fns) => fns.reduce((f, g) => (...args) => f(g(...args)))
 
@@ -22,10 +22,16 @@ const handleAction = (action, resources, actionHandlers) => {
  * @param {Object} resources - Object with actions, schemas, services, and middlewares
  * @returns {function} Dispatch function, accepting an action as only argument
  */
-function setupDispatch ({ actions: actionHandlers = {}, schemas = {}, services = {}, middlewares = [], identOptions = {} }) {
+function setupDispatch({
+  actions: actionHandlers = {},
+  schemas = {},
+  services = {},
+  middlewares = [],
+  identOptions = {}
+}) {
   const getService = setupGetService(schemas, services)
 
-  let dispatch = async (action) => {
+  let dispatch = async action => {
     debug('Dispatch: %o', action)
     return handleAction(
       action,
@@ -47,4 +53,4 @@ function setupDispatch ({ actions: actionHandlers = {}, schemas = {}, services =
   return dispatch
 }
 
-module.exports = setupDispatch
+export default setupDispatch

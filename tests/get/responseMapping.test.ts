@@ -1,5 +1,5 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
@@ -8,7 +8,7 @@ import entry2 from '../helpers/data/entry2'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 import jsonTransform from '../helpers/resources/transformers/jsonTransform'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Setup
 
@@ -16,7 +16,7 @@ const transformers = { jsonTransform }
 
 // Tests
 
-test('should map with response mapping', async (t) => {
+test('should map with response mapping', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
@@ -37,13 +37,17 @@ test('should map with response mapping', async (t) => {
   }
   const defs = {
     schemas: [entrySchema],
-    services: [{
-      ...entriesService,
-      endpoints: [{
-        responseMapping,
-        options: { uri: '/{id}' }
-      }]
-    }],
+    services: [
+      {
+        ...entriesService,
+        endpoints: [
+          {
+            responseMapping,
+            options: { uri: '/{id}' }
+          }
+        ]
+      }
+    ],
     mappings: [entriesMapping]
   }
 
@@ -60,7 +64,7 @@ test('should map with response mapping', async (t) => {
   nock.restore()
 })
 
-test('should use status code mapped from data', async (t) => {
+test('should use status code mapped from data', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent2')
@@ -82,13 +86,17 @@ test('should use status code mapped from data', async (t) => {
   }
   const defs = {
     schemas: [entrySchema],
-    services: [{
-      ...entriesService,
-      endpoints: [{
-        responseMapping,
-        options: { uri: '/{id}' }
-      }]
-    }],
+    services: [
+      {
+        ...entriesService,
+        endpoints: [
+          {
+            responseMapping,
+            options: { uri: '/{id}' }
+          }
+        ]
+      }
+    ],
     mappings: [entriesMapping]
   }
 
@@ -102,7 +110,7 @@ test('should use status code mapped from data', async (t) => {
   nock.restore()
 })
 
-test('should not override adater error with data status', async (t) => {
+test('should not override adater error with data status', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent2')
@@ -123,13 +131,17 @@ test('should not override adater error with data status', async (t) => {
   }
   const defs = {
     schemas: [entrySchema],
-    services: [{
-      ...entriesService,
-      endpoints: [{
-        responseMapping,
-        options: { uri: '/{id}' }
-      }]
-    }],
+    services: [
+      {
+        ...entriesService,
+        endpoints: [
+          {
+            responseMapping,
+            options: { uri: '/{id}' }
+          }
+        ]
+      }
+    ],
     mappings: [entriesMapping]
   }
 
@@ -143,7 +155,7 @@ test('should not override adater error with data status', async (t) => {
   nock.restore()
 })
 
-test('should map with sub mapping', async (t) => {
+test('should map with sub mapping', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent3')
@@ -165,13 +177,17 @@ test('should map with sub mapping', async (t) => {
   }
   const defs = {
     schemas: [entrySchema],
-    services: [{
-      ...entriesService,
-      endpoints: [{
-        responseMapping,
-        options: { uri: '/{id}' }
-      }]
-    }],
+    services: [
+      {
+        ...entriesService,
+        endpoints: [
+          {
+            responseMapping,
+            options: { uri: '/{id}' }
+          }
+        ]
+      }
+    ],
     mappings: [entriesMapping]
   }
 

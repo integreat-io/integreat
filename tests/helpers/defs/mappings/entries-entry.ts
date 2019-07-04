@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   id: 'entries-entry',
   type: 'entry',
   service: 'entries',

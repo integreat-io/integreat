@@ -1,4 +1,4 @@
-const gatherResources = require('../utils/gatherResources')
+import gatherResources from '../utils/gatherResources'
 
 const transformers = [
   'not',
@@ -9,4 +9,4 @@ const transformers = [
   'uppercase'
 ]
 
-module.exports = gatherResources(transformers, __dirname)
+export default gatherResources(transformers, __dirname)

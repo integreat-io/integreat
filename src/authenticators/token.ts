@@ -64,4 +64,4 @@ const tokenAuth = {
   }
 }
 
-module.exports = tokenAuth
+export default tokenAuth

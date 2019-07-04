@@ -5,7 +5,7 @@ function uppercase (value) {
   return value
 }
 
-module.exports = Object.assign(
+export default Object.assign(
   uppercase,
   { rev: uppercase }
 )

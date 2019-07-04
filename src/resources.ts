@@ -1,7 +1,7 @@
 const resources = () => ({
   adapters: {},
-  authenticators: require('./authenticators')(),
-  transformers: require('./transformers')()
+  authenticators: require('./authenticators').default(),
+  transformers: require('./transformers').default()
 })
 
-module.exports = resources
+export default resources

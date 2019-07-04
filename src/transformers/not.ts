@@ -1,4 +1,4 @@
-module.exports = Object.assign(
+export default Object.assign(
   (value) => !value,
   { rev: (value) => !value }
 )

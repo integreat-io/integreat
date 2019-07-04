@@ -1,10 +1,10 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Helpers
 
@@ -17,13 +17,16 @@ const entry1Item = {
   },
   relationships: {
     author: { id: 'johnf', type: 'user' },
-    sections: [{ id: 'news', type: 'section' }, { id: 'sports', type: 'section' }]
+    sections: [
+      { id: 'news', type: 'section' },
+      { id: 'sports', type: 'section' }
+    ]
   }
 }
 
 // Tests
 
-test('should refuse request to set entry with no ident', async (t) => {
+test('should refuse request to set entry with no ident', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/users/johnf')

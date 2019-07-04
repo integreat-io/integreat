@@ -1,3 +1,3 @@
-module.exports = {
-  completeIdent: require('./completeIdent')
+export default {
+  completeIdent: require('./completeIdent').default
 }

@@ -1,11 +1,11 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Helpers
 
@@ -26,10 +26,10 @@ const entry1Mapped = {
 
 // Tests
 
-test('should set data with request mapping', async (t) => {
+test('should set data with request mapping', async t => {
   const requestData = {
     content: {
-      items: [ entry1Mapped ],
+      items: [entry1Mapped],
       footnote: '',
       meta: '{"datatype":"entry"}'
     }
@@ -45,23 +45,31 @@ test('should set data with request mapping', async (t) => {
   const resources = {
     adapters: { json },
     transformers: {
-      stringify: (value) => JSON.stringify(value)
+      stringify: value => JSON.stringify(value)
     }
   }
   const requestMapping = {
     'content.items[]': 'data',
     'content.footnote': { const: '' },
-    'content.meta': { path: 'params.type', transformTo: 'stringify', sub: 'datatype' }
+    'content.meta': {
+      path: 'params.type',
+      transformTo: 'stringify',
+      sub: 'datatype'
+    }
   }
   const defs = {
     schemas: [entrySchema],
-    services: [{
-      ...entriesService,
-      endpoints: [{
-        requestMapping,
-        options: { uri: '/{id}' }
-      }]
-    }],
+    services: [
+      {
+        ...entriesService,
+        endpoints: [
+          {
+            requestMapping,
+            options: { uri: '/{id}' }
+          }
+        ]
+      }
+    ],
     mappings: [entriesMapping]
   }
 

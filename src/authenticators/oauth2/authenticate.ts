@@ -22,4 +22,4 @@ async function authenticate ({ uri, key, secret }) {
   }
 }
 
-module.exports = authenticate
+export default authenticate

@@ -1,9 +1,5 @@
-const gatherResources = require('../utils/gatherResources')
+import gatherResources from '../utils/gatherResources'
 
-const authenticators = [
-  'options',
-  'token',
-  'oauth2'
-]
+const authenticators = ['options', 'token', 'oauth2']
 
-module.exports = gatherResources(authenticators, __dirname)
+export default gatherResources(authenticators, __dirname)

@@ -1,11 +1,11 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 import ent1Data from '../helpers/data/entry1'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Setup
 
@@ -14,36 +14,36 @@ const updatedAt = '2017-11-24T07:11:43Z'
 
 // Tests
 
-test('should get one user from service', async (t) => {
+test('should get one user from service', async t => {
   const adapters = { json }
   nock('http://some.api')
-    .get('/users/johnf').times(2)
+    .get('/users/johnf')
+    .times(2)
     .reply(200, { data: { ...johnfData, createdAt, updatedAt } })
   const action = {
     type: 'GET',
     payload: { id: 'johnf', type: 'user' },
     meta: { ident: { id: 'johnf' } }
   }
-  const expected = [{
-    id: 'johnf',
-    type: 'user',
-    attributes: {
-      username: 'johnf',
-      firstname: 'John',
-      lastname: 'Fjon',
-      yearOfBirth: 1987,
-      createdAt: new Date(createdAt),
-      updatedAt: new Date(updatedAt),
-      roles: ['editor'],
-      tokens: ['twitter|23456', 'facebook|12345']
-    },
-    relationships: {
-      feeds: [
-        { id: 'news', type: 'feed' },
-        { id: 'social', type: 'feed' }
-      ]
+  const expected = [
+    {
+      id: 'johnf',
+      type: 'user',
+      attributes: {
+        username: 'johnf',
+        firstname: 'John',
+        lastname: 'Fjon',
+        yearOfBirth: 1987,
+        createdAt: new Date(createdAt),
+        updatedAt: new Date(updatedAt),
+        roles: ['editor'],
+        tokens: ['twitter|23456', 'facebook|12345']
+      },
+      relationships: {
+        feeds: [{ id: 'news', type: 'feed' }, { id: 'social', type: 'feed' }]
+      }
     }
-  }]
+  ]
 
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -54,7 +54,7 @@ test('should get one user from service', async (t) => {
   nock.restore()
 })
 
-test('should get one entry from service', async (t) => {
+test('should get one entry from service', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
@@ -64,23 +64,25 @@ test('should get one entry from service', async (t) => {
     payload: { id: 'ent1', type: 'entry' },
     meta: { ident: { root: true } }
   }
-  const expected = [{
-    id: 'ent1',
-    type: 'entry',
-    attributes: {
-      title: 'Entry 1',
-      text: 'The text of entry 1',
-      createdAt: new Date(createdAt),
-      updatedAt: new Date(updatedAt)
-    },
-    relationships: {
-      author: { id: 'johnf', type: 'user' },
-      sections: [
-        { id: 'news', type: 'section' },
-        { id: 'sports', type: 'section' }
-      ]
+  const expected = [
+    {
+      id: 'ent1',
+      type: 'entry',
+      attributes: {
+        title: 'Entry 1',
+        text: 'The text of entry 1',
+        createdAt: new Date(createdAt),
+        updatedAt: new Date(updatedAt)
+      },
+      relationships: {
+        author: { id: 'johnf', type: 'user' },
+        sections: [
+          { id: 'news', type: 'section' },
+          { id: 'sports', type: 'section' }
+        ]
+      }
     }
-  }]
+  ]
 
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)

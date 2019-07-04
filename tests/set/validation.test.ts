@@ -1,9 +1,9 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Helpers
 
@@ -40,16 +40,19 @@ test.after.always(() => {
 
 const alwaysOk = () => null
 
-const shouldHaveAuthor = (action) =>
-  (action.payload.data && action.payload.data.relationships.author)
+const shouldHaveAuthor = action =>
+  action.payload.data && action.payload.data.relationships.author
     ? null
     : { status: 'badrequest', error: 'Error from validator' }
 
-const isNumericId = (action) => (isNaN(action.payload.id)) ? { status: 'badrequest', error: 'Not number' } : null
+const isNumericId = action =>
+  isNaN(action.payload.id)
+    ? { status: 'badrequest', error: 'Not number' }
+    : null
 
 defs.services[0].endpoints.push({
   match: { action: 'SET', scope: 'member' },
-  validate: [ 'alwaysOk', 'shouldHaveAuthor' ],
+  validate: ['alwaysOk', 'shouldHaveAuthor'],
   options: { uri: '/{id}' }
 })
 defs.services[0].endpoints.push({
@@ -63,7 +66,7 @@ const transformers = { alwaysOk, shouldHaveAuthor, isNumericId }
 
 // Tests
 
-test('should respond with response from validation when not validated', async (t) => {
+test('should respond with response from validation when not validated', async t => {
   const scope = nock('http://some.api')
     .put('/entries/ent2')
     .reply(201, { data: { key: 'ent2', ok: true } })
@@ -81,7 +84,7 @@ test('should respond with response from validation when not validated', async (t
   t.false(scope.isDone())
 })
 
-test('should respond with ok when validated', async (t) => {
+test('should respond with ok when validated', async t => {
   const scope = nock('http://some.api')
     .put('/entries/ent1')
     .reply(201, { data: { key: 'ent1', ok: true } })
@@ -99,7 +102,7 @@ test('should respond with ok when validated', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should respond with response from validation when not validated - REQUEST', async (t) => {
+test('should respond with response from validation when not validated - REQUEST', async t => {
   const action = {
     type: 'REQUEST',
     payload: { type: 'entry', id: 'invalid' },

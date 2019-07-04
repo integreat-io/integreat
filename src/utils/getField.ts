@@ -1,4 +1,4 @@
-module.exports = (item, field) =>
+export default (item, field) =>
   item[field] ||
   item.attributes[field] ||
   (item.relationships[field] && ((Array.isArray(item.relationships[field]))

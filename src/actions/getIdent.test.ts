@@ -1,5 +1,5 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import integreat from '../integreat'
 import json from 'integreat-adapter-json'
 import defs from '../../tests/helpers/defs'

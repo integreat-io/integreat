@@ -67,4 +67,4 @@ function authenticate ({ authenticator, authOptions, setAuthentication = () => {
     : async (args) => args
 }
 
-module.exports = authenticate
+export default authenticate

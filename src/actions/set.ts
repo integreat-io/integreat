@@ -1,12 +1,13 @@
-const is = require('@sindresorhus/is')
+import is = require('@sindresorhus/is')
+import { mergeDeepWith } from 'ramda'
+import createUnknownServiceError from '../utils/createUnknownServiceError'
+import appendToAction from '../utils/appendToAction'
 const debug = require('debug')('great')
-const createUnknownServiceError = require('../utils/createUnknownServiceError')
-const appendToAction = require('../utils/appendToAction')
-const { mergeDeepWith } = require('ramda')
 
 const mergeDiff = (left, right) =>
-  (is.undefined(right) || (is.emptyArray(right) && is.nonEmptyArray(left)))
-    ? left : right
+  is.undefined(right) || (is.emptyArray(right) && is.nonEmptyArray(left))
+    ? left
+    : right
 
 const merge = (requestData, responseData) => {
   requestData = [].concat(requestData)
@@ -15,18 +16,22 @@ const merge = (requestData, responseData) => {
   }
   responseData = [].concat(responseData)
 
-  return requestData.map(
-    (data, index) => (data) ? mergeDeepWith(mergeDiff, data, responseData[index]) : responseData[index]
+  return requestData.map((data, index) =>
+    data
+      ? mergeDeepWith(mergeDiff, data, responseData[index])
+      : responseData[index]
   )
 }
 
-const mergeRequestAndResponseData = (response, requestData) => (response.status === 'ok')
-  ? { ...response, data: merge(requestData, response.data) }
-  : response
+const mergeRequestAndResponseData = (response, requestData) =>
+  response.status === 'ok'
+    ? { ...response, data: merge(requestData, response.data) }
+    : response
 
-const extractType = (action, data) => action.payload.type || (data && data.type) || undefined
+const extractType = (action, data) =>
+  action.payload.type || (data && data.type) || undefined
 
-const extractId = (data) => (data && data.id) || undefined
+const extractId = data => (data && data.id) || undefined
 
 /**
  * Set several items to a service, based on the given action object.
@@ -34,10 +39,15 @@ const extractId = (data) => (data && data.id) || undefined
  * @param {Object} resources - Object with getService
  * @returns {Object} Response object with any data returned from the service
  */
-async function set (action, { getService, schemas }) {
+async function set(action, { getService, schemas }) {
   debug('Action: SET')
 
-  const { service: serviceId, data, endpoint, onlyMappedValues = true } = action.payload
+  const {
+    service: serviceId,
+    data,
+    endpoint,
+    onlyMappedValues = true
+  } = action.payload
   const type = extractType(action, data)
   const id = extractId(data)
 
@@ -46,12 +56,14 @@ async function set (action, { getService, schemas }) {
     return createUnknownServiceError(type, serviceId, 'SET')
   }
 
-  const endpointDebug = (endpoint) ? `at endpoint '${endpoint}'` : ''
+  const endpointDebug = endpoint ? `at endpoint '${endpoint}'` : ''
   debug('SET: Send to service %s %s', service.id, endpointDebug)
 
-  const { response, authorizedRequestData } = await service.send(appendToAction(action, { id, type, onlyMappedValues }))
+  const { response, authorizedRequestData } = await service.send(
+    appendToAction(action, { id, type, onlyMappedValues })
+  )
 
   return mergeRequestAndResponseData(response, authorizedRequestData)
 }
 
-module.exports = set
+export default set

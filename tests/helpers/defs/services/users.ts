@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   id: 'users',
   adapter: 'json',
   options: { baseUri: 'http://some.api/users' },

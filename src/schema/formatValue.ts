@@ -54,4 +54,4 @@ const formatValue = (value, { type }) => {
     : formatOneValue(value, { type })
 }
 
-module.exports = formatValue
+export default formatValue

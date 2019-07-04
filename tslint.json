@@ -1,0 +1,11 @@
+{
+  "extends": [
+    "tslint-config-standard",
+    "tslint-config-prettier",
+    "tslint-config-security"
+  ],
+  "rules": {
+    "tsr-detect-possible-timing-attacks": false,
+    "tsr-detect-sql-literal-injection": false
+  }
+}

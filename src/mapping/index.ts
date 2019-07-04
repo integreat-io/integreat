@@ -1,23 +1,48 @@
 const { compose, map, mergeDeepWith } = require('ramda')
-const { mapTransform, transform, filter, functions: { compare }, set, fwd, rev } = require('map-transform')
-const is = require('@sindresorhus/is')
-const { preparePipeline, prepareRevPipeline } = require('../utils/preparePipeline')
-const { normalizeFieldMapping } = require('./normalize')
+import {
+  mapTransform,
+  transform,
+  filter,
+  functions,
+  set,
+  fwd,
+  rev
+} from 'map-transform'
+import is = require('@sindresorhus/is')
+import { preparePipeline, prepareRevPipeline } from '../utils/preparePipeline'
+import { normalizeFieldMapping } from './normalize'
+const { compare } = functions
 
 const hasFieldMappings = (id, attributes, relationships) =>
-  id || Object.keys(attributes).length > 0 || Object.keys(relationships).length > 0
+  id ||
+  Object.keys(attributes).length > 0 ||
+  Object.keys(relationships).length > 0
 
-const prepareRelationship = (normalize, createPipeline) => (relationship) =>
-  (relationship.mapping) ? createPipeline(relationship.mapping, undefined, relationship.path).pipeline : normalize(relationship)
+const prepareRelationship = (normalize, createPipeline) => relationship =>
+  relationship.mapping
+    ? createPipeline(relationship.mapping, undefined, relationship.path)
+        .pipeline
+    : normalize(relationship)
 
-function prepareMapping ({ attributes: { id = null, type = null, ...attributes } = {}, relationships = {}, toService = {} }, transformers, createPipeline) {
+function prepareMapping(
+  {
+    attributes: { id = null, type = null, ...attributes } = {},
+    relationships = {},
+    toService = {}
+  },
+  transformers,
+  createPipeline
+) {
   const normalize = normalizeFieldMapping(transformers)
   if (hasFieldMappings(id, attributes, relationships)) {
     return {
-      id: (id) ? normalize(id) : null,
-      type: (type) ? rev(type) : null,
+      id: id ? normalize(id) : null,
+      type: type ? rev(type) : null,
       attributes: map(normalize, attributes),
-      relationships: map(prepareRelationship(normalize, createPipeline), relationships),
+      relationships: map(
+        prepareRelationship(normalize, createPipeline),
+        relationships
+      ),
       ...map(normalize, toService)
     }
   } else {
@@ -37,29 +62,34 @@ const createCompareFilter = ([path, value]) => {
     return []
   }
 }
-const prepareQualifier = (qualifier) => (qualifier) ? createCompareFilter(qualifier.split('=')) : []
+const prepareQualifier = qualifier =>
+  qualifier ? createCompareFilter(qualifier.split('=')) : []
 
-const prepareTypeQualifier = ({ attributes = {}, relationships = {}, type }) => (is.emptyObject(attributes) && is.emptyObject(relationships))
-  ? [filter(compare({ path: 'type', operator: '=', match: type }))]
-  : []
+const prepareTypeQualifier = ({ attributes = {}, relationships = {}, type }) =>
+  is.emptyObject(attributes) && is.emptyObject(relationships)
+    ? [filter(compare({ path: 'type', operator: '=', match: type }))]
+    : []
 
-const concatOrRight = (left, right) => (Array.isArray(left)) ? left.concat(right) : right
+const concatOrRight = (left, right) =>
+  Array.isArray(left) ? left.concat(right) : right
 
-const ensureArray = (data) => (Array.isArray(data)) ? data : ((data) ? [data] : [])
+const ensureArray = data => (Array.isArray(data) ? data : data ? [data] : [])
 
-const overrideMappingProps = (mapping, overrideType, prependPath) => (mapping)
-  ? {
-    ...mapping,
-    type: overrideType || mapping.type,
-    path: [prependPath, mapping.path].filter(Boolean).join('.')
-  }
-  : undefined
+const overrideMappingProps = (mapping, overrideType, prependPath) =>
+  mapping
+    ? {
+        ...mapping,
+        type: overrideType || mapping.type,
+        path: [prependPath, mapping.path].filter(Boolean).join('.')
+      }
+    : undefined
 
-const lookupMapping = (mapping, mappings) => (mappings[mapping]) ? { ...mappings[mapping], id: mapping } : null
+const lookupMapping = (mapping, mappings) =>
+  mappings[mapping] ? { ...mappings[mapping], id: mapping } : null
 
 const expandMapping = (mapping, mappings, overrideType, prependPath) =>
   overrideMappingProps(
-    (typeof mapping === 'string') ? lookupMapping(mapping, mappings) : mapping,
+    typeof mapping === 'string' ? lookupMapping(mapping, mappings) : mapping,
     overrideType,
     prependPath
   )
@@ -75,10 +105,22 @@ const validateAndLookupSchema = (type, schemas) => {
   return schema
 }
 
-const transformFwd = compose(fwd, transform)
-const transformRev = compose(rev, transform)
-const filterFwd = compose(fwd, filter)
-const filterRev = compose(rev, filter)
+const transformFwd = compose(
+  fwd,
+  transform
+)
+const transformRev = compose(
+  rev,
+  transform
+)
+const filterFwd = compose(
+  fwd,
+  filter
+)
+const filterRev = compose(
+  rev,
+  filter
+)
 
 const createPipelines = (mapping, transformers, filters) => {
   const {
@@ -102,7 +144,11 @@ const createPipelines = (mapping, transformers, filters) => {
   }
 }
 
-const concatPipeline = (mapping, schema, { createPipelineFn, transformers, filters }) => {
+const concatPipeline = (
+  mapping,
+  schema,
+  { createPipelineFn, transformers, filters }
+) => {
   const pipelines = createPipelines(mapping, transformers, filters)
 
   return [
@@ -145,7 +191,7 @@ const createPipeline = (filters, transformers, schemas, mappings) => {
  * @param {Object} resources - filters, transformers, and schemas
  * @returns {Object} Item mapping def
  */
-function mapping ({
+function mapping({
   filters,
   transformers,
   schemas = {},
@@ -155,19 +201,23 @@ function mapping ({
     (mappings, def) => ({ ...mappings, [def.id]: def }),
     {}
   )
-  const createPipelineFn = createPipeline(filters, transformers, schemas, mappings)
+  const createPipelineFn = createPipeline(
+    filters,
+    transformers,
+    schemas,
+    mappings
+  )
 
   return (mapping, overrideType) => {
-    const { id, type, schema, pipeline } = createPipelineFn(mapping, overrideType)
+    const { id, type, schema, pipeline } = createPipelineFn(
+      mapping,
+      overrideType
+    )
     if (!pipeline) {
       return null
     }
 
-    const mapper = mapTransform([
-      fwd('data'),
-      ...pipeline,
-      rev(set('data'))
-    ])
+    const mapper = mapTransform([fwd('data'), ...pipeline, rev(set('data'))])
 
     return {
       id,
@@ -180,11 +230,11 @@ function mapping ({
        * @param {Object} options - onlyMappedValues
        * @returns {Object} Target item
        */
-      fromService (data, { onlyMappedValues = true } = {}) {
+      fromService(data, { onlyMappedValues = true } = {}) {
         return data
           ? ensureArray(
-            (onlyMappedValues) ? mapper.onlyMappedValues(data) : mapper(data)
-          )
+              onlyMappedValues ? mapper.onlyMappedValues(data) : mapper(data)
+            )
           : []
       },
 
@@ -194,7 +244,7 @@ function mapping ({
        * @param {Object} target - Optional object to map to data on
        * @returns {Object} Mapped data
        */
-      toService (data, target = null) {
+      toService(data, target = null) {
         const mapped = mapper.rev.onlyMappedValues(data)
         return (
           (target
@@ -208,4 +258,4 @@ function mapping ({
   }
 }
 
-module.exports = mapping
+export default mapping

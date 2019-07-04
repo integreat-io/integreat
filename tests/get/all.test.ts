@@ -1,12 +1,12 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import entriesData from '../helpers/data/entries'
 
-import integreat from '../..'
+import integreat = require('../..')
 
-test('should get all entries from service', async (t) => {
+test('should get all entries from service', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/')

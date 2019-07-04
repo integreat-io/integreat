@@ -1,11 +1,11 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Helpers
 
@@ -26,7 +26,7 @@ const entry1FromService = {
 
 // Tests
 
-test('should map response and merge with request data', async (t) => {
+test('should map response and merge with request data', async t => {
   const adapters = { json }
   nock('http://some.api')
     .put('/entries/ent1')
@@ -41,26 +41,32 @@ test('should map response and merge with request data', async (t) => {
   }
   const defs = {
     schemas: [entrySchema],
-    services: [{
-      ...entriesService,
-      endpoints: [{
-        responseMapping,
-        options: { uri: '/{id}' }
-      }]
-    }],
+    services: [
+      {
+        ...entriesService,
+        endpoints: [
+          {
+            responseMapping,
+            options: { uri: '/{id}' }
+          }
+        ]
+      }
+    ],
     mappings: [entriesMapping]
   }
-  const expectedData = [{
-    id: 'ent1',
-    type: 'entry',
-    attributes: {
-      title: 'Entry 1',
-      text: 'Text from entry 1'
-    },
-    relationships: {
-      sections: []
+  const expectedData = [
+    {
+      id: 'ent1',
+      type: 'entry',
+      attributes: {
+        title: 'Entry 1',
+        text: 'Text from entry 1'
+      },
+      relationships: {
+        sections: []
+      }
     }
-  }]
+  ]
 
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)

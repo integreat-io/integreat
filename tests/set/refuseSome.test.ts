@@ -1,9 +1,9 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Helpers
 
@@ -26,7 +26,7 @@ const bettyItem = {
 
 // Tests
 
-test('should refuse to set entries where ident has no access', async (t) => {
+test('should refuse to set entries where ident has no access', async t => {
   const adapters = { json }
   nock('http://some.api')
     .post('/users/')

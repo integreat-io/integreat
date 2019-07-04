@@ -6,15 +6,15 @@
  * @param {Object} collection - Object with pipeline functions
  * @returns {array} Prepared pipeline
  */
-function preparePipeline (pipeline, collection = {}) {
+export function preparePipeline(pipeline, collection = {}) {
   pipeline = [].concat(pipeline)
 
-  const replaceWithFunction = (key) => (typeof key === 'string') ? collection[key] : key
-  const isFunctionOrObject = (obj) => obj && ['function', 'object'].includes(typeof obj)
+  const replaceWithFunction = key =>
+    typeof key === 'string' ? collection[key] : key
+  const isFunctionOrObject = obj =>
+    obj && ['function', 'object'].includes(typeof obj)
 
-  return pipeline
-    .map(replaceWithFunction)
-    .filter(isFunctionOrObject)
+  return pipeline.map(replaceWithFunction).filter(isFunctionOrObject)
 }
 
 /**
@@ -26,10 +26,8 @@ function preparePipeline (pipeline, collection = {}) {
  * @param {Object} collection - Object with pipeline functions
  * @returns {array} Prepared reverse pipeline
  */
-function prepareRevPipeline (revPipeline, fwdPipeline, collection) {
-  return (revPipeline)
+export function prepareRevPipeline(revPipeline, fwdPipeline, collection) {
+  return revPipeline
     ? preparePipeline(revPipeline, collection)
-    : fwdPipeline.map((fn) => (fn.rev) ? fn.rev : null).filter(Boolean)
+    : fwdPipeline.map(fn => (fn.rev ? fn.rev : null)).filter(Boolean)
 }
-
-module.exports = { preparePipeline, prepareRevPipeline }

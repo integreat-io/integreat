@@ -1,10 +1,10 @@
 import test from 'ava'
-import sinon from 'sinon'
-import nock from 'nock'
+import sinon = require('sinon')
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Helpers
 
@@ -17,13 +17,16 @@ const entry1Item = {
   },
   relationships: {
     author: { id: 'johnf', type: 'user' },
-    sections: [{ id: 'news', type: 'section' }, { id: 'sports', type: 'section' }]
+    sections: [
+      { id: 'news', type: 'section' },
+      { id: 'sports', type: 'section' }
+    ]
   }
 }
 
 // Tests
 
-test('should emit request before mapping to service', async (t) => {
+test('should emit request before mapping to service', async t => {
   const adapters = { json }
   nock('http://some.api')
     .put('/entries/ent1')
@@ -49,7 +52,7 @@ test('should emit request before mapping to service', async (t) => {
   nock.restore()
 })
 
-test('should emit request after mapping to service', async (t) => {
+test('should emit request after mapping to service', async t => {
   const adapters = { json }
   nock('http://some.api')
     .put('/entries/ent2')

@@ -26,4 +26,4 @@ function requestFromAction (
   }
 }
 
-module.exports = requestFromAction
+export default requestFromAction

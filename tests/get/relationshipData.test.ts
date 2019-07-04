@@ -1,12 +1,12 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import usersUserMapping from '../helpers/defs/mappings/users-user'
 import entry1Data from '../helpers/data/entry1'
 import johnfData from '../helpers/data/userJohnf'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Setup
 
@@ -25,17 +25,19 @@ const entryMapping = {
     updatedAt: 'updatedAt'
   },
   relationships: {
-    'author': { mapping: 'entries-user' },
+    author: { mapping: 'entries-user' },
     'sections.id': 'sections[]'
   }
 }
 
 // Tests
 
-test('should get all entries from service', async (t) => {
+test('should get all entries from service', async t => {
   nock('http://some.api')
     .get('/entries/ent1')
-    .reply(200, { data: [{ ...entry1Data, author: { ...johnfData, createdAt, updatedAt } }] })
+    .reply(200, {
+      data: [{ ...entry1Data, author: { ...johnfData, createdAt, updatedAt } }]
+    })
   const adapters = { json }
   defs.mappings[0] = entryMapping
   defs.mappings.push({
@@ -61,10 +63,7 @@ test('should get all entries from service', async (t) => {
       tokens: ['twitter|23456', 'facebook|12345']
     },
     relationships: {
-      feeds: [
-        { id: 'news', type: 'feed' },
-        { id: 'social', type: 'feed' }
-      ]
+      feeds: [{ id: 'news', type: 'feed' }, { id: 'social', type: 'feed' }]
     }
   }
 
@@ -79,7 +78,7 @@ test('should get all entries from service', async (t) => {
   nock.restore()
 })
 
-test.skip('should map relationship on self referring type', async (t) => {
+test.skip('should map relationship on self referring type', async t => {
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: [{ ...johnfData, creator: 'betty' }] })

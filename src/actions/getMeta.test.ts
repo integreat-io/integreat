@@ -1,5 +1,5 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import createService from '../service'
 import schema from '../schema'
 import json from 'integreat-adapter-json'

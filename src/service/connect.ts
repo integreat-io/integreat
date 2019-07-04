@@ -34,4 +34,4 @@ function connect ({ adapter, serviceOptions, serviceId, setConnection = () => {}
   }
 }
 
-module.exports = connect
+export default connect

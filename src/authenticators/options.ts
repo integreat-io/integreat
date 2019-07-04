@@ -50,4 +50,4 @@ const optionsAuth = {
   }
 }
 
-module.exports = optionsAuth
+export default optionsAuth

@@ -1,11 +1,11 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
-import completeIdent from '../../lib/middleware/completeIdent'
+import completeIdent from '../../src/middleware/completeIdent'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Helpers
 
@@ -23,7 +23,10 @@ const entry1Item = {
   },
   relationships: {
     author: { id: 'johnf', type: 'user' },
-    sections: [{ id: 'news', type: 'section' }, { id: 'sports', type: 'section' }]
+    sections: [
+      { id: 'news', type: 'section' },
+      { id: 'sports', type: 'section' }
+    ]
   }
 }
 
@@ -48,7 +51,7 @@ test.after.always(() => {
 
 // Tests
 
-test('should set new entry', async (t) => {
+test('should set new entry', async t => {
   const adapters = { json }
   const middlewares = [completeIdent]
   const putData = {
@@ -80,11 +83,13 @@ test('should set new entry', async (t) => {
   t.deepEqual(ret.data, expected)
 })
 
-test('should set new entries', async (t) => {
+test('should set new entries', async t => {
   const adapters = { json }
   nock('http://some.api')
     .post('/entries/')
-    .reply(201, { data: [{ key: 'real1', ok: true }, { key: 'real2', ok: true }] })
+    .reply(201, {
+      data: [{ key: 'real1', ok: true }, { key: 'real2', ok: true }]
+    })
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entriesArr },

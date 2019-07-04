@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   id: 'users-user',
   type: 'user',
   service: 'users',

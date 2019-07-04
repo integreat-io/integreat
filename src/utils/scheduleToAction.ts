@@ -1,10 +1,10 @@
-const later = require('later')
-const nextSchedule = require('./nextSchedule')
+import later = require('later')
+import nextSchedule from './nextSchedule'
 
 const cleanSchedule = ({ schedules, exceptions }) => ({ schedules, exceptions })
-const wrapSimpleSchedule = (schedule) => ({ schedules: [].concat(schedule) })
+const wrapSimpleSchedule = schedule => ({ schedules: [].concat(schedule) })
 
-const parseStringDef = (def) => {
+const parseStringDef = def => {
   const schedule = later.parse.text(def)
   if (schedule.error !== -1) {
     throw new Error('Invalid schedule string')
@@ -12,11 +12,11 @@ const parseStringDef = (def) => {
   return cleanSchedule(schedule)
 }
 
-const parseSchedule = (def) => {
+const parseSchedule = def => {
   if (typeof def === 'string') {
     return parseStringDef(def)
   } else if (def) {
-    return (def.schedules || def.exceptions)
+    return def.schedules || def.exceptions
       ? cleanSchedule(def)
       : wrapSimpleSchedule(def)
   }
@@ -29,7 +29,7 @@ const parseSchedule = (def) => {
  * @param {Object} def - A schedule definition
  * @returns {object} An action object
  */
-function scheduleToAction (def) {
+function scheduleToAction(def) {
   if (!def) {
     return null
   }
@@ -43,9 +43,9 @@ function scheduleToAction (def) {
     meta: {
       id,
       schedule,
-      queue: (nextTime) ? nextTime.getTime() : true
+      queue: nextTime ? nextTime.getTime() : true
     }
   }
 }
 
-module.exports = scheduleToAction
+export default scheduleToAction

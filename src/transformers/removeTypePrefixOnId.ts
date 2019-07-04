@@ -20,7 +20,7 @@ const removeTypePrefixOnIdRev = (item) => {
   return item
 }
 
-module.exports = Object.assign(
+export default Object.assign(
   removeTypePrefixOnId,
   { rev: removeTypePrefixOnIdRev }
 )

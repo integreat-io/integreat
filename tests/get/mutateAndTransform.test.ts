@@ -1,14 +1,14 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
 import entry2 from '../helpers/data/entry2'
 
-import integreat from '../..'
+import integreat = require('../..')
 
-test('should transform entry', async (t) => {
+test('should transform entry', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
@@ -36,9 +36,11 @@ test('should transform entry', async (t) => {
     services: [{ ...entriesService, mappings: { entry: mapping } }]
   }
   const transformers = {
-    upperCase: (value) => value.toUpperCase(),
-    addSectionsToText: (item) => {
-      const sections = item.relationships.sections.map((section) => section.id).join('|')
+    upperCase: value => value.toUpperCase(),
+    addSectionsToText: item => {
+      const sections = item.relationships.sections
+        .map(section => section.id)
+        .join('|')
       item.attributes.text = `${item.attributes.text} - ${sections}`
       return item
     }
@@ -58,7 +60,7 @@ test('should transform entry', async (t) => {
   nock.restore()
 })
 
-test.skip('should transform array of entries', async (t) => {
+test.skip('should transform array of entries', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/')
@@ -86,9 +88,11 @@ test.skip('should transform array of entries', async (t) => {
     services: [{ ...entriesService, mappings: { entry: mapping } }]
   }
   const transformers = {
-    upperCase: (value) => value.toUpperCase(),
-    addSectionsToText: (item) => {
-      const sections = item.relationships.sections.map((section) => section.id).join('|')
+    upperCase: value => value.toUpperCase(),
+    addSectionsToText: item => {
+      const sections = item.relationships.sections
+        .map(section => section.id)
+        .join('|')
       item.attributes.text = `${item.attributes.text} - ${sections}`
       return item
     }

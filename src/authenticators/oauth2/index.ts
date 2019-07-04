@@ -1,4 +1,4 @@
-const authenticate = require('./authenticate')
+import authenticate from './authenticate'
 
 /**
  * The OAuth2 strategy. Will retrieve an access token through the
@@ -12,14 +12,12 @@ const oauth2Auth = {
    * @param {Object} options - An options object
    * @returns {Object} An authentication object
    */
-  async authenticate (options) {
+  async authenticate(options) {
     if (!options) {
       return { status: 'refused' }
     }
     const token = await authenticate(options)
-    return (token)
-      ? { status: 'granted', token }
-      : { status: 'refused' }
+    return token ? { status: 'granted', token } : { status: 'refused' }
   },
 
   /**
@@ -27,8 +25,12 @@ const oauth2Auth = {
    * @param {Object} authentication - The object returned from `authenticate()`
    * @returns {boolean} `true` if already authenticated, otherwise `false`
    */
-  isAuthenticated (authentication) {
-    return !!(authentication && authentication.status === 'granted' && authentication.token)
+  isAuthenticated(authentication) {
+    return !!(
+      authentication &&
+      authentication.status === 'granted' &&
+      authentication.token
+    )
   },
 
   /**
@@ -37,7 +39,7 @@ const oauth2Auth = {
    * @param {Object} authentication - The object returned from `authenticate()`
    * @returns {Object} Auth object
    */
-  asObject ({ status, token } = {}) {
+  asObject({ status, token } = {}) {
     if (status === 'granted' && token) {
       return { token }
     }
@@ -50,12 +52,12 @@ const oauth2Auth = {
    * @param {Object} authentication - The object returned from `authenticate()`
    * @returns {Object} Headers object
    */
-  asHttpHeaders ({ status, token } = {}) {
+  asHttpHeaders({ status, token } = {}) {
     if (status === 'granted' && token) {
-      return { 'Authorization': `Bearer ${token}` }
+      return { Authorization: `Bearer ${token}` }
     }
     return {}
   }
 }
 
-module.exports = oauth2Auth
+export default oauth2Auth

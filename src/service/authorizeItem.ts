@@ -1,5 +1,5 @@
-const { doAuth, getScheme } = require('./authorizeScheme')
-const getField = require('../utils/getField')
+import { doAuth, getScheme } from './authorizeScheme'
+import getField from '../utils/getField'
 
 const doAuthRoleFromField = (field, data, ident) => {
   const role = getField(data, field)
@@ -9,7 +9,7 @@ const doAuthRoleFromField = (field, data, ident) => {
 
 const doAuthIdentFromField = (field, data, ident) => {
   const identId = getField(data, field)
-  return (ident && ident.id === identId)
+  return ident && ident.id === identId
 }
 
 const authorizeWithScheme = (item, scheme, ident, requireAuth) => {
@@ -40,7 +40,7 @@ const authorizeWithScheme = (item, scheme, ident, requireAuth) => {
  * @param {Object} access - The access object to authorize against
  * @param {Object} options - Dataypes, action, and requireAuth
  */
-function authorizeItem (item, access, { schemas, action, requireAuth }) {
+function authorizeItem(item, access, { schemas, action, requireAuth }) {
   const { ident, status } = access
 
   if (status === 'refused') {
@@ -57,4 +57,4 @@ function authorizeItem (item, access, { schemas, action, requireAuth }) {
   return authorizeWithScheme(item, scheme, ident, requireAuth)
 }
 
-module.exports = authorizeItem
+export default authorizeItem

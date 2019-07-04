@@ -1,20 +1,34 @@
 const debug = require('debug')('great')
-const appendToAction = require('../utils/appendToAction')
-const createUnknownServiceError = require('../utils/createUnknownServiceError')
+import appendToAction from '../utils/appendToAction'
+import createUnknownServiceError from '../utils/createUnknownServiceError'
 
-const hasCollectionEndpoint = (endpoints) =>
-  endpoints.some((endpoint) => endpoint.match && endpoint.match.scope === 'members')
+const hasCollectionEndpoint = endpoints =>
+  endpoints.some(
+    endpoint => endpoint.match && endpoint.match.scope === 'members'
+  )
 
 const getIndividualItems = async (ids, action, getService) => {
-  const responses = await Promise.all(ids.map((id) => get(appendToAction(action, { id }), { getService })))
-  if (responses.some((response) => response.status !== 'ok' && response.status !== 'notfound')) {
-    return { status: 'error', error: `One or more of the requests for ids ${ids} failed.` }
+  const responses = await Promise.all(
+    ids.map(id => get(appendToAction(action, { id }), { getService }))
+  )
+  if (
+    responses.some(
+      response => response.status !== 'ok' && response.status !== 'notfound'
+    )
+  ) {
+    return {
+      status: 'error',
+      error: `One or more of the requests for ids ${ids} failed.`
+    }
   }
-  return { status: 'ok', data: responses.map((response) => response.data && response.data[0]) }
+  return {
+    status: 'ok',
+    data: responses.map(response => response.data && response.data[0])
+  }
 }
 
 const getIdFromPayload = ({ id }) =>
-  (Array.isArray(id) && id.length === 1) ? id[0] : id
+  Array.isArray(id) && id.length === 1 ? id[0] : id
 
 /**
  * Get several items from a service, based on the given action object.
@@ -22,7 +36,7 @@ const getIdFromPayload = ({ id }) =>
  * @param {Object} resources - Object with getService
  * @returns {array} Array of data from the service
  */
-async function get (action, { getService } = {}) {
+async function get(action, { getService } = {}) {
   const {
     type,
     service: serviceId = null,
@@ -30,8 +44,8 @@ async function get (action, { getService } = {}) {
     endpoint
   } = action.payload
 
-  const service = (typeof getService === 'function')
-    ? getService(type, serviceId) : null
+  const service =
+    typeof getService === 'function' ? getService(type, serviceId) : null
   if (!service) {
     return createUnknownServiceError(type, serviceId, 'GET')
   }
@@ -43,12 +57,16 @@ async function get (action, { getService } = {}) {
     return getIndividualItems(id, action, getService)
   }
 
-  const endpointDebug = (endpoint) ? `endpoint '${endpoint}'` : `endpoint matching type '${type}' and id '${id}'`
+  const endpointDebug = endpoint
+    ? `endpoint '${endpoint}'`
+    : `endpoint matching type '${type}' and id '${id}'`
   debug('GET: Fetch from service %s at %s', service.id, endpointDebug)
 
-  const { response } = await service.send(appendToAction(action, { id, onlyMappedValues }))
+  const { response } = await service.send(
+    appendToAction(action, { id, onlyMappedValues })
+  )
 
   return response
 }
 
-module.exports = get
+export default get

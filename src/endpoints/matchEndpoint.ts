@@ -50,4 +50,4 @@ function matchEndpoint (endpoints) {
       matchFilters(endpoint, { type, payload, meta }))
 }
 
-module.exports = matchEndpoint
+export default matchEndpoint

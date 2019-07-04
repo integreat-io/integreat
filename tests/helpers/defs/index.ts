@@ -1,15 +1,15 @@
-module.exports = {
+export default {
   schemas: [
-    require('./schemas/entry'),
-    require('./schemas/user')
+    require('./schemas/entry').default,
+    require('./schemas/user').default
   ],
   services: [
-    require('./services/entries'),
-    require('./services/users')
+    require('./services/entries').default,
+    require('./services/users').default
   ],
   mappings: [
-    require('./mappings/entries-entry'),
-    require('./mappings/users-user')
+    require('./mappings/entries-entry').default,
+    require('./mappings/users-user').default
   ],
   ident: {
     type: 'user'

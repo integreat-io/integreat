@@ -1,13 +1,13 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
-import completeIdent from '../../lib/middleware/completeIdent'
+import completeIdent from '../../src/middleware/completeIdent'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 
-import integreat from '../..'
+import integreat = require('../..')
 
-test('should get with ident token', async (t) => {
+test('should get with ident token', async t => {
   const adapters = { json }
   const middlewares = [completeIdent]
   const transformers = integreat.transformers()

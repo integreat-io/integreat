@@ -53,4 +53,4 @@ function mapFromService () {
   }
 }
 
-module.exports = mapFromService
+export default mapFromService

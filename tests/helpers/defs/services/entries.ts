@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   id: 'entries',
   adapter: 'json',
   options: { baseUri: 'http://some.api/entries' },

@@ -1,18 +1,18 @@
 import test from 'ava'
-import sinon from 'sinon'
-import nock from 'nock'
+import sinon = require('sinon')
+import nock = require('nock')
 import json from 'integreat-adapter-json'
-import tokenAuth from '../../lib/authenticators/token'
+import tokenAuth from '../../src/authenticators/token'
 import defs from '../helpers/defs'
 import entriesService from '../helpers/defs/services/entries'
 import entriesData from '../helpers/data/entries'
 
-import integreat from '../..'
+import integreat = require('../..')
 
-test('should not authenticate twice', async (t) => {
+test('should not authenticate twice', async t => {
   nock('http://some.api', {
     reqheaders: {
-      'authorization': 'Bearer t0k3n'
+      authorization: 'Bearer t0k3n'
     }
   })
     .get('/entries/')
@@ -22,15 +22,19 @@ test('should not authenticate twice', async (t) => {
   const authenticators = { token: tokenAuth }
   const defsWithAuth = {
     ...defs,
-    services: [{
-      ...entriesService,
-      auth: 'entriesToken'
-    }],
-    auths: [{
-      id: 'entriesToken',
-      authenticator: 'token',
-      options: { token: 't0k3n' }
-    }]
+    services: [
+      {
+        ...entriesService,
+        auth: 'entriesToken'
+      }
+    ],
+    auths: [
+      {
+        id: 'entriesToken',
+        authenticator: 'token',
+        options: { token: 't0k3n' }
+      }
+    ]
   }
   const action = {
     type: 'GET',

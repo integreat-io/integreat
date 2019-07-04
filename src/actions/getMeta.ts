@@ -1,12 +1,13 @@
 const debug = require('debug')('great')
-const createError = require('../utils/createError')
+import createError from '../utils/createError'
 
-const prepareMeta = (keys, meta) => (keys)
-  ? [].concat(keys)
-    .filter((key) => key !== 'createdAt' && key !== 'updatedAt')
-    .reduce((ret, key) =>
-      ({ ...ret, [key]: meta[key] || null }), {})
-  : prepareMeta(Object.keys(meta), meta)
+const prepareMeta = (keys, meta) =>
+  keys
+    ? []
+        .concat(keys)
+        .filter(key => key !== 'createdAt' && key !== 'updatedAt')
+        .reduce((ret, key) => ({ ...ret, [key]: meta[key] || null }), {})
+    : prepareMeta(Object.keys(meta), meta)
 
 /**
  * Get metadata for a service, based on the given action object.
@@ -14,7 +15,7 @@ const prepareMeta = (keys, meta) => (keys)
  * @param {Object} resources - Object with getService
  * @returns {Promise} Promise of metdata
  */
-async function getMeta ({ payload, meta }, { getService }) {
+async function getMeta({ payload, meta }, { getService }) {
   debug('Action: GET_META')
 
   const { service: serviceId, endpoint, keys } = payload
@@ -29,12 +30,21 @@ async function getMeta ({ payload, meta }, { getService }) {
   const type = service.meta
   const metaService = getService(type)
   if (!metaService) {
-    return createError(`Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`)
+    return createError(
+      `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`
+    )
   }
 
-  const endpointDebug = (endpoint) ? `endpoint '${endpoint}'` : `endpoint matching ${type} and ${id}`
-  debug('GET_META: Get meta %s for service \'%s\' on service \'%s\' at %s',
-    keys, service.id, metaService.id, endpointDebug)
+  const endpointDebug = endpoint
+    ? `endpoint '${endpoint}'`
+    : `endpoint matching ${type} and ${id}`
+  debug(
+    "GET_META: Get meta %s for service '%s' on service '%s' at %s",
+    keys,
+    service.id,
+    metaService.id,
+    endpointDebug
+  )
 
   const { response } = await metaService.send({
     type: 'GET',
@@ -51,4 +61,4 @@ async function getMeta ({ payload, meta }, { getService }) {
   }
 }
 
-module.exports = getMeta
+export default getMeta

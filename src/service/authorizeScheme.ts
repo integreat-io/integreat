@@ -13,9 +13,9 @@ const doAuthGrant = (scheme, ident) => {
 
 const doAuthIdent = (scheme, ident) => {
   if (scheme.role) {
-    return (ident.roles && ident.roles.includes(scheme.role))
+    return ident.roles && ident.roles.includes(scheme.role)
   } else if (scheme.ident) {
-    return (ident.id && ident.id === scheme.ident)
+    return ident.id && ident.id === scheme.ident
   } else if (scheme.roleFromField || scheme.identFromField) {
     return true
   }
@@ -23,7 +23,7 @@ const doAuthIdent = (scheme, ident) => {
   return false
 }
 
-const doAuth = (scheme, ident, requireAuth) => {
+export const doAuth = (scheme, ident, requireAuth) => {
   if (typeof scheme === 'string') {
     return doAuthGrant(scheme, ident)
   } else if (scheme === null) {
@@ -37,12 +37,13 @@ const doAuth = (scheme, ident, requireAuth) => {
   return false
 }
 
-const getActionPrefix = (action) => (action.includes('_')) ? action.split('_')[0] : action
+const getActionPrefix = action =>
+  action.includes('_') ? action.split('_')[0] : action
 
 const getAccessObject = (access, action) =>
   (access.actions && access.actions[getActionPrefix(action)]) || access
 
-const getScheme = (schema, action) => {
+export const getScheme = (schema, action) => {
   if (!schema || !schema.access || is.emptyObject(schema.access)) {
     return null
   }
@@ -63,9 +64,4 @@ const getScheme = (schema, action) => {
   // Some other scheme - return without any actions prop
   const { actions: _discard, ...rest } = access
   return rest
-}
-
-module.exports = {
-  doAuth,
-  getScheme
 }

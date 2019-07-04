@@ -1,9 +1,9 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Helpers
 
@@ -17,7 +17,7 @@ const entryMapping = {
     text: 'body'
   },
   relationships: {
-    'author': { mapping: 'entries-user' }
+    author: { mapping: 'entries-user' }
   }
 }
 
@@ -41,7 +41,12 @@ const entry1Item = {
     text: 'The text of entry 1'
   },
   relationships: {
-    author: { id: 'johnf', type: 'user', attributes: { firstname: 'John' }, relationships: {} },
+    author: {
+      id: 'johnf',
+      type: 'user',
+      attributes: { firstname: 'John' },
+      relationships: {}
+    },
     sections: []
   }
 }
@@ -52,7 +57,7 @@ test.after.always(() => {
 
 // Tests
 
-test('should map full relationship item to service', async (t) => {
+test('should map full relationship item to service', async t => {
   const putData = {
     key: 'ent1',
     headline: 'Entry 1',

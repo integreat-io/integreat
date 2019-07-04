@@ -1,16 +1,23 @@
 const debug = require('debug')('great')
-const { flatten } = require('ramda')
-const action = require('../utils/createAction')
-const createError = require('../utils/createError')
+import { flatten } from 'ramda'
+import action from '../utils/createAction'
+import createError from '../utils/createError'
 
-const makeErrorString = (results) => results
-  .map((result, index) => (result.status === 'ok') ? null : `[${index}]: ${result.error}`)
-  .filter(Boolean)
-  .join('\n')
+const makeErrorString = results =>
+  results
+    .map((result, index) =>
+      result.status === 'ok' ? null : `[${index}]: ${result.error}`
+    )
+    .filter(Boolean)
+    .join('\n')
 
-const setUpdatedParams = (dispatch, ident) => async (params) => {
+const setUpdatedParams = (dispatch, ident) => async params => {
   const { status, data, error } = await dispatch(
-    action('GET_META', { service: params.service, keys: 'lastSyncedAt' }, { ident })
+    action(
+      'GET_META',
+      { service: params.service, keys: 'lastSyncedAt' },
+      { ident }
+    )
   )
 
   if (status === 'ok' && data && data.meta && data.meta.lastSyncedAt) {
@@ -19,14 +26,25 @@ const setUpdatedParams = (dispatch, ident) => async (params) => {
       updatedAfter: data.meta.lastSyncedAt
     }
   } else {
-    debug('SYNC: Could not get meta for service %s. Error: %s %s', params.service, status, error)
+    debug(
+      'SYNC: Could not get meta for service %s. Error: %s %s',
+      params.service,
+      status,
+      error
+    )
   }
   return params
 }
 
-const generateParamsWithUpdatedDates = async (params, dispatch, ident, updatedAfter, updatedUntil) => {
+const generateParamsWithUpdatedDates = async (
+  params,
+  dispatch,
+  ident,
+  updatedAfter,
+  updatedUntil
+) => {
   if (updatedAfter || updatedUntil) {
-    return params.map((params) => ({
+    return params.map(params => ({
       ...params,
       updatedAfter: new Date(updatedAfter),
       updatedUntil: new Date(updatedUntil)
@@ -36,8 +54,8 @@ const generateParamsWithUpdatedDates = async (params, dispatch, ident, updatedAf
   }
 }
 
-const paramsFromStringOrObject = (params) =>
-  (typeof params === 'string') ? { service: params } : params
+const paramsFromStringOrObject = params =>
+  typeof params === 'string' ? { service: params } : params
 
 const generateFromParams = async (
   { retrieve, from, updatedAfter, updatedUntil },
@@ -46,7 +64,13 @@ const generateFromParams = async (
 ) => {
   const fromParams = [].concat(from).map(paramsFromStringOrObject)
   if (retrieve === 'updated') {
-    return generateParamsWithUpdatedDates(fromParams, dispatch, ident, updatedAfter, updatedUntil)
+    return generateParamsWithUpdatedDates(
+      fromParams,
+      dispatch,
+      ident,
+      updatedAfter,
+      updatedUntil
+    )
   } else {
     return fromParams
   }
@@ -58,7 +82,7 @@ const generateFromParams = async (
 const generateToParams = ({ to, type }, fromParams) => {
   const { updatedAfter, updatedUntil } = fromParams[0]
   return {
-    ...((typeof to === 'string') ? { service: to } : to),
+    ...(typeof to === 'string' ? { service: to } : to),
     type,
     updatedAfter,
     updatedUntil
@@ -66,34 +90,53 @@ const generateToParams = ({ to, type }, fromParams) => {
 }
 
 const filterDataOnUpdatedDates = (data, updatedAfter, updatedUntil) =>
-  (Array.isArray(data) && data.length > 0 && (updatedAfter || updatedUntil))
+  Array.isArray(data) && data.length > 0 && (updatedAfter || updatedUntil)
     ? data.filter(isWithinUpdateWindow(updatedAfter, updatedUntil))
     : data
 
-const isWithinUpdateWindow = (updatedAfter, updatedUntil) => (item) =>
+const isWithinUpdateWindow = (updatedAfter, updatedUntil) => item =>
   item.attributes.updatedAt &&
   (!updatedAfter || item.attributes.updatedAt > updatedAfter) &&
   (!updatedUntil || item.attributes.updatedAt <= updatedUntil)
 
-const getFromService = (dispatch, type, { project, ident }) => async (fromParams) => {
-  const response = await dispatch(action('GET', { type, ...fromParams }, { project, ident }))
+const getFromService = (
+  dispatch,
+  type,
+  { project, ident }
+) => async fromParams => {
+  const response = await dispatch(
+    action('GET', { type, ...fromParams }, { project, ident })
+  )
   if (response.status !== 'ok') {
-    return createError(`Could not get items from service '${fromParams.service}'. Reason: ${response.status} ${response.error}`)
+    return createError(
+      `Could not get items from service '${fromParams.service}'. Reason: ${response.status} ${response.error}`
+    )
   }
 
   return {
     status: 'ok',
-    data: filterDataOnUpdatedDates(response.data, fromParams.updatedAfter, fromParams.updatedUntil)
+    data: filterDataOnUpdatedDates(
+      response.data,
+      fromParams.updatedAfter,
+      fromParams.updatedUntil
+    )
   }
 }
 
-const createSetMetas = (fromParams, lastSyncedAt, ident, dispatch) => fromParams
-  .reduce((services, params) =>
-    (params.service && !services.includes(params.service))
-      ? [ ...services, params.service ] : services,
-  [])
-  .map((service) =>
-    dispatch(action('SET_META', { service, meta: { lastSyncedAt } }, { ident })))
+const createSetMetas = (fromParams, lastSyncedAt, ident, dispatch) =>
+  fromParams
+    .reduce(
+      (services, params) =>
+        params.service && !services.includes(params.service)
+          ? [...services, params.service]
+          : services,
+      []
+    )
+    .map(service =>
+      dispatch(
+        action('SET_META', { service, meta: { lastSyncedAt } }, { ident })
+      )
+    )
 
 /**
  * Action to sync from one service to another.
@@ -112,7 +155,7 @@ const createSetMetas = (fromParams, lastSyncedAt, ident, dispatch) => fromParams
  * @param {Object} resources - Dispatch function
  * @returns {Promise} Promise of the action result
  */
-async function sync ({ payload, meta = {} }, { dispatch }) {
+async function sync({ payload, meta = {} }, { dispatch }) {
   debug('Action: SYNC')
   const fromParams = await generateFromParams(payload, meta, dispatch)
   const toParams = generateToParams(payload, fromParams)
@@ -123,23 +166,27 @@ async function sync ({ payload, meta = {} }, { dispatch }) {
     fromParams.map(getFromService(dispatch, payload.type, meta))
   )
 
-  if (results.some((result) => result.status !== 'ok')) {
-    return (results.length === 1) ? results[0] : createError(makeErrorString(results))
+  if (results.some(result => result.status !== 'ok')) {
+    return results.length === 1
+      ? results[0]
+      : createError(makeErrorString(results))
   }
 
-  const data = flatten(results.map((result) => result.data)).filter(Boolean)
+  const data = flatten(results.map(result => result.data)).filter(Boolean)
 
   if (data.length === 0 && payload.syncNoData !== true) {
-    return createError(`No items to update from service '${fromParams[0].service}'`, 'noaction')
+    return createError(
+      `No items to update from service '${fromParams[0].service}'`,
+      'noaction'
+    )
   }
 
   return Promise.all([
     ...createSetMetas(fromParams, lastSyncedAt, meta.ident, dispatch),
     dispatch(action('SET', { data, ...toParams }, { ...meta, queue: true }))
-  ])
-    .then((responses) => {
-      return { status: 'ok', data: responses }
-    })
+  ]).then(responses => {
+    return { status: 'ok', data: responses }
+  })
 }
 
-module.exports = sync
+export default sync

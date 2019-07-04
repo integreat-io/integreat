@@ -7,4 +7,4 @@ const castData = ({ schemas }) => ({ request }) => {
   return { ...request, data }
 }
 
-module.exports = castData
+export default castData

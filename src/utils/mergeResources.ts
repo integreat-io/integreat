@@ -4,4 +4,4 @@ const mergeResources = (...resources) => {
   return resources.reduce((resources, external) => mergeDeepRight(resources, external), {})
 }
 
-module.exports = mergeResources
+export default mergeResources

@@ -46,4 +46,4 @@ const completeIdent = (next) => async (action) => {
   return next(action)
 }
 
-module.exports = completeIdent
+export default completeIdent

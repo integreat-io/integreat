@@ -1,12 +1,12 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import entry1Data from '../helpers/data/entry1'
 import entry2Data from '../helpers/data/entry2'
 import entry3Data from '../helpers/data/entry3'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Setup
 
@@ -15,7 +15,7 @@ const entries2 = [entry3Data]
 
 // Tests
 
-test('should get first and second page of entries from service', async (t) => {
+test('should get first and second page of entries from service', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/')

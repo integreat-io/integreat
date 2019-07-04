@@ -1,5 +1,5 @@
 const debug = require('debug')('great')
-const createUnknownServiceError = require('../utils/createUnknownServiceError')
+import createUnknownServiceError from '../utils/createUnknownServiceError'
 
 /**
  * Normalize and map a request to an action, and map and serialize its response.
@@ -7,21 +7,19 @@ const createUnknownServiceError = require('../utils/createUnknownServiceError')
  * @param {Object} resources - Object with getService and dispatch
  * @returns {Object} Response object
  */
-async function request (action, { getService, dispatch }) {
+async function request(action, { getService, dispatch }) {
   debug('Action: REQUEST')
 
-  const {
-    type,
-    service: serviceId = null,
-    endpoint
-  } = action.payload
+  const { type, service: serviceId = null, endpoint } = action.payload
 
   const service = getService(type, serviceId)
   if (!service) {
     return createUnknownServiceError(type, serviceId, 'GET')
   }
 
-  const endpointDebug = (endpoint) ? `endpoint '${endpoint}'` : `endpoint matching type '${type}'`
+  const endpointDebug = endpoint
+    ? `endpoint '${endpoint}'`
+    : `endpoint matching type '${type}'`
   debug('REQUEST: Fetch from service %s at %s', service.id, endpointDebug)
 
   const { response } = await service.receive(action, dispatch)
@@ -29,4 +27,4 @@ async function request (action, { getService, dispatch }) {
   return response
 }
 
-module.exports = request
+export default request

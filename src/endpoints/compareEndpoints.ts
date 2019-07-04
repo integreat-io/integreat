@@ -4,7 +4,7 @@ const hasParams = (endpoint, required) => !!endpoint.params && Object.keys(endpo
   .filter(key => endpoint.params[key] === required).length
 const hasFilters = (endpoint) => Array.isArray(endpoint.filters) && endpoint.filters.length
 
-module.exports = (a, b) => {
+export default (a, b) => {
   const matchA = a.match || {}
   const matchB = b.match || {}
 

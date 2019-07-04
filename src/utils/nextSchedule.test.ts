@@ -1,5 +1,5 @@
 import test from 'ava'
-import sinon from 'sinon'
+import sinon = require('sinon')
 
 import nextSchedule from './nextSchedule'
 

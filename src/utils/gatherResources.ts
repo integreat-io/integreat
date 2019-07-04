@@ -3,12 +3,13 @@ const gatherResources = (resources, dir) => (...ids) => {
     ids = resources
   }
 
-  const requireResource = (id) => require(`${dir}/${id}`)
+  const requireResource = id => require(`${dir}/${id}`).default
 
   return ids.reduce(
-    (obj, id) => (resources.includes(id)) ? { ...obj, [id]: requireResource(id) } : obj,
+    (obj, id) =>
+      resources.includes(id) ? { ...obj, [id]: requireResource(id) } : obj,
     {}
   )
 }
 
-module.exports = gatherResources
+export default gatherResources

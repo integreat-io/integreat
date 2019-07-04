@@ -2,7 +2,7 @@
 // integreat.queue. Will push payload directly to the subscribed handler.
 // Supports only one subscribe handler at the time.
 
-module.exports = () => {
+export default () => {
   let handlerFn = null
   return {
     async push (payload, timestamp = null, id = null) {

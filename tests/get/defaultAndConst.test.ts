@@ -1,11 +1,11 @@
 import test from 'ava'
-import nock from 'nock'
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Setup
 
@@ -15,7 +15,7 @@ const entryNoHeadline = {
 
 // Tests
 
-test('should transform entry', async (t) => {
+test('should transform entry', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')

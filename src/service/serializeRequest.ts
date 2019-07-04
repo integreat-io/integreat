@@ -1,6 +1,6 @@
-const createError = require('../utils/createError')
+import createError from '../utils/createError'
 
-module.exports = ({ adapter, serviceId }) => async ({ request, response }) => {
+export default ({ adapter, serviceId }) => async ({ request, response }) => {
   if (response) {
     return {}
   }
@@ -10,7 +10,9 @@ module.exports = ({ adapter, serviceId }) => async ({ request, response }) => {
     return { request: serialized }
   } catch (error) {
     return {
-      response: createError(`Error serializing data for service '${serviceId}'. ${error}`)
+      response: createError(
+        `Error serializing data for service '${serviceId}'. ${error}`
+      )
     }
   }
 }

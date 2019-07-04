@@ -1,4 +1,4 @@
-const authorizeItems = require('./authorizeItems')
+import authorizeItems from './authorizeItems'
 
 const authorizeUnmapped = (response, access) => {
   if (!access.ident.root) {
@@ -21,9 +21,9 @@ const authorizeUnmapped = (response, access) => {
 }
 
 const getStatus = (access, status) =>
-  (access && access.status === 'refused') ? 'noaccess' : status
+  access && access.status === 'refused' ? 'noaccess' : status
 
-function authorizeResponse ({ schemas }) {
+function authorizeResponse({ schemas }) {
   return ({ response, request }) => {
     if (response.status !== 'ok') {
       return response
@@ -35,12 +35,15 @@ function authorizeResponse ({ schemas }) {
       return authorizeUnmapped(response, access)
     }
 
-    const authResult = authorizeItems({
-      data: response.data,
-      access,
-      action: request.action,
-      auth: request.auth
-    }, schemas)
+    const authResult = authorizeItems(
+      {
+        data: response.data,
+        access,
+        action: request.action,
+        auth: request.auth
+      },
+      schemas
+    )
 
     const status = getStatus(authResult.access, response.status)
 
@@ -48,4 +51,4 @@ function authorizeResponse ({ schemas }) {
   }
 }
 
-module.exports = authorizeResponse
+export default authorizeResponse

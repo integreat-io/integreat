@@ -1,14 +1,14 @@
 const debug = require('debug')('great')
-const createError = require('../utils/createError')
-const scheduleToAction = require('../utils/scheduleToAction')
-const enqueue = require('./enqueue')
+import createError from '../utils/createError'
+import scheduleToAction from '../utils/scheduleToAction'
+import enqueue from './enqueue'
 
-async function schedule (defs, queue) {
+async function schedule(defs, queue) {
   defs = [].concat(defs)
   debug('Schedule: %d schedules', defs.length)
 
   return Promise.all(
-    defs.map((def) => {
+    defs.map(def => {
       try {
         return enqueue(queue, scheduleToAction(def))
       } catch (error) {
@@ -18,4 +18,4 @@ async function schedule (defs, queue) {
   )
 }
 
-module.exports = schedule
+export default schedule

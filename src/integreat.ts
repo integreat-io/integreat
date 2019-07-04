@@ -1,11 +1,11 @@
-const R = require('ramda')
-const createService = require('./service')
-const schema = require('./schema')
-const setupMapping = require('./mapping')
-const setupDispatch = require('./dispatch')
-const builtinActions = require('./actions')
+import R = require('ramda')
+import createService from './service'
+import schema from './schema'
+import setupMapping from './mapping'
+import setupDispatch from './dispatch'
+import builtinActions from './actions'
 
-const version = '0.7.2'
+const version = '0.8.0-alpha.0'
 
 /**
  * Return an Integreat instance with a dispatch method.
@@ -16,7 +16,7 @@ const version = '0.7.2'
  * @param {Array} middlewares - Array of middlewares
  * @returns {Object} Integration object with the dispatch method
  */
-function integreat (
+function integreat(
   {
     schemas: typeDefs,
     services: serviceDefs,
@@ -46,33 +46,39 @@ function integreat (
     R.map(schema)
   )(typeDefs)
 
-  const pluralTypes = Object.keys(schemas)
-    .reduce((plurals, type) => ({ ...plurals, [schemas[type].plural]: type }), {})
+  const pluralTypes = Object.keys(schemas).reduce(
+    (plurals, type) => ({ ...plurals, [schemas[type].plural]: type }),
+    {}
+  )
 
   // Setup auths object from auth defs
-  const auths = authDefs
-    .reduce((auths, def) => (def)
-      ? {
-        ...auths,
-        [def.id]: {
-          authenticator: authenticators[def && def.authenticator],
-          options: def.options,
-          authentication: null
-        }
-      }
-      : auths,
-    {})
+  const auths = authDefs.reduce(
+    (auths, def) =>
+      def
+        ? {
+            ...auths,
+            [def.id]: {
+              authenticator: authenticators[def && def.authenticator],
+              options: def.options,
+              authentication: null
+            }
+          }
+        : auths,
+    {}
+  )
 
   // Setup services object from service defs.
   const services = R.compose(
     R.indexBy(R.prop('id')),
-    R.map(createService({
-      adapters,
-      auths,
-      transformers,
-      schemas,
-      setupMapping: setupMapping({ filters, transformers, schemas, mappings })
-    }))
+    R.map(
+      createService({
+        adapters,
+        auths,
+        transformers,
+        schemas,
+        setupMapping: setupMapping({ filters, transformers, schemas, mappings })
+      })
+    )
   )(serviceDefs)
 
   // Return Integreat instance
@@ -100,7 +106,7 @@ function integreat (
      * Adds the `listener` function to the service's emitter for events with the
      * given `eventName` name.
      */
-    on (eventName, serviceId, listener) {
+    on(eventName, serviceId, listener) {
       const service = services[serviceId]
       if (service && service.on) {
         service.on(eventName, listener)
@@ -110,10 +116,10 @@ function integreat (
     /**
      * Return schema type from its plural form.
      */
-    typeFromPlural (plural) {
+    typeFromPlural(plural) {
       return pluralTypes[plural]
     }
   }
 }
 
-module.exports = integreat
+export default integreat

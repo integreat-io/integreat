@@ -1,13 +1,13 @@
 import test from 'ava'
-import sinon from 'sinon'
-import nock from 'nock'
+import sinon = require('sinon')
+import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import ent1Data from '../helpers/data/entry1'
 
-import integreat from '../..'
+import integreat = require('../..')
 
-test('should emit request and response before mapping from service', async (t) => {
+test('should emit request and response before mapping from service', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
@@ -32,7 +32,7 @@ test('should emit request and response before mapping from service', async (t) =
   nock.restore()
 })
 
-test('should emit request and response after mapping from service', async (t) => {
+test('should emit request and response after mapping from service', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')

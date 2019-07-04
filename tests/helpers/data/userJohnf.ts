@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   user: 'johnf',
   forename: 'John',
   surname: 'Fjon',

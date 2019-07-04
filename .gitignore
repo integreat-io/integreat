@@ -25,3 +25,6 @@ nbproject
 .node_history
 .todos
 .env
+
+# Temps and outputs
+dist

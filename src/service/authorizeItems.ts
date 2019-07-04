@@ -1,11 +1,14 @@
-const authorizeItem = require('./authorizeItem')
+import authorizeItem from './authorizeItem'
 
-const hasData = (data) => (Array.isArray(data)) ? data.length > 0 : !!data
+const hasData = data => (Array.isArray(data) ? data.length > 0 : !!data)
 const getStatusForData = (original, authorized) =>
-  (original.length === authorized.length) ? 'granted'
-    : (authorized.length) ? 'partially' : 'refused'
+  original.length === authorized.length
+    ? 'granted'
+    : authorized.length
+    ? 'partially'
+    : 'refused'
 
-function authorizeItems (request, schemas) {
+function authorizeItems(request, schemas) {
   const { data, access, action, auth } = request
   const { ident = null, status } = access || {}
 
@@ -16,11 +19,12 @@ function authorizeItems (request, schemas) {
   const requireAuth = !!auth
 
   const original = [].concat(data)
-  const authorized = original
-    .filter((item) => authorizeItem(item, { ident }, { schemas, requireAuth, action }))
+  const authorized = original.filter(item =>
+    authorizeItem(item, { ident }, { schemas, requireAuth, action })
+  )
 
   return {
-    data: (Array.isArray(data)) ? authorized : authorized[0],
+    data: Array.isArray(data) ? authorized : authorized[0],
     access: {
       status: getStatusForData(original, authorized),
       scheme: 'data',
@@ -29,4 +33,4 @@ function authorizeItems (request, schemas) {
   }
 }
 
-module.exports = authorizeItems
+export default authorizeItems

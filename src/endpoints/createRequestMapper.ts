@@ -1,13 +1,15 @@
-const { mapTransform, set } = require('map-transform')
-const { normalizeMappingWithSwitchedTransforms } = require('../mapping/normalize')
+import { mapTransform, set } from 'map-transform'
+import { normalizeMappingWithSwitchedTransforms } from '../mapping/normalize'
 
-function createRequestMapper ({ requestMapping }, { transformers } = {}) {
+function createRequestMapper({ requestMapping }, { transformers } = {}) {
   if (!requestMapping) {
     return null
   }
-  return (typeof requestMapping === 'string')
+  return typeof requestMapping === 'string'
     ? mapTransform(['data', set(requestMapping)])
-    : mapTransform(normalizeMappingWithSwitchedTransforms(requestMapping, transformers))
+    : mapTransform(
+        normalizeMappingWithSwitchedTransforms(requestMapping, transformers)
+      )
 }
 
-module.exports = createRequestMapper
+export default createRequestMapper

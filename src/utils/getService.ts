@@ -13,4 +13,4 @@ function getService (schemas, services) {
   }
 }
 
-module.exports = getService
+export default getService

@@ -1,22 +1,30 @@
-const util = require('util')
-const getField = require('../utils/getField')
-const createError = require('../utils/createError')
-const createUnknownServiceError = require('../utils/createUnknownServiceError')
+import util = require('util')
+import getField from '../utils/getField'
+import createError from '../utils/createError'
+import createUnknownServiceError from '../utils/createUnknownServiceError'
 
 const preparePropKeys = ({
   id = 'id',
   roles = 'roles',
   tokens = 'tokens'
 } = {}) => ({
-  id, roles, tokens
+  id,
+  roles,
+  tokens
 })
 
 const prepareParams = (ident, keys) =>
-  (ident.id) ? { [keys.id]: ident.id }
-    : (ident.withToken) ? { [keys.tokens]: ident.withToken }
-      : null
+  ident.id
+    ? { [keys.id]: ident.id }
+    : ident.withToken
+    ? { [keys.tokens]: ident.withToken }
+    : null
 
-const wrapOk = (data, ident) => ({ status: 'ok', data, access: { status: 'granted', ident } })
+const wrapOk = (data, ident) => ({
+  status: 'ok',
+  data,
+  access: { status: 'granted', ident }
+})
 
 const prepareResponse = (response, params, propKeys) => {
   const { data } = response
@@ -29,24 +37,30 @@ const prepareResponse = (response, params, propKeys) => {
     }
     return wrapOk(data[0], completeIdent)
   } else {
-    return createError(`Could not find ident with params ${util.inspect(params)}`, 'notfound')
+    return createError(
+      `Could not find ident with params ${util.inspect(params)}`,
+      'notfound'
+    )
   }
 }
 
 /**
-* Get an ident item from service, based on the meta.ident object on the action.
-* @param {Object} action - Action object
-* @param {Object} resources - Object with getService and identOptions
-* @returns {Object} Response object with ident item as data
+ * Get an ident item from service, based on the meta.ident object on the action.
+ * @param {Object} action - Action object
+ * @param {Object} resources - Object with getService and identOptions
+ * @returns {Object} Response object with ident item as data
  */
-async function getIdent ({ payload, meta }, { getService, identOptions = {} }) {
+async function getIdent({ payload, meta }, { getService, identOptions = {} }) {
   if (!meta.ident) {
     return createError('GET_IDENT: The request has no ident', 'noaction')
   }
 
   const { type } = identOptions
   if (!type) {
-    return createError('GET_IDENT: Integreat is not set up with authentication', 'noaction')
+    return createError(
+      'GET_IDENT: Integreat is not set up with authentication',
+      'noaction'
+    )
   }
 
   const service = getService(type)
@@ -57,7 +71,10 @@ async function getIdent ({ payload, meta }, { getService, identOptions = {} }) {
   const propKeys = preparePropKeys(identOptions.props)
   const params = prepareParams(meta.ident, propKeys)
   if (!params) {
-    return createError('GET_IDENT: The request has no ident with id or withToken', 'noaction')
+    return createError(
+      'GET_IDENT: The request has no ident with id or withToken',
+      'noaction'
+    )
   }
 
   const { response } = await service.send({
@@ -69,4 +86,4 @@ async function getIdent ({ payload, meta }, { getService, identOptions = {} }) {
   return prepareResponse(response, payload, propKeys)
 }
 
-module.exports = getIdent
+export default getIdent

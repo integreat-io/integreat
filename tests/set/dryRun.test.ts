@@ -2,7 +2,7 @@ import test from 'ava'
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat from '../..'
+import integreat = require('../..')
 
 // Helpers
 
@@ -20,13 +20,16 @@ const entry1Item = {
   },
   relationships: {
     author: { id: 'johnf', type: 'user' },
-    sections: [{ id: 'news', type: 'section' }, { id: 'sports', type: 'section' }]
+    sections: [
+      { id: 'news', type: 'section' },
+      { id: 'sports', type: 'section' }
+    ]
   }
 }
 
 // Tests
 
-test('should set new entry', async (t) => {
+test('should set new entry', async t => {
   const adapters = { json }
   const action = {
     type: 'SET',

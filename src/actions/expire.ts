@@ -1,37 +1,40 @@
-const action = require('../utils/createAction')
-const createError = require('../utils/createError')
+import action from '../utils/createAction'
+import createError from '../utils/createError'
 
 const getExpired = async (payload, ident, dispatch) => {
-  const {
-    service,
-    type,
-    endpoint,
-    msFromNow = 0
-  } = payload
+  const { service, type, endpoint, msFromNow = 0 } = payload
 
   const timestamp = Date.now() + msFromNow
   const isodate = new Date(timestamp).toISOString()
-  const payloadGet = { service, type, endpoint, onlyMappedValues: true, timestamp, isodate }
+  const payloadGet = {
+    service,
+    type,
+    endpoint,
+    onlyMappedValues: true,
+    timestamp,
+    isodate
+  }
 
   return dispatch(action('GET', payloadGet, { ident }))
 }
 
 const deleteExpired = async (response, service, ident, dispatch) => {
   if (response.status !== 'ok' || !Array.isArray(response.data)) {
-    return createError(`Could not get items from service '${service}'. Reason: ${response.status} ${response.error}`, 'noaction')
+    return createError(
+      `Could not get items from service '${service}'. Reason: ${response.status} ${response.error}`,
+      'noaction'
+    )
   }
   if (response.data.length === 0) {
-    return createError(`No items to expire from service '${service}'`, 'noaction')
+    return createError(
+      `No items to expire from service '${service}'`,
+      'noaction'
+    )
   }
 
-  const data = response.data.map((item) =>
-    ({ id: item.id, type: item.type }))
+  const data = response.data.map(item => ({ id: item.id, type: item.type }))
 
-  return dispatch(action(
-    'DELETE',
-    { service, data },
-    { queue: true, ident }
-  ))
+  return dispatch(action('DELETE', { service, data }, { queue: true, ident }))
 }
 
 /**
@@ -49,7 +52,7 @@ const deleteExpired = async (response, service, ident, dispatch) => {
  * @param {Object} resources - Dispatch and queue functions
  * @returns {Object} Response object
  */
-async function expire ({ payload, meta = {} }, { dispatch }) {
+async function expire({ payload, meta = {} }, { dispatch }) {
   const { service } = payload
   const { ident } = meta
 
@@ -57,10 +60,14 @@ async function expire ({ payload, meta = {} }, { dispatch }) {
     return createError(`Can't delete expired without a specified service`)
   }
   if (!payload.endpoint) {
-    return createError(`Can't delete expired from service '${service}' without an endpoint`)
+    return createError(
+      `Can't delete expired from service '${service}' without an endpoint`
+    )
   }
   if (!payload.type) {
-    return createError(`Can't delete expired from service '${service}' without one or more specified types`)
+    return createError(
+      `Can't delete expired from service '${service}' without one or more specified types`
+    )
   }
 
   const response = await getExpired(payload, ident, dispatch)
@@ -68,4 +75,4 @@ async function expire ({ payload, meta = {} }, { dispatch }) {
   return deleteExpired(response, service, ident, dispatch)
 }
 
-module.exports = expire
+export default expire

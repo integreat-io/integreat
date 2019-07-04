@@ -1,19 +1,19 @@
 import test from 'ava'
-import later from 'later'
+import later = require('later')
 
 import scheduleToAction from './scheduleToAction'
 
-test('should exist', (t) => {
+test('should exist', t => {
   t.is(typeof scheduleToAction, 'function')
 })
 
-test('should return null when no def', (t) => {
+test('should return null when no def', t => {
   const ret = scheduleToAction()
 
   t.is(ret, null)
 })
 
-test('should return action', (t) => {
+test('should return action', t => {
   const scheduleDef = Object.freeze({
     action: {
       type: 'SYNC',
@@ -38,7 +38,7 @@ test('should return action', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should set action id', (t) => {
+test('should set action id', t => {
   const scheduleDef = Object.freeze({
     id: 'job1',
     action: {
@@ -53,7 +53,7 @@ test('should set action id', (t) => {
   t.is(ret.meta.id, 'job1')
 })
 
-test('should schedule action at 2 am every night', (t) => {
+test('should schedule action at 2 am every night', t => {
   const scheduleDef = {
     schedule: [{ h: [2] }],
     action: {}
@@ -66,12 +66,15 @@ test('should schedule action at 2 am every night', (t) => {
   t.deepEqual(ret.meta.schedule, expected)
 })
 
-test('should set queue timestamp to time of next execution', (t) => {
+test('should set queue timestamp to time of next execution', t => {
   const scheduleDef = {
     schedule: [{ h: [2] }],
     action: {}
   }
-  const expected = later.schedule({ schedules: [{ h: [2] }] }).next().getTime()
+  const expected = later
+    .schedule({ schedules: [{ h: [2] }] })
+    .next()
+    .getTime()
 
   const ret = scheduleToAction(scheduleDef)
 
@@ -79,7 +82,7 @@ test('should set queue timestamp to time of next execution', (t) => {
   t.is(ret.meta.queue, expected)
 })
 
-test('should resolve from simple schedule', (t) => {
+test('should resolve from simple schedule', t => {
   const scheduleDef = {
     schedule: { h: [2] },
     action: {}
@@ -91,7 +94,7 @@ test('should resolve from simple schedule', (t) => {
   t.deepEqual(ret.meta.schedule, expected)
 })
 
-test('should accept complete schedule', (t) => {
+test('should accept complete schedule', t => {
   const scheduleDef = {
     schedule: {
       schedules: [{ h: [2] }],
@@ -107,7 +110,7 @@ test('should accept complete schedule', (t) => {
   t.deepEqual(ret.meta.schedule, expected)
 })
 
-test('should resolve from text expression', (t) => {
+test('should resolve from text expression', t => {
   const scheduleDef = {
     schedule: 'at 2:00 am',
     action: {}
@@ -122,7 +125,7 @@ test('should resolve from text expression', (t) => {
   t.is(schedule.error, undefined)
 })
 
-test('should throw on invalid text schedule', (t) => {
+test('should throw on invalid text schedule', t => {
   const scheduleDef = {
     schedule: 'at 2 am',
     action: {}
@@ -133,7 +136,7 @@ test('should throw on invalid text schedule', (t) => {
   })
 })
 
-test('should throw on invalid schedule definition', (t) => {
+test('should throw on invalid schedule definition', t => {
   const scheduleDef = {
     schedule: { x: [3] },
     action: {}
