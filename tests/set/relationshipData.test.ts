@@ -70,7 +70,7 @@ test.after.always(() => {
 
 // Tests
 
-test.failing('should map full relationship item to service', async t => {
+test('should map full relationship item to service', async t => {
   const putData = {
     key: 'ent1',
     headline: 'Entry 1',

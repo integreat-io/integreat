@@ -2,7 +2,7 @@ import test from 'ava'
 import { mapTransform } from 'map-transform'
 import transformFunctions from '../transformers/builtIns'
 
-import createDefMapping from './createDefMapping'
+import createCastMapping from './createCastMapping'
 
 test('should create mapping definition from schema', t => {
   const schema = {
@@ -74,7 +74,7 @@ test('should create mapping definition from schema', t => {
     }
   ]
 
-  const ret = mapTransform(createDefMapping(schema, 'entry'), {
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
     functions: transformFunctions
   })(data)
 
@@ -123,7 +123,7 @@ test('should map props in given order', t => {
     'comments'
   ]
 
-  const ret = mapTransform(createDefMapping(schema, 'entry'), {
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
     functions: transformFunctions
   })(data)
 
@@ -201,7 +201,7 @@ test('should reverse transform with mapping definition from schema', t => {
     }
   ]
 
-  const ret = mapTransform(createDefMapping(schema, 'entry'), {
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
     functions: transformFunctions
   }).rev(data)
 
@@ -236,7 +236,7 @@ test('should be iteratable', t => {
     }
   ]
 
-  const ret = mapTransform([createDefMapping(schema, 'entry')], {
+  const ret = mapTransform([createCastMapping(schema, 'entry')], {
     functions: transformFunctions
   })(data)
 
@@ -305,7 +305,7 @@ test('should create mapping definition from nested schema', t => {
     }
   ]
 
-  const ret = mapTransform(createDefMapping(schema, 'entry'), {
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
     functions: transformFunctions
   })(data)
 
@@ -339,7 +339,7 @@ test('should skip properties with invalid $cast', t => {
     }
   ]
 
-  const ret = mapTransform(createDefMapping(schema, 'entry'), {
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
     functions: transformFunctions
   })(data)
 
@@ -360,7 +360,7 @@ test('should skip items already cast with another $schema', t => {
   ]
   const expected = []
 
-  const ret = mapTransform(createDefMapping(schema, 'entry'), {
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
     functions: transformFunctions
   })(data)
 
@@ -368,3 +368,8 @@ test('should skip items already cast with another $schema', t => {
 })
 
 test.todo('should have some more error checking, probably')
+test.todo('cast should keep isNew when true')
+test.todo('cast should keep isDeleted when true')
+test.todo('cast should remove isTrue and isDeleted when false')
+test.todo('cast should generate random id')
+test.todo('should set default createdAt and upatedAt')

@@ -140,3 +140,9 @@ test('should iterate array in reverse', t => {
 
   t.deepEqual(ret, expected)
 })
+
+test.todo('cast should cast relationship object with id array')
+test.todo('cast should cast relationship object with meta')
+test.todo('cast should keep isNew when true')
+test.todo('cast should keep isDeleted when true')
+test.todo('cast should remove isTrue and isDeleted when false')

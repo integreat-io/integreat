@@ -1,5 +1,4 @@
 const { compose } = require('ramda')
-import castData from './castData'
 import authorizeRequest from './authorizeRequest'
 import mapFromService from './mapFromService'
 import mapToService from './mapToService'
@@ -61,8 +60,7 @@ export const beforeService = composeWithOptions(
   awaitAndAssign('request', mapToService),
   emitRequestAndResponse('mapToService'),
   awaitAndAssign('authorizedRequestData', extractRequestData),
-  awaitAndAssign(null, authorizeRequest),
-  awaitAndAssign('request', castData)
+  awaitAndAssign(null, authorizeRequest)
 )
 
 export const send = composeWithOptions(

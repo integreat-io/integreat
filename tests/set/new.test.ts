@@ -54,7 +54,7 @@ test.after.always(() => {
 
 // Tests
 
-test.failing('should set new entry', async t => {
+test('should set new entry', async t => {
   const adapters = { json }
   const middlewares = [completeIdent]
   const putData = {

@@ -295,16 +295,26 @@ test('should set authorized data on response', async t => {
   const payload = {
     service: 'accounts',
     data: [
-      { id: 'johnf', type: 'account', attributes: { name: 'John F.' } },
-      { id: 'betty', type: 'account', attributes: { name: 'Betty' } }
+      {
+        $schema: 'account',
+        id: 'johnf',
+        type: 'account',
+        attributes: { name: 'John F.' }
+      },
+      {
+        $schema: 'account',
+        id: 'betty',
+        type: 'account',
+        attributes: { name: 'Betty' }
+      }
     ]
   }
   const expectedData = [
     {
+      $schema: 'account',
       id: 'johnf',
       type: 'account',
-      attributes: { name: 'John F.' },
-      relationships: {}
+      attributes: { name: 'John F.' }
     }
   ]
   const src = setupService('http://api8.test/database/_bulk_docs', {
@@ -341,6 +351,7 @@ test('should merge request data with response data', async t => {
       service: 'accounts',
       data: [
         {
+          $schema: 'account',
           type: 'account',
           attributes: { name: 'John F.' },
           relationships: { posts: [{ id: 'ent1', type: 'entry' }] }

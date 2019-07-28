@@ -435,10 +435,9 @@ test('send should return authorized request data before mapping to service', asy
   }
   const expectedData = [
     {
+      $schema: 'account',
       id: 'johnf',
-      type: 'account',
-      attributes: {},
-      relationships: {}
+      type: 'account'
     }
   ]
 

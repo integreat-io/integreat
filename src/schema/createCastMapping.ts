@@ -58,7 +58,7 @@ const mappingFromSchema = (schema: Schema): MapObject =>
     }
   }, {})
 
-export default function createDefMapping(schema: Schema, type: string) {
+export default function createCastMapping(schema: Schema, type: string) {
   return [
     { $filter: 'equalOrNoSchema', type },
     {
