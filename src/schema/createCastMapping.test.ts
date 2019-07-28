@@ -165,7 +165,6 @@ test('should reverse transform with mapping definition from schema', t => {
     {
       $schema: 'entry',
       id: 'ent2',
-      title: undefined,
       age: 244511383,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk', $ref: 'user' },
@@ -174,6 +173,7 @@ test('should reverse transform with mapping definition from schema', t => {
   ]
   const expected = [
     {
+      $schema: 'entry',
       id: '12345',
       type: 'entry',
       title: 'Entry 1',
@@ -187,6 +187,7 @@ test('should reverse transform with mapping definition from schema', t => {
       comments: ['comment12', 'comment13']
     },
     {
+      $schema: 'entry',
       id: 'ent2',
       title: 'Entry with no name',
       type: 'entry',

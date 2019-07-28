@@ -2,9 +2,7 @@ import mapAny = require('map-any')
 import { GenericData } from '../types'
 import { SendOptions, Mappings, Request } from './types'
 
-const flatten = (
-  data: GenericData
-) =>
+const flatten = (data: GenericData) =>
   Array.isArray(data)
     ? data.reduce(
         (flattened, data) =>
@@ -34,11 +32,9 @@ const mapByType = (
 ) => (type: string) => {
   const mapping = mappings[type]
   return mapping
-    ? typeof mapping === 'function'
-      ? onlyMappedValues
-        ? mapping.onlyMappedValues(request)
-        : mapping(request)
-      : mapping.fromService(request, { onlyMappedValues })
+    ? onlyMappedValues
+      ? mapping.onlyMappedValues(request)
+      : mapping(request)
     : []
 }
 

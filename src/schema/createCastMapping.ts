@@ -64,8 +64,8 @@ export default function createCastMapping(schema: Schema, type: string) {
     {
       $iterate: true,
       $schema: [
-        { $transform: 'fixed', value: type, $direction: 'fwd' },
-        { $transform: 'fixed', value: undefined, $direction: 'rev' }
+        '$schema',
+        { $transform: 'fixed', value: type }
       ],
       ...mappingFromSchema(schema)
     }

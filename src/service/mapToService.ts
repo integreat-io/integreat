@@ -10,10 +10,13 @@ const concatOrRight = (left, right) =>
 
 const mapIt = (
   mapper: MapTransform,
-  data: Request,
+  request: Request,
   target: GenericData = null
 ) => {
-  const mapped = mapper.rev.onlyMappedValues(data)
+  const { onlyMappedValues = true } = request.params
+  const mapped = onlyMappedValues
+    ? mapper.rev.onlyMappedValues(request)
+    : mapper.rev(request)
   return (
     (target
       ? Array.isArray(target)
@@ -29,9 +32,7 @@ const mapItems = (
   target?: GenericData
 ) =>
   mapping
-    ? typeof mapping.rev === 'function'
-      ? mapIt(mapping, { ...request, data }, target)
-      : mapping.toService({ ...request, data }, target)
+    ? mapIt(mapping, { ...request, data }, target)
     : target
 
 const mapDataPerType = (

@@ -65,6 +65,7 @@ test('should get one user from service', async t => {
     firstname: 'John',
     lastname: 'Fjon',
     yearOfBirth: 1987,
+    createdBy: undefined,
     createdAt: new Date(createdAt),
     updatedAt: new Date(updatedAt),
     roles: ['editor'],

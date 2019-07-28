@@ -10,6 +10,7 @@ export default {
       firstname: 'forename',
       lastname: 'surname',
       yearOfBirth: 'birthyear',
+      createdBy: 'creator',
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
       roles: 'roles[]',

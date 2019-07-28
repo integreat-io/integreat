@@ -84,6 +84,29 @@ test('should map data', t => {
   t.deepEqual(ret.data, expected)
 })
 
+test('should map data with defaults', t => {
+  const data = {
+    $schema: 'entry',
+    id: 'ent1',
+    title: 'The heading',
+    service: { id: 'thenews', $ref: 'service' }
+  }
+  const request = {
+    action: 'SET',
+    params: { service: 'thenews', onlyMappedValues: false },
+    endpoint: {},
+    data,
+    access: { ident: { id: 'johnf' } }
+  }
+  const expected = {
+    items: [{ key: 'ent1', header: 'The heading', one: 1, two: undefined }]
+  }
+
+  const ret = mapToService()({ request, mappings })
+
+  t.deepEqual(ret.data, expected)
+})
+
 test('should map array of data', t => {
   const data = [
     {
@@ -116,9 +139,7 @@ test('should map array of data to top level', t => {
       mapOptions
     )
   }
-  const data = [
-    { id: 'ent1', $schema: 'entry', title: 'The heading' }
-  ]
+  const data = [{ id: 'ent1', $schema: 'entry', title: 'The heading' }]
   const request = { action: 'SET', params: {}, endpoint: {}, data }
   const expected = [{ key: 'ent1', header: 'The heading' }]
 

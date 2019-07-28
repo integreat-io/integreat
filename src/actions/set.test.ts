@@ -93,13 +93,16 @@ test('should map and set items to service', async t => {
       ]
     })
     .reply(201, [{ ok: true }, { ok: true }])
-  const action = { type: 'SET', payload: {
-    service: 'entries',
-    data: [
-      { $schema: 'entry', id: 'ent1', title: 'Entry 1' },
-      { $schema: 'entry', id: 'ent2', title: 'Entry 2' }
-    ]
-   }}
+  const action = {
+    type: 'SET',
+    payload: {
+      service: 'entries',
+      data: [
+        { $schema: 'entry', id: 'ent1', title: 'Entry 1' },
+        { $schema: 'entry', id: 'ent2', title: 'Entry 2' }
+      ]
+    }
+  }
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = (type, service) => (service === 'entries' ? src : null)
 
@@ -133,21 +136,26 @@ test('should map and set one item to service', async t => {
   t.true(scope.isDone())
 })
 
-test.failing('should map with default values from type', async t => {
+test('should map with default values from type', async t => {
   const scope = nock('http://api4.test')
     .post('/database/_bulk_docs', {
       docs: [{ id: 'ent1', header: 'A title' }]
     })
-    .reply(201, [{ ok: true }, { ok: true }])
-  const payload = {
-    service: 'entries',
-    data: [{ id: 'ent1', $schema: 'entry' }],
-    onlyMappedValues: false
+    .reply(201, [{ ok: true }])
+  const action = {
+    type: 'SET',
+    payload: {
+      service: 'entries',
+      type: 'entry',
+      data: [{ $schema: 'entry', id: 'ent1' }],
+      onlyMappedValues: false
+    },
+    meta: { ident: { id: 'johnf' } }
   }
   const src = setupService('http://api4.test/database/_bulk_docs')
   const getService = (type, service) => (service === 'entries' ? src : null)
 
-  const ret = await set({ type: 'SET', payload }, { getService })
+  const ret = await set(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
