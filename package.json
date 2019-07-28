@@ -51,11 +51,6 @@
       "tests/helpers/**.ts"
     ]
   },
-  "prettier": {
-    "semi": false,
-    "singleQuote": true,
-    "jsxSingleQuote": true
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/integreat-io/integreat.git"
