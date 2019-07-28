@@ -12,14 +12,13 @@ import deleteFn from './delete'
 const schemas = {
   entry: schema({
     id: 'entry',
-    attributes: {
-      type: 'string',
+    fields: {
       title: { $cast: 'string', $default: 'A title' }
     }
   }),
   account: schema({
     id: 'account',
-    attributes: {
+    fields: {
       name: 'string'
     },
     access: { identFromField: 'id' }
@@ -28,11 +27,11 @@ const schemas = {
 
 const pipelines = {
   entry: [
-    { $iterate: true, id: 'id', attributes: { title: 'header' } },
+    { $iterate: true, id: 'id', title: 'header' },
     { $apply: 'cast_entry' }
   ],
   account: [
-    { $iterate: true, id: 'id', attributes: { name: 'name' } },
+    { $iterate: true, id: 'id', name: 'name' },
     { $apply: 'cast_account' }
   ],
   cast_entry: schemas.entry.mapping,
@@ -75,7 +74,10 @@ test('should delete items from service', async t => {
   const action = {
     type: 'DELETE',
     payload: {
-      data: [{ id: 'ent1', type: 'entry' }, { id: 'ent2', type: 'entry' }],
+      data: [
+        { id: 'ent1', $schema: 'entry' },
+        { id: 'ent2', $schema: 'entry' }
+      ],
       service: 'entries'
     }
   }
@@ -143,12 +145,18 @@ test('should infer service id from type', async t => {
     mappings: { entry: 'entry' }
   })
   const getService = (type, service) => (type === 'entry' ? src : null)
-  const payload = {
-    data: [{ id: 'ent1', type: 'entry' }, { id: 'ent2', type: 'entry' }],
-    type: 'entry'
+  const action = {
+    type: 'DELETE',
+    payload: {
+      data: [
+        { id: 'ent1', $schema: 'entry' },
+        { id: 'ent2', $schema: 'entry' }
+      ],
+      type: 'entry'
+    }
   }
 
-  const ret = await deleteFn({ type: 'DELETE', payload }, { getService })
+  const ret = await deleteFn(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -177,14 +185,20 @@ test('should delete with other endpoint and uri params', async t => {
     mappings: { entry: 'entry' }
   })
   const getService = (type, service) => src
-  const payload = {
-    data: [{ id: 'ent1', type: 'entry' }, { id: 'ent2', type: 'entry' }],
-    type: 'entry',
-    endpoint: 'other',
-    typefolder: 'entries'
+  const action = {
+    type: 'DELETE',
+    payload: {
+      data: [
+        { id: 'ent1', $schema: 'entry' },
+        { id: 'ent2', $schema: 'entry' }
+      ],
+      type: 'entry',
+      endpoint: 'other',
+      typefolder: 'entries'
+    }
   }
 
-  const ret = await deleteFn({ type: 'DELETE', payload }, { getService })
+  const ret = await deleteFn(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -211,12 +225,15 @@ test('should return error from response', async t => {
     mappings: { entry: 'entry' }
   })
   const getService = (type, service) => src
-  const payload = {
-    data: [{ id: 'ent1', type: 'entry' }],
-    type: 'entry'
+  const action = {
+    type: 'DELETE',
+    payload: {
+      data: [{ id: 'ent1', $schema: 'entry' }],
+      type: 'entry'
+    }
   }
 
-  const ret = await deleteFn({ type: 'DELETE', payload }, { getService })
+  const ret = await deleteFn(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'notfound', ret.error)
@@ -238,9 +255,9 @@ test('should return noaction when nothing to delete', async t => {
     mappings: { entry: 'entry' }
   })
   const getService = (type, service) => src
-  const payload = { data: [], service: 'entries' }
+  const action = { type: 'DELETE', payload: { data: [], service: 'entries' } }
 
-  const ret = await deleteFn({ type: 'DELETE', payload }, { getService })
+  const ret = await deleteFn(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'noaction')
@@ -259,9 +276,12 @@ test('should skip null values in data array', async t => {
     mappings: { entry: 'entry' }
   })
   const getService = (type, service) => src
-  const payload = { data: [null], service: 'entries' }
+  const action = {
+    type: 'DELETE',
+    payload: { data: [null], service: 'entries' }
+  }
 
-  const ret = await deleteFn({ type: 'DELETE', payload }, { getService })
+  const ret = await deleteFn(action, { getService })
 
   t.is(ret.status, 'noaction')
 })
@@ -289,16 +309,19 @@ test('should only delete items the ident is authorized to', async t => {
     mappings: { account: 'account' }
   })
   const getService = (type, service) => (service === 'accounts' ? src : null)
-  const payload = {
-    data: [{ id: 'johnf', type: 'account' }, { id: 'betty', type: 'account' }],
-    service: 'accounts'
+  const action = {
+    type: 'DELETE',
+    payload: {
+      data: [
+        { id: 'johnf', $schema: 'account' },
+        { id: 'betty', $schema: 'account' }
+      ],
+      service: 'accounts',
+    },
+    meta: { ident: { id: 'johnf' } }
   }
-  const ident = { id: 'johnf' }
 
-  const ret = await deleteFn(
-    { type: 'DELETE', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await deleteFn(action, { getService })
 
   t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())

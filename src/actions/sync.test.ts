@@ -57,8 +57,8 @@ test('should return error when GET responds with error', async (t) => {
 })
 
 test('should queue SET to target', async (t) => {
-  const johnData = { id: 'john', type: 'user', attributes: { name: 'John' } }
-  const jennyData = { id: 'jenny', type: 'user', attributes: { name: 'Jenny' } }
+  const johnData = { id: 'john', $schema: 'user', name: 'John' }
+  const jennyData = { id: 'jenny', $schema: 'user', name: 'Jenny' }
   const dispatch = sinon.spy(setupDispatch({
     'GET': { status: 'ok', data: [johnData, jennyData] },
     'SET': { status: 'queued' }
@@ -155,7 +155,7 @@ test('should not set lastSyncedAt when there is no updates after date filter', a
   const lastSyncedAt = new Date('2017-05-13T18:43:00Z')
   const dispatch = sinon.spy(setupDispatch({
     'GET_META': { status: 'ok', data: { meta: { lastSyncedAt } } },
-    'GET': { status: 'ok', data: [{ id: 'john', type: 'user', attributes: { updatedAt } }] },
+    'GET': { status: 'ok', data: [{ id: 'john', $schema: 'user', updatedAt }] },
     'SET': { status: 'queued' }
   }))
   const payload = { from: 'users', to: 'store', type: 'user', retrieve: 'updated' }
@@ -289,8 +289,8 @@ test('should filter out items before updatedAfter', async (t) => {
     'GET': {
       status: 'ok',
       data: [
-        { id: 'ent1', attributes: { updatedAt: date1 } },
-        { id: 'ent2', attributes: { updatedAt: date2 } }
+        { id: 'ent1', updatedAt: date1 },
+        { id: 'ent2', updatedAt: date2 }
       ]
     },
     'SET': { status: 'queued' }
@@ -318,9 +318,9 @@ test('should filter out items before updatedAfter and after updatedUntil', async
     'GET': {
       status: 'ok',
       data: [
-        { id: 'ent1', attributes: { updatedAt: date1 } },
-        { id: 'ent2', attributes: { updatedAt: date2 } },
-        { id: 'ent3', attributes: { updatedAt: date3 } }
+        { id: 'ent1', updatedAt: date1 },
+        { id: 'ent2', updatedAt: date2 },
+        { id: 'ent3', updatedAt: date3 }
       ]
     },
     'SET': { status: 'queued' }
@@ -347,7 +347,7 @@ test('should set updatedAfter and after updatedUntil on SET action', async (t) =
   const dispatch = sinon.spy(setupDispatch({
     'GET': {
       status: 'ok',
-      data: [{ id: 'ent1', attributes: { updatedAt: new Date('2017-05-14T18:43:01Z') } }]
+      data: [{ id: 'ent1', updatedAt: new Date('2017-05-14T18:43:01Z') }]
     },
     'SET': { status: 'queued' }
   }))
@@ -371,7 +371,7 @@ test('should not set updatedAfter and after updatedUntil on SET action', async (
   const dispatch = sinon.spy(setupDispatch({
     'GET': {
       status: 'ok',
-      data: [{ id: 'ent1', attributes: { updatedAt: new Date('2017-05-14T18:43:01Z') } }]
+      data: [{ id: 'ent1', updatedAt: new Date('2017-05-14T18:43:01Z') }]
     },
     'SET': { status: 'queued' }
   }))
@@ -420,15 +420,15 @@ test('should combine and set items from several from-actions', async (t) => {
       {
         status: 'ok',
         data: [
-          { id: 'ent1', attributes: { updatedAt: date1 } },
-          { id: 'ent2', attributes: { updatedAt: date2 } }
+          { id: 'ent1', updatedAt: date1 },
+          { id: 'ent2', updatedAt: date2 }
         ]
       },
       {
         status: 'ok',
         data: [
-          { id: 'ent3', attributes: { updatedAt: date1 } },
-          { id: 'ent4', attributes: { updatedAt: date2 } }
+          { id: 'ent3', updatedAt: date1 },
+          { id: 'ent4', updatedAt: date2 }
         ]
       }
     ],
@@ -461,16 +461,15 @@ test('should combine and set items from several from-actions', async (t) => {
 test.serial('should set meta on several services', async (t) => {
   const lastSyncedAt = new Date()
   const clock = sinon.useFakeTimers(lastSyncedAt)
-  const attributes = {}
   const dispatch = sinon.spy(setupDispatch({
     'GET': [
       {
         status: 'ok',
-        data: [{ id: 'ent1', attributes }, { id: 'ent2', attributes }]
+        data: [{ id: 'ent1' }, { id: 'ent2' }]
       },
       {
         status: 'ok',
-        data: [{ id: 'ent3', attributes }, { id: 'ent4', attributes }]
+        data: [{ id: 'ent3' }, { id: 'ent4' }]
       }
     ]
   }))
@@ -503,7 +502,7 @@ test('should return error when one of several gets returns with error', async (t
     'GET': [
       {
         status: 'ok',
-        data: [{ id: 'ent1', attributes: { } }, { id: 'ent2', attributes: { } }]
+        data: [{ id: 'ent1' }, { id: 'ent2' }]
       },
       { status: 'error', error: 'Could not do it' }
     ]

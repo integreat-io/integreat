@@ -1,2 +1,2 @@
-export default (id, type, attributes = {}, relationships = {}) =>
-  ({ id, type, attributes, relationships })
+export default (id, type, fields = {}, relationships = {}) =>
+  ({ id, $schema: type, ...fields, ...relationships })

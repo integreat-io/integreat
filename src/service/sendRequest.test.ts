@@ -5,7 +5,7 @@ import sendRequest from './sendRequest'
 // Setup
 
 const adapter = {
-  send: async () => ({ status: 'ok', data: { item: { id: 'ent1', type: 'entry' } } })
+  send: async () => ({ status: 'ok', data: { item: { id: 'ent1' } } })
 }
 
 // Tests
@@ -19,7 +19,7 @@ test('should retrieve from endpoint', async (t) => {
   }
   const expected = {
     status: 'ok',
-    data: { item: { id: 'ent1', type: 'entry' } },
+    data: { item: { id: 'ent1' } },
     access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'auth' }
   }
 

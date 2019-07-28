@@ -10,19 +10,17 @@ import mapFromService from './mapFromService'
 const schemas = {
   entry: createSchema({
     id: 'entry',
-    attributes: {
+    fields: {
       title: 'string',
       one: { $cast: 'integer', $default: 1 },
-      two: 'integer'
-    },
-    relationships: {
+      two: 'integer',
       service: 'service',
       author: 'account'
     }
   }),
   account: createSchema({
     id: 'account',
-    attributes: { name: 'string' }
+    fields: { name: 'string' }
   })
 }
 
@@ -31,15 +29,11 @@ const entryMapping = [
   {
     $iterate: true,
     id: 'key',
-    attributes: {
-      title: 'header',
-      one: 'one',
-      two: 'two'
-    },
-    relationships: {
-      service: '^params.service',
-      author: '^access.ident.id'
-    }
+    title: 'header',
+    one: 'one',
+    two: 'two',
+    service: '^params.service',
+    author: '^access.ident.id'
   },
   { $apply: 'cast_entry' }
 ]
@@ -49,7 +43,7 @@ const accountMapping = [
   {
     $iterate: true,
     id: 'id',
-    attributes: { name: 'name' }
+    name: 'name'
   },
   { $apply: 'cast_account' }
 ]
@@ -84,15 +78,10 @@ test('should map and cast data', t => {
     {
       $schema: 'entry',
       id: 'ent1',
-      type: 'entry',
-      attributes: {
-        title: 'The heading',
-        two: 2
-      },
-      relationships: {
-        service: { id: 'thenews', $ref: 'service' },
-        author: { id: 'johnf', $ref: 'account' }
-      }
+      title: 'The heading',
+      two: 2,
+      service: { id: 'thenews', $ref: 'service' },
+      author: { id: 'johnf', $ref: 'account' }
     }
   ]
 
@@ -130,7 +119,7 @@ test('should cast data with defaults', t => {
 
   const ret = mapFromService()({ response, request, mappings })
 
-  t.is(ret.data[0].attributes.one, 1)
+  t.is(ret.data[0].one, 1)
 })
 
 test('should map and cast data that is not array', t => {
@@ -167,15 +156,12 @@ test('should map and cast data of different types', t => {
     {
       $schema: 'entry',
       id: 'ent1',
-      type: 'entry',
-      attributes: { title: 'The heading' },
-      relationships: {}
+      title: 'The heading'
     },
     {
       $schema: 'account',
       id: 'acc1',
-      type: 'account',
-      attributes: { name: 'John' }
+      name: 'John'
     }
   ]
 
@@ -311,14 +297,9 @@ test('should map and cast data from set action', t => {
       {
         $schema: 'entry',
         id: 'random',
-        type: 'entry',
-        attributes: {
-          title: 'The heading'
-        },
-        relationships: {
-          service: { id: 'thenews', $ref: 'service' },
-          author: { id: 'johnf', $ref: 'account' }
-        }
+        title: 'The heading',
+        service: { id: 'thenews', $ref: 'service' },
+        author: { id: 'johnf', $ref: 'account' }
       }
     ],
     access: { ident: { id: 'johnf' } }
@@ -331,15 +312,10 @@ test('should map and cast data from set action', t => {
     {
       $schema: 'entry',
       id: 'ent1',
-      type: 'entry',
-      attributes: {
-        title: 'The heading',
-        two: 2
-      },
-      relationships: {
-        service: { id: 'thenews', $ref: 'service' },
-        author: { id: 'johnf', $ref: 'account' }
-      }
+      title: 'The heading',
+      two: 2,
+      service: { id: 'thenews', $ref: 'service' },
+      author: { id: 'johnf', $ref: 'account' }
     }
   ]
 
@@ -362,14 +338,9 @@ test('should not map and cast data from set action when no responseMapper', t =>
       {
         $schema: 'entry',
         id: 'random',
-        type: 'entry',
-        attributes: {
-          title: 'The heading'
-        },
-        relationships: {
-          service: { id: 'thenews', $ref: 'service' },
-          author: { id: 'johnf', $ref: 'account' }
-        }
+        title: 'The heading',
+        service: { id: 'thenews', $ref: 'service' },
+        author: { id: 'johnf', $ref: 'account' }
       }
     ],
     access: { ident: { id: 'johnf' } }

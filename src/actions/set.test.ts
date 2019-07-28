@@ -12,17 +12,15 @@ import set from './set'
 const schemas = {
   entry: schema({
     id: 'entry',
-    attributes: {
+    fields: {
       title: { $cast: 'string', $default: 'A title' },
       one: 'integer'
     }
   }),
   account: schema({
     id: 'account',
-    attributes: {
-      name: 'string'
-    },
-    relationships: {
+    fields: {
+      name: 'string',
       posts: 'entry'
     },
     access: { identFromField: 'id' }
@@ -34,8 +32,7 @@ const pipelines = {
     {
       $iterate: true,
       id: 'id',
-      type: 'type',
-      attributes: { title: 'header' }
+      title: 'header'
     },
     { $apply: 'cast_entry' }
   ],
@@ -43,9 +40,8 @@ const pipelines = {
     {
       $iterate: true,
       id: 'id',
-      type: 'type',
-      attributes: { name: 'name' },
-      relationships: { posts: 'entries' }
+      name: 'name',
+      posts: 'entries'
     },
     { $apply: 'cast_account' }
   ],
@@ -56,8 +52,13 @@ const pipelines = {
 const mapOptions = { pipelines, functions }
 
 const setupService = (
-  endpoint,
-  { method = 'POST', path = 'docs[]', responseMapping, id = 'entries' } = {}
+  uri: string,
+  {
+    method = 'POST',
+    path = 'docs[]',
+    responseMapping = null,
+    id = 'entries'
+  } = {}
 ) => {
   return createService({
     schemas,
@@ -69,7 +70,7 @@ const setupService = (
       {
         requestMapping: path,
         responseMapping,
-        options: { uri: endpoint, method }
+        options: { uri, method }
       },
       { id: 'other', options: { uri: 'http://api1.test/other/_bulk_docs' } }
     ],
@@ -87,22 +88,22 @@ test('should map and set items to service', async t => {
   const scope = nock('http://api1.test')
     .post('/database/_bulk_docs', {
       docs: [
-        { id: 'ent1', type: 'entry', header: 'Entry 1' },
-        { id: 'ent2', type: 'entry', header: 'Entry 2' }
+        { id: 'ent1', header: 'Entry 1' },
+        { id: 'ent2', header: 'Entry 2' }
       ]
     })
     .reply(201, [{ ok: true }, { ok: true }])
-  const payload = {
+  const action = { type: 'SET', payload: {
     service: 'entries',
     data: [
-      { id: 'ent1', type: 'entry', attributes: { title: 'Entry 1' } },
-      { id: 'ent2', type: 'entry', attributes: { title: 'Entry 2' } }
+      { $schema: 'entry', id: 'ent1', title: 'Entry 1' },
+      { $schema: 'entry', id: 'ent2', title: 'Entry 2' }
     ]
-  }
+   }}
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = (type, service) => (service === 'entries' ? src : null)
 
-  const ret = await set({ type: 'SET', payload }, { getService, schemas })
+  const ret = await set(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -111,21 +112,23 @@ test('should map and set items to service', async t => {
 
 test('should map and set one item to service', async t => {
   const scope = nock('http://api5.test')
-    .put('/database/entry:ent1', { id: 'ent1', type: 'entry' })
+    .put('/database/entry:ent1', { id: 'ent1' })
     .reply(200, { okay: true, id: 'ent1', rev: '000001' })
-  const payload = {
-    data: { id: 'ent1', type: 'entry' }
+  const action = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: { $schema: 'entry', id: 'ent1' }
+    }
   }
   const src = setupService('http://api5.test/database/{type}:{id}', {
-    endpoint: 'setOne',
     method: 'PUT',
-    path: ''
+    path: null
   })
   const getService = (type, service) => (type === 'entry' ? src : null)
 
-  const ret = await set({ type: 'SET', payload }, { getService, schemas })
+  const ret = await set(action, { getService })
 
-  t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
@@ -133,18 +136,18 @@ test('should map and set one item to service', async t => {
 test.failing('should map with default values from type', async t => {
   const scope = nock('http://api4.test')
     .post('/database/_bulk_docs', {
-      docs: [{ id: 'ent1', type: 'entry', header: 'A title' }]
+      docs: [{ id: 'ent1', header: 'A title' }]
     })
     .reply(201, [{ ok: true }, { ok: true }])
   const payload = {
     service: 'entries',
-    data: [{ id: 'ent1', type: 'entry' }],
+    data: [{ id: 'ent1', $schema: 'entry' }],
     onlyMappedValues: false
   }
   const src = setupService('http://api4.test/database/_bulk_docs')
   const getService = (type, service) => (service === 'entries' ? src : null)
 
-  const ret = await set({ type: 'SET', payload }, { getService, schemas })
+  const ret = await set({ type: 'SET', payload }, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -157,12 +160,12 @@ test('should infer service id from type', async t => {
     .reply(201, [{ ok: true }, { ok: true }])
   const payload = {
     type: 'entry',
-    data: [{ id: 'ent1', type: 'entry' }, { id: 'ent2', type: 'entry' }]
+    data: [{ id: 'ent1', $schema: 'entry' }, { id: 'ent2', $schema: 'entry' }]
   }
   const src = setupService('http://api2.test/database/_bulk_docs')
   const getService = (type, service) => (type === 'entry' ? src : null)
 
-  const ret = await set({ type: 'SET', payload }, { getService, schemas })
+  const ret = await set({ type: 'SET', payload }, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -173,17 +176,19 @@ test('should set to specified endpoint', async t => {
   const scope = nock('http://api1.test')
     .put('/other/_bulk_docs')
     .reply(201, [{ ok: true }])
-  const payload = {
-    endpoint: 'other',
-    service: 'entries',
-    data: [{ id: 'ent1', type: 'entry' }]
+  const action = {
+    type: 'SET',
+    payload: {
+      endpoint: 'other',
+      service: 'entries',
+      data: [{ id: 'ent1', $schema: 'entry' }]
+    }
   }
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = (type, service) => (service === 'entries' ? src : null)
 
-  const ret = await set({ type: 'SET', payload }, { getService, schemas })
+  const ret = await set(action, { getService })
 
-  t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
@@ -195,12 +200,12 @@ test('should set to uri with params', async t => {
   const payload = {
     typefolder: 'entries',
     service: 'entries',
-    data: [{ id: 'ent1', type: 'entry' }]
+    data: [{ id: 'ent1', $schema: 'entry' }]
   }
   const src = setupService('http://api3.test/{typefolder}/_bulk_docs')
   const getService = (type, service) => (service === 'entries' ? src : null)
 
-  const ret = await set({ type: 'SET', payload }, { getService, schemas })
+  const ret = await set({ type: 'SET', payload }, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -213,12 +218,12 @@ test('should return error when service fails', async t => {
     .reply(404)
   const payload = {
     service: 'entries',
-    data: [{ id: 'ent1', type: 'entry' }]
+    data: [{ id: 'ent1', $schema: 'entry' }]
   }
   const src = setupService('http://api7.test/database/_bulk_docs')
   const getService = (type, service) => src
 
-  const ret = await set({ type: 'SET', payload }, { getService, schemas })
+  const ret = await set({ type: 'SET', payload }, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'notfound', ret.error)
@@ -231,11 +236,29 @@ test('should return error when no service exists for a type', async t => {
   const action = {
     type: 'SET',
     payload: {
-      data: { id: 'ent1', type: 'entry' }
+      type: 'entry',
+      data: { id: 'ent1', $schema: 'entry' }
     }
   }
 
-  const ret = await set(action, { getService, schemas })
+  const ret = await set(action, { getService })
+
+  t.truthy(ret)
+  t.is(ret.status, 'error')
+  t.is(ret.error, "No service exists for type 'entry'")
+})
+
+test('should get type from data $schema', async t => {
+  const getService = () => null
+  const action = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: { id: 'ent1', $schema: 'entry' }
+    }
+  }
+
+  const ret = await set(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'error')
@@ -248,11 +271,11 @@ test('should return error when specified service does not exist', async t => {
     type: 'SET',
     payload: {
       service: 'entries',
-      data: { id: 'ent1', type: 'entry' }
+      data: { id: 'ent1', $schema: 'entry' }
     }
   }
 
-  const ret = await set(action, { getService, schemas })
+  const ret = await set(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'error')
@@ -262,14 +285,14 @@ test('should return error when specified service does not exist', async t => {
 test('should authenticate items', async t => {
   const scope = nock('http://api6.test')
     .post('/database/_bulk_docs', {
-      docs: [{ id: 'johnf', type: 'account', name: 'John F.' }]
+      docs: [{ id: 'johnf', name: 'John F.' }]
     })
     .reply(201, [{ ok: true }])
   const payload = {
     service: 'accounts',
     data: [
-      { id: 'johnf', type: 'account', attributes: { name: 'John F.' } },
-      { id: 'betty', type: 'account', attributes: { name: 'Betty' } }
+      { id: 'johnf', $schema: 'account', name: 'John F.' },
+      { id: 'betty', $schema: 'account', name: 'Betty' }
     ]
   }
   const src = setupService('http://api6.test/database/_bulk_docs', {
@@ -280,7 +303,7 @@ test('should authenticate items', async t => {
 
   const ret = await set(
     { type: 'SET', payload, meta: { ident } },
-    { getService, schemas }
+    { getService }
   )
 
   t.truthy(ret)
@@ -298,14 +321,12 @@ test('should set authorized data on response', async t => {
       {
         $schema: 'account',
         id: 'johnf',
-        type: 'account',
-        attributes: { name: 'John F.' }
+        name: 'John F.'
       },
       {
         $schema: 'account',
         id: 'betty',
-        type: 'account',
-        attributes: { name: 'Betty' }
+        name: 'Betty'
       }
     ]
   }
@@ -313,8 +334,7 @@ test('should set authorized data on response', async t => {
     {
       $schema: 'account',
       id: 'johnf',
-      type: 'account',
-      attributes: { name: 'John F.' }
+      name: 'John F.'
     }
   ]
   const src = setupService('http://api8.test/database/_bulk_docs', {
@@ -327,7 +347,7 @@ test('should set authorized data on response', async t => {
     meta: { ident: { id: 'johnf' } }
   }
 
-  const ret = await set(action, { getService, schemas })
+  const ret = await set(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -352,9 +372,8 @@ test('should merge request data with response data', async t => {
       data: [
         {
           $schema: 'account',
-          type: 'account',
-          attributes: { name: 'John F.' },
-          relationships: { posts: [{ id: 'ent1', type: 'entry' }] }
+          name: 'John F.',
+          posts: [{ id: 'ent1', $ref: 'entry' }]
         }
       ]
     },
@@ -364,11 +383,8 @@ test('should merge request data with response data', async t => {
     {
       $schema: 'account',
       id: 'johnf',
-      type: 'account',
-      attributes: { name: 'John Fjon' },
-      relationships: {
-        posts: [{ id: 'ent1', type: 'entry' }]
-      }
+      name: 'John Fjon',
+      posts: [{ id: 'ent1', $ref: 'entry' }]
     }
   ]
   const src = setupService('http://api9.test/database/_bulk_docs', {
@@ -377,7 +393,7 @@ test('should merge request data with response data', async t => {
   })
   const getService = (type, service) => (service === 'accounts' ? src : null)
 
-  const ret = await set(action, { getService, schemas })
+  const ret = await set(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -400,8 +416,7 @@ test('should return response data when no request data', async t => {
     {
       $schema: 'account',
       id: 'johnf',
-      type: 'account',
-      attributes: { name: 'John Fjon' }
+      name: 'John Fjon'
     }
   ]
   const src = setupService('http://api10.test/database/_bulk_docs', {
@@ -410,7 +425,7 @@ test('should return response data when no request data', async t => {
   })
   const getService = (type, service) => (service === 'accounts' ? src : null)
 
-  const ret = await set(action, { getService, schemas })
+  const ret = await set(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -431,7 +446,7 @@ test('should allow null as request data', async t => {
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = (type, service) => src
 
-  const ret = await set(action, { getService, schemas })
+  const ret = await set(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)

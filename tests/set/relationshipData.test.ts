@@ -15,13 +15,9 @@ const entryMapping = {
     {
       $iterate: true,
       id: 'key',
-      attributes: {
-        title: ['headline', { $alt: 'value', value: 'An entry' }],
-        text: 'body'
-      },
-      relationships: {
-        author: ['author', { $apply: 'entries-user' }]
-      }
+      title: ['headline', { $alt: 'value', value: 'An entry' }],
+      text: 'body',
+      author: ['author', { $apply: 'entries-user' }]
     },
     { $apply: 'cast_entry' }
   ]
@@ -36,9 +32,7 @@ const userMapping = {
     {
       $iterate: true,
       id: 'username',
-      attributes: {
-        firstname: 'forename'
-      }
+      firstname: 'forename'
     },
     { $apply: 'cast_user' }
   ]
@@ -47,21 +41,14 @@ const userMapping = {
 const entry1Item = {
   $schema: 'entry',
   id: 'ent1',
-  type: 'entry',
-  attributes: {
-    title: 'Entry 1',
-    text: 'The text of entry 1'
+  title: 'Entry 1',
+  text: 'The text of entry 1',
+  author: {
+    $schema: 'user',
+    id: 'johnf',
+    firstname: 'John'
   },
-  relationships: {
-    author: {
-      $schema: 'user',
-      id: 'johnf',
-      type: 'user',
-      attributes: { firstname: 'John' },
-      relationships: {}
-    },
-    sections: []
-  }
+  sections: []
 }
 
 test.after.always(() => {

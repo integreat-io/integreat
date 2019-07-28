@@ -22,16 +22,12 @@ test('should transform entry', async t => {
     {
       $iterate: true,
       id: 'key',
-      attributes: {
-        title: ['headline', { $transform: 'upperCase' }],
-        text: 'body',
-        createdAt: 'createdAt',
-        updatedAt: 'updatedAt'
-      },
-      relationships: {
-        author: 'authorId',
-        sections: 'sections[]'
-      }
+      title: ['headline', { $transform: 'upperCase' }],
+      text: 'body',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      author: 'authorId',
+      sections: 'sections[]'
     },
     { $transform: 'addSectionsToText' },
     { $apply: 'cast_entry' }
@@ -44,8 +40,8 @@ test('should transform entry', async t => {
     upperCase: () => value => value.toUpperCase(),
     addSectionsToText: () =>
       mapAny(item => {
-        const sections = item.relationships.sections.join('|')
-        item.attributes.text = `${item.attributes.text} - ${sections}`
+        const sections = item.sections.join('|')
+        item.text = `${item.text} - ${sections}`
         return item
       })
   }
@@ -56,8 +52,8 @@ test('should transform entry', async t => {
   t.is(ret.status, 'ok')
   const item = ret.data
   t.is(item.id, 'ent1')
-  t.is(item.attributes.title, 'ENTRY 1')
-  t.is(item.attributes.text, 'The text of entry 1 - news|sports')
+  t.is(item.title, 'ENTRY 1')
+  t.is(item.text, 'The text of entry 1 - news|sports')
 
   nock.restore()
 })
@@ -75,16 +71,12 @@ test('should transform array of entries', async t => {
     {
       $iterate: true,
       id: 'key',
-      attributes: {
-        title: ['headline', { $transform: 'upperCase' }],
-        text: 'body',
-        createdAt: 'createdAt',
-        updatedAt: 'updatedAt'
-      },
-      relationships: {
-        author: 'authorId',
-        sections: 'sections[]'
-      }
+      title: ['headline', { $transform: 'upperCase' }],
+      text: 'body',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      author: 'authorId',
+      sections: 'sections[]'
     },
     { $transform: 'addSectionsToText' },
     { $apply: 'cast_entry' }
@@ -98,13 +90,10 @@ test('should transform array of entries', async t => {
     addSectionsToText: () =>
       mapAny(item => {
         const sections =
-          item.relationships && item.relationships.sections.join('|')
+          item && item.sections.join('|')
         return {
           ...item,
-          attributes: {
-            ...item.attributes,
-            text: `${item.attributes && item.attributes.text} - ${sections}`
-          }
+          text: `${item && item.text} - ${sections}`
         }
       })
   }
@@ -116,11 +105,11 @@ test('should transform array of entries', async t => {
   t.true(Array.isArray(ret.data))
   t.is(ret.data.length, 2)
   t.is(ret.data[0].id, 'ent1')
-  t.is(ret.data[0].attributes.title, 'ENTRY 1')
-  t.is(ret.data[0].attributes.text, 'The text of entry 1 - news|sports')
+  t.is(ret.data[0].title, 'ENTRY 1')
+  t.is(ret.data[0].text, 'The text of entry 1 - news|sports')
   t.is(ret.data[1].id, 'ent2')
-  t.is(ret.data[1].attributes.title, 'ENTRY 2')
-  t.is(ret.data[1].attributes.text, 'The text of entry 2 - ')
+  t.is(ret.data[1].title, 'ENTRY 2')
+  t.is(ret.data[1].text, 'The text of entry 2 - ')
 
   nock.restore()
 })

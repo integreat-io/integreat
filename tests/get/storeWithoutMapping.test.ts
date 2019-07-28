@@ -25,17 +25,13 @@ test('should get one entry from service', async t => {
     .get('/entries/ent1')
     .reply(200, {
       data: {
+        $schema: 'entry',
         id: 'ent1',
-        type: 'entry',
-        attributes: {
-          title: 'Entry 1',
-          text: 'The first entry ever created',
-          createdAt,
-          updatedAt
-        },
-        relationships: {
-          author: { id: 'johnf', $ref: 'user' }
-        }
+        title: 'Entry 1',
+        text: 'The first entry ever created',
+        createdAt,
+        updatedAt,
+        author: { id: 'johnf', $ref: 'user' }
       }
     })
   const action = {
@@ -45,17 +41,12 @@ test('should get one entry from service', async t => {
   const expected = {
     $schema: 'entry',
     id: 'ent1',
-    type: 'entry',
-    attributes: {
-      title: 'Entry 1',
-      text: 'The first entry ever created',
-      createdAt: new Date(createdAt),
-      updatedAt: new Date(updatedAt)
-    },
-    relationships: {
-      author: { id: 'johnf', $ref: 'user' },
-      sections: []
-    }
+    title: 'Entry 1',
+    text: 'The first entry ever created',
+    createdAt: new Date(createdAt),
+    updatedAt: new Date(updatedAt),
+    author: { id: 'johnf', $ref: 'user' },
+    sections: []
   }
 
   const great = integreat(defs, { adapters })

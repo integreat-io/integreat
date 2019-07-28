@@ -21,7 +21,7 @@ const serializeData = ({
   authorId,
   sections
 }) =>
-  JSON.stringify({
+  JSON.stringify([{
     key,
     headline,
     originalTitle: headline,
@@ -30,7 +30,7 @@ const serializeData = ({
     updatedAt,
     authorId,
     sections
-  })
+  }])
 
 test.after.always(() => {
   nock.restore()
@@ -38,7 +38,7 @@ test.after.always(() => {
 
 // Tests
 
-test.failing('should dispatch set action and return respons', async t => {
+test('should dispatch set action and return respons', async t => {
   const send = sinon.stub().resolves({
     status: 'ok',
     data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } })
@@ -56,9 +56,9 @@ test.failing('should dispatch set action and return respons', async t => {
   const expectedRequestParams = {
     type: 'entry',
     onlyMappedValues: true,
-    id: undefined
+    id: 'ent1'
   }
-  const expectedRequestData = `{"data":[{"key":"ent1","headline":"Entry 1","originalTitle":"Entry 1","createdAt":"${createdAt}","updatedAt":"${updatedAt}","sections":[]}]}`
+  const expectedRequestData = `{"key":"ent1","headline":"Entry 1","originalTitle":"Entry 1","createdAt":"${createdAt}","updatedAt":"${updatedAt}","sections":[]}`
   const expectedResponse = {
     status: 'ok',
     data: serializeData({ ...ent1Data, createdAt, updatedAt }),

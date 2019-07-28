@@ -78,8 +78,8 @@ test('should queue DELETE with id and type only', async (t) => {
   const data = [{
     id: 'ent1',
     type: 'entry',
-    attributes: { title: 'Entry 1' },
-    relationships: { author: { id: 'johnf', type: 'user' } }
+    title: 'Entry 1',
+    author: { id: 'johnf', type: 'user' }
   }]
   const dispatch = sinon.stub().resolves({ status: 'ok', data })
   dispatch.withArgs(sinon.match({ type: 'DELETE' })).resolves({ status: 'queued' })

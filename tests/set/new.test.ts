@@ -15,36 +15,27 @@ const updatedAt = new Date()
 const entry1Item = {
   $schema: 'entry',
   id: 'ent1',
-  type: 'entry',
-  attributes: {
-    title: 'Entry 1',
-    text: 'The text of entry 1',
-    createdAt,
-    updatedAt
-  },
-  relationships: {
-    author: { id: 'johnf', $ref: 'user' },
-    sections: [
-      { id: 'news', $ref: 'section' },
-      { id: 'sports', $ref: 'section' }
-    ]
-  }
+  title: 'Entry 1',
+  text: 'The text of entry 1',
+  createdAt,
+  updatedAt,
+  author: { id: 'johnf', $ref: 'user' },
+  sections: [
+    { id: 'news', $ref: 'section' },
+    { id: 'sports', $ref: 'section' }
+  ]
 }
 
 const entriesArr = [
   {
     $schema: 'entry',
     id: 'ent1',
-    type: 'entry',
-    attributes: { title: 'Entry 1' },
-    relationships: {}
+    title: 'Entry 1'
   },
   {
     $schema: 'entry',
     id: 'ent2',
-    type: 'entry',
-    attributes: { title: 'Entry 2' },
-    relationships: {}
+    title: 'Entry 2'
   }
 ]
 

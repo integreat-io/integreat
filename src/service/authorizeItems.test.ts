@@ -9,18 +9,16 @@ const schemas = {
   entry: createSchema({
     id: 'entry',
     plural: 'entries',
-    attributes: {
+    fields: {
       title: 'string',
       one: { type: 'integer', default: 1 },
-      two: 'integer'
-    },
-    relationships: {
+      two: 'integer',
       service: 'service'
     }
   }),
   account: createSchema({
     id: 'account',
-    attributes: {
+    fields: {
       name: 'string'
     },
     access: {
@@ -36,8 +34,8 @@ const schemas = {
 
 test('should return all authorized data', (t) => {
   const data = [
-    { id: 'ent1', type: 'entry', attributes: { title: 'Entry 1' }, relationships: {} },
-    { id: 'ent2', type: 'entry', attributes: { title: 'Entry 2' }, relationships: {} }
+    { id: 'ent1', $schema: 'entry', title: 'Entry 1' },
+    { id: 'ent2', $schema: 'entry', title: 'Entry 2' }
   ]
   const access = null
   const action = 'GET'
@@ -52,7 +50,7 @@ test('should return all authorized data', (t) => {
 })
 
 test('should return object as object', (t) => {
-  const data = { id: 'ent1', type: 'entry', attriutes: { title: 'Entry 1' }, relationships: {} }
+  const data = { id: 'ent1', $schema: 'entry', title: 'Entry 1' }
   const access = { ident: null }
   const action = 'GET'
   const expected = {
@@ -67,8 +65,8 @@ test('should return object as object', (t) => {
 
 test('should skip unauthorized data', (t) => {
   const data = [
-    { id: 'johnf', type: 'account', attriutes: { name: 'John F.' }, relationships: {} },
-    { id: 'betty', type: 'account', attriutes: { name: 'Betty' }, relationships: {} }
+    { id: 'johnf', $schema: 'account', name: 'John F.' },
+    { id: 'betty', $schema: 'account', name: 'Betty' }
   ]
   const access = { ident: { id: 'johnf' } }
   const action = 'GET'
@@ -83,8 +81,8 @@ test('should skip unauthorized data', (t) => {
 
 test('should not allow no access scheme when auth is reqired', (t) => {
   const data = [
-    { id: 'ent1', type: 'entry', attriutes: { title: 'Entry 1' }, relationships: {} },
-    { id: 'ent2', type: 'entry', attriutes: { title: 'Entry 2' }, relationships: {} }
+    { id: 'ent1', $schema: 'entry', title: 'Entry 1' },
+    { id: 'ent2', $schema: 'entry', title: 'Entry 2' }
   ]
   const access = {}
   const action = 'GET'
@@ -100,8 +98,8 @@ test('should not allow no access scheme when auth is reqired', (t) => {
 
 test('should authorized with access scheme for action', (t) => {
   const data = [
-    { id: 'johnf', type: 'account', attriutes: { name: 'John F.' }, relationships: {} },
-    { id: 'betty', type: 'account', attriutes: { name: 'Betty' }, relationships: {} }
+    { id: 'johnf', $schema: 'account', name: 'John F.' },
+    { id: 'betty', $schema: 'account', name: 'Betty' }
   ]
   const access = null
   const action = 'TEST'

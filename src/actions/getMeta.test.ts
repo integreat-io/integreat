@@ -13,7 +13,7 @@ const schemas = {
   meta: schema({
     id: 'meta',
     service: 'store',
-    attributes: {
+    fields: {
       lastSyncedAt: 'date',
       count: 'integer',
       status: 'string'
@@ -53,7 +53,7 @@ test.after((t) => {
 test('should get metadata for service', async (t) => {
   nock('http://api1.test')
     .get('/database/meta%3Astore')
-    .reply(200, { id: 'meta:store', _rev: '000001', type: 'meta', attributes: metadata })
+    .reply(200, { id: 'meta:store', _rev: '000001', ...metadata })
   const endpoints = [{ options: { uri: 'http://api1.test/database/{id}' } }]
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type, service) => (service === 'store' || type === 'meta') ? src : null
@@ -75,7 +75,7 @@ test('should get metadata for service', async (t) => {
 test('should get several metadata for service', async (t) => {
   nock('http://api2.test')
     .get('/database/meta%3Astore')
-    .reply(200, { id: 'meta:store', type: 'meta', attributes: metadata })
+    .reply(200, { id: 'meta:store', ...metadata })
   const endpoints = [{ id: 'getMeta', options: { uri: 'http://api2.test/database/{id}' } }]
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type, service) => (service === 'store' || type === 'meta') ? src : null
@@ -93,10 +93,10 @@ test('should get several metadata for service', async (t) => {
   t.deepEqual(ret.data, expected)
 })
 
-test('should all metadata for service', async (t) => {
+test('should get all metadata for service', async (t) => {
   nock('http://api3.test')
     .get('/database/meta%3Astore')
-    .reply(200, { id: 'meta:store', type: 'meta', attributes: metadata })
+    .reply(200, { id: 'meta:store', ...metadata })
   const endpoints = [{ id: 'getMeta', options: { uri: 'http://api3.test/database/{id}' } }]
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type, service) => (service === 'store' || type === 'meta') ? src : null
@@ -172,7 +172,7 @@ test('should return error when when no meta type is set', async (t) => {
 test('should get metadata from other service', async (t) => {
   nock('http://api7.test')
     .get('/database/meta%3Aentries')
-    .reply(200, { id: 'entries', _rev: '000001', type: 'meta', attributes: { lastSyncedAt } })
+    .reply(200, { id: 'entries', _rev: '000001', lastSyncedAt })
   const endpoints = [{ id: 'getMeta', options: { uri: 'http://api7.test/database/{id}' } }]
   const storeSrc = setupService('store', { endpoints })
   const src = setupService('entries', { meta: 'meta' })
@@ -221,7 +221,7 @@ test('should return error for unknown service', async (t) => {
 test('should respond with noaccess when not authorized', async (t) => {
   nock('http://api8.test')
     .get('/database/meta%3Astore')
-    .reply(200, { id: 'meta:store', _rev: '000001', type: 'meta', attributes: metadata })
+    .reply(200, { id: 'meta:store', _rev: '000001', ...metadata })
   const endpoints = [{ options: { uri: 'http://api8.test/database/{id}' } }]
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type, service) => (service === 'store' || type === 'meta') ? src : null

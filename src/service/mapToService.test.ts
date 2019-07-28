@@ -10,18 +10,16 @@ import mapToService from './mapToService'
 const schemas = {
   entry: createSchema({
     id: 'entry',
-    attributes: {
+    fields: {
       title: 'string',
       one: { $cast: 'integer', $default: 1 },
-      two: 'integer'
-    },
-    relationships: {
+      two: 'integer',
       service: 'service'
     }
   }),
   account: createSchema({
     id: 'account',
-    attributes: { name: 'string' }
+    fields: { name: 'string' }
   })
 }
 
@@ -30,14 +28,10 @@ const entryMapping = [
   {
     $iterate: true,
     id: 'key',
-    attributes: {
-      title: 'header',
-      one: 'one',
-      two: 'two'
-    },
-    relationships: {
-      service: '^params.service'
-    }
+    title: 'header',
+    one: 'one',
+    two: 'two',
+    service: '^params.service'
   },
   { $apply: 'cast_entry' },
   set('data')
@@ -48,7 +42,7 @@ const accountMapping = [
   {
     $iterate: true,
     id: 'id',
-    attributes: { name: 'name' }
+    name: 'name'
   },
   { $apply: 'cast_account' },
   set('data')
@@ -73,11 +67,8 @@ test('should map data', t => {
   const data = {
     $schema: 'entry',
     id: 'ent1',
-    type: 'entry',
-    attributes: { title: 'The heading' },
-    relationships: {
-      service: { id: 'thenews', $ref: 'service' }
-    }
+    title: 'The heading',
+    service: { id: 'thenews', $ref: 'service' }
   }
   const request = {
     action: 'SET',
@@ -96,10 +87,9 @@ test('should map data', t => {
 test('should map array of data', t => {
   const data = [
     {
+      $schema: 'entry',
       id: 'ent1',
-      type: 'entry',
-      attributes: { title: 'The heading' },
-      relationships: {}
+      title: 'The heading'
     }
   ]
   const request = { action: 'SET', params: {}, endpoint: {}, data }
@@ -118,9 +108,7 @@ test('should map array of data to top level', t => {
         {
           $iterate: true,
           id: 'key',
-          attributes: {
-            title: 'header'
-          }
+          title: 'header'
         },
         { $apply: 'cast_entry' },
         set('data')
@@ -129,7 +117,7 @@ test('should map array of data to top level', t => {
     )
   }
   const data = [
-    { id: 'ent1', type: 'entry', attributes: { title: 'The heading' } }
+    { id: 'ent1', $schema: 'entry', title: 'The heading' }
   ]
   const request = { action: 'SET', params: {}, endpoint: {}, data }
   const expected = [{ key: 'ent1', header: 'The heading' }]
@@ -143,24 +131,15 @@ test('should map data of different types', t => {
   const data = [
     {
       $schema: 'entry',
-      id: 'ent1',
-      type: 'entry',
-      attributes: {},
-      relationships: {}
+      id: 'ent1'
     },
     {
       $schema: 'account',
-      id: 'acc1',
-      type: 'account',
-      attributes: {},
-      relationships: {}
+      id: 'acc1'
     },
     {
       $schema: 'entry',
-      id: 'ent2',
-      type: 'entry',
-      attributes: {},
-      relationships: {}
+      id: 'ent2'
     }
   ]
   const request = { action: 'SET', params: {}, endpoint: {}, data }
@@ -205,11 +184,8 @@ test('should map with request mapper', t => {
   const data = {
     $schema: 'entry',
     id: 'ent1',
-    type: 'entry',
-    attributes: { title: 'The heading' },
-    relationships: {
-      service: { id: 'thenews', $ref: 'service' }
-    }
+    title: 'The heading',
+    service: { id: 'thenews', $ref: 'service' }
   }
   const requestMapper = mapTransform(['data.content', set('data')])
   const request = {

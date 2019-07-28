@@ -12,19 +12,17 @@ const schemas = {
   entry: createSchema({
     id: 'entry',
     plural: 'entries',
-    attributes: {
+    fields: {
       title: 'string',
       one: { $cast: 'integer', $default: 1 },
-      two: 'integer'
-    },
-    relationships: {
+      two: 'integer',
       service: 'service'
     },
     access: 'auth'
   }),
   account: createSchema({
     id: 'account',
-    attributes: {
+    fields: {
       name: 'string'
     },
     access: {
@@ -42,15 +40,11 @@ const entryMapping = [
   {
     $iterate: true,
     id: 'key',
-    attributes: {
-      title: 'header',
-      one: 'one',
-      two: 'two'
-    },
-    relationships: {
-      service: '^params.service',
-      author: '^access.ident.id'
-    }
+    title: 'header',
+    one: 'one',
+    two: 'two',
+    service: '^params.service',
+    author: '^access.ident.id'
   },
   { $apply: 'cast_entry' },
   rev(set('data'))
@@ -61,8 +55,7 @@ const accountMapping = [
   {
     $iterate: true,
     id: 'id',
-    type: 'type',
-    attributes: { name: 'name' }
+    name: 'name'
   },
   { $apply: 'cast_account' },
   rev(set('data'))
@@ -114,8 +107,8 @@ test('send should authenticate request', async t => {
       type: 'account'
     },
     data: [
-      { $schema: 'account', id: 'johnf', type: 'account' },
-      { $schema: 'account', id: 'betty', type: 'account' }
+      { $schema: 'account', id: 'johnf' },
+      { $schema: 'account', id: 'betty' }
     ],
     endpoint: endpointOptions,
     access: {
@@ -130,7 +123,7 @@ test('send should authenticate request', async t => {
     params: {
       type: 'account'
     },
-    data: [{ id: 'johnf', type: 'account' }],
+    data: [{ id: 'johnf' }],
     endpoint: endpointOptions,
     access: {
       status: 'partially',
@@ -165,8 +158,8 @@ test('send should map request data', async t => {
       {
         $schema: 'entry',
         id: 'ent1',
-        type: 'entry',
-        attributes: { title: 'The heading', two: '2' }
+        title: 'The heading',
+        two: '2'
       }
     ],
     endpoint: endpointOptions,
@@ -198,8 +191,8 @@ test('send should emit request data before mapping to service', async t => {
       {
         $schema: 'entry',
         id: 'ent1',
-        type: 'entry',
-        attributes: { title: 'The heading', two: '2' }
+        title: 'The heading',
+        two: '2'
       }
     ],
     endpoint: endpointOptions,
@@ -219,7 +212,7 @@ test('send should emit request data before mapping to service', async t => {
   t.is(emit.args[0][0], 'mapToService')
   const emitRequest = emit.args[0][1]
   t.is(emitRequest.action, 'SET')
-  t.is(emitRequest.data[0].attributes.title, 'The heading')
+  t.is(emitRequest.data[0].title, 'The heading')
   t.is(emit.args[0][2], null)
 })
 
@@ -234,8 +227,8 @@ test('send should emit request data after mapping to service', async t => {
       {
         $schema: 'entry',
         id: 'ent1',
-        type: 'entry',
-        attributes: { title: 'The heading', two: '2' }
+        title: 'The heading',
+        two: '2'
       }
     ],
     endpoint: endpointOptions,
@@ -288,11 +281,9 @@ test('send should retrieve and map data from endpoint', async t => {
       {
         $schema: 'entry',
         id: 'ent1',
-        type: 'entry',
-        attributes: { title: 'Entry 1', two: 2 },
-        relationships: {
-          service: { id: 'thenews', $ref: 'service' }
-        }
+        title: 'Entry 1',
+        two: 2,
+        service: { id: 'thenews', $ref: 'service' }
       }
     ],
     access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
@@ -311,7 +302,7 @@ test('send should return authorized response', async t => {
   const adapter = createAdapter({
     send: async () => ({
       status: 'ok',
-      data: [{ id: 'johnf', type: 'account' }, { id: 'betty', type: 'account' }]
+      data: [{ id: 'johnf' }, { id: 'betty' }]
     })
   })
   const request = {
@@ -326,8 +317,7 @@ test('send should return authorized response', async t => {
     data: [
       {
         $schema: 'account',
-        id: 'johnf',
-        type: 'account'
+        id: 'johnf'
       }
     ],
     access: {
@@ -427,8 +417,8 @@ test('send should return authorized request data before mapping to service', asy
     action: 'SET',
     params: {},
     data: [
-      { $schema: 'account', id: 'johnf', type: 'account' },
-      { $schema: 'account', id: 'betty', type: 'account' }
+      { $schema: 'account', id: 'johnf' },
+      { $schema: 'account', id: 'betty' }
     ],
     access: { ident: { id: 'johnf' } },
     endpoint: endpointOptions
@@ -436,8 +426,7 @@ test('send should return authorized request data before mapping to service', asy
   const expectedData = [
     {
       $schema: 'account',
-      id: 'johnf',
-      type: 'account'
+      id: 'johnf'
     }
   ]
 
@@ -469,11 +458,8 @@ test('send should call send with connection', async t => {
       {
         $schema: 'entry',
         id: 'ent1',
-        type: 'entry',
-        attributes: { title: 'Value from existing connection' },
-        relationships: {
-          service: { id: 'thenews', $ref: 'service' }
-        }
+        title: 'Value from existing connection',
+        service: { id: 'thenews', $ref: 'service' }
       }
     ],
     access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
@@ -509,11 +495,8 @@ test('send should call connect', async t => {
       {
         $schema: 'entry',
         id: 'ent1',
-        type: 'entry',
-        attributes: { title: 'Value from connection' },
-        relationships: {
-          service: { id: 'thenews', $ref: 'service' }
-        }
+        title: 'Value from connection',
+        service: { id: 'thenews', $ref: 'service' }
       }
     ],
     access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
@@ -547,10 +530,10 @@ test('send should retrieve from endpoint with default values', async t => {
   })
 
   const { data } = ret.response
-  t.is(data[0].attributes.one, 1)
+  t.is(data[0].one, 1)
   // TODO: Fix dates
-  // t.true(data[0].attributes.createdAt instanceof Date)
-  // t.true(data[0].attributes.updatedAt instanceof Date)
+  // t.true(data[0].createdAt instanceof Date)
+  // t.true(data[0].updatedAt instanceof Date)
 })
 
 test('send should skip unknown schemas', async t => {
@@ -560,7 +543,7 @@ test('send should skip unknown schemas', async t => {
     params: { type: 'account' },
     data: [
       { id: 'un1', type: 'unknown' },
-      { $schema: 'account', id: 'johnf', type: 'account' }
+      { $schema: 'account', id: 'johnf' }
     ],
     access: { ident: { id: 'johnf' } },
     endpoint: endpointOptions

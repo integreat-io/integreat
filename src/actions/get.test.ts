@@ -13,17 +13,15 @@ import get from './get'
 const schemas = {
   entry: schema({
     id: 'entry',
-    attributes: {
+    fields: {
       title: 'string',
-      byline: { $cast: 'string', $default: 'Somebody' }
-    },
-    relationships: {
+      byline: { $cast: 'string', $default: 'Somebody' },
       service: 'service'
     }
   }),
   account: schema({
     id: 'account',
-    attributes: {
+    fields: {
       name: 'string'
     },
     access: { identFromField: 'id' }
@@ -35,14 +33,10 @@ const pipelines = {
     {
       $iterate: true,
       id: 'id',
-      attributes: {
-        title: 'headline',
-        createdAt: 'createdAt',
-        updatedAt: 'updatedAt'
-      },
-      relationships: {
-        service: '^params.source'
-      }
+      title: 'headline',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      service: '^params.source'
     },
     { $apply: 'cast_entry' }
   ],
@@ -50,11 +44,9 @@ const pipelines = {
     {
       $iterate: true,
       id: 'id',
-      attributes: {
-        name: 'name',
-        createdAt: 'createdAt',
-        updatedAt: 'updatedAt'
-      }
+      name: 'name',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt'
     },
     { $apply: 'cast_account' }
   ],
@@ -108,16 +100,11 @@ test('should get all items from service', async t => {
       {
         $schema: 'entry',
         id: 'ent1',
-        type: 'entry',
-        attributes: {
-          title: 'Entry 1',
-          byline: 'Somebody',
-          createdAt: date,
-          updatedAt: date
-        },
-        relationships: {
-          service: { id: 'thenews', $ref: 'service' }
-        }
+        title: 'Entry 1',
+        byline: 'Somebody',
+        createdAt: date,
+        updatedAt: date,
+        service: { id: 'thenews', $ref: 'service' }
       }
     ],
     access: { status: 'granted', ident, scheme: 'data' }
@@ -272,8 +259,7 @@ test('should get default values from type', async t => {
 
   const ret = await get({ type: 'GET', payload }, { getService, schemas })
 
-  t.truthy(ret.data[0].attributes)
-  t.is(ret.data[0].attributes.byline, 'Somebody')
+  t.is(ret.data[0].byline, 'Somebody')
 })
 
 test('should not get default values from type', async t => {
@@ -290,8 +276,7 @@ test('should not get default values from type', async t => {
 
   const ret = await get({ type: 'GET', payload }, { getService, schemas })
 
-  t.truthy(ret.data[0].attributes)
-  t.is(ret.data[0].attributes.byline, undefined)
+  t.is(ret.data[0].byline, undefined)
 })
 
 test('should infer service id from type', async t => {
@@ -426,12 +411,9 @@ test('should get only authorized items', async t => {
       {
         $schema: 'account',
         id: 'johnf',
-        type: 'account',
-        attributes: {
-          name: 'John F.',
-          createdAt: date,
-          updatedAt: date
-        }
+        name: 'John F.',
+        createdAt: date,
+        updatedAt: date
       }
     ],
     access: { status: 'partially', ident, scheme: 'data' }

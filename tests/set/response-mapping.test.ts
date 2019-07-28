@@ -10,12 +10,9 @@ import integreat = require('../..')
 // Helpers
 
 const entry1Item = {
+  $schema: 'entry',
   id: 'ent1',
-  type: 'entry',
-  attributes: {
-    title: 'Entry 1'
-  },
-  relationships: {}
+  title: 'Entry 1'
 }
 
 const entry1FromService = {
@@ -55,14 +52,9 @@ test('should map response and merge with request data', async t => {
     {
       $schema: 'entry',
       id: 'ent1',
-      type: 'entry',
-      attributes: {
-        title: 'Entry 1',
-        text: 'Text from entry 1'
-      },
-      relationships: {
-        sections: []
-      }
+      title: 'Entry 1',
+      text: 'Text from entry 1',
+      sections: []
     }
   ]
 

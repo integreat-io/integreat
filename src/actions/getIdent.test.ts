@@ -22,18 +22,13 @@ const johnfIdent = {
 const johnfItem = {
   $schema: 'user',
   id: 'johnf',
-  type: 'user',
-  attributes: {
-    firstname: 'John',
-    lastname: 'Fjon',
-    roles: ['editor'],
-    tokens: ['twitter|23456', 'facebook|12345'],
-    username: 'johnf',
-    yearOfBirth: 1987
-  },
-  relationships: {
-    feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
-  }
+  firstname: 'John',
+  lastname: 'Fjon',
+  roles: ['editor'],
+  tokens: ['twitter|23456', 'facebook|12345'],
+  username: 'johnf',
+  yearOfBirth: 1987,
+  feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
 }
 
 test.after.always(() => {
@@ -174,7 +169,7 @@ test('should complete ident with other prop keys', async t => {
     { getService, identOptions }
   )
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.access, expectedAccess)
 })
 

@@ -72,11 +72,11 @@ test('should not prepare incoming endpoints with adapter', t => {
 test('should prepare filters', t => {
   const endpoints = [
     {
-      match: { filters: { 'data.attributes.draft': { const: false } } },
+      match: { filters: { 'data.draft': { const: false } } },
       options: {}
     }
   ]
-  const validData = { data: { attributes: { draft: false } } }
+  const validData = { data: { draft: false } }
 
   const ret = prepareEndpoints({ endpoints }, { adapter })
 
@@ -177,7 +177,7 @@ test('should sort endoints', t => {
   const endpoints = [
     { match: {}, options: { no: 1 } },
     {
-      match: { filters: { 'data.attributes.draft': { const: false } } },
+      match: { filters: { 'data.draft': { const: false } } },
       options: { no: 2 }
     },
     { match: { type: 'user' }, options: { no: 3 } }

@@ -29,16 +29,12 @@ test('should transform entry', async t => {
     {
       $iterate: true,
       id: 'key',
-      attributes: {
-        title: ['headline', { $alt: 'value', value: 'No title' }],
-        text: 'body',
-        createdAt: 'createdAt',
-        updatedAt: 'updatedAt'
-      },
-      relationships: {
-        author: [{ $transform: 'fixed', value: 'admin' }],
-        sections: 'sections[]'
-      }
+      title: ['headline', { $alt: 'value', value: 'No title' }],
+      text: 'body',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      author: [{ $transform: 'fixed', value: 'admin' }],
+      sections: 'sections[]'
     },
     { $apply: 'cast_entry' }
   ]
@@ -54,13 +50,13 @@ test('should transform entry', async t => {
   t.is(ret.data.length, 2)
   const item0 = ret.data[0]
   t.is(item0.id, 'ent1')
-  t.is(item0.attributes.title, 'Entry 1')
-  t.is(item0.relationships.author.id, 'admin')
-  t.is(item0.relationships.author.$ref, 'user')
+  t.is(item0.title, 'Entry 1')
+  t.is(item0.author.id, 'admin')
+  t.is(item0.author.$ref, 'user')
   const item1 = ret.data[1]
   t.is(item1.id, 'ent2')
-  t.is(item1.attributes.title, 'No title')
-  t.is(item1.relationships.author.id, 'admin')
+  t.is(item1.title, 'No title')
+  t.is(item1.author.id, 'admin')
 
   nock.restore()
 })

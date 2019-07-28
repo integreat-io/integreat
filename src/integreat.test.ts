@@ -22,19 +22,17 @@ const schemas = [
     id: 'entry',
     plural: 'entries',
     service: 'entries',
-    attributes: {
+    fields: {
       title: 'string',
       text: 'string',
-      age: 'integer'
-    },
-    relationships: {
+      age: 'integer',
       author: 'user'
     },
     access: 'all'
   },
   {
     id: 'article',
-    attributes: {
+    fields: {
       title: 'string'
     },
     access: 'all'
@@ -50,16 +48,11 @@ const mappings = [
       {
         $iterate: true,
         id: 'id',
-        type: ['type', { $transform: 'fixed', value: 'entry' }],
-        attributes: {
-          title: 'headline',
-          text: 'body',
-          age: 'age',
-          unknown: []
-        },
-        relationships: {
-          author: 'creator'
-        }
+        title: 'headline',
+        text: 'body',
+        age: 'age',
+        unknown: [],
+        author: 'creator'
       },
       { $apply: 'cast_entry' }
     ]
@@ -205,9 +198,8 @@ test('should map data from service specified by type', async t => {
   const item = ret.data
   t.truthy(item)
   t.is(item.id, 'ent1')
-  t.truthy(item.attributes)
-  t.is(item.attributes.title, 'The title')
-  t.is(item.attributes.text, 'The text')
+  t.is(item.title, 'The title')
+  t.is(item.text, 'The text')
 })
 
 test('should allow mappings specified for several types', async t => {
@@ -218,9 +210,7 @@ test('should allow mappings specified for several types', async t => {
         {
           $iterate: true,
           id: 'id',
-          attributes: {
-            title: 'headline'
-          }
+          title: 'headline'
         }
       ]
     }
@@ -250,8 +240,7 @@ test('should allow mappings specified for several types', async t => {
   t.is(ret.status, 'ok')
   const item = ret.data
   t.is(item.id, 'ent1')
-  t.truthy(item.attributes)
-  t.is(item.attributes.title, 'The title')
+  t.is(item.title, 'The title')
 })
 
 test('should map with item transformers', async t => {
@@ -274,7 +263,7 @@ test('should map with item transformers', async t => {
         {
           $iterate: true,
           id: 'id',
-          attributes: { title: 'headline' }
+          title: 'headline'
         },
         { $transform: 'addText' },
         { $apply: 'cast_entry' }
@@ -286,12 +275,9 @@ test('should map with item transformers', async t => {
     payload: { id: 'ent1', type: 'entry' },
     meta: { ident: { id: 'johnf' } }
   }
-  const addText = item => () => ({
+  const addText = () => item => ({
     ...item,
-    attributes: {
-      ...item.attributes,
-      text: 'Extra!'
-    }
+    text: 'Extra!'
   })
   const transformers = { addText }
 
@@ -303,8 +289,7 @@ test('should map with item transformers', async t => {
 
   t.is(ret.status, 'ok')
   const item = ret.data
-  t.truthy(item.attributes)
-  t.is(item.attributes.text, 'Extra!')
+  t.is(item.text, 'Extra!')
 })
 
 test('should filter items', async t => {
@@ -364,7 +349,8 @@ test('should use auth', async t => {
       pipeline: [
         {
           id: 'id',
-          attributes: { title: 'headline', text: 'body' }
+          title: 'headline',
+          text: 'body'
         }
       ]
     }
@@ -439,10 +425,7 @@ test('should ignore null auth', async t => {
 // Tests -- on
 
 test('should subscribe to event on service', t => {
-  const great = integreat(
-    { services, schemas, mappings },
-    { adapters }
-  )
+  const great = integreat({ services, schemas, mappings }, { adapters })
   const cb = () => {}
   const onStub = sinon.stub(great.services.entries, 'on')
 
@@ -454,10 +437,7 @@ test('should subscribe to event on service', t => {
 })
 
 test('should not subscribe to anything for unknown service', t => {
-  const great = integreat(
-    { services, schemas, mappings },
-    { adapters }
-  )
+  const great = integreat({ services, schemas, mappings }, { adapters })
 
   t.notThrows(() => {
     great.on('mapToService', 'unknown', () => {})

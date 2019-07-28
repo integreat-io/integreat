@@ -21,16 +21,12 @@ const entryMapping = {
     {
       $iterate: true,
       id: 'key',
-      attributes: {
-        title: ['headline', { $alt: 'value', value: 'An entry' }],
-        text: 'body',
-        createdAt: 'createdAt',
-        updatedAt: 'updatedAt'
-      },
-      relationships: {
-        author: ['author', { $apply: 'entries-user' }],
-        'sections.id': 'sections[]'
-      }
+      title: ['headline', { $alt: 'value', value: 'An entry' }],
+      text: 'body',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      author: ['author', { $apply: 'entries-user' }],
+      'sections.id': 'sections[]'
     },
     { $apply: 'cast_entry' }
   ]
@@ -58,20 +54,15 @@ test('should get all entries from service', async t => {
   const expectedRel = {
     $schema: 'user',
     id: 'johnf',
-    type: 'user',
-    attributes: {
-      username: 'johnf',
-      firstname: 'John',
-      lastname: 'Fjon',
-      yearOfBirth: 1987,
-      createdAt: new Date(createdAt),
-      updatedAt: new Date(updatedAt),
-      roles: ['editor'],
-      tokens: ['twitter|23456', 'facebook|12345']
-    },
-    relationships: {
-      feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
-    }
+    username: 'johnf',
+    firstname: 'John',
+    lastname: 'Fjon',
+    yearOfBirth: 1987,
+    createdAt: new Date(createdAt),
+    updatedAt: new Date(updatedAt),
+    roles: ['editor'],
+    tokens: ['twitter|23456', 'facebook|12345'],
+    feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
   }
 
   const great = integreat(defs, { adapters })
@@ -80,7 +71,7 @@ test('should get all entries from service', async t => {
   t.is(ret.status, 'ok', ret.error)
   t.is(ret.data.length, 1)
   t.is(ret.data[0].id, 'ent1')
-  t.deepEqual(ret.data[0].relationships.author, expectedRel)
+  t.deepEqual(ret.data[0].author, expectedRel)
 
   nock.restore()
 })
@@ -93,10 +84,7 @@ test.skip('should map relationship on self referring type', async t => {
   defs.mappings.push({
     ...usersUserMapping,
     id: 'entries-user',
-    relationships: {
-      ...usersUserMapping.relationships,
-      createdBy: { path: 'creator', mapping: 'entries-user' }
-    }
+    createdBy: { path: 'creator', mapping: 'entries-user' }
   })
   const action = {
     type: 'GET',
@@ -109,7 +97,7 @@ test.skip('should map relationship on self referring type', async t => {
   t.is(ret.status, 'ok', ret.error)
   t.is(ret.data.length, 1)
   t.is(ret.data[0].id, 'johnf')
-  t.is(ret.data[0].relationships.createdBy.id, 'betty')
+  t.is(ret.data[0].createdBy.id, 'betty')
 
   nock.restore()
 })

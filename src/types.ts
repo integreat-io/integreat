@@ -48,8 +48,7 @@ export interface SchemaDef {
   id: string
   plural?: string
   service?: string
-  attributes?: Schema
-  relationships?: Schema
+  fields?: Schema
   access?: string | object
   internal?: boolean
 }

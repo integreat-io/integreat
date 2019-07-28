@@ -1,60 +1,53 @@
 import createCastMapping from './createCastMapping'
-import { SchemaDef } from '../types'
+import { SchemaDef, PropertySchema, Schema } from '../types'
+import { isSchema } from '../utils/is'
 
-const expandField = val => (typeof val === 'string' ? { type: val } : val)
-const expandFields = vals =>
-  Object.keys(vals).reduce(
-    (newVals, key) => ({ ...newVals, [key]: expandField(vals[key]) }),
+const expandField = (val: Schema | PropertySchema | string | undefined) =>
+  typeof val === 'string'
+    ? { $cast: val }
+    : isSchema(val)
+    ? expandFields(val)
+    : val
+
+const expandFields = (vals: Schema) =>
+  Object.entries(vals).reduce(
+    (newVals, [key, def]) => ({ ...newVals, [key]: expandField(def) }),
     {}
   )
 
 /**
  * Create a schema with the given id and service.
- * @param def - Object with id, plural, service, attributes, and relationships
+ * @param def - Object with id, plural, service, and fields
  * @returns The created schema
  */
-function schema({
+export default function createSchema({
   id,
   plural,
   service,
-  attributes: attrDefs,
-  relationships: relDefs,
+  fields,
   access,
   internal = false
 }: SchemaDef) {
-  const attributes = {
-    ...expandFields(attrDefs || {}),
-    id: { type: 'string' },
-    type: { type: 'string' },
-    createdAt: { type: 'date' },
-    updatedAt: { type: 'date' }
-  }
-  const relationships = expandFields(relDefs || {})
-
-  const mapping = createCastMapping(
-    {
-      id: 'string',
-      type: { $cast: 'string', $const: id },
-      attributes: {
-        ...attrDefs,
-        createdAt: 'date',
-        updatedAt: 'date'
-      },
-      relationships: relDefs
-    },
-    id
-  )
-
   return {
     id,
     plural: plural || `${id}s`,
     service,
     internal,
-    attributes,
-    relationships,
+    fields: {
+      ...expandFields(fields || {}),
+      id: { $cast: 'string' },
+      createdAt: { $cast: 'date' },
+      updatedAt: { $cast: 'date' }
+    },
     access,
-    mapping
+    mapping: createCastMapping(
+      {
+        ...fields,
+        id: 'string',
+        createdAt: 'date',
+        updatedAt: 'date'
+      },
+      id
+    )
   }
 }
-
-export default schema

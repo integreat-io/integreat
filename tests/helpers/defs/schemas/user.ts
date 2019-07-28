@@ -1,15 +1,13 @@
 export default {
   id: 'user',
   service: 'users',
-  attributes: {
+  fields: {
     username: 'string',
     firstname: 'string',
     lastname: 'string',
     yearOfBirth: 'integer',
     roles: 'string[]',
-    tokens: 'string[]'
-  },
-  relationships: {
+    tokens: 'string[]',
     feeds: 'feed'
   },
   access: {

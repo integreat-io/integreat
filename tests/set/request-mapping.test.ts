@@ -10,12 +10,9 @@ import integreat = require('../..')
 // Helpers
 
 const entry1Item = {
+  $schema: 'entry',
   id: 'ent1',
-  type: 'entry',
-  attributes: {
-    title: 'Entry 1'
-  },
-  relationships: {}
+  title: 'Entry 1'
 }
 
 const entry1Mapped = {

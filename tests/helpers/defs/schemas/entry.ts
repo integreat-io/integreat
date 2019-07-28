@@ -2,11 +2,9 @@ export default {
   id: 'entry',
   plural: 'entries',
   service: 'entries',
-  attributes: {
+  fields: {
     title: 'string',
-    text: 'string'
-  },
-  relationships: {
+    text: 'string',
     author: 'user',
     sections: 'section[]'
   },

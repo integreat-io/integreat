@@ -6,7 +6,7 @@ test('should pass on all response props when authorized', (t) => {
   const schemas = { entry: { id: 'entry', access: 'all' } }
   const response = {
     status: 'ok',
-    data: [{ id: 'ent1', type: 'entry' }],
+    data: [{ id: 'ent1', $schema: 'entry' }],
     paging: { next: { type: 'entry', pageAfter: 'ent1', pageSize: 20 } }
   }
 
@@ -30,7 +30,7 @@ test('should authorize data', (t) => {
   const schemas = { entry: { id: 'entry', access: 'auth' } }
   const access = { status: 'granted', scheme: 'auth', ident: { id: 'johnf' } }
   const request = { action: 'GET', params: { type: 'entry' }, access }
-  const data = [{ id: 'ent1', type: 'entry' }, { id: 'ent2', type: 'entry' }]
+  const data = [{ id: 'ent1', $schema: 'entry' }, { id: 'ent2', $schema: 'entry' }]
   const response = { status: 'ok', data, access }
   const expected = {
     status: 'ok',
@@ -47,11 +47,11 @@ test('should remove unauthorized data', (t) => {
   const schemas = { user: { id: 'user', access: { identFromField: 'id' } } }
   const access = { status: 'granted', scheme: 'auth', ident: { id: 'johnf' } }
   const request = { action: 'GET', params: { type: 'user' }, access }
-  const data = [{ id: 'johnf', type: 'user' }, { id: 'betty', type: 'user' }]
+  const data = [{ id: 'johnf', $schema: 'user' }, { id: 'betty', $schema: 'user' }]
   const response = { status: 'ok', data, access }
   const expected = {
     status: 'ok',
-    data: [{ id: 'johnf', type: 'user' }],
+    data: [{ id: 'johnf', $schema: 'user' }],
     access: { status: 'partially', scheme: 'data', ident: { id: 'johnf' } }
   }
 
@@ -64,7 +64,7 @@ test('should change status to noaccess when no data is authorized', (t) => {
   const schemas = { user: { id: 'user', access: { role: 'admin' } } }
   const access = { status: 'granted', scheme: 'auth', ident: { id: 'johnf' } }
   const request = { action: 'GET', params: { type: 'user' }, access }
-  const data = [{ id: 'johnf', type: 'user' }, { id: 'betty', type: 'user' }]
+  const data = [{ id: 'johnf', $schema: 'user' }, { id: 'betty', $schema: 'user' }]
   const response = { status: 'ok', data, access }
   const expected = {
     status: 'noaccess',

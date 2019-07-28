@@ -3,7 +3,7 @@ import { MapTransform } from 'map-transform'
 import { GenericData, DataObject } from '../types'
 import { SendOptions, Mappings, Request } from './types'
 
-const groupByType = groupBy(prop('type'))
+const groupByType = groupBy(prop('$schema'))
 
 const concatOrRight = (left, right) =>
   Array.isArray(left) ? left.concat(right) : right
@@ -49,7 +49,7 @@ const mapData = (data: GenericData, request: Request, mappings: Mappings) =>
   data
     ? Array.isArray(data)
       ? mapDataPerType(groupByType(data), request, mappings)
-      : mapItems(data, request, mappings[data.type])
+      : mapItems(data, request, mappings[data.$schema])
     : undefined
 
 const applyEndpointMapper = (request: Request, requestMapper?: MapTransform) =>

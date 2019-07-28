@@ -11,27 +11,20 @@ const createdAt = new Date()
 const updatedAt = new Date()
 
 const entryWithAuthor = {
+  $schema: 'entry',
   id: 'ent1',
-  type: 'entry',
-  attributes: {
-    title: 'Entry 1',
-    createdAt,
-    updatedAt
-  },
-  relationships: {
-    author: { id: 'johnf', type: 'user' }
-  }
+  title: 'Entry 1',
+  createdAt,
+  updatedAt,
+  author: { id: 'johnf', type: 'user' }
 }
 
 const entryWithoutAuthor = {
+  $schema: 'entry',
   id: 'ent2',
-  type: 'entry',
-  attributes: {
-    title: 'Entry 2',
-    createdAt,
-    updatedAt
-  },
-  relationships: {}
+  title: 'Entry 2',
+  createdAt,
+  updatedAt
 }
 
 test.after.always(() => {
@@ -41,7 +34,7 @@ test.after.always(() => {
 const alwaysOk = () => null
 
 const shouldHaveAuthor = action =>
-  action.payload.data && action.payload.data.relationships.author
+  action.payload.data && action.payload.data.author
     ? null
     : { status: 'badrequest', error: 'Error from validator' }
 

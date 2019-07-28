@@ -5,7 +5,7 @@ import appendToAction from '../utils/appendToAction'
 const debug = require('debug')('great')
 
 const mergeDiff = (left, right) =>
-  is.undefined(right) || (is.emptyArray(right) && is.nonEmptyArray(left))
+  right === undefined || (is.emptyArray(right) && is.nonEmptyArray(left))
     ? left
     : right
 
@@ -29,17 +29,17 @@ const mergeRequestAndResponseData = (response, requestData) =>
     : response
 
 const extractType = (action, data) =>
-  action.payload.type || (data && data.type) || undefined
+  action.payload.type || (data && data.$schema) || undefined
 
 const extractId = data => (data && data.id) || undefined
 
 /**
  * Set several items to a service, based on the given action object.
- * @param {Object} payload - Payload from action object
- * @param {Object} resources - Object with getService
- * @returns {Object} Response object with any data returned from the service
+ * @param payload - Payload from action object
+ * @param resources - Object with getService
+ * @returns Response object with any data returned from the service
  */
-async function set(action, { getService, schemas }) {
+export default async function set(action, { getService }) {
   debug('Action: SET')
 
   const {
@@ -65,5 +65,3 @@ async function set(action, { getService, schemas }) {
 
   return mergeRequestAndResponseData(response, authorizedRequestData)
 }
-
-export default set

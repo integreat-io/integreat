@@ -1,19 +1,27 @@
 const debug = require('debug')('great')
 import createError from '../utils/createError'
+import { DataObject } from '../types'
 
-const prepareMeta = (keys, meta) =>
+const isMetaField = (key: string) => key !== 'id' && !key.startsWith('$')
+const extractAllMetaFields = (meta: DataObject) =>
+  Object.keys(meta).filter(isMetaField)
+
+const extractMeta = (meta: DataObject, keys?: string[]) =>
   keys
-    ? []
+    ? ([] as string[])
         .concat(keys)
         .filter(key => key !== 'createdAt' && key !== 'updatedAt')
-        .reduce((ret, key) => ({ ...ret, [key]: (meta && meta[key]) || null }), {})
-    : prepareMeta(Object.keys(meta), meta)
+        .reduce(
+          (ret, key) => ({ ...ret, [key]: (meta && meta[key]) || null }),
+          {}
+        )
+    : extractMeta(meta, extractAllMetaFields(meta))
 
 /**
  * Get metadata for a service, based on the given action object.
- * @param {Object} payload - Payload from action object
- * @param {Object} resources - Object with getService
- * @returns {Promise} Promise of metdata
+ * @param payload - Payload from action object
+ * @param resources - Object with getService
+ * @returns Promise of metdata
  */
 async function getMeta({ payload, meta }, { getService }) {
   debug('Action: GET_META')
@@ -54,7 +62,7 @@ async function getMeta({ payload, meta }, { getService }) {
 
   if (response.status === 'ok') {
     const { data } = response
-    const meta = prepareMeta(keys, data.attributes)
+    const meta = extractMeta(data, keys)
     return { ...response, data: { service: serviceId, meta } }
   } else {
     return response

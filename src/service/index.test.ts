@@ -12,19 +12,17 @@ const schemas = {
   entry: schema({
     id: 'entry',
     plural: 'entries',
-    attributes: {
+    fields: {
       title: 'string',
       one: { $cast: 'integer', $default: 1 },
-      two: 'integer'
-    },
-    relationships: {
+      two: 'integer',
       service: 'service'
     },
     access: 'auth'
   }),
   account: schema({
     id: 'account',
-    attributes: {
+    fields: {
       name: 'string'
     },
     access: {
@@ -41,15 +39,11 @@ const entryMapping = [
   {
     $iterate: true,
     id: 'key',
-    attributes: {
-      title: 'header',
-      one: 'one',
-      two: 'two'
-    },
-    relationships: {
-      service: '^params.service',
-      author: '^access.ident.id'
-    }
+    title: 'header',
+    one: 'one',
+    two: 'two',
+    service: '^params.service',
+    author: '^access.ident.id'
   },
   { $apply: 'cast_entry' }
 ]
@@ -59,9 +53,7 @@ const entry2Mapping = [
   {
     $iterate: true,
     id: 'key',
-    attributes: {
-      title: 'subheader'
-    }
+    title: 'subheader'
   },
   { $apply: 'cast_entry' }
 ]
@@ -71,8 +63,7 @@ const accountMapping = [
   {
     $iterate: true,
     id: 'id',
-    type: 'type',
-    attributes: { name: 'name' }
+    name: 'name'
   },
   { $apply: 'cast_account' }
 ]
@@ -161,11 +152,8 @@ test('send should retrieve and map data from endpoint', async t => {
       {
         $schema: 'entry',
         id: 'ent1',
-        type: 'entry',
-        attributes: { title: 'Entry 1', two: 2 },
-        relationships: {
+        title: 'Entry 1', two: 2,
           service: { id: 'thenews', $ref: 'service' }
-        }
       }
     ],
     access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
@@ -207,7 +195,7 @@ test('send should retrieve and map data with overridden mapping on endpoint', as
 
   const { response } = await service.send(action)
 
-  t.is(response.data[0].attributes.title, 'Subheader 1')
+  t.is(response.data[0].title, 'Subheader 1')
 })
 
 test('send should return noaction response when no endpoint', async t => {
@@ -272,10 +260,10 @@ test('send should retrieve from endpoint with default values', async t => {
   const { response } = await service.send(action)
 
   const { data } = response
-  t.is(data[0].attributes.one, 1)
+  t.is(data[0].one, 1)
   // TODO: Fix dates
-  // t.true(data[0].attributes.createdAt instanceof Date)
-  // t.true(data[0].attributes.updatedAt instanceof Date)
+  // t.true(data[0].createdAt instanceof Date)
+  // t.true(data[0].updatedAt instanceof Date)
 })
 
 test('send should return authorized response', async t => {
@@ -302,7 +290,7 @@ test('send should return authorized response', async t => {
   }
   const expected = {
     status: 'ok',
-    data: [{ $schema: 'account', id: 'johnf', type: 'account' }],
+    data: [{ $schema: 'account', id: 'johnf' }],
     access: {
       status: 'partially',
       scheme: 'data',
@@ -336,8 +324,7 @@ test('send should cast, map and send data to service', async t => {
         {
           $schema: 'entry',
           id: 'ent1',
-          type: 'entry',
-          attributes: { title: 'The heading', two: '2' }
+          title: 'The heading', two: '2'
         },
         undefined
       ]
@@ -550,10 +537,7 @@ test('receive should dispatch action with mapped data by type from request actio
         {
           $schema: 'entry',
           id: 'ent1',
-          type: 'entry',
-          attributes: {
             title: 'Entry 1'
-          }
         }
       ]
     },
@@ -572,9 +556,7 @@ test('receive should respond with serialized data', async t => {
     {
       $schema: 'entry',
       id: 'ent1',
-      type: 'entry',
-      attributes: { title: 'Entry 1', two: 2 },
-      relationships: {}
+      title: 'Entry 1', two: 2
     }
   ]
   const dispatch = async () => ({

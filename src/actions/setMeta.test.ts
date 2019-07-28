@@ -13,7 +13,7 @@ const schemas = {
   meta: schema({
     id: 'meta',
     service: 'store',
-    attributes: { lastSyncedAt: 'date', status: 'string' },
+    fields: { lastSyncedAt: 'date', status: 'string' },
     access: 'auth'
   })
 }
@@ -47,26 +47,24 @@ test('should set metadata on service', async t => {
   const scope = nock('http://api1.test')
     .put('/database/meta%3Astore', {
       id: 'meta:store',
-      type: 'meta',
-      attributes: {
-        lastSyncedAt: lastSyncedAt.toISOString(),
-        status: 'busy'
-      }
+      lastSyncedAt: lastSyncedAt.toISOString(),
+      status: 'busy'
     })
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [{ options: { uri: 'http://api1.test/database/{id}' } }]
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type, service) =>
     service === 'store' || type === 'meta' ? src : null
-  const payload = {
-    service: 'store',
-    meta: { lastSyncedAt, status: 'busy' }
+  const action = {
+    type: 'SET_META',
+    payload: {
+      service: 'store',
+      meta: { lastSyncedAt, status: 'busy' }
+    },
+    meta: { ident }
   }
 
-  const ret = await setMeta(
-    { type: 'SET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await setMeta(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -100,10 +98,7 @@ test('should set metadata on other service', async t => {
   const scope = nock('http://api3.test')
     .put('/database/meta%3Aentries', {
       id: 'meta:entries',
-      type: 'meta',
-      attributes: {
-        lastSyncedAt: lastSyncedAt.toISOString()
-      }
+      lastSyncedAt: lastSyncedAt.toISOString()
     })
     .reply(200, { okay: true, id: 'meta:entries', rev: '000001' })
   const endpoints = [
@@ -117,16 +112,17 @@ test('should set metadata on other service', async t => {
       : service === 'store' || type === 'meta'
       ? storeSrc
       : null
-  const payload = {
-    service: 'entries',
-    meta: { lastSyncedAt },
-    endpoint: 'setMeta'
+  const action = {
+    type: 'SET_META',
+    payload: {
+      service: 'entries',
+      meta: { lastSyncedAt },
+      endpoint: 'setMeta'
+    },
+    meta: { ident }
   }
 
-  const ret = await setMeta(
-    { type: 'SET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await setMeta(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)

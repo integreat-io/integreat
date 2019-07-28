@@ -27,20 +27,15 @@ test('should get one entry from service', async t => {
   const expected = {
     $schema: 'entry',
     id: 'ent1',
-    type: 'entry',
-    attributes: {
-      title: 'Entry 1',
-      text: 'The text of entry 1',
-      createdAt: new Date(createdAt),
-      updatedAt: new Date(updatedAt)
-    },
-    relationships: {
-      author: { id: 'johnf', $ref: 'user' },
-      sections: [
-        { id: 'news', $ref: 'section' },
-        { id: 'sports', $ref: 'section' }
-      ]
-    }
+    title: 'Entry 1',
+    text: 'The text of entry 1',
+    createdAt: new Date(createdAt),
+    updatedAt: new Date(updatedAt),
+    author: { id: 'johnf', $ref: 'user' },
+    sections: [
+      { id: 'news', $ref: 'section' },
+      { id: 'sports', $ref: 'section' }
+    ]
   }
 
   const great = integreat(defs, { adapters })
@@ -66,20 +61,15 @@ test('should get one user from service', async t => {
   const expected = {
     $schema: 'user',
     id: 'johnf',
-    type: 'user',
-    attributes: {
-      username: 'johnf',
-      firstname: 'John',
-      lastname: 'Fjon',
-      yearOfBirth: 1987,
-      createdAt: new Date(createdAt),
-      updatedAt: new Date(updatedAt),
-      roles: ['editor'],
-      tokens: ['twitter|23456', 'facebook|12345']
-    },
-    relationships: {
-      feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
-    }
+    username: 'johnf',
+    firstname: 'John',
+    lastname: 'Fjon',
+    yearOfBirth: 1987,
+    createdAt: new Date(createdAt),
+    updatedAt: new Date(updatedAt),
+    roles: ['editor'],
+    tokens: ['twitter|23456', 'facebook|12345'],
+    feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
   }
 
   const great = integreat(defs, { adapters })

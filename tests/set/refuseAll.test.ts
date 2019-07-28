@@ -9,19 +9,15 @@ import integreat = require('../..')
 // Helpers
 
 const entry1Item = {
+  $schema: 'entry',
   id: 'ent1',
-  type: 'entry',
-  attributes: {
-    title: 'Entry 1',
-    text: 'The text of entry 1'
-  },
-  relationships: {
-    author: { id: 'johnf', type: 'user' },
-    sections: [
-      { id: 'news', type: 'section' },
-      { id: 'sports', type: 'section' }
-    ]
-  }
+  title: 'Entry 1',
+  text: 'The text of entry 1',
+  author: { id: 'johnf', type: 'user' },
+  sections: [
+    { id: 'news', type: 'section' },
+    { id: 'sports', type: 'section' }
+  ]
 }
 
 // Tests

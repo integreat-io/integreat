@@ -63,7 +63,7 @@ test('should map with response mapping', async t => {
   t.is(ret.data.length, 1)
   const item = ret.data[0]
   t.is(item.id, 'ent1')
-  t.is(item.attributes.title, 'Entry 1')
+  t.is(item.title, 'Entry 1')
 
   nock.restore()
 })
@@ -140,9 +140,9 @@ test('should map with sub mapping', async t => {
   t.true(Array.isArray(ret.data))
   t.is(ret.data.length, 2)
   t.is(ret.data[0].id, 'ent1')
-  t.is(ret.data[0].attributes.title, 'Entry 1')
+  t.is(ret.data[0].title, 'Entry 1')
   t.is(ret.data[1].id, 'ent2')
-  t.is(ret.data[1].attributes.title, 'Entry 2')
+  t.is(ret.data[1].title, 'Entry 2')
 
   nock.restore()
 })

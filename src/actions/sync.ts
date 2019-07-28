@@ -95,9 +95,9 @@ const filterDataOnUpdatedDates = (data, updatedAfter, updatedUntil) =>
     : data
 
 const isWithinUpdateWindow = (updatedAfter, updatedUntil) => item =>
-  item.attributes.updatedAt &&
-  (!updatedAfter || item.attributes.updatedAt > updatedAfter) &&
-  (!updatedUntil || item.attributes.updatedAt <= updatedUntil)
+  item.updatedAt &&
+  (!updatedAfter || item.updatedAt > updatedAfter) &&
+  (!updatedUntil || item.updatedAt <= updatedUntil)
 
 const getFromService = (
   dispatch,

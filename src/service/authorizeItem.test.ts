@@ -45,7 +45,7 @@ test('should refuse data with roleFromField', (t) => {
 test('should authorize data with identFromField', (t) => {
   const schemas = { entry: { id: 'entry', access: { identFromField: 'author' } } }
   const ident = { id: 'ident1' }
-  const data = createItem('ent1', 'entry', undefined, { author: { id: 'ident1', type: 'user' } })
+  const data = createItem('ent1', 'entry', undefined, { author: { id: 'ident1', $ref: 'user' } })
 
   const ret = authorizeItem(data, { ident }, { schemas })
 

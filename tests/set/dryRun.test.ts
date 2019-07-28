@@ -10,21 +10,17 @@ const createdAt = new Date()
 const updatedAt = new Date()
 
 const entry1Item = {
+  $schema: 'entry',
   id: 'ent1',
-  type: 'entry',
-  attributes: {
-    title: 'Entry 1',
-    text: 'The text of entry 1',
-    createdAt,
-    updatedAt
-  },
-  relationships: {
-    author: { id: 'johnf', type: 'user' },
-    sections: [
-      { id: 'news', type: 'section' },
-      { id: 'sports', type: 'section' }
-    ]
-  }
+  title: 'Entry 1',
+  text: 'The text of entry 1',
+  createdAt,
+  updatedAt,
+  author: { id: 'johnf', type: 'user' },
+  sections: [
+    { id: 'news', type: 'section' },
+    { id: 'sports', type: 'section' }
+  ]
 }
 
 // Tests
