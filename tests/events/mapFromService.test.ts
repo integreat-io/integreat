@@ -52,7 +52,7 @@ test('should emit request and response after mapping from service', async t => {
   t.is(handler.callCount, 1)
   const response = handler.args[0][1]
   t.truthy(response.data)
-  t.is(response.data[0].id, 'ent1')
+  t.is(response.data.id, 'ent1')
 
   nock.restore()
 })

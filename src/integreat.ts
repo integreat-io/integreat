@@ -1,20 +1,31 @@
 import R = require('ramda')
 import createService from './service'
-import schema from './schema'
-import setupMapping from './mapping'
+import createSchema from './schema'
 import setupDispatch from './dispatch'
-import builtinActions from './actions'
+import builtInActions from './actions'
+import createMapOptions, { TransformFunctions } from './utils/createMapOptions'
+import { MappingDef, SchemaDef } from './types'
+import builtInFunctions from './transformers/builtIns'
 
 const version = '0.8.0-alpha.0'
+
+interface Definitions {
+  schemas: SchemaDef[]
+  mappings: MappingDef[]
+}
+
+interface Resources {
+  transformers?: TransformFunctions
+}
 
 /**
  * Return an Integreat instance with a dispatch method.
  * Use the dispatch method for sending actions to services, for retrieving typed
  * items and updating data.
- * @param {Object} defs - Services, schemas, mappings, and auths
- * @param {Object} resources - Object with adapters, authenticators, filters, transformers, and actions
- * @param {Array} middlewares - Array of middlewares
- * @returns {Object} Integration object with the dispatch method
+ * @param defs - Services, schemas, mappings, and auths
+ * @param resources - Object with adapters, authenticators, transformers, and actions
+ * @param middlewares - Array of middlewares
+ * @returns Integration object with the dispatch method
  */
 function integreat(
   {
@@ -23,14 +34,13 @@ function integreat(
     mappings = [],
     auths: authDefs = [],
     ident: identOptions = {}
-  },
+  }: Definitions,
   {
     adapters = {},
     authenticators = {},
-    filters = {},
     transformers = {},
     actions = {}
-  } = {},
+  }: Resources = {},
   middlewares = []
 ) {
   if (!serviceDefs || !typeDefs) {
@@ -38,18 +48,28 @@ function integreat(
   }
 
   // Merge custom actions with built-in actions
-  actions = { ...builtinActions, ...actions }
+  actions = { ...builtInActions, ...actions }
 
   // Setup schemas object from type defs
-  const schemas = R.compose(
-    R.indexBy(R.prop('id')),
-    R.map(schema)
-  )(typeDefs)
+  const schemaArr = typeDefs.map(createSchema)
+  const schemas = schemaArr.reduce(
+    (schemas, schema) => ({ ...schemas, [schema.id]: schema }),
+    {}
+  )
+  const schemaMappings = schemaArr.reduce(
+    (schemas, schema) => ({ ...schemas, [schema.id]: schema.mapping }),
+    {}
+  )
 
   const pluralTypes = Object.keys(schemas).reduce(
     (plurals, type) => ({ ...plurals, [schemas[type].plural]: type }),
     {}
   )
+
+  const mapOptions = createMapOptions(mappings, schemaMappings, {
+    ...transformers,
+    ...builtInFunctions
+  })
 
   // Setup auths object from auth defs
   const auths = authDefs.reduce(
@@ -76,7 +96,7 @@ function integreat(
         auths,
         transformers,
         schemas,
-        setupMapping: setupMapping({ filters, transformers, schemas, mappings })
+        mapOptions
       })
     )
   )(serviceDefs)

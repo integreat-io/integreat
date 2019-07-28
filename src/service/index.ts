@@ -63,16 +63,16 @@ const wrapResponse = response => ({ response })
 
 /**
  * Create a service with the given id and adapter.
- * @param {Object} def - Service definition
- * @param {Object} resources - Object with mappings, adapters, auths, and plurals
- * @returns {Object} The created service
+ * @param def - Service definition
+ * @param resources - Object with mappings, adapters, auths, and plurals
+ * @returns The created service
  */
 const service = ({
   adapters = {},
   auths = {},
   transformers = {},
   schemas,
-  setupMapping = identity
+  mapOptions
 } = {}) => ({
   id: serviceId,
   adapter,
@@ -94,8 +94,12 @@ const service = ({
   }
 
   endpoints = prepareEndpoints(
-    { endpoints, options, mappings: mappingsDef },
-    { adapter, transformers, setupMapping }
+    {
+      endpoints,
+      options,
+      mappings: mappingsDef
+    },
+    { adapter, transformers, mapOptions }
   )
   auth = lookup(auth, auths) || {}
   let connection = null

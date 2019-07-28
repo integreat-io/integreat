@@ -21,18 +21,16 @@ const serializeData = ({
   authorId,
   sections
 }) =>
-  JSON.stringify([
-    {
-      key,
-      headline,
-      originalTitle: headline,
-      body,
-      createdAt,
-      updatedAt,
-      authorId,
-      sections
-    }
-  ])
+  JSON.stringify({
+    key,
+    headline,
+    originalTitle: headline,
+    body,
+    createdAt,
+    updatedAt,
+    authorId,
+    sections
+  })
 
 test.after.always(() => {
   nock.restore()
@@ -41,12 +39,10 @@ test.after.always(() => {
 // Tests
 
 test('should dispatch get action and return respons', async t => {
-  const send = sinon
-    .stub()
-    .resolves({
-      status: 'ok',
-      data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } })
-    })
+  const send = sinon.stub().resolves({
+    status: 'ok',
+    data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } })
+  })
   const resources = { adapters: { json: { ...json, send } } }
   const action = {
     type: 'REQUEST',

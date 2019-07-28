@@ -8,7 +8,7 @@ export default {
   },
   relationships: {
     author: 'user',
-    sections: 'section'
+    sections: 'section[]'
   },
   access: {
     allow: 'all',

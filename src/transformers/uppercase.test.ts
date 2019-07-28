@@ -2,36 +2,32 @@ import test from 'ava'
 
 import uppercase from './uppercase'
 
-// Tests -- from service
+// Setup
 
-test('should return uppercase', (t) => {
+const operands = {}
+
+// Tests
+
+test('should return uppercase)', (t) => {
   const value = 'julestjerne'
   const expected = 'JULESTJERNE'
 
-  const ret = uppercase(value)
+  const ret = uppercase(operands)(value)
 
   t.is(ret, expected)
 })
 
 test('should return null when null', (t) => {
-  const ret = uppercase(null)
+  const ret = uppercase(operands)(null)
 
   t.is(ret, null)
 })
 
-// Tests -- to service
+test('should iterate array)', (t) => {
+  const value = ['julestjerne', 'påskelilje', undefined]
+  const expected = ['JULESTJERNE', 'PÅSKELILJE', undefined]
 
-test('should return uppercase to service', (t) => {
-  const value = 'julestjerne'
-  const expected = 'JULESTJERNE'
+  const ret = uppercase(operands)(value)
 
-  const ret = uppercase.rev(value)
-
-  t.is(ret, expected)
-})
-
-test('should return null when null to service', (t) => {
-  const ret = uppercase.rev(null)
-
-  t.is(ret, null)
+  t.deepEqual(ret, expected)
 })

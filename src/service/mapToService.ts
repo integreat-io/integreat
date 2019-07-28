@@ -1,41 +1,70 @@
-const { groupBy, prop } = require('ramda')
+const { groupBy, prop, mergeDeepWith } = require('ramda')
+import { MapTransform } from 'map-transform'
+import { GenericData, DataObject } from '../types'
+import { SendOptions, Mappings, Request } from './types'
 
 const groupByType = groupBy(prop('type'))
 
-const mapItems = (data, request, mapping, target) =>
-  mapping ? mapping.toService({ ...request, data }, target) : target
+const concatOrRight = (left, right) =>
+  Array.isArray(left) ? left.concat(right) : right
 
-const mapDataPerType = (typeArrays, request, mappings) =>
+const mapIt = (
+  mapper: MapTransform,
+  data: Request,
+  target: GenericData = null
+) => {
+  const mapped = mapper.rev.onlyMappedValues(data)
+  return (
+    (target
+      ? Array.isArray(target)
+        ? [...target].concat(mapped)
+        : mergeDeepWith(concatOrRight, target, mapped) // TODO: Move merging to MapTransform
+      : mapped) || null
+  )
+}
+const mapItems = (
+  data: GenericData,
+  request: Request,
+  mapping: Mappings,
+  target?: GenericData
+) =>
+  mapping
+    ? typeof mapping.rev === 'function'
+      ? mapIt(mapping, { ...request, data }, target)
+      : mapping.toService({ ...request, data }, target)
+    : target
+
+const mapDataPerType = (
+  typeArrays: DataObject,
+  request: Request,
+  mappings: Mappings
+) =>
   Object.keys(typeArrays).reduce(
     (target, type) =>
       mapItems(typeArrays[type], request, mappings[type], target),
     undefined
   )
 
-const mapData = (data, request, mappings) =>
+const mapData = (data: GenericData, request: Request, mappings: Mappings) =>
   data
     ? Array.isArray(data)
       ? mapDataPerType(groupByType(data), request, mappings)
       : mapItems(data, request, mappings[data.type])
     : undefined
 
-const applyEndpointMapper = (data, request, requestMapper) =>
-  requestMapper ? requestMapper({ ...request, data }) : data
+const applyEndpointMapper = (request: Request, requestMapper?: MapTransform) =>
+  requestMapper ? requestMapper.rev(request) : request
 
 /**
- * Map the data coming _from_ the service. Everything is handled by the mappings,
+ * Map the data going _to_ the service. Everything is handled by the mappings,
  * but this method make sure that the right types are mapped.
- *
- * @param {Object} data - The data to map
- * @param {Object} mappings - The mappings to map with
- * @returns {Object} Mapped data
  */
 function mapToService() {
-  return ({ request, requestMapper, mappings }) => {
+  return ({ request, requestMapper, mappings }: SendOptions) => {
     const data = mapData(request.data, request, mappings)
     return {
       ...request,
-      data: applyEndpointMapper(data, request, requestMapper)
+      ...applyEndpointMapper({ ...request, data }, requestMapper)
     }
   }
 }

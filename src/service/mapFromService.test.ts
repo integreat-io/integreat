@@ -1,6 +1,7 @@
 import test from 'ava'
+import { mapTransform } from 'map-transform'
 import createSchema from '../schema'
-import createMapping from '../mapping'
+import functions from '../transformers/builtIns'
 
 import mapFromService from './mapFromService'
 
@@ -11,7 +12,7 @@ const schemas = {
     id: 'entry',
     attributes: {
       title: 'string',
-      one: { type: 'integer', default: 1 },
+      one: { $cast: 'integer', $default: 1 },
       two: 'integer'
     },
     relationships: {
@@ -25,67 +26,85 @@ const schemas = {
   })
 }
 
-const setupMapping = createMapping({ schemas })
-
-const mappings = {
-  entry: setupMapping({
-    id: 'entry',
-    type: 'entry',
-    service: 'entries',
-    path: 'items[]',
+const entryMapping = [
+  'data.items[]',
+  {
+    $iterate: true,
+    id: 'key',
     attributes: {
-      id: 'key',
       title: 'header',
       one: 'one',
       two: 'two'
     },
     relationships: {
-      service: '$params.service',
-      author: '$access.ident.id'
+      service: '^params.service',
+      author: '^access.ident.id'
     }
-  }),
-  account: setupMapping({
-    id: 'account',
-    type: 'account',
-    service: 'entries',
-    path: 'accounts[]',
-    attributes: { id: 'id', name: 'name' }
-  })
+  },
+  { $apply: 'cast_entry' }
+]
+
+const accountMapping = [
+  'data.accounts[]',
+  {
+    $iterate: true,
+    id: 'id',
+    attributes: { name: 'name' }
+  },
+  { $apply: 'cast_account' }
+]
+
+const mapOptions = {
+  pipelines: {
+    cast_entry: schemas.entry.mapping,
+    cast_account: schemas.account.mapping
+  },
+  functions
+}
+
+const mappings = {
+  entry: mapTransform(entryMapping, mapOptions),
+  account: mapTransform(accountMapping, mapOptions)
 }
 
 // Tests
 
-test('should map and cast data', (t) => {
+test('should map and cast data', t => {
   const request = {
     action: 'GET',
     params: { service: 'thenews', type: 'entry' },
+    endpoint: {},
     access: { ident: { id: 'johnf' } }
   }
   const response = {
     status: 'ok',
-    data: { items: [{ key: 'ent1', header: 'The heading', two: 2 }] }
+    data: { items: [{ key: 'ent1', header: 'The heading', two: '2' }] }
   }
-  const expected = [{
-    id: 'ent1',
-    type: 'entry',
-    attributes: {
-      title: 'The heading',
-      two: 2
-    },
-    relationships: {
-      service: { id: 'thenews', type: 'service' },
-      author: { id: 'johnf', type: 'account' }
+  const expected = [
+    {
+      $schema: 'entry',
+      id: 'ent1',
+      type: 'entry',
+      attributes: {
+        title: 'The heading',
+        two: 2
+      },
+      relationships: {
+        service: { id: 'thenews', $ref: 'service' },
+        author: { id: 'johnf', $ref: 'account' }
+      }
     }
-  }]
+  ]
 
   const ret = mapFromService()({ response, request, mappings })
 
   t.deepEqual(ret.data, expected)
 })
 
-test('should not map with status other than ok', (t) => {
+test('should not map with status other than ok', t => {
   const request = {
     action: 'GET',
+    endpoint: {},
     params: { service: 'thenews', type: 'entry' }
   }
   const response = {
@@ -98,9 +117,10 @@ test('should not map with status other than ok', (t) => {
   t.deepEqual(ret, response)
 })
 
-test('should cast data with defaults', (t) => {
+test('should cast data with defaults', t => {
   const request = {
     action: 'GET',
+    endpoint: {},
     params: { type: 'entry', onlyMappedValues: false }
   }
   const response = {
@@ -113,9 +133,10 @@ test('should cast data with defaults', (t) => {
   t.is(ret.data[0].attributes.one, 1)
 })
 
-test('should map and cast data that is not array', (t) => {
+test('should map and cast data that is not array', t => {
   const request = {
     action: 'GET',
+    endpoint: {},
     params: { type: 'entry' }
   }
   const response = {
@@ -129,9 +150,10 @@ test('should map and cast data that is not array', (t) => {
   t.is(ret.data[0].id, 'ent1')
 })
 
-test('should map and cast data of different types', (t) => {
+test('should map and cast data of different types', t => {
   const request = {
     action: 'GET',
+    endpoint: {},
     params: { type: ['entry', 'account'] }
   }
   const response = {
@@ -143,16 +165,17 @@ test('should map and cast data of different types', (t) => {
   }
   const expected = [
     {
+      $schema: 'entry',
       id: 'ent1',
       type: 'entry',
       attributes: { title: 'The heading' },
       relationships: {}
     },
     {
+      $schema: 'account',
       id: 'acc1',
       type: 'account',
-      attributes: { name: 'John' },
-      relationships: {}
+      attributes: { name: 'John' }
     }
   ]
 
@@ -161,9 +184,10 @@ test('should map and cast data of different types', (t) => {
   t.deepEqual(ret.data, expected)
 })
 
-test('should use all types when no type is provided', (t) => {
+test('should use all types when no type is provided', t => {
   const request = {
     action: 'GET',
+    endpoint: {},
     params: {}
   }
   const response = {
@@ -181,9 +205,10 @@ test('should use all types when no type is provided', (t) => {
   t.is(ret.data[1].id, 'acc1')
 })
 
-test('should use status code and error from mapping', (t) => {
+test('should use status code and error from mapping', t => {
   const request = {
     action: 'GET',
+    endpoint: {},
     params: { service: 'thenews', type: 'entry' },
     access: { ident: { id: 'johnf' } }
   }
@@ -198,7 +223,12 @@ test('should use status code and error from mapping', (t) => {
   }
   const responseMapper = ({ data }) => data
 
-  const ret = mapFromService()({ response, request, responseMapper, mappings })
+  const ret = mapFromService()({
+    response,
+    request,
+    responseMapper,
+    mappings
+  })
 
   t.is(ret.status, 'error')
   t.is(ret.error, 'Well. It failed')
@@ -206,9 +236,10 @@ test('should use status code and error from mapping', (t) => {
   t.deepEqual(ret.access, { ident: { id: 'johnf' } })
 })
 
-test('should map data without returning status code', (t) => {
+test('should map data without returning status code', t => {
   const request = {
     action: 'GET',
+    endpoint: {},
     params: { service: 'thenews', type: 'entry' },
     access: { ident: { id: 'johnf' } }
   }
@@ -223,7 +254,12 @@ test('should map data without returning status code', (t) => {
   }
   const responseMapper = ({ data }) => ({ data: data.data })
 
-  const ret = mapFromService()({ response, request, responseMapper, mappings })
+  const ret = mapFromService()({
+    response,
+    request,
+    responseMapper,
+    mappings
+  })
 
   t.is(ret.status, 'ok')
   t.truthy(ret.data)
@@ -231,9 +267,10 @@ test('should map data without returning status code', (t) => {
   t.deepEqual(ret.access, { ident: { id: 'johnf' } })
 })
 
-test('should use paging from responseMapper', (t) => {
+test('should use paging from responseMapper', t => {
   const request = {
     action: 'GET',
+    endpoint: {},
     params: { service: 'thenews', type: 'entry' },
     access: { ident: { id: 'johnf' } }
   }
@@ -253,67 +290,88 @@ test('should use paging from responseMapper', (t) => {
   })
   const expectedPaging = { next: { offset: 'page2', type: 'entry' } }
 
-  const ret = mapFromService()({ response, request, responseMapper, mappings })
+  const ret = mapFromService()({
+    response,
+    request,
+    responseMapper,
+    mappings
+  })
 
   t.is(ret.status, 'ok')
   t.deepEqual(ret.paging, expectedPaging)
 })
 
-test('should map and cast data from set action', (t) => {
+test('should map and cast data from set action', t => {
   const responseMapper = ({ data }) => ({ data })
   const request = {
     action: 'SET',
     params: { service: 'thenews', type: 'entry' },
-    data: [{
-      id: 'random',
-      type: 'entry',
-      attributes: {
-        title: 'The heading'
-      },
-      relationships: {
-        service: { id: 'thenews', type: 'service' },
-        author: { id: 'johnf', type: 'account' }
+    endpoint: {},
+    data: [
+      {
+        $schema: 'entry',
+        id: 'random',
+        type: 'entry',
+        attributes: {
+          title: 'The heading'
+        },
+        relationships: {
+          service: { id: 'thenews', $ref: 'service' },
+          author: { id: 'johnf', $ref: 'account' }
+        }
       }
-    }],
+    ],
     access: { ident: { id: 'johnf' } }
   }
   const response = {
     status: 'ok',
     data: { items: [{ key: 'ent1', header: 'The heading', two: 2 }] }
   }
-  const expected = [{
-    id: 'ent1',
-    type: 'entry',
-    attributes: {
-      title: 'The heading',
-      two: 2
-    },
-    relationships: {
-      service: { id: 'thenews', type: 'service' },
-      author: { id: 'johnf', type: 'account' }
+  const expected = [
+    {
+      $schema: 'entry',
+      id: 'ent1',
+      type: 'entry',
+      attributes: {
+        title: 'The heading',
+        two: 2
+      },
+      relationships: {
+        service: { id: 'thenews', $ref: 'service' },
+        author: { id: 'johnf', $ref: 'account' }
+      }
     }
-  }]
+  ]
 
-  const ret = mapFromService()({ response, request, responseMapper, mappings })
+  const ret = mapFromService()({
+    response,
+    request,
+    responseMapper,
+    mappings
+  })
 
   t.deepEqual(ret.data, expected)
 })
 
-test('should not map and cast data from set action when no responseMapper', (t) => {
+test('should not map and cast data from set action when no responseMapper', t => {
   const request = {
     action: 'SET',
     params: { service: 'thenews', type: 'entry' },
-    data: [{
-      id: 'random',
-      type: 'entry',
-      attributes: {
-        title: 'The heading'
-      },
-      relationships: {
-        service: { id: 'thenews', type: 'service' },
-        author: { id: 'johnf', type: 'account' }
+    endpoint: {},
+    data: [
+      {
+        $schema: 'entry',
+        id: 'random',
+        type: 'entry',
+        attributes: {
+          title: 'The heading'
+        },
+        relationships: {
+          service: { id: 'thenews', $ref: 'service' },
+          author: { id: 'johnf', $ref: 'account' }
+        }
       }
-    }],
+    ],
     access: { ident: { id: 'johnf' } }
   }
   const response = {
@@ -323,13 +381,14 @@ test('should not map and cast data from set action when no responseMapper', (t) 
 
   const ret = mapFromService()({ response, request, mappings })
 
-  t.is(typeof ret.data, 'undefined')
+  t.is(ret.data, undefined)
 })
 
-test('should skip unknown types', (t) => {
+test('should skip unknown types', t => {
   const request = {
     action: 'GET',
-    params: { type: 'unknown' }
+    params: { type: 'unknown' },
+    endpoint: {}
   }
   const response = {
     status: 'ok',
@@ -341,10 +400,11 @@ test('should skip unknown types', (t) => {
   t.deepEqual(ret.data, [])
 })
 
-test('should return undefined when no data', (t) => {
+test('should return undefined when no data', t => {
   const request = {
     action: 'GET',
-    params: { type: 'entry' }
+    params: { type: 'entry' },
+    endpoint: {}
   }
   const response = {
     status: 'ok',
@@ -353,13 +413,14 @@ test('should return undefined when no data', (t) => {
 
   const ret = mapFromService()({ response, request, mappings })
 
-  t.is(typeof ret.data, 'undefined')
+  t.is(ret.data, undefined)
 })
 
-test('should return empty array when path points to undefined', (t) => {
+test('should return empty array when path points to undefined', t => {
   const request = {
     action: 'GET',
-    params: { type: 'entry' }
+    params: { type: 'entry' },
+    endpoint: {}
   }
   const response = {
     status: 'ok',

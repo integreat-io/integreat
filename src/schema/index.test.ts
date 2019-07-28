@@ -1,10 +1,12 @@
 import test from 'ava'
+import { mapTransform } from 'map-transform'
+import transformFunctions from '../transformers/builtIns'
 
 import schema from '.'
 
 // Tests
 
-test('should setup schema', (t) => {
+test('should setup schema', t => {
   const type = {
     id: 'entry',
     plural: 'entries',
@@ -35,7 +37,7 @@ test('should setup schema', (t) => {
   t.deepEqual(ret.relationships.author, { type: 'user' })
 })
 
-test('should infer plural when not set', (t) => {
+test('should infer plural when not set', t => {
   const type = {
     id: 'article',
     attributes: {}
@@ -47,7 +49,7 @@ test('should infer plural when not set', (t) => {
   t.is(ret.plural, 'articles')
 })
 
-test('should include base attributes', (t) => {
+test('should include base attributes', t => {
   const type = {
     id: 'entry',
     service: 'entries',
@@ -65,7 +67,7 @@ test('should include base attributes', (t) => {
   t.deepEqual(ret.attributes, expected)
 })
 
-test('should override base attributes in definition', (t) => {
+test('should override base attributes in definition', t => {
   const type = {
     id: 'entry',
     service: 'entries',
@@ -87,7 +89,7 @@ test('should override base attributes in definition', (t) => {
   t.deepEqual(ret.attributes, expected)
 })
 
-test('should always set relationships object', (t) => {
+test('should always set relationships object', t => {
   const type = {
     id: 'entry',
     service: 'entries',
@@ -99,7 +101,7 @@ test('should always set relationships object', (t) => {
   t.deepEqual(ret.relationships, {})
 })
 
-test('should expand short value form', (t) => {
+test('should expand short value form', t => {
   const type = {
     id: 'entry',
     service: 'entries',
@@ -119,7 +121,7 @@ test('should expand short value form', (t) => {
   t.deepEqual(ret.relationships.author, { type: 'user' })
 })
 
-test('should set internal prop', (t) => {
+test('should set internal prop', t => {
   const type = {
     id: 'entry',
     service: 'entries',
@@ -133,7 +135,7 @@ test('should set internal prop', (t) => {
 
 // Tests -- cast
 
-test('cast should cast provided attributes', (t) => {
+test('cast should cast provided attributes', t => {
   const createdDate = new Date('2017-05-11T18:00:00Z')
   const updatedDate = new Date('2017-05-13T14:00:00Z')
   const def = {
@@ -178,7 +180,7 @@ test('cast should cast provided attributes', (t) => {
   t.deepEqual(ret.attributes, expected)
 })
 
-test('cast should return undefined when no data', (t) => {
+test('cast should return undefined when no data', t => {
   const type = schema({ id: 'entry' })
 
   const ret = type.cast(null)
@@ -186,7 +188,7 @@ test('cast should return undefined when no data', (t) => {
   t.is(typeof ret, 'undefined')
 })
 
-test('cast should set type', (t) => {
+test('cast should set type', t => {
   const type = schema({ id: 'entry' })
 
   const ret = type.cast({})
@@ -194,7 +196,7 @@ test('cast should set type', (t) => {
   t.is(ret.type, 'entry')
 })
 
-test('cast should keep isNew when true', (t) => {
+test('cast should keep isNew when true', t => {
   const type = schema({ id: 'entry' })
 
   const ret = type.cast({ type: 'entry', isNew: true })
@@ -202,7 +204,7 @@ test('cast should keep isNew when true', (t) => {
   t.true(ret.isNew)
 })
 
-test('cast should keep isDeleted when true', (t) => {
+test('cast should keep isDeleted when true', t => {
   const type = schema({ id: 'entry' })
 
   const ret = type.cast({ type: 'entry', isDeleted: true })
@@ -210,7 +212,7 @@ test('cast should keep isDeleted when true', (t) => {
   t.true(ret.isDeleted)
 })
 
-test('cast should remove isTrue and isDeleted when false', (t) => {
+test('cast should remove isTrue and isDeleted when false', t => {
   const type = schema({ id: 'entry' })
 
   const ret = type.cast({ type: 'entry', isNew: false, isDeleted: false })
@@ -219,7 +221,7 @@ test('cast should remove isTrue and isDeleted when false', (t) => {
   t.false(ret.hasOwnProperty('isDeleted'))
 })
 
-test('cast should generate random id', (t) => {
+test('cast should generate random id', t => {
   const type = schema({ id: 'entry' })
 
   const ret1 = type.cast({})
@@ -230,7 +232,7 @@ test('cast should generate random id', (t) => {
   t.not(ret1.id, ret2.id)
 })
 
-test('cast should use id attribute', (t) => {
+test('cast should use id attribute', t => {
   const type = schema({ id: 'entry' })
   const data = { attributes: { id: 'ent1' } }
 
@@ -240,7 +242,7 @@ test('cast should use id attribute', (t) => {
   t.is(ret.attributes.id, undefined)
 })
 
-test('cast should use id property', (t) => {
+test('cast should use id property', t => {
   const type = schema({ id: 'entry' })
   const data = { id: 'ent1', attributes: { id: 'wrong' } }
 
@@ -250,7 +252,7 @@ test('cast should use id property', (t) => {
   t.is(ret.attributes.id, undefined)
 })
 
-test('cast should set createdAt and updatedAt to current Date when not specified', (t) => {
+test('cast should set createdAt and updatedAt to current Date when not specified', t => {
   const type = schema({ id: 'entry' })
   const before = Date.now()
 
@@ -264,11 +266,13 @@ test('cast should set createdAt and updatedAt to current Date when not specified
   t.is(createdAt.getTime(), updatedAt.getTime())
 })
 
-test('cast should use createdAt and updatedAt attributes', (t) => {
+test('cast should use createdAt and updatedAt attributes', t => {
   const createdDate = new Date('2017-05-11')
   const updatedDate = new Date('2017-05-13')
   const type = schema({ id: 'entry' })
-  const data = { attributes: { createdAt: createdDate, updatedAt: updatedDate } }
+  const data = {
+    attributes: { createdAt: createdDate, updatedAt: updatedDate }
+  }
 
   const ret = type.cast(data)
 
@@ -277,11 +281,13 @@ test('cast should use createdAt and updatedAt attributes', (t) => {
   t.is(updatedAt.getTime(), updatedDate.getTime())
 })
 
-test('cast should cast createdAt and updatedAt attributes', (t) => {
+test('cast should cast createdAt and updatedAt attributes', t => {
   const createdDate = '2017-05-11T18:01:43.000Z'
   const updatedDate = '2017-05-13T11:04:51.000Z'
   const type = schema({ id: 'entry' })
-  const data = { attributes: { createdAt: createdDate, updatedAt: updatedDate } }
+  const data = {
+    attributes: { createdAt: createdDate, updatedAt: updatedDate }
+  }
 
   const ret = type.cast(data)
 
@@ -290,7 +296,7 @@ test('cast should cast createdAt and updatedAt attributes', (t) => {
   t.is(updatedAt.getTime(), new Date(updatedDate).getTime())
 })
 
-test('cast should use createdAt when updatedAt is not specified', (t) => {
+test('cast should use createdAt when updatedAt is not specified', t => {
   const createdDate = new Date('2017-05-11')
   const type = schema({ id: 'entry' })
   const data = { attributes: { createdAt: createdDate } }
@@ -301,7 +307,7 @@ test('cast should use createdAt when updatedAt is not specified', (t) => {
   t.is(updatedAt.getTime(), createdDate.getTime())
 })
 
-test('cast should use updatedAt when createdAt is not specified', (t) => {
+test('cast should use updatedAt when createdAt is not specified', t => {
   const updatedDate = new Date('2017-05-11')
   const type = schema({ id: 'entry' })
   const data = { attributes: { updatedAt: updatedDate } }
@@ -312,7 +318,7 @@ test('cast should use updatedAt when createdAt is not specified', (t) => {
   t.is(createdAt.getTime(), updatedDate.getTime())
 })
 
-test('cast should cast boolean attributes', (t) => {
+test('cast should cast boolean attributes', t => {
   const attributes = {
     isTrue: 'boolean',
     isFalse: 'boolean',
@@ -322,14 +328,16 @@ test('cast should cast boolean attributes', (t) => {
     isFalseString: 'boolean'
   }
   const type = schema({ id: 'entry', attributes })
-  const data = { attributes: {
-    isTrue: true,
-    isFalse: false,
-    isFalsy: '',
-    isTruthy: 'Something truthy',
-    isTrueString: 'true',
-    isFalseString: 'false'
-  } }
+  const data = {
+    attributes: {
+      isTrue: true,
+      isFalse: false,
+      isFalsy: '',
+      isTruthy: 'Something truthy',
+      isTrueString: 'true',
+      isFalseString: 'false'
+    }
+  }
 
   const ret = type.cast(data)
 
@@ -341,25 +349,27 @@ test('cast should cast boolean attributes', (t) => {
   t.false(ret.attributes.isFalseString)
 })
 
-test('cast should not return invalid attributes', (t) => {
+test('cast should not return invalid attributes', t => {
   const attributes = {
     title: 'string',
     rating: 'float',
     reviewedAt: 'date'
   }
   const type = schema({ id: 'entry', attributes })
-  const data = { attributes: {
-    views: 'notint',
-    rating: 'notfloat',
-    reviewedAt: 'notdate'
-  } }
+  const data = {
+    attributes: {
+      views: 'notint',
+      rating: 'notfloat',
+      reviewedAt: 'notdate'
+    }
+  }
 
   const ret = type.cast(data, { onlyMappedValues: true })
 
   t.deepEqual(ret.attributes, {})
 })
 
-test('cast should allow null for all field types', (t) => {
+test('cast should allow null for all field types', t => {
   const attributes = {
     title: 'string',
     views: 'integer',
@@ -368,13 +378,15 @@ test('cast should allow null for all field types', (t) => {
     reviewedAt: 'date'
   }
   const type = schema({ id: 'entry', attributes })
-  const data = { attributes: {
-    title: null,
-    views: null,
-    active: null,
-    rating: null,
-    reviewedAt: null
-  } }
+  const data = {
+    attributes: {
+      title: null,
+      views: null,
+      active: null,
+      rating: null,
+      reviewedAt: null
+    }
+  }
 
   const ret = type.cast(data, { onlyMappedValues: true })
 
@@ -385,7 +397,7 @@ test('cast should allow null for all field types', (t) => {
   t.is(ret.attributes.reviewedAt, null)
 })
 
-test('cast should cast provided relationships', (t) => {
+test('cast should cast provided relationships', t => {
   const relationships = {
     user: 'user',
     comments: 'comment[]',
@@ -394,13 +406,15 @@ test('cast should cast provided relationships', (t) => {
     undefInData: 'undef'
   }
   const type = schema({ id: 'entry', relationships })
-  const data = { relationships: {
-    user: 'johnf',
-    comments: ['no1', 'no2', null],
-    author: null,
-    unknown: 'Nope',
-    undefInData: undefined
-  } }
+  const data = {
+    relationships: {
+      user: 'johnf',
+      comments: ['no1', 'no2', null],
+      author: null,
+      unknown: 'Nope',
+      undefInData: undefined
+    }
+  }
   const expected = {
     user: { id: 'johnf', type: 'user' },
     comments: [{ id: 'no1', type: 'comment' }, { id: 'no2', type: 'comment' }],
@@ -412,19 +426,21 @@ test('cast should cast provided relationships', (t) => {
   t.deepEqual(ret.relationships, expected)
 })
 
-test('cast should cast relationship objects and keep meta', (t) => {
+test('cast should cast relationship objects and keep meta', t => {
   const relationships = {
     author: 'user',
     sections: 'section'
   }
   const type = schema({ id: 'entry', relationships })
-  const data = { relationships: {
-    author: { id: 'johnf', type: 'user', meta: { editor: true } },
-    sections: [
-      { id: 'news', type: 'section', meta: { pri: 1 } },
-      { id: 'sports', type: 'section', meta: { pri: 2 } }
-    ]
-  } }
+  const data = {
+    relationships: {
+      author: { id: 'johnf', type: 'user', meta: { editor: true } },
+      sections: [
+        { id: 'news', type: 'section', meta: { pri: 1 } },
+        { id: 'sports', type: 'section', meta: { pri: 2 } }
+      ]
+    }
+  }
   const expected = {
     author: { id: 'johnf', type: 'user', meta: { editor: true } },
     sections: [
@@ -438,14 +454,16 @@ test('cast should cast relationship objects and keep meta', (t) => {
   t.deepEqual(ret.relationships, expected)
 })
 
-test('cast should keep isNew on relationship object', (t) => {
+test('cast should keep isNew on relationship object', t => {
   const type = schema({
     id: 'entry',
     relationships: { author: 'user' }
   })
-  const data = { relationships: {
-    author: { id: 'johnf', type: 'user', isNew: true }
-  } }
+  const data = {
+    relationships: {
+      author: { id: 'johnf', type: 'user', isNew: true }
+    }
+  }
   const expected = {
     author: { id: 'johnf', type: 'user', isNew: true }
   }
@@ -455,14 +473,16 @@ test('cast should keep isNew on relationship object', (t) => {
   t.deepEqual(ret.relationships, expected)
 })
 
-test('cast should keep isDeleted on relationship object', (t) => {
+test('cast should keep isDeleted on relationship object', t => {
   const type = schema({
     id: 'entry',
     relationships: { author: 'user' }
   })
-  const data = { relationships: {
-    author: { id: 'johnf', type: 'user', isDeleted: true }
-  } }
+  const data = {
+    relationships: {
+      author: { id: 'johnf', type: 'user', isDeleted: true }
+    }
+  }
   const expected = {
     author: { id: 'johnf', type: 'user', isDeleted: true }
   }
@@ -472,14 +492,16 @@ test('cast should keep isDeleted on relationship object', (t) => {
   t.deepEqual(ret.relationships, expected)
 })
 
-test('cast should remove isNew and isDeleted on relationship object when not true', (t) => {
+test('cast should remove isNew and isDeleted on relationship object when not true', t => {
   const type = schema({
     id: 'entry',
     relationships: { author: 'user' }
   })
-  const data = { relationships: {
-    author: { id: 'johnf', type: 'user', isNew: false, isDeleted: false }
-  } }
+  const data = {
+    relationships: {
+      author: { id: 'johnf', type: 'user', isNew: false, isDeleted: false }
+    }
+  }
   const expected = {
     author: { id: 'johnf', type: 'user' }
   }
@@ -489,14 +511,16 @@ test('cast should remove isNew and isDeleted on relationship object when not tru
   t.deepEqual(ret.relationships, expected)
 })
 
-test('cast should cast relationship object without type', (t) => {
+test('cast should cast relationship object without type', t => {
   const relationships = {
     user: 'user'
   }
   const type = schema({ id: 'entry', relationships })
-  const data = { relationships: {
-    user: { id: 'johnf' }
-  } }
+  const data = {
+    relationships: {
+      user: { id: 'johnf' }
+    }
+  }
   const expected = {
     user: { id: 'johnf', type: 'user' }
   }
@@ -506,14 +530,16 @@ test('cast should cast relationship object without type', (t) => {
   t.deepEqual(ret.relationships, expected)
 })
 
-test('cast should cast relationship object to null when no id', (t) => {
+test('cast should cast relationship object to null when no id', t => {
   const relationships = {
     user: 'user'
   }
   const type = schema({ id: 'entry', relationships })
-  const data = { relationships: {
-    user: { id: null }
-  } }
+  const data = {
+    relationships: {
+      user: { id: null }
+    }
+  }
   const expected = {
     user: null
   }
@@ -523,7 +549,7 @@ test('cast should cast relationship object to null when no id', (t) => {
   t.deepEqual(ret.relationships, expected)
 })
 
-test('cast should cast relationship object with attributes', (t) => {
+test('cast should cast relationship object with attributes', t => {
   const relationships = {
     author: 'user'
   }
@@ -556,7 +582,7 @@ test('cast should cast relationship object with attributes', (t) => {
   t.deepEqual(ret.relationships.author, expectedRel)
 })
 
-test('cast should cast relationship object with relationships', (t) => {
+test('cast should cast relationship object with relationships', t => {
   const relationships = {
     author: 'user'
   }
@@ -589,19 +615,18 @@ test('cast should cast relationship object with relationships', (t) => {
   t.deepEqual(ret.relationships.author, expectedRel)
 })
 
-test('cast should cast relationship object with id array', (t) => {
+test('cast should cast relationship object with id array', t => {
   const relationships = {
     user: 'user'
   }
   const type = schema({ id: 'entry', relationships })
-  const data = { relationships: {
-    user: { id: ['johnf', 'maryk'] }
-  } }
+  const data = {
+    relationships: {
+      user: { id: ['johnf', 'maryk'] }
+    }
+  }
   const expected = {
-    user: [
-      { id: 'johnf', type: 'user' },
-      { id: 'maryk', type: 'user' }
-    ]
+    user: [{ id: 'johnf', type: 'user' }, { id: 'maryk', type: 'user' }]
   }
 
   const ret = type.cast(data)
@@ -609,14 +634,16 @@ test('cast should cast relationship object with id array', (t) => {
   t.deepEqual(ret.relationships, expected)
 })
 
-test('cast should cast relationship object with id array and meta', (t) => {
+test('cast should cast relationship object with id array and meta', t => {
   const relationships = {
     user: 'user'
   }
   const type = schema({ id: 'entry', relationships })
-  const data = { relationships: {
-    user: { id: ['johnf', 'maryk'], meta: { editor: false } }
-  } }
+  const data = {
+    relationships: {
+      user: { id: ['johnf', 'maryk'], meta: { editor: false } }
+    }
+  }
   const expected = {
     user: [
       { id: 'johnf', type: 'user', meta: { editor: false } },
@@ -629,7 +656,7 @@ test('cast should cast relationship object with id array and meta', (t) => {
   t.deepEqual(ret.relationships, expected)
 })
 
-test('cast should include default attributes', (t) => {
+test('cast should include default attributes', t => {
   const attributes = {
     title: { type: 'string', default: 'No title' },
     views: 'integer',
@@ -645,7 +672,7 @@ test('cast should include default attributes', (t) => {
   t.is(ret.attributes.rating, 3.0)
 })
 
-test('cast should not set id, type, createdAt, or updatedAt as a default attributes', (t) => {
+test('cast should not set id, type, createdAt, or updatedAt as a default attributes', t => {
   const type = schema({
     id: 'entry',
     attributes: {
@@ -662,7 +689,7 @@ test('cast should not set id, type, createdAt, or updatedAt as a default attribu
   t.true(ret.attributes.updatedAt instanceof Date) // Would be null if default was used
 })
 
-test('cast should include default relationships', (t) => {
+test('cast should include default relationships', t => {
   const relationships = {
     user: { type: 'user', default: 'admin' },
     comments: 'comment',
@@ -682,7 +709,7 @@ test('cast should include default relationships', (t) => {
 
 // Tests - relationship query
 
-test('castQueryParams should return params for rel query', (t) => {
+test('castQueryParams should return params for rel query', t => {
   const data = {
     id: 'johnf',
     type: 'user',
@@ -705,7 +732,7 @@ test('castQueryParams should return params for rel query', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('castQueryParams should return empty array when no query object', (t) => {
+test('castQueryParams should return empty array when no query object', t => {
   const data = {
     id: 'johnf',
     type: 'user',
@@ -727,15 +754,17 @@ test('castQueryParams should return empty array when no query object', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('castQueryParams should return id array from many-relationship', (t) => {
+test('castQueryParams should return id array from many-relationship', t => {
   const data = {
     id: 'johnf',
     type: 'user',
     attributes: {},
-    relationships: { genres: [
-      { id: 'fiction', type: 'genre' },
-      { id: 'romance', type: 'genre' }
-    ] }
+    relationships: {
+      genres: [
+        { id: 'fiction', type: 'genre' },
+        { id: 'romance', type: 'genre' }
+      ]
+    }
   }
   const type = schema({
     id: 'user',
@@ -753,7 +782,7 @@ test('castQueryParams should return id array from many-relationship', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('castQueryParams should throw at missing param value', (t) => {
+test('castQueryParams should throw at missing param value', t => {
   const data = { id: 'johnf', type: 'user', attributes: {}, relationships: {} }
   const type = schema({
     id: 'user',
@@ -768,4 +797,63 @@ test('castQueryParams should throw at missing param value', (t) => {
   const error = t.throws(() => type.castQueryParams('books', data))
 
   t.is(error.message, 'Missing value for query param')
+})
+
+// Tests -- mapping
+
+test('should provide cast mapping', t => {
+  const date = new Date('2019-01-18T03:43:52Z')
+  const def = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    attributes: {
+      title: { $cast: 'string', $default: 'Entry with no name' },
+      text: 'string',
+      age: { $cast: 'integer' }
+    },
+    relationships: {
+      author: 'user',
+      comments: { $cast: 'comment[]' }
+    },
+    access: 'auth'
+  }
+  const data = [
+    {
+      id: 12345,
+      attributes: {
+        age: '244511383',
+        text: 'The first entry',
+        createdAt: date,
+        updatedAt: date
+      },
+      relationships: {
+        author: 'maryk',
+        comments: 'comment23'
+      }
+    }
+  ]
+  const expected = [
+    {
+      $schema: 'entry',
+      id: '12345',
+      type: 'entry',
+      attributes: {
+        title: 'Entry with no name',
+        text: 'The first entry',
+        age: 244511383,
+        createdAt: date,
+        updatedAt: date
+      },
+      relationships: {
+        author: { id: 'maryk', $ref: 'user' },
+        comments: [{ id: 'comment23', $ref: 'comment' }]
+      }
+    }
+  ]
+
+  const mapping = schema(def).mapping
+  const ret = mapTransform(mapping, { functions: transformFunctions })(data)
+
+  t.deepEqual(ret, expected)
 })

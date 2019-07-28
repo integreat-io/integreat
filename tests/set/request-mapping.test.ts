@@ -21,7 +21,8 @@ const entry1Item = {
 const entry1Mapped = {
   key: 'ent1',
   headline: 'Entry 1',
-  originalTitle: 'Entry 1'
+  originalTitle: 'Entry 1',
+  sections: []
 }
 
 // Tests
@@ -45,18 +46,18 @@ test('should set data with request mapping', async t => {
   const resources = {
     adapters: { json },
     transformers: {
-      stringify: value => JSON.stringify(value)
+      stringify: () => value => JSON.stringify(value)
     }
   }
-  const requestMapping = {
-    'content.items[]': 'data',
-    'content.footnote': { const: '' },
-    'content.meta': {
-      path: 'params.type',
-      transformTo: 'stringify',
-      sub: 'datatype'
-    }
-  }
+  const requestMapping = ['data', {
+    'data': 'content.items[]',
+    'none0': ['content.footnote', { $transform: 'fixed', value: '' }],
+    'params.type': [
+      'content.meta',
+      { $transform: 'stringify', $direction: 'rev' },
+      'datatype'
+    ]
+  }]
   const defs = {
     schemas: [entrySchema],
     services: [

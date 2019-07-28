@@ -17,9 +17,9 @@ const prepareData = payload => {
 
 /**
  * Delete several items from a service, based on the given payload.
- * @param {Object} payload - Payload from action object
- * @param {Object} resources - Object with getService
- * @returns {Object} Response object with any data returned from the service
+ * @param payload - Payload from action object
+ * @param resources - Object with getService
+ * @returns Response object with any data returned from the service
  */
 async function deleteFn(action, { getService } = {}) {
   debug('Action: DELETE')

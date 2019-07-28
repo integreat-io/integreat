@@ -1,6 +1,7 @@
 import test from 'ava'
 import nock = require('nock')
 import json from 'integreat-adapter-json'
+import mapAny = require('map-any')
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
@@ -17,42 +18,43 @@ test('should transform entry', async t => {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' }
   }
-  const mapping = {
-    attributes: {
+  const mapping = [
+    {
+      $iterate: true,
       id: 'key',
-      title: { path: 'headline', transform: 'upperCase' },
-      text: 'body',
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt'
+      attributes: {
+        title: ['headline', { $transform: 'upperCase' }],
+        text: 'body',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt'
+      },
+      relationships: {
+        author: 'authorId',
+        sections: 'sections[]'
+      }
     },
-    relationships: {
-      author: 'authorId',
-      sections: 'sections[]'
-    },
-    transform: 'addSectionsToText'
-  }
+    { $transform: 'addSectionsToText' },
+    { $apply: 'cast_entry' }
+  ]
   const defs = {
     schemas: [entrySchema],
     services: [{ ...entriesService, mappings: { entry: mapping } }]
   }
   const transformers = {
-    upperCase: value => value.toUpperCase(),
-    addSectionsToText: item => {
-      const sections = item.relationships.sections
-        .map(section => section.id)
-        .join('|')
-      item.attributes.text = `${item.attributes.text} - ${sections}`
-      return item
-    }
+    upperCase: () => value => value.toUpperCase(),
+    addSectionsToText: () =>
+      mapAny(item => {
+        const sections = item.relationships.sections.join('|')
+        item.attributes.text = `${item.attributes.text} - ${sections}`
+        return item
+      })
   }
 
   const great = integreat(defs, { adapters, transformers })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')
-  t.true(Array.isArray(ret.data))
-  t.is(ret.data.length, 1)
-  const item = ret.data[0]
+  const item = ret.data
   t.is(item.id, 'ent1')
   t.is(item.attributes.title, 'ENTRY 1')
   t.is(item.attributes.text, 'The text of entry 1 - news|sports')
@@ -60,7 +62,7 @@ test('should transform entry', async t => {
   nock.restore()
 })
 
-test.skip('should transform array of entries', async t => {
+test('should transform array of entries', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/')
@@ -69,33 +71,42 @@ test.skip('should transform array of entries', async t => {
     type: 'GET',
     payload: { type: 'entry' }
   }
-  const mapping = {
-    attributes: {
+  const mapping = [
+    {
+      $iterate: true,
       id: 'key',
-      title: { path: 'headline', transform: 'upperCase' },
-      text: 'body',
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt'
+      attributes: {
+        title: ['headline', { $transform: 'upperCase' }],
+        text: 'body',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt'
+      },
+      relationships: {
+        author: 'authorId',
+        sections: 'sections[]'
+      }
     },
-    relationships: {
-      author: 'authorId',
-      sections: 'sections[]'
-    },
-    transform: 'addSectionsToText'
-  }
+    { $transform: 'addSectionsToText' },
+    { $apply: 'cast_entry' }
+  ]
   const defs = {
     schemas: [entrySchema],
     services: [{ ...entriesService, mappings: { entry: mapping } }]
   }
   const transformers = {
-    upperCase: value => value.toUpperCase(),
-    addSectionsToText: item => {
-      const sections = item.relationships.sections
-        .map(section => section.id)
-        .join('|')
-      item.attributes.text = `${item.attributes.text} - ${sections}`
-      return item
-    }
+    upperCase: () => value => value.toUpperCase(),
+    addSectionsToText: () =>
+      mapAny(item => {
+        const sections =
+          item.relationships && item.relationships.sections.join('|')
+        return {
+          ...item,
+          attributes: {
+            ...item.attributes,
+            text: `${item.attributes && item.attributes.text} - ${sections}`
+          }
+        }
+      })
   }
 
   const great = integreat(defs, { adapters, transformers })

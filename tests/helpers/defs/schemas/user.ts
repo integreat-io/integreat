@@ -10,8 +10,7 @@ export default {
     tokens: 'string[]'
   },
   relationships: {
-    feeds: 'feed',
-    createdBy: 'user'
+    feeds: 'feed'
   },
   access: {
     identFromField: 'id'

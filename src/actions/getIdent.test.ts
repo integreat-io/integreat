@@ -14,8 +14,13 @@ const great = integreat(defs, { adapters: { json } })
 const getService = () => great.services.users
 const identOptions = { type: 'user' }
 
-const johnfIdent = { id: 'johnf', roles: ['editor'], tokens: ['twitter|23456', 'facebook|12345'] }
+const johnfIdent = {
+  id: 'johnf',
+  roles: ['editor'],
+  tokens: ['twitter|23456', 'facebook|12345']
+}
 const johnfItem = {
+  $schema: 'user',
   id: 'johnf',
   type: 'user',
   attributes: {
@@ -27,7 +32,7 @@ const johnfItem = {
     yearOfBirth: 1987
   },
   relationships: {
-    feeds: [{ id: 'news', type: 'feed' }, { id: 'social', type: 'feed' }]
+    feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
   }
 }
 
@@ -37,7 +42,7 @@ test.after.always(() => {
 
 // Tests
 
-test('should complete ident with token', async (t) => {
+test('should complete ident with token', async t => {
   nock('http://some.api')
     .get('/users')
     .query({ tokens: 'twitter|23456' })
@@ -49,12 +54,15 @@ test('should complete ident with token', async (t) => {
     access: { status: 'granted', ident: johnfIdent }
   }
 
-  const ret = await getIdent({ type: 'GET_IDENT', payload: {}, meta: { ident } }, { getService, identOptions })
+  const ret = await getIdent(
+    { type: 'GET_IDENT', payload: {}, meta: { ident } },
+    { getService, identOptions }
+  )
 
   t.deepEqual(ret, expected)
 })
 
-test('should complete ident with id', async (t) => {
+test('should complete ident with id', async t => {
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: { ...johnfData } })
@@ -65,12 +73,15 @@ test('should complete ident with id', async (t) => {
     access: { status: 'granted', ident: johnfIdent }
   }
 
-  const ret = await getIdent({ type: 'GET_IDENT', payload: {}, meta: { ident } }, { getService, identOptions })
+  const ret = await getIdent(
+    { type: 'GET_IDENT', payload: {}, meta: { ident } },
+    { getService, identOptions }
+  )
 
   t.deepEqual(ret, expected)
 })
 
-test('should complete ident with id when more props are present', async (t) => {
+test('should complete ident with id when more props are present', async t => {
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: { ...johnfData } })
@@ -81,49 +92,64 @@ test('should complete ident with id when more props are present', async (t) => {
     access: { status: 'granted', ident: johnfIdent }
   }
 
-  const ret = await getIdent({ type: 'GET_IDENT', payload: {}, meta: { ident } }, { getService, identOptions })
+  const ret = await getIdent(
+    { type: 'GET_IDENT', payload: {}, meta: { ident } },
+    { getService, identOptions }
+  )
 
   t.deepEqual(ret, expected)
 })
 
-test('should return noaction when no props', async (t) => {
+test('should return noaction when no props', async t => {
   const ident = {}
 
-  const ret = await getIdent({ type: 'GET_IDENT', payload: {}, meta: { ident } }, { getService, identOptions })
+  const ret = await getIdent(
+    { type: 'GET_IDENT', payload: {}, meta: { ident } },
+    { getService, identOptions }
+  )
 
   t.is(ret.status, 'noaction')
   t.is(typeof ret.error, 'string')
 })
 
-test('should return noaction when null', async (t) => {
+test('should return noaction when null', async t => {
   const ident = null
 
-  const ret = await getIdent({ type: 'GET_IDENT', payload: {}, meta: { ident } }, { getService, identOptions })
+  const ret = await getIdent(
+    { type: 'GET_IDENT', payload: {}, meta: { ident } },
+    { getService, identOptions }
+  )
 
   t.is(ret.status, 'noaction')
   t.is(typeof ret.error, 'string')
 })
 
-test('should return noaction when no ident options', async (t) => {
+test('should return noaction when no ident options', async t => {
   const ident = { withToken: 'twitter|23456' }
 
-  const ret = await getIdent({ type: 'GET_IDENT', payload: {}, meta: { ident } }, { getService })
+  const ret = await getIdent(
+    { type: 'GET_IDENT', payload: {}, meta: { ident } },
+    { getService }
+  )
 
   t.is(ret.status, 'noaction')
   t.is(typeof ret.error, 'string')
 })
 
-test('should return notfound when ident not found', async (t) => {
+test('should return notfound when ident not found', async t => {
   const ident = { id: 'unknown' }
 
-  const ret = await getIdent({ type: 'GET_IDENT', payload: {}, meta: { ident } }, { getService, identOptions })
+  const ret = await getIdent(
+    { type: 'GET_IDENT', payload: {}, meta: { ident } },
+    { getService, identOptions }
+  )
 
   t.truthy(ret)
   t.is(ret.status, 'notfound')
   t.is(typeof ret.error, 'string')
 })
 
-test('should complete ident with other prop keys', async (t) => {
+test('should complete ident with other prop keys', async t => {
   nock('http://some.api')
     .get('/entries')
     .query({ author: 'johnf' })
@@ -138,15 +164,21 @@ test('should complete ident with other prop keys', async (t) => {
     }
   }
   const getService = () => great.services.entries
-  const expectedAccess = { status: 'granted', ident: { id: 'johnf', roles: ['news', 'sports'], tokens: undefined } }
+  const expectedAccess = {
+    status: 'granted',
+    ident: { id: 'johnf', roles: ['news', 'sports'], tokens: undefined }
+  }
 
-  const ret = await getIdent({ type: 'GET_IDENT', payload: {}, meta: { ident } }, { getService, identOptions })
+  const ret = await getIdent(
+    { type: 'GET_IDENT', payload: {}, meta: { ident } },
+    { getService, identOptions }
+  )
 
   t.is(ret.status, 'ok')
   t.deepEqual(ret.access, expectedAccess)
 })
 
-test('should return error when unknown service', async (t) => {
+test('should return error when unknown service', async t => {
   nock('http://some.api')
     .get('/users')
     .query({ tokens: 'twitter|23456' })
@@ -154,7 +186,10 @@ test('should return error when unknown service', async (t) => {
   const getService = () => null
   const ident = { withToken: 'twitter|23456' }
 
-  const ret = await getIdent({ type: 'GET_IDENT', payload: {}, meta: { ident } }, { getService, identOptions })
+  const ret = await getIdent(
+    { type: 'GET_IDENT', payload: {}, meta: { ident } },
+    { getService, identOptions }
+  )
 
   t.is(ret.status, 'error')
 })

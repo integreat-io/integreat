@@ -36,9 +36,6 @@ test('should map response and merge with request data', async t => {
     payload: { type: 'entry', data: entry1Item },
     meta: { ident: { root: true } }
   }
-  const responseMapping = {
-    data: { path: 'content.items' }
-  }
   const defs = {
     schemas: [entrySchema],
     services: [
@@ -46,7 +43,7 @@ test('should map response and merge with request data', async t => {
         ...entriesService,
         endpoints: [
           {
-            responseMapping,
+            responseMapping: 'content.items',
             options: { uri: '/{id}' }
           }
         ]
@@ -56,6 +53,7 @@ test('should map response and merge with request data', async t => {
   }
   const expectedData = [
     {
+      $schema: 'entry',
       id: 'ent1',
       type: 'entry',
       attributes: {

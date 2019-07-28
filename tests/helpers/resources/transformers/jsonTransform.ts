@@ -1,4 +1,4 @@
-const jsonTransform = (obj) => JSON.parse(obj)
-jsonTransform.rev = (str) => JSON.stringify(str)
-
-export default jsonTransform
+export default function jsonTransform() {
+  return (data, { rev }: { rev: boolean }) =>
+    rev ? JSON.stringify(data) : JSON.parse(data)
+}

@@ -1,9 +1,28 @@
-import { validate } from 'map-transform'
-import createRequestMapper from './createRequestMapper'
-import createResponseMapper from './createResponseMapper'
+import {
+  mapTransform,
+  set,
+  fwd,
+  rev,
+  validate,
+  MapDefinition,
+  MapObject
+} from 'map-transform'
 import compareEndpoints from './compareEndpoints'
 import matchEndpoint from './matchEndpoint'
 import { preparePipeline } from '../utils/preparePipeline'
+import { DataObject } from '../types'
+
+function createMapper(mapping: MapDefinition, mapOptions: DataObject) {
+  if (mapping) {
+    return mapTransform(
+      typeof mapping === 'string'
+        ? [`data.${mapping}`, set('data')]
+        : mapping,
+      mapOptions
+    )
+  }
+  return null
+}
 
 const prepareMatch = (match = {}) => {
   const filters = match.filters
@@ -14,11 +33,21 @@ const prepareMatch = (match = {}) => {
   return filters.length > 0 ? { ...match, filters } : match
 }
 
-const prepareMappings = (mappingsDef, setupMapping) =>
-  Object.keys(mappingsDef).reduce((mappings, type) => {
-    const mapping = setupMapping(mappingsDef[type], type)
-    return mapping ? { ...mappings, [type]: mapping } : mappings
-  }, {})
+const mappingFromDef = (def: MapDefinition | undefined) =>
+  [
+    fwd('data'),
+    typeof def === 'string' ? { $apply: def } : def,
+    rev(set('data'))
+  ] as MapDefinition
+
+const prepareMappings = (mappingsDef: MapObject, mapOptions: DataObject) =>
+  Object.entries(mappingsDef).reduce(
+    (mappings, [type, def]) => ({
+      ...mappings,
+      [type]: mapTransform(mappingFromDef(def as MapDefinition), mapOptions)
+    }),
+    {}
+  )
 
 const callUntilResponse = fns => action => {
   for (let fn of fns) {
@@ -38,27 +67,25 @@ const prepareEndpoint = (
   transformers,
   serviceOptions,
   mappings,
-  setupMapping
+  mapOptions
 ) => endpoint => ({
   ...endpoint,
   match: prepareMatch(endpoint.match),
   validate: prepareValidate(endpoint.validate, transformers),
-  requestMapper: createRequestMapper(endpoint, { transformers }),
-  responseMapper: createResponseMapper(endpoint, { transformers }),
+  requestMapper: createMapper(endpoint.requestMapping, mapOptions),
+  responseMapper: createMapper(endpoint.responseMapping, mapOptions),
   options: endpoint.incoming
     ? endpoint.options
     : adapter.prepareEndpoint(endpoint.options, serviceOptions),
-  mappings: prepareMappings({ ...mappings, ...endpoint.mappings }, setupMapping)
+  mappings: prepareMappings({ ...mappings, ...endpoint.mappings }, mapOptions)
 })
 
 function prepareEndpoints(
   { endpoints, options, mappings = {} },
-  { adapter, transformers = {}, setupMapping }
+  { adapter, transformers = {}, mapOptions }
 ) {
   const list = endpoints
-    .map(
-      prepareEndpoint(adapter, transformers, options, mappings, setupMapping)
-    )
+    .map(prepareEndpoint(adapter, transformers, options, mappings, mapOptions))
     .sort(compareEndpoints)
 
   return {

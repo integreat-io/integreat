@@ -1,6 +1,8 @@
 import cast from './cast'
 import castQueryParams from './castQueryParams'
 import mapAny = require('map-any')
+import createDefMapping from './createDefMapping'
+import { GenericData, SchemaDef } from '../types'
 
 const expandField = val => (typeof val === 'string' ? { type: val } : val)
 const expandFields = vals =>
@@ -31,8 +33,8 @@ const prepareDefaultRels = relationships =>
 
 /**
  * Create a schema with the given id and service.
- * @param {Object} def - Object with id, plural, service, attributes, and relationships
- * @returns {Object} The created schema
+ * @param def - Object with id, plural, service, attributes, and relationships
+ * @returns The created schema
  */
 function schema({
   id,
@@ -42,7 +44,7 @@ function schema({
   relationships: relDefs,
   access,
   internal = false
-}) {
+}: SchemaDef) {
   const attributes = {
     ...expandFields(attrDefs || {}),
     id: { type: 'string' },
@@ -54,6 +56,20 @@ function schema({
 
   const defaultAttrs = prepareDefaultAttrs(attributes, attrDefs)
   const defaultRels = prepareDefaultRels(relationships, relDefs)
+
+  const mapping = createDefMapping(
+    {
+      id: 'string',
+      type: { $cast: 'string', $const: id },
+      attributes: {
+        ...attrDefs,
+        createdAt: 'date',
+        updatedAt: 'date'
+      },
+      relationships: relDefs
+    },
+    id
+  )
 
   const castFn = cast({
     id,
@@ -71,17 +87,18 @@ function schema({
     attributes,
     relationships,
     access,
+    mapping,
 
     /**
      * Will cast the given data according to the type. Attributes will be
      * coerced to the right format, relationships will be expanded to
      * relationship objects, and object properties will be moved from
      * `attributes` or be set with defaults.
-     * @param {Object} data - The data to cast
-     * @param {boolean} onlyMappedValues - Will use defaults if true
-     * @returns {Object} Returned data in the format expected from the schema
+     * @param data - The data to cast
+     * @param options - onlyMappedValues: use defaults if true
+     * @returns Returned data in the format expected from the schema
      */
-    cast(data, { onlyMappedValues = false } = {}) {
+    cast(data: GenericData, { onlyMappedValues = false } = {}) {
       return mapAny(data => castFn(data, { onlyMappedValues }), data)
     },
 
@@ -93,11 +110,11 @@ function schema({
      * of this object references field ids in the given data item. The returned
      * query object will have these ids replaced with actual field values.
      *
-     * @param {string} relId - The id of a relationship
-     * @param {Object} data - A data item to get field values from.
-     * @returns {Object} Query object
+     * @param relId - The id of a relationship
+     * @param data - A data item to get field values from.
+     * @returns Query object
      */
-    castQueryParams(relId, data) {
+    castQueryParams(relId: string, data: GenericData) {
       return castQueryParams(relId, data, { relationships })
     }
   }

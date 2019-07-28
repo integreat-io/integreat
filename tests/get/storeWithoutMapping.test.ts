@@ -11,7 +11,8 @@ const defs = {
     {
       id: 'entries-entry',
       type: 'entry',
-      service: 'entries'
+      service: 'entries',
+      pipeline: [{ $apply: 'cast_entry' }]
     }
   ]
 }
@@ -33,7 +34,7 @@ test('should get one entry from service', async t => {
           updatedAt
         },
         relationships: {
-          author: { id: 'johnf', type: 'user' }
+          author: { id: 'johnf', $ref: 'user' }
         }
       }
     })
@@ -41,21 +42,21 @@ test('should get one entry from service', async t => {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' }
   }
-  const expected = [
-    {
-      id: 'ent1',
-      type: 'entry',
-      attributes: {
-        title: 'Entry 1',
-        text: 'The first entry ever created',
-        createdAt: new Date(createdAt),
-        updatedAt: new Date(updatedAt)
-      },
-      relationships: {
-        author: { id: 'johnf', type: 'user' }
-      }
+  const expected = {
+    $schema: 'entry',
+    id: 'ent1',
+    type: 'entry',
+    attributes: {
+      title: 'Entry 1',
+      text: 'The first entry ever created',
+      createdAt: new Date(createdAt),
+      updatedAt: new Date(updatedAt)
+    },
+    relationships: {
+      author: { id: 'johnf', $ref: 'user' },
+      sections: []
     }
-  ]
+  }
 
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)

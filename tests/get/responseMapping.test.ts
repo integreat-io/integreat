@@ -14,6 +14,31 @@ import integreat = require('../..')
 
 const transformers = { jsonTransform }
 
+const responseMapping = [
+  'data',
+  {
+    status: 'reponseValue',
+    data: 'responseContent.articles[]',
+    error: 'responseMessage'
+  }
+]
+
+const defsWithResponseMapping = (responseMapping) => ({
+  schemas: [entrySchema],
+  services: [
+    {
+      ...entriesService,
+      endpoints: [
+        {
+          responseMapping,
+          options: { uri: '/{id}' }
+        }
+      ]
+    }
+  ],
+  mappings: [entriesMapping]
+})
+
 // Tests
 
 test('should map with response mapping', async t => {
@@ -28,28 +53,7 @@ test('should map with response mapping', async t => {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' }
   }
-  const responseMapping = {
-    status: 'reponseValue',
-    data: {
-      path: 'responseContent.articles[]'
-    },
-    error: 'responseMessage'
-  }
-  const defs = {
-    schemas: [entrySchema],
-    services: [
-      {
-        ...entriesService,
-        endpoints: [
-          {
-            responseMapping,
-            options: { uri: '/{id}' }
-          }
-        ]
-      }
-    ],
-    mappings: [entriesMapping]
-  }
+  const defs = defsWithResponseMapping(responseMapping)
 
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -77,28 +81,7 @@ test('should use status code mapped from data', async t => {
     type: 'GET',
     payload: { type: 'entry', id: 'ent2' }
   }
-  const responseMapping = {
-    status: 'reponseValue',
-    data: {
-      path: 'responseContent.articles[]'
-    },
-    error: 'responseMessage'
-  }
-  const defs = {
-    schemas: [entrySchema],
-    services: [
-      {
-        ...entriesService,
-        endpoints: [
-          {
-            responseMapping,
-            options: { uri: '/{id}' }
-          }
-        ]
-      }
-    ],
-    mappings: [entriesMapping]
-  }
+  const defs = defsWithResponseMapping(responseMapping)
 
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -122,28 +105,7 @@ test('should not override adater error with data status', async t => {
     type: 'GET',
     payload: { type: 'entry', id: 'ent2' }
   }
-  const responseMapping = {
-    status: 'reponseValue',
-    data: {
-      path: 'responseContent.articles[]'
-    },
-    error: 'responseMessage'
-  }
-  const defs = {
-    schemas: [entrySchema],
-    services: [
-      {
-        ...entriesService,
-        endpoints: [
-          {
-            responseMapping,
-            options: { uri: '/{id}' }
-          }
-        ]
-      }
-    ],
-    mappings: [entriesMapping]
-  }
+  const defs = defsWithResponseMapping(responseMapping)
 
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -167,29 +129,9 @@ test('should map with sub mapping', async t => {
     payload: { type: 'entry', id: 'ent3' }
   }
   const responseMapping = {
-    'data[]': {
-      path: 'responseContent',
-      transform: 'jsonTransform',
-      sub: {
-        path: 'articles[]'
-      }
-    }
+    'data[]': ['data.responseContent', { $transform: 'jsonTransform' }, 'articles[]']
   }
-  const defs = {
-    schemas: [entrySchema],
-    services: [
-      {
-        ...entriesService,
-        endpoints: [
-          {
-            responseMapping,
-            options: { uri: '/{id}' }
-          }
-        ]
-      }
-    ],
-    mappings: [entriesMapping]
-  }
+  const defs = defsWithResponseMapping(responseMapping)
 
   const great = integreat(defs, { adapters, transformers })
   const ret = await great.dispatch(action)

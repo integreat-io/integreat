@@ -26,16 +26,18 @@ const wrapOk = (data, ident) => ({
   access: { status: 'granted', ident }
 })
 
-const prepareResponse = (response, params, propKeys) => {
-  const { data } = response
+const getFirstIfArray = (data) => Array.isArray(data) ? data[0] : data
 
-  if (data && data[0]) {
+const prepareResponse = (response, params, propKeys) => {
+  const data = getFirstIfArray(response.data)
+
+  if (data) {
     const completeIdent = {
-      id: getField(data[0], propKeys.id),
-      roles: getField(data[0], propKeys.roles),
-      tokens: getField(data[0], propKeys.tokens)
+      id: getField(data, propKeys.id),
+      roles: getField(data, propKeys.roles),
+      tokens: getField(data, propKeys.tokens)
     }
-    return wrapOk(data[0], completeIdent)
+    return wrapOk(data, completeIdent)
   } else {
     return createError(
       `Could not find ident with params ${util.inspect(params)}`,
@@ -83,7 +85,7 @@ async function getIdent({ payload, meta }, { getService, identOptions = {} }) {
     meta: { ident: { root: true } }
   })
 
-  return prepareResponse(response, payload, propKeys)
+  return prepareResponse(response, params, propKeys)
 }
 
 export default getIdent

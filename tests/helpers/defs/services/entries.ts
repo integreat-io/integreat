@@ -2,23 +2,33 @@ export default {
   id: 'entries',
   adapter: 'json',
   options: { baseUri: 'http://some.api/entries' },
+  mappings: {
+    entry: 'entries-entry',
+    user: 'users-user'
+  },
   endpoints: [
     {
       match: { action: 'GET', scope: 'collection', params: { offset: true } },
-      responseMapping: {
-        data: 'data[]',
-        'paging.next.type': { path: 'none1', default: 'entry' },
-        'paging.next.offset': 'offset'
-      },
+      responseMapping: [
+        'data',
+        {
+          data: 'data[]',
+          'paging.next.type': [{ $transform: 'fixed', value: 'entry' }],
+          'paging.next.offset': 'offset'
+        }
+      ],
       options: { uri: '/{?offset=offset?}' }
     },
     {
       match: { action: 'GET', scope: 'collection' },
-      responseMapping: {
-        data: 'data[]',
-        'paging.next.type': { path: 'none1', default: 'entry' },
-        'paging.next.offset': 'offset'
-      },
+      responseMapping: [
+        'data',
+        {
+          data: 'data[]',
+          'paging.next.type': [{ $transform: 'fixed', value: 'entry' }],
+          'paging.next.offset': 'offset'
+        }
+      ],
       options: { uri: '/' }
     },
     {
@@ -27,8 +37,16 @@ export default {
       responseMapping: 'data[]',
       options: { uri: '/', method: 'POST' }
     },
-    { match: { scope: 'member' }, responseMapping: 'data', options: { uri: '/{id}' } },
-    { match: { action: 'GET', params: { author: true } }, responseMapping: 'data', options: { uri: '{?author}' } },
+    {
+      match: { scope: 'member' },
+      responseMapping: 'data',
+      options: { uri: '/{id}' }
+    },
+    {
+      match: { action: 'GET', params: { author: true } },
+      responseMapping: 'data',
+      options: { uri: '{?author}' }
+    },
     {
       match: {
         action: 'REQUEST',
@@ -37,9 +55,11 @@ export default {
           'params.requestMethod': { const: 'GET' }
         }
       },
-      responseMapping: {
-        'params.id': 'key'
-      },
+      responseMapping: [
+        {
+          'params.id': 'data.key'
+        }
+      ],
       incoming: true,
       options: { actionType: 'GET', actionPayload: { type: 'entry' } }
     },
@@ -54,9 +74,5 @@ export default {
       incoming: true,
       options: { actionType: 'SET', actionPayload: { type: 'entry' } }
     }
-  ],
-  mappings: {
-    entry: 'entries-entry',
-    user: 'users-user'
-  }
+  ]
 }

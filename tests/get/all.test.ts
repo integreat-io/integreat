@@ -13,7 +13,8 @@ test('should get all entries from service', async t => {
     .reply(200, { data: entriesData })
   const action = {
     type: 'GET',
-    payload: { type: 'entry' }
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' } }
   }
 
   const great = integreat(defs, { adapters })

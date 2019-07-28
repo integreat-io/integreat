@@ -3,7 +3,7 @@ import nock = require('nock')
 import createService from '../service'
 import schema from '../schema'
 import json from 'integreat-adapter-json'
-import setupMapping from '../mapping'
+import functions from '../transformers/builtIns'
 
 import getMeta from './getMeta'
 
@@ -22,16 +22,21 @@ const schemas = {
   })
 }
 
+const pipelines = {
+  'cast_meta': schemas.meta.mapping
+}
+
+const mapOptions = { pipelines, functions }
+
 const setupService = (id, { meta, endpoints = [] } = {}) => createService({
   schemas,
-  mappings: [],
-  setupMapping: setupMapping({ schemas })
+  mapOptions
 })({
   id,
   adapter: json,
   meta,
   endpoints,
-  mappings: { meta: {} }
+  mappings: { meta: [{ $apply: 'cast_meta' }] }
 })
 
 const lastSyncedAt = new Date()

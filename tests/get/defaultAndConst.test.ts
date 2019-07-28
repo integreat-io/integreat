@@ -18,25 +18,30 @@ const entryNoHeadline = {
 test('should transform entry', async t => {
   const adapters = { json }
   nock('http://some.api')
-    .get('/entries/ent1')
+    .get('/entries/')
     .reply(200, { data: [entry1, entryNoHeadline] })
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent1' }
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' } }
   }
-  const mapping = {
-    attributes: {
+  const mapping = [
+    {
+      $iterate: true,
       id: 'key',
-      title: { path: 'headline', default: 'No title' },
-      text: 'body',
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt'
+      attributes: {
+        title: ['headline', { $alt: 'value', value: 'No title' }],
+        text: 'body',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt'
+      },
+      relationships: {
+        author: [{ $transform: 'fixed', value: 'admin' }],
+        sections: 'sections[]'
+      }
     },
-    relationships: {
-      'author.id': { const: 'admin' },
-      sections: 'sections[]'
-    }
-  }
+    { $apply: 'cast_entry' }
+  ]
   const defs = {
     schemas: [entrySchema],
     services: [{ ...entriesService, mappings: { entry: mapping } }]
@@ -45,13 +50,13 @@ test('should transform entry', async t => {
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(ret.data.length, 2)
   const item0 = ret.data[0]
   t.is(item0.id, 'ent1')
   t.is(item0.attributes.title, 'Entry 1')
   t.is(item0.relationships.author.id, 'admin')
-  t.is(item0.relationships.author.type, 'user')
+  t.is(item0.relationships.author.$ref, 'user')
   const item1 = ret.data[1]
   t.is(item1.id, 'ent2')
   t.is(item1.attributes.title, 'No title')

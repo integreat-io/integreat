@@ -7,24 +7,22 @@ const hasCollectionEndpoint = endpoints =>
     endpoint => endpoint.match && endpoint.match.scope === 'members'
   )
 
+const isErrorResponse = response =>
+  response.status !== 'ok' && response.status !== 'notfound'
+
 const getIndividualItems = async (ids, action, getService) => {
   const responses = await Promise.all(
     ids.map(id => get(appendToAction(action, { id }), { getService }))
   )
-  if (
-    responses.some(
-      response => response.status !== 'ok' && response.status !== 'notfound'
-    )
-  ) {
-    return {
-      status: 'error',
-      error: `One or more of the requests for ids ${ids} failed.`
-    }
-  }
-  return {
-    status: 'ok',
-    data: responses.map(response => response.data && response.data[0])
-  }
+  return responses.some(isErrorResponse)
+    ? {
+        status: 'error',
+        error: `One or more of the requests for ids ${ids} failed.`
+      }
+    : {
+        status: 'ok',
+        data: responses.map(response => Array.isArray(response.data) ? response.data[0] : response.data)
+      }
 }
 
 const getIdFromPayload = ({ id }) =>

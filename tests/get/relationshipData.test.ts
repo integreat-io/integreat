@@ -17,17 +17,23 @@ const entryMapping = {
   id: 'entries-entry',
   type: 'entry',
   service: 'entries',
-  attributes: {
-    id: 'key',
-    title: { path: 'headline', default: 'An entry' },
-    text: 'body',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
-  },
-  relationships: {
-    author: { mapping: 'entries-user' },
-    'sections.id': 'sections[]'
-  }
+  pipeline: [
+    {
+      $iterate: true,
+      id: 'key',
+      attributes: {
+        title: ['headline', { $alt: 'value', value: 'An entry' }],
+        text: 'body',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt'
+      },
+      relationships: {
+        author: ['author', { $apply: 'entries-user' }],
+        'sections.id': 'sections[]'
+      }
+    },
+    { $apply: 'cast_entry' }
+  ]
 }
 
 // Tests
@@ -50,6 +56,7 @@ test('should get all entries from service', async t => {
     payload: { type: 'entry', id: 'ent1' }
   }
   const expectedRel = {
+    $schema: 'user',
     id: 'johnf',
     type: 'user',
     attributes: {
@@ -63,7 +70,7 @@ test('should get all entries from service', async t => {
       tokens: ['twitter|23456', 'facebook|12345']
     },
     relationships: {
-      feeds: [{ id: 'news', type: 'feed' }, { id: 'social', type: 'feed' }]
+      feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
     }
   }
 

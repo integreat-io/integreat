@@ -6,7 +6,7 @@ const prepareMeta = (keys, meta) =>
     ? []
         .concat(keys)
         .filter(key => key !== 'createdAt' && key !== 'updatedAt')
-        .reduce((ret, key) => ({ ...ret, [key]: meta[key] || null }), {})
+        .reduce((ret, key) => ({ ...ret, [key]: (meta && meta[key]) || null }), {})
     : prepareMeta(Object.keys(meta), meta)
 
 /**
@@ -54,7 +54,7 @@ async function getMeta({ payload, meta }, { getService }) {
 
   if (response.status === 'ok') {
     const { data } = response
-    const meta = prepareMeta(keys, data[0].attributes)
+    const meta = prepareMeta(keys, data.attributes)
     return { ...response, data: { service: serviceId, meta } }
   } else {
     return response
