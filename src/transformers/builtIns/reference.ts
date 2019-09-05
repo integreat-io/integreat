@@ -6,23 +6,26 @@ interface Operands {
   type?: string
 }
 
-interface Context {
-  rev?: boolean
+function extractId(value: Data) {
+  if (isDataObject(value)) {
+    return value.id
+  } else {
+    return value instanceof Date ? value.getTime() : value
+  }
 }
 
-const extractId = (value: Data) =>
-  isDataObject(value)
-    ? value.id
-    : value instanceof Date
-    ? value.getTime()
-    : value
+function extractProps(value: Data) {
+  if (isDataObject(value)) {
+    const { isNew, isDeleted } = value
+    return {
+      ...(isNew === true ? { isNew } : {}),
+      ...(isDeleted === true ? { isDeleted } : {})
+    }
+  }
+  return {}
+}
 
-const isRev = (context: Context) =>
-  typeof context === 'object' && context !== null && context.rev === true
-
-const castItem = (type: string | undefined, context: Context) => (
-  value: Data
-) => {
+const castItem = (type: string | undefined) => (value: Data) => {
   if (type === undefined) {
     return undefined
   }
@@ -34,12 +37,11 @@ const castItem = (type: string | undefined, context: Context) => (
 
   const id = extractId(value)
   if (typeof id === 'string' || (typeof id === 'number' && !isNaN(id))) {
-    return isRev(context)
-      ? String(id)
-      : {
-          id: String(id),
-          $ref: type
-        }
+    return {
+      id: String(id),
+      $ref: type,
+      ...extractProps(value)
+    }
   } else if (id === null) {
     return null
   } else {
@@ -48,6 +50,5 @@ const castItem = (type: string | undefined, context: Context) => (
 }
 
 export default function reference({ type }: Operands) {
-  return (value: Data, context: Context): Data =>
-    mapAny(castItem(type, context), value)
+  return (value: Data, _context: object): Data => mapAny(castItem(type), value)
 }

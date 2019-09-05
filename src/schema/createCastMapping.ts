@@ -1,6 +1,12 @@
-import { MapObject } from 'map-transform'
-import { Schema, PropertySchema } from '../types'
-import { isSchema, isPropertySchema } from '../utils/is'
+import mapAny = require('map-any')
+import { MapObject, transform, fwd, rev, filter } from 'map-transform'
+import { Schema, PropertySchema, Data } from '../types'
+import {
+  isSchema,
+  isPropertySchema,
+  isDataObject,
+  isTypedData
+} from '../utils/is'
 
 const primitiveTypes = ['string', 'integer', 'number', 'boolean', 'date']
 
@@ -59,13 +65,39 @@ const mappingFromSchema = (schema: Schema): MapObject =>
     }
   }, {})
 
+function equalOrNoSchema(type: string) {
+  return (data: Data) => !type || !isTypedData(data) || data.$type === type
+}
+
+const cleanUpCast = (type: string) =>
+  mapAny((item: Data) => {
+    if (isDataObject(item)) {
+      const { isNew, isDeleted, ...fields } = item
+      return {
+        $type: type,
+        ...fields,
+        ...(isNew === true ? { isNew } : {}),
+        ...(isDeleted === true ? { isDeleted } : {})
+      }
+    } else {
+      return item
+    }
+  })
+
 export default function createCastMapping(schema: Schema, type: string) {
+  const filterItem = filter(equalOrNoSchema(type))
+  const cleanUpTransform = transform(cleanUpCast(type))
+
   return [
-    { $filter: 'equalOrNoSchema', type },
+    fwd(filterItem),
+    rev(cleanUpTransform),
     {
       $iterate: true,
-      $type: ['$type', { $transform: 'fixed', value: type }],
-      ...mappingFromSchema(schema)
-    }
+      ...mappingFromSchema(schema),
+      isNew: ['isNew', { $transform: 'boolean' }],
+      isDeleted: ['isDeleted', { $transform: 'boolean' }]
+    },
+    fwd(cleanUpTransform),
+    rev(filterItem)
   ]
 }

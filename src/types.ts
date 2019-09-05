@@ -16,11 +16,15 @@ export interface TypedData extends DataObject {
   id?: string
   createdAt?: TypedData | string
   updatedAt?: TypedData | string
+  isNew?: boolean
+  isDeleted?: boolean
 }
 
 export interface Reference {
   id: string | null
   $ref: string
+  isNew?: boolean
+  isDeleted?: boolean
 }
 
 export interface DataFunction {

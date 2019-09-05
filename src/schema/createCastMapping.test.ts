@@ -156,18 +156,15 @@ test('should reverse transform with mapping definition from schema', t => {
       lat: '5.326373',
       active: 'true',
       createdAt: '2019-03-11T18:43:09Z',
-      author: { id: 'johnf', $ref: 'user' },
-      comments: [
-        { id: 'comment12', $ref: 'comment' },
-        { id: 'comment13', $ref: 'comment' }
-      ]
+      author: 'johnf',
+      comments: ['comment12', { id: 'comment13', $ref: 'comment' }]
     },
     {
       $type: 'entry',
       id: 'ent2',
       age: 244511383,
       createdAt: new Date('2019-03-12T09:40:43Z'),
-      author: { id: 'maryk', $ref: 'user' },
+      author: { id: 'maryk' },
       comments: [{ id: 'comment23', $ref: 'comment' }]
     }
   ]
@@ -183,8 +180,11 @@ test('should reverse transform with mapping definition from schema', t => {
       lat: 5.326373,
       active: true,
       createdAt: new Date('2019-03-11T18:43:09Z'),
-      author: 'johnf',
-      comments: ['comment12', 'comment13']
+      author: { id: 'johnf', $ref: 'user' },
+      comments: [
+        { id: 'comment12', $ref: 'comment' },
+        { id: 'comment13', $ref: 'comment' }
+      ]
     },
     {
       $type: 'entry',
@@ -197,8 +197,8 @@ test('should reverse transform with mapping definition from schema', t => {
       lat: undefined,
       active: undefined,
       createdAt: new Date('2019-03-12T09:40:43Z'),
-      author: 'maryk',
-      comments: ['comment23']
+      author: { id: 'maryk', $ref: 'user' },
+      comments: [{ id: 'comment23', $ref: 'comment' }]
     }
   ]
 
@@ -369,7 +369,183 @@ test('should skip items already cast with another $type', t => {
   t.deepEqual(ret, expected)
 })
 
+test('should pass on items already cast with this $type', t => {
+  const schema = {
+    id: 'string',
+    title: 'string'
+  }
+  const data = [
+    {
+      $type: 'entry',
+      id: 'ent1',
+      title: 'Entry 1'
+    }
+  ]
+  const expected = data
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    functions: transformFunctions
+  })(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should skip items already cast with another $type in reverse', t => {
+  const schema = {
+    id: 'string',
+    title: 'string'
+  }
+  const data = [
+    {
+      $type: 'user',
+      id: 'johnf',
+      name: 'John F.'
+    }
+  ]
+  const expected = []
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    functions: transformFunctions
+  }).rev(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should pass on items already cast with this $type in reverse', t => {
+  const schema = {
+    id: 'string',
+    title: 'string'
+  }
+  const data = [
+    {
+      $type: 'entry',
+      id: 'ent1',
+      title: 'Entry 1'
+    }
+  ]
+  const expected = data
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    functions: transformFunctions
+  }).rev(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should keep isNew and isDeleted when true', t => {
+  const schema = {
+    id: 'string',
+    title: 'string'
+  }
+  const data = [
+    {
+      id: '12345',
+      title: 'Entry 1',
+      isNew: true,
+      isDeleted: true
+    }
+  ]
+  const expected = [
+    {
+      $type: 'entry',
+      id: '12345',
+      title: 'Entry 1',
+      isNew: true,
+      isDeleted: true
+    }
+  ]
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    functions: transformFunctions
+  })(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should remove isNew and isDeleted when false', t => {
+  const schema = {
+    id: 'string',
+    title: 'string'
+  }
+  const data = [
+    {
+      id: '12345',
+      title: 'Entry 1',
+      isNew: false,
+      isDeleted: false
+    }
+  ]
+  const expected = [
+    {
+      $type: 'entry',
+      id: '12345',
+      title: 'Entry 1'
+    }
+  ]
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    functions: transformFunctions
+  })(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should keep isNew and isDeleted when true in reverse', t => {
+  const schema = {
+    id: 'string',
+    title: 'string'
+  }
+  const data = [
+    {
+      id: '12345',
+      title: 'Entry 1',
+      isNew: true,
+      isDeleted: true
+    }
+  ]
+  const expected = [
+    {
+      $type: 'entry',
+      id: '12345',
+      title: 'Entry 1',
+      isNew: true,
+      isDeleted: true
+    }
+  ]
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    functions: transformFunctions
+  }).rev(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should remove isNew and isDeleted when false in reverse', t => {
+  const schema = {
+    id: 'string',
+    title: 'string'
+  }
+  const data = [
+    {
+      id: '12345',
+      title: 'Entry 1',
+      isNew: false,
+      isDeleted: false
+    }
+  ]
+  const expected = [
+    {
+      $type: 'entry',
+      id: '12345',
+      title: 'Entry 1'
+    }
+  ]
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    functions: transformFunctions
+  }).rev(data)
+
+  t.deepEqual(ret, expected)
+})
+
 test.todo('should have some more error checking, probably')
-test.todo('cast should keep isNew when true')
-test.todo('cast should keep isDeleted when true')
-test.todo('cast should remove isTrue and isDeleted when false')
