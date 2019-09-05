@@ -36,14 +36,14 @@
   },
   "dependencies": {
     "@types/later": "^1.2.5",
-    "@types/uuid": "^3.4.5",
+    "@types/nanoid": "^2.0.0",
     "debug": "^4.1.1",
     "got": "^9.6.0",
     "later": "^1.2.0",
     "map-any": "^0.2.1",
     "map-transform": "^0.3.6",
-    "ramda": "^0.26.1",
-    "uuid": "^3.2.2"
+    "nanoid": "^2.1.0",
+    "ramda": "^0.26.1"
   },
   "devDependencies": {
     "@types/nock": "^10.0.3",

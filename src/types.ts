@@ -23,10 +23,14 @@ export interface Reference {
   $ref: string
 }
 
+export interface DataFunction {
+  (): Data
+}
+
 export interface PropertySchema {
   $cast: string
-  $default?: Data
-  $const?: Data
+  $default?: Data | DataFunction
+  $const?: Data | DataFunction
 }
 
 export interface Schema {

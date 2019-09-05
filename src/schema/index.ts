@@ -1,6 +1,7 @@
 import createCastMapping from './createCastMapping'
 import { SchemaDef, PropertySchema, Schema } from '../types'
 import { isSchema } from '../utils/is'
+import nanoid = require('nanoid')
 
 const expandField = (val: Schema | PropertySchema | string | undefined) =>
   typeof val === 'string'
@@ -14,6 +15,9 @@ const expandFields = (vals: Schema) =>
     (newVals, [key, def]) => ({ ...newVals, [key]: expandField(def) }),
     {}
   )
+
+const defaultId = () => nanoid()
+const defaultDate = () => new Date()
 
 /**
  * Create a schema with the given id and service.
@@ -43,9 +47,9 @@ export default function createSchema({
     mapping: createCastMapping(
       {
         ...fields,
-        id: 'string',
-        createdAt: 'date',
-        updatedAt: 'date'
+        id: { $cast: 'string', $default: defaultId },
+        createdAt: { $cast: 'date', $default: defaultDate },
+        updatedAt: { $cast: 'date', $default: defaultDate }
       },
       id
     )

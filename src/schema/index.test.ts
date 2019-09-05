@@ -1,6 +1,7 @@
 import test from 'ava'
 import { mapTransform } from 'map-transform'
 import builtIns from '../transformers/builtIns'
+import { DataObject } from '../types'
 
 import schema from '.'
 
@@ -155,4 +156,78 @@ test('should provide cast mapping', t => {
   const ret = mapTransform(mapping, { functions: builtIns })(data)
 
   t.deepEqual(ret, expected)
+})
+
+test('should set createdAt and updatedAt to now when not set', t => {
+  const def = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    fields: {
+      id: 'string',
+      title: 'string',
+      createdAt: 'date',
+      updatedAt: 'date'
+    }
+  }
+  const data = {
+    id: 12345,
+    title: 'Entry 1'
+  }
+  const before = Date.now()
+
+  const mapping = schema(def).mapping
+  const ret = mapTransform(mapping, { functions: builtIns })(data)
+
+  const after = Date.now()
+  const { createdAt, updatedAt } = ret as DataObject
+  t.true(createdAt instanceof Date)
+  t.true(updatedAt instanceof Date)
+  t.deepEqual(createdAt, updatedAt)
+  t.true((createdAt as Date).getTime() >= before)
+  t.true((createdAt as Date).getTime() <= after)
+})
+
+test('should cast id to string', t => {
+  const def = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    fields: {
+      id: 'string',
+      title: 'string'
+    }
+  }
+  const data = {
+    id: 35,
+    title: 'Entry 1'
+  }
+
+  const mapping = schema(def).mapping
+  const ret = mapTransform(mapping, { functions: builtIns })(data)
+
+  const { id } = ret as DataObject
+  t.is(id, '35')
+})
+
+test('should generate id when not set', t => {
+  const def = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    fields: {
+      id: 'string',
+      title: 'string'
+    }
+  }
+  const data = {
+    title: 'Entry 1'
+  }
+
+  const mapping = schema(def).mapping
+  const ret = mapTransform(mapping, { functions: builtIns })(data)
+
+  const { id } = ret as DataObject
+  t.is(typeof id, 'string')
+  t.true((id as string).length >= 21)
 })
