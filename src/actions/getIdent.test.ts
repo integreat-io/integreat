@@ -20,7 +20,7 @@ const johnfIdent = {
   tokens: ['twitter|23456', 'facebook|12345']
 }
 const johnfItem = {
-  $schema: 'user',
+  $type: 'user',
   id: 'johnf',
   firstname: 'John',
   lastname: 'Fjon',

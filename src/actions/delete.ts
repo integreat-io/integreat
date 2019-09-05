@@ -10,7 +10,7 @@ const prepareData = payload => {
 
   if (type && id) {
     // Delete one action -- return as data
-    return [{ id, $schema: type }]
+    return [{ id, $type: type }]
   } else {
     // Filter away null values
     return [].concat(payload.data).filter(item => !!item)

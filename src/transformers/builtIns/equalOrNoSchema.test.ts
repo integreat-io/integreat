@@ -12,7 +12,7 @@ const operands = {
 
 test('should return true when item has given schema type', t => {
   const item = {
-    $schema: 'entry',
+    $type: 'entry',
     id: 'ent1',
     title: 'Entry 1'
   }
@@ -24,7 +24,7 @@ test('should return true when item has given schema type', t => {
 
 test('should return false when item has other schema type', t => {
   const item = {
-    $schema: 'user',
+    $type: 'user',
     id: 'johnf',
     name: 'John F.'
   }

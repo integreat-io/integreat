@@ -8,12 +8,12 @@ import integreat = require('../..')
 // Helpers
 
 const johnfItem = {
-  $schema: 'user',
+  $type: 'user',
   id: 'johnf',
   username: 'johnf'
 }
 const bettyItem = {
-  $schema: 'user',
+  $type: 'user',
   id: 'betty',
   username: 'betty'
 }

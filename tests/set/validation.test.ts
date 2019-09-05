@@ -11,7 +11,7 @@ const createdAt = new Date()
 const updatedAt = new Date()
 
 const entryWithAuthor = {
-  $schema: 'entry',
+  $type: 'entry',
   id: 'ent1',
   title: 'Entry 1',
   createdAt,
@@ -20,7 +20,7 @@ const entryWithAuthor = {
 }
 
 const entryWithoutAuthor = {
-  $schema: 'entry',
+  $type: 'entry',
   id: 'ent2',
   title: 'Entry 2',
   createdAt,

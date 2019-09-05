@@ -64,7 +64,7 @@ export default function createCastMapping(schema: Schema, type: string) {
     { $filter: 'equalOrNoSchema', type },
     {
       $iterate: true,
-      $schema: ['$schema', { $transform: 'fixed', value: type }],
+      $type: ['$type', { $transform: 'fixed', value: type }],
       ...mappingFromSchema(schema)
     }
   ]

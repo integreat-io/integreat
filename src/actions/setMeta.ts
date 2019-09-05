@@ -41,7 +41,7 @@ async function setMeta({ payload, meta }, { getService }) {
     endpointDebug
   )
 
-  const data = { id, $schema: type, ...metaAttrs }
+  const data = { id, $type: type, ...metaAttrs }
   const { response } = await metaService.send({
     type: 'SET',
     payload: {

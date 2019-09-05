@@ -65,7 +65,7 @@ const mappings = {
 
 test('should map data', t => {
   const data = {
-    $schema: 'entry',
+    $type: 'entry',
     id: 'ent1',
     title: 'The heading',
     service: { id: 'thenews', $ref: 'service' }
@@ -86,7 +86,7 @@ test('should map data', t => {
 
 test('should map data with defaults', t => {
   const data = {
-    $schema: 'entry',
+    $type: 'entry',
     id: 'ent1',
     title: 'The heading',
     service: { id: 'thenews', $ref: 'service' }
@@ -110,7 +110,7 @@ test('should map data with defaults', t => {
 test('should map array of data', t => {
   const data = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent1',
       title: 'The heading'
     }
@@ -139,7 +139,7 @@ test('should map array of data to top level', t => {
       mapOptions
     )
   }
-  const data = [{ id: 'ent1', $schema: 'entry', title: 'The heading' }]
+  const data = [{ id: 'ent1', $type: 'entry', title: 'The heading' }]
   const request = { action: 'SET', params: {}, endpoint: {}, data }
   const expected = [{ key: 'ent1', header: 'The heading' }]
 
@@ -151,15 +151,15 @@ test('should map array of data to top level', t => {
 test('should map data of different types', t => {
   const data = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent1'
     },
     {
-      $schema: 'account',
+      $type: 'account',
       id: 'acc1'
     },
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent2'
     }
   ]
@@ -203,7 +203,7 @@ test('should return undefined when empty array', t => {
 
 test('should map with request mapper', t => {
   const data = {
-    $schema: 'entry',
+    $type: 'entry',
     id: 'ent1',
     title: 'The heading',
     service: { id: 'thenews', $ref: 'service' }

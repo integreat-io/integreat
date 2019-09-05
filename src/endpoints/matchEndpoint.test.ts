@@ -255,7 +255,7 @@ test('should match when filter is validated', t => {
   ])
   const action = {
     type: 'POST',
-    payload: { data: { $schema: 'entry', title: 'Entry 1', draft: false } }
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } }
   }
 
   const ret = matchEndpoint(endpoints)(action)
@@ -271,7 +271,7 @@ test('should not match when filter is invalidated', t => {
   ])
   const action = {
     type: 'POST',
-    payload: { data: { $schema: 'entry', title: 'Entry 1', draft: true } }
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } }
   }
 
   const ret = matchEndpoint(endpoints)(action)
@@ -287,7 +287,7 @@ test('should match when all filters are validated', t => {
   ])
   const action = {
     type: 'POST',
-    payload: { data: { $schema: 'entry', title: 'Entry 1', draft: false } }
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } }
   }
 
   const ret = matchEndpoint(endpoints)(action)
@@ -303,7 +303,7 @@ test('should not match when one filter is invalidated', t => {
   ])
   const action = {
     type: 'POST',
-    payload: { data: { $schema: 'entry', title: 'Entry 2', draft: false } }
+    payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } }
   }
 
   const ret = matchEndpoint(endpoints)(action)
@@ -319,7 +319,7 @@ test('should match when no filters', t => {
   ])
   const action = {
     type: 'POST',
-    payload: { data: { $schema: 'entry', title: 'Entry 1', draft: true } }
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } }
   }
 
   const ret = matchEndpoint(endpoints)(action)
@@ -337,7 +337,7 @@ test('should match with params filter', t => {
     type: 'POST',
     payload: {
       author: 'johnf',
-      data: { $schema: 'entry', title: 'Entry 1', draft: true }
+      data: { $type: 'entry', title: 'Entry 1', draft: true }
     }
   }
 
@@ -354,7 +354,7 @@ test('should match with meta filter', t => {
   ])
   const action = {
     type: 'POST',
-    payload: { data: { $schema: 'entry', title: 'Entry 1', draft: true } },
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
     meta: { ident: { root: true } }
   }
 

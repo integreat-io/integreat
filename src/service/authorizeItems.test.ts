@@ -34,8 +34,8 @@ const schemas = {
 
 test('should return all authorized data', (t) => {
   const data = [
-    { id: 'ent1', $schema: 'entry', title: 'Entry 1' },
-    { id: 'ent2', $schema: 'entry', title: 'Entry 2' }
+    { id: 'ent1', $type: 'entry', title: 'Entry 1' },
+    { id: 'ent2', $type: 'entry', title: 'Entry 2' }
   ]
   const access = null
   const action = 'GET'
@@ -50,7 +50,7 @@ test('should return all authorized data', (t) => {
 })
 
 test('should return object as object', (t) => {
-  const data = { id: 'ent1', $schema: 'entry', title: 'Entry 1' }
+  const data = { id: 'ent1', $type: 'entry', title: 'Entry 1' }
   const access = { ident: null }
   const action = 'GET'
   const expected = {
@@ -65,8 +65,8 @@ test('should return object as object', (t) => {
 
 test('should skip unauthorized data', (t) => {
   const data = [
-    { id: 'johnf', $schema: 'account', name: 'John F.' },
-    { id: 'betty', $schema: 'account', name: 'Betty' }
+    { id: 'johnf', $type: 'account', name: 'John F.' },
+    { id: 'betty', $type: 'account', name: 'Betty' }
   ]
   const access = { ident: { id: 'johnf' } }
   const action = 'GET'
@@ -81,8 +81,8 @@ test('should skip unauthorized data', (t) => {
 
 test('should not allow no access scheme when auth is reqired', (t) => {
   const data = [
-    { id: 'ent1', $schema: 'entry', title: 'Entry 1' },
-    { id: 'ent2', $schema: 'entry', title: 'Entry 2' }
+    { id: 'ent1', $type: 'entry', title: 'Entry 1' },
+    { id: 'ent2', $type: 'entry', title: 'Entry 2' }
   ]
   const access = {}
   const action = 'GET'
@@ -98,8 +98,8 @@ test('should not allow no access scheme when auth is reqired', (t) => {
 
 test('should authorized with access scheme for action', (t) => {
   const data = [
-    { id: 'johnf', $schema: 'account', name: 'John F.' },
-    { id: 'betty', $schema: 'account', name: 'Betty' }
+    { id: 'johnf', $type: 'account', name: 'John F.' },
+    { id: 'betty', $type: 'account', name: 'Betty' }
   ]
   const access = null
   const action = 'TEST'

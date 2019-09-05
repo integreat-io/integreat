@@ -76,8 +76,8 @@ test('should delete items from service', async t => {
     type: 'DELETE',
     payload: {
       data: [
-        { id: 'ent1', $schema: 'entry' },
-        { id: 'ent2', $schema: 'entry' }
+        { id: 'ent1', $type: 'entry' },
+        { id: 'ent2', $type: 'entry' }
       ],
       service: 'entries'
     }
@@ -151,8 +151,8 @@ test('should infer service id from type', async t => {
     type: 'DELETE',
     payload: {
       data: [
-        { id: 'ent1', $schema: 'entry' },
-        { id: 'ent2', $schema: 'entry' }
+        { id: 'ent1', $type: 'entry' },
+        { id: 'ent2', $type: 'entry' }
       ],
       type: 'entry'
     }
@@ -191,8 +191,8 @@ test('should delete with other endpoint and uri params', async t => {
     type: 'DELETE',
     payload: {
       data: [
-        { id: 'ent1', $schema: 'entry' },
-        { id: 'ent2', $schema: 'entry' }
+        { id: 'ent1', $type: 'entry' },
+        { id: 'ent2', $type: 'entry' }
       ],
       type: 'entry',
       endpoint: 'other',
@@ -230,7 +230,7 @@ test('should return error from response', async t => {
   const action = {
     type: 'DELETE',
     payload: {
-      data: [{ id: 'ent1', $schema: 'entry' }],
+      data: [{ id: 'ent1', $type: 'entry' }],
       type: 'entry'
     }
   }
@@ -316,8 +316,8 @@ test('should only delete items the ident is authorized to', async t => {
     type: 'DELETE',
     payload: {
       data: [
-        { id: 'johnf', $schema: 'account' },
-        { id: 'betty', $schema: 'account' }
+        { id: 'johnf', $type: 'account' },
+        { id: 'betty', $type: 'account' }
       ],
       service: 'accounts'
     },

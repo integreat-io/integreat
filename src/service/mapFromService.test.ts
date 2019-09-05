@@ -76,7 +76,7 @@ test('should map and cast data', t => {
   }
   const expected = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent1',
       title: 'The heading',
       two: 2,
@@ -154,12 +154,12 @@ test('should map and cast data of different types', t => {
   }
   const expected = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent1',
       title: 'The heading'
     },
     {
-      $schema: 'account',
+      $type: 'account',
       id: 'acc1',
       name: 'John'
     }
@@ -295,7 +295,7 @@ test('should map and cast data from set action', t => {
     endpoint: {},
     data: [
       {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'random',
         title: 'The heading',
         service: { id: 'thenews', $ref: 'service' },
@@ -310,7 +310,7 @@ test('should map and cast data from set action', t => {
   }
   const expected = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent1',
       title: 'The heading',
       two: 2,
@@ -336,7 +336,7 @@ test('should not map and cast data from set action when no responseMapper', t =>
     endpoint: {},
     data: [
       {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'random',
         title: 'The heading',
         service: { id: 'thenews', $ref: 'service' },

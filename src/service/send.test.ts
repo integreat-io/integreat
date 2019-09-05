@@ -107,8 +107,8 @@ test('send should authenticate request', async t => {
       type: 'account'
     },
     data: [
-      { $schema: 'account', id: 'johnf' },
-      { $schema: 'account', id: 'betty' }
+      { $type: 'account', id: 'johnf' },
+      { $type: 'account', id: 'betty' }
     ],
     endpoint: endpointOptions,
     access: {
@@ -156,7 +156,7 @@ test('send should map request data', async t => {
     },
     data: [
       {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'ent1',
         title: 'The heading',
         two: '2'
@@ -189,7 +189,7 @@ test('send should emit request data before mapping to service', async t => {
     },
     data: [
       {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'ent1',
         title: 'The heading',
         two: '2'
@@ -225,7 +225,7 @@ test('send should emit request data after mapping to service', async t => {
     },
     data: [
       {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'ent1',
         title: 'The heading',
         two: '2'
@@ -279,7 +279,7 @@ test('send should retrieve and map data from endpoint', async t => {
     status: 'ok',
     data: [
       {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'ent1',
         title: 'Entry 1',
         two: 2,
@@ -316,7 +316,7 @@ test('send should return authorized response', async t => {
     status: 'ok',
     data: [
       {
-        $schema: 'account',
+        $type: 'account',
         id: 'johnf'
       }
     ],
@@ -417,15 +417,15 @@ test('send should return authorized request data before mapping to service', asy
     action: 'SET',
     params: {},
     data: [
-      { $schema: 'account', id: 'johnf' },
-      { $schema: 'account', id: 'betty' }
+      { $type: 'account', id: 'johnf' },
+      { $type: 'account', id: 'betty' }
     ],
     access: { ident: { id: 'johnf' } },
     endpoint: endpointOptions
   }
   const expectedData = [
     {
-      $schema: 'account',
+      $type: 'account',
       id: 'johnf'
     }
   ]
@@ -456,7 +456,7 @@ test('send should call send with connection', async t => {
     status: 'ok',
     data: [
       {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'ent1',
         title: 'Value from existing connection',
         service: { id: 'thenews', $ref: 'service' }
@@ -493,7 +493,7 @@ test('send should call connect', async t => {
     status: 'ok',
     data: [
       {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'ent1',
         title: 'Value from connection',
         service: { id: 'thenews', $ref: 'service' }
@@ -541,7 +541,7 @@ test('send should skip unknown schemas', async t => {
   const request = {
     action: 'SET',
     params: { type: 'account' },
-    data: [{ id: 'un1', type: 'unknown' }, { $schema: 'account', id: 'johnf' }],
+    data: [{ id: 'un1', type: 'unknown' }, { $type: 'account', id: 'johnf' }],
     access: { ident: { id: 'johnf' } },
     endpoint: endpointOptions
   }

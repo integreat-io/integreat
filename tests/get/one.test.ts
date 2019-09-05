@@ -25,7 +25,7 @@ test('should get one entry from service', async t => {
     meta: { ident: { root: true } }
   }
   const expected = {
-    $schema: 'entry',
+    $type: 'entry',
     id: 'ent1',
     title: 'Entry 1',
     text: 'The text of entry 1',
@@ -59,7 +59,7 @@ test('should get one user from service', async t => {
     meta: { ident: { id: 'johnf' } }
   }
   const expected = {
-    $schema: 'user',
+    $type: 'user',
     id: 'johnf',
     username: 'johnf',
     firstname: 'John',

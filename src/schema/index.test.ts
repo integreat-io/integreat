@@ -139,7 +139,7 @@ test('should provide cast mapping', t => {
   ]
   const expected = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: '12345',
       title: 'Entry with no name',
       text: 'The first entry',

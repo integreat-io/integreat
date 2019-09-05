@@ -10,7 +10,7 @@ import integreat = require('../..')
 // Helpers
 
 const entry1Item = {
-  $schema: 'entry',
+  $type: 'entry',
   id: 'ent1',
   title: 'Entry 1'
 }

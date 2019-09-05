@@ -99,7 +99,7 @@ test('should get all items from service', async t => {
     status: 'ok',
     data: [
       {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'ent1',
         title: 'Entry 1',
         byline: 'Somebody',
@@ -414,7 +414,7 @@ test('should get only authorized items', async t => {
     status: 'ok',
     data: [
       {
-        $schema: 'account',
+        $type: 'account',
         id: 'johnf',
         name: 'John F.',
         createdAt: date,

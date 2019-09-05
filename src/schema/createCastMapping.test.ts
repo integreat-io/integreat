@@ -42,7 +42,7 @@ test('should create mapping definition from schema', t => {
   ]
   const expected = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: '12345',
       type: 'entry',
       title: 'Entry 1',
@@ -59,7 +59,7 @@ test('should create mapping definition from schema', t => {
       ]
     },
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent2',
       type: 'entry',
       title: 'Entry with no name',
@@ -109,7 +109,7 @@ test('should map props in given order', t => {
     comments: [{ id: 'comment12', $ref: 'comment' }, { id: 'comment13' }]
   }
   const expectedProps = [
-    '$schema',
+    '$type',
     'id',
     'type',
     'title',
@@ -146,7 +146,7 @@ test('should reverse transform with mapping definition from schema', t => {
   }
   const data = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 12345,
       type: 'unknown',
       title: 'Entry 1',
@@ -163,7 +163,7 @@ test('should reverse transform with mapping definition from schema', t => {
       ]
     },
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent2',
       age: 244511383,
       createdAt: new Date('2019-03-12T09:40:43Z'),
@@ -173,7 +173,7 @@ test('should reverse transform with mapping definition from schema', t => {
   ]
   const expected = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: '12345',
       type: 'entry',
       title: 'Entry 1',
@@ -187,7 +187,7 @@ test('should reverse transform with mapping definition from schema', t => {
       comments: ['comment12', 'comment13']
     },
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent2',
       title: 'Entry with no name',
       type: 'entry',
@@ -226,12 +226,12 @@ test('should be iteratable', t => {
   ]
   const expected = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: '1',
       title: 'Entry 1'
     },
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: '2',
       title: 'Entry 2'
     }
@@ -282,7 +282,7 @@ test('should create mapping definition from nested schema', t => {
   ]
   const expected = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: '12345',
       type: 'entry',
       attributes: { title: 'Entry 1', age: 180734118 },
@@ -295,7 +295,7 @@ test('should create mapping definition from nested schema', t => {
       }
     },
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent2',
       type: 'entry',
       attributes: { title: 'Entry with no name', age: 244511383 },
@@ -334,7 +334,7 @@ test('should skip properties with invalid $cast', t => {
   ]
   const expected = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: '12345',
       title: 'Entry 1'
     }
@@ -348,14 +348,14 @@ test('should skip properties with invalid $cast', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should skip items already cast with another $schema', t => {
+test('should skip items already cast with another $type', t => {
   const schema = {
     id: 'string',
     title: 'string'
   }
   const data = [
     {
-      $schema: 'user',
+      $type: 'user',
       id: 'johnf',
       name: 'John F.'
     }

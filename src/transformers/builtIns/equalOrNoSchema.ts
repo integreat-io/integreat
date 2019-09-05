@@ -6,5 +6,5 @@ interface Operands {
 }
 
 export default function equalOrNoSchema ({ type }: Operands) {
-  return (data: GenericData) => !type || !isCastedData(data) || data.$schema === type
+  return (data: GenericData) => !type || !isCastedData(data) || data.$type === type
 }

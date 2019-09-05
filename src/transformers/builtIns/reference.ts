@@ -24,7 +24,7 @@ const castItem = (type: string, context: Context) => (
   value: GenericData
 ): Data | Reference | string | null | undefined => {
   if (isCastedData(value)) {
-    return value.$schema === type ? value : undefined
+    return value.$type === type ? value : undefined
   } else if (isReference(value) && value.$ref !== type) {
     return undefined
   }

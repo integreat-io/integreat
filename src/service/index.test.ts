@@ -150,7 +150,7 @@ test('send should retrieve and map data from endpoint', async t => {
     status: 'ok',
     data: [
       {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'ent1',
         title: 'Entry 1',
         two: 2,
@@ -291,7 +291,7 @@ test('send should return authorized response', async t => {
   }
   const expected = {
     status: 'ok',
-    data: [{ $schema: 'account', id: 'johnf' }],
+    data: [{ $type: 'account', id: 'johnf' }],
     access: {
       status: 'partially',
       scheme: 'data',
@@ -323,7 +323,7 @@ test('send should cast, map and send data to service', async t => {
       type: 'entry',
       data: [
         {
-          $schema: 'entry',
+          $type: 'entry',
           id: 'ent1',
           title: 'The heading',
           two: '2'
@@ -537,7 +537,7 @@ test('receive should dispatch action with mapped data by type from request actio
       type: 'hook',
       data: [
         {
-          $schema: 'entry',
+          $type: 'entry',
           id: 'ent1',
           title: 'Entry 1'
         }
@@ -556,7 +556,7 @@ test('receive should dispatch action with mapped data by type from request actio
 test('receive should respond with serialized data', async t => {
   const data = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent1',
       title: 'Entry 1',
       two: 2

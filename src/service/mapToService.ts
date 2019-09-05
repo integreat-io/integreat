@@ -5,7 +5,7 @@ import { SendOptions, Mappings, Request } from './types'
 
 const { groupBy, prop, mergeDeepWith } = R
 
-const groupByType = groupBy(prop('$schema'))
+const groupByType = groupBy(prop('$type'))
 
 const concatOrRight = (left, right) =>
   Array.isArray(left) ? left.concat(right) : right
@@ -49,7 +49,7 @@ const mapData = (data: GenericData, request: Request, mappings: Mappings) =>
   data
     ? Array.isArray(data)
       ? mapDataPerType(groupByType(data), request, mappings)
-      : mapItems(data, request, mappings[data.$schema])
+      : mapItems(data, request, mappings[data.$type])
     : undefined
 
 const applyEndpointMapper = (request: Request, requestMapper?: MapTransform) =>

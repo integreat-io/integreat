@@ -9,7 +9,7 @@ export interface DataObject {
 export type GenericData = DataValue | DataObject | (DataValue | DataObject)[]
 
 export interface Data extends DataObject {
-  $schema: string
+  $type: string
   id?: string
   createdAt?: Data | string
   updatedAt?: Data | string

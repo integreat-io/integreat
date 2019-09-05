@@ -4,7 +4,7 @@ export const isDataObject = (value: unknown): value is DataObject =>
   typeof value === 'object' && value !== null && !(value instanceof Date)
 
 export const isCastedData = (value: unknown): value is Data =>
-  typeof value === 'object' && value !== null && value.hasOwnProperty('$schema')
+  typeof value === 'object' && value !== null && value.hasOwnProperty('$type')
 
 export const isReference = (value: unknown): value is Reference =>
   typeof value === 'object' && value !== null && value.hasOwnProperty('$ref')

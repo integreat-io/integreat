@@ -46,7 +46,7 @@ test.after(() => {
 test('should set metadata on service', async t => {
   const scope = nock('http://api1.test')
     .put('/database/meta%3Astore', {
-      $schema: 'meta',
+      $type: 'meta',
       id: 'meta:store',
       lastSyncedAt: lastSyncedAt.toISOString(),
       status: 'busy'
@@ -98,7 +98,7 @@ test('should not set metadata on service when no meta type', async t => {
 test('should set metadata on other service', async t => {
   const scope = nock('http://api3.test')
     .put('/database/meta%3Aentries', {
-      $schema: 'meta',
+      $type: 'meta',
       id: 'meta:entries',
       lastSyncedAt: lastSyncedAt.toISOString()
     })

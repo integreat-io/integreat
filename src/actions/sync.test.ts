@@ -57,8 +57,8 @@ test('should return error when GET responds with error', async (t) => {
 })
 
 test('should queue SET to target', async (t) => {
-  const johnData = { id: 'john', $schema: 'user', name: 'John' }
-  const jennyData = { id: 'jenny', $schema: 'user', name: 'Jenny' }
+  const johnData = { id: 'john', $type: 'user', name: 'John' }
+  const jennyData = { id: 'jenny', $type: 'user', name: 'Jenny' }
   const dispatch = sinon.spy(setupDispatch({
     'GET': { status: 'ok', data: [johnData, jennyData] },
     'SET': { status: 'queued' }
@@ -155,7 +155,7 @@ test('should not set lastSyncedAt when there is no updates after date filter', a
   const lastSyncedAt = new Date('2017-05-13T18:43:00Z')
   const dispatch = sinon.spy(setupDispatch({
     'GET_META': { status: 'ok', data: { meta: { lastSyncedAt } } },
-    'GET': { status: 'ok', data: [{ id: 'john', $schema: 'user', updatedAt }] },
+    'GET': { status: 'ok', data: [{ id: 'john', $type: 'user', updatedAt }] },
     'SET': { status: 'queued' }
   }))
   const payload = { from: 'users', to: 'store', type: 'user', retrieve: 'updated' }

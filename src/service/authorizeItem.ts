@@ -51,7 +51,7 @@ function authorizeItem(item, access, { schemas, action, requireAuth }) {
     return true
   }
 
-  const schema = schemas[item.$schema]
+  const schema = schemas[item.$type]
   const scheme = getScheme(schema, action)
 
   return authorizeWithScheme(item, scheme, ident, requireAuth)

@@ -13,7 +13,7 @@ const createdAt = new Date()
 const updatedAt = new Date()
 
 const entry1Item = {
-  $schema: 'entry',
+  $type: 'entry',
   id: 'ent1',
   title: 'Entry 1',
   text: 'The text of entry 1',
@@ -28,12 +28,12 @@ const entry1Item = {
 
 const entriesArr = [
   {
-    $schema: 'entry',
+    $type: 'entry',
     id: 'ent1',
     title: 'Entry 1'
   },
   {
-    $schema: 'entry',
+    $type: 'entry',
     id: 'ent2',
     title: 'Entry 2'
   }

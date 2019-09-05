@@ -10,7 +10,7 @@ import integreat = require('../..')
 // Helpers
 
 const entry1Item = {
-  $schema: 'entry',
+  $type: 'entry',
   id: 'ent1',
   title: 'Entry 1'
 }
@@ -50,7 +50,7 @@ test('should map response and merge with request data', async t => {
   }
   const expectedData = [
     {
-      $schema: 'entry',
+      $type: 'entry',
       id: 'ent1',
       title: 'Entry 1',
       text: 'Text from entry 1',

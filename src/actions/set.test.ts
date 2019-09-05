@@ -98,8 +98,8 @@ test('should map and set items to service', async t => {
     payload: {
       service: 'entries',
       data: [
-        { $schema: 'entry', id: 'ent1', title: 'Entry 1' },
-        { $schema: 'entry', id: 'ent2', title: 'Entry 2' }
+        { $type: 'entry', id: 'ent1', title: 'Entry 1' },
+        { $type: 'entry', id: 'ent2', title: 'Entry 2' }
       ]
     }
   }
@@ -122,7 +122,7 @@ test('should map and set one item to service', async t => {
     type: 'SET',
     payload: {
       type: 'entry',
-      data: { $schema: 'entry', id: 'ent1' }
+      data: { $type: 'entry', id: 'ent1' }
     }
   }
   const src = setupService('http://api5.test/database/{type}:{id}', {
@@ -149,7 +149,7 @@ test('should map with default values from type', async t => {
     payload: {
       service: 'entries',
       type: 'entry',
-      data: [{ $schema: 'entry', id: 'ent1' }],
+      data: [{ $type: 'entry', id: 'ent1' }],
       onlyMappedValues: false
     },
     meta: { ident: { id: 'johnf' } }
@@ -170,7 +170,7 @@ test('should infer service id from type', async t => {
     .reply(201, [{ ok: true }, { ok: true }])
   const payload = {
     type: 'entry',
-    data: [{ id: 'ent1', $schema: 'entry' }, { id: 'ent2', $schema: 'entry' }]
+    data: [{ id: 'ent1', $type: 'entry' }, { id: 'ent2', $type: 'entry' }]
   }
   const src = setupService('http://api2.test/database/_bulk_docs')
   const getService = (type: string, _service: string) =>
@@ -192,7 +192,7 @@ test('should set to specified endpoint', async t => {
     payload: {
       endpoint: 'other',
       service: 'entries',
-      data: [{ id: 'ent1', $schema: 'entry' }]
+      data: [{ id: 'ent1', $type: 'entry' }]
     }
   }
   const src = setupService('http://api1.test/database/_bulk_docs')
@@ -211,7 +211,7 @@ test('should set to uri with params', async t => {
   const payload = {
     typefolder: 'entries',
     service: 'entries',
-    data: [{ id: 'ent1', $schema: 'entry' }]
+    data: [{ id: 'ent1', $type: 'entry' }]
   }
   const src = setupService('http://api3.test/{typefolder}/_bulk_docs')
   const getService = () => src
@@ -229,7 +229,7 @@ test('should return error when service fails', async t => {
     .reply(404)
   const payload = {
     service: 'entries',
-    data: [{ id: 'ent1', $schema: 'entry' }]
+    data: [{ id: 'ent1', $type: 'entry' }]
   }
   const src = setupService('http://api7.test/database/_bulk_docs')
   const getService = () => src
@@ -248,7 +248,7 @@ test('should return error when no service exists for a type', async t => {
     type: 'SET',
     payload: {
       type: 'entry',
-      data: { id: 'ent1', $schema: 'entry' }
+      data: { id: 'ent1', $type: 'entry' }
     }
   }
 
@@ -259,13 +259,13 @@ test('should return error when no service exists for a type', async t => {
   t.is(ret.error, "No service exists for type 'entry'")
 })
 
-test('should get type from data $schema', async t => {
+test('should get type from data $type', async t => {
   const getService = () => null
   const action = {
     type: 'SET',
     payload: {
       type: 'entry',
-      data: { id: 'ent1', $schema: 'entry' }
+      data: { id: 'ent1', $type: 'entry' }
     }
   }
 
@@ -282,7 +282,7 @@ test('should return error when specified service does not exist', async t => {
     type: 'SET',
     payload: {
       service: 'entries',
-      data: { id: 'ent1', $schema: 'entry' }
+      data: { id: 'ent1', $type: 'entry' }
     }
   }
 
@@ -302,8 +302,8 @@ test('should authenticate items', async t => {
   const payload = {
     service: 'accounts',
     data: [
-      { id: 'johnf', $schema: 'account', name: 'John F.' },
-      { id: 'betty', $schema: 'account', name: 'Betty' }
+      { id: 'johnf', $type: 'account', name: 'John F.' },
+      { id: 'betty', $type: 'account', name: 'Betty' }
     ]
   }
   const src = setupService('http://api6.test/database/_bulk_docs', {
@@ -331,12 +331,12 @@ test('should set authorized data on response', async t => {
     service: 'accounts',
     data: [
       {
-        $schema: 'account',
+        $type: 'account',
         id: 'johnf',
         name: 'John F.'
       },
       {
-        $schema: 'account',
+        $type: 'account',
         id: 'betty',
         name: 'Betty'
       }
@@ -344,7 +344,7 @@ test('should set authorized data on response', async t => {
   }
   const expectedData = [
     {
-      $schema: 'account',
+      $type: 'account',
       id: 'johnf',
       name: 'John F.'
     }
@@ -384,7 +384,7 @@ test('should merge request data with response data', async t => {
       service: 'accounts',
       data: [
         {
-          $schema: 'account',
+          $type: 'account',
           name: 'John F.',
           posts: [{ id: 'ent1', $ref: 'entry' }]
         }
@@ -394,7 +394,7 @@ test('should merge request data with response data', async t => {
   }
   const expectedData = [
     {
-      $schema: 'account',
+      $type: 'account',
       id: 'johnf',
       name: 'John Fjon',
       posts: [{ id: 'ent1', $ref: 'entry' }]
@@ -427,7 +427,7 @@ test('should return response data when no request data', async t => {
   }
   const expectedData = [
     {
-      $schema: 'account',
+      $type: 'account',
       id: 'johnf',
       name: 'John Fjon'
     }

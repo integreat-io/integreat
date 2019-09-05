@@ -25,7 +25,7 @@ test('should get one entry from service', async t => {
     .get('/entries/ent1')
     .reply(200, {
       data: {
-        $schema: 'entry',
+        $type: 'entry',
         id: 'ent1',
         title: 'Entry 1',
         text: 'The first entry ever created',
@@ -39,7 +39,7 @@ test('should get one entry from service', async t => {
     payload: { id: 'ent1', type: 'entry' }
   }
   const expected = {
-    $schema: 'entry',
+    $type: 'entry',
     id: 'ent1',
     title: 'Entry 1',
     text: 'The first entry ever created',

@@ -402,8 +402,8 @@ test('should grant request for identFromField for some data', (t) => {
     action: 'GET',
     params: { type: 'entry' },
     data: [
-      { id: 'ent1', $schema: 'entry', author: 'ident1' },
-      { id: 'ent2', $schema: 'entry', author: 'ident2' }
+      { id: 'ent1', $type: 'entry', author: 'ident1' },
+      { id: 'ent2', $type: 'entry', author: 'ident2' }
     ],
     access: { ident: { id: 'ident1' } }
   }
@@ -413,7 +413,7 @@ test('should grant request for identFromField for some data', (t) => {
     ident: { id: 'ident1' }
   }
   const expectedData = [
-    { id: 'ent1', $schema: 'entry', author: 'ident1' }
+    { id: 'ent1', $type: 'entry', author: 'ident1' }
   ]
 
   const ret = authorizeRequest({ schemas })({ request })

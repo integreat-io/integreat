@@ -36,7 +36,7 @@ const mergeRequestAndResponseData = (response, requestData) =>
     : response
 
 const extractType = (action, data) =>
-  action.payload.type || (data && data.$schema) || undefined
+  action.payload.type || (data && data.$type) || undefined
 
 const extractId = data => (data && data.id) || undefined
 

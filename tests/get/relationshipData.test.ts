@@ -55,7 +55,7 @@ test('should get all entries from service', async t => {
     payload: { type: 'entry', id: 'ent1' }
   }
   const expectedRel = {
-    $schema: 'user',
+    $type: 'user',
     id: 'johnf',
     username: 'johnf',
     firstname: 'John',

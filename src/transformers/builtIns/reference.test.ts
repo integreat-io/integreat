@@ -65,9 +65,9 @@ test('should return undefined when existing $ref does not match type', t => {
   t.is(ret, expected)
 })
 
-test('should not touch object with $schema', t => {
+test('should not touch object with $type', t => {
   const value = {
-    $schema: 'entry',
+    $type: 'entry',
     id: 'ent1',
     title: 'Entry 1'
   }
@@ -78,9 +78,9 @@ test('should not touch object with $schema', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should return undefined when $schema does not match type', t => {
+test('should return undefined when $type does not match type', t => {
   const value = {
-    $schema: 'user',
+    $type: 'user',
     id: 'johnf',
     name: 'John F.'
   }
