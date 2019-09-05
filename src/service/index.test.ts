@@ -420,7 +420,7 @@ test('send should use mapping defined on service', async t => {
   t.is(response.data[0].id, 'ent1')
 })
 
-test.failing('send should skip mappings referenced by unknown id', async t => {
+test('send should skip mappings referenced by unknown id', async t => {
   const send = async () => ({ status: 'ok', data: [{ key: 'ent1' }] })
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
@@ -436,7 +436,7 @@ test.failing('send should skip mappings referenced by unknown id', async t => {
 
   const { response } = await service.send(action)
 
-  t.deepEqual(response.data, [])
+  t.is(response.data, undefined)
 })
 
 test('send should not map response data when unmapped is true', async t => {
