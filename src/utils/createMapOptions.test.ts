@@ -1,5 +1,4 @@
 import test from 'ava'
-import createSchema from '../schema'
 
 import createMapOptions from './createMapOptions'
 
@@ -48,15 +47,15 @@ const schemaMappings = {
 }
 
 const transformFunctions = {
-  string: () => (value: any) => String(value)
+  string: () => (value: unknown) => String(value)
 }
 
 // Tests
 
 test('should return map options with pipelines from mappings', t => {
   const expected = {
-    entries_entry: mappings[0].pipeline,
-    entries_user: mappings[1].pipeline
+    ['entries_entry']: mappings[0].pipeline,
+    ['entries_user']: mappings[1].pipeline
   }
 
   const ret = createMapOptions(mappings, {}, transformFunctions)
@@ -66,10 +65,10 @@ test('should return map options with pipelines from mappings', t => {
 
 test('should include schema cast mappings in pipelines', t => {
   const expected = {
-    entries_entry: mappings[0].pipeline,
-    entries_user: mappings[1].pipeline,
-    cast_entry: schemaMappings.entry,
-    cast_user: schemaMappings.user
+    ['entries_entry']: mappings[0].pipeline,
+    ['entries_user']: mappings[1].pipeline,
+    ['cast_entry']: schemaMappings.entry,
+    ['cast_user']: schemaMappings.user
   }
 
   const ret = createMapOptions(mappings, schemaMappings, transformFunctions)

@@ -9,10 +9,10 @@ export interface Ident {
 export interface Request<T = GenericData> {
   action: string
   params: {
-    [param: string]: any
+    [param: string]: GenericData
   }
   endpoint: {
-    [option: string]: any
+    [option: string]: GenericData
   }
   data?: T
   auth?: object | boolean

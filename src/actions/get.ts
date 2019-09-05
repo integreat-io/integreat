@@ -1,6 +1,8 @@
-const debug = require('debug')('great')
+import debugLib = require('debug')
 import appendToAction from '../utils/appendToAction'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
+
+const debug = debugLib('great')
 
 const hasCollectionEndpoint = endpoints =>
   endpoints.some(
@@ -10,9 +12,10 @@ const hasCollectionEndpoint = endpoints =>
 const isErrorResponse = response =>
   response.status !== 'ok' && response.status !== 'notfound'
 
-const getIndividualItems = async (ids, action, getService) => {
+const getIndividualItems = async (ids: string[], action, getService) => {
   const responses = await Promise.all(
-    ids.map(id => get(appendToAction(action, { id }), { getService }))
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    ids.map((id: string) => get(appendToAction(action, { id }), { getService }))
   )
   return responses.some(isErrorResponse)
     ? {
@@ -21,7 +24,9 @@ const getIndividualItems = async (ids, action, getService) => {
       }
     : {
         status: 'ok',
-        data: responses.map(response => Array.isArray(response.data) ? response.data[0] : response.data)
+        data: responses.map(response =>
+          Array.isArray(response.data) ? response.data[0] : response.data
+        )
       }
 }
 
@@ -30,9 +35,9 @@ const getIdFromPayload = ({ id }) =>
 
 /**
  * Get several items from a service, based on the given action object.
- * @param {Object} action - payload and ident from the action object
- * @param {Object} resources - Object with getService
- * @returns {array} Array of data from the service
+ * @param action - payload and ident from the action object
+ * @param resources - Object with getService
+ * @returns Array of data from the service
  */
 async function get(action, { getService } = {}) {
   const {

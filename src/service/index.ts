@@ -1,5 +1,5 @@
 import EventEmitter = require('events')
-const { compose, identity } = require('ramda')
+import R = require('ramda')
 import prepareEndpoints from '../endpoints'
 import requestFromAction from './requestFromAction'
 import {
@@ -10,6 +10,9 @@ import {
 } from './send'
 import createError from '../utils/createError'
 
+const { compose } = R
+
+// eslint-disable-next-line security/detect-object-injection
 const lookup = (id, resource) => (typeof id === 'string' ? resource[id] : id)
 
 const normalizeAction = async (action, adapter) => {

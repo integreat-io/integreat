@@ -26,7 +26,7 @@ const wrapOk = (data, ident) => ({
   access: { status: 'granted', ident }
 })
 
-const getFirstIfArray = (data) => Array.isArray(data) ? data[0] : data
+const getFirstIfArray = data => (Array.isArray(data) ? data[0] : data)
 
 const prepareResponse = (response, params, propKeys) => {
   const data = getFirstIfArray(response.data)
@@ -48,11 +48,11 @@ const prepareResponse = (response, params, propKeys) => {
 
 /**
  * Get an ident item from service, based on the meta.ident object on the action.
- * @param {Object} action - Action object
- * @param {Object} resources - Object with getService and identOptions
- * @returns {Object} Response object with ident item as data
+ * @param action - Action object
+ * @param resources - Object with getService and identOptions
+ * @returns Response object with ident item as data
  */
-async function getIdent({ payload, meta }, { getService, identOptions = {} }) {
+async function getIdent({ meta }, { getService, identOptions = {} }) {
   if (!meta.ident) {
     return createError('GET_IDENT: The request has no ident', 'noaction')
   }

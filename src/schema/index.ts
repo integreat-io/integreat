@@ -6,7 +6,7 @@ const expandField = (val: Schema | PropertySchema | string | undefined) =>
   typeof val === 'string'
     ? { $cast: val }
     : isSchema(val)
-    ? expandFields(val)
+    ? expandFields(val) // eslint-disable-line @typescript-eslint/no-use-before-define
     : val
 
 const expandFields = (vals: Schema) =>

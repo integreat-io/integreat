@@ -1,11 +1,13 @@
-const debug = require('debug')('great')
+import debugLib = require('debug')
 import createUnknownServiceError from '../utils/createUnknownServiceError'
+
+const debug = debugLib('great')
 
 /**
  * Normalize and map a request to an action, and map and serialize its response.
- * @param {Object} action - The action object
- * @param {Object} resources - Object with getService and dispatch
- * @returns {Object} Response object
+ * @param action - The action object
+ * @param resources - Object with getService and dispatch
+ * @returns Response object
  */
 async function request(action, { getService, dispatch }) {
   debug('Action: REQUEST')

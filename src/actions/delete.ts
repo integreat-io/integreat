@@ -1,7 +1,9 @@
-const debug = require('debug')('great')
+import debugLib = require('debug')
 import appendToAction from '../utils/appendToAction'
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
+
+const debug = debugLib('great')
 
 const prepareData = payload => {
   const { type, id } = payload

@@ -15,9 +15,7 @@ import { DataObject } from '../types'
 function createMapper(mapping: MapDefinition, mapOptions: DataObject) {
   if (mapping) {
     return mapTransform(
-      typeof mapping === 'string'
-        ? [`data.${mapping}`, set('data')]
-        : mapping,
+      typeof mapping === 'string' ? [`data.${mapping}`, set('data')] : mapping,
       mapOptions
     )
   }
@@ -26,8 +24,8 @@ function createMapper(mapping: MapDefinition, mapOptions: DataObject) {
 
 const prepareMatch = (match = {}) => {
   const filters = match.filters
-    ? Object.keys(match.filters).map(path =>
-        validate(path, match.filters[path])
+    ? Object.keys(match.filters).map(
+        path => validate(path, match.filters[path]) // eslint-disable-line security/detect-object-injection
       )
     : []
   return filters.length > 0 ? { ...match, filters } : match
@@ -50,7 +48,7 @@ const prepareMappings = (mappingsDef: MapObject, mapOptions: DataObject) =>
   )
 
 const callUntilResponse = fns => action => {
-  for (let fn of fns) {
+  for (const fn of fns) {
     const response = fn(action)
     if (response !== null) {
       return response

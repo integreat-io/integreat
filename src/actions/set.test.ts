@@ -45,8 +45,8 @@ const pipelines = {
     },
     { $apply: 'cast_account' }
   ],
-  cast_entry: schemas.entry.mapping,
-  cast_account: schemas.account.mapping
+  ['cast_entry']: schemas.entry.mapping,
+  ['cast_account']: schemas.account.mapping
 }
 
 const mapOptions = { pipelines, functions }
@@ -78,7 +78,7 @@ const setupService = (
   })
 }
 
-test.after(t => {
+test.after(() => {
   nock.restore()
 })
 
@@ -104,7 +104,8 @@ test('should map and set items to service', async t => {
     }
   }
   const src = setupService('http://api1.test/database/_bulk_docs')
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = (_type: string, service: string) =>
+    service === 'entries' ? src : null
 
   const ret = await set(action, { getService })
 
@@ -128,7 +129,8 @@ test('should map and set one item to service', async t => {
     method: 'PUT',
     path: null
   })
-  const getService = (type, service) => (type === 'entry' ? src : null)
+  const getService = (type: string, _service: string) =>
+    type === 'entry' ? src : null
 
   const ret = await set(action, { getService })
 
@@ -153,7 +155,7 @@ test('should map with default values from type', async t => {
     meta: { ident: { id: 'johnf' } }
   }
   const src = setupService('http://api4.test/database/_bulk_docs')
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = () => src
 
   const ret = await set(action, { getService })
 
@@ -171,7 +173,8 @@ test('should infer service id from type', async t => {
     data: [{ id: 'ent1', $schema: 'entry' }, { id: 'ent2', $schema: 'entry' }]
   }
   const src = setupService('http://api2.test/database/_bulk_docs')
-  const getService = (type, service) => (type === 'entry' ? src : null)
+  const getService = (type: string, _service: string) =>
+    type === 'entry' ? src : null
 
   const ret = await set({ type: 'SET', payload }, { getService })
 
@@ -193,7 +196,7 @@ test('should set to specified endpoint', async t => {
     }
   }
   const src = setupService('http://api1.test/database/_bulk_docs')
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = () => src
 
   const ret = await set(action, { getService })
 
@@ -211,7 +214,7 @@ test('should set to uri with params', async t => {
     data: [{ id: 'ent1', $schema: 'entry' }]
   }
   const src = setupService('http://api3.test/{typefolder}/_bulk_docs')
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = () => src
 
   const ret = await set({ type: 'SET', payload }, { getService })
 
@@ -229,7 +232,7 @@ test('should return error when service fails', async t => {
     data: [{ id: 'ent1', $schema: 'entry' }]
   }
   const src = setupService('http://api7.test/database/_bulk_docs')
-  const getService = (type, service) => src
+  const getService = () => src
 
   const ret = await set({ type: 'SET', payload }, { getService })
 
@@ -306,7 +309,8 @@ test('should authenticate items', async t => {
   const src = setupService('http://api6.test/database/_bulk_docs', {
     id: 'accounts'
   })
-  const getService = (type, service) => (service === 'accounts' ? src : null)
+  const getService = (_type: string, service: string) =>
+    service === 'accounts' ? src : null
   const ident = { id: 'johnf' }
 
   const ret = await set(
@@ -348,7 +352,8 @@ test('should set authorized data on response', async t => {
   const src = setupService('http://api8.test/database/_bulk_docs', {
     id: 'accounts'
   })
-  const getService = (type, service) => (service === 'accounts' ? src : null)
+  const getService = (_type: string, service: string) =>
+    service === 'accounts' ? src : null
   const action = {
     type: 'SET',
     payload,
@@ -399,7 +404,7 @@ test('should merge request data with response data', async t => {
     id: 'accounts',
     responseMapping: '.'
   })
-  const getService = (type, service) => (service === 'accounts' ? src : null)
+  const getService = () => src
 
   const ret = await set(action, { getService })
 
@@ -431,7 +436,7 @@ test('should return response data when no request data', async t => {
     id: 'accounts',
     responseMapping: '.'
   })
-  const getService = (type, service) => (service === 'accounts' ? src : null)
+  const getService = () => src
 
   const ret = await set(action, { getService })
 
@@ -452,7 +457,7 @@ test('should allow null as request data', async t => {
     }
   }
   const src = setupService('http://api1.test/database/_bulk_docs')
-  const getService = (type, service) => src
+  const getService = () => src
 
   const ret = await set(action, { getService })
 

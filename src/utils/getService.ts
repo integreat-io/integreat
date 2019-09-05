@@ -1,15 +1,18 @@
 /**
  * Get service from type or service id.
- * @param {Object} schemas - The schemas
- * @param {Object} services - The services
- * @returns {function} Function to retrieve service from type and service id
+ * @param schemas - The schemas
+ * @param services - The services
+ * @returns Function to retrieve service from type and service id
  */
-function getService (schemas, services) {
-  return (type, service) => {
-    if (!service && schemas[type]) {
-      service = schemas[type].service
+function getService(schemas, services) {
+  return (type: string, serviceId: string) => {
+    if (!serviceId) {
+      // eslint-disable-next-line security/detect-object-injection
+      const service = schemas[type]
+      serviceId = service ? service.service : undefined
     }
-    return services[service] || null
+    // eslint-disable-next-line security/detect-object-injection
+    return services[serviceId] || null
   }
 }
 

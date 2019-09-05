@@ -1,12 +1,14 @@
-const debug = require('debug')('great')
+import debugLib = require('debug')
 import setupGetService from './utils/getService'
+
+const debug = debugLib('great')
 
 const compose = (...fns) => fns.reduce((f, g) => (...args) => f(g(...args)))
 
 const handleAction = (action, resources, actionHandlers) => {
   if (action) {
     const { type, payload = {}, meta = {} } = action
-    const handler = actionHandlers[type]
+    const handler = actionHandlers[type] // eslint-disable-line security/detect-object-injection
 
     if (typeof handler === 'function') {
       return handler({ type, payload, meta }, resources)
@@ -19,8 +21,8 @@ const handleAction = (action, resources, actionHandlers) => {
 /**
  * Setup and return dispatch function. The dispatch function will call the
  * relevant action handler.
- * @param {Object} resources - Object with actions, schemas, services, and middlewares
- * @returns {function} Dispatch function, accepting an action as only argument
+ * @param resources - Object with actions, schemas, services, and middlewares
+ * @returns Dispatch function, accepting an action as only argument
  */
 function setupDispatch({
   actions: actionHandlers = {},

@@ -1,4 +1,4 @@
-const is = require('@sindresorhus/is')
+import { isEmptyObject } from '../utils/is'
 
 const doAuthGrant = (scheme, ident) => {
   switch (scheme) {
@@ -44,7 +44,7 @@ const getAccessObject = (access, action) =>
   (access.actions && access.actions[getActionPrefix(action)]) || access
 
 export const getScheme = (schema, action) => {
-  if (!schema || !schema.access || is.emptyObject(schema.access)) {
+  if (!schema || !schema.access || isEmptyObject(schema.access)) {
     return null
   }
 

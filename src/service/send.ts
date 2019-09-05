@@ -1,4 +1,4 @@
-const { compose } = require('ramda')
+import R = require('ramda')
 import authorizeRequest from './authorizeRequest'
 import mapFromService from './mapFromService'
 import mapToService from './mapToService'
@@ -8,6 +8,8 @@ import serializeRequest from './serializeRequest'
 import authorizeResponse from './authorizeResponse'
 import authenticate from './authenticate'
 import connect from './connect'
+
+const { compose } = R
 
 const composeWithOptions = (...fns) => options => {
   const fnsWithOptions = fns.map(fn => fn(options))

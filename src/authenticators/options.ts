@@ -9,10 +9,10 @@ const optionsAuth = {
    * Would normaly perform an authentication request and return the token
    * received, but in optionsAuth the given options object is returned as the
    * authentication object.
-   * @param {Object} options - An options object
-   * @returns {Object} An authentication object
+   * @param options - An options object
+   * @returns An authentication object
    */
-  async authenticate (options) {
+  async authenticate(options) {
     return { status: 'granted', ...options }
   },
 
@@ -20,10 +20,10 @@ const optionsAuth = {
    * Check whether we've already ran authentication.
    * In the optionsAuth, this will always be true, as no authentication is
    * really necessary.
-   * @param {Object} authentication - The object returned from `authenticate()`
-   * @returns {boolean} `true` if already authenticated, otherwise `false`
+   * @param authentication - The object returned from `authenticate()`
+   * @returns `true` if already authenticated, otherwise `false`
    */
-  isAuthenticated (authentication) {
+  isAuthenticated(authentication) {
     return !!(authentication && authentication.status === 'granted')
   },
 
@@ -32,20 +32,20 @@ const optionsAuth = {
    * with this strategy.
    * For OptionsStrategy, this will simply be the options object given on
    * creation.
-   * @param {Object} authentication - The object returned from `authenticate()`
-   * @returns {Object} Auth object
+   * @param authentication - The object returned from `authenticate()`
+   * @returns Auth object
    */
-  asObject ({ status, ...options }) {
-    return (status === 'granted') ? options : {}
+  asObject({ status, ...options }) {
+    return status === 'granted' ? options : {}
   },
 
   /**
    * Return a headers object with the headers needed for authenticated requests
    * with this strategy. For OptionsStrategy, there will be no headers.
-   * @param {Object} authentication - The object returned from `authenticate()`
-   * @returns {Object} Headers object
+   * @param authentication - The object returned from `authenticate()`
+   * @returns Headers object
    */
-  asHttpHeaders (authentication) {
+  asHttpHeaders(_authentication) {
     return {}
   }
 }

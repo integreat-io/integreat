@@ -8,7 +8,10 @@ const operands = { type: 'entry' }
 const context = {}
 const contextRev = { type: 'entry', rev: true }
 
-const createRel = (id: string, type = 'entry') => ({ id, $ref: type })
+const createRel = (id: string | number | null, type = 'entry') => ({
+  id: typeof id === 'number' ? String(id) : id,
+  $ref: type
+})
 
 // Tests
 
@@ -31,13 +34,19 @@ test('should return relationship object from value', t => {
 
 test('should return just the id in reverse', t => {
   t.deepEqual(reference(operands)('ent1', contextRev), 'ent1')
-  t.deepEqual(reference(operands)({ id: 'ent1', $ref: 'entry' }, contextRev), 'ent1')
+  t.deepEqual(
+    reference(operands)({ id: 'ent1', $ref: 'entry' }, contextRev),
+    'ent1'
+  )
   t.deepEqual(reference(operands)({ id: 'ent1' }, contextRev), 'ent1')
 })
 
 test('should transform illegal values to undefined', t => {
   t.is(reference(operands)({}, context), undefined)
-  t.is(reference(operands)({ noid: '12345', title: 'Wrong' }, context), undefined)
+  t.is(
+    reference(operands)({ noid: '12345', title: 'Wrong' }, context),
+    undefined
+  )
   t.is(reference(operands)(new Date('No date'), context), undefined)
   t.is(reference(operands)(NaN, context), undefined)
   t.is(reference(operands)(true, context), undefined)
@@ -98,7 +107,7 @@ test('should iterate array', t => {
     null,
     undefined,
     true,
-    {} as any
+    {}
   ]
   const expected = [
     createRel('ent1'),
@@ -119,22 +128,14 @@ test('should iterate array', t => {
 test('should iterate array in reverse', t => {
   const value = [
     createRel('ent1'),
-    createRel(12345 as any),
-    createRel(null as any),
+    createRel(12345),
+    createRel(null),
     'ent1',
     { id: 'ent1' },
     null,
     undefined
   ]
-  const expected = [
-    'ent1',
-    '12345',
-    null,
-    'ent1',
-    'ent1',
-    null,
-    undefined
-  ]
+  const expected = ['ent1', '12345', null, 'ent1', 'ent1', null, undefined]
 
   const ret = reference(operands)(value, contextRev)
 

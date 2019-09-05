@@ -1,12 +1,12 @@
 const getPluralType = (type, schemas) =>
-  (schemas[type] && schemas[type].plural) || (type && `${type}s`)
+  (schemas[type] && schemas[type].plural) || (type && `${type}s`) // eslint-disable-line security/detect-object-injection
 
 /**
  * Complete missing props and allow only expected props on the request object.
- * @param {Object} request - The request object to complete
- * @returns {Object} The completed request object
+ * @param request - The request object to complete
+ * @returns The completed request object
  */
-function requestFromAction (
+function requestFromAction(
   { type: action, payload, meta = {} },
   { endpoint, schemas = {} } = {}
 ) {

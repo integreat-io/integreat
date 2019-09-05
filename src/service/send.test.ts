@@ -63,8 +63,8 @@ const accountMapping = [
 
 const mapOptions = {
   pipelines: {
-    cast_entry: schemas.entry.mapping,
-    cast_account: schemas.account.mapping
+    ['cast_entry']: schemas.entry.mapping,
+    ['cast_account']: schemas.account.mapping
   },
   functions
 }
@@ -81,8 +81,8 @@ const createAdapter = (overrides = {}) => ({
   connect: async (options, auth, connection) => connection,
   serialize: async request => request,
   send: async () => ({ status: 'ok', data: [] }),
-  normalize: async (response, request) => response,
-  disconnect: connection => {},
+  normalize: async (response, _request) => response,
+  disconnect: () => {},
   ...overrides
 })
 
@@ -97,7 +97,7 @@ test('send should authenticate request', async t => {
       status: 'granted',
       headers: { Authorization: token }
     }),
-    isAuthenticated: authentication => false,
+    isAuthenticated: () => false,
     asHttpHeaders: ({ headers }) => headers
   }
   const authOptions = { token: 't0k3n' }
@@ -541,10 +541,7 @@ test('send should skip unknown schemas', async t => {
   const request = {
     action: 'SET',
     params: { type: 'account' },
-    data: [
-      { id: 'un1', type: 'unknown' },
-      { $schema: 'account', id: 'johnf' }
-    ],
+    data: [{ id: 'un1', type: 'unknown' }, { $schema: 'account', id: 'johnf' }],
     access: { ident: { id: 'johnf' } },
     endpoint: endpointOptions
   }

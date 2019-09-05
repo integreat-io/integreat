@@ -1,7 +1,9 @@
-const debug = require('debug')('great')
+import debugLib = require('debug')
 import { flatten } from 'ramda'
 import action from '../utils/createAction'
 import createError from '../utils/createError'
+
+const debug = debugLib('great')
 
 const makeErrorString = results =>
   results
@@ -89,15 +91,15 @@ const generateToParams = ({ to, type }, fromParams) => {
   }
 }
 
-const filterDataOnUpdatedDates = (data, updatedAfter, updatedUntil) =>
-  Array.isArray(data) && data.length > 0 && (updatedAfter || updatedUntil)
-    ? data.filter(isWithinUpdateWindow(updatedAfter, updatedUntil))
-    : data
-
 const isWithinUpdateWindow = (updatedAfter, updatedUntil) => item =>
   item.updatedAt &&
   (!updatedAfter || item.updatedAt > updatedAfter) &&
   (!updatedUntil || item.updatedAt <= updatedUntil)
+
+const filterDataOnUpdatedDates = (data, updatedAfter, updatedUntil) =>
+  Array.isArray(data) && data.length > 0 && (updatedAfter || updatedUntil)
+    ? data.filter(isWithinUpdateWindow(updatedAfter, updatedUntil))
+    : data
 
 const getFromService = (
   dispatch,
@@ -151,9 +153,9 @@ const createSetMetas = (fromParams, lastSyncedAt, ident, dispatch) =>
  * The `lastSyncedAt` metadata will be set on the `from` service when items
  * are retrieved and updated.
  *
- * @param {Object} payload - Action payload (from, to, type, and retrieve)
- * @param {Object} resources - Dispatch function
- * @returns {Promise} Promise of the action result
+ * @param payload - Action payload (from, to, type, and retrieve)
+ * @param resources - Dispatch function
+ * @returns Promise of the action result
  */
 async function sync({ payload, meta = {} }, { dispatch }) {
   debug('Action: SYNC')

@@ -13,20 +13,23 @@ const request = {
 
 // Tests
 
-test('should call connect and return connection', async (t) => {
+test('should call connect and return connection', async t => {
   const serviceOptions = { value: 'Value from options' }
   const authentication = { token: 't0k3n' }
   const adapter = {
-    connect: async ({ value }, { token }, connection) => ({ status: 'ok', value, token })
+    connect: async ({ value }, { token }) => ({ status: 'ok', value, token })
   }
   const expected = { status: 'ok', value: 'Value from options', token: 't0k3n' }
 
-  const ret = await connect({ adapter, serviceOptions })({ request, authentication })
+  const ret = await connect({ adapter, serviceOptions })({
+    request,
+    authentication
+  })
 
   t.deepEqual(ret.connection, expected)
 })
 
-test('should store connection', async (t) => {
+test('should store connection', async t => {
   const setConnection = sinon.stub()
   const connection = { status: 'ok', value: 'Store this' }
   const adapter = {
@@ -39,11 +42,12 @@ test('should store connection', async (t) => {
   t.deepEqual(setConnection.args[0][0], connection)
 })
 
-test('should provide connect with existing connection', async (t) => {
+test('should provide connect with existing connection', async t => {
   const setConnection = sinon.stub()
   const connection = { status: 'ok', value: 'Existing' }
   const adapter = {
-    connect: async (options, auth, connection) => connection || { status: 'ok', value: 'New' }
+    connect: async (_options, _auth, connection) =>
+      connection || { status: 'ok', value: 'New' }
   }
   const expected = { status: 'ok', value: 'Existing' }
 
@@ -53,9 +57,9 @@ test('should provide connect with existing connection', async (t) => {
   t.is(setConnection.callCount, 0)
 })
 
-test('should not connect when error response is set', async (t) => {
+test('should not connect when error response is set', async t => {
   const adapter = {
-    connect: async (options, auth, connection) => ({ status: 'ok' })
+    connect: async () => ({ status: 'ok' })
   }
   const response = { status: 'error', error: 'Oh no' }
 
@@ -64,7 +68,7 @@ test('should not connect when error response is set', async (t) => {
   t.deepEqual(ret, {})
 })
 
-test('should not return connection when no connect method on adapter', async (t) => {
+test('should not return connection when no connect method on adapter', async t => {
   const setConnection = sinon.stub()
   const adapter = {}
 
@@ -74,15 +78,15 @@ test('should not return connection when no connect method on adapter', async (t)
   t.is(setConnection.callCount, 0)
 })
 
-test('should return error response when connection fails', async (t) => {
+test('should return error response when connection fails', async t => {
   const setConnection = sinon.stub()
   const serviceId = 'entries'
   const adapter = {
-    connect: async (options, auth, connection) => ({ status: 'notfound', error: 'Not found' })
+    connect: async () => ({ status: 'notfound', error: 'Not found' })
   }
   const expectedResponse = {
     status: 'error',
-    error: 'Could not connect to service \'entries\': Not found'
+    error: "Could not connect to service 'entries': Not found"
   }
 
   const ret = await connect({ adapter, setConnection, serviceId })({ request })
@@ -93,11 +97,11 @@ test('should return error response when connection fails', async (t) => {
   t.is(setConnection.args[0][0], null)
 })
 
-test('should set connection to null on noaction', async (t) => {
+test('should set connection to null on noaction', async t => {
   const setConnection = sinon.stub()
   const serviceId = 'entries'
   const adapter = {
-    connect: async (options, auth, connection) => ({ status: 'noaction' })
+    connect: async () => ({ status: 'noaction' })
   }
   const expected = {
     connection: null

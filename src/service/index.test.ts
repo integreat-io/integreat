@@ -70,8 +70,8 @@ const accountMapping = [
 
 const mapOptions = {
   pipelines: {
-    cast_entry: schemas.entry.mapping,
-    cast_account: schemas.account.mapping,
+    ['cast_entry']: schemas.entry.mapping,
+    ['cast_account']: schemas.account.mapping,
     entry: entryMapping,
     entry2: entry2Mapping,
     account: accountMapping
@@ -152,8 +152,9 @@ test('send should retrieve and map data from endpoint', async t => {
       {
         $schema: 'entry',
         id: 'ent1',
-        title: 'Entry 1', two: 2,
-          service: { id: 'thenews', $ref: 'service' }
+        title: 'Entry 1',
+        two: 2,
+        service: { id: 'thenews', $ref: 'service' }
       }
     ],
     access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
@@ -324,7 +325,8 @@ test('send should cast, map and send data to service', async t => {
         {
           $schema: 'entry',
           id: 'ent1',
-          title: 'The heading', two: '2'
+          title: 'The heading',
+          two: '2'
         },
         undefined
       ]
@@ -537,7 +539,7 @@ test('receive should dispatch action with mapped data by type from request actio
         {
           $schema: 'entry',
           id: 'ent1',
-            title: 'Entry 1'
+          title: 'Entry 1'
         }
       ]
     },
@@ -556,7 +558,8 @@ test('receive should respond with serialized data', async t => {
     {
       $schema: 'entry',
       id: 'ent1',
-      title: 'Entry 1', two: 2
+      title: 'Entry 1',
+      two: 2
     }
   ]
   const dispatch = async () => ({

@@ -1,9 +1,9 @@
-const crypto = require('crypto')
+import crypto = require('crypto')
 
 const replaceRegex = /[+/=]/g
 
-const replaceReserved = hash => {
-  return hash.replace(replaceRegex, match => {
+const replaceReserved = (hash: string) => {
+  return hash.replace(replaceRegex, (match: string) => {
     switch (match) {
       case '+':
         return '-'
@@ -11,17 +11,19 @@ const replaceReserved = hash => {
         return '_'
       case '=':
         return '~'
+      default:
+        return match
     }
   })
 }
 
-function hash(value) {
+function hash(value: unknown) {
   if (value === null || value === undefined || value === '') {
     return value
   }
-  value = String(value)
   const hasher = crypto.createHash('sha256')
-  return replaceReserved(hasher.update(value).digest('base64'))
+  const hash = hasher.update(String(value)).digest('base64')
+  return replaceReserved(hash)
 }
 
 export default hash

@@ -1,7 +1,9 @@
-const debug = require('debug')('great')
+import debugLib = require('debug')
 import createError from '../utils/createError'
 import scheduleToAction from '../utils/scheduleToAction'
 import enqueue from './enqueue'
+
+const debug = debugLib('great')
 
 async function schedule(defs, queue) {
   defs = [].concat(defs)

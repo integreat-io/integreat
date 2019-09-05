@@ -3,12 +3,13 @@ import sinon = require('sinon')
 
 import request from './request'
 
-test('should call service.receive with action and return response', async (t) => {
+test('should call service.receive with action and return response', async t => {
   const response = { status: 'ok', data: '[]' }
   const service = {
     receive: sinon.stub().resolves({ response })
   }
-  const getService = (type, serviceId) => (type === 'entry') ? service : null
+  const getService = (type: string, _serviceId: string) =>
+    type === 'entry' ? service : null
   const dispatch = async () => ({ status: 'ok' })
   const action = {
     type: 'REQUEST',
@@ -24,11 +25,12 @@ test('should call service.receive with action and return response', async (t) =>
   t.deepEqual(ret, response)
 })
 
-test('should get service with service id', async (t) => {
+test('should get service with service id', async t => {
   const service = {
     receive: sinon.stub().resolves({ response: { status: 'ok', data: '[]' } })
   }
-  const getService = (type, serviceId) => (serviceId === 'entries') ? service : null
+  const getService = (_type: string, serviceId: string) =>
+    serviceId === 'entries' ? service : null
   const dispatch = async () => ({ status: 'ok' })
   const action = {
     type: 'REQUEST',
@@ -41,8 +43,8 @@ test('should get service with service id', async (t) => {
   t.is(service.receive.callCount, 1)
 })
 
-test('should return error on unknown service', async (t) => {
-  const getService = (type, serviceId) => null
+test('should return error on unknown service', async t => {
+  const getService = () => null
   const dispatch = async () => ({ status: 'ok' })
   const action = {
     type: 'REQUEST',
@@ -51,7 +53,7 @@ test('should return error on unknown service', async (t) => {
   }
   const expected = {
     status: 'error',
-    error: 'No service exists for type \'entry\''
+    error: "No service exists for type 'entry'"
   }
 
   const ret = await request(action, { getService, dispatch })

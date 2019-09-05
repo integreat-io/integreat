@@ -50,8 +50,8 @@ const accountMapping = [
 
 const mapOptions = {
   pipelines: {
-    cast_entry: schemas.entry.mapping,
-    cast_account: schemas.account.mapping
+    ['cast_entry']: schemas.entry.mapping,
+    ['cast_account']: schemas.account.mapping
   },
   functions: functions()
 }

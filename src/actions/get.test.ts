@@ -50,13 +50,13 @@ const pipelines = {
     },
     { $apply: 'cast_account' }
   ],
-  'cast_entry': schemas.entry.mapping,
-  'cast_account': schemas.account.mapping
+  ['cast_entry']: schemas.entry.mapping,
+  ['cast_account']: schemas.account.mapping
 }
 
 const mapOptions = { pipelines, functions }
 
-const setupService = (uri, match = {}, { id = 'entries' } = {}) =>
+const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
   createService({ schemas, mapOptions })({
     id,
     adapter: json,
@@ -93,7 +93,8 @@ test('should get all items from service', async t => {
   }
   const ident = { id: 'johnf' }
   const src = setupService('http://api1.test/database')
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = (_type: string, service: string) =>
+    service === 'entries' ? src : null
   const expected = {
     status: 'ok',
     data: [
@@ -112,7 +113,7 @@ test('should get all items from service', async t => {
 
   const ret = await get(
     { type: 'GET', payload, meta: { ident } },
-    { getService, schemas }
+    { getService }
   )
 
   t.deepEqual(ret, expected)
@@ -128,9 +129,10 @@ test('should get item by id from service', async t => {
     service: 'entries'
   }
   const src = setupService('http://api1.test/database/{type}:{id}')
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = (_type: string, service: string) =>
+    service === 'entries' ? src : null
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(ret.data.id, 'ent1')
@@ -149,9 +151,9 @@ test('should get items by id array from service from member_s_ endpoint', async 
   const src = setupService('http://api12.test/entries{?id}', {
     scope: 'members'
   })
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = () => src
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.status, 'ok', ret.error)
   t.true(Array.isArray(ret.data))
@@ -167,16 +169,17 @@ test('should get items by id array from service from member endpoints', async t 
     .get('/entries/ent2')
     .reply(200, { id: 'ent2', type: 'entry' })
     .get('/entries/ent3')
-    .reply(404, null)
+    .reply(404, undefined)
   const payload = {
     id: ['ent1', 'ent2', 'ent3'],
     type: 'entry',
     service: 'entries'
   }
   const src = setupService('http://api6.test/entries/{id}', { scope: 'member' })
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = (_type: string, service: string) =>
+    service === 'entries' ? src : null
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.status, 'ok', ret.error)
   t.true(Array.isArray(ret.data))
@@ -199,9 +202,9 @@ test('should pass on ident when getting from id array', async t => {
   sinon.stub(src, 'send').resolves({
     response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }
   })
-  const getService = (type, service) => src
+  const getService = () => src
 
-  await get({ type: 'GET', payload, meta: { ident } }, { getService, schemas })
+  await get({ type: 'GET', payload, meta: { ident } }, { getService })
 
   t.is(src.send.callCount, 2)
   const request0 = src.send.args[0][0]
@@ -221,9 +224,9 @@ test('should return error when one or more requests for individual ids fails', a
     service: 'entries'
   }
   const src = setupService('http://api8.test/entries/{id}', { scope: 'member' })
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = () => src
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.status, 'error')
 })
@@ -238,9 +241,9 @@ test('should get item by id from service when id is array of one', async t => {
     service: 'entries'
   }
   const src = setupService('http://api7.test/entries/{id}', { scope: 'member' })
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = () => src
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(ret.data.id, 'ent1')
@@ -257,7 +260,7 @@ test('should get default values from type', async t => {
   const src = setupService('http://api1.test/database')
   const getService = () => src
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.data[0].byline, 'Somebody')
 })
@@ -274,7 +277,7 @@ test('should not get default values from type', async t => {
   const src = setupService('http://api1.test/database')
   const getService = () => src
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.data[0].byline, undefined)
 })
@@ -285,9 +288,10 @@ test('should infer service id from type', async t => {
     .reply(200, [{ id: 'ent1', type: 'entry' }])
   const payload = { type: 'entry' }
   const src = setupService('http://api1.test/database')
-  const getService = (type, service) => (type === 'entry' ? src : null)
+  const getService = (type: string, _service: string) =>
+    type === 'entry' ? src : null
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.status, 'ok')
   t.is(ret.data[0].id, 'ent1')
@@ -304,7 +308,7 @@ test('should get from other endpoint', async t => {
   const src = setupService('http://api5.test/database')
   const getService = () => src
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(ret.data[0].id, 'ent1')
@@ -322,7 +326,7 @@ test('should get with uri params', async t => {
   const src = setupService('http://api1.test/database{?first,max,type}')
   const getService = () => src
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(ret.data[0].id, 'ent1')
@@ -339,7 +343,7 @@ test('should return error on not found', async t => {
   const src = setupService('http://api3.test/unknown')
   const getService = () => src
 
-  const ret = await get({ type: 'GET', payload }, { getService, schemas })
+  const ret = await get({ type: 'GET', payload }, { getService })
 
   t.is(ret.status, 'notfound')
   t.is(ret.data, undefined)
@@ -348,9 +352,9 @@ test('should return error on not found', async t => {
 
 test('should return error when no service exists for type', async t => {
   const action = { type: 'GET', payload: { type: 'entry' } }
-  const getService = (type, service) => null
+  const getService = () => null
 
-  const ret = await get(action, { getService, schemas })
+  const ret = await get(action, { getService })
 
   t.is(ret.status, 'error')
   t.is(ret.error, "No service exists for type 'entry'")
@@ -358,9 +362,9 @@ test('should return error when no service exists for type', async t => {
 
 test('should return error when specified service does not exist', async t => {
   const action = { type: 'GET', payload: { service: 'entries', type: 'entry' } }
-  const getService = (type, service) => null
+  const getService = () => null
 
-  const ret = await get(action, { getService, schemas })
+  const ret = await get(action, { getService })
 
   t.is(ret.status, 'error')
   t.is(ret.error, "Service with id 'entries' does not exist")
@@ -404,7 +408,8 @@ test('should get only authorized items', async t => {
   }
   const ident = { id: 'johnf' }
   const src = setupService('http://api9.test/database', {}, { id: 'accounts' })
-  const getService = (type, service) => (service === 'accounts' ? src : null)
+  const getService = (_type: string, service: string) =>
+    service === 'accounts' ? src : null
   const expected = {
     status: 'ok',
     data: [
@@ -421,7 +426,7 @@ test('should get only authorized items', async t => {
 
   const ret = await get(
     { type: 'GET', payload, meta: { ident } },
-    { getService, schemas }
+    { getService }
   )
 
   t.deepEqual(ret, expected)

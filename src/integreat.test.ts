@@ -62,7 +62,7 @@ const mappings = [
 const adapters = {
   mockdapter: {
     prepareEndpoint: json.prepareEndpoint,
-    send: async ({ uri, auth }) => {
+    send: async ({ auth }) => {
       if (auth && !auth.isAuthenticated()) {
         return { status: 'autherror', error: 'Could not authenticate' }
       }
@@ -78,8 +78,8 @@ const adapters = {
         }
       }
     },
-    normalize: async (item, request) => item,
-    serialize: async (item, request) => item
+    normalize: async (item, _request) => item,
+    serialize: async (item, _request) => item
   }
 }
 
@@ -131,7 +131,7 @@ test('should call middleware dispatch', async t => {
   const action = { type: 'TEST' }
   const otherAction = sinon.stub().resolves({ status: 'ok' })
   const actions = { OTHER: otherAction }
-  const middlewares = [next => async action => next({ type: 'OTHER' })]
+  const middlewares = [next => async _action => next({ type: 'OTHER' })]
 
   const great = integreat(
     { services, schemas, mappings },

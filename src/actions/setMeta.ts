@@ -1,11 +1,13 @@
-const debug = require('debug')('great')
+import debugLib = require('debug')
 import createError from '../utils/createError'
+
+const debug = debugLib('great')
 
 /**
  * Set metadata on a service, based on the given action object.
- * @param {Object} payload - Payload from action object
- * @param {Object} resources - Object with getService
- * @returns {Promise} Promise that will be resolved when metadata is set
+ * @param payload - Payload from action object
+ * @param resources - Object with getService
+ * @returns Promise that will be resolved when metadata is set
  */
 async function setMeta({ payload, meta }, { getService }) {
   debug('Action: SET_META')

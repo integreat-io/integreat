@@ -1,6 +1,8 @@
-const debug = require('debug')('great')
+import debugLib = require('debug')
 import createError from '../utils/createError'
 import { DataObject } from '../types'
+
+const debug = debugLib('great')
 
 const isMetaField = (key: string) => key !== 'id' && !key.startsWith('$')
 const extractAllMetaFields = (meta: DataObject) =>
@@ -12,6 +14,7 @@ const extractMeta = (meta: DataObject, keys?: string[]) =>
         .concat(keys)
         .filter(key => key !== 'createdAt' && key !== 'updatedAt')
         .reduce(
+          // eslint-disable-next-line security/detect-object-injection
           (ret, key) => ({ ...ret, [key]: (meta && meta[key]) || null }),
           {}
         )

@@ -1,7 +1,9 @@
-const { groupBy, prop, mergeDeepWith } = require('ramda')
+import R = require('ramda')
 import { MapTransform } from 'map-transform'
 import { GenericData, DataObject } from '../types'
 import { SendOptions, Mappings, Request } from './types'
+
+const { groupBy, prop, mergeDeepWith } = R
 
 const groupByType = groupBy(prop('$schema'))
 
@@ -30,10 +32,7 @@ const mapItems = (
   request: Request,
   mapping: Mappings,
   target?: GenericData
-) =>
-  mapping
-    ? mapIt(mapping, { ...request, data }, target)
-    : target
+) => (mapping ? mapIt(mapping, { ...request, data }, target) : target)
 
 const mapDataPerType = (
   typeArrays: DataObject,
@@ -42,7 +41,7 @@ const mapDataPerType = (
 ) =>
   Object.keys(typeArrays).reduce(
     (target, type) =>
-      mapItems(typeArrays[type], request, mappings[type], target),
+      mapItems(typeArrays[type], request, mappings[type], target), // eslint-disable-line security/detect-object-injection
     undefined
   )
 

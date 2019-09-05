@@ -62,6 +62,7 @@ function integreat(
   )
 
   const pluralTypes = Object.keys(schemas).reduce(
+    // eslint-disable-next-line security/detect-object-injection
     (plurals, type) => ({ ...plurals, [schemas[type].plural]: type }),
     {}
   )
@@ -127,6 +128,7 @@ function integreat(
      * given `eventName` name.
      */
     on(eventName, serviceId, listener) {
+      // eslint-disable-next-line security/detect-object-injection
       const service = services[serviceId]
       if (service && service.on) {
         service.on(eventName, listener)
@@ -137,6 +139,7 @@ function integreat(
      * Return schema type from its plural form.
      */
     typeFromPlural(plural) {
+      // eslint-disable-next-line security/detect-object-injection
       return pluralTypes[plural]
     }
   }

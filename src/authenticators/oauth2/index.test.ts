@@ -5,27 +5,27 @@ import oauth2 from '.'
 
 // Helpers
 
-const nockRequestToken = (apiUri) => {
+const nockRequestToken = (apiUri: string) => {
   return nock(apiUri, {
     reqheaders: {
       'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-      'Authorization': 'Basic dGhldXNlcjp0aGVwYXNzd29yZCUyNg=='
+      Authorization: 'Basic dGhldXNlcjp0aGVwYXNzd29yZCUyNg=='
     }
   })
     .post('/token', 'grant_type=client_credentials')
     .reply(200, {
-      'token_type': 'bearer',
-      'access_token': 'thetoken'
+      ['token_type']: 'bearer',
+      ['access_token']: 'thetoken'
     })
 }
 
-test.after((t) => {
+test.after(() => {
   nock.restore()
 })
 
 // Tests
 
-test('should be an auth strat', (t) => {
+test('should be an auth strat', t => {
   t.truthy(oauth2)
   t.is(typeof oauth2.isAuthenticated, 'function')
   t.is(typeof oauth2.authenticate, 'function')
@@ -33,7 +33,7 @@ test('should be an auth strat', (t) => {
   t.is(typeof oauth2.asHttpHeaders, 'function')
 })
 
-test('should authenticate', async (t) => {
+test('should authenticate', async t => {
   const scope = nockRequestToken('https://api1.test')
   const options = {
     uri: 'https://api1.test/token',
@@ -51,10 +51,10 @@ test('should authenticate', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should handle failed authentication', async (t) => {
+test('should handle failed authentication', async t => {
   nock('https://api2.test', {
     reqheaders: {
-      'Authorization': 'Basic dGhldXNlcjp3cm9uZ3Bhc3N3b3JkJTI2'
+      Authorization: 'Basic dGhldXNlcjp3cm9uZ3Bhc3N3b3JkJTI2'
     }
   })
     .post('/token')
@@ -71,7 +71,7 @@ test('should handle failed authentication', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should handle invalid return format', async (t) => {
+test('should handle invalid return format', async t => {
   nock('https://api7.test')
     .post('/token', 'grant_type=client_credentials')
     .reply(200, 'not json')
@@ -87,7 +87,7 @@ test('should handle invalid return format', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should handle error', async (t) => {
+test('should handle error', async t => {
   nock('https://api3.test')
     .post('/token')
     .replyWithError('Catastrophy!')
@@ -103,7 +103,7 @@ test('should handle error', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should refuse on missing options', async (t) => {
+test('should refuse on missing options', async t => {
   nock('https://api3.test')
     .post('/token')
     .replyWithError('Catastrophy!')
@@ -115,7 +115,7 @@ test('should refuse on missing options', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('isAuthenticated should return false when no authentication', (t) => {
+test('isAuthenticated should return false when no authentication', t => {
   const authentication = null
 
   const ret = oauth2.isAuthenticated(authentication)
@@ -123,7 +123,7 @@ test('isAuthenticated should return false when no authentication', (t) => {
   t.false(ret)
 })
 
-test('isAuthenticated should return false for refused authentication', (t) => {
+test('isAuthenticated should return false for refused authentication', t => {
   const authentication = { status: 'refused', token: 'shouldnotbehere' }
 
   const ret = oauth2.isAuthenticated(authentication)
@@ -131,7 +131,7 @@ test('isAuthenticated should return false for refused authentication', (t) => {
   t.false(ret)
 })
 
-test('isAuthenticated should return true', async (t) => {
+test('isAuthenticated should return true', async t => {
   nockRequestToken('https://api4.test')
   const options = {
     uri: 'https://api4.test/token',
@@ -145,19 +145,22 @@ test('isAuthenticated should return true', async (t) => {
   t.true(ret)
 })
 
-test('asHttpHeaders should return empty object when no authentication', (t) => {
+test('asHttpHeaders should return empty object when no authentication', t => {
   const ret = oauth2.asHttpHeaders()
 
   t.deepEqual(ret, {})
 })
 
-test('asHttpHeaders should return empty object for refused authentication', (t) => {
-  const ret = oauth2.asHttpHeaders({ status: 'refused', token: 'shouldnotbehere' })
+test('asHttpHeaders should return empty object for refused authentication', t => {
+  const ret = oauth2.asHttpHeaders({
+    status: 'refused',
+    token: 'shouldnotbehere'
+  })
 
   t.deepEqual(ret, {})
 })
 
-test('asHttpHeaders should return authorization header', async (t) => {
+test('asHttpHeaders should return authorization header', async t => {
   nockRequestToken('https://api5.test')
   const options = {
     uri: 'https://api5.test/token',
@@ -165,7 +168,7 @@ test('asHttpHeaders should return authorization header', async (t) => {
     secret: 'thepassword&'
   }
   const expected = {
-    'Authorization': 'Bearer thetoken'
+    Authorization: 'Bearer thetoken'
   }
 
   const authentication = await oauth2.authenticate(options)
@@ -174,19 +177,19 @@ test('asHttpHeaders should return authorization header', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when no authentication', (t) => {
+test('asObject should return empty object when no authentication', t => {
   const ret = oauth2.asObject()
 
   t.deepEqual(ret, {})
 })
 
-test('asObject should return empty object for refused authentication', (t) => {
+test('asObject should return empty object for refused authentication', t => {
   const ret = oauth2.asObject({ status: 'refused', token: 'shouldnotbehere' })
 
   t.deepEqual(ret, {})
 })
 
-test('asObject should return token', async (t) => {
+test('asObject should return token', async t => {
   nockRequestToken('https://api6.test')
   const options = {
     uri: 'https://api6.test/token',

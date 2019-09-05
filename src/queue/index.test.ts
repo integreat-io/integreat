@@ -163,7 +163,7 @@ test('middleware should reschedule repeating action', async t => {
 test('middleware should not reschedule when schedule is ended', async t => {
   const queue = setupQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
-  const schedule = { schedules: [{ Y_b: [2015] }] }
+  const schedule = { schedules: [{ ['Y_b']: [2015] }] }
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -212,34 +212,34 @@ test('should subscribe underlying queue and dispatch', async t => {
 test('should not subscribe unless setDispatch is called', async t => {
   const action = { type: 'GET', payload: { type: 'entry' } }
   const mock = mockQueue()
-  sinon.spy(mock, 'subscribe')
+  const mockSubscribe = sinon.spy(mock, 'subscribe')
 
   const queue = setupQueue(mock)
   await queue.queue.push(action) // Pushes directly to subscribed handler
 
-  t.is(mock.subscribe.callCount, 0)
+  t.is(mockSubscribe.callCount, 0)
 })
 
 test('should not subscribe twice', async t => {
   const dispatch = async () => ({ status: 'ok' })
   const mock = mockQueue()
-  sinon.spy(mock, 'subscribe')
+  const mockSubscribe = sinon.spy(mock, 'subscribe')
 
   const queue = setupQueue(mock)
   queue.setDispatch(dispatch)
   queue.setDispatch(dispatch)
 
-  t.is(mock.subscribe.callCount, 1)
+  t.is(mockSubscribe.callCount, 1)
 })
 
 test('should not subscribe when called with no-function', async t => {
   const mock = mockQueue()
-  sinon.spy(mock, 'subscribe')
+  const mockSubscribe = sinon.spy(mock, 'subscribe')
 
   const queue = setupQueue(mock)
   queue.setDispatch(null)
 
-  t.is(mock.subscribe.callCount, 0)
+  t.is(mockSubscribe.callCount, 0)
 })
 
 test('should not throw when no dispatch function', async t => {

@@ -317,10 +317,10 @@ test('should skip properties with invalid $cast', t => {
   const schema = {
     id: 'string',
     title: 'string',
-    abstract: null as any,
-    age: undefined as any,
-    active: 1 as any,
-    author: { $cast: 78 } as any
+    abstract: null,
+    age: undefined,
+    active: 1,
+    author: { $cast: 78 }
   }
   const data = [
     {
@@ -340,7 +340,8 @@ test('should skip properties with invalid $cast', t => {
     }
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ret = mapTransform(createCastMapping(schema as any, 'entry'), {
     functions: transformFunctions
   })(data)
 

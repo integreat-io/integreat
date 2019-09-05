@@ -30,6 +30,7 @@ const mapByType = (
   mappings: Mappings,
   onlyMappedValues: boolean
 ) => (type: string) => {
+  // eslint-disable-next-line security/detect-object-injection
   const mapping = mappings[type]
   return mapping
     ? onlyMappedValues

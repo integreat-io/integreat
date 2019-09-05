@@ -4,7 +4,8 @@ import { isSchema, isPropertySchema } from '../utils/is'
 
 const primitiveTypes = ['string', 'integer', 'number', 'boolean', 'date']
 
-const typeFromProp = (prop: any) => (isPropertySchema(prop) ? prop.$cast : prop)
+const typeFromProp = (prop: unknown) =>
+  isPropertySchema(prop) ? prop.$cast : prop
 
 const defaultFromProp = (prop?: string | PropertySchema) => {
   if (isPropertySchema(prop)) {
@@ -63,10 +64,7 @@ export default function createCastMapping(schema: Schema, type: string) {
     { $filter: 'equalOrNoSchema', type },
     {
       $iterate: true,
-      $schema: [
-        '$schema',
-        { $transform: 'fixed', value: type }
-      ],
+      $schema: ['$schema', { $transform: 'fixed', value: type }],
       ...mappingFromSchema(schema)
     }
   ]

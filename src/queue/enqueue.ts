@@ -1,5 +1,7 @@
-const debug = require('debug')('great')
+import debugLib = require('debug')
 import createError from '../utils/createError'
+
+const debug = debugLib('great')
 
 const prepareMetaForQueue = ({ queue, ...rest }) => ({
   ...rest,

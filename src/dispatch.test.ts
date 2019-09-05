@@ -5,11 +5,11 @@ import dispatch from './dispatch'
 
 // Tests -- actions
 
-test('should exist', (t) => {
+test('should exist', t => {
   t.is(typeof dispatch, 'function')
 })
 
-test('should route to GET action', async (t) => {
+test('should route to GET action', async t => {
   const action = {
     type: 'GET',
     payload: {
@@ -19,7 +19,7 @@ test('should route to GET action', async (t) => {
     }
   }
   const actions = {
-    'GET': async () => ({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] })
+    GET: async () => ({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] })
   }
 
   const ret = await dispatch({ actions })(action)
@@ -28,7 +28,7 @@ test('should route to GET action', async (t) => {
   t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
 })
 
-test('should return status noaction when no action', async (t) => {
+test('should return status noaction when no action', async t => {
   const action = null
   const services = {}
 
@@ -37,7 +37,7 @@ test('should return status noaction when no action', async (t) => {
   t.deepEqual(ret, { status: 'noaction' })
 })
 
-test('should return null when unknown action', async (t) => {
+test('should return null when unknown action', async t => {
   const action = { type: 'UNKNOWN' }
   const services = {}
   const actions = {}
@@ -47,9 +47,9 @@ test('should return null when unknown action', async (t) => {
   t.deepEqual(ret, { status: 'noaction' })
 })
 
-test('should call action handler with action', async (t) => {
+test('should call action handler with action', async t => {
   const getHandler = sinon.stub().resolves({ status: 'ok' })
-  const actions = { 'GET': getHandler }
+  const actions = { GET: getHandler }
   const ident = { id: 'ident1', roles: [], tokens: [] }
   const action = { type: 'GET', payload: {}, meta: { ident } }
 
@@ -59,9 +59,9 @@ test('should call action handler with action', async (t) => {
   t.deepEqual(getHandler.args[0][0], action)
 })
 
-test('should call action handler with payload and meta', async (t) => {
+test('should call action handler with payload and meta', async t => {
   const getHandler = sinon.stub().resolves({ status: 'ok' })
-  const actions = { 'GET': getHandler }
+  const actions = { GET: getHandler }
   const action = { type: 'GET' }
   const expected = { type: 'GET', payload: {}, meta: {} }
 
@@ -71,9 +71,9 @@ test('should call action handler with payload and meta', async (t) => {
   t.deepEqual(getHandler.args[0][0], expected)
 })
 
-test('should call action handler with services, schemas, and identOptions', async (t) => {
+test('should call action handler with services, schemas, and identOptions', async t => {
   const getHandler = sinon.stub().resolves({ status: 'ok' })
-  const actions = { 'GET': getHandler }
+  const actions = { GET: getHandler }
   const services = {}
   const schemas = {}
   const identOptions = {}
@@ -88,10 +88,10 @@ test('should call action handler with services, schemas, and identOptions', asyn
   t.is(resources.identOptions, identOptions)
 })
 
-test('should call action handler with dispatch function', async (t) => {
+test('should call action handler with dispatch function', async t => {
   const action = { type: 'GET' }
   const getHandler = sinon.stub().resolves({ status: 'ok' })
-  const actions = { 'GET': getHandler }
+  const actions = { GET: getHandler }
 
   const dispatchFn = dispatch({ actions })
   await dispatchFn(action)
@@ -101,12 +101,12 @@ test('should call action handler with dispatch function', async (t) => {
   t.is(resources.dispatch, dispatchFn)
 })
 
-test('should call middlewares', async (t) => {
+test('should call middlewares', async t => {
   const action = { type: 'TEST' }
-  const actions = { 'TEST': () => 'fromAction' }
+  const actions = { TEST: () => 'fromAction' }
   const middlewares = [
-    (next) => async (action) => `<${await next(action)}>`,
-    (next) => async (action) => `(${await next(action)})`
+    next => async action => `<${await next(action)}>`,
+    next => async action => `(${await next(action)})`
   ]
   const expected = '<(fromAction)>'
 
@@ -115,13 +115,11 @@ test('should call middlewares', async (t) => {
   t.is(ret, expected)
 })
 
-test('should allow middlewares to abort middleware chain', async (t) => {
+test('should allow middlewares to abort middleware chain', async t => {
   const action = { type: 'TEST' }
   const actionHandler = sinon.stub().resolves({ status: 'ok' })
-  const actions = { 'TEST': actionHandler }
-  const middlewares = [
-    (next) => async (action) => ({ status: 'error' })
-  ]
+  const actions = { TEST: actionHandler }
+  const middlewares = [_next => async _action => ({ status: 'error' })]
 
   const ret = await dispatch({ actions, middlewares })(action)
 
@@ -129,15 +127,13 @@ test('should allow middlewares to abort middleware chain', async (t) => {
   t.is(actionHandler.callCount, 0)
 })
 
-test('should dispatch to middleware from action handlers', async (t) => {
+test('should dispatch to middleware from action handlers', async t => {
   const action = { type: 'DISPATCHER' }
   const actions = {
-    'TEST': () => 'fromAction',
-    'DISPATCHER': (action, { dispatch }) => dispatch({ type: 'TEST' })
+    TEST: () => 'fromAction',
+    DISPATCHER: (action, { dispatch }) => dispatch({ type: 'TEST' })
   }
-  const middlewares = [
-    (next) => async (action) => `<${await next(action)}>`
-  ]
+  const middlewares = [next => async action => `<${await next(action)}>`]
   const expected = '<<fromAction>>'
 
   const ret = await dispatch({ actions, middlewares })(action)

@@ -34,8 +34,8 @@ const pipelines = {
     { $iterate: true, id: 'id', name: 'name' },
     { $apply: 'cast_account' }
   ],
-  cast_entry: schemas.entry.mapping,
-  cast_account: schemas.account.mapping
+  ['cast_entry']: schemas.entry.mapping,
+  ['cast_account']: schemas.account.mapping
 }
 
 const mapOptions = { pipelines, functions }
@@ -70,7 +70,8 @@ test('should delete items from service', async t => {
     ],
     mappings: { entry: 'entry' }
   })
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = (_type: string, service: string) =>
+    service === 'entries' ? src : null
   const action = {
     type: 'DELETE',
     payload: {
@@ -109,7 +110,7 @@ test('should delete one item from service', async t => {
     ],
     mappings: { entry: 'entry' }
   })
-  const getService = (type, service) => (service === 'entries' ? src : null)
+  const getService = () => src
   const action = {
     type: 'DELETE',
     payload: { id: 'ent1', type: 'entry', service: 'entries' }
@@ -144,7 +145,8 @@ test('should infer service id from type', async t => {
     ],
     mappings: { entry: 'entry' }
   })
-  const getService = (type, service) => (type === 'entry' ? src : null)
+  const getService = (type: string, _service: string) =>
+    type === 'entry' ? src : null
   const action = {
     type: 'DELETE',
     payload: {
@@ -184,7 +186,7 @@ test('should delete with other endpoint and uri params', async t => {
     ],
     mappings: { entry: 'entry' }
   })
-  const getService = (type, service) => src
+  const getService = () => src
   const action = {
     type: 'DELETE',
     payload: {
@@ -224,7 +226,7 @@ test('should return error from response', async t => {
     ],
     mappings: { entry: 'entry' }
   })
-  const getService = (type, service) => src
+  const getService = () => src
   const action = {
     type: 'DELETE',
     payload: {
@@ -254,7 +256,7 @@ test('should return noaction when nothing to delete', async t => {
     ],
     mappings: { entry: 'entry' }
   })
-  const getService = (type, service) => src
+  const getService = () => src
   const action = { type: 'DELETE', payload: { data: [], service: 'entries' } }
 
   const ret = await deleteFn(action, { getService })
@@ -275,7 +277,7 @@ test('should skip null values in data array', async t => {
     ],
     mappings: { entry: 'entry' }
   })
-  const getService = (type, service) => src
+  const getService = () => src
   const action = {
     type: 'DELETE',
     payload: { data: [null], service: 'entries' }
@@ -308,7 +310,8 @@ test('should only delete items the ident is authorized to', async t => {
     ],
     mappings: { account: 'account' }
   })
-  const getService = (type, service) => (service === 'accounts' ? src : null)
+  const getService = (_type: string, service: string) =>
+    service === 'accounts' ? src : null
   const action = {
     type: 'DELETE',
     payload: {
@@ -316,7 +319,7 @@ test('should only delete items the ident is authorized to', async t => {
         { id: 'johnf', $schema: 'account' },
         { id: 'betty', $schema: 'account' }
       ],
-      service: 'accounts',
+      service: 'accounts'
     },
     meta: { ident: { id: 'johnf' } }
   }
@@ -334,7 +337,7 @@ test('should return error when no service exists for a type', async t => {
     payload: { id: 'ent1', type: 'entry' }
   }
 
-  const ret = await deleteFn(action, { getService, schemas })
+  const ret = await deleteFn(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'error')
@@ -348,7 +351,7 @@ test('should return error when specified service does not exist', async t => {
     payload: { id: 'ent1', type: 'entry', service: 'entries' }
   }
 
-  const ret = await deleteFn(action, { getService, schemas })
+  const ret = await deleteFn(action, { getService })
 
   t.truthy(ret)
   t.is(ret.status, 'error')

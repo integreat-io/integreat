@@ -1,12 +1,16 @@
-const debug = require('debug')('great')
+import debugLib = require('debug')
 import createError from './createError'
 
-const createUnknownServiceError = (type, serviceId, action) => {
+const debug = debugLib('great')
+
+export default function createUnknownServiceError(
+  type: string,
+  serviceId: string,
+  actionType: string
+) {
   const error = serviceId
     ? `Service with id '${serviceId}' does not exist`
     : `No service exists for type '${type}'`
-  debug(`${action}: ${error}`)
+  debug(`${actionType}: ${error}`)
   return createError(error)
 }
-
-export default createUnknownServiceError

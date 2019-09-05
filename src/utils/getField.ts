@@ -6,7 +6,7 @@ import { GenericData } from '../types'
 const extractIdFromRef = (data: GenericData) =>
   isReference(data) ? data.id : data
 
-const extractFromPath = (data: GenericData, fieldPath: String) =>
+const extractFromPath = (data: GenericData, fieldPath: string) =>
   (data && fieldPath && path(fieldPath.split('.'), data)) || undefined
 
 export default (item: GenericData, field: string) =>

@@ -19,14 +19,14 @@ const schemas = {
 }
 
 const pipelines = {
-  cast_meta: schemas.meta.mapping
+  ['cast_meta']: schemas.meta.mapping
 }
 
 const mapOptions = { pipelines, functions }
 
 const ident = { id: 'johnf' }
 
-const setupService = (id, { meta, endpoints = [] } = {}) =>
+const setupService = (id: string, { meta, endpoints = [] } = {}) =>
   createService({ schemas, mapOptions })({
     id,
     adapter: json,
@@ -37,7 +37,7 @@ const setupService = (id, { meta, endpoints = [] } = {}) =>
 
 const lastSyncedAt = new Date()
 
-test.after(t => {
+test.after(() => {
   nock.restore()
 })
 
@@ -54,7 +54,7 @@ test('should set metadata on service', async t => {
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [{ options: { uri: 'http://api1.test/database/{id}' } }]
   const src = setupService('store', { meta: 'meta', endpoints })
-  const getService = (type, service) =>
+  const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
   const action = {
     type: 'SET_META',
@@ -78,7 +78,7 @@ test('should not set metadata on service when no meta type', async t => {
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [{ options: { uri: 'http://api2.test/database/{id}' } }]
   const src = setupService('store', { meta: null, endpoints })
-  const getService = (type, service) =>
+  const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
   const payload = {
     service: 'store',
@@ -108,7 +108,7 @@ test('should set metadata on other service', async t => {
   ]
   const storeSrc = setupService('store', { endpoints })
   const src = setupService('entries', { meta: 'meta' })
-  const getService = (type, service) =>
+  const getService = (type: string, service: string) =>
     service === 'entries'
       ? src
       : service === 'store' || type === 'meta'
@@ -154,7 +154,7 @@ test('should refuse setting metadata on service when not authorized', async t =>
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [{ options: { uri: 'http://api4.test/database/{id}' } }]
   const src = setupService('store', { meta: 'meta', endpoints })
-  const getService = (type, service) =>
+  const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
   const payload = {
     service: 'store',
@@ -172,7 +172,7 @@ test('should refuse setting metadata on service when not authorized', async t =>
 })
 
 test('should return error for unknown service', async t => {
-  const getService = (type, service) => null
+  const getService = () => null
   const payload = {
     service: 'unknown',
     meta: { lastSyncedAt }
