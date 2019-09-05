@@ -1,16 +1,16 @@
 import mapAny = require('map-any')
-import { GenericData, Data, Reference } from '../../types'
-import { isDataObject, isCastedData, isReference } from '../../utils/is'
+import { Data } from '../../types'
+import { isDataObject, isTypedData, isReference } from '../../utils/is'
 
 interface Operands {
-  type: string
+  type?: string
 }
 
 interface Context {
   rev?: boolean
 }
 
-const extractId = (value: GenericData) =>
+const extractId = (value: Data) =>
   isDataObject(value)
     ? value.id
     : value instanceof Date
@@ -20,10 +20,13 @@ const extractId = (value: GenericData) =>
 const isRev = (context: Context) =>
   typeof context === 'object' && context !== null && context.rev === true
 
-const castItem = (type: string, context: Context) => (
-  value: GenericData
-): Data | Reference | string | null | undefined => {
-  if (isCastedData(value)) {
+const castItem = (type: string | undefined, context: Context) => (
+  value: Data
+) => {
+  if (type === undefined) {
+    return undefined
+  }
+  if (isTypedData(value)) {
     return value.$type === type ? value : undefined
   } else if (isReference(value) && value.$ref !== type) {
     return undefined
@@ -45,6 +48,6 @@ const castItem = (type: string, context: Context) => (
 }
 
 export default function reference({ type }: Operands) {
-  return (value: GenericData, context: Context) =>
+  return (value: Data, context: Context): Data =>
     mapAny(castItem(type, context), value)
 }

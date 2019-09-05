@@ -1,7 +1,7 @@
 import mapAny = require('map-any')
-import { GenericData } from '../../types'
+import { Data } from '../../types'
 
-const castBoolean = (value: GenericData) => {
+const castBoolean = (value: Data) => {
   if (value === null || value === undefined) {
     return value
   } else {

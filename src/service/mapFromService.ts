@@ -1,13 +1,13 @@
 import mapAny = require('map-any')
-import { GenericData } from '../types'
+import { Data } from '../types'
 import { SendOptions, Mappings, Request } from './types'
 
-const flatten = (data: GenericData) =>
+const flatten = (data: Data) =>
   Array.isArray(data)
     ? data.reduce(
         (flattened, data) =>
           Array.isArray(data) ? [...flattened, ...data] : [...flattened, data],
-        [] as GenericData[]
+        [] as Data[]
       )
     : data
 

@@ -1,7 +1,7 @@
 import mapAny = require('map-any')
-import { GenericData } from '../../types'
+import { Data } from '../../types'
 
-function castString (value: GenericData): string | null | undefined {
+function castString (value: Data): string | null | undefined {
   if (value === null || value === undefined) {
     return value
   } else if (typeof value === 'object') {

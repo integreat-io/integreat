@@ -1,9 +1,9 @@
 import mapAny = require('map-any')
-import { GenericData } from '../../types'
+import { Data } from '../../types'
 
 const numberOrUndefined = (value: number) => (isNaN(value) ? undefined : value)
 
-function castNumber(value: GenericData): number | null | undefined {
+function castNumber(value: Data): number | null | undefined {
   if (typeof value === 'number') {
     return numberOrUndefined(value)
   } else if (value === null || value === undefined) {

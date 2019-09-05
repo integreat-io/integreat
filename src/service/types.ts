@@ -1,25 +1,25 @@
 import { MapTransform } from 'map-transform'
-import { GenericData } from '../types'
+import { Data } from '../types'
 
 export interface Ident {
   id: string
   root?: boolean
 }
 
-export interface Request<T = GenericData> {
+export interface Request<T = Data> {
   action: string
   params: {
-    [param: string]: GenericData
+    [param: string]: Data
   }
   endpoint: {
-    [option: string]: GenericData
+    [option: string]: Data
   }
   data?: T
   auth?: object | boolean
   access?: { ident: Ident }
 }
 
-export interface Response<T = GenericData> {
+export interface Response<T = Data> {
   status: string
   data: T
   error?: string

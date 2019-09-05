@@ -1,7 +1,7 @@
 import mapAny = require('map-any')
-import { GenericData, DataObject } from '../types'
+import { Data, DataObject } from '../types'
 
-function uppercase(value: GenericData) {
+function uppercase(value: Data) {
   if (typeof value === 'string') {
     return value.toUpperCase()
   }

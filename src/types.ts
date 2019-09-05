@@ -3,16 +3,19 @@ import { MapDefinition } from 'map-transform'
 export type DataValue = string | number | boolean | Date | null | undefined
 
 export interface DataObject {
-  [key: string]: DataValue | DataObject | (DataValue | DataObject)[] | undefined
+  [key: string]: Data
 }
 
-export type GenericData = DataValue | DataObject | (DataValue | DataObject)[]
+export type Data = DataValue | DataObject | DataArray
 
-export interface Data extends DataObject {
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface DataArray extends Array<Data> {}
+
+export interface TypedData extends DataObject {
   $type: string
   id?: string
-  createdAt?: Data | string
-  updatedAt?: Data | string
+  createdAt?: TypedData | string
+  updatedAt?: TypedData | string
 }
 
 export interface Reference {
@@ -22,8 +25,8 @@ export interface Reference {
 
 export interface PropertySchema {
   $cast: string
-  $default?: GenericData
-  $const?: GenericData
+  $default?: Data
+  $const?: Data
 }
 
 export interface Schema {
@@ -32,9 +35,9 @@ export interface Schema {
 
 export interface TransformFunction<
   T extends DataObject = DataObject,
-  U extends GenericData = GenericData
+  U extends Data = Data
 > {
-  (operands: T): (value: GenericData) => U
+  (operands: T): (value: Data) => U
 }
 
 export interface MappingDef {

@@ -1,6 +1,6 @@
 import R = require('ramda')
 import { MapTransform } from 'map-transform'
-import { GenericData, DataObject } from '../types'
+import { Data, DataObject } from '../types'
 import { SendOptions, Mappings, Request } from './types'
 
 const { groupBy, prop, mergeDeepWith } = R
@@ -13,7 +13,7 @@ const concatOrRight = (left, right) =>
 const mapIt = (
   mapper: MapTransform,
   request: Request,
-  target: GenericData = null
+  target: Data = null
 ) => {
   const { onlyMappedValues = true } = request.params
   const mapped = onlyMappedValues
@@ -28,10 +28,10 @@ const mapIt = (
   )
 }
 const mapItems = (
-  data: GenericData,
+  data: Data,
   request: Request,
   mapping: Mappings,
-  target?: GenericData
+  target?: Data
 ) => (mapping ? mapIt(mapping, { ...request, data }, target) : target)
 
 const mapDataPerType = (
@@ -45,7 +45,7 @@ const mapDataPerType = (
     undefined
   )
 
-const mapData = (data: GenericData, request: Request, mappings: Mappings) =>
+const mapData = (data: Data, request: Request, mappings: Mappings) =>
   data
     ? Array.isArray(data)
       ? mapDataPerType(groupByType(data), request, mappings)

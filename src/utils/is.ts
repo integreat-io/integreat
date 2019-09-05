@@ -1,9 +1,15 @@
-import { DataObject, Data, Reference, Schema, PropertySchema } from '../types'
+import {
+  DataObject,
+  TypedData,
+  Reference,
+  Schema,
+  PropertySchema
+} from '../types'
 
 export const isDataObject = (value: unknown): value is DataObject =>
   typeof value === 'object' && value !== null && !(value instanceof Date)
 
-export const isCastedData = (value: unknown): value is Data =>
+export const isTypedData = (value: unknown): value is TypedData =>
   typeof value === 'object' && value !== null && value.hasOwnProperty('$type')
 
 export const isReference = (value: unknown): value is Reference =>
