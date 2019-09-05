@@ -13,7 +13,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "npm run lint && npm run dev && nyc --reporter=text-summary ava dist/**/*.test.js",
+    "test": "npm run lint && npm run build && nyc --reporter=text-summary ava --config ./ava-dist.config.js",
     "test:inspect": "node --inspect node_modules/ava/profile.js",
     "test:watch": "npm run dev",
     "dev": "ava --watch",
@@ -21,34 +21,6 @@
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "nyc:report": "nyc report --reporter=text --reporter=html",
     "lint": "eslint --ext .ts src"
-  },
-  "ava": {
-    "compileEnhancements": false,
-    "extensions": [
-      "ts"
-    ],
-    "require": [
-      "ts-node/register/transpile-only"
-    ],
-    "files": [
-      "src/**/*.test.ts",
-      "tests/**/*.test.ts"
-    ],
-    "sources": [
-      "./index.js",
-      "src/**/!(*.test).ts"
-    ]
-  },
-  "nyc": {
-    "extension": [
-      ".ts",
-      ".js"
-    ],
-    "exclude": [
-      "**/*.test.js",
-      "**/*.test.ts",
-      "tests/helpers/**.ts"
-    ]
   },
   "repository": {
     "type": "git",

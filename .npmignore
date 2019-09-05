@@ -4,4 +4,4 @@ tests/
 *.test*
 .*
 tsconfig.json
-tslint.json
+*.config.js
