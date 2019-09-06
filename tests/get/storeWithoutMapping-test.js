@@ -26,19 +26,21 @@ test('should get one entry from service', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
-    .reply(200, { data: {
-      id: 'ent1',
-      type: 'entry',
-      attributes: {
-        title: 'Entry 1',
-        text: 'The first entry ever created',
-        createdAt,
-        updatedAt
-      },
-      relationships: {
-        author: { id: 'johnf', type: 'user' }
+    .reply(200, {
+      data: {
+        id: 'ent1',
+        type: 'entry',
+        attributes: {
+          title: 'Entry 1',
+          text: 'The first entry ever created',
+          createdAt,
+          updatedAt
+        },
+        relationships: {
+          author: { id: 'johnf', type: 'user' }
+        }
       }
-    } })
+    })
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' }

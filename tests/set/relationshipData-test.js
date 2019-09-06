@@ -17,7 +17,7 @@ const entryMapping = {
     text: 'body'
   },
   relationships: {
-    'author': { mapping: 'entries-user' }
+    author: { mapping: 'entries-user' }
   }
 }
 

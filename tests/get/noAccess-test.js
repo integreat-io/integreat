@@ -39,10 +39,12 @@ test('should respond with only authorized data', async (t) => {
   const transformers = integreat.transformers()
   nock('http://some.api')
     .get('/users/')
-    .reply(200, { data: [
-      { ...johnfData, createdAt, updatedAt },
-      { ...bettyData, createdAt, updatedAt }
-    ] })
+    .reply(200, {
+      data: [
+        { ...johnfData, createdAt, updatedAt },
+        { ...bettyData, createdAt, updatedAt }
+      ]
+    })
   const action = {
     type: 'GET',
     payload: { type: 'user' },

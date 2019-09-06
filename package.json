@@ -49,24 +49,23 @@
     "npm": ">= 5.6"
   },
   "dependencies": {
-    "@sindresorhus/is": "^0.15.0",
+    "@sindresorhus/is": "^1.0.0",
     "debug": "^4.1.1",
     "got": "^9.6.0",
     "later": "^1.2.0",
-    "map-any": "^0.1.2",
-    "map-transform": "^0.3.3",
+    "map-any": "^0.2.1",
+    "map-transform": "0.3.4",
     "ramda": "^0.26.1",
-    "uuid": "^3.2.2"
+    "uuid": "^3.2.3"
   },
   "devDependencies": {
-    "ava": "1.4.1",
-    "babel-preset-env": "^1.7.0",
-    "coveralls": "^3.0.3",
+    "ava": "2.3.0",
+    "coveralls": "^3.0.6",
     "dotenv": "^7.0.0",
-    "integreat-adapter-json": "^0.1.5",
-    "nock": "^10.0.6",
-    "nyc": "^13.3.0",
-    "sinon": "^7.3.1",
-    "standard": "^12.0.1"
+    "integreat-adapter-json": "^0.1.6",
+    "nock": "^11.3.1",
+    "nyc": "^14.1.1",
+    "sinon": "^7.4.2",
+    "standard": "^14.1.0"
   }
 }

@@ -12,7 +12,7 @@ import integreat from '../..'
 test('should not authenticate twice', async (t) => {
   nock('http://some.api', {
     reqheaders: {
-      'authorization': 'Bearer t0k3n'
+      authorization: 'Bearer t0k3n'
     }
   })
     .get('/entries/')

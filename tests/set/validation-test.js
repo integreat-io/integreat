@@ -49,7 +49,7 @@ const isNumericId = (action) => (isNaN(action.payload.id)) ? { status: 'badreque
 
 defs.services[0].endpoints.push({
   match: { action: 'SET', scope: 'member' },
-  validate: [ 'alwaysOk', 'shouldHaveAuthor' ],
+  validate: ['alwaysOk', 'shouldHaveAuthor'],
   options: { uri: '/{id}' }
 })
 defs.services[0].endpoints.push({

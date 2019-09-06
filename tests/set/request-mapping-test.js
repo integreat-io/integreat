@@ -29,7 +29,7 @@ const entry1Mapped = {
 test('should set data with request mapping', async (t) => {
   const requestData = {
     content: {
-      items: [ entry1Mapped ],
+      items: [entry1Mapped],
       footnote: '',
       meta: '{"datatype":"entry"}'
     }

@@ -11,7 +11,7 @@ import integreat from '../..'
 test('should get entries from service requiring authentication', async (t) => {
   nock('http://some.api', {
     reqheaders: {
-      'authorization': 'Bearer t0k3n'
+      authorization: 'Bearer t0k3n'
     }
   })
     .get('/entries/')

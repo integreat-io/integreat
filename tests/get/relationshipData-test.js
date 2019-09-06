@@ -25,7 +25,7 @@ const entryMapping = {
     updatedAt: 'updatedAt'
   },
   relationships: {
-    'author': { mapping: 'entries-user' },
+    author: { mapping: 'entries-user' },
     'sections.id': 'sections[]'
   }
 }
