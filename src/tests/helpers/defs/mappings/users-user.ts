@@ -13,7 +13,7 @@ export default {
       createdBy: 'creator',
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
-      roles: 'roles[]',
+      roles: ['roles[]', { $transform: 'map', dictionary: 'userRole' }],
       tokens: 'tokens[]',
       feeds: 'feeds[]'
     },

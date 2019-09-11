@@ -11,6 +11,9 @@ export default {
     require('./mappings/entries-entry').default,
     require('./mappings/users-user').default
   ],
+  dictionaries: {
+    userRole: [['super', 'admin'] as const, ['readwrite', 'editor'] as const]
+  },
   ident: {
     type: 'user'
   }

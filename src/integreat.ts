@@ -1,3 +1,4 @@
+import { Dictionaries } from 'map-transform'
 import R = require('ramda')
 import createService from './service'
 import createSchema from './schema'
@@ -12,6 +13,7 @@ const version = '0.8.0-alpha.0'
 interface Definitions {
   schemas: SchemaDef[]
   mappings: MappingDef[]
+  dictionaries: Dictionaries
 }
 
 interface Resources {
@@ -33,7 +35,8 @@ function integreat(
     services: serviceDefs,
     mappings = [],
     auths: authDefs = [],
-    ident: identOptions = {}
+    ident: identOptions = {},
+    dictionaries
   }: Definitions,
   {
     adapters = {},
@@ -67,10 +70,15 @@ function integreat(
     {}
   )
 
-  const mapOptions = createMapOptions(mappings, schemaMappings, {
-    ...transformers,
-    ...builtInFunctions
-  })
+  const mapOptions = createMapOptions(
+    mappings,
+    schemaMappings,
+    {
+      ...transformers,
+      ...builtInFunctions
+    },
+    dictionaries
+  )
 
   // Setup auths object from auth defs
   const auths = authDefs.reduce(

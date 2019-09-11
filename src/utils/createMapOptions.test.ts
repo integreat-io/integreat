@@ -50,6 +50,10 @@ const transformFunctions = {
   string: () => (value: unknown) => String(value)
 }
 
+const dictionaries = {
+  userRole: [['super', 'admin'] as const, ['readwrite', 'editor'] as const]
+}
+
 // Tests
 
 test('should return map options with pipelines from mappings', t => {
@@ -82,4 +86,13 @@ test('should include transform functions', t => {
   t.is(ret.functions, transformFunctions)
 })
 
-test.todo('should have some error checking')
+test('should include dictionaries functions', t => {
+  const ret = createMapOptions(
+    mappings,
+    schemaMappings,
+    transformFunctions,
+    dictionaries
+  )
+
+  t.is(ret.dictionaries, dictionaries)
+})

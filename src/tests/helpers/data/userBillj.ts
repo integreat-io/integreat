@@ -4,6 +4,6 @@ export default {
   surname: 'Jones',
   birthyear: '1963',
   feeds: [],
-  roles: ['admin'],
+  roles: ['super'],
   tokens: ['twitter|23459']
 }

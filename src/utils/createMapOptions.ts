@@ -1,4 +1,4 @@
-import { MapDefinition, CustomFunction } from 'map-transform'
+import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
 import { MappingDef } from '../types'
 
 interface MapDefinitions {
@@ -27,13 +27,15 @@ const pipelinesFromSchemas = (schemas: MapDefinitions): MapDefinitions =>
 export default function createMapOptions(
   mappings: MappingDef[],
   schemas: MapDefinitions,
-  functions: TransformFunctions
+  functions: TransformFunctions,
+  dictionaries?: Dictionaries
 ) {
   return {
     pipelines: {
       ...pipelinesFromMappings(mappings),
       ...pipelinesFromSchemas(schemas)
     },
-    functions
+    functions,
+    dictionaries
   }
 }
