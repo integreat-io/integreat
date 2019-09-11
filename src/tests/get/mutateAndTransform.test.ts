@@ -7,7 +7,7 @@ import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
 import entry2 from '../helpers/data/entry2'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 test('should transform entry', async t => {
   const adapters = { json }
@@ -89,8 +89,7 @@ test('should transform array of entries', async t => {
     upperCase: () => value => value.toUpperCase(),
     addSectionsToText: () =>
       mapAny(item => {
-        const sections =
-          item && item.sections.join('|')
+        const sections = item && item.sections.join('|')
         return {
           ...item,
           text: `${item && item.text} - ${sections}`

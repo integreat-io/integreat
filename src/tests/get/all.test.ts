@@ -4,7 +4,7 @@ import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import entriesData from '../helpers/data/entries'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 test('should get all entries from service', async t => {
   const adapters = { json }

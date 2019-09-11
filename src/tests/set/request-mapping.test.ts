@@ -5,20 +5,24 @@ import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Helpers
+
+const date = '2019-08-13T13:43:00.000Z'
 
 const entry1Item = {
   $type: 'entry',
   id: 'ent1',
-  title: 'Entry 1'
+  title: 'Entry 1',
+  createdAt: new Date(date)
 }
 
 const entry1Mapped = {
   key: 'ent1',
   headline: 'Entry 1',
   originalTitle: 'Entry 1',
+  createdAt: date,
   sections: []
 }
 
@@ -46,15 +50,18 @@ test('should set data with request mapping', async t => {
       stringify: () => value => JSON.stringify(value)
     }
   }
-  const requestMapping = ['data', {
-    'data': 'content.items[]',
-    'none0': ['content.footnote', { $transform: 'fixed', value: '' }],
-    'params.type': [
-      'content.meta',
-      { $transform: 'stringify', $direction: 'rev' },
-      'datatype'
-    ]
-  }]
+  const requestMapping = [
+    'data',
+    {
+      data: 'content.items[]',
+      none0: ['content.footnote', { $transform: 'fixed', value: '' }],
+      'params.type': [
+        'content.meta',
+        { $transform: 'stringify', $direction: 'rev' },
+        'datatype'
+      ]
+    }
+  ]
   const defs = {
     schemas: [entrySchema],
     services: [

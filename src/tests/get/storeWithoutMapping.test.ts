@@ -2,7 +2,7 @@ import test from 'ava'
 import nock = require('nock')
 import json from 'integreat-adapter-json'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 const defs = {
   schemas: [require('../helpers/defs/schemas/entry').default],

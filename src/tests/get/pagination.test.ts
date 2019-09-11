@@ -6,7 +6,7 @@ import entry1Data from '../helpers/data/entry1'
 import entry2Data from '../helpers/data/entry2'
 import entry3Data from '../helpers/data/entry3'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Setup
 

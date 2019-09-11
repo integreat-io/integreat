@@ -2,7 +2,7 @@ import test from 'ava'
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Helpers
 
@@ -17,10 +17,7 @@ const entry1Item = {
   createdAt,
   updatedAt,
   author: { id: 'johnf', type: 'user' },
-  sections: [
-    { id: 'news', type: 'section' },
-    { id: 'sports', type: 'section' }
-  ]
+  sections: [{ id: 'news', type: 'section' }, { id: 'sports', type: 'section' }]
 }
 
 // Tests
@@ -42,8 +39,11 @@ test('should set new entry', async t => {
       body: 'The text of entry 1',
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),
-      authorId: 'johnf',
-      sections: ['news', 'sports']
+      authorId: { id: 'johnf', $ref: 'user' },
+      sections: [
+        { id: 'news', $ref: 'section' },
+        { id: 'sports', $ref: 'section' }
+      ]
     }),
     headers: {
       'Content-Type': 'application/json'

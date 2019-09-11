@@ -3,7 +3,7 @@ import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 test('should get error object for unknown entry', async t => {
   const adapters = { json }

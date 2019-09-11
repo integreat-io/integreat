@@ -5,7 +5,7 @@ import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import ent1Data from '../helpers/data/entry1'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Setup
 
@@ -21,7 +21,7 @@ const serializeData = ({
   authorId,
   sections
 }) =>
-  JSON.stringify([{
+  JSON.stringify({
     key,
     headline,
     originalTitle: headline,
@@ -30,7 +30,7 @@ const serializeData = ({
     updatedAt,
     authorId,
     sections
-  }])
+  })
 
 test.after.always(() => {
   nock.restore()
@@ -38,7 +38,7 @@ test.after.always(() => {
 
 // Tests
 
-test('should dispatch set action and return respons', async t => {
+test('should dispatch get action and return respons', async t => {
   const send = sinon.stub().resolves({
     status: 'ok',
     data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } })
@@ -46,33 +46,38 @@ test('should dispatch set action and return respons', async t => {
   const resources = { adapters: { json: { ...json, send } } }
   const action = {
     type: 'REQUEST',
-    payload: {
-      type: 'entry',
-      data: `{"key":"ent1","headline":"Entry 1","createdAt":"${createdAt}","updatedAt":"${updatedAt}"}`,
-      requestMethod: 'POST'
-    },
-    meta: { ident: { root: true } }
+    payload: { type: 'entry', data: '{"key":"ent1"}', requestMethod: 'GET' },
+    meta: { ident: { id: 'johnf' } }
   }
   const expectedRequestParams = {
     type: 'entry',
-    onlyMappedValues: true,
-    id: 'ent1'
+    id: 'ent1',
+    onlyMappedValues: false
   }
-  const expectedRequestData = `{"key":"ent1","headline":"Entry 1","originalTitle":"Entry 1","createdAt":"${createdAt}","updatedAt":"${updatedAt}","sections":[]}`
+  const expectedResponseData = serializeData({
+    key: 'ent1',
+    headline: 'Entry 1',
+    body: 'The text of entry 1',
+    authorId: { id: 'johnf', $ref: 'user' },
+    sections: [
+      { id: 'news', $ref: 'section' },
+      { id: 'sports', $ref: 'section' }
+    ],
+    createdAt,
+    updatedAt
+  })
   const expectedResponse = {
     status: 'ok',
-    data: serializeData({ ...ent1Data, createdAt, updatedAt }),
-    access: { status: 'granted', ident: { root: true }, scheme: 'data' }
+    data: expectedResponseData,
+    access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
   }
 
   const great = integreat(defs, resources)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)
   const sentRequest = send.args[0][0]
-  t.is(sentRequest.action, 'SET')
+  t.is(sentRequest.action, 'GET')
   t.deepEqual(sentRequest.params, expectedRequestParams)
-  t.is(sentRequest.data, expectedRequestData)
   t.deepEqual(ret, expectedResponse)
 })

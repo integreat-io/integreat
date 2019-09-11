@@ -5,7 +5,7 @@ import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 import bettyData from '../helpers/data/userBetty'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 test.after.always(() => {
   nock.restore()

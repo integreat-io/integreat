@@ -4,7 +4,7 @@ import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Helpers
 
@@ -14,10 +14,7 @@ const entry1Item = {
   title: 'Entry 1',
   text: 'The text of entry 1',
   author: { id: 'johnf', $ref: 'user' },
-  sections: [
-    { id: 'news', $ref: 'section' },
-    { id: 'sports', $ref: 'section' }
-  ]
+  sections: [{ id: 'news', $ref: 'section' }, { id: 'sports', $ref: 'section' }]
 }
 
 // Tests

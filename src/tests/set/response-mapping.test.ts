@@ -5,7 +5,7 @@ import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Helpers
 

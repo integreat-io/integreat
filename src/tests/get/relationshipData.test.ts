@@ -6,7 +6,7 @@ import usersUserMapping from '../helpers/defs/mappings/users-user'
 import entry1Data from '../helpers/data/entry1'
 import johnfData from '../helpers/data/userJohnf'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Setup
 

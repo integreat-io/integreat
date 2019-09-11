@@ -8,7 +8,7 @@ import entry2 from '../helpers/data/entry2'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 import jsonTransform from '../helpers/resources/transformers/jsonTransform'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Setup
 
@@ -23,7 +23,7 @@ const responseMapping = [
   }
 ]
 
-const defsWithResponseMapping = (responseMapping) => ({
+const defsWithResponseMapping = responseMapping => ({
   schemas: [entrySchema],
   services: [
     {
@@ -129,7 +129,11 @@ test('should map with sub mapping', async t => {
     payload: { type: 'entry', id: 'ent3' }
   }
   const responseMapping = {
-    'data[]': ['data.responseContent', { $transform: 'jsonTransform' }, 'articles[]']
+    'data[]': [
+      'data.responseContent',
+      { $transform: 'jsonTransform' },
+      'articles[]'
+    ]
   }
   const defs = defsWithResponseMapping(responseMapping)
 

@@ -5,7 +5,7 @@ import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 import ent1Data from '../helpers/data/entry1'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Setup
 

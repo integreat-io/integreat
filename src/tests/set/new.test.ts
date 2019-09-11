@@ -1,11 +1,11 @@
 import test from 'ava'
 import nock = require('nock')
 import json from 'integreat-adapter-json'
-import completeIdent from '../../src/middleware/completeIdent'
+import completeIdent from '../../middleware/completeIdent'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Helpers
 
@@ -20,10 +20,7 @@ const entry1Item = {
   createdAt,
   updatedAt,
   author: { id: 'johnf', $ref: 'user' },
-  sections: [
-    { id: 'news', $ref: 'section' },
-    { id: 'sports', $ref: 'section' }
-  ]
+  sections: [{ id: 'news', $ref: 'section' }, { id: 'sports', $ref: 'section' }]
 }
 
 const entriesArr = [
@@ -55,8 +52,11 @@ test('should set new entry', async t => {
     body: 'The text of entry 1',
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
-    authorId: 'johnf',
-    sections: ['news', 'sports']
+    authorId: { id: 'johnf', $ref: 'user' },
+    sections: [
+      { id: 'news', $ref: 'section' },
+      { id: 'sports', $ref: 'section' }
+    ]
   }
   nock('http://some.api')
     .get('/users/johnf')

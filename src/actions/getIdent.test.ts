@@ -2,9 +2,9 @@ import test from 'ava'
 import nock = require('nock')
 import integreat from '../integreat'
 import json from 'integreat-adapter-json'
-import defs from '../../tests/helpers/defs'
-import johnfData from '../../tests/helpers/data/userJohnf'
-import ent1Data from '../../tests/helpers/data/entry1'
+import defs from '../tests/helpers/defs'
+import johnfData from '../tests/helpers/data/userJohnf'
+import ent1Data from '../tests/helpers/data/entry1'
 
 import getIdent from './getIdent'
 

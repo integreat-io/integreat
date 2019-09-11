@@ -4,7 +4,7 @@ import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 // Helpers
 
@@ -14,10 +14,7 @@ const entry1Item = {
   title: 'Entry 1',
   text: 'The text of entry 1',
   author: { id: 'johnf', type: 'user' },
-  sections: [
-    { id: 'news', type: 'section' },
-    { id: 'sports', type: 'section' }
-  ]
+  sections: [{ id: 'news', type: 'section' }, { id: 'sports', type: 'section' }]
 }
 
 // Tests

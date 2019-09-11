@@ -5,7 +5,7 @@ import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import ent1Data from '../helpers/data/entry1'
 
-import integreat = require('../..')
+import integreat = require('../../..')
 
 test('should emit request and response before mapping from service', async t => {
   const adapters = { json }
