@@ -71,21 +71,21 @@ test('should call action handler with payload and meta', async t => {
   t.deepEqual(getHandler.args[0][0], expected)
 })
 
-test('should call action handler with services, schemas, and identOptions', async t => {
+test('should call action handler with services, schemas, and identConfig', async t => {
   const getHandler = sinon.stub().resolves({ status: 'ok' })
   const actions = { GET: getHandler }
   const services = {}
   const schemas = {}
-  const identOptions = {}
+  const identConfig = {}
   const action = { type: 'GET' }
 
-  await dispatch({ actions, services, schemas, identOptions })(action)
+  await dispatch({ actions, services, schemas, identConfig })(action)
 
   t.is(getHandler.callCount, 1)
   const resources = getHandler.args[0][1]
   t.is(resources.services, services)
   t.is(resources.schemas, schemas)
-  t.is(resources.identOptions, identOptions)
+  t.is(resources.identConfig, identConfig)
 })
 
 test('should call action handler with dispatch function', async t => {

@@ -29,7 +29,7 @@ function setupDispatch({
   schemas = {},
   services = {},
   middlewares = [],
-  identOptions = {}
+  identConfig = {}
 }) {
   const getService = setupGetService(schemas, services)
 
@@ -41,7 +41,7 @@ function setupDispatch({
         schemas,
         services,
         dispatch,
-        identOptions,
+        identConfig,
         getService
       },
       actionHandlers

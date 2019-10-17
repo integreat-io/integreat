@@ -14,7 +14,7 @@ export default {
   dictionaries: {
     userRole: [['super', 'admin'] as const, ['readwrite', 'editor'] as const]
   },
-  ident: {
+  identConfig: {
     type: 'user'
   }
 }

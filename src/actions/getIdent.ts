@@ -49,15 +49,15 @@ const prepareResponse = (response, params, propKeys) => {
 /**
  * Get an ident item from service, based on the meta.ident object on the action.
  * @param action - Action object
- * @param resources - Object with getService and identOptions
+ * @param resources - Object with getService and identConfig
  * @returns Response object with ident item as data
  */
-async function getIdent({ meta }, { getService, identOptions = {} }) {
+async function getIdent({ meta }, { getService, identConfig = {} }) {
   if (!meta.ident) {
     return createError('GET_IDENT: The request has no ident', 'noaction')
   }
 
-  const { type } = identOptions
+  const { type } = identConfig
   if (!type) {
     return createError(
       'GET_IDENT: Integreat is not set up with authentication',
@@ -70,7 +70,7 @@ async function getIdent({ meta }, { getService, identOptions = {} }) {
     return createUnknownServiceError(type, null, 'GET_IDENT')
   }
 
-  const propKeys = preparePropKeys(identOptions.props)
+  const propKeys = preparePropKeys(identConfig.props)
   const params = prepareParams(meta.ident, propKeys)
   if (!params) {
     return createError(

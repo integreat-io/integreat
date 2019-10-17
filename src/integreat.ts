@@ -5,14 +5,23 @@ import createSchema from './schema'
 import setupDispatch from './dispatch'
 import builtInActions from './actions'
 import createMapOptions, { TransformFunctions } from './utils/createMapOptions'
-import { MappingDef, SchemaDef } from './types'
+import {
+  MappingDef,
+  SchemaDef,
+  AuthDef,
+  ServiceDef,
+  IdentConfig
+} from './types'
 import builtInFunctions from './transformers/builtIns'
 
 const version = '0.8.0-alpha.0'
 
 interface Definitions {
   schemas: SchemaDef[]
+  services: ServiceDef[]
   mappings: MappingDef[]
+  auths: AuthDef[]
+  identConfig?: IdentConfig
   dictionaries: Dictionaries
 }
 
@@ -35,7 +44,7 @@ function integreat(
     services: serviceDefs,
     mappings = [],
     auths: authDefs = [],
-    ident: identOptions = {},
+    identConfig,
     dictionaries
   }: Definitions,
   {
@@ -115,7 +124,7 @@ function integreat(
     version,
     schemas,
     services,
-    identType: identOptions.type,
+    identType: identConfig && identConfig.type,
 
     /**
      * Function for dispatching actions to Integreat. Will be run through the
@@ -128,7 +137,7 @@ function integreat(
       services,
       schemas,
       middlewares,
-      identOptions
+      identConfig
     }),
 
     /**

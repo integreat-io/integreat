@@ -63,3 +63,35 @@ export interface SchemaDef {
   access?: string | object
   internal?: boolean
 }
+
+export interface AuthDef {
+  id: string
+  authenticator: string
+  options: { [key: string]: unknown }
+}
+
+export interface IdentConfig {
+  type: string
+  props?: {
+    id?: string
+    roles?: string
+    tokens?: string
+  }
+}
+
+export interface EndpointDef {
+  id?: string
+  match?: object
+  validate?: unknown[]
+  options?: { [key: string]: unknown }
+}
+
+export interface ServiceDef {
+  id: string
+  adapter: string
+  auth?: string | null
+  meta?: string | null
+  options?: { [key: string]: unknown }
+  endpoints: EndpointDef[]
+  mappings: { [type: string]: string | MapDefinition }
+}

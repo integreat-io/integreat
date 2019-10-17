@@ -86,8 +86,8 @@ const adapters = {
 // Tests
 
 test('should return object with version, dispatch, on, schemas, and identType', t => {
-  const ident = { type: 'account' }
-  const great = integreat({ services, schemas, ident }, { adapters })
+  const identConfig = { type: 'account' }
+  const great = integreat({ services, schemas, identConfig }, { adapters })
 
   t.is(typeof great.version, 'string')
   t.is(typeof great.dispatch, 'function')

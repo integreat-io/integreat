@@ -12,7 +12,7 @@ import getIdent from './getIdent'
 
 const great = integreat(defs, { adapters: { json } })
 const getService = () => great.services.users
-const identOptions = { type: 'user' }
+const identConfig = { type: 'user' }
 
 const johnfIdent = {
   id: 'johnf',
@@ -51,7 +51,7 @@ test('should complete ident with token', async t => {
 
   const ret = await getIdent(
     { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identOptions }
+    { getService, identConfig }
   )
 
   t.deepEqual(ret, expected)
@@ -70,7 +70,7 @@ test('should complete ident with id', async t => {
 
   const ret = await getIdent(
     { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identOptions }
+    { getService, identConfig }
   )
 
   t.deepEqual(ret, expected)
@@ -89,7 +89,7 @@ test('should complete ident with id when more props are present', async t => {
 
   const ret = await getIdent(
     { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identOptions }
+    { getService, identConfig }
   )
 
   t.deepEqual(ret, expected)
@@ -100,7 +100,7 @@ test('should return noaction when no props', async t => {
 
   const ret = await getIdent(
     { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identOptions }
+    { getService, identConfig }
   )
 
   t.is(ret.status, 'noaction')
@@ -112,7 +112,7 @@ test('should return noaction when null', async t => {
 
   const ret = await getIdent(
     { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identOptions }
+    { getService, identConfig }
   )
 
   t.is(ret.status, 'noaction')
@@ -136,7 +136,7 @@ test('should return notfound when ident not found', async t => {
 
   const ret = await getIdent(
     { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identOptions }
+    { getService, identConfig }
   )
 
   t.truthy(ret)
@@ -150,7 +150,7 @@ test('should complete ident with other prop keys', async t => {
     .query({ author: 'johnf' })
     .reply(200, { data: ent1Data })
   const ident = { id: 'johnf' }
-  const identOptions = {
+  const identConfig = {
     type: 'entry',
     props: {
       id: 'author',
@@ -166,7 +166,7 @@ test('should complete ident with other prop keys', async t => {
 
   const ret = await getIdent(
     { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identOptions }
+    { getService, identConfig }
   )
 
   t.is(ret.status, 'ok', ret.error)
@@ -183,7 +183,7 @@ test('should return error when unknown service', async t => {
 
   const ret = await getIdent(
     { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identOptions }
+    { getService, identConfig }
   )
 
   t.is(ret.status, 'error')
