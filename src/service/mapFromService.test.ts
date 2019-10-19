@@ -10,7 +10,7 @@ import mapFromService from './mapFromService'
 const schemas = {
   entry: createSchema({
     id: 'entry',
-    fields: {
+    shape: {
       title: 'string',
       one: { $cast: 'integer', $default: 1 },
       two: 'integer',
@@ -20,7 +20,7 @@ const schemas = {
   }),
   account: createSchema({
     id: 'account',
-    fields: { name: 'string' }
+    shape: { name: 'string' }
   })
 }
 

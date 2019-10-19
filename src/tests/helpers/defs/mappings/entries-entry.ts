@@ -2,7 +2,7 @@ export default {
   id: 'entries-entry',
   type: 'entry',
   service: 'entries',
-  pipeline: [
+  mapping: [
     {
       $iterate: true,
       id: 'key',

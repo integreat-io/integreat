@@ -1,21 +1,52 @@
 import debugLib = require('debug')
 import setupGetService from './utils/getService'
+import {
+  Dictionary,
+  Dispatch,
+  Action,
+  Response,
+  IdentConfig,
+  Middleware
+} from './types'
 
 const debug = debugLib('great')
 
 const compose = (...fns) => fns.reduce((f, g) => (...args) => f(g(...args)))
 
-const handleAction = (action, resources, actionHandlers) => {
-  if (action) {
-    const { type, payload = {}, meta = {} } = action
-    const handler = actionHandlers[type] // eslint-disable-line security/detect-object-injection
+export interface ActionHandler {
+  (
+    action: Action,
+    dispatch: Dispatch,
+    getService: Function,
+    identConfig?: IdentConfig
+  ): Promise<Response>
+}
 
-    if (typeof handler === 'function') {
-      return handler({ type, payload, meta }, resources)
+const completeAction = ({ type, payload = {}, meta = {} }: Action) => ({
+  type,
+  payload,
+  meta
+})
+
+function getActionHandlerFromType(
+  type: string | undefined,
+  actionHandlers: Dictionary<ActionHandler>
+) {
+  if (type) {
+    const actionHandler = actionHandlers[type]
+    if (typeof actionHandler === 'function') {
+      return actionHandler
     }
   }
+  return undefined
+}
 
-  return { status: 'noaction' }
+interface Resources {
+  actionHandlers: Dictionary<ActionHandler>
+  schemas: object
+  services: object
+  middlewares?: Middleware[]
+  identConfig?: IdentConfig
 }
 
 /**
@@ -24,28 +55,29 @@ const handleAction = (action, resources, actionHandlers) => {
  * @param resources - Object with actions, schemas, services, and middlewares
  * @returns Dispatch function, accepting an action as only argument
  */
-function setupDispatch({
-  actions: actionHandlers = {},
+export default function createDispatch({
+  actionHandlers = {},
   schemas = {},
   services = {},
   middlewares = [],
-  identConfig = {}
-}) {
+  identConfig
+}: Resources) {
   const getService = setupGetService(schemas, services)
+  let dispatch: Dispatch
 
-  let dispatch = async action => {
+  dispatch = async action => {
     debug('Dispatch: %o', action)
-    return handleAction(
-      action,
-      {
-        schemas,
-        services,
-        dispatch,
-        identConfig,
-        getService
-      },
-      actionHandlers
-    )
+
+    if (!action) {
+      return { status: 'noaction', error: 'Dispatched no action' }
+    }
+
+    const handler = getActionHandlerFromType(action.type, actionHandlers)
+    if (!handler) {
+      return { status: 'noaction', error: 'Dispatched unknown action' }
+    }
+
+    return handler(completeAction(action), dispatch, getService, identConfig)
   }
 
   if (middlewares.length > 0) {
@@ -54,5 +86,3 @@ function setupDispatch({
 
   return dispatch
 }
-
-export default setupDispatch

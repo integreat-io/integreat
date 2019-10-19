@@ -2,7 +2,7 @@ import test from 'ava'
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Helpers
 
@@ -50,7 +50,7 @@ test('should set new entry', async t => {
     }
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'dryrun', ret.error)

@@ -7,13 +7,13 @@ import functions from '../transformers/builtIns'
 
 import setMeta from './setMeta'
 
-// Helpers
+// Setup
 
 const schemas = {
   meta: schema({
     id: 'meta',
     service: 'store',
-    fields: { lastSyncedAt: 'date', status: 'string' },
+    shape: { lastSyncedAt: 'date', status: 'string' },
     access: 'auth'
   })
 }
@@ -36,6 +36,8 @@ const setupService = (id: string, { meta, endpoints = [] } = {}) =>
   })
 
 const lastSyncedAt = new Date()
+
+const dispatch = async () => ({ status: 'ok' })
 
 test.after(() => {
   nock.restore()
@@ -65,7 +67,7 @@ test('should set metadata on service', async t => {
     meta: { ident }
   }
 
-  const ret = await setMeta(action, { getService })
+  const ret = await setMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -80,15 +82,16 @@ test('should not set metadata on service when no meta type', async t => {
   const src = setupService('store', { meta: null, endpoints })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
-  const payload = {
-    service: 'store',
-    meta: { lastSyncedAt }
+  const action = {
+    type: 'SET_META',
+    payload: {
+      service: 'store',
+      meta: { lastSyncedAt }
+    },
+    meta: { ident }
   }
 
-  const ret = await setMeta(
-    { type: 'SET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await setMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'noaction')
@@ -124,7 +127,7 @@ test('should set metadata on other service', async t => {
     meta: { ident }
   }
 
-  const ret = await setMeta(action, { getService })
+  const ret = await setMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -134,15 +137,16 @@ test('should set metadata on other service', async t => {
 test('should return status noaction when meta is set to an unknown schema', async t => {
   const src = setupService('store', { meta: 'unknown' })
   const getService = (type, service) => (service === 'store' ? src : null)
-  const payload = {
-    service: 'store',
-    meta: { lastSyncedAt }
+  const action = {
+    type: 'SET_META',
+    payload: {
+      service: 'store',
+      meta: { lastSyncedAt }
+    },
+    meta: { ident }
   }
 
-  const ret = await setMeta(
-    { type: 'SET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await setMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'noaction')
@@ -156,15 +160,16 @@ test('should refuse setting metadata on service when not authorized', async t =>
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
-  const payload = {
-    service: 'store',
-    meta: { lastSyncedAt, status: 'busy' }
+  const action = {
+    type: 'SET_META',
+    payload: {
+      service: 'store',
+      meta: { lastSyncedAt, status: 'busy' }
+    },
+    meta: {}
   }
 
-  const ret = await setMeta(
-    { type: 'SET_META', payload, meta: {} },
-    { getService }
-  )
+  const ret = await setMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'noaccess', ret.error)
@@ -173,15 +178,16 @@ test('should refuse setting metadata on service when not authorized', async t =>
 
 test('should return error for unknown service', async t => {
   const getService = () => null
-  const payload = {
-    service: 'unknown',
-    meta: { lastSyncedAt }
+  const action = {
+    type: 'SET_META',
+    payload: {
+      service: 'unknown',
+      meta: { lastSyncedAt }
+    },
+    meta: { ident }
   }
 
-  const ret = await setMeta(
-    { type: 'SET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await setMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'error')

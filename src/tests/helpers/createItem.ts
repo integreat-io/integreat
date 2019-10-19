@@ -1,2 +1,6 @@
-export default (id, type, fields = {}, relationships = {}) =>
-  ({ id, $type: type, ...fields, ...relationships })
+export default (id, type, shape = {}, relationships = {}) => ({
+  id,
+  $type: type,
+  ...shape,
+  ...relationships
+})

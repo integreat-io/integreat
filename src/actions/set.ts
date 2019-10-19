@@ -46,7 +46,7 @@ const extractId = data => (data && data.id) || undefined
  * @param resources - Object with getService
  * @returns Response object with any data returned from the service
  */
-export default async function set(action, { getService }) {
+export default async function set(action, _dispatch, getService) {
   debug('Action: SET')
 
   const {

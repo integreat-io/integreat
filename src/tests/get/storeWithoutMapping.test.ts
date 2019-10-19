@@ -2,7 +2,7 @@ import test from 'ava'
 import nock = require('nock')
 import json from 'integreat-adapter-json'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 const defs = {
   schemas: [require('../helpers/defs/schemas/entry').default],
@@ -12,7 +12,7 @@ const defs = {
       id: 'entries-entry',
       type: 'entry',
       service: 'entries',
-      pipeline: [{ $apply: 'cast_entry' }]
+      mapping: [{ $apply: 'cast_entry' }]
     }
   ]
 }
@@ -49,7 +49,7 @@ test('should get one entry from service', async t => {
     sections: []
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

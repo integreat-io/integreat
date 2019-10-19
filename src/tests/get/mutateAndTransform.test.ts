@@ -7,7 +7,7 @@ import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
 import entry2 from '../helpers/data/entry2'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 test('should transform entry', async t => {
   const adapters = { json }
@@ -46,7 +46,7 @@ test('should transform entry', async t => {
       })
   }
 
-  const great = integreat(defs, { adapters, transformers })
+  const great = Integreat.create(defs, { adapters, transformers })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')
@@ -97,7 +97,7 @@ test('should transform array of entries', async t => {
       })
   }
 
-  const great = integreat(defs, { adapters, transformers })
+  const great = Integreat.create(defs, { adapters, transformers })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

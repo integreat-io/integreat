@@ -5,7 +5,7 @@ import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import ent1Data from '../helpers/data/entry1'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Setup
 
@@ -72,7 +72,7 @@ test('should dispatch get action and return respons', async t => {
     access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
   }
 
-  const great = integreat(defs, resources)
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(send.callCount, 1)

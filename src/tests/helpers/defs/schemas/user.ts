@@ -1,7 +1,7 @@
 export default {
   id: 'user',
   service: 'users',
-  fields: {
+  shape: {
     username: 'string',
     firstname: 'string',
     lastname: 'string',

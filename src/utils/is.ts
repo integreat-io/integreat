@@ -2,8 +2,8 @@ import {
   DataObject,
   TypedData,
   Reference,
-  Schema,
-  PropertySchema
+  Shape,
+  PropertyShape
 } from '../types'
 
 export const isDataObject = (value: unknown): value is DataObject =>
@@ -18,10 +18,10 @@ export const isTypedData = (value: unknown): value is TypedData =>
 export const isReference = (value: unknown): value is Reference =>
   isDataObject(value) && value.hasOwnProperty('$ref')
 
-export const isSchema = (value: unknown): value is Schema =>
+export const isSchema = (value: unknown): value is Shape =>
   isDataObject(value) && !value.hasOwnProperty('$cast')
 
-export const isPropertySchema = (value: unknown): value is PropertySchema =>
+export const isPropertySchema = (value: unknown): value is PropertyShape =>
   isDataObject(value) && value.hasOwnProperty('$cast')
 
 export const isNullOrUndefined = (value: unknown): value is null | undefined =>

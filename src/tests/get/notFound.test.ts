@@ -3,7 +3,7 @@ import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 test('should get error object for unknown entry', async t => {
   const adapters = { json }
@@ -15,7 +15,7 @@ test('should get error object for unknown entry', async t => {
     payload: { id: 'ent0', type: 'entry' }
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'notfound', ret.error)

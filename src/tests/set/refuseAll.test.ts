@@ -4,7 +4,7 @@ import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Helpers
 
@@ -32,7 +32,7 @@ test('should refuse request to set entry with no ident', async t => {
     meta: { ident: null }
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'noaccess', ret.error)

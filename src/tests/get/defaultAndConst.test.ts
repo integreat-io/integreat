@@ -5,7 +5,7 @@ import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Setup
 
@@ -43,7 +43,7 @@ test('should transform entry', async t => {
     services: [{ ...entriesService, mappings: { entry: mapping } }]
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

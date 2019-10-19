@@ -26,7 +26,7 @@ const extractMeta = (meta: DataObject, keys?: string[]) =>
  * @param resources - Object with getService
  * @returns Promise of metdata
  */
-async function getMeta({ payload, meta }, { getService }) {
+async function getMeta({ payload, meta }, _dispatch, getService) {
   debug('Action: GET_META')
 
   const { service: serviceId, endpoint, keys } = payload

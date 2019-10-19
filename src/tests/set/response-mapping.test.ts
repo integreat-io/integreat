@@ -5,7 +5,7 @@ import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Helpers
 
@@ -58,7 +58,7 @@ test('should map response and merge with request data', async t => {
     }
   ]
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

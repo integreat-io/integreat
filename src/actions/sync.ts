@@ -157,7 +157,7 @@ const createSetMetas = (fromParams, lastSyncedAt, ident, dispatch) =>
  * @param resources - Dispatch function
  * @returns Promise of the action result
  */
-async function sync({ payload, meta = {} }, { dispatch }) {
+async function sync({ payload, meta = {} }, dispatch) {
   debug('Action: SYNC')
   const fromParams = await generateFromParams(payload, meta, dispatch)
   const toParams = generateToParams(payload, fromParams)

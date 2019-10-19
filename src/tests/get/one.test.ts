@@ -5,7 +5,7 @@ import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 import ent1Data from '../helpers/data/entry1'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Setup
 
@@ -38,7 +38,7 @@ test('should get one entry from service', async t => {
     ]
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -73,7 +73,7 @@ test('should get one user from service', async t => {
     feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

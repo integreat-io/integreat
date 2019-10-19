@@ -12,7 +12,7 @@ const schemas = {
   entry: createSchema({
     id: 'entry',
     plural: 'entries',
-    fields: {
+    shape: {
       title: 'string',
       one: { $cast: 'integer', $default: 1 },
       two: 'integer',
@@ -22,7 +22,7 @@ const schemas = {
   }),
   account: createSchema({
     id: 'account',
-    fields: {
+    shape: {
       name: 'string'
     },
     access: {

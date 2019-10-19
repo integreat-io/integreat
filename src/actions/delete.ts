@@ -23,7 +23,7 @@ const prepareData = payload => {
  * @param resources - Object with getService
  * @returns Response object with any data returned from the service
  */
-async function deleteFn(action, { getService } = {}) {
+async function deleteFn(action, _dispatch, getService) {
   debug('Action: DELETE')
   const { type, id, service: serviceId, endpoint } = action.payload
 

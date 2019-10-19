@@ -2,7 +2,7 @@ export default {
   id: 'users-user',
   type: 'user',
   service: 'users',
-  pipeline: [
+  mapping: [
     {
       $iterate: true,
       id: 'user',

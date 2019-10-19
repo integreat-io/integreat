@@ -16,6 +16,7 @@ and expose them through a well defined interface, to abstract away the specifics
 of each service, and map their data to defined schemas.
 
 This is done through:
+
 - adapters, that does all the hard work of communicating with the different
   services
 - a definition format, for setting up each service with the right adapter and
@@ -62,6 +63,7 @@ authenticated service, will leave Integreat unauthenticated. What this means,
 though, depends on how you define your services.
 
 ## Install
+
 Requires node v8.6.
 
 Install from npm:
@@ -71,36 +73,38 @@ npm install integreat
 ```
 
 ## Hello world
+
 The hello world example of Integreat, would look something like this:
 
 ```javascript
-const integreat = require('integreat')
-const adapters = integreat.adapters('json')
+const Integreat = require('integreat')
+const json = require('integreat-adapter-json')
 
-const schemas = [{
-  id: 'message',
-  plural: 'messages',
-  service: 'helloworld',
-  attributes: {text: 'string'}
-}]
+const schemas = [
+  {
+    id: 'message',
+    service: 'helloworld',
+    shape: { text: 'string' }
+  }
+]
 
-const services = [{
-  id: 'helloworld',
-  adapter: 'json',
-  endpoints: [
-    {options: {uri: 'https://api.helloworld.io/json'}}
-  ],
-  mappings: {
-    message: {
-      attributes: {text: {path: 'message'}}
+const services = [
+  {
+    id: 'helloworld',
+    adapter: 'json',
+    endpoints: [{ options: { uri: 'https://api.helloworld.io/json' } }],
+    mappings: {
+      message: { text: 'message' }
     }
   }
-}]
+]
 
-const great = integreat({schemas, services}, {adapters})
-const action = {type: 'GET', payload: {type: 'message'}}
+const adapters = { json }
 
-great.dispatch(action).then((data) => console.log(data.attributes.text))
+const great = Integreat.create({ schemas, services }, { adapters })
+const action = { type: 'GET', payload: { type: 'message' } }
+
+great.dispatch(action).then(data => console.log(data.text))
 //--> Hello world
 ```
 
@@ -110,6 +114,7 @@ possible.
 
 The example requires an imagined api at 'https://api.helloworld.io/json',
 returning the following json data:
+
 ```json
 {
   "message": "Hello world"
@@ -117,6 +122,7 @@ returning the following json data:
 ```
 
 ## Schema definitions
+
 To do anything with Integreat, you need to define one or more schemas. They
 describe the data you expected to get out of Integreat. A type will be
 associated with a service, which is used to retrieve data for the type, unless
@@ -152,6 +158,7 @@ it to build a RESTful endpoint structure, and will append an _s_ to `id` if
 `plural` is not set – which may be weird in some cases.
 
 ### Attributes
+
 Each attribute is defined with an id, which may contain only alphanumeric
 characters, and may not start with a digit. This id is used to reference the
 attribute.
@@ -164,6 +171,7 @@ The `default` value will be used when a data service does not provide this value
 Default is `null`.
 
 ### Relationships
+
 Relationship is defined in the same way as attributes, but with one important
 difference: The `type` property refers to other Integreat schemas. E.g. a
 schema for an article may have a relationship called `author`, with
@@ -184,6 +192,7 @@ of a field (an attribute, a relationship, or `id`) on the schema the relationshi
 refers to, and the value is the id of field on this schema.
 
 Example schema with a query definition:
+
 ```
 {
   id: 'user',
@@ -207,6 +216,7 @@ The simplest access type `auth`, which means that anyone can do anything with
 the data of this schema, as long as they are authenticated.
 
 Example of a schema with an access rule:
+
 ```javascript
 {
   id: 'entry',
@@ -228,6 +238,7 @@ access, no matter who they are.
 For a more fine-grained rules, set `access` to an access definition.
 
 ## Service definitions
+
 Service definitions are at the core of Integreat, as they define the services to
 fetch data from, how to map this data to a set of items to make available
 through Integreat's data api, and how to send data back to the service.
@@ -254,10 +265,9 @@ supported schemas (attributes and relationships):
 }
 ```
 
-Service definitions are passed to Integreat on creation through the `integreat()`
-function. To add services after creation, pass a service definition to the
-`great.setService()` method. There is also a `great.removeService()` method, that
-accepts the id of a service to remove.
+Service definitions are passed to Integreat on creation through the
+`Integreat.create()` function. There is no way to change services after
+creation.
 
 See [mapping definition](#mapping-definition) for a description of the
 relationship between services and mappings, and the `mappings` property.
@@ -269,6 +279,7 @@ username and password in the uri, set the `auth` property to `true` to signal
 that this is an authenticated service.
 
 ### Endpoint definition
+
 ```
 {
   id: <string>,
@@ -285,7 +296,9 @@ that this is an authenticated service.
 ```
 
 #### Match properties
+
 An endpoint may specify none or more of the following match properties:
+
 - `id`: An action payload may include an `endpoint` property, that will be
   matched against this `id`. For actions with an endpoint id, no other matching
   properties will be considered
@@ -317,6 +330,7 @@ When no match properties are set, the endpoint will match any actions, as long
 as no other endpoints match.
 
 #### Params property
+
 An endpoint may accept properties, and indicate this by listing them on the
 `params` object, with the value set to `true` for required params. All
 properties are treated as strings.
@@ -325,6 +339,7 @@ An endpoint is only used for actions where all the required parameters are
 present.
 
 Example service definition with endpoint parameters:
+
 ```
 {
   id: 'entries',
@@ -346,6 +361,7 @@ Example service definition with endpoint parameters:
 
 Some params are always available and does not need to be specified in `params`,
 unless to define them as required:
+
 - `id`: The item id from the action payload or from the data property (if it is
   an object and not an array). Required in endpoints with `scope: 'member'`, not
   included for `scope: 'collection'`, and optional when scope is not set.
@@ -356,6 +372,7 @@ unless to define them as required:
   set.
 
 #### Options property
+
 Unlike the match properties, the `options` property is required. This should be
 an object with properties to be passed to the adapter as part of a request. The
 props are completely adapter specific, so that each adapter can dictate what
@@ -363,22 +380,23 @@ kind of information it will need, but there are a set of recommended props to
 use when they are relevant:
 
 - `uri`: A uri template, where e.g. `{id}` will be placed with the value of the
-parameter `id` from the action payload. For a full specification of the template
-format, see
-[Integreat URI Template](https://github.com/integreat-io/great-uri-template).
+  parameter `id` from the action payload. For a full specification of the template
+  format, see
+  [Integreat URI Template](https://github.com/integreat-io/great-uri-template).
 
 - `path`: A [path](#paths) into the data, specific for this endpoint. It will
-usually point to an array, in which the items can be found, but as mappings may
-have their own `path`, the endpoint path may point to an object from where the
-different mapping paths point to different arrays.
+  usually point to an array, in which the items can be found, but as mappings may
+  have their own `path`, the endpoint path may point to an object from where the
+  different mapping paths point to different arrays.
 
 - `method`: An adapter specific keyword, to tell the adapter which method of
-transportation to use. For adapters based on http, the options will typically
-be `PUT`, `POST`, etc. The method specified on the endpoint will override any
-method provided elsewhere. As an example, the `SET` action will use the `PUT`
-method as default, but only if no method is specified on the endpoint.
+  transportation to use. For adapters based on http, the options will typically
+  be `PUT`, `POST`, etc. The method specified on the endpoint will override any
+  method provided elsewhere. As an example, the `SET` action will use the `PUT`
+  method as default, but only if no method is specified on the endpoint.
 
 ## Mapping definition
+
 ```
 {
   id: <string>,
@@ -413,7 +431,7 @@ these are not defined, default values will be used; a UUID for `id` and the
 current timestamp for `createdAt` and `updatedAt`.
 
 Data from the service may come in a different format than what is
-[required by Integreat]((#the-data-format)), so specify a [`path`](#paths) to
+[required by Integreat](<(#the-data-format)>), so specify a [`path`](#paths) to
 point to the right value for each attribute and relationship. These values will
 be cast to the right schema after all mapping, mutating, and transforming is
 done. The value of each attribute or relationship should be in a format that can
@@ -449,6 +467,7 @@ In some cases you may be able to reuse a mapping for several services or several
 types, by referring to the mapping id from several service definitions.
 
 ### Paths
+
 Mappings, attributes, and relationships all have an optional `path` property,
 for specifying what part of the data from the service to return in each case.
 (Endpoints may also have a `path` property, but not all adapters support this.)
@@ -456,6 +475,7 @@ for specifying what part of the data from the service to return in each case.
 The `path` properties use a dot notation with array brackets.
 
 For example, with this data returned from the service ...
+
 ```javascript
 const data = {
   sections: [
@@ -477,6 +497,7 @@ would be `'sections[0].articles.items[]'` and to get the content of each item
 `'body.content'`.
 
 The bracket notation offers some possibilities for filtering arrays:
+
 - `[]` - Matches _all_ items in an array
 - `[0]` - Matches the item at index 0
 - `[1:3]` - Matches all items from index 1 to 3, not including 3.
@@ -484,6 +505,7 @@ The bracket notation offers some possibilities for filtering arrays:
 - `[id="ent1"]` - Matches the item with an id equal to `'ent1'`
 
 The bracket notation also offers two options for objects:
+
 - `[keys]` - Matches all keys on an object
 - `[values]` - Matches all values for the object's keys
 
@@ -503,6 +525,7 @@ the first one does not match any properties in the data, the next path is tried,
 and so on.
 
 ### Qualifiers
+
 When a service returns data for several schemas, Integreat needs a way to
 recognize which schema to use for each item in the data. For some services,
 the different schemas may be find on different paths in the data, so
@@ -516,6 +539,7 @@ satisfies all its qualifiers. Qualifiers are applied to the data at the
 mapping's path, before it is mapped and transformed.
 
 An example of two mappings with qualifiers:
+
 ```
 ...
 mappings: {
@@ -537,6 +561,7 @@ When a qualifier points to an array, the qualifier returns true when at least
 one of the items in the array satisfies the condition.
 
 ### Configuring metadata
+
 If a service may send and receive metadata, set the `meta` property to the id of
 a schema defining the metadata as attributes.
 
@@ -588,12 +613,14 @@ Finally, if a service will not have metadata, simply set `meta` to null or skip
 it all together.
 
 ## Idents and security rules
+
 An ident in Integreat is basically an id unique to one participant in the
 security scheme. It is represented by an object, that may also have other
 properties to describe the ident's permissions, or to make it possible to map
 identities in other systems, to an Integreat ident.
 
 Example ident:
+
 ```javascript
 {
   id: 'ident1',
@@ -625,6 +652,7 @@ information and uphold its part of the security agreement and only return data
 and execute actions that the ident have permissions for.
 
 ### Access rules
+
 Access rules are defined with properties telling Integreat which rights to
 require when performing different actions with a given schema. It may be set
 as a overall right to do anything with a schema, or it may be specified on the
@@ -675,6 +703,7 @@ In this example, all actions are allowed for admins, but anyone else that is
 authenticated may GET.
 
 Available rule props:
+
 - `role` - Authorize only idents with this role. May be an array of strings
   (array is not implemented).
 - `ident` - Authorize only idents with this precise id. May be an array (array
@@ -688,6 +717,7 @@ Available rule props:
   use this string instead of a access rule object.
 
 Another example, intended for authorizing only the ident matching an account:
+
 ```javascript
 {
   id: 'accountAccess',
@@ -700,14 +730,15 @@ used as ident id, only an ident with the same id as the account, will have
 access to it.
 
 ### Persisting idents
+
 A security scheme with no way of storing the permissions given to each ident,
 is of little value. (The only case where this would suffice, is when every
 relevant service provided the same ident id, and authorization where done on the
 ident id only.)
 
 Unsurprisingly, Integreat uses schemas and services to store idents. In the
-definition object passed to `integreat()`, set the id of the schema to use
-with idents, on `ident.schema`.
+definition object passed to `Integreat.create()`, set the id of the schema to
+use with idents, on `ident.schema`.
 
 In addition, you may define what fields (attributes or relationships) will
 match the different props on an ident:
@@ -766,7 +797,9 @@ To make Integreat complete idents on actions with the persisted data, set it up
 with the `completeIdent` middleware:
 
 ```javascript
-const great = integreat(defs, resources, [integreat.middleware.completeIdent])
+const great = Integreat.create(defs, resources, [
+  integreat.middleware.completeIdent
+])
 ```
 
 This middleware will intercept any action with `meta.ident` and replace it with
@@ -776,12 +809,14 @@ ident with the specified token. If no ident is found, the original ident is
 kept.
 
 ## Actions
+
 Actions are serializable objects that are dispatched to Integreat, and may be
 queued when appropriate. It is a key point that they are serializable, as they
 allows them to be put in a database persisted queue and be picked up of another
 Intergreat instance in another process.
 
 An action looks like this:
+
 ```
 {
   type: <actionType>,
@@ -798,6 +833,7 @@ add your own properties here, but be aware that some properties are already
 used by Integreat, and more may be added in the future.
 
 Current meta properties reserved by Integreat:
+
 - `id`: Assigning the action an id. Will be picked up when queueing.
 - `queue`: Signals that an action may be queued. May be `true` or a timestamp
 - `queuedAt`: Timestamp for when the action was pushed to the queue
@@ -805,6 +841,7 @@ Current meta properties reserved by Integreat:
 - `ident`: The ident to authorize the action with
 
 ### Returned responses from actions
+
 Retrieving from a service will return an Intgreat response object of the
 following format:
 
@@ -817,6 +854,7 @@ following format:
 ```
 
 The `status` will be one of the following status codes:
+
 - `ok`: Everything is well, data is returned as expected
 - `queued`: The action has been queued
 - `notfound`: Tried to access a resource/endpoint that does not exist
@@ -848,6 +886,7 @@ action other than receiving data. On success, the returned `status` will be
 no guaranty on the returned data format in these cases.
 
 ### The data format
+
 Items will be in the following format:
 
 ```
@@ -876,10 +915,12 @@ still be treated in the same way as now.
 ### Available actions
 
 #### `GET`
+
 Get items from a service. Returned in the `data` property is an array of mapped
 object, in [Integreat's data format](#the-data-format).
 
 Example GET action:
+
 ```javascript
 {
   type: 'GET',
@@ -903,6 +944,7 @@ By default, the returned data will be cast with default values, but set
 the service data.
 
 #### `GET_UNMAPPED`
+
 Get data from a service without applying the mapping rules. Returned in the
 `data` property is an array of normalized objects in the format retrieved from
 the service. The data is not mapped in any way, and the only thing guarantied, is
@@ -916,6 +958,7 @@ Furthermore, a `service` property is required, as there is no `type` to infer
 from.
 
 Example GET action:
+
 ```javascript
 {
   type: 'GET_UNMAPPED',
@@ -930,6 +973,7 @@ The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
 
 #### `GET_META`
+
 Get metadata for a service. Normal endpoint matching is applied, but it's
 common practice to define an endpoint matching the `GET_META` action.
 
@@ -937,6 +981,7 @@ The action returns an object with a `data` property, which contains the `service
 (the service id) and `meta` object with the metadata set as properties.
 
 Example GET_META action:
+
 ```javascript
 {
   type: 'GET_META',
@@ -948,6 +993,7 @@ Example GET_META action:
 ```
 
 This will return data in the following form:
+
 ```javascript
 {
   status: 'ok',
@@ -969,6 +1015,7 @@ Note that the service must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
 #### `SET`
+
 Send data to a service. Returned in the `data` property is the data that was sent
 to the service – casted, but not mapped to the service.
 
@@ -976,6 +1023,7 @@ The data to send is provided in the payload `data` property, and must given as
 an array of objects in [Integreat's data format](#the-data-format).
 
 Example SET action:
+
 ```javascript
 {
   type: 'SET',
@@ -1001,6 +1049,7 @@ but set `onlyMappedValues: false` to cast the data going to the service with
 default values. This will also affect the data coming back from the action.
 
 #### `SET_META`
+
 Set metadata on a service. Returned in the `data` property is whatever the
 adapter returns. Normal endpoint matching is used, but it's common practice to
 set up an endpoint matching the `SET_META` action.
@@ -1009,6 +1058,7 @@ The payload should contain the `service` to get metadata for (the service id), a
 a `meta` object, with all metadata to set as properties.
 
 Example SET_META action:
+
 ```javascript
 {
   type: 'SET_META',
@@ -1025,6 +1075,7 @@ Note that the service must be set up to handle metadata. See
 [Configuring metadata](#configuring-metadata) for more.
 
 #### `DELETE` / `DEL`
+
 Delete data for several items from a service. Returned in the `data` property is
 whatever the adapter returns.
 
@@ -1034,6 +1085,7 @@ and must given as an array of objects in
 relationships are not required.
 
 Example DELETE action:
+
 ```javascript
 {
   type: 'DELETE',
@@ -1051,6 +1103,7 @@ In the example above, the `service` is specified in the payload. Specifying a
 `type` to infer the service from is also possible.
 
 Example DELETE action for one item:
+
 ```javascript
 {
   type: 'DELETE',
@@ -1070,6 +1123,7 @@ The method used for the request defaults to `POST` when `data` is set, and
 `DEL` is a shorthand for `DELETE`.
 
 #### `REQUEST`
+
 While `GET`, `SET`, and `DELETE` are about sending requests to a service, the
 `REQUEST` action supports receiving from a service. The action will map its data
 _from_ the service, dispatch an action with this data, and map its response _to_
@@ -1082,6 +1136,7 @@ the `REQUEST` action will come back mapped and serialized, and may be returned
 in the http response.
 
 Example `REQUEST` action:
+
 ```javascript
 {
   type: 'REQUEST',
@@ -1097,6 +1152,7 @@ The service may be set up for outgoing requests as well. It might be a good idea
 to explicitly match the endpoints for incoming requests to `action: 'REQUEST'`.
 
 #### `SYNC`
+
 The `SYNC` action will retrieve items from one service and set them on another.
 There are different options for how to retrieve items, ranging from a crude
 retrieval of all items on every sync, to a more fine grained approach where only
@@ -1104,6 +1160,7 @@ items that have been updated since last sync, will be synced.
 
 The simplest action definition would look like this, where all items would be
 retrieved from the service and set on the target:
+
 ```
 {
   type: 'SYNC',
@@ -1130,6 +1187,7 @@ or set to the `to` service, you may provide a params object for the `from` or
 `to` props, with the service id set as a `service` param.
 
 #### `EXPIRE`
+
 With an endpoint for getting expired items, the `EXPIRE` action will fetch
 these and delete them from the service. The endpoint may include param for the
 current time, either as microseconds since Januar 1, 1970 UTC with param
@@ -1140,6 +1198,7 @@ to the current time, or set `msFromNow` to a negative number to a time in the
 past.
 
 Here's a typical action definition:
+
 ```
 {
   type: 'EXPIRE',
@@ -1158,6 +1217,7 @@ specified with an id is allowed, as the consequence of delete all items received
 from the wrong endpoint could be quite severe.
 
 Example endpoint uri template for `getExpired` (from a CouchDB service):
+
 ```javascript
 {
   uri: '/_design/fns/_view/expired?include_docs=true{&endkey=timestamp}',
@@ -1171,6 +1231,7 @@ You may write your own action handlers to handle dispatched actions just like
 the built-in types.
 
 Action handler signature:
+
 ```javascript
 function (payload, {dispatch, services, schemas, getService}) { ... }
 ```
@@ -1196,7 +1257,7 @@ and the handler function as the value.
 const actions = {
   `MYACTION`: function (payload, {dispatch}) { ... }
 }
-const great = integreat(defs, {schemas, services, mappings, actions})
+const great = Integreat.create(defs, {schemas, services, mappings, actions})
 ```
 
 Note that if a custom action handler is added with an action type that is
@@ -1205,18 +1266,23 @@ will have precedence. So be careful when you choose an action type, if your
 intention is not to replace an existing action handler.
 
 ## Adapters
+
 Interface:
+
 - `prepareEndpoint(endpointOptions, [serviceOptions])`
 - `async send(request)`
 - `async normalize(data, request)`
 - `async serialize(data, request)`
 
 Available adapters:
+
 - `json` (built in)
 - [`couchdb`](https://github.com/integreat-io/integreat-adapter-couchdb)
 
 ## Service authentication
+
 This definition format is used to authenticate with a service:
+
 ```
 {
   id: <id>,
@@ -1231,16 +1297,19 @@ At runtime, the specified authenticator is used to authenticate requests. The
 authenticator is given the `options` payload.
 
 ## Pipeline functions
+
 - Item `transform(item)`
 - Item `filter(item)`
 - Attribute `transform(value)`
 
 Built in transformers:
+
 - `not` - inverts a boolean value going from or to a service
 - `hash` - converts any string(ish) value to a SHA256 hash in base64 (with the
   url-unfriendly characters +, /, and = replaced with -, \_, and ~)
 
 ### Schedule definition
+
 **Note:** This will likely be removed in version 0.8.
 
 ```
@@ -1256,22 +1325,23 @@ composite schedule formats on the `schedule` property, as well as the [text
 format](http://bunkat.github.io/later/parsers.html#text)).
 
 The following time periods are supported:
+
 - `s`: Seconds in a minute (0-59)
 - `m`: Minutes in an hour (0-59)
 - `h`: Hours in a day (0-23)
 - `t`: Time of the day, as seconds since midnight (0-86399)
 - `D`: Days of the month (1-maximum number of days in the month, 0 to specifies
-last day of month)
+  last day of month)
 - `d`: Days of the week (1-7, starting with Sunday)
 - `dc`: Days of week count, (1-maximum weeks of the month, 0 specifies last in
-the month). Use together with `d` to get first Wednesday every month, etc.
+  the month). Use together with `d` to get first Wednesday every month, etc.
 - `dy`: Days of year (1 to maximum number of days in the year, 0
-specifies last day of year).
+  specifies last day of year).
 - `wm`: Weeks of the month (1-maximum number of weeks in the month, 0 for last
-week of the month.). First week of the month is the week containing the 1st, and
-weeks start on Sunday.
+  week of the month.). First week of the month is the week containing the 1st, and
+  weeks start on Sunday.
 - `wy`: [ISO weeks of the year](http://en.wikipedia.org/wiki/ISO_week_date)
-(1-maximum number of ISO weeks in the year, 0 is the last ISO week of the year).
+  (1-maximum number of ISO weeks in the year, 0 is the last ISO week of the year).
 - `M`: Months of the year (1-12)
 - `Y`: Years (1970-2099)
 
@@ -1279,6 +1349,7 @@ See Later's documentation on
 [time periods](http://bunkat.github.io/later/time-periods.html) for more.
 
 Example schedule running an action at 2 am every weekday:
+
 ```javascript
 {
   schedule: {d: [2,3,4,5,6], h: [2]},
@@ -1308,8 +1379,9 @@ the result from the `next()` function, but is not required to do so. The only
 requirement is that the functions returns a valid Integreat response object.
 
 Example implementation of a very simple logger middleware:
+
 ```javascript
-const logger = (next) => async (action) => {
+const logger = next => async action => {
   console.log('Dispatch was called with action', action)
   const response = await next(action)
   console.log('Dispatch completed with response', response)
@@ -1334,8 +1406,8 @@ will be queued for the next timestamp defined by the schedule.
 To setup Integreat with a queue:
 
 ```javascript
-const queue = integreat.queue(redisQueue(options))
-const great = integreat(defs, resources, [queue.middleware])
+const queue = Integreat.queue(redisQueue(options))
+const great = Integreat.create(defs, resources, [queue.middleware])
 queue.setDispatch(great.dispatch)
 ```
 
@@ -1343,6 +1415,7 @@ queue.setDispatch(great.dispatch)
 to tell the queue interface where to dispatch actions pulled from the queue.
 
 ## Debugging
+
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.
 
 Some sub modules sends debug messages with the `great:` prefix, so use

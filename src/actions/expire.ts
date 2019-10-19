@@ -52,7 +52,7 @@ const deleteExpired = async (response, service, ident, dispatch) => {
  * @param {Object} resources - Dispatch and queue functions
  * @returns {Object} Response object
  */
-async function expire({ payload, meta = {} }, { dispatch }) {
+async function expire({ payload, meta = {} }, dispatch) {
   const { service } = payload
   const { ident } = meta
 

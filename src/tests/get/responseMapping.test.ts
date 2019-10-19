@@ -8,7 +8,7 @@ import entry2 from '../helpers/data/entry2'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 import jsonTransform from '../helpers/resources/transformers/jsonTransform'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Setup
 
@@ -55,7 +55,7 @@ test('should map with response mapping', async t => {
   }
   const defs = defsWithResponseMapping(responseMapping)
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')
@@ -83,7 +83,7 @@ test('should use status code mapped from data', async t => {
   }
   const defs = defsWithResponseMapping(responseMapping)
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'error')
@@ -107,7 +107,7 @@ test('should not override adater error with data status', async t => {
   }
   const defs = defsWithResponseMapping(responseMapping)
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'notfound')
@@ -137,7 +137,7 @@ test('should map with sub mapping', async t => {
   }
   const defs = defsWithResponseMapping(responseMapping)
 
-  const great = integreat(defs, { adapters, transformers })
+  const great = Integreat.create(defs, { adapters, transformers })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')

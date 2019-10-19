@@ -5,7 +5,7 @@ import completeIdent from '../../middleware/completeIdent'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Helpers
 
@@ -70,7 +70,7 @@ test('should set new entry', async t => {
   }
   const expected = [entry1Item]
 
-  const great = integreat(defs, { adapters }, middlewares)
+  const great = Integreat.create(defs, { adapters }, middlewares)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -90,7 +90,10 @@ test('should set new entries', async t => {
     meta: { ident: { root: true } }
   }
 
-  const great = integreat(defs, { adapters, middlewares: [completeIdent] })
+  const great = Integreat.create(defs, {
+    adapters,
+    middlewares: [completeIdent]
+  })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

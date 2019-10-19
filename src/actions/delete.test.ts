@@ -7,18 +7,18 @@ import functions from '../transformers/builtIns'
 
 import deleteFn from './delete'
 
-// Helpers
+// Setup
 
 const schemas = {
   entry: schema({
     id: 'entry',
-    fields: {
+    shape: {
       title: { $cast: 'string', $default: 'A title' }
     }
   }),
   account: schema({
     id: 'account',
-    fields: {
+    shape: {
       name: 'string'
     },
     access: { identFromField: 'id' }
@@ -41,6 +41,8 @@ const pipelines = {
 const mapOptions = { pipelines, functions }
 
 const setupService = createService({ schemas, mapOptions })
+
+const dispatch = async () => ({ status: 'ok' })
 
 test.after.always(() => {
   nock.restore()
@@ -75,15 +77,12 @@ test('should delete items from service', async t => {
   const action = {
     type: 'DELETE',
     payload: {
-      data: [
-        { id: 'ent1', $type: 'entry' },
-        { id: 'ent2', $type: 'entry' }
-      ],
+      data: [{ id: 'ent1', $type: 'entry' }, { id: 'ent2', $type: 'entry' }],
       service: 'entries'
     }
   }
 
-  const ret = await deleteFn(action, { getService })
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
@@ -116,7 +115,7 @@ test('should delete one item from service', async t => {
     payload: { id: 'ent1', type: 'entry', service: 'entries' }
   }
 
-  const ret = await deleteFn(action, { getService })
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -150,15 +149,12 @@ test('should infer service id from type', async t => {
   const action = {
     type: 'DELETE',
     payload: {
-      data: [
-        { id: 'ent1', $type: 'entry' },
-        { id: 'ent2', $type: 'entry' }
-      ],
+      data: [{ id: 'ent1', $type: 'entry' }, { id: 'ent2', $type: 'entry' }],
       type: 'entry'
     }
   }
 
-  const ret = await deleteFn(action, { getService })
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -190,17 +186,14 @@ test('should delete with other endpoint and uri params', async t => {
   const action = {
     type: 'DELETE',
     payload: {
-      data: [
-        { id: 'ent1', $type: 'entry' },
-        { id: 'ent2', $type: 'entry' }
-      ],
+      data: [{ id: 'ent1', $type: 'entry' }, { id: 'ent2', $type: 'entry' }],
       type: 'entry',
       endpoint: 'other',
       typefolder: 'entries'
     }
   }
 
-  const ret = await deleteFn(action, { getService })
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -235,7 +228,7 @@ test('should return error from response', async t => {
     }
   }
 
-  const ret = await deleteFn(action, { getService })
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'notfound', ret.error)
@@ -259,7 +252,7 @@ test('should return noaction when nothing to delete', async t => {
   const getService = () => src
   const action = { type: 'DELETE', payload: { data: [], service: 'entries' } }
 
-  const ret = await deleteFn(action, { getService })
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'noaction')
@@ -283,7 +276,7 @@ test('should skip null values in data array', async t => {
     payload: { data: [null], service: 'entries' }
   }
 
-  const ret = await deleteFn(action, { getService })
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.is(ret.status, 'noaction')
 })
@@ -324,7 +317,7 @@ test('should only delete items the ident is authorized to', async t => {
     meta: { ident: { id: 'johnf' } }
   }
 
-  const ret = await deleteFn(action, { getService })
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
@@ -337,7 +330,7 @@ test('should return error when no service exists for a type', async t => {
     payload: { id: 'ent1', type: 'entry' }
   }
 
-  const ret = await deleteFn(action, { getService })
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'error')
@@ -351,7 +344,7 @@ test('should return error when specified service does not exist', async t => {
     payload: { id: 'ent1', type: 'entry', service: 'entries' }
   }
 
-  const ret = await deleteFn(action, { getService })
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'error')
@@ -361,7 +354,7 @@ test('should return error when specified service does not exist', async t => {
 test('should return error if no getService', async t => {
   const action = { type: 'DELETE', payload: { id: 'ent1', type: 'entry' } }
 
-  const ret = await deleteFn(action)
+  const ret = await deleteFn(action, dispatch, undefined)
 
   t.is(ret.status, 'error')
 })

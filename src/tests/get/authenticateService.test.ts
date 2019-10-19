@@ -6,7 +6,7 @@ import defs from '../helpers/defs'
 import entriesService from '../helpers/defs/services/entries'
 import entriesData from '../helpers/data/entries'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 test('should get entries from service requiring authentication', async t => {
   nock('http://some.api', {
@@ -39,7 +39,7 @@ test('should get entries from service requiring authentication', async t => {
     payload: { type: 'entry' }
   }
 
-  const great = integreat(defsWithAuth, { adapters, authenticators })
+  const great = Integreat.create(defsWithAuth, { adapters, authenticators })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

@@ -7,13 +7,13 @@ import functions from '../transformers/builtIns'
 
 import getMeta from './getMeta'
 
-// Helpers
+// Setup
 
 const schemas = {
   meta: schema({
     id: 'meta',
     service: 'store',
-    fields: {
+    shape: {
       lastSyncedAt: 'date',
       count: 'integer',
       status: 'string'
@@ -45,6 +45,8 @@ const metadata = { lastSyncedAt, count: 5, status: 'ready' }
 
 const ident = { id: 'johnf' }
 
+const dispatch = async () => ({ status: 'ok' })
+
 test.after(() => {
   nock.restore()
 })
@@ -59,9 +61,13 @@ test('should get metadata for service', async t => {
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
-  const payload = {
-    service: 'store',
-    keys: 'lastSyncedAt'
+  const action = {
+    type: 'GET_META',
+    payload: {
+      service: 'store',
+      keys: 'lastSyncedAt'
+    },
+    meta: { ident }
   }
   const expected = {
     status: 'ok',
@@ -69,10 +75,7 @@ test('should get metadata for service', async t => {
     access: { status: 'granted', ident, scheme: 'data' }
   }
 
-  const ret = await getMeta(
-    { type: 'GET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await getMeta(action, dispatch, getService)
 
   t.deepEqual(ret, expected)
 })
@@ -87,17 +90,18 @@ test('should get several metadata for service', async t => {
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
-  const payload = {
-    service: 'store',
-    keys: ['lastSyncedAt', 'count'],
-    endpoint: 'getMeta'
+  const action = {
+    type: 'GET_META',
+    payload: {
+      service: 'store',
+      keys: ['lastSyncedAt', 'count'],
+      endpoint: 'getMeta'
+    },
+    meta: { ident }
   }
   const expected = { service: 'store', meta: { lastSyncedAt, count: 5 } }
 
-  const ret = await getMeta(
-    { type: 'GET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await getMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.error)
@@ -114,18 +118,19 @@ test('should get all metadata for service', async t => {
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
-  const payload = {
-    service: 'store'
+  const action = {
+    type: 'GET_META',
+    payload: {
+      service: 'store'
+    },
+    meta: { ident }
   }
   const expected = {
     service: 'store',
     meta: { lastSyncedAt, count: 5, status: 'ready' }
   }
 
-  const ret = await getMeta(
-    { type: 'GET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await getMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok')
@@ -142,16 +147,17 @@ test('should return null for metadata when not set on service', async t => {
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
-  const payload = {
-    service: 'store',
-    keys: 'lastSyncedAt'
+  const action = {
+    type: 'GET_META',
+    payload: {
+      service: 'store',
+      keys: 'lastSyncedAt'
+    },
+    meta: { ident }
   }
   const expected = { service: 'store', meta: { lastSyncedAt: null } }
 
-  const ret = await getMeta(
-    { type: 'GET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await getMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok')
@@ -168,15 +174,16 @@ test('should return reply from service when not ok', async t => {
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
-  const payload = {
-    service: 'store',
-    keys: 'lastSyncedAt'
+  const action = {
+    type: 'GET_META',
+    payload: {
+      service: 'store',
+      keys: 'lastSyncedAt'
+    },
+    meta: { ident }
   }
 
-  const ret = await getMeta(
-    { type: 'GET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await getMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'notfound', ret.error)
@@ -192,15 +199,16 @@ test('should return error when when no meta type is set', async t => {
   const src = setupService('store', { meta: null, endpoints })
   const getService = (_type: string, service: string) =>
     service === 'store' ? src : null
-  const payload = {
-    service: 'store',
-    keys: 'lastSyncedAt'
+  const action = {
+    type: 'GET_META',
+    payload: {
+      service: 'store',
+      keys: 'lastSyncedAt'
+    },
+    meta: { ident }
   }
 
-  const ret = await getMeta(
-    { type: 'GET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await getMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'error')
@@ -222,16 +230,17 @@ test('should get metadata from other service', async t => {
       : service === 'store' || type === 'meta'
       ? storeSrc
       : null
-  const payload = {
-    service: 'entries',
-    keys: 'lastSyncedAt'
+  const action = {
+    type: 'GET_META',
+    payload: {
+      service: 'entries',
+      keys: 'lastSyncedAt'
+    },
+    meta: { ident }
   }
   const expected = { service: 'entries', meta: { lastSyncedAt } }
 
-  const ret = await getMeta(
-    { type: 'GET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await getMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok')
@@ -241,15 +250,16 @@ test('should get metadata from other service', async t => {
 test('should return error when meta is set to an unknown type', async t => {
   const src = setupService('entries', { meta: 'unknown' })
   const getService = (type, service) => (service === 'entries' ? src : null)
-  const payload = {
-    service: 'entries',
-    keys: 'lastSyncedAt'
+  const action = {
+    type: 'GET_META',
+    payload: {
+      service: 'entries',
+      keys: 'lastSyncedAt'
+    },
+    meta: { ident }
   }
 
-  const ret = await getMeta(
-    { type: 'GET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await getMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'error')
@@ -257,15 +267,16 @@ test('should return error when meta is set to an unknown type', async t => {
 
 test('should return error for unknown service', async t => {
   const getService = () => null
-  const payload = {
-    service: 'unknown',
-    keys: 'lastSyncedAt'
+  const action = {
+    type: 'GET_META',
+    payload: {
+      service: 'unknown',
+      keys: 'lastSyncedAt'
+    },
+    meta: { ident }
   }
 
-  const ret = await getMeta(
-    { type: 'GET_META', payload, meta: { ident } },
-    { getService }
-  )
+  const ret = await getMeta(action, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'error')
@@ -279,16 +290,17 @@ test('should respond with noaccess when not authorized', async t => {
   const src = setupService('store', { meta: 'meta', endpoints })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? src : null
-  const payload = {
-    service: 'store',
-    keys: 'lastSyncedAt'
+  const action = {
+    type: 'GET_META',
+    payload: {
+      service: 'store',
+      keys: 'lastSyncedAt'
+    },
+    meta: {}
   }
   const expectedAccess = { status: 'refused', ident: null, scheme: 'auth' }
 
-  const ret = await getMeta(
-    { type: 'GET_META', payload, meta: {} },
-    { getService }
-  )
+  const ret = await getMeta(action, dispatch, getService)
 
   t.is(ret.status, 'noaccess')
   t.is(typeof ret.error, 'string')

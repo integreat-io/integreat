@@ -5,7 +5,7 @@ import tokenAuth from '../../authenticators/token'
 import defs from '../helpers/defs'
 import entriesData from '../helpers/data/entries'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 test('should connect to service and reuse connection', async t => {
   let count = 1
@@ -19,7 +19,7 @@ test('should connect to service and reuse connection', async t => {
     payload: { type: 'entry' }
   }
 
-  const great = integreat(defs, { adapters, authenticators })
+  const great = Integreat.create(defs, { adapters, authenticators })
   await great.dispatch(action)
   const ret = await great.dispatch(action)
 

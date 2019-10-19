@@ -6,7 +6,7 @@ import usersUserMapping from '../helpers/defs/mappings/users-user'
 import entry1Data from '../helpers/data/entry1'
 import johnfData from '../helpers/data/userJohnf'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Setup
 
@@ -17,7 +17,7 @@ defs.mappings[0] = {
   id: 'entries-entry',
   type: 'entry',
   service: 'entries',
-  pipeline: [
+  mapping: [
     {
       $iterate: true,
       id: 'key',
@@ -69,7 +69,7 @@ test('should get all entries from service', async t => {
     feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

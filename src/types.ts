@@ -1,4 +1,9 @@
 import { MapDefinition } from 'map-transform'
+import { AuthDef, Auth } from './auth/types'
+
+export interface Dictionary<T> {
+  [key: string]: T
+}
 
 export type DataValue = string | number | boolean | Date | null | undefined
 
@@ -31,14 +36,14 @@ export interface DataFunction {
   (): Data
 }
 
-export interface PropertySchema {
+export interface PropertyShape {
   $cast: string
   $default?: Data | DataFunction
   $const?: Data | DataFunction
 }
 
-export interface Schema {
-  [key: string]: Schema | PropertySchema | string | undefined
+export interface Shape {
+  [key: string]: Shape | PropertyShape | string | undefined
 }
 
 export interface TransformFunction<
@@ -52,22 +57,16 @@ export interface MappingDef {
   id: string
   type?: string
   service?: string
-  pipeline: MapDefinition
+  mapping: MapDefinition
 }
 
 export interface SchemaDef {
   id: string
   plural?: string
   service?: string
-  fields?: Schema
+  shape?: Shape
   access?: string | object
   internal?: boolean
-}
-
-export interface AuthDef {
-  id: string
-  authenticator: string
-  options: { [key: string]: unknown }
 }
 
 export interface IdentConfig {
@@ -89,9 +88,51 @@ export interface EndpointDef {
 export interface ServiceDef {
   id: string
   adapter: string
-  auth?: string | null
+  auth?: AuthDef | string | null
   meta?: string | null
   options?: { [key: string]: unknown }
   endpoints: EndpointDef[]
   mappings: { [type: string]: string | MapDefinition }
+}
+
+export interface Ident {
+  id: string
+  root?: boolean
+}
+
+export interface Request<T = Data> {
+  action: string
+  params: {
+    [param: string]: Data
+  }
+  endpoint: {
+    [option: string]: Data
+  }
+  data?: T
+  auth?: Auth | boolean
+  access?: { ident: Ident }
+}
+
+export interface Response<T = Data> {
+  status: string
+  data?: T
+  error?: string
+  responses?: Response[]
+  access?: object
+}
+
+export interface Action {
+  type: string
+  payload: {}
+  meta?: {
+    ident?: Ident
+  }
+}
+
+export interface Dispatch {
+  (action: Action): Promise<Response>
+}
+
+export interface Middleware {
+  (next: Dispatch): Dispatch
 }

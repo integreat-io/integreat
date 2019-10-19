@@ -6,7 +6,7 @@ import entry1Data from '../helpers/data/entry1'
 import entry2Data from '../helpers/data/entry2'
 import entry3Data from '../helpers/data/entry3'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Setup
 
@@ -27,7 +27,7 @@ test('should get first and second page of entries from service', async t => {
     payload: { type: 'entry' }
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret1 = await great.dispatch(action1)
   const action2 = { type: 'GET', payload: ret1.paging.next }
   const ret2 = await great.dispatch(action2)

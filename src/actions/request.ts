@@ -9,7 +9,7 @@ const debug = debugLib('great')
  * @param resources - Object with getService and dispatch
  * @returns Response object
  */
-async function request(action, { getService, dispatch }) {
+async function request(action, dispatch, getService) {
   debug('Action: REQUEST')
 
   const { type, service: serviceId = null, endpoint } = action.payload

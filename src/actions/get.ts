@@ -12,10 +12,17 @@ const hasCollectionEndpoint = endpoints =>
 const isErrorResponse = response =>
   response.status !== 'ok' && response.status !== 'notfound'
 
-const getIndividualItems = async (ids: string[], action, getService) => {
+const getIndividualItems = async (
+  ids: string[],
+  action,
+  dispatch,
+  getService
+) => {
   const responses = await Promise.all(
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    ids.map((id: string) => get(appendToAction(action, { id }), { getService }))
+    ids.map((id: string) =>
+      get(appendToAction(action, { id }), dispatch, getService)
+    )
   )
   return responses.some(isErrorResponse)
     ? {
@@ -39,7 +46,7 @@ const getIdFromPayload = ({ id }) =>
  * @param resources - Object with getService
  * @returns Array of data from the service
  */
-async function get(action, { getService } = {}) {
+export default async function get(action, dispatch, getService) {
   const {
     type,
     service: serviceId = null,
@@ -57,7 +64,7 @@ async function get(action, { getService } = {}) {
 
   // Do individual gets for array of ids, if there is no collection scoped endpoint
   if (Array.isArray(id) && !hasCollectionEndpoint(service.endpoints)) {
-    return getIndividualItems(id, action, getService)
+    return getIndividualItems(id, action, dispatch, getService)
   }
 
   const endpointDebug = endpoint
@@ -71,5 +78,3 @@ async function get(action, { getService } = {}) {
 
   return response
 }
-
-export default get

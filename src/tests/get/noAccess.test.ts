@@ -5,7 +5,7 @@ import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 import bettyData from '../helpers/data/userBetty'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 test.after.always(() => {
   nock.restore()
@@ -23,7 +23,7 @@ test('should respond with noaccess when no ident', async t => {
     payload: { id: 'johnf', type: 'user' }
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'noaccess', ret.error)
@@ -54,7 +54,7 @@ test('should respond with only authorized data', async t => {
     scheme: 'data'
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

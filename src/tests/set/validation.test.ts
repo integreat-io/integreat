@@ -3,7 +3,7 @@ import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Helpers
 
@@ -69,7 +69,7 @@ test('should respond with response from validation when not validated', async t 
     meta: { ident: { root: true } }
   }
 
-  const great = integreat(defs, { adapters, transformers })
+  const great = Integreat.create(defs, { adapters, transformers })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'badrequest', ret.error)
@@ -87,7 +87,7 @@ test('should respond with ok when validated', async t => {
     meta: { ident: { root: true } }
   }
 
-  const great = integreat(defs, { adapters, transformers })
+  const great = Integreat.create(defs, { adapters, transformers })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -102,7 +102,7 @@ test('should respond with response from validation when not validated - REQUEST'
     meta: { ident: { root: true } }
   }
 
-  const great = integreat(defs, { adapters, transformers })
+  const great = Integreat.create(defs, { adapters, transformers })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'badrequest', ret.error)

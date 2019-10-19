@@ -1,33 +1,30 @@
 import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
-import { MappingDef } from '../types'
+import { Schema } from '../schema'
+import { Dictionary, MappingDef } from '../types'
 
-interface MapDefinitions {
-  [id: string]: MapDefinition
-}
-
-export interface TransformFunctions {
-  [id: string]: CustomFunction
-}
-
-const pipelinesFromMappings = (mappings: MappingDef[]): MapDefinitions =>
+const pipelinesFromMappings = (
+  mappings: MappingDef[] = []
+): Dictionary<MapDefinition> =>
   mappings.reduce(
     (pipelines, def) => ({
       ...pipelines,
-      [def.id]: def.pipeline
+      [def.id]: def.mapping
     }),
     {}
   )
 
-const pipelinesFromSchemas = (schemas: MapDefinitions): MapDefinitions =>
+const pipelinesFromSchemas = (
+  schemas: Dictionary<Schema>
+): Dictionary<MapDefinition> =>
   Object.entries(schemas).reduce(
-    (pipelines, [id, def]) => ({ ...pipelines, [`cast_${id}`]: def }),
+    (pipelines, [id, def]) => ({ ...pipelines, [`cast_${id}`]: def.mapping }),
     {}
   )
 
 export default function createMapOptions(
-  mappings: MappingDef[],
-  schemas: MapDefinitions,
-  functions: TransformFunctions,
+  schemas: Dictionary<Schema>,
+  mappings?: MappingDef[],
+  functions?: Dictionary<CustomFunction>,
   dictionaries?: Dictionaries
 ) {
   return {

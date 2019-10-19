@@ -1,6 +1,6 @@
 import test from 'ava'
 import nock = require('nock')
-import integreat from '../integreat'
+import Integreat from '..'
 import json from 'integreat-adapter-json'
 import defs from '../tests/helpers/defs'
 import johnfData from '../tests/helpers/data/userJohnf'
@@ -8,9 +8,9 @@ import ent1Data from '../tests/helpers/data/entry1'
 
 import getIdent from './getIdent'
 
-// Helpers
+// Setup
 
-const great = integreat(defs, { adapters: { json } })
+const great = Integreat.create(defs, { adapters: { json } })
 const getService = () => great.services.users
 const identConfig = { type: 'user' }
 
@@ -31,6 +31,8 @@ const johnfItem = {
   feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
 }
 
+const dispatch = async () => ({ status: 'ok' })
+
 test.after.always(() => {
   nock.restore()
 })
@@ -42,17 +44,18 @@ test('should complete ident with token', async t => {
     .get('/users')
     .query({ tokens: 'twitter|23456' })
     .reply(200, { data: { ...johnfData } })
-  const ident = { withToken: 'twitter|23456' }
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { withToken: 'twitter|23456' } }
+  }
   const expected = {
     status: 'ok',
     data: johnfItem,
     access: { status: 'granted', ident: johnfIdent }
   }
 
-  const ret = await getIdent(
-    { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identConfig }
-  )
+  const ret = await getIdent(action, dispatch, getService, identConfig)
 
   t.deepEqual(ret, expected)
 })
@@ -61,17 +64,18 @@ test('should complete ident with id', async t => {
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: { ...johnfData } })
-  const ident = { id: 'johnf' }
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { id: 'johnf' } }
+  }
   const expected = {
     status: 'ok',
     data: johnfItem,
     access: { status: 'granted', ident: johnfIdent }
   }
 
-  const ret = await getIdent(
-    { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identConfig }
-  )
+  const ret = await getIdent(action, dispatch, getService, identConfig)
 
   t.deepEqual(ret, expected)
 })
@@ -80,64 +84,61 @@ test('should complete ident with id when more props are present', async t => {
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: { ...johnfData } })
-  const ident = { id: 'johnf', withToken: 'other|34567' }
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { id: 'johnf', withToken: 'other|34567' } }
+  }
   const expected = {
     status: 'ok',
     data: johnfItem,
     access: { status: 'granted', ident: johnfIdent }
   }
 
-  const ret = await getIdent(
-    { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identConfig }
-  )
+  const ret = await getIdent(action, dispatch, getService, identConfig)
 
   t.deepEqual(ret, expected)
 })
 
 test('should return noaction when no props', async t => {
-  const ident = {}
+  const action = { type: 'GET_IDENT', payload: {}, meta: { ident: {} } }
 
-  const ret = await getIdent(
-    { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identConfig }
-  )
+  const ret = await getIdent(action, dispatch, getService, identConfig)
 
   t.is(ret.status, 'noaction')
   t.is(typeof ret.error, 'string')
 })
 
 test('should return noaction when null', async t => {
-  const ident = null
+  const action = { type: 'GET_IDENT', payload: {}, meta: { ident: null } }
 
-  const ret = await getIdent(
-    { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identConfig }
-  )
+  const ret = await getIdent(action, dispatch, getService, identConfig)
 
   t.is(ret.status, 'noaction')
   t.is(typeof ret.error, 'string')
 })
 
 test('should return noaction when no ident options', async t => {
-  const ident = { withToken: 'twitter|23456' }
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { withToken: 'twitter|23456' } }
+  }
 
-  const ret = await getIdent(
-    { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService }
-  )
+  const ret = await getIdent(action, dispatch, getService, undefined)
 
   t.is(ret.status, 'noaction')
   t.is(typeof ret.error, 'string')
 })
 
 test('should return notfound when ident not found', async t => {
-  const ident = { id: 'unknown' }
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { id: 'unknown' } }
+  }
 
-  const ret = await getIdent(
-    { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identConfig }
-  )
+  const ret = await getIdent(action, dispatch, getService, identConfig)
 
   t.truthy(ret)
   t.is(ret.status, 'notfound')
@@ -149,7 +150,11 @@ test('should complete ident with other prop keys', async t => {
     .get('/entries')
     .query({ author: 'johnf' })
     .reply(200, { data: ent1Data })
-  const ident = { id: 'johnf' }
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { id: 'johnf' } }
+  }
   const identConfig = {
     type: 'entry',
     props: {
@@ -164,10 +169,7 @@ test('should complete ident with other prop keys', async t => {
     ident: { id: 'johnf', roles: ['news', 'sports'], tokens: undefined }
   }
 
-  const ret = await getIdent(
-    { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identConfig }
-  )
+  const ret = await getIdent(action, dispatch, getService, identConfig)
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.access, expectedAccess)
@@ -179,12 +181,13 @@ test('should return error when unknown service', async t => {
     .query({ tokens: 'twitter|23456' })
     .reply(200, { data: { ...johnfData } })
   const getService = () => null
-  const ident = { withToken: 'twitter|23456' }
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { withToken: 'twitter|23456' } }
+  }
 
-  const ret = await getIdent(
-    { type: 'GET_IDENT', payload: {}, meta: { ident } },
-    { getService, identConfig }
-  )
+  const ret = await getIdent(action, dispatch, getService, identConfig)
 
   t.is(ret.status, 'error')
 })

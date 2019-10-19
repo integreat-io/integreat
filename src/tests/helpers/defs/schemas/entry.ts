@@ -2,7 +2,7 @@ export default {
   id: 'entry',
   plural: 'entries',
   service: 'entries',
-  fields: {
+  shape: {
     title: 'string',
     text: 'string',
     author: 'user',

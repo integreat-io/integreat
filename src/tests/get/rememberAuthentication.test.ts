@@ -7,7 +7,7 @@ import defs from '../helpers/defs'
 import entriesService from '../helpers/defs/services/entries'
 import entriesData from '../helpers/data/entries'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 test('should not authenticate twice', async t => {
   nock('http://some.api', {
@@ -42,7 +42,7 @@ test('should not authenticate twice', async t => {
   }
   const authSpy = sinon.spy(tokenAuth, 'authenticate')
 
-  const great = integreat(defsWithAuth, { adapters, authenticators })
+  const great = Integreat.create(defsWithAuth, { adapters, authenticators })
   await great.dispatch(action)
   const ret = await great.dispatch(action)
 

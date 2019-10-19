@@ -52,7 +52,7 @@ const prepareResponse = (response, params, propKeys) => {
  * @param resources - Object with getService and identConfig
  * @returns Response object with ident item as data
  */
-async function getIdent({ meta }, { getService, identConfig = {} }) {
+async function getIdent({ meta }, _dispatch, getService, identConfig = {}) {
   if (!meta.ident) {
     return createError('GET_IDENT: The request has no ident', 'noaction')
   }

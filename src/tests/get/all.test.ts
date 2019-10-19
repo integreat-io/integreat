@@ -4,7 +4,7 @@ import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import entriesData from '../helpers/data/entries'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 test('should get all entries from service', async t => {
   const adapters = { json }
@@ -17,7 +17,7 @@ test('should get all entries from service', async t => {
     meta: { ident: { id: 'johnf' } }
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

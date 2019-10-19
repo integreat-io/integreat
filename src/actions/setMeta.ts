@@ -9,7 +9,7 @@ const debug = debugLib('great')
  * @param resources - Object with getService
  * @returns Promise that will be resolved when metadata is set
  */
-async function setMeta({ payload, meta }, { getService }) {
+async function setMeta({ payload, meta }, _dispatch, getService) {
   debug('Action: SET_META')
 
   const { service: serviceId, meta: metaAttrs, endpoint } = payload

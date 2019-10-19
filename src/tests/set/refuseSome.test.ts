@@ -3,7 +3,7 @@ import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Helpers
 
@@ -31,7 +31,7 @@ test('should refuse to set entries where ident has no access', async t => {
     meta: { ident: { id: 'johnf' } }
   }
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

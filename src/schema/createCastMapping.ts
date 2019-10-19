@@ -72,10 +72,10 @@ function equalOrNoSchema(type: string) {
 const cleanUpCast = (type: string) =>
   mapAny((item: Data) => {
     if (isDataObject(item)) {
-      const { isNew, isDeleted, ...fields } = item
+      const { isNew, isDeleted, ...shape } = item
       return {
         $type: type,
-        ...fields,
+        ...shape,
         ...(isNew === true ? { isNew } : {}),
         ...(isDeleted === true ? { isDeleted } : {})
       }

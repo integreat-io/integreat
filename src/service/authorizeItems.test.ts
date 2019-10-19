@@ -9,16 +9,16 @@ const schemas = {
   entry: createSchema({
     id: 'entry',
     plural: 'entries',
-    fields: {
+    shape: {
       title: 'string',
-      one: { type: 'integer', default: 1 },
+      one: { $cast: 'integer', $default: 1 },
       two: 'integer',
       service: 'service'
     }
   }),
   account: createSchema({
     id: 'account',
-    fields: {
+    shape: {
       name: 'string'
     },
     access: {
@@ -32,7 +32,7 @@ const schemas = {
 
 // Tests
 
-test('should return all authorized data', (t) => {
+test('should return all authorized data', t => {
   const data = [
     { id: 'ent1', $type: 'entry', title: 'Entry 1' },
     { id: 'ent2', $type: 'entry', title: 'Entry 2' }
@@ -49,7 +49,7 @@ test('should return all authorized data', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should return object as object', (t) => {
+test('should return object as object', t => {
   const data = { id: 'ent1', $type: 'entry', title: 'Entry 1' }
   const access = { ident: null }
   const action = 'GET'
@@ -63,7 +63,7 @@ test('should return object as object', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should skip unauthorized data', (t) => {
+test('should skip unauthorized data', t => {
   const data = [
     { id: 'johnf', $type: 'account', name: 'John F.' },
     { id: 'betty', $type: 'account', name: 'Betty' }
@@ -71,7 +71,11 @@ test('should skip unauthorized data', (t) => {
   const access = { ident: { id: 'johnf' } }
   const action = 'GET'
   const expectedData = [data[0]]
-  const expectedAccess = { status: 'partially', scheme: 'data', ident: { id: 'johnf' } }
+  const expectedAccess = {
+    status: 'partially',
+    scheme: 'data',
+    ident: { id: 'johnf' }
+  }
 
   const ret = authorizeItems({ data, access, action }, schemas)
 
@@ -79,7 +83,7 @@ test('should skip unauthorized data', (t) => {
   t.deepEqual(ret.access, expectedAccess)
 })
 
-test('should not allow no access scheme when auth is reqired', (t) => {
+test('should not allow no access scheme when auth is reqired', t => {
   const data = [
     { id: 'ent1', $type: 'entry', title: 'Entry 1' },
     { id: 'ent2', $type: 'entry', title: 'Entry 2' }
@@ -96,7 +100,7 @@ test('should not allow no access scheme when auth is reqired', (t) => {
   t.deepEqual(ret.access, expectedAccess)
 })
 
-test('should authorized with access scheme for action', (t) => {
+test('should authorized with access scheme for action', t => {
   const data = [
     { id: 'johnf', $type: 'account', name: 'John F.' },
     { id: 'betty', $type: 'account', name: 'Betty' }
@@ -112,7 +116,7 @@ test('should authorized with access scheme for action', (t) => {
   t.deepEqual(ret.access, expectedAccess)
 })
 
-test('should not authorize empty data array', (t) => {
+test('should not authorize empty data array', t => {
   const data = []
   const access = { ident: { id: 'johnf' } }
   const action = 'GET'
@@ -123,7 +127,7 @@ test('should not authorize empty data array', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should not authorize when no data', (t) => {
+test('should not authorize when no data', t => {
   const access = { ident: { id: 'johnf' } }
   const action = 'GET'
   const expected = {}
@@ -133,7 +137,7 @@ test('should not authorize when no data', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should not authorize when already refused', (t) => {
+test('should not authorize when already refused', t => {
   const data = [{ id: 'ent1', type: 'entry' }]
   const access = { status: 'refused' }
   const action = 'GET'

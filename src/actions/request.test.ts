@@ -17,7 +17,7 @@ test('should call service.receive with action and return response', async t => {
     meta: { ident: { id: 'johnf' } }
   }
 
-  const ret = await request(action, { getService, dispatch })
+  const ret = await request(action, dispatch, getService)
 
   t.is(service.receive.callCount, 1)
   t.deepEqual(service.receive.args[0][0], action)
@@ -38,7 +38,7 @@ test('should get service with service id', async t => {
     meta: { ident: { id: 'johnf' } }
   }
 
-  await request(action, { getService, dispatch })
+  await request(action, dispatch, getService)
 
   t.is(service.receive.callCount, 1)
 })
@@ -56,7 +56,7 @@ test('should return error on unknown service', async t => {
     error: "No service exists for type 'entry'"
   }
 
-  const ret = await request(action, { getService, dispatch })
+  const ret = await request(action, dispatch, getService)
 
   t.deepEqual(ret, expected)
 })

@@ -1,16 +1,17 @@
 import createCastMapping from './createCastMapping'
-import { SchemaDef, PropertySchema, Schema } from '../types'
+import { MapDefinition } from 'map-transform'
+import { SchemaDef, PropertyShape, Shape } from '../types'
 import { isSchema } from '../utils/is'
 import nanoid = require('nanoid')
 
-const expandField = (val: Schema | PropertySchema | string | undefined) =>
+const expandField = (val: Shape | PropertyShape | string | undefined) =>
   typeof val === 'string'
     ? { $cast: val }
     : isSchema(val)
     ? expandFields(val) // eslint-disable-line @typescript-eslint/no-use-before-define
     : val
 
-const expandFields = (vals: Schema) =>
+const expandFields = (vals: Shape) =>
   Object.entries(vals).reduce(
     (newVals, [key, def]) => ({ ...newVals, [key]: expandField(def) }),
     {}
@@ -19,26 +20,36 @@ const expandFields = (vals: Schema) =>
 const defaultId = () => nanoid()
 const defaultDate = () => new Date()
 
+export interface Schema {
+  id: string
+  plural?: string
+  service?: string
+  internal: boolean
+  shape: Shape
+  access?: string | object
+  mapping: MapDefinition
+}
+
 /**
  * Create a schema with the given id and service.
- * @param def - Object with id, plural, service, and fields
+ * @param def - Object with id, plural, service, and shape
  * @returns The created schema
  */
 export default function createSchema({
   id,
   plural,
   service,
-  fields,
+  shape,
   access,
   internal = false
-}: SchemaDef) {
+}: SchemaDef): Schema {
   return {
     id,
     plural: plural || `${id}s`,
     service,
     internal,
-    fields: {
-      ...expandFields(fields || {}),
+    shape: {
+      ...expandFields(shape || {}),
       id: { $cast: 'string' },
       createdAt: { $cast: 'date' },
       updatedAt: { $cast: 'date' }
@@ -46,7 +57,7 @@ export default function createSchema({
     access,
     mapping: createCastMapping(
       {
-        ...fields,
+        ...shape,
         id: { $cast: 'string', $default: defaultId },
         createdAt: { $cast: 'date', $default: defaultDate },
         updatedAt: { $cast: 'date', $default: defaultDate }

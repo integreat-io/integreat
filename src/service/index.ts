@@ -9,6 +9,9 @@ import {
   respondToUnknownAction
 } from './send'
 import createError from '../utils/createError'
+import { Dictionary, ServiceDef } from '../types'
+import { Dictionaries, CustomFunction, MapDefinition } from 'map-transform'
+import { Schema } from '../schema'
 
 const { compose } = R
 
@@ -64,19 +67,28 @@ const createNextAction = (action, { options }, mappedResponse) => ({
 
 const wrapResponse = response => ({ response })
 
+interface Resources {
+  adapters: Dictionary<object>
+  auths?: Dictionary<Function>
+  transformers?: Dictionary<CustomFunction>
+  schemas: Dictionary<Schema>
+  mapOptions: {
+    pipelines?: Dictionary<MapDefinition>
+    functions?: Dictionary<CustomFunction>
+    dictionaries?: Dictionaries
+  }
+}
+
 /**
  * Create a service with the given id and adapter.
- * @param def - Service definition
- * @param resources - Object with mappings, adapters, auths, and plurals
- * @returns The created service
  */
 const service = ({
-  adapters = {},
-  auths = {},
+  adapters,
+  auths,
   transformers = {},
   schemas,
   mapOptions
-} = {}) => ({
+}: Resources) => ({
   id: serviceId,
   adapter,
   auth = null,
@@ -84,7 +96,7 @@ const service = ({
   options = {},
   endpoints = [],
   mappings: mappingsDef = {}
-}) => {
+}: ServiceDef) => {
   if (!serviceId) {
     throw new TypeError(`Can't create service without an id.`)
   }

@@ -3,7 +3,7 @@ import nock = require('nock')
 import json from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
-import integreat = require('../../..')
+import Integreat from '../..'
 
 // Helpers
 
@@ -11,7 +11,7 @@ const entryMapping = {
   id: 'entries-entry',
   type: 'entry',
   service: 'entries',
-  pipeline: [
+  mapping: [
     {
       $iterate: true,
       id: 'key',
@@ -28,7 +28,7 @@ const userMapping = {
   path: 'author',
   type: 'user',
   service: 'users',
-  pipeline: [
+  mapping: [
     {
       $iterate: true,
       id: 'username',
@@ -77,7 +77,7 @@ test('should map full relationship item to service', async t => {
   }
   const expected = [entry1Item]
 
-  const great = integreat(defs, { adapters })
+  const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

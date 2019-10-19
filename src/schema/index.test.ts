@@ -12,7 +12,7 @@ test('should setup schema', t => {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
-    fields: {
+    shape: {
       attributes: {
         title: 'string',
         text: { $cast: 'string' },
@@ -43,9 +43,9 @@ test('should setup schema', t => {
   t.is(ret.service, 'entries')
   t.is(ret.access, 'auth')
   t.false(ret.internal)
-  t.truthy(ret.fields)
-  t.deepEqual(ret.fields.attributes, expectedAttributes)
-  t.deepEqual(ret.fields.relationships, expectedRelationships)
+  t.truthy(ret.shape)
+  t.deepEqual(ret.shape.attributes, expectedAttributes)
+  t.deepEqual(ret.shape.relationships, expectedRelationships)
 })
 
 test('should set internal prop', t => {
@@ -63,7 +63,7 @@ test('should set internal prop', t => {
 test('should infer plural when not set', t => {
   const type = {
     id: 'article',
-    fields: {}
+    shape: {}
   }
 
   const ret = schema(type)
@@ -76,7 +76,7 @@ test('should include base fields', t => {
   const type = {
     id: 'entry',
     service: 'entries',
-    fields: {}
+    shape: {}
   }
   const expected = {
     id: { $cast: 'string' },
@@ -86,14 +86,14 @@ test('should include base fields', t => {
 
   const ret = schema(type)
 
-  t.deepEqual(ret.fields, expected)
+  t.deepEqual(ret.shape, expected)
 })
 
 test('should override base fields in definition', t => {
   const type = {
     id: 'entry',
     service: 'entries',
-    fields: {
+    shape: {
       id: 'date',
       createdAt: 'boolean',
       updatedAt: 'boolean'
@@ -107,7 +107,7 @@ test('should override base fields in definition', t => {
 
   const ret = schema(type)
 
-  t.deepEqual(ret.fields, expected)
+  t.deepEqual(ret.shape, expected)
 })
 
 // Tests -- cast mapping
@@ -118,7 +118,7 @@ test('should provide cast mapping', t => {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
-    fields: {
+    shape: {
       title: { $cast: 'string', $default: 'Entry with no name' },
       text: 'string',
       age: { $cast: 'integer' },
@@ -163,7 +163,7 @@ test('should set createdAt and updatedAt to now when not set', t => {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
-    fields: {
+    shape: {
       id: 'string',
       title: 'string',
       createdAt: 'date',
@@ -193,7 +193,7 @@ test('should cast id to string', t => {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
-    fields: {
+    shape: {
       id: 'string',
       title: 'string'
     }
@@ -215,7 +215,7 @@ test('should generate id when not set', t => {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
-    fields: {
+    shape: {
       id: 'string',
       title: 'string'
     }
