@@ -70,3 +70,44 @@ test('should map response and merge with request data', async (t) => {
 
   nock.restore()
 })
+
+test('should map to params', async (t) => {
+  const adapters = { json: json() }
+  nock('http://some1.api')
+    .put('/entries')
+    .reply(201, { ok: true, content: { items: null }, jobId: '145' })
+  const action = {
+    type: 'SET',
+    payload: { type: 'entry', data: entry1Item },
+    meta: { ident: { root: true } }
+  }
+  const responseMapping = {
+    data: { path: 'content.items' },
+    'params.job': 'jobId'
+  }
+  const defs = {
+    schemas: [entrySchema],
+    services: [{
+      ...entriesService,
+      endpoints: [{
+        responseMapping,
+        options: {
+          baseUri: null,
+          uri: 'http://some1.api/entries'
+        }
+      }]
+    }],
+    mappings: [entriesMapping]
+  }
+  const expectedParams = {
+    job: '145'
+  }
+
+  const great = integreat(defs, { adapters })
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.params, expectedParams)
+
+  nock.restore()
+})
