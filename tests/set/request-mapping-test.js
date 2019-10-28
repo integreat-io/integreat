@@ -43,7 +43,7 @@ test('should set data with request mapping', async (t) => {
     meta: { ident: { root: true } }
   }
   const resources = {
-    adapters: { json },
+    adapters: { json: json() },
     transformers: {
       stringify: (value) => JSON.stringify(value)
     }

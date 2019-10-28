@@ -23,7 +23,7 @@ test.after.always(() => {
 
 test('should dispatch set action and return respons', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok', data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }) })
-  const resources = { adapters: { json: { ...json, send } } }
+  const resources = { adapters: { json: { ...json(), send } } }
   const action = {
     type: 'REQUEST',
     payload: {

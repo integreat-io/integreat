@@ -14,7 +14,7 @@ test.after.always(() => {
 test('should respond with noaccess when no ident', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
-  const adapters = { json }
+  const adapters = { json: json() }
   const transformers = integreat.transformers()
   nock('http://some.api')
     .get('/users/johnf')
@@ -35,7 +35,7 @@ test('should respond with noaccess when no ident', async (t) => {
 test('should respond with only authorized data', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
-  const adapters = { json }
+  const adapters = { json: json() }
   const transformers = integreat.transformers()
   nock('http://some.api')
     .get('/users/')

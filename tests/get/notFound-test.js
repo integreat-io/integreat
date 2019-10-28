@@ -6,7 +6,7 @@ import defs from '../helpers/defs'
 import integreat from '../..'
 
 test('should get error object for unknown entry', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   const transformers = integreat.transformers()
   nock('http://some.api')
     .get('/entries/ent0')

@@ -49,7 +49,7 @@ test.after.always(() => {
 // Tests
 
 test('should set new entry', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   const middlewares = [completeIdent]
   const putData = {
     key: 'ent1',
@@ -81,7 +81,7 @@ test('should set new entry', async (t) => {
 })
 
 test('should set new entries', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .post('/entries/')
     .reply(201, { data: [{ key: 'real1', ok: true }, { key: 'real2', ok: true }] })

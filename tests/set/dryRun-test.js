@@ -27,7 +27,7 @@ const entry1Item = {
 // Tests
 
 test('should set new entry', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item, dryrun: true },
@@ -36,6 +36,7 @@ test('should set new entry', async (t) => {
   const expectedData = {
     uri: 'http://some.api/entries/ent1',
     method: 'PUT',
+    retries: 0,
     body: JSON.stringify({
       key: 'ent1',
       headline: 'Entry 1',

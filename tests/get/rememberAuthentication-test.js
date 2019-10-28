@@ -18,7 +18,7 @@ test('should not authenticate twice', async (t) => {
     .get('/entries/')
     .times(2)
     .reply(200, { data: entriesData })
-  const adapters = { json }
+  const adapters = { json: json() }
   const authenticators = { token: tokenAuth }
   const defsWithAuth = {
     ...defs,

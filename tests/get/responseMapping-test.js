@@ -17,7 +17,7 @@ const transformers = { jsonTransform }
 // Tests
 
 test('should map with response mapping', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {
@@ -61,7 +61,7 @@ test('should map with response mapping', async (t) => {
 })
 
 test('should use status code mapped from data', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/entries/ent2')
     .reply(200, {
@@ -103,7 +103,7 @@ test('should use status code mapped from data', async (t) => {
 })
 
 test('should not override adater error with data status', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/entries/ent2')
     .reply(404, {
@@ -144,7 +144,7 @@ test('should not override adater error with data status', async (t) => {
 })
 
 test('should map with sub mapping', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/entries/ent3')
     .reply(200, {

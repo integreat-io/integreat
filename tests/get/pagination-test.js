@@ -16,7 +16,7 @@ const entries2 = [entry3Data]
 // Tests
 
 test('should get first and second page of entries from service', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/entries/')
     .reply(200, { data: entries1, offset: 'page2' })

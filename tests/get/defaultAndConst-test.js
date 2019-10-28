@@ -16,7 +16,7 @@ const entryNoHeadline = {
 // Tests
 
 test('should transform entry', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, { data: [entry1, entryNoHeadline] })

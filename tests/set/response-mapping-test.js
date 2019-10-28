@@ -27,7 +27,7 @@ const entry1FromService = {
 // Tests
 
 test('should map response and merge with request data', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .put('/entries/ent1')
     .reply(201, { ok: true, content: { items: entry1FromService } })

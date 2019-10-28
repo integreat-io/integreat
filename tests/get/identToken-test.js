@@ -8,7 +8,7 @@ import johnfData from '../helpers/data/userJohnf'
 import integreat from '../..'
 
 test('should get with ident token', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   const middlewares = [completeIdent]
   const transformers = integreat.transformers()
   nock('http://some.api')

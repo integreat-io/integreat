@@ -24,7 +24,7 @@ const entry1Item = {
 // Tests
 
 test('should emit request before mapping to service', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .put('/entries/ent1')
     .reply(201, { id: 'ent1', ok: true, rev: '1-12345' })
@@ -50,7 +50,7 @@ test('should emit request before mapping to service', async (t) => {
 })
 
 test('should emit request after mapping to service', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .put('/entries/ent2')
     .reply(201, { id: 'ent2', ok: true, rev: '1-12346' })

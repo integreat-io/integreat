@@ -49,7 +49,7 @@
     "npm": ">= 5.6"
   },
   "dependencies": {
-    "@sindresorhus/is": "^1.0.0",
+    "@sindresorhus/is": "^1.2.0",
     "debug": "^4.1.1",
     "got": "^9.6.0",
     "later": "^1.2.0",
@@ -59,13 +59,13 @@
     "uuid": "^3.2.3"
   },
   "devDependencies": {
-    "ava": "2.3.0",
-    "coveralls": "^3.0.6",
-    "dotenv": "^7.0.0",
-    "integreat-adapter-json": "^0.1.6",
-    "nock": "^11.3.1",
+    "ava": "2.4.0",
+    "coveralls": "^3.0.7",
+    "dotenv": "^8.2.0",
+    "integreat-adapter-json": "^0.2.1",
+    "nock": "^11.6.0",
     "nyc": "^14.1.1",
-    "sinon": "^7.4.2",
-    "standard": "^14.1.0"
+    "sinon": "^7.5.0",
+    "standard": "^14.3.1"
   }
 }

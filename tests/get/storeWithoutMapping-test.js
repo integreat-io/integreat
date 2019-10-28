@@ -23,7 +23,7 @@ const defs = {
 test('should get one entry from service', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {

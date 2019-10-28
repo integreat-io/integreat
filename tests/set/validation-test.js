@@ -58,7 +58,7 @@ defs.services[0].endpoints.push({
   options: { uri: '/{id}', actionType: 'GET' }
 })
 
-const adapters = { json }
+const adapters = { json: json() }
 const transformers = { alwaysOk, shouldHaveAuthor, isNumericId }
 
 // Tests

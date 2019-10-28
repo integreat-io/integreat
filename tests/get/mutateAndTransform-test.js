@@ -9,7 +9,7 @@ import entry2 from '../helpers/data/entry2'
 import integreat from '../..'
 
 test('should transform entry', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, { data: entry1 })
@@ -59,7 +59,7 @@ test('should transform entry', async (t) => {
 })
 
 test.skip('should transform array of entries', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/entries/')
     .reply(200, { data: [entry1, entry2] })

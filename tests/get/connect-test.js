@@ -11,7 +11,7 @@ test('should connect to service and reuse connection', async (t) => {
   let count = 1
   const send = sinon.stub().resolves({ status: 'ok', data: entriesData })
   const connect = async (options, args, conn) => conn || { status: 'ok', value: `Call ${count++}` }
-  const adapters = { json: { ...json, send, connect } }
+  const adapters = { json: { ...json(), send, connect } }
   const authenticators = { token: tokenAuth }
   const action = {
     type: 'GET',

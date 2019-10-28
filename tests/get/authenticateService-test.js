@@ -16,7 +16,7 @@ test('should get entries from service requiring authentication', async (t) => {
   })
     .get('/entries/')
     .reply(200, { data: entriesData })
-  const adapters = { json }
+  const adapters = { json: json() }
   const authenticators = { token: tokenAuth }
   const defsWithAuth = {
     ...defs,

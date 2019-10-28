@@ -27,7 +27,7 @@ const bettyItem = {
 // Tests
 
 test('should refuse to set entries where ident has no access', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .post('/users/')
     .reply(201, { ok: true })

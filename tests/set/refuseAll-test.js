@@ -24,7 +24,7 @@ const entry1Item = {
 // Tests
 
 test('should refuse request to set entry with no ident', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: { ...johnfData } })

@@ -62,7 +62,7 @@ test('should map full relationship item to service', async (t) => {
   nock('http://some.api')
     .put('/entries/ent1', putData)
     .reply(201, { data: { key: 'ent1', ok: true } })
-  const adapters = { json }
+  const adapters = { json: json() }
   defs.mappings[0] = entryMapping
   defs.mappings.push(userMapping)
   const action = {

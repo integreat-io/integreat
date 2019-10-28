@@ -36,7 +36,7 @@ test('should get all entries from service', async (t) => {
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, { data: [{ ...entry1Data, author: { ...johnfData, createdAt, updatedAt } }] })
-  const adapters = { json }
+  const adapters = { json: json() }
   defs.mappings[0] = entryMapping
   defs.mappings.push({
     ...usersUserMapping,
@@ -83,7 +83,7 @@ test.skip('should map relationship on self referring type', async (t) => {
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: [{ ...johnfData, creator: 'betty' }] })
-  const adapters = { json }
+  const adapters = { json: json() }
   defs.mappings.push({
     ...usersUserMapping,
     id: 'entries-user',

@@ -15,7 +15,7 @@ const updatedAt = '2017-11-24T07:11:43Z'
 // Tests
 
 test('should get one user from service', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/users/johnf').times(2)
     .reply(200, { data: { ...johnfData, createdAt, updatedAt } })
@@ -55,7 +55,7 @@ test('should get one user from service', async (t) => {
 })
 
 test('should get one entry from service', async (t) => {
-  const adapters = { json }
+  const adapters = { json: json() }
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, { data: { ...ent1Data, createdAt, updatedAt } })
