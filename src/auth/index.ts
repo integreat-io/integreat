@@ -1,19 +1,6 @@
-import { Dictionary, Auth, AuthDef } from '../types'
-import { Authenticator } from './types'
-
-function getAuthenticator(
-  id: string,
-  authenticators?: Dictionary<Authenticator>
-) {
-  if (!authenticators) {
-    throw new Error('No authenticators were supplied')
-  }
-  const authenticator = authenticators[id]
-  if (!authenticator) {
-    throw new Error(`Could not find the authenticator '${id}'`)
-  }
-  return authenticator
-}
+import { Dictionary } from '../types'
+import { Authenticator, Auth, AuthDef } from './types'
+import { lookupById } from '../utils/indexUtils'
 
 /*
  * Create an Auth object from an AuthDef, by looking up the authenticator.
@@ -27,7 +14,10 @@ export default function createAuth(
   }
 
   const { id, options = {} } = def
-  const authenticator = getAuthenticator(def.authenticator, authenticators)
+  const authenticator = lookupById(def.authenticator, authenticators)
+  if (typeof authenticator !== 'object' || authenticator === null) {
+    throw new Error(`Unknown authenticator '${def.authenticator}'`)
+  }
 
   return {
     id,

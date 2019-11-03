@@ -15,6 +15,7 @@ import createService from './service'
 import createMapOptions from './utils/createMapOptions'
 import createAuth from './auth'
 import createDispatch, { ActionHandler } from './dispatch'
+import { indexById, ObjectWithId } from './utils/indexUtils'
 
 interface Definitions {
   schemas: SchemaDef[]
@@ -26,19 +27,11 @@ interface Definitions {
 }
 
 interface Resources {
-  adapters: Dictionary<object>
+  adapters: Dictionary<ObjectWithId> // TODO: Needs better typing
   actionHandlers?: Dictionary<ActionHandler>
   authenticators?: Dictionary<Authenticator>
   transformers?: Dictionary<CustomFunction>
 }
-
-const indexById = <T extends { id: string }>(
-  obj: Dictionary<T>,
-  item: T
-): Dictionary<T> => ({
-  ...obj,
-  [item.id]: item
-})
 
 /*
  * Create an Integreat instance.
@@ -92,7 +85,7 @@ export default function create(
         mapOptions
       })
     )
-    .reduce(indexById, {} as Dictionary<{ id: string }>) // TODO: Properly type Service
+    .reduce(indexById, {} as Dictionary<ObjectWithId>) // TODO: Properly type Service
 
   // Create dispatch
   const dispatch = createDispatch({

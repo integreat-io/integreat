@@ -4,7 +4,7 @@ import authenticator from './options'
 
 // Tests
 
-test('authenticate should always grant and return options', async (t) => {
+test('authenticate should always grant and return options', async t => {
   const options = { username: 'bill', password: 'secret' }
   const expected = { status: 'granted', username: 'bill', password: 'secret' }
 
@@ -13,23 +13,31 @@ test('authenticate should always grant and return options', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('isAuthenticated should return true when granted', (t) => {
-  const authentication = { status: 'granted', username: 'bill', password: 'secret' }
+test('isAuthenticated should return true when granted', t => {
+  const authentication = {
+    status: 'granted',
+    username: 'bill',
+    password: 'secret'
+  }
 
   const ret = authenticator.isAuthenticated(authentication)
 
   t.true(ret)
 })
 
-test('isAuthenticated should return false when not granted', (t) => {
-  const authentication = { status: 'refused', username: 'bill', password: 'secret' }
+test('isAuthenticated should return false when not granted', t => {
+  const authentication = {
+    status: 'refused',
+    username: 'bill',
+    password: 'secret'
+  }
 
   const ret = authenticator.isAuthenticated(authentication)
 
   t.false(ret)
 })
 
-test('isAuthenticated should return false when no authentication', (t) => {
+test('isAuthenticated should return false when no authentication', t => {
   const authentication = null
 
   const ret = authenticator.isAuthenticated(authentication)
@@ -37,28 +45,40 @@ test('isAuthenticated should return false when no authentication', (t) => {
   t.false(ret)
 })
 
-test('asHttpHeaders should return an empty object', (t) => {
-  const authentication = { status: 'granted', username: 'bill', password: 'secret' }
+test('asHttpHeaders should return an empty object', t => {
+  const authentication = {
+    status: 'granted',
+    username: 'bill',
+    password: 'secret'
+  }
 
-  const ret = authenticator.asHttpHeaders(authentication)
+  const ret = authenticator.authentication.asHttpHeaders(authentication)
 
   t.deepEqual(ret, {})
 })
 
-test('asObject should return the options object', (t) => {
-  const authentication = { status: 'granted', username: 'bill', password: 'secret' }
+test('asObject should return the options object', t => {
+  const authentication = {
+    status: 'granted',
+    username: 'bill',
+    password: 'secret'
+  }
   const expected = { username: 'bill', password: 'secret' }
 
-  const ret = authenticator.asObject(authentication)
+  const ret = authenticator.authentication.asObject(authentication)
 
   t.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when not granted', (t) => {
-  const authentication = { status: 'refused', username: 'bill', password: 'secret' }
+test('asObject should return empty object when not granted', t => {
+  const authentication = {
+    status: 'refused',
+    username: 'bill',
+    password: 'secret'
+  }
   const expected = {}
 
-  const ret = authenticator.asObject(authentication)
+  const ret = authenticator.authentication.asObject(authentication)
 
   t.deepEqual(ret, expected)
 })

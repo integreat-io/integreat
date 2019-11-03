@@ -1,6 +1,8 @@
 import EventEmitter = require('events')
 import R = require('ramda')
-import prepareEndpoints from '../endpoints'
+import compareEndpoints from '../endpoints/compareEndpoints'
+import matchEndpoint from '../endpoints/matchEndpoint'
+import prepareEndpoint from '../endpoints/prepareEndpoint'
 import requestFromAction from './requestFromAction'
 import {
   beforeService,
@@ -9,16 +11,32 @@ import {
   respondToUnknownAction
 } from './send'
 import createError from '../utils/createError'
-import { Dictionary, ServiceDef } from '../types'
-import { Dictionaries, CustomFunction, MapDefinition } from 'map-transform'
+import {
+  Dictionary,
+  ServiceDef,
+  Response,
+  Request,
+  Action,
+  Dispatch,
+  Adapter,
+  MapOptions,
+  DataObject
+} from '../types'
+import { CustomFunction } from 'map-transform'
 import { Schema } from '../schema'
+import { Auth } from '../auth/types'
+import { EndpointOptions } from '../endpoints/types'
+import { lookupById } from '../utils/indexUtils'
+
+interface IncomingEndpointOptions extends EndpointOptions {
+  actionType?: string
+  actionPayload?: DataObject
+  actionMeta?: DataObject
+}
 
 const { compose } = R
 
-// eslint-disable-next-line security/detect-object-injection
-const lookup = (id, resource) => (typeof id === 'string' ? resource[id] : id)
-
-const normalizeAction = async (action, adapter) => {
+const normalizeAction = async (action: Action, adapter: Adapter) => {
   const normalized = await adapter.normalize(
     { status: 'ok', data: action.payload.data },
     { endpoint: {} }
@@ -27,19 +45,19 @@ const normalizeAction = async (action, adapter) => {
 }
 
 const receiveRequestFromAction = (
-  { type, payload: { data, ...params }, meta: { ident } },
-  endpoint
-) => ({
+  { type, payload: { data, ...params }, meta: { ident } = {} }: Action,
+  endpoint: IncomingEndpointOptions
+): Request => ({
   action: type,
   params: {
-    ...endpoint.options.actionPayload,
+    ...endpoint.actionPayload,
     ...params
   },
-  endpoint: endpoint.options,
-  access: { ident }
+  endpoint,
+  access: ident ? { ident } : undefined
 })
 
-const receiveAfterArgs = (action, request, endpoint) => ({
+const receiveAfterArgs = (action: Action, request: Request, endpoint) => ({
   request,
   response: { status: 'ok', data: action.payload.data },
   requestMapper: endpoint.requestMapper,
@@ -47,14 +65,22 @@ const receiveAfterArgs = (action, request, endpoint) => ({
   mappings: endpoint.mappings
 })
 
-const receiveBeforeArgs = ({ data, status, error }, request, endpoint) => ({
+const receiveBeforeArgs = (
+  { data, status, error }: Response,
+  request: Request,
+  endpoint
+) => ({
   request: { ...request, data, params: { ...request.params, status, error } },
   requestMapper: endpoint.requestMapper,
   responseMapper: endpoint.responseMapper,
   mappings: endpoint.mappings
 })
 
-const createNextAction = (action, { options }, mappedResponse) => ({
+const createNextAction = (
+  action: Action,
+  options: IncomingEndpointOptions,
+  mappedResponse: Response
+) => ({
   type: options.actionType,
   payload: {
     type: action.payload.type,
@@ -65,18 +91,14 @@ const createNextAction = (action, { options }, mappedResponse) => ({
   meta: { ...action.meta, ...options.actionMeta }
 })
 
-const wrapResponse = response => ({ response })
+const wrapResponse = (response: Response) => ({ response })
 
 interface Resources {
-  adapters: Dictionary<object>
-  auths?: Dictionary<Function>
+  adapters: Dictionary<Adapter>
+  auths?: Dictionary<Auth>
   transformers?: Dictionary<CustomFunction>
   schemas: Dictionary<Schema>
-  mapOptions: {
-    pipelines?: Dictionary<MapDefinition>
-    functions?: Dictionary<CustomFunction>
-    dictionaries?: Dictionaries
-  }
+  mapOptions?: MapOptions
 }
 
 /**
@@ -90,46 +112,41 @@ const service = ({
   mapOptions
 }: Resources) => ({
   id: serviceId,
-  adapter,
-  auth = null,
+  adapter: adapterId,
+  auth: authId,
   meta = null,
   options = {},
-  endpoints = [],
+  endpoints: endpointDefs = [],
   mappings: mappingsDef = {}
 }: ServiceDef) => {
-  if (!serviceId) {
+  if (typeof serviceId !== 'string' || serviceId === '') {
     throw new TypeError(`Can't create service without an id.`)
   }
 
-  adapter = lookup(adapter, adapters)
-  if (!adapter) {
+  const adapter = lookupById(adapterId, adapters) || adapterId
+  if (typeof adapter !== 'object' || adapter === null) {
     throw new TypeError(
       `Can't create service '${serviceId}' without an adapter.`
     )
   }
 
-  endpoints = prepareEndpoints(
-    {
-      endpoints,
-      options,
-      mappings: mappingsDef
-    },
-    { adapter, transformers, mapOptions }
-  )
-  auth = lookup(auth, auths) || {}
-  let connection = null
+  const auth = lookupById(authId, auths) || {}
+
+  const endpoints = endpointDefs
+    .map(
+      prepareEndpoint(adapter, transformers, options, mappingsDef, mapOptions)
+    )
+    .sort(compareEndpoints)
+
+  let connection: object | null = null
   const emitter = new EventEmitter()
 
   const sendOptions = {
     serviceId,
     schemas,
     adapter,
-    authenticator: auth.authenticator,
-    authOptions: auth.options,
-    setAuthentication: authentication => {
-      auth.authentication = authentication
-    },
-    setConnection: conn => {
+    auth,
+    setConnection: (conn: object) => {
       connection = conn
     },
     serviceOptions: options,
@@ -151,7 +168,7 @@ const service = ({
     id: serviceId,
     adapter,
     meta,
-    endpoints: endpoints.list,
+    endpoints,
     on: emitter.on.bind(emitter),
 
     /**
@@ -160,12 +177,9 @@ const service = ({
      * mapped, authenticated, and returned.
      *
      * The prepared and authenticated request is also returned.
-     *
-     * @param {Object} action - Action object to map and send to the service
-     * @returns {Object} Object with the sent request and the received response
      */
-    async send(action) {
-      const endpoint = endpoints.match(action)
+    async send(action: Action) {
+      const endpoint = matchEndpoint(endpoints)(action)
       if (!endpoint) {
         return {
           response: createError(
@@ -182,7 +196,6 @@ const service = ({
 
       return sendFn({
         request: requestFromAction(action, { endpoint, schemas }),
-        authentication: auth.authentication,
         requestMapper: endpoint.requestMapper,
         responseMapper: endpoint.responseMapper,
         mappings: endpoint.mappings,
@@ -195,14 +208,10 @@ const service = ({
      * _from_ the service. It is then made into an action and dispatched.
      * The response from the action is mapped, authenticated, and returned – for
      * going _to_ the service.
-     *
-     * @param {Object} action - Action object to map from the service
-     * @param {Object} dispatch - A dispatch function
-     * @returns {Object} Object with the received response
      */
-    async receive(action, dispatch) {
+    async receive(action: Action, dispatch: Dispatch) {
       action = await normalizeAction(action, adapter)
-      const endpoint = endpoints.match(action)
+      const endpoint = matchEndpoint(endpoints)(action)
       if (!endpoint) {
         return wrapResponse(
           createError(
@@ -226,11 +235,15 @@ const service = ({
         )
       }
 
-      const request = receiveRequestFromAction(action, endpoint)
+      const request = receiveRequestFromAction(action, endpoint.options)
       const mapped = await afterServiceFn(
         receiveAfterArgs(action, request, endpoint)
       )
-      const nextAction = createNextAction(action, endpoint, mapped.response)
+      const nextAction = createNextAction(
+        action,
+        endpoint.options,
+        mapped.response
+      )
 
       const response = await dispatch(nextAction)
 

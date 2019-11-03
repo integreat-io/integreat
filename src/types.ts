@@ -1,5 +1,6 @@
-import { MapDefinition } from 'map-transform'
+import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
 import { AuthDef, Auth } from './auth/types'
+import { EndpointDef, EndpointOptions } from './endpoints/types'
 
 export interface Dictionary<T> {
   [key: string]: T
@@ -53,6 +54,14 @@ export interface TransformFunction<
   (operands: T): (value: Data) => U
 }
 
+export interface Adapter {
+  authentication: string
+  prepareEndpoint: (
+    options?: EndpointOptions,
+    serviceOptions?: EndpointOptions
+  ) => EndpointOptions
+}
+
 export interface MappingDef {
   id: string
   type?: string
@@ -78,21 +87,20 @@ export interface IdentConfig {
   }
 }
 
-export interface EndpointDef {
-  id?: string
-  match?: object
-  validate?: unknown[]
-  options?: { [key: string]: unknown }
+export interface MapOptions {
+  pipelines?: Dictionary<MapDefinition>
+  functions?: Dictionary<CustomFunction>
+  dictionaries?: Dictionaries
 }
 
 export interface ServiceDef {
   id: string
-  adapter: string
+  adapter: string | Adapter
   auth?: AuthDef | string | null
   meta?: string | null
   options?: { [key: string]: unknown }
   endpoints: EndpointDef[]
-  mappings: { [type: string]: string | MapDefinition }
+  mappings: Dictionary<string | MapDefinition>
 }
 
 export interface Ident {
@@ -102,12 +110,8 @@ export interface Ident {
 
 export interface Request<T = Data> {
   action: string
-  params: {
-    [param: string]: Data
-  }
-  endpoint: {
-    [option: string]: Data
-  }
+  params: Dictionary<Data>
+  endpoint: Dictionary<Data>
   data?: T
   auth?: Auth | boolean
   access?: { ident: Ident }
@@ -119,11 +123,20 @@ export interface Response<T = Data> {
   error?: string
   responses?: Response[]
   access?: object
+  params?: Dictionary<Data>
+}
+
+export interface Payload extends Dictionary<Data> {
+  type?: string
+  id?: string
+  data?: Data
+  service?: string
+  dryrun?: boolean
 }
 
 export interface Action {
   type: string
-  payload: {}
+  payload: Payload
   meta?: {
     ident?: Ident
   }

@@ -1,7 +1,10 @@
+import { Adapter, Request } from '../types'
+import { Auth, Authentication, Authenticator, AuthOptions } from '../auth/types'
+
 const generateErrorResponse = (
   status: string,
   error: string,
-  access,
+  access?: object,
   authError?: string
 ) => ({
   status,
@@ -9,7 +12,10 @@ const generateErrorResponse = (
   access: { ...access, status: 'refused', scheme: 'service' }
 })
 
-const responseFromAuthentication = (authentication, response, { access }) => {
+const responseFromAuthentication = (
+  authentication: Authentication,
+  { access }: Request
+) => {
   switch (authentication.status) {
     case 'granted':
       return undefined
@@ -37,13 +43,15 @@ const responseFromAuthentication = (authentication, response, { access }) => {
 }
 
 const requestFromAuthentication = (
-  authentication,
-  authenticator,
-  adapter,
-  request
+  authentication: Authentication,
+  authenticator: Authenticator,
+  adapter: Adapter,
+  request: Request
 ) => {
   if (authentication.status === 'granted') {
-    const fn = authenticator[adapter.authentication]
+    const fn =
+      authenticator.authentication &&
+      authenticator.authentication[adapter.authentication]
     if (typeof fn === 'function') {
       const auth = fn(authentication)
       return { ...request, auth }
@@ -54,29 +62,34 @@ const requestFromAuthentication = (
 }
 
 const doAuthenticate = async (
-  authenticator,
-  authOptions,
-  request,
+  authenticator: Authenticator,
+  authOptions: AuthOptions,
   retries = 1
 ) => {
-  const authentication = await authenticator.authenticate(authOptions, request)
+  const authentication = await authenticator.authenticate(authOptions)
 
   if (authentication.status === 'timeout' && retries > 0) {
-    return doAuthenticate(authenticator, authOptions, request, retries - 1)
+    return doAuthenticate(authenticator, authOptions, retries - 1)
   }
 
   return authentication
 }
 
-function authenticate({
-  authenticator,
-  authOptions,
-  setAuthentication = () => {},
-  adapter
-}) {
+interface Options {
+  adapter: Adapter
+  auth: Auth
+}
+
+interface Args {
+  request: Request
+}
+
+function authenticate({ auth, adapter }: Options) {
+  const { authenticator } = auth
   return authenticator && authenticator.authenticate
-    ? async args => {
-        const { authentication, response, request } = args
+    ? async (args: Args) => {
+        const { authentication } = auth
+        const { request } = args
 
         if (authentication && authenticator.isAuthenticated(authentication)) {
           return {
@@ -92,19 +105,13 @@ function authenticate({
 
         const nextAuthentication = await doAuthenticate(
           authenticator,
-          authOptions,
-          request
+          auth.options
         )
-        setAuthentication(nextAuthentication)
+        auth.authentication = nextAuthentication
 
         return {
           ...args,
-          authentication: nextAuthentication,
-          response: responseFromAuthentication(
-            nextAuthentication,
-            response,
-            request
-          ),
+          response: responseFromAuthentication(nextAuthentication, request),
           request: requestFromAuthentication(
             nextAuthentication,
             authenticator,
@@ -113,7 +120,7 @@ function authenticate({
           )
         }
       }
-    : async args => args
+    : async (args: Args) => args
 }
 
 export default authenticate

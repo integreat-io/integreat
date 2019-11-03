@@ -1,10 +1,18 @@
-const getTypeAndToken = (authentication) => {
+import { Authenticator, Authentication, AuthOptions } from '../auth/types'
+
+interface TokenAuthentication extends Authentication {
+  token?: string | null
+  type?: string
+  encode?: boolean
+}
+
+const getTypeAndToken = (authentication: TokenAuthentication | null) => {
   const { status, token, type, encode } = authentication || {}
-  if (status !== 'granted') {
+  if (status !== 'granted' || !token) {
     return {}
   }
   return {
-    token: (encode) ? Buffer.from(token).toString('base64') : token,
+    token: encode ? Buffer.from(token).toString('base64') : token,
     type
   }
 }
@@ -12,17 +20,16 @@ const getTypeAndToken = (authentication) => {
 /**
  * The token strategy. The token is given as an option.
  */
-const tokenAuth = {
+const tokenAuth: Authenticator = {
   /**
    * Authenticate and return authentication object if authentication was
    * successful.
    * Would normaly perform an authentication request and set the token received,
    * but in tokenAuth the token is set as from the options object.
-   * @param {Object} options - An options object
-   * @returns {Object} An authentication object
    */
-  async authenticate ({ token = null, type = 'Bearer', encode = false }) {
-    return (token)
+  async authenticate(options: AuthOptions | null) {
+    const { token = null, type = 'Bearer', encode = false } = options || {}
+    return token
       ? { status: 'granted', token, type, encode }
       : { status: 'refused' }
   },
@@ -31,36 +38,36 @@ const tokenAuth = {
    * Check whether we've already ran authentication.
    * In the tokenAuth, this will be true if we get an authentication object
    * with granted status and a token.
-   * @param {Object} authentication - The object returned from `authenticate()`
-   * @returns {boolean} `true` if already authenticated, otherwise `false`
    */
-  isAuthenticated (authentication) {
-    return !!(authentication && authentication.status === 'granted' && authentication.token)
+  isAuthenticated(authentication) {
+    return !!(
+      authentication &&
+      authentication.status === 'granted' &&
+      authentication.token
+    )
   },
 
-  /**
-   * Return an object with the information needed for authenticated requests
-   * with this authenticator. The object will include `token` and `type` as
-   * seperate properties. The token will be encoded when the `encode` option is
-   * set true.
-   * @param {Object} authentication - The object returned from `authenticate()`
-   * @returns {Object} Auth object
-   */
-  asObject (authentication) {
-    return getTypeAndToken(authentication)
-  },
+  authentication: {
+    /**
+     * Return an object with the information needed for authenticated requests
+     * with this authenticator. The object will include `token` and `type` as
+     * seperate properties. The token will be encoded when the `encode` option is
+     * set true.
+     */
+    asObject(authentication: TokenAuthentication | null) {
+      return getTypeAndToken(authentication)
+    },
 
-  /**
-   * Return a headers object with the headers needed for authenticated requests
-   * with this authenticator. There will be only one property, namely
-   * `Authorization`, which will consist of the type and the token, the latter
-   * encoded if the `encode` option is true.
-   * @param {Object} authentication - The object returned from `authenticate()`
-   * @returns {Object} Headers object
-   */
-  asHttpHeaders (authentication) {
-    const { type, token } = getTypeAndToken(authentication)
-    return (token) ? { 'Authorization': `${type} ${token}` } : {}
+    /**
+     * Return a headers object with the headers needed for authenticated requests
+     * with this authenticator. There will be only one property, namely
+     * `Authorization`, which will consist of the type and the token, the latter
+     * encoded if the `encode` option is true.
+     */
+    asHttpHeaders(authentication: TokenAuthentication | null) {
+      const { type, token } = getTypeAndToken(authentication)
+      return token ? { Authorization: `${type} ${token}` } : {}
+    }
   }
 }
 

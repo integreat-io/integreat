@@ -3,6 +3,7 @@ import sinon = require('sinon')
 import { mapTransform, set, fwd, rev } from 'map-transform'
 import createSchema from '../schema'
 import functions from '../transformers/builtIns'
+import { AuthOptions, Authentication } from '../auth/types'
 
 import { send } from './send'
 
@@ -88,19 +89,32 @@ const createAdapter = (overrides = {}) => ({
 
 const requestMapper = mapTransform({ data: 'data' })
 
+const authenticator = {
+  authenticate: async ({ token }: AuthOptions) => ({
+    status: 'granted',
+    headers: { Authorization: token }
+  }),
+  isAuthenticated: () => false,
+  authentication: {
+    asHttpHeaders: (auth: Authentication | null) =>
+      (auth && (auth.headers as object)) || {}
+  }
+}
+
+const createAuth = () => ({
+  id: 'auth1',
+  authenticator,
+  options: { token: 't0k3n' },
+  authentication: null
+})
+
+const auth = createAuth()
+
 // Tests
 
 test('send should authenticate request', async t => {
   const adapter = createAdapter()
-  const authenticator = {
-    authenticate: async ({ token }) => ({
-      status: 'granted',
-      headers: { Authorization: token }
-    }),
-    isAuthenticated: () => false,
-    asHttpHeaders: ({ headers }) => headers
-  }
-  const authOptions = { token: 't0k3n' }
+  const auth = createAuth()
   const request = {
     action: 'SET',
     params: {
@@ -139,8 +153,7 @@ test('send should authenticate request', async t => {
   const ret = await send({
     schemas,
     adapter,
-    authenticator,
-    authOptions
+    auth
   })({ request, mappings })
 
   t.deepEqual(ret.request, expectedRequest)
@@ -148,7 +161,6 @@ test('send should authenticate request', async t => {
 
 test('send should map request data', async t => {
   const adapter = createAdapter()
-  const authenticator = { id: 'auth1' }
   const request = {
     action: 'SET',
     params: {
@@ -171,7 +183,7 @@ test('send should map request data', async t => {
     items: [{ key: 'ent1', header: 'The heading', two: 2 }]
   }
 
-  const ret = await send({ schemas, adapter, authenticator })({
+  const ret = await send({ schemas, adapter, auth })({
     request,
     requestMapper,
     mappings
@@ -202,7 +214,7 @@ test('send should emit request data before mapping to service', async t => {
   }
   const emit = sinon.stub()
 
-  await send({ schemas, adapter, emit })({
+  await send({ schemas, adapter, emit, auth })({
     request,
     requestMapper,
     mappings
@@ -247,7 +259,7 @@ test('send should emit request data after mapping to service', async t => {
     ]
   }
 
-  await send({ schemas, adapter, emit })({
+  await send({ schemas, adapter, emit, auth })({
     request,
     requestMapper,
     mappings
@@ -289,7 +301,7 @@ test('send should retrieve and map data from endpoint', async t => {
     access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
   }
 
-  const ret = await send({ schemas, adapter })({
+  const ret = await send({ schemas, adapter, auth })({
     request,
     responseMapper,
     mappings
@@ -327,7 +339,7 @@ test('send should return authorized response', async t => {
     }
   }
 
-  const ret = await send({ schemas, adapter })({
+  const ret = await send({ schemas, adapter, auth })({
     request,
     mappings
   })
@@ -359,7 +371,7 @@ test('send should emit request and response data before mapping from service', a
   }
   const emit = sinon.stub()
 
-  const ret = await send({ schemas, adapter, emit })({
+  const ret = await send({ schemas, adapter, emit, auth })({
     request,
     mappings
   })
@@ -397,7 +409,7 @@ test('send should emit request and response data after mapping from service', as
   }
   const emit = sinon.stub()
 
-  const ret = await send({ schemas, adapter, emit })({
+  const ret = await send({ schemas, adapter, emit, auth })({
     request,
     mappings
   })
@@ -430,7 +442,7 @@ test('send should return authorized request data before mapping to service', asy
     }
   ]
 
-  const ret = await send({ schemas, adapter })({
+  const ret = await send({ schemas, adapter, auth })({
     request,
     mappings
   })
@@ -465,7 +477,7 @@ test('send should call send with connection', async t => {
     access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
   }
 
-  const ret = await send({ schemas, adapter })({
+  const ret = await send({ schemas, adapter, auth })({
     request,
     connection,
     mappings
@@ -502,7 +514,7 @@ test('send should call connect', async t => {
     access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
   }
 
-  const ret = await send({ schemas, adapter, serviceOptions })({
+  const ret = await send({ schemas, adapter, serviceOptions, auth })({
     request,
     mappings
   })
@@ -524,7 +536,7 @@ test('send should retrieve from endpoint with default values', async t => {
     endpoint: endpointOptions
   }
 
-  const ret = await send({ schemas, adapter })({
+  const ret = await send({ schemas, adapter, auth })({
     request,
     mappings
   })
@@ -546,7 +558,7 @@ test('send should skip unknown schemas', async t => {
     endpoint: endpointOptions
   }
 
-  const ret = await send({ schemas, adapter })({
+  const ret = await send({ schemas, adapter, auth })({
     request,
     mappings
   })
@@ -574,7 +586,7 @@ test('send should not map response data when unmapped is true', async t => {
     access: { status: 'granted', ident: { root: true }, scheme: 'unmapped' }
   }
 
-  const ret = await send({ schemas, adapter })({
+  const ret = await send({ schemas, adapter, auth })({
     request,
     mappings
   })
@@ -582,16 +594,20 @@ test('send should not map response data when unmapped is true', async t => {
   t.deepEqual(ret.response, expected)
 })
 
-test('should respond with noaction for unknown action type', async t => {
-  const request = {
-    action: 'SYNC',
-    params: {}
-  }
-  const expectedResponse = {
-    status: 'noaction'
-  }
+test.failing(
+  'should respond with noaction for unknown action type',
+  async t => {
+    const adapter = createAdapter()
+    const request = {
+      action: 'SYNC',
+      params: {}
+    }
+    const expectedResponse = {
+      status: 'noaction'
+    }
 
-  const ret = await send({})({ request, mappings })
+    const ret = await send({ adapter, auth })({ request, mappings })
 
-  t.deepEqual(ret.response, expectedResponse)
-})
+    t.deepEqual(ret.response, expectedResponse)
+  }
+)

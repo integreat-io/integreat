@@ -29,10 +29,6 @@ const authItemsAndWrap = (request, access, schemas) => {
  *
  * The access object also includes the `ident` and the  `scheme`used for
  * authentication.
- *
- * @param {Object} request - The request object to authorize
- * @param {Object} schemas - An object with all schemas that may be needed
- * @returns {Object} The request object with updated access object
  */
 function authorizeRequest({ schemas }) {
   return ({ request }) => {

@@ -199,6 +199,38 @@ test('send should retrieve and map data with overridden mapping on endpoint', as
   t.is(response.data[0].title, 'Subheader 1')
 })
 
+test('should pick the most specified endoint', async t => {
+  const endpoints = [
+    {
+      match: { type: 'entry' },
+      options: { uri: 'http://test.api/1' },
+      correct: false
+    },
+    {
+      match: { type: 'entry', scope: 'member' },
+      options: { uri: 'http://test.api/2', correct: true }
+    }
+  ]
+  const send = sinon.stub().resolves({ status: 'ok', data: [] })
+  const service = setupService({ mapOptions, schemas })({
+    id: 'entries',
+    endpoints,
+    adapter: { ...json, send },
+    mappings: { entry: 'entry' }
+  })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', service: 'thenews' },
+    meta: { ident: { id: 'johnf' } }
+  }
+
+  await service.send(action)
+
+  t.is(send.callCount, 1)
+  const args = send.args[0][0]
+  t.true(args.endpoint.correct)
+})
+
 test('send should return noaction response when no endpoint', async t => {
   const send = async () => ({ status: 'ok', data: [] })
   const service = setupService({ mapOptions, schemas })({

@@ -183,9 +183,10 @@ test('should set createdAt and updatedAt to now when not set', t => {
   const { createdAt, updatedAt } = ret as DataObject
   t.true(createdAt instanceof Date)
   t.true(updatedAt instanceof Date)
-  t.deepEqual(createdAt, updatedAt)
   t.true((createdAt as Date).getTime() >= before)
   t.true((createdAt as Date).getTime() <= after)
+  t.true((updatedAt as Date).getTime() >= before)
+  t.true((updatedAt as Date).getTime() <= after)
 })
 
 test('should cast id to string', t => {

@@ -37,7 +37,7 @@ const extractRequestData = () => args => args.request.data
 
 const knownActions = ['GET', 'SET', 'DELETE', 'REQUEST']
 
-export const respondToUnknownAction = () => args =>
+export const respondToUnknownAction = _options => args =>
   args.request && knownActions.includes(args.request.action)
     ? args
     : { ...args, response: { status: 'noaction' } }

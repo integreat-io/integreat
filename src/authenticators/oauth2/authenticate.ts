@@ -1,9 +1,14 @@
 import got = require('got')
 import debugLib = require('debug')
+import { OauthOptions } from '.'
 
 const debug = debugLib('great:auth')
 
-async function authenticate({ uri, key, secret }) {
+async function authenticate({ uri, key, secret }: OauthOptions) {
+  if (!key || !secret || !uri) {
+    return null
+  }
+
   const credentials = `${encodeURIComponent(key)}:${encodeURIComponent(secret)}`
   const credentials64 = Buffer.from(credentials).toString('base64')
 

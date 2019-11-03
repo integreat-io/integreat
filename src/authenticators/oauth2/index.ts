@@ -1,18 +1,27 @@
+import { Authenticator, Authentication, AuthOptions } from '../../auth/types'
 import authenticate from './authenticate'
+
+interface OAuthAuthentication extends Authentication {
+  token?: string
+}
+
+export interface OauthOptions extends AuthOptions {
+  key?: string
+  secret?: string
+  uri?: string
+}
 
 /**
  * The OAuth2 strategy. Will retrieve an access token through the
  * client_credentials approach, and include the token as a Bearer on every
  * request.
  */
-const oauth2Auth = {
+const oauth2Auth: Authenticator = {
   /**
    * Authenticate and return authentication object if authentication was
    * successful.
-   * @param {Object} options - An options object
-   * @returns {Object} An authentication object
    */
-  async authenticate(options) {
+  async authenticate(options: OauthOptions | null) {
     if (!options) {
       return { status: 'refused' }
     }
@@ -22,8 +31,6 @@ const oauth2Auth = {
 
   /**
    * Check whether we've already ran authentication.
-   * @param {Object} authentication - The object returned from `authenticate()`
-   * @returns {boolean} `true` if already authenticated, otherwise `false`
    */
   isAuthenticated(authentication) {
     return !!(
@@ -33,30 +40,30 @@ const oauth2Auth = {
     )
   },
 
-  /**
-   * Return an object with the information needed for authenticated requests
-   * with this authenticator.
-   * @param {Object} authentication - The object returned from `authenticate()`
-   * @returns {Object} Auth object
-   */
-  asObject({ status, token } = {}) {
-    if (status === 'granted' && token) {
-      return { token }
-    }
-    return {}
-  },
+  authentication: {
+    /**
+     * Return an object with the information needed for authenticated requests
+     * with this authenticator.
+     */
+    asObject(authentication: OAuthAuthentication | null) {
+      const { status, token } = authentication || {}
+      if (status === 'granted' && token) {
+        return { token }
+      }
+      return {}
+    },
 
-  /**
-   * Return a headers object with the headers needed for authenticated requests
-   * with this authenticator.
-   * @param {Object} authentication - The object returned from `authenticate()`
-   * @returns {Object} Headers object
-   */
-  asHttpHeaders({ status, token } = {}) {
-    if (status === 'granted' && token) {
-      return { Authorization: `Bearer ${token}` }
+    /**
+     * Return a headers object with the headers needed for authenticated requests
+     * with this authenticator.
+     */
+    asHttpHeaders(authentication: OAuthAuthentication | null) {
+      const { status, token } = authentication || {}
+      if (status === 'granted' && token) {
+        return { Authorization: `Bearer ${token}` }
+      }
+      return {}
     }
-    return {}
   }
 }
 

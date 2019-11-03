@@ -3,7 +3,8 @@ import {
   TypedData,
   Reference,
   Shape,
-  PropertyShape
+  PropertyShape,
+  Action
 } from '../types'
 
 export const isDataObject = (value: unknown): value is DataObject =>
@@ -26,6 +27,11 @@ export const isPropertySchema = (value: unknown): value is PropertyShape =>
 
 export const isNullOrUndefined = (value: unknown): value is null | undefined =>
   value === null || value === undefined
+
+export const isAction = (action: unknown): action is Action =>
+  isDataObject(action) &&
+  typeof action.type === 'string' &&
+  isDataObject(action.payload)
 
 export const isEmptyObject = (value: unknown): value is {} =>
   isDataObject(value) && Object.keys(value).length === 0

@@ -1,5 +1,6 @@
 import test from 'ava'
 import token from '../authenticators/token'
+import { Auth } from './types'
 
 import createAuth from '.'
 
@@ -19,10 +20,10 @@ test('should create auth object', t => {
   const auth = createAuth(def, authenticators)
 
   t.truthy(auth)
-  t.is(auth.id, 'auth1')
-  t.is(auth.authenticator, token)
-  t.deepEqual(auth.options, { token: 't0k3n' })
-  t.is(auth.authentication, null)
+  t.is((auth as Auth).id, 'auth1')
+  t.is((auth as Auth).authenticator, token)
+  t.deepEqual((auth as Auth).options, { token: 't0k3n' })
+  t.is((auth as Auth).authentication, null)
 })
 
 test('should return null when no auth definition', t => {
@@ -41,7 +42,7 @@ test('should throw when no authenticators', t => {
   const err = t.throws(() => createAuth(def, undefined))
 
   t.true(err instanceof Error)
-  t.is(err.message, 'No authenticators were supplied')
+  t.is(err.message, "Unknown authenticator 'token'")
 })
 
 test('should throw on unknown authenticator', t => {
@@ -54,5 +55,5 @@ test('should throw on unknown authenticator', t => {
   const err = t.throws(() => createAuth(def, authenticators))
 
   t.true(err instanceof Error)
-  t.is(err.message, "Could not find the authenticator 'unknown'")
+  t.is(err.message, "Unknown authenticator 'unknown'")
 })

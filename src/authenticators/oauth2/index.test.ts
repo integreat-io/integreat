@@ -29,8 +29,8 @@ test('should be an auth strat', t => {
   t.truthy(oauth2)
   t.is(typeof oauth2.isAuthenticated, 'function')
   t.is(typeof oauth2.authenticate, 'function')
-  t.is(typeof oauth2.asObject, 'function')
-  t.is(typeof oauth2.asHttpHeaders, 'function')
+  t.is(typeof oauth2.authentication.asObject, 'function')
+  t.is(typeof oauth2.authentication.asHttpHeaders, 'function')
 })
 
 test('should authenticate', async t => {
@@ -103,7 +103,7 @@ test('should handle error', async t => {
   t.deepEqual(ret, expected)
 })
 
-test('should refuse on missing options', async t => {
+test('should refuse on no options object', async t => {
   nock('https://api3.test')
     .post('/token')
     .replyWithError('Catastrophy!')
@@ -113,6 +113,19 @@ test('should refuse on missing options', async t => {
   const ret = await oauth2.authenticate(options)
 
   t.deepEqual(ret, expected)
+})
+
+test('should refuse on undefined options', async t => {
+  const scope = nock('https://api8.test')
+    .post('/token')
+    .replyWithError('Catastrophy!')
+  const options = { uri: 'https://api8.test/token' }
+  const expected = { status: 'refused' }
+
+  const ret = await oauth2.authenticate(options)
+
+  t.deepEqual(ret, expected)
+  t.false(scope.isDone())
 })
 
 test('isAuthenticated should return false when no authentication', t => {
@@ -146,13 +159,13 @@ test('isAuthenticated should return true', async t => {
 })
 
 test('asHttpHeaders should return empty object when no authentication', t => {
-  const ret = oauth2.asHttpHeaders()
+  const ret = oauth2.authentication.asHttpHeaders(null)
 
   t.deepEqual(ret, {})
 })
 
 test('asHttpHeaders should return empty object for refused authentication', t => {
-  const ret = oauth2.asHttpHeaders({
+  const ret = oauth2.authentication.asHttpHeaders({
     status: 'refused',
     token: 'shouldnotbehere'
   })
@@ -172,19 +185,22 @@ test('asHttpHeaders should return authorization header', async t => {
   }
 
   const authentication = await oauth2.authenticate(options)
-  const ret = oauth2.asHttpHeaders(authentication)
+  const ret = oauth2.authentication.asHttpHeaders(authentication)
 
   t.deepEqual(ret, expected)
 })
 
 test('asObject should return empty object when no authentication', t => {
-  const ret = oauth2.asObject()
+  const ret = oauth2.authentication.asObject(null)
 
   t.deepEqual(ret, {})
 })
 
 test('asObject should return empty object for refused authentication', t => {
-  const ret = oauth2.asObject({ status: 'refused', token: 'shouldnotbehere' })
+  const ret = oauth2.authentication.asObject({
+    status: 'refused',
+    token: 'shouldnotbehere'
+  })
 
   t.deepEqual(ret, {})
 })
@@ -201,7 +217,7 @@ test('asObject should return token', async t => {
   }
 
   const authentication = await oauth2.authenticate(options)
-  const ret = oauth2.asObject(authentication)
+  const ret = oauth2.authentication.asObject(authentication)
 
   t.deepEqual(ret, expected)
 })

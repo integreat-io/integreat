@@ -1,3 +1,5 @@
+import { Action } from '../types'
+
 const matchValue = (match, value) =>
   Array.isArray(match) ? match.includes(value) : match === value
 
@@ -40,13 +42,9 @@ const matchFilters = ({ match = {} }, { payload: { data, ...params }, meta }) =>
  * already been sortert with higher specificity first. Type should match before
  * scope, which should match before action, but the order here is taken care of
  * by the required sorting.
- *
- * @param endpoints - Array of endpoint objects
- * @param action - Action object to match agains
- * @returns Matching endpoint
  */
 function matchEndpoint(endpoints) {
-  return ({ type, payload, meta }) =>
+  return ({ type, payload, meta }: Action) =>
     endpoints.find(
       endpoint =>
         matchId(endpoint, { type, payload }) &&

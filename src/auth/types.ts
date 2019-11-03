@@ -1,14 +1,14 @@
-import { Dictionary, Data, DataObject } from '../types'
+import { Dictionary, Data } from '../types'
 
-export interface Authentication extends Dictionary<Data> {
+export type AuthOptions = Dictionary<Data>
+
+export interface Authentication extends AuthOptions {
   status: string
   error?: string
 }
 
-type Options = DataObject
-
 export interface Authenticator {
-  authenticate: (options: Options) => Promise<Authentication>
+  authenticate: (options: AuthOptions | null) => Promise<Authentication>
   isAuthenticated: (authentication: Authentication | null) => boolean
   authentication: {
     [asFunction: string]: (authentication: Authentication | null) => object
@@ -18,11 +18,12 @@ export interface Authenticator {
 export interface AuthDef {
   id: string
   authenticator: string
-  options: { [key: string]: Data }
+  options: AuthOptions
 }
 
 export interface Auth {
   id: string
-  authenticator: Authenticator
-  options: { [key: string]: Data }
+  authenticator: Authenticator | null
+  options: AuthOptions
+  authentication: null | Authentication
 }

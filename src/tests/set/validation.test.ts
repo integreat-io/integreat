@@ -31,14 +31,14 @@ test.after.always(() => {
   nock.restore()
 })
 
-const alwaysOk = () => null
+const alwaysOk = () => () => null
 
-const shouldHaveAuthor = action =>
+const shouldHaveAuthor = () => action =>
   action.payload.data && action.payload.data.author
     ? null
     : { status: 'badrequest', error: 'Error from validator' }
 
-const isNumericId = action =>
+const isNumericId = () => action =>
   isNaN(action.payload.id)
     ? { status: 'badrequest', error: 'Not number' }
     : null
