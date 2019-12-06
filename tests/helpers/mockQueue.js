@@ -11,11 +11,11 @@ module.exports = () => {
       }
       return id || 'queued1'
     },
-    subscribe (handler) {
+    async subscribe (handler) {
       handlerFn = handler
       return 'handle1'
     },
-    unsubscribe (handle) {
+    async unsubscribe (handle) {
       if (handle === 'handle1') {
         handlerFn = null
       }
