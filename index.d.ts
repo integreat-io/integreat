@@ -77,7 +77,7 @@ declare namespace integreat {
 
   export interface Queue {
     queue: object,
-    setDispatch: (dispatch: Dispatch) => void,
+    setDispatch: (dispatch: Dispatch) => Promise<void>,
     middleware: (next: Middleware) => Response,
     schedule: (schedule: object) => Response
   }
@@ -97,7 +97,7 @@ declare namespace integreat {
   }
 
   type Relationship = {
-    id: string,
+    id: string | null | undefined,
     type: string,
     attributes?: Attributes,
     relationships?: Relationships,
@@ -109,7 +109,7 @@ declare namespace integreat {
   }
 
   export type Data = {
-    id: string | null,
+    id: string | null | undefined,
     type: string,
     attributes: Attributes,
     relationships: Relationships
