@@ -31,7 +31,10 @@ test('should set data with request mapping', async (t) => {
     content: {
       items: [entry1Mapped],
       footnote: '',
-      meta: '{"datatype":"entry"}'
+      meta: '{"datatype":"entry"}',
+      lists: [
+        { items: [{ id: 'no1', name: 'Number One' }] }
+      ]
     }
   }
   nock('http://some.api')
@@ -51,7 +54,11 @@ test('should set data with request mapping', async (t) => {
   const requestMapping = {
     'content.items[]': 'data',
     'content.footnote': { const: '' },
-    'content.meta': { path: 'params.type', transformTo: 'stringify', sub: 'datatype' }
+    'content.meta': {
+      path: 'params.type', transformTo: 'stringify', sub: 'datatype'
+    },
+    'content.lists[0].items[0].id': { const: 'no1' },
+    'content.lists[0].items[0].name': { const: 'Number One'}
   }
   const defs = {
     schemas: [entrySchema],
