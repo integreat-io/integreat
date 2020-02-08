@@ -97,7 +97,6 @@ test('should use status code mapped from data', async (t) => {
 
   t.is(ret.status, 'error')
   t.is(ret.error, 'Oh no!')
-  t.falsy(ret.data)
 
   nock.restore()
 })

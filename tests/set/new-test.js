@@ -1,4 +1,5 @@
 import test from 'ava'
+import sinon from 'sinon'
 import nock from 'nock'
 import json from 'integreat-adapter-json'
 import completeIdent from '../../lib/middleware/completeIdent'
@@ -132,4 +133,28 @@ test('should respond with raw data', async (t) => {
 
   t.is(ret.status, 'ok', ret.error)
   t.is(ret.data, 'entry1')
+})
+
+test('should respond with data on error', async (t) => {
+  const adapters = {
+    json: {
+      ...json(),
+      send: sinon.stub().resolves({
+        status: 'error',
+        data: JSON.stringify({ error: 'Should return this' })
+      })
+    }
+  }
+  const action = {
+    type: 'SET',
+    payload: { type: 'entry', id: 'ent2', data: entriesArr[1] },
+    meta: { ident: { root: true } }
+  }
+
+  const great = integreat(defs, { adapters })
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret.data, { error: 'Should return this' })
+  t.is(ret.error, 'Should return this')
 })
