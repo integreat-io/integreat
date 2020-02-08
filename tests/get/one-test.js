@@ -12,6 +12,10 @@ import integreat from '../..'
 const createdAt = '2017-11-18T18:43:01Z'
 const updatedAt = '2017-11-24T07:11:43Z'
 
+test.after.always(() => {
+  nock.restore()
+})
+
 // Tests
 
 test('should get one user from service', async (t) => {
@@ -50,8 +54,6 @@ test('should get one user from service', async (t) => {
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, expected)
-
-  nock.restore()
 })
 
 test('should get one entry from service', async (t) => {
@@ -87,6 +89,39 @@ test('should get one entry from service', async (t) => {
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, expected)
+})
 
-  nock.restore()
+test('should respond with raw data', async (t) => {
+  const defsWithEndpoint = {
+    ...defs,
+    services: [
+      {
+        ...defs.services[0],
+        endpoints: [
+          {
+            match: { action: 'GET' },
+            responseMapping: 'replaceKey',
+            mapResponseWithType: false,
+            options: { uri: '/{id}' }
+          }
+        ]
+      }
+    ]
+  }
+  const adapters = { json: json() }
+  const scope = nock('http://some.api')
+    .get('/entries/ent2')
+    .reply(200, { replaceKey: 'entry2' })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent2', type: 'entry' },
+    meta: { ident: { id: 'johnf' } }
+  }
+
+  const great = integreat(defsWithEndpoint, { adapters })
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.data, 'entry2')
+  t.true(scope.isDone())
 })

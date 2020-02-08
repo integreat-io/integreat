@@ -21,13 +21,10 @@
     "lint": "standard"
   },
   "ava": {
+    "babel": true,
     "files": [
       "lib/**/*-test.js",
       "tests/**/*-test.js"
-    ],
-    "service": [
-      "./index.js",
-      "lib/**/!(*-test).js"
     ]
   },
   "nyc": {
@@ -54,18 +51,19 @@
     "got": "^9.6.0",
     "later": "^1.2.0",
     "map-any": "^0.2.1",
-    "ramda": "^0.26.1",
-    "uuid": "^3.2.3"
     "map-transform": "^0.3.8",
+    "ramda": "^0.27.0",
+    "uuid": "^3.4.0"
   },
   "devDependencies": {
-    "ava": "2.4.0",
+    "@ava/babel": "^1.0.0",
+    "ava": "3.2.0",
     "coveralls": "^3.0.9",
     "dotenv": "^8.2.0",
     "integreat-adapter-json": "^0.2.1",
     "nock": "^11.7.2",
     "nyc": "^15.0.0",
-    "sinon": "^8.0.4",
+    "sinon": "^8.1.1",
     "standard": "^14.3.1"
   }
 }

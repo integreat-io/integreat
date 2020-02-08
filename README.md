@@ -279,6 +279,9 @@ that this is an authenticated service.
     params: {...},
     filters: []
   },
+  requestMapping: <string | mapping def>,
+  responseMapping: <string | mapping def>,
+  mapResponseWithType: <boolean>,
   validate: [],
   options: {...}
 }

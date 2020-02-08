@@ -99,3 +99,37 @@ test('should set new entries', async (t) => {
   t.is(ret.data[0].id, 'real1')
   t.is(ret.data[1].id, 'real2')
 })
+
+test('should respond with raw data', async (t) => {
+  const defsWithEndpoint = {
+    ...defs,
+    services: [
+      {
+        ...defs.services[0],
+        endpoints: [
+          {
+            match: { action: 'SET' },
+            responseMapping: 'newKey',
+            mapResponseWithType: false,
+            options: { uri: '/', method: 'POST' }
+          }
+        ]
+      }
+    ]
+  }
+  const adapters = { json: json() }
+  nock('http://some.api')
+    .post('/entries/')
+    .reply(201, { newKey: 'entry1' })
+  const action = {
+    type: 'SET',
+    payload: { type: 'entry', data: entry1Item },
+    meta: { ident: { root: true } }
+  }
+
+  const great = integreat(defsWithEndpoint, { adapters, middlewares: [completeIdent] })
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.data, 'entry1')
+})

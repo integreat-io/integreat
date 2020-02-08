@@ -24,6 +24,10 @@ const entry1Mapped = {
   originalTitle: 'Entry 1'
 }
 
+test.after.always(() => {
+  nock.restore()
+})
+
 // Tests
 
 test('should set data with request mapping', async (t) => {
@@ -58,7 +62,7 @@ test('should set data with request mapping', async (t) => {
       path: 'params.type', transformTo: 'stringify', sub: 'datatype'
     },
     'content.lists[0].items[0].id': { const: 'no1' },
-    'content.lists[0].items[0].name': { const: 'Number One'}
+    'content.lists[0].items[0].name': { const: 'Number One' }
   }
   const defs = {
     schemas: [entrySchema],
@@ -76,8 +80,6 @@ test('should set data with request mapping', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-
-  nock.restore()
 })
 
 test('should set data with reverse transform', async (t) => {
@@ -126,6 +128,4 @@ test('should set data with reverse transform', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-
-  nock.restore()
 })
