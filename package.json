@@ -35,35 +35,34 @@
     "npm": ">= 5.6"
   },
   "dependencies": {
-    "@types/later": "^1.2.5",
+    "@types/later": "^1.2.6",
     "@types/nanoid": "^2.0.0",
     "debug": "^4.1.1",
     "got": "^9.6.0",
     "later": "^1.2.0",
     "map-any": "^0.2.1",
     "map-transform": "^0.3.6",
-    "nanoid": "^2.1.0",
+    "nanoid": "^2.1.11",
     "p-pipe": "^3.0.0",
-    "ramda": "^0.26.1"
+    "ramda": "^0.27.0"
   },
   "devDependencies": {
-    "@types/nock": "^10.0.3",
-    "@types/sinon": "^7.0.13",
-    "@typescript-eslint/eslint-plugin": "^2.1.0",
-    "@typescript-eslint/parser": "^2.1.0",
-    "coveralls": "^3.0.5",
-    "eslint": "^6.3.0",
-    "eslint-config-prettier": "^6.2.0",
-    "eslint-plugin-node": "^10.0.0",
+    "@types/sinon": "^7.5.1",
+    "@typescript-eslint/eslint-plugin": "^2.19.2",
+    "@typescript-eslint/parser": "^2.19.2",
     "ava": "3.3.0",
+    "coveralls": "^3.0.9",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-node": "^11.0.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-security": "^1.4.0",
-    "integreat-adapter-json": "^0.1.6",
-    "nock": "^10.0.6",
-    "nyc": "^14.1.1",
-    "prettier": "^1.18.2",
-    "sinon": "^7.3.2",
-    "ts-node": "^8.3.0",
-    "typescript": "^3.5.3"
+    "integreat-adapter-json": "^0.3.0",
+    "nock": "^12.0.0",
+    "nyc": "^15.0.0",
+    "prettier": "^1.19.1",
+    "sinon": "^8.1.1",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.7.5"
   }
 }
