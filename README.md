@@ -99,7 +99,7 @@ const services = [
   }
 ]
 
-const adapters = { json }
+const adapters = { json: json(console) }
 
 const great = Integreat.create({ schemas, services }, { adapters })
 const action = { type: 'GET', payload: { type: 'message' } }

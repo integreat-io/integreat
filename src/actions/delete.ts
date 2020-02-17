@@ -1,31 +1,41 @@
 import debugLib = require('debug')
-import appendToAction from '../utils/appendToAction'
+import pPipe = require('p-pipe')
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
+import {
+  exchangeFromAction,
+  responseFromExchange
+} from '../utils/exchangeMapping'
+import { Action, Exchange, ExchangeRequest, Dispatch, Data } from '../types'
+import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
 
-const prepareData = payload => {
-  const { type, id } = payload
+const prepareData = ({ type, id, data }: ExchangeRequest) =>
+  type && id
+    ? // Delete one action -- return as data
+      [{ id, $type: type }]
+    : // Filter away null values
+      ([] as Data[]).concat(data).filter(Boolean)
 
-  if (type && id) {
-    // Delete one action -- return as data
-    return [{ id, $type: type }]
-  } else {
-    // Filter away null values
-    return [].concat(payload.data).filter(item => !!item)
-  }
-}
+const setDataOnExchange = (exchange: Exchange, data?: Data | Data[]) => ({
+  ...exchange,
+  request: { ...exchange.request, data }
+})
 
 /**
  * Delete several items from a service, based on the given payload.
- * @param payload - Payload from action object
- * @param resources - Object with getService
- * @returns Response object with any data returned from the service
  */
-async function deleteFn(action, _dispatch, getService) {
-  debug('Action: DELETE')
-  const { type, id, service: serviceId, endpoint } = action.payload
+export default async function deleteFn(
+  obsoleteAction: Action,
+  _dispatch: Dispatch,
+  getService: GetService
+) {
+  const exchange = exchangeFromAction(obsoleteAction)
+  const {
+    request: { type, id, service: serviceId },
+    endpoint
+  } = exchange
 
   const service =
     typeof getService === 'function' ? getService(type, serviceId) : null
@@ -33,7 +43,7 @@ async function deleteFn(action, _dispatch, getService) {
     return createUnknownServiceError(type, serviceId, 'DELETE')
   }
 
-  const data = prepareData(action.payload)
+  const data = prepareData(exchange.request)
   if (data.length === 0) {
     return createError(
       `No items to delete from service '${service.id}'`,
@@ -46,9 +56,21 @@ async function deleteFn(action, _dispatch, getService) {
     : `endpoint matching ${type} and ${id}`
   debug("DELETE: Delete from service '%s' at %s.", service.id, endpointDebug)
 
-  const { response } = await service.send(appendToAction(action, { data }))
+  const nextExchange = await pPipe<
+    Exchange,
+    Exchange,
+    Exchange,
+    Exchange,
+    Exchange,
+    Exchange
+  >(
+    service.authorizeExchange,
+    service.assignEndpointMapper,
+    service.mapToService,
+    service.sendExchange,
+    service.mapFromService
+  )(setDataOnExchange(exchange, data))
 
-  return response.status === 'ok' ? { status: 'ok' } : response
+  return responseFromExchange(nextExchange)
+  // return response.status === 'ok' ? { status: 'ok' } : response
 }
-
-export default deleteFn

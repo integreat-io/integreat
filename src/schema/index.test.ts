@@ -232,3 +232,69 @@ test('should generate id when not set', t => {
   t.is(typeof id, 'string')
   t.true((id as string).length >= 21)
 })
+
+test('should not cast undefined', t => {
+  const def = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    shape: {
+      title: { $cast: 'string', $default: 'Entry with no name' }
+    },
+    access: 'auth'
+  }
+  const data = undefined
+  const expected = undefined
+
+  const mapping = schema(def).mapping
+  const ret = mapTransform(mapping, { functions: builtIns })(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not cast null', t => {
+  const def = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    shape: {
+      title: { $cast: 'string', $default: 'Entry with no name' }
+    },
+    access: 'auth'
+  }
+  const data = null
+  const expected = undefined
+
+  const mapping = schema(def).mapping
+  const ret = mapTransform(mapping, { functions: builtIns })(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not cast undefined in array', t => {
+  const date = new Date('2019-01-18T03:43:52Z')
+  const def = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    shape: {
+      title: { $cast: 'string', $default: 'Entry with no name' }
+    },
+    access: 'auth'
+  }
+  const data = [undefined, { id: 12345, createdAt: date, updatedAt: date }]
+  const expected = [
+    {
+      $type: 'entry',
+      id: '12345',
+      title: 'Entry with no name',
+      createdAt: date,
+      updatedAt: date
+    }
+  ]
+
+  const mapping = schema(def).mapping
+  const ret = mapTransform(mapping, { functions: builtIns })(data)
+
+  t.deepEqual(ret, expected)
+})

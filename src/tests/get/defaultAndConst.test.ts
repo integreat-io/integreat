@@ -1,6 +1,6 @@
 import test from 'ava'
 import nock = require('nock')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
@@ -8,6 +8,8 @@ import entry1 from '../helpers/data/entry1'
 import Integreat from '../..'
 
 // Setup
+
+const json = jsonAdapter()
 
 const entryNoHeadline = {
   key: 'ent2'
@@ -18,7 +20,7 @@ const entryNoHeadline = {
 test('should transform entry', async t => {
   const adapters = { json }
   nock('http://some.api')
-    .get('/entries/')
+    .get('/entries')
     .reply(200, { data: [entry1, entryNoHeadline] })
   const action = {
     type: 'GET',

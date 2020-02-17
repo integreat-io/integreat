@@ -1,9 +1,15 @@
 import test from 'ava'
 import nock = require('nock')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
 import Integreat from '../..'
+
+// Setup
+
+const json = jsonAdapter()
+
+// Tests
 
 test('should get error object for unknown entry', async t => {
   const adapters = { json }

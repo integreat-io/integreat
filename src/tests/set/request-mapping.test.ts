@@ -1,13 +1,15 @@
 import test from 'ava'
 import nock = require('nock')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 
 import Integreat from '../..'
 
-// Helpers
+// Setup
+
+const json = jsonAdapter()
 
 const date = '2019-08-13T13:43:00.000Z'
 
@@ -15,7 +17,8 @@ const entry1Item = {
   $type: 'entry',
   id: 'ent1',
   title: 'Entry 1',
-  createdAt: new Date(date)
+  createdAt: new Date(date),
+  updatedAt: new Date(date)
 }
 
 const entry1Mapped = {
@@ -23,6 +26,7 @@ const entry1Mapped = {
   headline: 'Entry 1',
   originalTitle: 'Entry 1',
   createdAt: date,
+  updatedAt: date,
   sections: []
 }
 
@@ -50,12 +54,12 @@ test('should set data with request mapping', async t => {
       stringify: () => value => JSON.stringify(value)
     }
   }
-  const requestMapping = [
+  const toMapping = [
     'data',
     {
       data: 'content.items[]',
       none0: ['content.footnote', { $transform: 'fixed', value: '' }],
-      'params.type': [
+      type: [
         'content.meta',
         { $transform: 'stringify', $direction: 'rev' },
         'datatype'
@@ -69,8 +73,8 @@ test('should set data with request mapping', async t => {
         ...entriesService,
         endpoints: [
           {
-            requestMapping,
-            options: { uri: '/{id}' }
+            toMapping,
+            options: { uri: '/entries/{id}' }
           }
         ]
       }

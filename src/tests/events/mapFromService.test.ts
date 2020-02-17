@@ -1,11 +1,17 @@
 import test from 'ava'
 import sinon = require('sinon')
 import nock = require('nock')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import ent1Data from '../helpers/data/entry1'
 
 import Integreat from '../..'
+
+// Setup
+
+const json = jsonAdapter()
+
+// Tests
 
 test.skip('should emit request and response before mapping from service', async t => {
   const adapters = { json }

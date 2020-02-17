@@ -1,11 +1,17 @@
 import test from 'ava'
 import sinon = require('sinon')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import tokenAuth from '../../authenticators/token'
 import defs from '../helpers/defs'
 import entriesData from '../helpers/data/entries'
 
 import Integreat from '../..'
+
+// Setup
+
+const json = jsonAdapter()
+
+// Tests
 
 test('should connect to service and reuse connection', async t => {
   let count = 1

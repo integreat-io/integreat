@@ -1,12 +1,14 @@
 import test from 'ava'
 import sinon = require('sinon')
 import nock = require('nock')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
 import Integreat from '../..'
 
-// Helpers
+// Setup
+
+const json = jsonAdapter()
 
 const entry1Item = {
   $type: 'entry',
@@ -14,7 +16,10 @@ const entry1Item = {
   title: 'Entry 1',
   text: 'The text of entry 1',
   author: { id: 'johnf', $ref: 'user' },
-  sections: [{ id: 'news', $ref: 'section' }, { id: 'sports', $ref: 'section' }]
+  sections: [
+    { id: 'news', $ref: 'section' },
+    { id: 'sports', $ref: 'section' }
+  ]
 }
 
 // Tests

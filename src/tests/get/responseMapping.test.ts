@@ -1,6 +1,6 @@
 import test from 'ava'
 import nock = require('nock')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
@@ -12,26 +12,28 @@ import Integreat from '../..'
 
 // Setup
 
+const json = jsonAdapter()
+
 const transformers = { jsonTransform }
 
-const responseMapping = [
+const fromMapping = [
   'data',
   {
-    status: 'reponseValue',
+    status: 'responseValue',
     data: 'responseContent.articles[]',
     error: 'responseMessage'
   }
 ]
 
-const defsWithResponseMapping = responseMapping => ({
+const defsWithFromMapping = fromMapping => ({
   schemas: [entrySchema],
   services: [
     {
       ...entriesService,
       endpoints: [
         {
-          responseMapping,
-          options: { uri: '/{id}' }
+          fromMapping,
+          options: { uri: '/entries/{id}' }
         }
       ]
     }
@@ -47,13 +49,13 @@ test('should map with response mapping', async t => {
     .get('/entries/ent1')
     .reply(200, {
       responseContent: { articles: [entry1] },
-      reponseValue: 'ok'
+      responseValue: 'ok'
     })
   const action = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' }
   }
-  const defs = defsWithResponseMapping(responseMapping)
+  const defs = defsWithFromMapping(fromMapping)
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -74,38 +76,37 @@ test('should use status code mapped from data', async t => {
     .get('/entries/ent2')
     .reply(200, {
       responseContent: { articles: [entry1] },
-      reponseValue: 'error',
+      responseValue: 'error',
       responseMessage: 'Oh no!'
     })
   const action = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent2' }
   }
-  const defs = defsWithResponseMapping(responseMapping)
+  const defs = defsWithFromMapping(fromMapping)
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'error')
   t.is(ret.error, 'Oh no!')
-  t.falsy(ret.data)
 
   nock.restore()
 })
 
-test('should not override adater error with data status', async t => {
+test('should not override adapter error with data status', async t => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent2')
     .reply(404, {
       responseContent: null,
-      reponseValue: 'ok'
+      responseValue: 'ok'
     })
   const action = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent2' }
   }
-  const defs = defsWithResponseMapping(responseMapping)
+  const defs = defsWithFromMapping(fromMapping)
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -128,14 +129,14 @@ test('should map with sub mapping', async t => {
     type: 'GET',
     payload: { type: 'entry', id: 'ent3' }
   }
-  const responseMapping = {
+  const fromMapping = {
     'data[]': [
       'data.responseContent',
       { $transform: 'jsonTransform' },
       'articles[]'
     ]
   }
-  const defs = defsWithResponseMapping(responseMapping)
+  const defs = defsWithFromMapping(fromMapping)
 
   const great = Integreat.create(defs, { adapters, transformers })
   const ret = await great.dispatch(action)

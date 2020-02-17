@@ -1,7 +1,7 @@
 export default {
   id: 'entries',
   adapter: 'json',
-  options: { baseUri: 'http://some.api/entries' },
+  options: { baseUri: 'http://some.api' },
   mappings: {
     entry: 'entries-entry',
     user: 'users-user'
@@ -9,7 +9,7 @@ export default {
   endpoints: [
     {
       match: { action: 'GET', scope: 'collection', params: { offset: true } },
-      responseMapping: [
+      fromMapping: [
         'data',
         {
           data: 'data[]',
@@ -17,11 +17,11 @@ export default {
           'paging.next.offset': 'offset'
         }
       ],
-      options: { uri: '/{?offset=offset?}' }
+      options: { uri: '/entries{?offset=offset?}' }
     },
     {
       match: { action: 'GET', scope: 'collection' },
-      responseMapping: [
+      fromMapping: [
         'data',
         {
           data: 'data[]',
@@ -29,49 +29,47 @@ export default {
           'paging.next.offset': 'offset'
         }
       ],
-      options: { uri: '/' }
+      options: { uri: '/entries' }
     },
     {
       match: { action: 'SET', scope: 'collection' },
-      requestMapping: 'data[]',
-      responseMapping: 'data[]',
-      options: { uri: '/', method: 'POST' }
+      toMapping: 'data[]',
+      fromMapping: 'data[]',
+      options: { uri: '/entries', method: 'POST' }
     },
     {
       match: { scope: 'member' },
-      responseMapping: 'data',
-      options: { uri: '/{id}' }
+      fromMapping: 'data',
+      options: { uri: '/entries/{id}' }
     },
     {
       match: { action: 'GET', params: { author: true } },
-      responseMapping: 'data',
-      options: { uri: '{?author}' }
+      fromMapping: 'data',
+      options: { uri: '/entries{?author}' }
     },
     {
       match: {
         action: 'REQUEST',
         filters: {
           data: { type: 'object', required: ['key'] },
-          'params.requestMethod': { const: 'GET' }
+          'request.requestMethod': { const: 'GET' }
         }
       },
-      responseMapping: [
+      fromMapping: [
         {
           'params.id': 'data.key'
         }
       ],
-      incoming: true,
       options: { actionType: 'GET', actionPayload: { type: 'entry' } }
     },
     {
       match: {
         action: 'REQUEST',
         filters: {
-          'params.type': { const: 'entry' },
-          'params.requestMethod': { const: 'POST' }
+          'request.type': { const: 'entry' },
+          'request.requestMethod': { const: 'POST' }
         }
       },
-      incoming: true,
       options: { actionType: 'SET', actionPayload: { type: 'entry' } }
     }
   ]

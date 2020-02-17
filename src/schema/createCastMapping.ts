@@ -1,19 +1,24 @@
 import mapAny = require('map-any')
+import R = require('ramda')
 import { MapObject, transform, fwd, rev, filter } from 'map-transform'
-import { Schema, PropertySchema, Data } from '../types'
+import { Shape, PropertyShape, Data } from '../types'
 import {
   isSchema,
   isPropertySchema,
   isDataObject,
-  isTypedData
+  isTypedData,
+  isNullOrUndefined,
+  not
 } from '../utils/is'
+
+const { compose } = R
 
 const primitiveTypes = ['string', 'integer', 'number', 'boolean', 'date']
 
 const typeFromProp = (prop: unknown) =>
   isPropertySchema(prop) ? prop.$cast : prop
 
-const defaultFromProp = (prop?: string | PropertySchema) => {
+const defaultFromProp = (prop?: string | PropertyShape) => {
   if (isPropertySchema(prop)) {
     if (prop.hasOwnProperty('$const')) {
       return { $transform: 'fixed', value: prop.$const }
@@ -41,7 +46,7 @@ const transformFromType = (type: string) => {
   }
 }
 
-const mappingFromSchema = (schema: Schema): MapObject =>
+const mappingFromSchema = (schema: Shape): MapObject =>
   Object.entries(schema).reduce((mapping, [field, prop]) => {
     if (isSchema(prop)) {
       return { ...mapping, [field]: [field, mappingFromSchema(prop)] }
@@ -65,9 +70,14 @@ const mappingFromSchema = (schema: Schema): MapObject =>
     }
   }, {})
 
-function equalOrNoSchema(type: string) {
-  return (data: Data) => !type || !isTypedData(data) || data.$type === type
-}
+const noSchemaOrEqualType = (data: Data, type: string) =>
+  !isTypedData(data) || data.$type === type
+
+const includeInCasting = (type: string) =>
+  type
+    ? (data: Data) =>
+        !isNullOrUndefined(data) && noSchemaOrEqualType(data, type)
+    : compose(not, isNullOrUndefined)
 
 const cleanUpCast = (type: string) =>
   mapAny((item: Data) => {
@@ -84,8 +94,8 @@ const cleanUpCast = (type: string) =>
     }
   })
 
-export default function createCastMapping(schema: Schema, type: string) {
-  const filterItem = filter(equalOrNoSchema(type))
+export default function createCastMapping(schema: Shape, type: string) {
+  const filterItem = filter(includeInCasting(type))
   const cleanUpTransform = transform(cleanUpCast(type))
 
   return [

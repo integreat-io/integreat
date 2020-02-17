@@ -1,6 +1,10 @@
 import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
-import { AuthDef, Auth } from './auth/types'
-import { EndpointDef, EndpointOptions } from './endpoints/types'
+import { AuthDef, Auth, Authentication } from './auth/types'
+import {
+  EndpointDef,
+  EndpointOptions,
+  Endpoint
+} from './service/endpoints/types'
 
 export interface Dictionary<T> {
   [key: string]: T
@@ -54,12 +58,22 @@ export interface TransformFunction<
   (operands: T): (value: Data) => U
 }
 
+export interface Connection extends Dictionary<unknown> {
+  status: string
+}
+
 export interface Adapter {
   authentication: string
   prepareEndpoint: (
-    options?: EndpointOptions,
+    options: EndpointOptions,
     serviceOptions?: EndpointOptions
   ) => EndpointOptions
+  connect: (
+    options: EndpointOptions,
+    authentication: Authentication | null,
+    connection: Connection | null
+  ) => Promise<Connection | null>
+  send: (request: Request, connection: Connection | null) => Promise<Response>
 }
 
 export interface MappingDef {
@@ -93,45 +107,90 @@ export interface MapOptions {
   dictionaries?: Dictionaries
 }
 
+export type MapDefinitions = Dictionary<string | MapDefinition>
+
 export interface ServiceDef {
   id: string
   adapter: string | Adapter
   auth?: AuthDef | string | null
-  meta?: string | null
+  meta?: string
   options?: { [key: string]: unknown }
   endpoints: EndpointDef[]
-  mappings: Dictionary<string | MapDefinition>
+  mappings: MapDefinitions
 }
 
 export interface Ident {
   id: string
   root?: boolean
+  withToken?: string
+  roles?: string[]
+  tokens?: string[]
 }
+
+export type Params = Dictionary<Data>
 
 export interface Request<T = Data> {
   action: string
-  params: Dictionary<Data>
-  endpoint: Dictionary<Data>
+  params: Params
+  endpoint: Dictionary<unknown>
   data?: T
-  auth?: Auth | boolean
+  auth?: Auth | boolean | null
   access?: { ident: Ident }
 }
 
 export interface Response<T = Data> {
-  status: string
+  status: string | null
   data?: T
   error?: string
   responses?: Response[]
   access?: object
-  params?: Dictionary<Data>
+  params?: Params
+}
+
+export interface ExchangeRequest<T = Data> {
+  type?: string | string[]
+  id?: string | string[]
+  service?: string
+  params?: Params
+  data?: T
+  uri?: string
+  method?: string
+  headers?: Dictionary<string>
+  page?: number
+  pageSize?: number
+}
+
+export interface ExchangeResponse<T = Data> {
+  data?: T
+  error?: string
+  paging?: object
+  params?: Params
+}
+
+export type Meta = Dictionary<Data>
+
+export interface Exchange<ReqData = Data, RespData = Data> {
+  type: string
+  id?: string
+  status: string | null
+  request: ExchangeRequest<ReqData>
+  response: ExchangeResponse<RespData>
+  ident?: Ident
+  auth?: Authentication
+  meta: Meta
+  endpointId?: string
+  endpoint?: Endpoint
+  authorized?: boolean
 }
 
 export interface Payload extends Dictionary<Data> {
   type?: string
-  id?: string
+  id?: string | string[]
   data?: Data
   service?: string
   dryrun?: boolean
+  endpoint?: string
+  params?: Params
 }
 
 export interface Action {

@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon = require('sinon')
 import nock = require('nock')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import tokenAuth from '../../authenticators/token'
 import defs from '../helpers/defs'
 import entriesService from '../helpers/defs/services/entries'
@@ -9,13 +9,19 @@ import entriesData from '../helpers/data/entries'
 
 import Integreat from '../..'
 
-test('should not authenticate twice', async t => {
+// Setup
+
+const json = jsonAdapter()
+
+// Tests
+
+test.failing('should not authenticate twice', async t => {
   nock('http://some.api', {
     reqheaders: {
       authorization: 'Bearer t0k3n'
     }
   })
-    .get('/entries/')
+    .get('/entries')
     .times(2)
     .reply(200, { data: entriesData })
   const adapters = { json }

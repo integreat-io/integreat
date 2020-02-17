@@ -8,6 +8,9 @@ import {
   IdentConfig,
   Middleware
 } from './types'
+import { Service } from './service/types'
+import { Schema } from './schema'
+import { ObjectWithId } from './utils/indexUtils'
 
 const debug = debugLib('great')
 
@@ -22,6 +25,10 @@ export interface ActionHandler {
   ): Promise<Response>
 }
 
+export interface GetService {
+  (type?: string | string[], serviceId?: string): Service | undefined // TODO: Properly type Service
+}
+
 const completeAction = ({ type, payload = {}, meta = {} }: Action) => ({
   type,
   payload,
@@ -33,6 +40,7 @@ function getActionHandlerFromType(
   actionHandlers: Dictionary<ActionHandler>
 ) {
   if (type) {
+    // eslint-disable-next-line security/detect-object-injection
     const actionHandler = actionHandlers[type]
     if (typeof actionHandler === 'function') {
       return actionHandler
@@ -43,8 +51,8 @@ function getActionHandlerFromType(
 
 interface Resources {
   actionHandlers: Dictionary<ActionHandler>
-  schemas: object
-  services: object
+  schemas: Dictionary<Schema>
+  services: Dictionary<ObjectWithId> // TODO: Properly type Service
   middlewares?: Middleware[]
   identConfig?: IdentConfig
 }

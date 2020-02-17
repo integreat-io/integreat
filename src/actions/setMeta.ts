@@ -1,27 +1,31 @@
 import debugLib = require('debug')
 import createError from '../utils/createError'
+import { DataObject, Action, Dispatch } from '../types'
+import { GetService } from '../dispatch'
+import setHandler from './set'
 
 const debug = debugLib('great')
 
 /**
  * Set metadata on a service, based on the given action object.
- * @param payload - Payload from action object
- * @param resources - Object with getService
- * @returns Promise that will be resolved when metadata is set
  */
-async function setMeta({ payload, meta }, _dispatch, getService) {
-  debug('Action: SET_META')
-
+export default async function setMeta(
+  { payload, meta }: Action,
+  dispatch: Dispatch,
+  getService: GetService
+) {
   const { service: serviceId, meta: metaAttrs, endpoint } = payload
   const id = `meta:${serviceId}`
 
-  const service = getService(null, serviceId)
+  const service = getService(undefined, serviceId)
   if (!service) {
     debug(`SET_META: Service '${serviceId}' doesn't exist`)
     return createError(`Service '${serviceId}' doesn't exist`)
   }
 
   const type = service.meta
+
+  // TODO: Check if the meta service exists - find a better way?
   const metaService = getService(type)
   if (!metaService) {
     debug(
@@ -41,20 +45,17 @@ async function setMeta({ payload, meta }, _dispatch, getService) {
     endpointDebug
   )
 
-  const data = { id, $type: type, ...metaAttrs }
-  const { response } = await metaService.send({
+  const action = {
     type: 'SET',
     payload: {
-      keys: Object.keys(metaAttrs),
+      keys: Object.keys(metaAttrs as DataObject),
       type,
       id,
-      data,
+      data: { id, $type: type, ...(metaAttrs as DataObject) },
       endpoint,
       onlyMappedValues: true
     },
-    meta: { ident: meta.ident }
-  })
-  return response
+    meta: { ident: meta?.ident }
+  }
+  return setHandler(action, dispatch, getService)
 }
-
-export default setMeta

@@ -1,7 +1,17 @@
 import util = require('util')
 import getField from '../utils/getField'
 import createError from '../utils/createError'
-import createUnknownServiceError from '../utils/createUnknownServiceError'
+import {
+  Action,
+  Dispatch,
+  IdentConfig,
+  Data,
+  Ident,
+  Response,
+  Dictionary
+} from '../types'
+import { GetService } from '../dispatch'
+import getHandler from './get'
 
 const preparePropKeys = ({
   id = 'id',
@@ -13,22 +23,30 @@ const preparePropKeys = ({
   tokens
 })
 
-const prepareParams = (ident, keys) =>
+// Will set any key that is not `id` on a params object. Not necessarily the
+// best way to go about this.
+const prepareParams = (ident: Ident, keys: Dictionary<string>) =>
   ident.id
-    ? { [keys.id]: ident.id }
+    ? keys.id === 'id'
+      ? { [keys.id]: ident.id }
+      : { params: { [keys.id]: ident.id } }
     : ident.withToken
-    ? { [keys.tokens]: ident.withToken }
+    ? { params: { [keys.tokens]: ident.withToken } }
     : null
 
-const wrapOk = (data, ident) => ({
+const wrapOk = (data: Data | Data[], ident: object) => ({
   status: 'ok',
   data,
   access: { status: 'granted', ident }
 })
 
-const getFirstIfArray = data => (Array.isArray(data) ? data[0] : data)
+const getFirstIfArray = (data: Data) => (Array.isArray(data) ? data[0] : data)
 
-const prepareResponse = (response, params, propKeys) => {
+const prepareResponse = (
+  response: Response,
+  params: object,
+  propKeys: Dictionary<string>
+) => {
   const data = getFirstIfArray(response.data)
 
   if (data) {
@@ -40,7 +58,9 @@ const prepareResponse = (response, params, propKeys) => {
     return wrapOk(data, completeIdent)
   } else {
     return createError(
-      `Could not find ident with params ${util.inspect(params)}`,
+      `Could not find ident with params ${util.inspect(params)}, error: ${
+        response.error
+      }`,
       'notfound'
     )
   }
@@ -48,16 +68,18 @@ const prepareResponse = (response, params, propKeys) => {
 
 /**
  * Get an ident item from service, based on the meta.ident object on the action.
- * @param action - Action object
- * @param resources - Object with getService and identConfig
- * @returns Response object with ident item as data
  */
-async function getIdent({ meta }, _dispatch, getService, identConfig = {}) {
-  if (!meta.ident) {
+export default async function getIdent(
+  { meta }: Action,
+  dispatch: Dispatch,
+  getService: GetService,
+  identConfig?: IdentConfig
+) {
+  if (!meta?.ident) {
     return createError('GET_IDENT: The request has no ident', 'noaction')
   }
 
-  const { type } = identConfig
+  const { type } = identConfig || {}
   if (!type) {
     return createError(
       'GET_IDENT: Integreat is not set up with authentication',
@@ -65,12 +87,7 @@ async function getIdent({ meta }, _dispatch, getService, identConfig = {}) {
     )
   }
 
-  const service = getService(type)
-  if (!service) {
-    return createUnknownServiceError(type, null, 'GET_IDENT')
-  }
-
-  const propKeys = preparePropKeys(identConfig.props)
+  const propKeys = preparePropKeys(identConfig?.props)
   const params = prepareParams(meta.ident, propKeys)
   if (!params) {
     return createError(
@@ -79,13 +96,12 @@ async function getIdent({ meta }, _dispatch, getService, identConfig = {}) {
     )
   }
 
-  const { response } = await service.send({
+  const action = {
     type: 'GET',
     payload: { type, ...params },
-    meta: { ident: { root: true } }
-  })
+    meta: { ident: { id: 'root', root: true } }
+  }
+  const response = await getHandler(action, dispatch, getService)
 
   return prepareResponse(response, params, propKeys)
 }
-
-export default getIdent

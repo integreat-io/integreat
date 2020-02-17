@@ -548,4 +548,46 @@ test('should remove isNew and isDeleted when false in reverse', t => {
   t.deepEqual(ret, expected)
 })
 
+test('should not cast null or undefined', t => {
+  const schema = {
+    id: 'string',
+    title: { $cast: 'string', $default: 'Entry with no name' }
+  }
+  const data = [null, undefined, { id: 'ent1' }]
+  const expected = [
+    {
+      $type: 'entry',
+      id: 'ent1',
+      title: 'Entry with no name'
+    }
+  ]
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    functions: transformFunctions
+  })(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not cast null or undefined in reverse', t => {
+  const schema = {
+    id: 'string',
+    title: { $cast: 'string', $default: 'Entry with no name' }
+  }
+  const data = [null, undefined, { id: 'ent1' }]
+  const expected = [
+    {
+      $type: 'entry',
+      id: 'ent1',
+      title: 'Entry with no name'
+    }
+  ]
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    functions: transformFunctions
+  }).rev(data)
+
+  t.deepEqual(ret, expected)
+})
+
 test.todo('should have some more error checking, probably')

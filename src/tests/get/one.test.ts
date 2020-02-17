@@ -1,6 +1,6 @@
 import test from 'ava'
 import nock = require('nock')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 import ent1Data from '../helpers/data/entry1'
@@ -8,6 +8,8 @@ import ent1Data from '../helpers/data/entry1'
 import Integreat from '../..'
 
 // Setup
+
+const json = jsonAdapter()
 
 const createdAt = '2017-11-18T18:43:01Z'
 const updatedAt = '2017-11-24T07:11:43Z'
@@ -70,7 +72,10 @@ test('should get one user from service', async t => {
     updatedAt: new Date(updatedAt),
     roles: ['editor'],
     tokens: ['twitter|23456', 'facebook|12345'],
-    feeds: [{ id: 'news', $ref: 'feed' }, { id: 'social', $ref: 'feed' }]
+    feeds: [
+      { id: 'news', $ref: 'feed' },
+      { id: 'social', $ref: 'feed' }
+    ]
   }
 
   const great = Integreat.create(defs, { adapters })

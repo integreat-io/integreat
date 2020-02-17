@@ -1,124 +1,60 @@
 import EventEmitter = require('events')
-import R = require('ramda')
-import compareEndpoints from '../endpoints/compareEndpoints'
-import matchEndpoint from '../endpoints/matchEndpoint'
-import prepareEndpoint from '../endpoints/prepareEndpoint'
-import requestFromAction from './requestFromAction'
+import prepareEndpointMappers from './endpoints'
 import {
-  beforeService,
-  sendToService,
-  afterService,
-  respondToUnknownAction
-} from './send'
+  requestFromExchange,
+  responseToExchange
+} from '../utils/exchangeMapping'
 import createError from '../utils/createError'
 import {
   Dictionary,
   ServiceDef,
   Response,
-  Request,
-  Action,
-  Dispatch,
+  Exchange,
+  Ident,
   Adapter,
   MapOptions,
-  DataObject
+  Connection
 } from '../types'
+import { Service } from './types'
 import { CustomFunction } from 'map-transform'
 import { Schema } from '../schema'
 import { Auth } from '../auth/types'
-import { EndpointOptions } from '../endpoints/types'
 import { lookupById } from '../utils/indexUtils'
+import { doAuth, getScheme } from './authorizeScheme'
 
-interface IncomingEndpointOptions extends EndpointOptions {
-  actionType?: string
-  actionPayload?: DataObject
-  actionMeta?: DataObject
-}
-
-const { compose } = R
-
-const normalizeAction = async (action: Action, adapter: Adapter) => {
-  const normalized = await adapter.normalize(
-    { status: 'ok', data: action.payload.data },
-    { endpoint: {} }
-  )
-  return { ...action, payload: { ...action.payload, data: normalized.data } }
-}
-
-const receiveRequestFromAction = (
-  { type, payload: { data, ...params }, meta: { ident } = {} }: Action,
-  endpoint: IncomingEndpointOptions
-): Request => ({
-  action: type,
-  params: {
-    ...endpoint.actionPayload,
-    ...params
-  },
-  endpoint,
-  access: ident ? { ident } : undefined
-})
-
-const receiveAfterArgs = (action: Action, request: Request, endpoint) => ({
-  request,
-  response: { status: 'ok', data: action.payload.data },
-  requestMapper: endpoint.requestMapper,
-  responseMapper: endpoint.responseMapper,
-  mappings: endpoint.mappings
-})
-
-const receiveBeforeArgs = (
-  { data, status, error }: Response,
-  request: Request,
-  endpoint
-) => ({
-  request: { ...request, data, params: { ...request.params, status, error } },
-  requestMapper: endpoint.requestMapper,
-  responseMapper: endpoint.responseMapper,
-  mappings: endpoint.mappings
-})
-
-const createNextAction = (
-  action: Action,
-  options: IncomingEndpointOptions,
-  mappedResponse: Response
-) => ({
-  type: options.actionType,
-  payload: {
-    type: action.payload.type,
-    ...options.actionPayload,
-    ...mappedResponse.params,
-    ...(mappedResponse.data ? { data: mappedResponse.data } : {})
-  },
-  meta: { ...action.meta, ...options.actionMeta }
-})
-
-const wrapResponse = (response: Response) => ({ response })
+const isConnectionError = (
+  connection: Connection | null
+): connection is Connection =>
+  !!connection && !['ok', 'noaction'].includes(connection.status)
 
 interface Resources {
-  adapters: Dictionary<Adapter>
+  adapters?: Dictionary<Adapter>
   auths?: Dictionary<Auth>
   transformers?: Dictionary<CustomFunction>
   schemas: Dictionary<Schema>
   mapOptions?: MapOptions
 }
 
+const authorize = (exchange: Exchange, schemas: Dictionary<Schema>) =>
+  typeof exchange.request.type !== 'string' ||
+  doAuth(
+    getScheme(schemas[exchange.request.type], exchange.type),
+    exchange.ident,
+    !!exchange.auth
+  )
+
 /**
  * Create a service with the given id and adapter.
  */
-const service = ({
-  adapters,
-  auths,
-  transformers = {},
-  schemas,
-  mapOptions
-}: Resources) => ({
+export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
   id: serviceId,
   adapter: adapterId,
   auth: authId,
-  meta = null,
+  meta,
   options = {},
   endpoints: endpointDefs = [],
   mappings: mappingsDef = {}
-}: ServiceDef) => {
+}: ServiceDef): Service => {
   if (typeof serviceId !== 'string' || serviceId === '') {
     throw new TypeError(`Can't create service without an id.`)
   }
@@ -130,46 +66,146 @@ const service = ({
     )
   }
 
+  mapOptions = { mutateNull: false, ...mapOptions }
+
+  // TODO: Reimplement auth
   const auth = lookupById(authId, auths) || {}
 
-  const endpoints = endpointDefs
-    .map(
-      prepareEndpoint(adapter, transformers, options, mappingsDef, mapOptions)
-    )
-    .sort(compareEndpoints)
+  const getEndpointMapper = prepareEndpointMappers(
+    endpointDefs,
+    mappingsDef,
+    options,
+    mapOptions,
+    adapter.prepareEndpoint
+  )
 
-  let connection: object | null = null
+  let connection: Connection | null = null
   const emitter = new EventEmitter()
 
-  const sendOptions = {
-    serviceId,
-    schemas,
-    adapter,
-    auth,
-    setConnection: (conn: object) => {
-      connection = conn
-    },
-    serviceOptions: options,
-    emit: emitter.emit.bind(emitter)
-  }
-
-  const beforeServiceFn = beforeService(sendOptions)
-  const afterServiceFn = afterService(sendOptions)
-
-  const sendFn = compose(
-    afterServiceFn,
-    sendToService(sendOptions),
-    beforeServiceFn,
-    respondToUnknownAction(sendOptions)
-  )
+  // const sendOptions = {
+  //   serviceId,
+  //   schemas,
+  //   adapter,
+  //   auth,
+  //   setConnection: (conn: Connection | null) => {
+  //     connection = conn
+  //   },
+  //   serviceOptions: options,
+  //   emit: emitter.emit.bind(emitter)
+  // }
 
   // Create the service instance
   return {
     id: serviceId,
-    adapter,
     meta,
-    endpoints,
     on: emitter.on.bind(emitter),
+
+    /**
+     * Find the endpoint mapper that best matches the given exchange, and assign
+     * it to the exchange.
+     */
+    assignEndpointMapper(exchange: Exchange): Exchange {
+      const endpoint = getEndpointMapper(exchange)
+
+      if (endpoint) {
+        return { ...exchange, endpoint }
+      } else {
+        return responseToExchange(
+          exchange,
+          createError(
+            `No endpoint matching ${exchange.type} request to service '${serviceId}'.`,
+            'noaction'
+          )
+        )
+      }
+    },
+
+    /**
+     * Authorize the exchange. Sets the authorized flag if okay, otherwise sets
+     * an appropriate status and error.
+     */
+    authorizeExchange(exchange: Exchange): Exchange {
+      const ident = exchange.ident || ({} as Ident)
+      if (ident.root || authorize(exchange, schemas)) {
+        return { ...exchange, authorized: true }
+      } else {
+        return {
+          ...exchange,
+          authorized: false,
+          status: 'noaccess',
+          response: {
+            ...exchange.response,
+            error: "Anonymous user don't have access to perform this action"
+          }
+        }
+      }
+    },
+
+    /**
+     * Map response data coming from the service
+     */
+    mapFromService(exchange: Exchange): Exchange {
+      const { endpoint } = exchange
+      if (!endpoint) {
+        return exchange.status
+          ? exchange
+          : responseToExchange(exchange, createError('No endpoint provided'))
+      }
+      return endpoint.mapFromService(exchange)
+      // TODO: Authenticate
+    },
+
+    /**
+     * Map response data coming from the service
+     */
+    mapToService(exchange: Exchange): Exchange {
+      const { endpoint } = exchange
+      if (!endpoint) {
+        return exchange.status
+          ? exchange
+          : responseToExchange(exchange, createError('No endpoint provided'))
+      }
+      // TODO: Authenticate
+      return endpoint.mapToService(exchange)
+    },
+
+    /**
+     * The given exchange is sent to the service via the relevant adapter, and
+     * the exchange is updated with the response from the service.
+     */
+    async sendExchange(exchange: Exchange): Promise<Exchange> {
+      if (exchange.status) {
+        return exchange
+      }
+
+      // TODO: Authenticate
+
+      const {
+        endpoint: { options = {} } = {},
+        auth = { status: 'ok' }
+      } = exchange
+      let response: Response
+
+      try {
+        const nextConnection = await adapter.connect(options, auth, connection)
+        if (isConnectionError(nextConnection)) {
+          connection = null
+          response = createError(
+            `Could not connect to service '${serviceId}': ${nextConnection.error}`
+          )
+        } else {
+          connection = nextConnection
+          const request = await adapter.serialize(requestFromExchange(exchange))
+          response = await adapter.send(request, connection)
+          response = await adapter.normalize(response, request)
+        }
+      } catch (error) {
+        response = createError(
+          `Error retrieving from service '${serviceId}': ${error.message}`
+        )
+      }
+      return responseToExchange(exchange, response)
+    }
 
     /**
      * The given action is prepared, authenticated, and mapped, before it is
@@ -178,30 +214,30 @@ const service = ({
      *
      * The prepared and authenticated request is also returned.
      */
-    async send(action: Action) {
-      const endpoint = matchEndpoint(endpoints)(action)
-      if (!endpoint) {
-        return {
-          response: createError(
-            `No endpoint matching request to service '${serviceId}'.`,
-            'noaction'
-          )
-        }
-      }
-
-      const validateRes = endpoint.validate(action)
-      if (validateRes !== null) {
-        return { response: validateRes }
-      }
-
-      return sendFn({
-        request: requestFromAction(action, { endpoint, schemas }),
-        requestMapper: endpoint.requestMapper,
-        responseMapper: endpoint.responseMapper,
-        mappings: endpoint.mappings,
-        connection
-      })
-    },
+    // async send(action: Action) {
+    //   const endpoint = matchEndpoint(oldEndpoints)(action)
+    //   if (!endpoint) {
+    //     return {
+    //       response: createError(
+    //         `No endpoint matching request to service '${serviceId}'.`,
+    //         'noaction'
+    //       )
+    //     }
+    //   }
+    //
+    //   const validateRes = endpoint.validate(action)
+    //   if (validateRes !== null) {
+    //     return { response: validateRes }
+    //   }
+    //
+    //   return sendFn({
+    //     request: requestFromAction(action, { endpoint, schemas }),
+    //     requestMapper: endpoint.requestMapper,
+    //     responseMapper: endpoint.responseMapper,
+    //     mappings: endpoint.mappings,
+    //     connection
+    //   })
+    // }
 
     /**
      * The given action is prepared, authenticated, and mapped – as coming
@@ -209,55 +245,83 @@ const service = ({
      * The response from the action is mapped, authenticated, and returned – for
      * going _to_ the service.
      */
-    async receive(action: Action, dispatch: Dispatch) {
-      action = await normalizeAction(action, adapter)
-      const endpoint = matchEndpoint(endpoints)(action)
-      if (!endpoint) {
-        return wrapResponse(
-          createError(
-            `No endpoint matching request to service '${serviceId}'.`,
-            'noaction'
-          )
-        )
-      }
-
-      const validateRes = endpoint.validate(action)
-      if (validateRes !== null) {
-        return wrapResponse(validateRes)
-      }
-
-      if (!endpoint.options || !endpoint.options.actionType) {
-        return wrapResponse(
-          createError(
-            `The matching endpoint on service '${serviceId}' did not specify an action type`,
-            'noaction'
-          )
-        )
-      }
-
-      const request = receiveRequestFromAction(action, endpoint.options)
-      const mapped = await afterServiceFn(
-        receiveAfterArgs(action, request, endpoint)
-      )
-      const nextAction = createNextAction(
-        action,
-        endpoint.options,
-        mapped.response
-      )
-
-      const response = await dispatch(nextAction)
-
-      const serialized = await beforeServiceFn(
-        receiveBeforeArgs(response, request, endpoint)
-      )
-
-      return wrapResponse({
-        ...response,
-        ...(serialized.request.data ? { data: serialized.request.data } : {}),
-        access: serialized.request.access
-      })
-    }
+    // async receive(action: Action, dispatch: Dispatch) {
+    //   action = await normalizeAction(action, adapter)
+    //   const endpoint = matchEndpoint(oldEndpoints)(action)
+    //   if (!endpoint) {
+    //     return wrapResponse(
+    //       createError(
+    //         `No endpoint matching request to service '${serviceId}'.`,
+    //         'noaction'
+    //       )
+    //     )
+    //   }
+    //
+    //   const validateRes = endpoint.validate(action)
+    //   if (validateRes !== null) {
+    //     return wrapResponse(validateRes)
+    //   }
+    //
+    //   if (!endpoint.options || !endpoint.options.actionType) {
+    //     return wrapResponse(
+    //       createError(
+    //         `The matching endpoint on service '${serviceId}' did not specify an action type`,
+    //         'noaction'
+    //       )
+    //     )
+    //   }
+    //
+    //   const request = receiveRequestFromAction(action, endpoint.options)
+    //   const mapped = await afterServiceFn(
+    //     receiveAfterArgs(action, request, endpoint)
+    //   )
+    //   const nextAction = createNextAction(
+    //     action,
+    //     endpoint.options,
+    //     mapped.response
+    //   )
+    //
+    //   const response = await dispatch(nextAction)
+    //
+    //   const serialized = await beforeServiceFn(
+    //     receiveBeforeArgs(response, request, endpoint)
+    //   )
+    //
+    //   return wrapResponse({
+    //     ...response,
+    //     ...(serialized.request.data ? { data: serialized.request.data } : {}),
+    //     access: serialized.request.access
+    //   })
+    // }
   }
 }
 
-export default service
+// const knownActions = ['GET', 'SET', 'DELETE', 'REQUEST']
+//
+// export const respondToUnknownAction = _options => args =>
+//   args.request && knownActions.includes(args.request.action)
+//     ? args
+//     : { ...args, response: { status: 'noaction' } }
+
+// export const afterService = composeWithOptions(
+//   awaitAndAssign('response', authorizeResponse),
+//   emitRequestAndResponse('mappedFromService'),
+//   awaitAndAssign('response', mapFromService),
+//   emitRequestAndResponse('mapFromService')
+// )
+//
+// export const sendToService = composeWithOptions(
+//   awaitAndAssign('response', normalizeResponse),
+//   awaitAndAssign('response', sendRequest),
+//   awaitAndAssign(null, connect),
+//   awaitAndAssign(null, authenticate)
+// )
+//
+// export const beforeService = composeWithOptions(
+//   awaitAndAssign(null, serializeRequest),
+//   emitRequestAndResponse('mappedToService'),
+//   awaitAndAssign('request', mapToService),
+//   emitRequestAndResponse('mapToService'),
+//   awaitAndAssign('authorizedRequestData', extractRequestData),
+//   awaitAndAssign(null, authorizeRequest)
+// )

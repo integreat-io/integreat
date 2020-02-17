@@ -1,8 +1,12 @@
 import test from 'ava'
 import nock = require('nock')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 
 import Integreat from '../..'
+
+// Setup
+
+const json = jsonAdapter()
 
 const defs = {
   schemas: [require('../helpers/defs/schemas/entry').default],
@@ -16,6 +20,8 @@ const defs = {
     }
   ]
 }
+
+// Tests
 
 test('should get one entry from service', async t => {
   const createdAt = '2017-11-18T18:43:01Z'

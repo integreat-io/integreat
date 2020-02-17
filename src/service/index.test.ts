@@ -1,8 +1,11 @@
 import test from 'ava'
 import sinon = require('sinon')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import functions from '../transformers/builtIns'
 import schema from '../schema'
+import { Connection } from '../types'
+import { EndpointOptions } from '../service/endpoints/types'
+import { Authentication } from '../auth/types'
 
 import setupService from '.'
 
@@ -43,7 +46,9 @@ const entryMapping = [
     one: 'one',
     two: 'two',
     service: '^params.service',
-    author: '^access.ident.id'
+    author: '^access.ident.id',
+    createdAt: 'created',
+    updatedAt: 'updated'
   },
   { $apply: 'cast_entry' }
 ]
@@ -79,16 +84,43 @@ const mapOptions = {
   functions
 }
 
-const endpoints = [{ match: {}, options: { uri: ['http://some.api/1.0'] } }]
+const exchangeDefaults = {
+  status: null,
+  request: {},
+  response: {},
+  ident: {},
+  options: {},
+  meta: {}
+}
+
+const json = jsonAdapter()
+const adapters = { json }
+
+const endpoints = [
+  {
+    id: 'endpoint1',
+    match: { type: 'entry' },
+    options: { uri: 'http://test.api/1' }
+  },
+  {
+    id: 'endpoint2',
+    match: { type: 'entry', scope: 'member' },
+    options: { uri: 'http://test.api/2' }
+  },
+  {
+    id: 'endpoint3',
+    match: { type: 'account' },
+    options: { uri: 'http://some.api/1.0' }
+  }
+]
 
 // Tests
 
-test('should return service object with id, adapter, endpoints, and meta', t => {
+test('should return service object with id and meta', t => {
   const endpoints = [
     { id: 'endpoint1', options: { uri: 'http://some.api/1.0' } }
   ]
   const def = { id: 'entries', adapter: 'json', endpoints, meta: 'meta' }
-  const adapters = { json }
 
   const service = setupService({
     adapters,
@@ -97,15 +129,10 @@ test('should return service object with id, adapter, endpoints, and meta', t => 
   })(def)
 
   t.is(service.id, 'entries')
-  t.is(service.adapter, json)
-  t.is(service.endpoints.length, 1)
-  t.is(service.endpoints[0].id, 'endpoint1')
   t.is(service.meta, 'meta')
 })
 
 test('should throw when no id', t => {
-  const adapters = { json }
-
   t.throws(() => {
     setupService({
       adapters,
@@ -117,89 +144,63 @@ test('should throw when no id', t => {
 
 test('should throw when no adapter', t => {
   t.throws(() => {
-    setupService()({ id: 'entries' })
+    setupService({ mapOptions })({ id: 'entries' })
   })
 })
 
-// Tests -- send
+// Tests -- assignEndpointMapper
 
-test('send should retrieve and map data from endpoint', async t => {
-  const send = async () => ({
-    status: 'ok',
-    data: {
-      content: { data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] } }
-    }
-  })
-  const service = setupService({ mapOptions, schemas })({
+test('assignEndpointMapper should assign an endpoint to the exchange', t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
-    endpoints: [
-      {
-        responseMapping: 'content.data',
-        options: { uri: 'http://some.api/1.0' }
-      }
-    ],
-    adapter: { ...json, send },
-    mappings: { entry: 'entry' }
+    adapter: 'json',
+    mappings: { entry: 'entry' },
+    endpoints
   })
-  const action = {
+  const exchange = {
+    ...exchangeDefaults,
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', service: 'thenews' },
-    meta: { ident: { id: 'johnf' } }
-  }
-  const expected = {
-    status: 'ok',
-    data: [
-      {
-        $type: 'entry',
-        id: 'ent1',
-        title: 'Entry 1',
-        two: 2,
-        service: { id: 'thenews', $ref: 'service' }
-      }
-    ],
-    access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
+    request: {
+      type: 'entry',
+      id: 'ent1'
+    },
+    ident: { id: 'johnf' }
   }
 
-  const { response } = await service.send(action)
+  const ret = service.assignEndpointMapper(exchange)
 
-  t.deepEqual(response, expected)
+  t.is(ret.type, 'GET')
+  t.truthy(ret.endpoint)
+  t.is(ret.endpoint?.id, 'endpoint2')
 })
 
-test('send should retrieve and map data with overridden mapping on endpoint', async t => {
-  const send = async () => ({
-    status: 'ok',
-    data: {
-      content: {
-        data: {
-          items: [{ key: 'ent1', header: 'Entry 1', subheader: 'Subheader 1' }]
-        }
-      }
-    }
-  })
-  const service = setupService({ mapOptions, schemas })({
+test('assignEndpointMapper should set endpoint to undefined and status noaction on no match', t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
-    endpoints: [
-      {
-        responseMapping: 'content.data',
-        options: { uri: 'http://some.api/1.0' },
-        mappings: { entry: 'entry2' }
-      }
-    ],
-    adapter: { ...json, send },
-    mappings: { entry: 'entry' }
+    adapter: 'json',
+    mappings: { entry: 'entry' },
+    endpoints
   })
-  const action = {
+  const exchange = {
+    ...exchangeDefaults,
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', service: 'thenews' },
-    meta: { ident: { id: 'johnf' } }
+    request: {
+      type: 'unknown'
+    },
+    ident: { id: 'johnf' }
   }
 
-  const { response } = await service.send(action)
+  const ret = service.assignEndpointMapper(exchange)
 
-  t.is(response.data[0].title, 'Subheader 1')
+  t.is(ret.endpoint, undefined)
+  t.is(ret.status, 'noaction')
+  t.is(
+    ret.response.error,
+    "No endpoint matching GET request to service 'entries'."
+  )
 })
 
-test('should pick the most specified endoint', async t => {
+test('assignEndpointMapper should pick the most specified endpoint', async t => {
   const endpoints = [
     {
       match: { type: 'entry' },
@@ -211,189 +212,746 @@ test('should pick the most specified endoint', async t => {
       options: { uri: 'http://test.api/2', correct: true }
     }
   ]
-  const send = sinon.stub().resolves({ status: 'ok', data: [] })
-  const service = setupService({ mapOptions, schemas })({
+  const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     endpoints,
-    adapter: { ...json, send },
+    adapter: 'json',
     mappings: { entry: 'entry' }
   })
-  const action = {
+  const exchange = {
+    ...exchangeDefaults,
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', service: 'thenews' },
-    meta: { ident: { id: 'johnf' } }
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    ident: { id: 'johnf' }
   }
 
-  await service.send(action)
+  const ret = service.assignEndpointMapper(exchange)
 
-  t.is(send.callCount, 1)
-  const args = send.args[0][0]
-  t.true(args.endpoint.correct)
+  t.true(ret.endpoint.options.correct)
 })
 
-test('send should return noaction response when no endpoint', async t => {
-  const send = async () => ({ status: 'ok', data: [] })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    endpoints: [],
-    adapter: { ...json, send },
-    mappings: { entry: 'entry' }
-  })
-  const action = {
-    type: 'GET',
-    payload: { id: 'ent1', type: 'entry', service: 'thenews' },
-    meta: { ident: { id: 'johnf' } }
-  }
+// Tests -- authorizeExchange
 
-  const { response } = await service.send(action)
-
-  t.truthy(response)
-  t.is(response.status, 'noaction')
-  t.is(response.error, "No endpoint matching request to service 'entries'.")
-})
-
-test('should return noaccess when request is refused', async t => {
-  const send = async () => ({ status: 'ok', data: [] })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    adapter: { ...json, send },
-    mappings: { entry: 'entry' }
-  })
-  const action = {
-    type: 'GET',
-    payload: { id: 'ent1', type: 'entry', service: 'thenews' },
-    meta: { ident: null }
-  }
-
-  const { response } = await service.send(action)
-
-  t.truthy(response)
-  t.is(response.status, 'noaccess', response.error)
-  t.is(typeof response.error, 'string')
-})
-
-test('send should retrieve from endpoint with default values', async t => {
-  const send = async () => ({
-    status: 'ok',
-    data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] }
-  })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    adapter: { ...json, send },
-    mappings: { entry: 'entry' }
-  })
-  const action = {
-    type: 'GET',
-    payload: { id: 'ent1', type: 'entry', onlyMappedValues: false },
-    meta: { ident: { id: 'johnf' } }
-  }
-
-  const { response } = await service.send(action)
-
-  const { data } = response
-  t.is(data[0].one, 1)
-  // TODO: Fix dates
-  // t.true(data[0].createdAt instanceof Date)
-  // t.true(data[0].updatedAt instanceof Date)
-})
-
-test('send should return authorized response', async t => {
-  const send = async () => ({
-    status: 'ok',
-    data: {
-      accounts: [
-        { id: 'johnf', type: 'account' },
-        { id: 'betty', type: 'account' }
-      ]
-    }
-  })
-  const service = setupService({ mapOptions, schemas })({
+test('authorizeExchange should set authorized flag', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
     id: 'accounts',
-    adapter: { ...json, send },
+    adapter: 'json',
     auth: { id: 'auth1' },
     mappings: { account: 'account' },
     endpoints
   })
-  const action = {
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
     type: 'GET',
-    payload: { type: 'account' },
-    meta: { ident: { id: 'johnf' } }
+    request: { type: 'account' },
+    ident: { root: true, id: 'root' }
+  })
+  const expectedExchange = {
+    ...exchange,
+    authorized: true
   }
-  const expected = {
-    status: 'ok',
-    data: [{ $type: 'account', id: 'johnf' }],
-    access: {
-      status: 'partially',
-      scheme: 'data',
-      ident: { id: 'johnf' }
+
+  const ret = await service.authorizeExchange(exchange)
+
+  t.deepEqual(ret, expectedExchange)
+})
+
+test('authorizeExchange should authorize exchange without type', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'accounts',
+    adapter: 'json',
+    auth: { id: 'auth1' },
+    mappings: { account: 'account' },
+    endpoints
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { params: { what: 'somethingelse' } },
+    ident: { id: 'johnf' }
+  })
+  const expectedExchange = {
+    ...exchange,
+    authorized: true
+  }
+
+  const ret = await service.authorizeExchange(exchange)
+
+  t.deepEqual(ret, expectedExchange)
+})
+
+test('authorizeExchange should authorize based on schema', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'accounts',
+    adapter: 'json',
+    auth: { id: 'auth1' },
+    mappings: { account: 'account' },
+    endpoints
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { type: 'account' },
+    ident: { id: 'johnf' }
+  })
+  const expectedExchange = {
+    ...exchange,
+    authorized: true
+  }
+
+  const ret = await service.authorizeExchange(exchange)
+
+  t.deepEqual(ret, expectedExchange)
+})
+
+test('authorizeExchange should return noaccess when request is refused', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    response: { data: [] },
+    ident: null
+  })
+  const expectedExchange = {
+    ...exchange,
+    authorized: false,
+    status: 'noaccess',
+    response: {
+      data: [],
+      error: "Anonymous user don't have access to perform this action"
     }
   }
 
-  const ret = await service.send(action)
+  const ret = await service.authorizeExchange(exchange)
 
-  t.deepEqual(ret.response, expected)
+  t.deepEqual(ret, expectedExchange)
 })
 
-test('send should cast, map and send data to service', async t => {
-  const send = sinon.stub().resolves({ status: 'ok', data: '[]' })
-  const service = setupService({ mapOptions, schemas })({
+// Tests -- sendExchange
+
+test('sendExchange should retrieve data from service', async t => {
+  const data = {
+    content: {
+      data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] }
+    }
+  }
+  const adapters = {
+    json: {
+      ...json,
+      send: async () => ({ status: 'ok', data })
+    }
+  }
+  const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
-    adapter: { ...json, send },
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    ident: { id: 'johnf' }
+  })
+  const expected = {
+    ...exchange,
+    status: 'ok',
+    response: { data }
+  }
+
+  const ret = await service.sendExchange(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+test('sendExchange should connect before sending request', async t => {
+  const connect = async (
+    { value }: EndpointOptions,
+    { token }: Authentication,
+    _connection: Connection | null
+  ) => ({ status: 'ok', value, token })
+  const adapters = {
+    json: {
+      ...json,
+      connect: connect,
+      send: sinon.stub().resolves({ status: 'ok', data: {} })
+    }
+  }
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    endpoints: [
+      { options: { uri: 'http://some.api/1.0', value: 'Value from options' } }
+    ],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    ident: { id: 'johnf' },
+    auth: { status: 'ok', token: 't0k3n' }
+  })
+
+  await service.sendExchange(exchange)
+
+  t.is(adapters.json.send.callCount, 1)
+  t.deepEqual(adapters.json.send.args[0][1], {
+    status: 'ok',
+    value: 'Value from options',
+    token: 't0k3n'
+  })
+})
+
+test('sendExchange should store connection', async t => {
+  const adapters = {
+    json: {
+      ...json,
+      connect: sinon.stub().returns({ status: 'ok' }),
+      send: async () => ({ status: 'ok', data: {} })
+    }
+  }
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    endpoints: [
+      { options: { uri: 'http://some.api/1.0', value: 'Value from options' } }
+    ],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    ident: { id: 'johnf' },
+    auth: { status: 'ok', token: 't0k3n' }
+  })
+
+  await service.sendExchange(exchange)
+  await service.sendExchange(exchange)
+
+  t.is(adapters.json.connect.callCount, 2)
+  t.deepEqual(adapters.json.connect.args[0][2], null)
+  t.deepEqual(adapters.json.connect.args[1][2], { status: 'ok' })
+})
+
+test('sendExchange should return error when connection fails', async t => {
+  const adapters = {
+    json: {
+      ...json,
+      connect: async () => ({ status: 'notfound', error: 'Not found' }),
+      send: async () => ({ status: 'ok', data: {} })
+    }
+  }
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    endpoints: [
+      { options: { uri: 'http://some.api/1.0', value: 'Value from options' } }
+    ],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    ident: { id: 'johnf' },
+    auth: { status: 'ok', token: 't0k3n' }
+  })
+
+  const ret = await service.sendExchange(exchange)
+
+  t.is(ret.status, 'error')
+  t.is(ret.response.error, "Could not connect to service 'entries': Not found")
+})
+
+test('sendExchange should retrieve error response from service', async t => {
+  const adapters = {
+    json: {
+      ...json,
+      send: async () => ({
+        status: 'badrequest',
+        error: 'Real bad request'
+      })
+    }
+  }
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    ident: { id: 'johnf' }
+  })
+  const expected = {
+    ...exchange,
+    status: 'badrequest',
+    response: { error: 'Real bad request', data: null }
+  }
+
+  const ret = await service.sendExchange(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+test('sendExchange should return with error when adapter throws', async t => {
+  const adapters = {
+    json: {
+      ...json,
+      send: async () => {
+        throw new Error('We did not expect this')
+      }
+    }
+  }
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    ident: { id: 'johnf' }
+  })
+  const expected = {
+    ...exchange,
+    status: 'error',
+    response: {
+      error: "Error retrieving from service 'entries': We did not expect this"
+    }
+  }
+
+  const ret = await service.sendExchange(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+test('sendExchange should do nothing when exchange has a status', async t => {
+  const adapters = {
+    json: {
+      ...json,
+      send: sinon.stub().resolves({
+        status: 'error',
+        error: 'Should not be called'
+      })
+    }
+  }
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    status: 'badrequest',
+    type: 'GET',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    response: { error: 'Bad request catched early' },
+    ident: { id: 'johnf' }
+  })
+  const expected = exchange
+
+  const ret = await service.sendExchange(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+// Tests -- mapFromService
+
+test.serial('mapFromService should map data array from service', async t => {
+  const theDate = new Date()
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
     endpoints: [
       {
-        requestMapping: 'content.data[].createOrMutate',
+        fromMapping: 'content.data',
+        options: { uri: 'http://some.api/1.0' }
+      }
+    ],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    status: 'ok',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    response: {
+      data: {
+        content: {
+          data: {
+            items: [
+              {
+                key: 'ent1',
+                header: 'Entry 1',
+                two: 2,
+                created: theDate,
+                updated: theDate
+              }
+            ]
+          }
+        }
+      }
+    },
+    ident: { id: 'johnf' }
+  })
+  const expected = {
+    ...exchange,
+    response: {
+      data: [
+        {
+          $type: 'entry',
+          id: 'ent1',
+          title: 'Entry 1',
+          one: 1,
+          two: 2,
+          service: { id: 'thenews', $ref: 'service' },
+          createdAt: theDate,
+          updatedAt: theDate
+        }
+      ]
+    },
+    ident: { id: 'johnf' }
+  }
+
+  const ret = await service.mapFromService(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+test('mapFromService should map data object from service', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'accounts',
+    endpoints: [
+      {
+        fromMapping: 'content.data',
+        options: { uri: 'http://some.api/1.0' }
+      }
+    ],
+    adapter: 'json',
+    mappings: { account: 'account' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    status: 'ok',
+    request: { id: 'johnf', type: 'account' },
+    response: {
+      data: {
+        content: {
+          data: { accounts: { id: 'johnf', name: 'John F.' } }
+        }
+      }
+    },
+    ident: { id: 'johnf' }
+  })
+
+  const ret = await service.mapFromService(exchange)
+
+  t.false(Array.isArray(ret.response.data))
+  t.is(ret.response.data.id, 'johnf')
+  t.is(ret.response.data.$type, 'account')
+})
+
+test('mapFromService should map data with overridden mapping on endpoint', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    endpoints: [
+      {
+        fromMapping: 'content.data',
+        options: { uri: 'http://some.api/1.0' },
+        mappings: { entry: 'entry2' }
+      }
+    ],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    status: 'ok',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    response: {
+      data: {
+        content: {
+          data: {
+            items: [
+              { key: 'ent1', header: 'Entry 1', subheader: 'Subheader 1' }
+            ]
+          }
+        }
+      }
+    },
+    ident: { id: 'johnf' }
+  })
+
+  const ret = await service.mapFromService(exchange)
+
+  t.is(ret.response.data[0].title, 'Subheader 1')
+})
+
+test('mapFromService should use mapping defined in service definition', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    adapter: 'json',
+    endpoints,
+    mappings: {
+      entry: [
+        {
+          $iterate: true,
+          id: 'key'
+        }
+      ]
+    }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { type: 'entry' },
+    response: { data: [{ key: 'ent1' }] },
+    ident: { id: 'johnf' }
+  })
+
+  const ret = await service.mapFromService(exchange)
+
+  t.is(ret.response.data.length, 1)
+  t.is(ret.response.data[0].id, 'ent1')
+})
+
+test('mapFromService send should skip mappings referenced by unknown id', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    adapter: 'json',
+    endpoints,
+    mappings: { entry: 'unknown' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { type: 'entry' },
+    response: { data: [{ key: 'ent1' }] },
+    ident: { id: 'johnf' }
+  })
+
+  const ret = await service.mapFromService(exchange)
+
+  t.is(ret.response.data, undefined)
+})
+
+test('mapFromService should map null to undefined', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'accounts',
+    endpoints: [
+      {
+        options: { uri: 'http://some.api/1.0' }
+      }
+    ],
+    adapter: 'json',
+    mappings: { account: 'account' }
+  })
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
+    type: 'GET',
+    status: 'ok',
+    request: { id: 'johnf', type: 'account' },
+    response: {
+      data: { accounts: null }
+    },
+    ident: { id: 'johnf' }
+  })
+  const expected = {
+    ...exchange,
+    response: {
+      data: undefined
+    },
+    ident: { id: 'johnf' }
+  }
+
+  const ret = await service.mapFromService(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+// test.skip('mapFromService should map with default values', async t => {
+//   const send = async () => ({
+//     status: 'ok',
+//     data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] }
+//   })
+//   const service = setupService({ mapOptions, schemas })({
+//     id: 'entries',
+//     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+//     adapter: { ...json, send },
+//     mappings: { entry: 'entry' }
+//   })
+//   const action = {
+//     type: 'GET',
+//     payload: { id: 'ent1', type: 'entry', onlyMappedValues: false },
+//     meta: { ident: { id: 'johnf' } }
+//   }
+//
+//   const { response } = await service.send(action)
+//
+//   const { data } = response
+//   t.is(data[0].one, 1)
+//   // TODO: Fix dates
+//   // t.true(data[0].createdAt instanceof Date)
+//   // t.true(data[0].updatedAt instanceof Date)
+// })
+
+// test.skip('mapFromService should not map response data when unmapped is true', async t => {
+//   const send = async () => ({
+//     status: 'ok',
+//     data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] }
+//   })
+//   const service = setupService({ mapOptions, schemas })({
+//     id: 'entries',
+//     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+//     adapter: { ...json, send },
+//     mappings: { entry: 'entry' }
+//   })
+//   const action = {
+//     type: 'GET',
+//     payload: { id: 'ent1', type: 'entry', service: 'thenews', unmapped: true },
+//     meta: { ident: { root: true } }
+//   }
+//   const expected = {
+//     status: 'ok',
+//     data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+//     access: { status: 'granted', ident: { root: true }, scheme: 'unmapped' }
+//   }
+//
+//   const { response } = await service.send(action)
+//
+//   t.deepEqual(response, expected)
+// })
+
+test('mapFromService should respond with error when no endpoint and no error', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    endpoints: [
+      {
+        fromMapping: 'content.data',
+        options: { uri: 'http://some.api/1.0' }
+      }
+    ],
+    adapter: 'json',
+    mappings: { entry: 'entry' }
+  })
+  const exchange = {
+    ...exchangeDefaults,
+    type: 'GET',
+    status: null,
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    response: {
+      data: {
+        content: {
+          data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] }
+        }
+      }
+    },
+    ident: { id: 'johnf' }
+  }
+  const expected = {
+    ...exchange,
+    status: 'error',
+    response: {
+      ...exchange.response,
+      error: 'No endpoint provided'
+    }
+  }
+
+  const ret = await service.mapFromService(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+// Tests -- mapToService
+
+test('mapToService should cast and map request data', async t => {
+  const theDate = new Date()
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    adapter: 'json',
+    endpoints: [
+      {
+        toMapping: 'content.data[].createOrMutate',
         options: { uri: 'http://some.api/1.0' }
       }
     ],
     mappings: { entry: 'entry' }
   })
-  const action = {
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
     type: 'SET',
-    payload: {
+    request: {
       type: 'entry',
       data: [
         {
           $type: 'entry',
           id: 'ent1',
           title: 'The heading',
-          two: '2'
-        },
-        undefined
-      ]
-    },
-    meta: { ident: { id: 'johnf' } }
-  }
-  const expectedData = JSON.stringify({
-    content: {
-      data: [
-        {
-          createOrMutate: {
-            items: [{ key: 'ent1', header: 'The heading', two: 2 }]
-          }
+          two: '2',
+          createdAt: theDate,
+          updatedAt: theDate
         }
       ]
-    }
+    },
+    ident: { id: 'johnf' }
   })
+  const expectedExchange = {
+    ...exchange,
+    request: {
+      ...exchange.request,
+      data: {
+        content: {
+          data: [
+            {
+              createOrMutate: {
+                items: [
+                  {
+                    key: 'ent1',
+                    header: 'The heading',
+                    one: 1,
+                    two: 2,
+                    created: theDate,
+                    updated: theDate
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
 
-  const { response } = await service.send(action)
+  const ret = await service.mapToService(exchange)
 
-  t.is(response.status, 'ok')
-  t.is(send.callCount, 1)
-  const sentRequest = send.args[0][0]
-  t.truthy(sentRequest)
-  t.deepEqual(sentRequest.data, expectedData)
+  t.deepEqual(ret, expectedExchange)
 })
 
-test('send should use empty as default', async t => {
-  const send = sinon.stub().resolves({ status: 'ok', data: '[]' })
-  const service = setupService({ mapOptions, schemas })({
+test.todo('should strip undefined from data array')
+
+test('mapToService send should use toMapping pipeline', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
-    adapter: { ...json, send },
+    adapter: 'json',
     endpoints: [
       {
-        requestMapping: [
+        toMapping: [
           'data',
           {
             data: [
@@ -407,349 +965,52 @@ test('send should use empty as default', async t => {
     ],
     mappings: { entry: 'entry' }
   })
-  const action = {
-    type: 'GET',
-    payload: {},
-    meta: { ident: { id: 'johnf' } }
-  }
-  const expectedData = JSON.stringify({
-    StupidSoapOperator: { StupidSoapEmptyArgs: {} }
-  })
-
-  const { response } = await service.send(action)
-
-  t.is(response.status, 'ok')
-  t.is(send.callCount, 1)
-  const sentRequest = send.args[0][0]
-  t.truthy(sentRequest)
-  t.deepEqual(sentRequest.data, expectedData)
-})
-
-test('send should use mapping defined on service', async t => {
-  const send = async () => ({ status: 'ok', data: [{ key: 'ent1' }] })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    adapter: { ...json, send },
-    endpoints,
-    mappings: {
-      entry: [
-        {
-          $iterate: true,
-          id: 'key'
-        }
-      ]
-    }
-  })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry' },
-    meta: { ident: { id: 'johnf' } }
-  }
-
-  const { response } = await service.send(action)
-
-  t.is(response.data.length, 1)
-  t.is(response.data[0].id, 'ent1')
-})
-
-test('send should skip mappings referenced by unknown id', async t => {
-  const send = async () => ({ status: 'ok', data: [{ key: 'ent1' }] })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    adapter: { ...json, send },
-    endpoints,
-    mappings: { entry: 'unknown' }
-  })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry' },
-    meta: { ident: { id: 'johnf' } }
-  }
-
-  const { response } = await service.send(action)
-
-  t.is(response.data, undefined)
-})
-
-test('send should not map response data when unmapped is true', async t => {
-  const send = async () => ({
-    status: 'ok',
-    data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] }
-  })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    adapter: { ...json, send },
-    mappings: { entry: 'entry' }
-  })
-  const action = {
-    type: 'GET',
-    payload: { id: 'ent1', type: 'entry', service: 'thenews', unmapped: true },
-    meta: { ident: { root: true } }
-  }
-  const expected = {
-    status: 'ok',
-    data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
-    access: { status: 'granted', ident: { root: true }, scheme: 'unmapped' }
-  }
-
-  const { response } = await service.send(action)
-
-  t.deepEqual(response, expected)
-})
-
-// Tests -- receive
-
-test('receive should dispatch action with data mapped to params', async t => {
-  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    endpoints: [
-      {
-        match: { action: 'REQUEST' },
-        responseMapping: { 'params.id': 'data.items[0].key' },
-        incoming: true,
-        options: {
-          actionType: 'GET',
-          actionPayload: { type: 'entry' },
-          actionMeta: { project: 'project1' }
-        }
-      }
-    ],
-    adapter: json
-  })
-  const action = {
-    type: 'REQUEST',
-    payload: {
-      data: '{"items":[{"key":"ent1"}]}',
-      type: 'hook'
-    },
-    meta: { ident: { id: 'johnf' } }
-  }
-  const expected = {
-    type: 'GET',
-    payload: {
-      id: 'ent1',
-      type: 'entry'
-    },
-    meta: { ident: { id: 'johnf' }, project: 'project1' }
-  }
-
-  await service.receive(action, dispatch)
-
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expected)
-})
-
-test('receive should dispatch action with mapped data by type from request action', async t => {
-  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    endpoints: [
-      {
-        match: { action: 'REQUEST' },
-        incoming: true,
-        options: { actionType: 'SET', actionPayload: { type: 'hook' } }
-      }
-    ],
-    adapter: json,
-    mappings: { entry: 'entry' }
-  })
-  const action = {
-    type: 'REQUEST',
-    payload: {
-      data: '{"items":[{"key":"ent1","header":"Entry 1"}]}',
-      type: 'entry'
-    },
-    meta: { ident: { id: 'johnf' }, project: 'project1' }
-  }
-  const expected = {
+  const exchange = service.assignEndpointMapper({
+    ...exchangeDefaults,
     type: 'SET',
-    payload: {
-      type: 'hook',
-      data: [
-        {
-          $type: 'entry',
-          id: 'ent1',
-          title: 'Entry 1'
-        }
-      ]
-    },
-    meta: { ident: { id: 'johnf' }, project: 'project1' }
+    request: {},
+    ident: { id: 'johnf' }
+  })
+  const expectedData = {
+    StupidSoapOperator: { StupidSoapEmptyArgs: {} }
   }
 
-  const ret = await service.receive(action, dispatch)
+  const ret = await service.mapToService(exchange)
 
-  t.is(ret.response.status, 'ok', ret.response.error)
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expected)
+  t.deepEqual(ret.request.data, expectedData)
 })
 
-test('receive should respond with serialized data', async t => {
-  const data = [
-    {
-      $type: 'entry',
-      id: 'ent1',
-      title: 'Entry 1',
-      two: 2
+test('mapToService should respond with error when no endpoint', async t => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    adapter: 'json',
+    endpoints: [
+      {
+        toMapping: 'content.data[].createOrMutate',
+        options: { uri: 'http://some.api/1.0' }
+      }
+    ],
+    mappings: { entry: 'entry' }
+  })
+  const exchange = {
+    ...exchangeDefaults,
+    type: 'SET',
+    request: {
+      type: 'entry',
+      data: []
+    },
+    ident: { id: 'johnf' }
+  }
+  const expected = {
+    ...exchange,
+    status: 'error',
+    response: {
+      ...exchange.response,
+      error: 'No endpoint provided'
     }
-  ]
-  const dispatch = async () => ({
-    status: 'ok',
-    data,
-    access: { status: 'granted', ident: { id: 'johnf' } }
-  })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    endpoints: [
-      {
-        match: { action: 'REQUEST' },
-        responseMapping: { 'params.id': 'data.key' },
-        requestMapping: ['data', { data: { items: 'content.entries' } }],
-        incoming: true,
-        options: { actionType: 'GET', actionPayload: { type: 'entry' } }
-      }
-    ],
-    adapter: json,
-    mappings: { entry: 'entry' }
-  })
-  const action = {
-    type: 'REQUEST',
-    payload: { data: '{"key":"ent1"}', type: 'entry' },
-    meta: { ident: { id: 'johnf' } }
-  }
-  const expected = {
-    status: 'ok',
-    data: '{"content":{"entries":[{"key":"ent1","header":"Entry 1","two":2}]}}',
-    access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
   }
 
-  const ret = await service.receive(action, dispatch)
+  const ret = await service.mapToService(exchange)
 
-  t.deepEqual(ret.response, expected)
-})
-
-test('receive should use type from request action if not set on endpoint', async t => {
-  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    endpoints: [
-      {
-        match: { action: 'REQUEST' },
-        responseMapping: { 'params.id': 'data.items[0].key' },
-        incoming: true,
-        options: { actionType: 'GET' }
-      }
-    ],
-    adapter: json
-  })
-  const action = {
-    type: 'REQUEST',
-    payload: { data: '{"items":[{"key":"ent1"}]}', type: 'entry' },
-    meta: { ident: { id: 'johnf' } }
-  }
-  const expected = {
-    type: 'GET',
-    payload: {
-      id: 'ent1',
-      type: 'entry'
-    },
-    meta: { ident: { id: 'johnf' } }
-  }
-
-  await service.receive(action, dispatch)
-
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expected)
-})
-
-test('receive should respond with noaction when no action type is set on endpoint', async t => {
-  const dispatch = async () => ({
-    status: 'ok',
-    data: [],
-    access: { status: 'granted', ident: { id: 'johnf' } }
-  })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    endpoints: [
-      {
-        match: { action: 'REQUEST' },
-        responseMapping: { 'params.id': 'data.key' },
-        requestMapping: { 'data.items': 'content.entries' },
-        incoming: true
-      }
-    ],
-    adapter: json,
-    mappings: { entry: 'entry' }
-  })
-  const action = {
-    type: 'REQUEST',
-    payload: { data: '{"key":"ent1"}', type: 'entry' },
-    meta: { ident: { id: 'johnf' } }
-  }
-
-  const ret = await service.receive(action, dispatch)
-
-  t.is(ret.response.status, 'noaction')
-  t.is(typeof ret.response.error, 'string')
-})
-
-test('receive should respond with noaction when no endpoint matches', async t => {
-  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    adapter: json
-  })
-  const action = {
-    type: 'REQUEST',
-    payload: { data: '{"items":[{"key":"ent1"}]}' },
-    meta: { ident: { id: 'johnf' } }
-  }
-
-  const ret = await service.receive(action, dispatch)
-
-  t.is(ret.response.status, 'noaction')
-  t.is(ret.response.error, "No endpoint matching request to service 'entries'.")
-})
-
-test('receive should map and pass on error from dispatch', async t => {
-  const dispatch = async () => ({
-    status: 'notfound',
-    error: 'Not found',
-    access: { status: 'granted', ident: { id: 'johnf' } }
-  })
-  const service = setupService({ mapOptions, schemas })({
-    id: 'entries',
-    endpoints: [
-      {
-        match: { action: 'REQUEST' },
-        requestMapping: [
-          'data',
-          {
-            'data.items': 'content',
-            'params.error': 'a:errorMessage'
-          }
-        ],
-        incoming: true,
-        options: { actionType: 'GET', actionPayload: { type: 'entry' } }
-      }
-    ],
-    adapter: json,
-    mappings: { entry: 'entry' }
-  })
-  const action = {
-    type: 'REQUEST',
-    payload: { data: '{"key":"ent1"}', type: 'entry' },
-    meta: { ident: { id: 'johnf' } }
-  }
-  const expected = {
-    status: 'notfound',
-    data: '{"a:errorMessage":"Not found"}',
-    error: 'Not found',
-    access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'auth' }
-  }
-
-  const ret = await service.receive(action, dispatch)
-
-  t.deepEqual(ret.response, expected)
+  t.deepEqual(ret, expected)
 })

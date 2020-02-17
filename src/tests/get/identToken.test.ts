@@ -1,11 +1,17 @@
 import test from 'ava'
 import nock = require('nock')
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import completeIdent from '../../middleware/completeIdent'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 
 import Integreat from '../..'
+
+// Setup
+
+const json = jsonAdapter()
+
+// Tests
 
 test('should get with ident token', async t => {
   const adapters = { json }

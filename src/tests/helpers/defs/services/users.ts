@@ -1,27 +1,27 @@
 export default {
   id: 'users',
   adapter: 'json',
-  options: { baseUri: 'http://some.api/users' },
+  options: { baseUri: 'http://some.api' },
   endpoints: [
     {
+      match: { action: 'GET', params: { tokens: true } },
+      fromMapping: 'data',
+      options: { uri: '/users{?tokens}' }
+    },
+    {
       match: { action: 'GET', scope: 'collection' },
-      responseMapping: 'data',
-      options: { uri: '/' }
+      fromMapping: 'data',
+      options: { uri: '/users' }
     },
     {
       match: { action: 'SET', scope: 'collection' },
-      responseMapping: 'data',
-      options: { uri: '/', method: 'POST' }
+      fromMapping: 'data',
+      options: { uri: '/users', method: 'POST' }
     },
     {
       match: { action: 'GET', scope: 'member' },
-      responseMapping: 'data',
-      options: { uri: '/{id}' }
-    },
-    {
-      match: { action: 'GET', params: { tokens: true } },
-      responseMapping: 'data',
-      options: { uri: '{?tokens}' }
+      fromMapping: 'data',
+      options: { uri: '/users/{id}' }
     }
   ],
   mappings: {

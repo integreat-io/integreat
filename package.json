@@ -43,6 +43,7 @@
     "map-any": "^0.2.1",
     "map-transform": "^0.3.6",
     "nanoid": "^2.1.0",
+    "p-pipe": "^3.0.0",
     "ramda": "^0.26.1"
   },
   "devDependencies": {

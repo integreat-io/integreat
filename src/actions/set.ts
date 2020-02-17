@@ -1,61 +1,77 @@
 import debugLib = require('debug')
-import { mergeDeepWith } from 'ramda'
+import pPipe = require('p-pipe')
+// import { mergeDeepWith } from 'ramda'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
-import appendToAction from '../utils/appendToAction'
+import {
+  exchangeFromAction,
+  responseFromExchange
+} from '../utils/exchangeMapping'
+import { isTypedData } from '../utils/is'
+import { Action, Exchange, Dispatch, Data } from '../types'
+import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
 
-const isEmptyArray = (arr: unknown): arr is [] =>
-  Array.isArray(arr) && arr.length === 0
-const isNonEmptyArray = (arr: unknown): arr is [] =>
-  Array.isArray(arr) && arr.length > 0
+// const isEmptyArray = (arr: unknown): arr is [] =>
+//   Array.isArray(arr) && arr.length === 0
+// const isNonEmptyArray = (arr: unknown): arr is [] =>
+//   Array.isArray(arr) && arr.length > 0
+//
+// const mergeDiff = (left: unknown, right: unknown) =>
+//   right === undefined || (isEmptyArray(right) && isNonEmptyArray(left))
+//     ? left
+//     : right
+//
+// const merge = (requestData, responseData) => {
+//   requestData = [].concat(requestData)
+//   if (!responseData || isEmptyArray(responseData)) {
+//     return requestData
+//   }
+//   responseData = [].concat(responseData)
+//
+//   return requestData.map(
+//     (data, index) =>
+//       data
+//         ? mergeDeepWith(mergeDiff, data, responseData[index]) // eslint-disable-line security/detect-object-injection
+//         : responseData[index] // eslint-disable-line security/detect-object-injection
+//   )
+// }
+//
+// const mergeRequestAndResponseData = (response, requestData) =>
+//   response.status === 'ok'
+//     ? { ...response, data: merge(requestData, response.data) }
+//     : response
 
-const mergeDiff = (left: unknown, right: unknown) =>
-  right === undefined || (isEmptyArray(right) && isNonEmptyArray(left))
-    ? left
-    : right
+const extractType = (exchange: Exchange, data?: Data) =>
+  exchange.request.type || (isTypedData(data) && data.$type) || undefined
 
-const merge = (requestData, responseData) => {
-  requestData = [].concat(requestData)
-  if (!responseData || isEmptyArray(responseData)) {
-    return requestData
-  }
-  responseData = [].concat(responseData)
+const extractId = (data?: Data) => (isTypedData(data) && data.id) || undefined
 
-  return requestData.map(
-    (data, index) =>
-      data
-        ? mergeDeepWith(mergeDiff, data, responseData[index]) // eslint-disable-line security/detect-object-injection
-        : responseData[index] // eslint-disable-line security/detect-object-injection
-  )
-}
-
-const mergeRequestAndResponseData = (response, requestData) =>
-  response.status === 'ok'
-    ? { ...response, data: merge(requestData, response.data) }
-    : response
-
-const extractType = (action, data) =>
-  action.payload.type || (data && data.$type) || undefined
-
-const extractId = data => (data && data.id) || undefined
+const setIdAndTypeOnExchange = (
+  exchange: Exchange,
+  id?: string | string[],
+  type?: string | string[]
+) => ({
+  ...exchange,
+  request: { ...exchange.request, id, type }
+})
 
 /**
  * Set several items to a service, based on the given action object.
- * @param payload - Payload from action object
- * @param resources - Object with getService
- * @returns Response object with any data returned from the service
  */
-export default async function set(action, _dispatch, getService) {
-  debug('Action: SET')
-
+export default async function set(
+  obsoleteAction: Action,
+  _dispatch: Dispatch,
+  getService: GetService
+) {
+  const exchange = exchangeFromAction(obsoleteAction)
   const {
-    service: serviceId,
-    data,
-    endpoint,
-    onlyMappedValues = true
-  } = action.payload
-  const type = extractType(action, data)
+    request: { service: serviceId, data },
+    endpoint
+    // onlyMappedValues = true
+  } = exchange
+
+  const type = extractType(exchange, data)
   const id = extractId(data)
 
   const service = getService(type, serviceId)
@@ -66,9 +82,20 @@ export default async function set(action, _dispatch, getService) {
   const endpointDebug = endpoint ? `at endpoint '${endpoint}'` : ''
   debug('SET: Send to service %s %s', service.id, endpointDebug)
 
-  const { response, authorizedRequestData } = await service.send(
-    appendToAction(action, { id, type, onlyMappedValues })
-  )
+  const nextExchange = await pPipe<
+    Exchange,
+    Exchange,
+    Exchange,
+    Exchange,
+    Exchange,
+    Exchange
+  >(
+    service.authorizeExchange,
+    service.assignEndpointMapper,
+    service.mapToService,
+    service.sendExchange,
+    service.mapFromService
+  )(setIdAndTypeOnExchange(exchange, id, type))
 
-  return mergeRequestAndResponseData(response, authorizedRequestData)
+  return responseFromExchange(nextExchange)
 }

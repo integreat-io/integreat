@@ -5,6 +5,7 @@ import {
   SchemaDef,
   ServiceDef,
   IdentConfig,
+  Adapter,
   Middleware
 } from './types'
 import { AuthDef, Auth, Authenticator } from './auth/types'
@@ -27,7 +28,7 @@ interface Definitions {
 }
 
 interface Resources {
-  adapters: Dictionary<ObjectWithId> // TODO: Needs better typing
+  adapters?: Dictionary<Adapter>
   actionHandlers?: Dictionary<ActionHandler>
   authenticators?: Dictionary<Authenticator>
   transformers?: Dictionary<CustomFunction>

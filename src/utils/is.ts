@@ -4,7 +4,8 @@ import {
   Reference,
   Shape,
   PropertyShape,
-  Action
+  Action,
+  Exchange
 } from '../types'
 
 export const isDataObject = (value: unknown): value is DataObject =>
@@ -32,6 +33,12 @@ export const isAction = (action: unknown): action is Action =>
   isDataObject(action) &&
   typeof action.type === 'string' &&
   isDataObject(action.payload)
+
+export const isExchange = (exchange: unknown): exchange is Exchange =>
+  isDataObject(exchange) &&
+  typeof exchange.type === 'string' &&
+  isDataObject(exchange.request) &&
+  (typeof exchange.status === 'string' || exchange.status === null)
 
 export const isEmptyObject = (value: unknown): value is {} =>
   isDataObject(value) && Object.keys(value).length === 0

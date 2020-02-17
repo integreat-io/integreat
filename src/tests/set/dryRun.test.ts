@@ -1,10 +1,12 @@
 import test from 'ava'
-import json from 'integreat-adapter-json'
+import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 
 import Integreat from '../..'
 
-// Helpers
+// Setup
+
+const json = jsonAdapter()
 
 const createdAt = new Date()
 const updatedAt = new Date()
@@ -17,7 +19,10 @@ const entry1Item = {
   createdAt,
   updatedAt,
   author: { id: 'johnf', type: 'user' },
-  sections: [{ id: 'news', type: 'section' }, { id: 'sports', type: 'section' }]
+  sections: [
+    { id: 'news', type: 'section' },
+    { id: 'sports', type: 'section' }
+  ]
 }
 
 // Tests
@@ -47,7 +52,8 @@ test('should set new entry', async t => {
     }),
     headers: {
       'Content-Type': 'application/json'
-    }
+    },
+    retries: 0
   }
 
   const great = Integreat.create(defs, { adapters })
