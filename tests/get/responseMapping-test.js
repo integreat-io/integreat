@@ -145,13 +145,13 @@ test('should not override adater error with data status', async (t) => {
 test('should map with sub mapping', async (t) => {
   const adapters = { json: json() }
   nock('http://some.api')
-    .get('/entries/ent3')
+    .get('/entries/')
     .reply(200, {
       responseContent: JSON.stringify({ articles: [entry1, entry2] })
     })
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent3' }
+    payload: { type: 'entry' }
   }
   const responseMapping = {
     'data[]': {
@@ -168,7 +168,7 @@ test('should map with sub mapping', async (t) => {
       ...entriesService,
       endpoints: [{
         responseMapping,
-        options: { uri: '/{id}' }
+        options: { uri: '/' }
       }]
     }],
     mappings: [entriesMapping]
@@ -177,7 +177,7 @@ test('should map with sub mapping', async (t) => {
   const great = integreat(defs, { adapters, transformers })
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.true(Array.isArray(ret.data))
   t.is(ret.data.length, 2)
   t.is(ret.data[0].id, 'ent1')

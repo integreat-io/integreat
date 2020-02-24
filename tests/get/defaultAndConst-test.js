@@ -18,11 +18,11 @@ const entryNoHeadline = {
 test('should transform entry', async (t) => {
   const adapters = { json: json() }
   nock('http://some.api')
-    .get('/entries/ent1')
+    .get('/entries/')
     .reply(200, { data: [entry1, entryNoHeadline] })
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent1' }
+    payload: { type: 'entry' }
   }
   const mapping = {
     attributes: {
@@ -45,7 +45,7 @@ test('should transform entry', async (t) => {
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(ret.data.length, 2)
   const item0 = ret.data[0]
   t.is(item0.id, 'ent1')
