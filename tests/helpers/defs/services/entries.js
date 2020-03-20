@@ -25,7 +25,7 @@ module.exports = {
       match: { action: 'SET', scope: 'collection' },
       requestMapping: {
         data: 'data[]',
-        'headers.x-correlation-id': 'params.cid'
+        'headers.x-correlation-id': 'meta.id'
       },
       responseMapping: 'data[]',
       options: { uri: '/', method: 'POST' }
