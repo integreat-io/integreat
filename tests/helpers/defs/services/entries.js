@@ -23,7 +23,10 @@ module.exports = {
     },
     {
       match: { action: 'SET', scope: 'collection' },
-      requestMapping: 'data[]',
+      requestMapping: {
+        data: 'data[]',
+        'headers.x-correlation-id': 'params.cid'
+      },
       responseMapping: 'data[]',
       options: { uri: '/', method: 'POST' }
     },
