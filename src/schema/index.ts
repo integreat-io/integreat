@@ -2,7 +2,7 @@ import createCastMapping from './createCastMapping'
 import { MapDefinition } from 'map-transform'
 import { SchemaDef, PropertyShape, Shape } from '../types'
 import { isSchema } from '../utils/is'
-import nanoid = require('nanoid')
+import { nanoid } from 'nanoid'
 
 const expandField = (val: Shape | PropertyShape | string | undefined) =>
   typeof val === 'string'

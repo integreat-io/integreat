@@ -31,39 +31,37 @@
   },
   "homepage": "https://github.com/integreat-io/integreat#readme",
   "engines": {
-    "node": ">= 8.6",
-    "npm": ">= 5.6"
+    "node": ">= 10"
   },
   "dependencies": {
-    "@types/later": "^1.2.5",
+    "@types/later": "^1.2.6",
     "@types/nanoid": "^2.0.0",
     "debug": "^4.1.1",
-    "got": "^9.6.0",
+    "got": "^10.7.0",
     "later": "^1.2.0",
     "map-any": "^0.2.1",
     "map-transform": "^0.3.6",
-    "nanoid": "^2.1.0",
+    "nanoid": "^3.0.1",
     "p-pipe": "^3.0.0",
-    "ramda": "^0.26.1"
+    "ramda": "^0.27.0"
   },
   "devDependencies": {
-    "@types/nock": "^10.0.3",
-    "@types/sinon": "^7.0.13",
-    "@typescript-eslint/eslint-plugin": "^2.1.0",
-    "@typescript-eslint/parser": "^2.1.0",
-    "coveralls": "^3.0.5",
-    "eslint": "^6.3.0",
-    "eslint-config-prettier": "^6.2.0",
-    "eslint-plugin-node": "^10.0.0",
-    "ava": "3.3.0",
+    "@types/sinon": "^7.5.2",
+    "@typescript-eslint/eslint-plugin": "^2.25.0",
+    "@typescript-eslint/parser": "^2.25.0",
+    "ava": "3.5.1",
+    "coveralls": "^3.0.11",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-security": "^1.4.0",
-    "integreat-adapter-json": "^0.1.6",
-    "nock": "^10.0.6",
-    "nyc": "^14.1.1",
-    "prettier": "^1.18.2",
-    "sinon": "^7.3.2",
-    "ts-node": "^8.3.0",
-    "typescript": "^3.5.3"
+    "integreat-adapter-json": "^0.3.1",
+    "nock": "^12.0.3",
+    "nyc": "^15.0.0",
+    "prettier": "^2.0.2",
+    "sinon": "^9.0.1",
+    "ts-node": "^8.8.1",
+    "typescript": "^3.8.3"
   }
 }

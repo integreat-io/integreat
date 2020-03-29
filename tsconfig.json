@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es2018",
     "module": "commonjs",
+    "lib": ["es2018"],
     "moduleResolution": "node",
     "declaration": true,
     "sourceMap": true,
@@ -14,6 +15,7 @@
     "strictNullChecks": true,
     "noImplicitReturns": true,
     "alwaysStrict": true,
+    "skipLibCheck": true,
     "removeComments": true,
     "baseUrl": ".",
     "paths": {
