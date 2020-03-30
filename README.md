@@ -1128,6 +1128,10 @@ this case, the action will get the `lastSyncedAt` from the `from` service, and
 get only newer items, by passing it the `updatedAfter` param. The action will
 also filter out older items, in case the service does not support `updatedAfter`.
 
+The meta data is set for the service, but if you have different sets of metadata
+for a service, you may provide the `metaKey` property to store metadata in
+different dictionaries within a service.
+
 If you need to include more params in the actions to get from the `from` service
 or set to the `to` service, you may provide a params object for the `from` or
 `to` props, with the service id set as a `service` param.
