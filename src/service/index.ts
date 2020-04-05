@@ -2,7 +2,7 @@ import EventEmitter = require('events')
 import prepareEndpointMappers from './endpoints'
 import {
   requestFromExchange,
-  responseToExchange
+  responseToExchange,
 } from '../utils/exchangeMapping'
 import createError from '../utils/createError'
 import {
@@ -13,7 +13,7 @@ import {
   Ident,
   Adapter,
   MapOptions,
-  Connection
+  Connection,
 } from '../types'
 import { Service } from './types'
 import { CustomFunction } from 'map-transform'
@@ -53,7 +53,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
   meta,
   options = {},
   endpoints: endpointDefs = [],
-  mappings: mappingsDef = {}
+  mappings: mappingsDef = {},
 }: ServiceDef): Service => {
   if (typeof serviceId !== 'string' || serviceId === '') {
     throw new TypeError(`Can't create service without an id.`)
@@ -110,12 +110,10 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
       if (endpoint) {
         return { ...exchange, endpoint }
       } else {
-        return responseToExchange(
+        return createError(
           exchange,
-          createError(
-            `No endpoint matching ${exchange.type} request to service '${serviceId}'.`,
-            'noaction'
-          )
+          `No endpoint matching ${exchange.type} request to service '${serviceId}'.`,
+          'noaction'
         )
       }
     },
@@ -135,8 +133,8 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
           status: 'noaccess',
           response: {
             ...exchange.response,
-            error: "Anonymous user don't have access to perform this action"
-          }
+            error: "Anonymous user don't have access to perform this action",
+          },
         }
       }
     },
@@ -149,7 +147,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
       if (!endpoint) {
         return exchange.status
           ? exchange
-          : responseToExchange(exchange, createError('No endpoint provided'))
+          : createError(exchange, 'No endpoint provided')
       }
       return endpoint.mapFromService(exchange)
       // TODO: Authenticate
@@ -163,7 +161,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
       if (!endpoint) {
         return exchange.status
           ? exchange
-          : responseToExchange(exchange, createError('No endpoint provided'))
+          : createError(exchange, 'No endpoint provided')
       }
       // TODO: Authenticate
       return endpoint.mapToService(exchange)
@@ -182,7 +180,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
 
       const {
         endpoint: { options = {} } = {},
-        auth = { status: 'ok' }
+        auth = { status: 'ok' },
       } = exchange
       let response: Response
 
@@ -190,7 +188,8 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
         const nextConnection = await adapter.connect(options, auth, connection)
         if (isConnectionError(nextConnection)) {
           connection = null
-          response = createError(
+          return createError(
+            exchange,
             `Could not connect to service '${serviceId}': ${nextConnection.error}`
           )
         } else {
@@ -200,12 +199,13 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
           response = await adapter.normalize(response, request)
         }
       } catch (error) {
-        response = createError(
+        return createError(
+          exchange,
           `Error retrieving from service '${serviceId}': ${error.message}`
         )
       }
       return responseToExchange(exchange, response)
-    }
+    },
 
     /**
      * The given action is prepared, authenticated, and mapped, before it is

@@ -3,7 +3,7 @@ import { AuthDef, Auth, Authentication } from './auth/types'
 import {
   EndpointDef,
   EndpointOptions,
-  Endpoint
+  Endpoint,
 } from './service/endpoints/types'
 
 export interface Dictionary<T> {
@@ -120,7 +120,7 @@ export interface ServiceDef {
 }
 
 export interface Ident {
-  id: string
+  id?: string
   root?: boolean
   withToken?: string
   roles?: string[]
@@ -184,27 +184,36 @@ export interface Exchange<ReqData = Data, RespData = Data> {
 }
 
 export interface Payload extends Dictionary<Data> {
-  type?: string
+  type?: string | string[]
   id?: string | string[]
   data?: Data
   service?: string
   dryrun?: boolean
   endpoint?: string
   params?: Params
+  page?: number
+  pageSize?: number
+}
+
+export interface ActionMeta {
+  [key: string]: unknown
+  ident?: Ident
 }
 
 export interface Action {
   type: string
   payload: Payload
-  meta?: {
-    ident?: Ident
-  }
+  meta?: ActionMeta
 }
 
-export interface Dispatch {
-  (action: Action): Promise<Response>
+export interface Dispatch<T extends Data = Data> {
+  (action: Action | null): Promise<Response<T>>
+}
+
+export interface InternalDispatch {
+  (exchange: Exchange): Promise<Exchange>
 }
 
 export interface Middleware {
-  (next: Dispatch): Dispatch
+  (next: InternalDispatch): InternalDispatch
 }

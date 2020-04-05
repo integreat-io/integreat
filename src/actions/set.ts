@@ -2,12 +2,8 @@ import debugLib = require('debug')
 import pPipe = require('p-pipe')
 // import { mergeDeepWith } from 'ramda'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
-import {
-  exchangeFromAction,
-  responseFromExchange
-} from '../utils/exchangeMapping'
 import { isTypedData } from '../utils/is'
-import { Action, Exchange, Dispatch, Data } from '../types'
+import { Exchange, Dispatch, Data } from '../types'
 import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
@@ -53,21 +49,20 @@ const setIdAndTypeOnExchange = (
   type?: string | string[]
 ) => ({
   ...exchange,
-  request: { ...exchange.request, id, type }
+  request: { ...exchange.request, id, type },
 })
 
 /**
  * Set several items to a service, based on the given action object.
  */
 export default async function set(
-  obsoleteAction: Action,
+  exchange: Exchange,
   _dispatch: Dispatch,
   getService: GetService
-) {
-  const exchange = exchangeFromAction(obsoleteAction)
+): Promise<Exchange> {
   const {
     request: { service: serviceId, data },
-    endpoint
+    endpoint,
     // onlyMappedValues = true
   } = exchange
 
@@ -76,26 +71,17 @@ export default async function set(
 
   const service = getService(type, serviceId)
   if (!service) {
-    return createUnknownServiceError(type, serviceId, 'SET')
+    return createUnknownServiceError(exchange, type, serviceId, 'SET')
   }
 
   const endpointDebug = endpoint ? `at endpoint '${endpoint}'` : ''
   debug('SET: Send to service %s %s', service.id, endpointDebug)
 
-  const nextExchange = await pPipe<
-    Exchange,
-    Exchange,
-    Exchange,
-    Exchange,
-    Exchange,
-    Exchange
-  >(
+  return pPipe<Exchange, Exchange, Exchange, Exchange, Exchange, Exchange>(
     service.authorizeExchange,
     service.assignEndpointMapper,
     service.mapToService,
     service.sendExchange,
     service.mapFromService
   )(setIdAndTypeOnExchange(exchange, id, type))
-
-  return responseFromExchange(nextExchange)
 }

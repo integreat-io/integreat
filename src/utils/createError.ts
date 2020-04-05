@@ -1,8 +1,16 @@
-function createError (message, status = 'error') {
+import { Exchange } from '../types'
+
+export default function createError(
+  exchange: Exchange,
+  error?: string,
+  status = 'error'
+): Exchange {
   return {
+    ...exchange,
     status,
-    error: message
+    response: {
+      ...exchange.response,
+      error,
+    },
   }
 }
-
-export default createError

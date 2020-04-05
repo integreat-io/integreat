@@ -38,7 +38,7 @@ test('should create exchange from action', t => {
       id: 'johnf',
       type: 'user',
       data: { name: 'John F.' },
-      params: undefined
+      params: {}
     },
     endpointId: 'superuser',
     ident: { id: 'johnf' }

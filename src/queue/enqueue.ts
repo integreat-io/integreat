@@ -1,16 +1,15 @@
 import debugLib = require('debug')
-import createError from '../utils/createError'
 
 const debug = debugLib('great')
 
 const prepareMetaForQueue = ({ queue, ...rest }) => ({
   ...rest,
-  queuedAt: Date.now()
+  queuedAt: Date.now(),
 })
 
-const prepareForQueue = action => ({
+const prepareForQueue = (action) => ({
   ...action,
-  meta: prepareMetaForQueue(action.meta)
+  meta: prepareMetaForQueue(action.meta),
 })
 
 const enqueue = async (queue, action) => {
@@ -29,7 +28,7 @@ const enqueue = async (queue, action) => {
       timestamp,
       error
     )
-    return createError(`Could not push to queue. ${error}`)
+    return { status: 'error', error: `Could not push to queue. ${error}` }
   }
 
   debug(

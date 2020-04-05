@@ -3,6 +3,7 @@ import nock = require('nock')
 import Integreat from '..'
 import jsonAdapter from 'integreat-adapter-json'
 import { EndpointDef } from '../service/endpoints/types'
+import { completeExchange } from '../utils/exchangeMapping'
 
 import getMeta from './getMeta'
 
@@ -18,10 +19,10 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
       shape: {
         lastSyncedAt: 'date',
         count: 'integer',
-        status: 'string'
+        status: 'string',
       },
-      access: 'auth'
-    }
+      access: 'auth',
+    },
   ],
   services: [
     {
@@ -29,20 +30,20 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
       adapter: json,
       meta: meta || undefined,
       endpoints,
-      mappings: { meta: [{ $apply: 'cast_meta' }] }
+      mappings: { meta: [{ $apply: 'cast_meta' }] },
     },
     {
       id: 'entries',
       adapter: json,
       meta: 'meta',
       endpoints,
-      mappings: { meta: [{ $apply: 'cast_meta' }] }
-    }
+      mappings: { meta: [{ $apply: 'cast_meta' }] },
+    },
   ],
   mappings: [],
   adapters: {
-    json: json
-  }
+    json: json,
+  },
 })
 
 const lastSyncedAt = new Date()
@@ -56,173 +57,167 @@ test.after(() => {
 
 // Tests
 
-test('should get metadata for service', async t => {
+test('should get metadata for service', async (t) => {
   nock('http://api1.test')
     .get('/database/meta%3Astore')
     .reply(200, { id: 'meta:store', _rev: '000001', ...metadata })
   const endpoints = [{ options: { uri: 'http://api1.test/database/{id}' } }]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
   const getService = () => great.services.store
-  const action = {
+  const exchange = completeExchange({
     type: 'GET_META',
-    payload: {
+    request: {
       service: 'store',
-      keys: 'lastSyncedAt'
+      params: { keys: 'lastSyncedAt' },
     },
-    meta: { ident }
-  }
-  const expected = {
-    status: 'ok',
+    ident,
+  })
+  const expectedResponse = {
     data: { service: 'store', meta: { lastSyncedAt } },
-    access: { ident } // status: 'granted', scheme: 'data'
   }
 
-  const ret = await getMeta(action, great.dispatch, getService)
+  const ret = await getMeta(exchange, great.dispatch, getService)
 
-  t.deepEqual(ret, expected)
+  t.is(ret.status, 'ok')
+  t.deepEqual(ret.response, expectedResponse)
 })
 
-test('should get several metadata for service', async t => {
+test('should get several metadata for service', async (t) => {
   nock('http://api2.test')
     .get('/database/meta%3Astore')
     .reply(200, { id: 'meta:store', ...metadata })
   const endpoints = [
-    { id: 'getMeta', options: { uri: 'http://api2.test/database/{id}' } }
+    { id: 'getMeta', options: { uri: 'http://api2.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? great.services.store : null
-  const action = {
+  const exchange = completeExchange({
     type: 'GET_META',
-    payload: {
+    request: {
       service: 'store',
-      keys: ['lastSyncedAt', 'count'],
-      endpoint: 'getMeta'
+      params: { keys: ['lastSyncedAt', 'count'] },
     },
-    meta: { ident }
-  }
+    endpointId: 'getMeta',
+    ident,
+  })
   const expected = { service: 'store', meta: { lastSyncedAt, count: 5 } }
 
-  const ret = await getMeta(action, great.dispatch, getService)
+  const ret = await getMeta(exchange, great.dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expected)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.deepEqual(ret.response.data, expected)
 })
 
-test('should get all metadata for service', async t => {
+test('should get all metadata for service', async (t) => {
   nock('http://api3.test')
     .get('/database/meta%3Astore')
     .reply(200, { id: 'meta:store', ...metadata })
   const endpoints = [
-    { id: 'getMeta', options: { uri: 'http://api3.test/database/{id}' } }
+    { id: 'getMeta', options: { uri: 'http://api3.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? great.services.store : null
-  const action = {
+  const exchange = completeExchange({
     type: 'GET_META',
-    payload: {
-      service: 'store'
+    request: {
+      service: 'store',
     },
-    meta: { ident }
-  }
+    ident,
+  })
   const expected = {
     service: 'store',
-    meta: { lastSyncedAt, count: 5, status: 'ready' }
+    meta: { lastSyncedAt, count: 5, status: 'ready' },
   }
 
-  const ret = await getMeta(action, great.dispatch, getService)
+  const ret = await getMeta(exchange, great.dispatch, getService)
 
   t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expected)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.deepEqual(ret.response.data, expected)
 })
 
-test('should return null for metadata when not set on service', async t => {
+test('should return null for metadata when not set on service', async (t) => {
   nock('http://api4.test')
     .get('/database/meta%3Astore')
     .reply(200, { id: 'meta:store', _rev: '000001', type: 'meta' })
   const endpoints = [
-    { id: 'getMeta', options: { uri: 'http://api4.test/database/{id}' } }
+    { id: 'getMeta', options: { uri: 'http://api4.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? great.services.store : null
-  const action = {
+  const exchange = completeExchange({
     type: 'GET_META',
-    payload: {
+    request: {
       service: 'store',
-      keys: 'lastSyncedAt'
+      params: { keys: 'lastSyncedAt' },
     },
-    meta: { ident }
-  }
+    ident,
+  })
   const expected = { service: 'store', meta: { lastSyncedAt: null } }
 
-  const ret = await getMeta(action, great.dispatch, getService)
+  const ret = await getMeta(exchange, great.dispatch, getService)
 
   t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expected)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.deepEqual(ret.response.data, expected)
 })
 
-test('should return reply from service when not ok', async t => {
-  nock('http://api5.test')
-    .get('/database/meta%3Astore')
-    .reply(404)
+test('should return reply from service when not ok', async (t) => {
+  nock('http://api5.test').get('/database/meta%3Astore').reply(404)
   const endpoints = [
-    { id: 'getMeta', options: { uri: 'http://api5.test/database/{id}' } }
+    { id: 'getMeta', options: { uri: 'http://api5.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? great.services.store : null
-  const action = {
+  const exchange = completeExchange({
     type: 'GET_META',
-    payload: {
+    request: {
       service: 'store',
-      keys: 'lastSyncedAt'
+      params: { keys: 'lastSyncedAt' },
     },
-    meta: { ident }
-  }
+    ident,
+  })
 
-  const ret = await getMeta(action, great.dispatch, getService)
+  const ret = await getMeta(exchange, great.dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'notfound', ret.error)
+  t.is(ret.status, 'notfound', ret.response.error)
 })
 
-test('should return error when when no meta type is set', async t => {
+test('should return error when when no meta type is set', async (t) => {
   const scope = nock('http://api6.test')
     .get('/database/meta%3Astore')
     .reply(200, {})
   const endpoints = [
-    { id: 'getMeta', options: { uri: 'http://api6.test/database/{{id}' } }
+    { id: 'getMeta', options: { uri: 'http://api6.test/database/{{id}' } },
   ]
   const great = Integreat.create(defs(endpoints, null), { adapters: { json } })
   const getService = (_type: string, service: string) =>
     service === 'store' ? great.services.store : null
-  const action = {
+  const exchange = completeExchange({
     type: 'GET_META',
-    payload: {
+    request: {
       service: 'store',
-      keys: 'lastSyncedAt'
+      params: { keys: 'lastSyncedAt' },
     },
-    meta: { ident }
-  }
+    meta: { ident },
+  })
 
-  const ret = await getMeta(action, great.dispatch, getService)
+  const ret = await getMeta(exchange, great.dispatch, getService)
 
-  t.truthy(ret)
   t.is(ret.status, 'error')
   t.false(scope.isDone())
 })
 
-test('should get metadata from other service', async t => {
+test('should get metadata from other service', async (t) => {
   nock('http://api7.test')
     .get('/database/meta%3Aentries')
     .reply(200, { id: 'entries', _rev: '000001', lastSyncedAt })
   const endpoints = [
-    { id: 'getMeta', options: { uri: 'http://api7.test/database/{id}' } }
+    { id: 'getMeta', options: { uri: 'http://api7.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints, null), { adapters: { json } })
   const getService = (type: string, service: string) =>
@@ -231,65 +226,62 @@ test('should get metadata from other service', async t => {
       : service === 'store' || type === 'meta'
       ? great.services.store
       : null
-  const action = {
+  const exchange = completeExchange({
     type: 'GET_META',
-    payload: {
+    request: {
       service: 'entries',
-      keys: 'lastSyncedAt'
+      params: { keys: 'lastSyncedAt' },
     },
-    meta: { ident }
-  }
+    ident,
+  })
   const expected = { service: 'entries', meta: { lastSyncedAt } }
 
-  const ret = await getMeta(action, great.dispatch, getService)
+  const ret = await getMeta(exchange, great.dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expected)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.deepEqual(ret.response.data, expected)
 })
 
-test('should return error when meta is set to an unknown type', async t => {
+test('should return error when meta is set to an unknown type', async (t) => {
   const endpoints = []
   const great = Integreat.create(defs(endpoints, 'unknown'), {
-    adapters: { json }
+    adapters: { json },
   })
-  const getService = (type, service) =>
-    service === 'entries' ? great.services.store : null
-  const action = {
+  const getService = (_type?: string | string, service?: string) =>
+    service === 'entries' ? great.services.store : undefined
+  const exchange = completeExchange({
     type: 'GET_META',
-    payload: {
+    request: {
       service: 'entries',
-      keys: 'lastSyncedAt'
+      params: { keys: 'lastSyncedAt' },
     },
-    meta: { ident }
-  }
+    ident,
+  })
 
-  const ret = await getMeta(action, great.dispatch, getService)
+  const ret = await getMeta(exchange, great.dispatch, getService)
 
-  t.truthy(ret)
   t.is(ret.status, 'error')
 })
 
-test('should return error for unknown service', async t => {
+test('should return error for unknown service', async (t) => {
   const dispatch = async () => ({ status: 'ok' })
-  const getService = () => null
-  const action = {
+  const getService = () => undefined
+  const exchange = completeExchange({
     type: 'GET_META',
-    payload: {
+    request: {
       service: 'unknown',
-      keys: 'lastSyncedAt'
+      params: { keys: 'lastSyncedAt' },
     },
-    meta: { ident }
-  }
+    ident,
+  })
 
-  const ret = await getMeta(action, dispatch, getService)
+  const ret = await getMeta(exchange, dispatch, getService)
 
-  t.truthy(ret)
   t.is(ret.status, 'error')
 })
 
 // Waiting for a solution to authorization
-test.failing('should respond with noaccess when not authorized', async t => {
+test.failing('should respond with noaccess when not authorized', async (t) => {
   nock('http://api8.test')
     .get('/database/meta%3Astore')
     .reply(200, { id: 'meta:store', _rev: '000001', ...metadata })
@@ -297,20 +289,19 @@ test.failing('should respond with noaccess when not authorized', async t => {
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? great.services.store : null
-  const action = {
+  const exchange = completeExchange({
     type: 'GET_META',
-    payload: {
+    request: {
       service: 'store',
-      keys: 'lastSyncedAt'
+      params: { keys: 'lastSyncedAt' },
     },
-    meta: {}
-  }
+  })
   const expectedAccess = { status: 'refused', ident: null, scheme: 'auth' }
 
-  const ret = await getMeta(action, great.dispatch, getService)
+  const ret = await getMeta(exchange, great.dispatch, getService)
 
-  t.is(ret.status, 'noaccess', ret.error)
-  t.is(typeof ret.error, 'string')
-  t.falsy(ret.data)
+  t.is(ret.status, 'noaccess', ret.response.error)
+  t.is(typeof ret.response.error, 'string')
+  t.falsy(ret.response.data)
   t.deepEqual(ret.access, expectedAccess)
 })

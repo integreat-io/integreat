@@ -2,16 +2,17 @@ import test from 'ava'
 
 import createAction from './createAction'
 
-test('should exist', (t) => {
+test('should exist', t => {
   t.is(typeof createAction, 'function')
 })
 
-test('should return an action', (t) => {
+test('should return an action', t => {
   const type = 'GET'
   const payload = { id: 'ent1', type: 'entry' }
   const expected = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry' }
+    payload: { id: 'ent1', type: 'entry' },
+    meta: {}
   }
 
   const ret = createAction(type, payload)
@@ -19,11 +20,12 @@ test('should return an action', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should always set payload object', (t) => {
+test('should always set payload object', t => {
   const type = 'GET'
   const expected = {
     type: 'GET',
-    payload: {}
+    payload: {},
+    meta: {}
   }
 
   const ret = createAction(type)
@@ -31,7 +33,7 @@ test('should always set payload object', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should set meta', (t) => {
+test('should set meta', t => {
   const type = 'GET'
   const payload = { id: 'ent1', type: 'entry' }
   const meta = { schedule: {}, queue: true }
@@ -46,7 +48,7 @@ test('should set meta', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should return null if no type', (t) => {
+test('should return null if no type', t => {
   const payload = { id: 'ent1', type: 'entry' }
 
   const ret = createAction(null, payload)

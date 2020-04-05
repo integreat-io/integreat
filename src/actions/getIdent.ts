@@ -1,14 +1,14 @@
 import util = require('util')
 import getField from '../utils/getField'
 import createError from '../utils/createError'
+import { exchangeFromAction } from '../utils/exchangeMapping'
 import {
-  Action,
+  Exchange,
   Dispatch,
   IdentConfig,
   Data,
   Ident,
-  Response,
-  Dictionary
+  Dictionary,
 } from '../types'
 import { GetService } from '../dispatch'
 import getHandler from './get'
@@ -16,11 +16,11 @@ import getHandler from './get'
 const preparePropKeys = ({
   id = 'id',
   roles = 'roles',
-  tokens = 'tokens'
+  tokens = 'tokens',
 } = {}) => ({
   id,
   roles,
-  tokens
+  tokens,
 })
 
 // Will set any key that is not `id` on a params object. Not necessarily the
@@ -34,32 +34,34 @@ const prepareParams = (ident: Ident, keys: Dictionary<string>) =>
     ? { params: { [keys.tokens]: ident.withToken } }
     : null
 
-const wrapOk = (data: Data | Data[], ident: object) => ({
+const wrapOk = (exchange: Exchange, data: Data | Data[], ident: object) => ({
+  ...exchange,
   status: 'ok',
-  data,
-  access: { status: 'granted', ident }
+  response: { ...exchange.response, data },
+  ident,
 })
 
 const getFirstIfArray = (data: Data) => (Array.isArray(data) ? data[0] : data)
 
 const prepareResponse = (
-  response: Response,
+  exchange: Exchange,
   params: object,
   propKeys: Dictionary<string>
-) => {
-  const data = getFirstIfArray(response.data)
+): Exchange => {
+  const data = getFirstIfArray(exchange.response.data)
 
   if (data) {
     const completeIdent = {
       id: getField(data, propKeys.id),
       roles: getField(data, propKeys.roles),
-      tokens: getField(data, propKeys.tokens)
+      tokens: getField(data, propKeys.tokens),
     }
-    return wrapOk(data, completeIdent)
+    return wrapOk(exchange, data, completeIdent)
   } else {
     return createError(
+      exchange,
       `Could not find ident with params ${util.inspect(params)}, error: ${
-        response.error
+        exchange.response.error
       }`,
       'notfound'
     )
@@ -70,38 +72,45 @@ const prepareResponse = (
  * Get an ident item from service, based on the meta.ident object on the action.
  */
 export default async function getIdent(
-  { meta }: Action,
+  exchange: Exchange,
   dispatch: Dispatch,
   getService: GetService,
   identConfig?: IdentConfig
-) {
-  if (!meta?.ident) {
-    return createError('GET_IDENT: The request has no ident', 'noaction')
+): Promise<Exchange> {
+  const { ident } = exchange
+  if (!ident) {
+    return createError(
+      exchange,
+      'GET_IDENT: The request has no ident',
+      'noaction'
+    )
   }
 
   const { type } = identConfig || {}
   if (!type) {
     return createError(
+      exchange,
       'GET_IDENT: Integreat is not set up with authentication',
       'noaction'
     )
   }
 
   const propKeys = preparePropKeys(identConfig?.props)
-  const params = prepareParams(meta.ident, propKeys)
+  const params = prepareParams(ident, propKeys)
   if (!params) {
     return createError(
+      exchange,
       'GET_IDENT: The request has no ident with id or withToken',
       'noaction'
     )
   }
 
-  const action = {
+  const nextExchange = exchangeFromAction({
     type: 'GET',
     payload: { type, ...params },
-    meta: { ident: { id: 'root', root: true } }
-  }
-  const response = await getHandler(action, dispatch, getService)
+    meta: { ident: { id: 'root', root: true } },
+  })
+  const responseExchange = await getHandler(nextExchange, dispatch, getService)
 
-  return prepareResponse(response, params, propKeys)
+  return prepareResponse(responseExchange, params, propKeys)
 }

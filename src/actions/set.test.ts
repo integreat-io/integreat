@@ -4,6 +4,7 @@ import createService from '../service'
 import jsonAdapter from 'integreat-adapter-json'
 import schema from '../schema'
 import functions from '../transformers/builtIns'
+import { completeExchange } from '../utils/exchangeMapping'
 
 import set from './set'
 
@@ -16,17 +17,17 @@ const schemas = {
     id: 'entry',
     shape: {
       title: { $cast: 'string', $default: 'A title' },
-      one: 'integer'
-    }
+      one: 'integer',
+    },
   }),
   account: schema({
     id: 'account',
     shape: {
       name: 'string',
-      posts: 'entry'
+      posts: 'entry',
     },
-    access: { identFromField: 'id' }
-  })
+    access: { identFromField: 'id' },
+  }),
 }
 
 const pipelines = {
@@ -34,32 +35,44 @@ const pipelines = {
     {
       $iterate: true,
       id: 'id',
-      title: 'header'
+      title: 'header',
     },
-    { $apply: 'cast_entry' }
+    { $apply: 'cast_entry' },
   ],
   account: [
     {
       $iterate: true,
       id: 'id',
       name: 'name',
-      posts: 'entries'
+      posts: 'entries',
     },
-    { $apply: 'cast_account' }
+    { $apply: 'cast_account' },
   ],
   ['cast_entry']: schemas.entry.mapping,
-  ['cast_account']: schemas.account.mapping
+  ['cast_account']: schemas.account.mapping,
 }
 
 const mapOptions = { pipelines, functions }
 
+interface Options {
+  method?: string
+  path?: string
+  fromMapping?: string | null
+  id?: string
+}
+
 const setupService = (
   uri: string,
-  { method = 'POST', path = 'docs[]', fromMapping = null, id = 'entries' } = {}
+  {
+    method = 'POST',
+    path = 'docs[]',
+    fromMapping = null,
+    id = 'entries',
+  }: Options = {}
 ) => {
   return createService({
     schemas,
-    mapOptions
+    mapOptions,
   })({
     id,
     adapter: json,
@@ -67,11 +80,11 @@ const setupService = (
       {
         toMapping: path,
         fromMapping,
-        options: { uri, method }
+        options: { uri, method },
       },
-      { id: 'other', options: { uri: 'http://api1.test/other/_bulk_docs' } }
+      { id: 'other', options: { uri: 'http://api1.test/other/_bulk_docs' } },
     ],
-    mappings: id === 'accounts' ? { account: 'account' } : { entry: 'entry' }
+    mappings: id === 'accounts' ? { account: 'account' } : { entry: 'entry' },
   })
 }
 
@@ -83,304 +96,292 @@ test.after(() => {
 
 // Tests
 
-test('should map and set items to service', async t => {
+test('should map and set items to service', async (t) => {
   const scope = nock('http://api1.test')
     .post('/database/_bulk_docs', {
       docs: [
         { id: 'ent1', header: 'Entry 1' },
-        { id: 'ent2', header: 'Entry 2' }
-      ]
+        { id: 'ent2', header: 'Entry 2' },
+      ],
     })
     .reply(201, [{ ok: true }, { ok: true }])
-  const action = {
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
+    request: {
       type: 'entry',
       service: 'entries',
       data: [
         { $type: 'entry', id: 'ent1', title: 'Entry 1' },
-        { $type: 'entry', id: 'ent2', title: 'Entry 2' }
-      ]
-    }
-  }
+        { $type: 'entry', id: 'ent2', title: 'Entry 2' },
+      ],
+    },
+  })
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : null
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
 })
 
 // Failing due to missing onlyMappedValues
-test.failing('should map and set one item to service', async t => {
+test.failing('should map and set one item to service', async (t) => {
   const scope = nock('http://api5.test')
     .put('/database/entry:ent1', { id: 'ent1' })
     .reply(200, { okay: true, id: 'ent1', rev: '000001' })
-  const action = {
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
+    request: {
       type: 'entry',
-      data: { $type: 'entry', id: 'ent1' }
-    }
-  }
+      data: { $type: 'entry', id: 'ent1' },
+    },
+  })
   const src = setupService('http://api5.test/database/{type}:{id}', {
     method: 'PUT',
-    path: null
+    path: undefined,
   })
   const getService = (type?: string | string[], _service?: string) =>
     type === 'entry' ? src : null
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
 })
 
-test('should map with default values from type', async t => {
+test('should map with default values from type', async (t) => {
   const scope = nock('http://api4.test')
     .post('/database/_bulk_docs', {
-      docs: [{ id: 'ent1', header: 'A title' }]
+      docs: [{ id: 'ent1', header: 'A title' }],
     })
     .reply(201, [{ ok: true }])
-  const action = {
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
+    request: {
       service: 'entries',
       type: 'entry',
       data: [{ $type: 'entry', id: 'ent1' }],
-      onlyMappedValues: false
+      params: { onlyMappedValues: false }, // TODO: How to do this?
     },
-    meta: { ident: { id: 'johnf' } }
-  }
+    ident: { id: 'johnf' },
+  })
   const src = setupService('http://api4.test/database/_bulk_docs')
   const getService = () => src
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
 })
 
-test('should infer service id from type', async t => {
+test('should infer service id from type', async (t) => {
   const scope = nock('http://api2.test')
     .post('/database/_bulk_docs')
     .reply(201, [{ ok: true }, { ok: true }])
-  const payload = {
-    type: 'entry',
-    data: [
-      { id: 'ent1', $type: 'entry' },
-      { id: 'ent2', $type: 'entry' }
-    ]
-  }
+  const exchange = completeExchange({
+    type: 'SET',
+    request: {
+      type: 'entry',
+      data: [
+        { id: 'ent1', $type: 'entry' },
+        { id: 'ent2', $type: 'entry' },
+      ],
+    },
+  })
   const src = setupService('http://api2.test/database/_bulk_docs')
-  const getService = (type: string, _service: string) =>
-    type === 'entry' ? src : null
+  const getService = (type?: string | string[], _service?: string) =>
+    type === 'entry' ? src : undefined
 
-  const ret = await set({ type: 'SET', payload }, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
 })
 
-test('should set to specified endpoint', async t => {
+test('should set to specified endpoint', async (t) => {
   const scope = nock('http://api1.test')
     .put('/other/_bulk_docs')
     .reply(201, [{ ok: true }])
-  const action = {
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
-      endpoint: 'other',
+    request: {
       service: 'entries',
-      data: [{ id: 'ent1', $type: 'entry' }]
-    }
-  }
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+    endpointId: 'other',
+  })
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = () => src
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
 })
 
-test('should set to uri with params', async t => {
+test('should set to uri with params', async (t) => {
   const scope = nock('http://api3.test')
     .post('/entries/_bulk_docs')
     .reply(201, [{ ok: true }])
-  const action = {
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
-      typefolder: 'entries',
+    request: {
       service: 'entries',
-      data: [{ id: 'ent1', $type: 'entry' }]
-    }
-  }
+      data: [{ id: 'ent1', $type: 'entry' }],
+      params: { typefolder: 'entries' },
+    },
+  })
   const src = setupService('http://api3.test/{typefolder}/_bulk_docs')
   const getService = () => src
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
 })
 
-test('should return error when service fails', async t => {
-  nock('http://api7.test')
-    .post('/database/_bulk_docs')
-    .reply(404)
-  const action = {
+test('should return error when service fails', async (t) => {
+  nock('http://api7.test').post('/database/_bulk_docs').reply(404)
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
+    request: {
       service: 'entries',
-      data: [{ id: 'ent1', $type: 'entry' }]
-    }
-  }
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+  })
   const src = setupService('http://api7.test/database/_bulk_docs')
   const getService = () => src
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'notfound', ret.error)
-  t.is(typeof ret.error, 'string')
-  t.falsy(ret.data)
+  t.is(ret.status, 'notfound', ret.response.error)
+  t.is(typeof ret.response.error, 'string')
+  t.falsy(ret.response.data)
 })
 
-test('should return error when no service exists for a type', async t => {
-  const getService = () => null
-  const action = {
+test('should return error when no service exists for a type', async (t) => {
+  const getService = () => undefined
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
+    request: {
       type: 'entry',
-      data: { id: 'ent1', $type: 'entry' }
-    }
-  }
+      data: { id: 'ent1', $type: 'entry' },
+    },
+  })
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
   t.is(ret.status, 'error')
-  t.is(ret.error, "No service exists for type 'entry'")
+  t.is(ret.response.error, "No service exists for type 'entry'")
 })
 
-test('should get type from data $type', async t => {
-  const getService = () => null
-  const action = {
+test('should get type from data $type', async (t) => {
+  const getService = () => undefined
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
+    request: {
       type: 'entry',
-      data: { id: 'ent1', $type: 'entry' }
-    }
-  }
+      data: { id: 'ent1', $type: 'entry' },
+    },
+  })
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
   t.is(ret.status, 'error')
-  t.is(ret.error, "No service exists for type 'entry'")
+  t.is(ret.response.error, "No service exists for type 'entry'")
 })
 
-test('should return error when specified service does not exist', async t => {
-  const getService = () => null
-  const action = {
+test('should return error when specified service does not exist', async (t) => {
+  const getService = () => undefined
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
+    request: {
       service: 'entries',
-      data: { id: 'ent1', $type: 'entry' }
-    }
-  }
+      data: { id: 'ent1', $type: 'entry' },
+    },
+  })
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
   t.is(ret.status, 'error')
-  t.is(ret.error, "Service with id 'entries' does not exist")
+  t.is(ret.response.error, "Service with id 'entries' does not exist")
 })
 
 // Waiting for authentication to service
-test.failing('should authenticate items', async t => {
+test.failing('should authenticate items', async (t) => {
   const scope = nock('http://api6.test')
     .post('/database/_bulk_docs', {
-      docs: [{ id: 'johnf', name: 'John F.' }]
+      docs: [{ id: 'johnf', name: 'John F.' }],
     })
     .reply(201, [{ ok: true }])
-  const action = {
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
+    request: {
       service: 'accounts',
       data: [
         { id: 'johnf', $type: 'account', name: 'John F.' },
-        { id: 'betty', $type: 'account', name: 'Betty' }
-      ]
+        { id: 'betty', $type: 'account', name: 'Betty' },
+      ],
     },
-    meta: { ident: { id: 'johnf' } }
-  }
-  const src = setupService('http://api6.test/database/_bulk_docs', {
-    id: 'accounts'
+    ident: { id: 'johnf' },
   })
-  const getService = (_type: string, service: string) =>
-    service === 'accounts' ? src : null
+  const src = setupService('http://api6.test/database/_bulk_docs', {
+    id: 'accounts',
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'accounts' ? src : undefined
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
 })
 
 // TODO: Decide how to treat return from SET
-test.failing('should set authorized data on response', async t => {
-  nock('http://api8.test')
-    .post('/database/_bulk_docs')
-    .reply(201, '{}')
-  const payload = {
-    service: 'accounts',
-    data: [
-      {
-        $type: 'account',
-        id: 'johnf',
-        name: 'John F.'
-      },
-      {
-        $type: 'account',
-        id: 'betty',
-        name: 'Betty'
-      }
-    ]
-  }
+test.failing('should set authorized data on response', async (t) => {
+  nock('http://api8.test').post('/database/_bulk_docs').reply(201, '{}')
+  const src = setupService('http://api8.test/database/_bulk_docs', {
+    id: 'accounts',
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'accounts' ? src : undefined
+  const exchange = completeExchange({
+    type: 'SET',
+    request: {
+      service: 'accounts',
+      data: [
+        {
+          $type: 'account',
+          id: 'johnf',
+          name: 'John F.',
+        },
+        {
+          $type: 'account',
+          id: 'betty',
+          name: 'Betty',
+        },
+      ],
+    },
+    ident: { id: 'johnf' },
+  })
   const expectedData = [
     {
       $type: 'account',
       id: 'johnf',
-      name: 'John F.'
-    }
+      name: 'John F.',
+    },
   ]
-  const src = setupService('http://api8.test/database/_bulk_docs', {
-    id: 'accounts'
-  })
-  const getService = (_type: string, service: string) =>
-    service === 'accounts' ? src : null
-  const action = {
-    type: 'SET',
-    payload,
-    meta: { ident: { id: 'johnf' } }
-  }
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expectedData)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.deepEqual(ret.response.data, expectedData)
 })
 
 // TODO: Decide how to treat return from SET
-test.failing('should merge request data with response data', async t => {
+test.failing('should merge request data with response data', async (t) => {
   nock('http://api9.test')
     .post('/database/_bulk_docs')
     .reply(201, [
@@ -388,62 +389,60 @@ test.failing('should merge request data with response data', async t => {
         id: 'johnf',
         type: 'account',
         name: 'John Fjon',
-        entries: []
-      }
+        entries: [],
+      },
     ])
-  const action = {
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
+    request: {
       service: 'accounts',
       data: [
         {
           $type: 'account',
           name: 'John F.',
-          posts: [{ id: 'ent1', $ref: 'entry' }]
-        }
-      ]
+          posts: [{ id: 'ent1', $ref: 'entry' }],
+        },
+      ],
     },
-    meta: { ident: { root: true } }
-  }
+    ident: { root: true },
+  })
   const expectedData = [
     {
       $type: 'account',
       id: 'johnf',
       name: 'John Fjon',
-      posts: [{ id: 'ent1', $ref: 'entry' }]
-    }
+      posts: [{ id: 'ent1', $ref: 'entry' }],
+    },
   ]
   const src = setupService('http://api9.test/database/_bulk_docs', {
     id: 'accounts',
-    fromMapping: '.'
+    fromMapping: '.',
   })
   const getService = () => src
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expectedData)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.deepEqual(ret.response.data, expectedData)
 })
 
 // TODO: Decide on correct approach to mapping null to array
-test.failing('should allow null as request data', async t => {
+test.failing('should allow null as request data', async (t) => {
   const scope = nock('http://api1.test')
     .post('/database/_bulk_docs', '{"docs":[]}')
     .reply(201, [{ ok: true }, { ok: true }])
-  const action = {
+  const exchange = completeExchange({
     type: 'SET',
-    payload: {
+    request: {
       service: 'entries',
-      data: null
-    }
-  }
+      data: null,
+    },
+  })
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = () => src
 
-  const ret = await set(action, dispatch, getService)
+  const ret = await set(exchange, dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
 })

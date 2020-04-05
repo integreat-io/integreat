@@ -1,69 +1,84 @@
 import debugLib = require('debug')
 import pPipe = require('p-pipe')
+import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
-import {
-  exchangeFromAction,
-  responseFromExchange,
-  responseToExchange
-} from '../utils/exchangeMapping'
-import { Action, Exchange, Dispatch, Response } from '../types'
+import { Exchange, Dispatch } from '../types'
+import { Service } from '../service/types'
 import { Endpoint } from '../service/endpoints/types'
 import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
 
-const isErrorResponse = (response: Response) =>
-  response.status !== 'ok' && response.status !== 'notfound'
+const isErrorExchange = (exchange: Exchange) =>
+  exchange.status !== 'ok' && exchange.status !== 'notfound'
 
-// TODO: Combine exchanges instead of taken the extra trip with responses
-const combineResponses = (responses: Response[], ids?: string | string[]) =>
-  responses.some(isErrorResponse)
-    ? {
-        status: 'error',
-        error: `One or more of the requests for ids ${ids} failed.`
-      }
+const getIdFromExchange = ({ request: { id } }: Exchange) =>
+  Array.isArray(id) && id.length === 1 ? id[0] : id
+
+const combineExchanges = (exchange: Exchange, exchanges: Exchange[]) =>
+  exchanges.some(isErrorExchange)
+    ? createError(
+        exchange,
+        `One or more of the requests for ids ${getIdFromExchange(
+          exchange
+        )} failed.`
+      )
     : {
+        ...exchange,
         status: 'ok',
-        data: responses.map(response =>
-          Array.isArray(response.data) ? response.data[0] : response.data
-        )
+        response: {
+          ...exchange.response,
+          data: exchanges.map((exchange) =>
+            Array.isArray(exchange.response.data)
+              ? exchange.response.data[0]
+              : exchange.response.data
+          ),
+        },
       }
 
 const isMembersScope = (endpoint?: Endpoint) =>
   endpoint?.match?.scope === 'members'
 
-const getIdFromExchange = ({ request: { id } }: Exchange) =>
-  Array.isArray(id) && id.length === 1 ? id[0] : id
-
 const setIdOnExchange = (exchange: Exchange, id?: string | string[]) => ({
   ...exchange,
-  request: { ...exchange.request, id }
+  request: { ...exchange.request, id },
 })
 
-const combineExchanges = (exchange: Exchange, exchanges: Exchange[]) =>
-  responseToExchange(
+const runAsIndividualExchanges = async (
+  exchange: Exchange,
+  id: string[],
+  mapPerId: (exchange: Exchange) => Promise<Exchange>,
+  service: Service
+) =>
+  combineExchanges(
     exchange,
-    combineResponses(
-      exchanges.map(exchange => responseFromExchange(exchange)),
-      getIdFromExchange(exchange)
+    await Promise.all(
+      id.map((oneId) =>
+        mapPerId(service.assignEndpointMapper(setIdOnExchange(exchange, oneId)))
+      )
     )
   )
 
+const mapOneOrMany = (
+  id: string | string[] | undefined,
+  mapPerId: (exchange: Exchange) => Promise<Exchange>,
+  service: Service
+) => async (exchange: Exchange): Promise<Exchange> =>
+  Array.isArray(id) && exchange.authorized && !isMembersScope(exchange.endpoint)
+    ? runAsIndividualExchanges(exchange, id, mapPerId, service)
+    : mapPerId(exchange)
+
 /**
  * Get several items from a service, based on the given action object.
- * @param action - payload and ident from the action object
- * @param resources - Object with getService
- * @returns Array of data from the service
  */
 export default async function get(
-  obsoleteAction: Action,
+  exchange: Exchange,
   _dispatch: Dispatch,
   getService: GetService
-): Promise<Response> {
-  const exchange = exchangeFromAction(obsoleteAction)
+): Promise<Exchange> {
   const {
     request: { type, service: serviceId },
-    endpointId
+    endpointId,
   } = exchange
 
   // const onlyMappedValues = false // TODO: Figure out how and if to set this
@@ -71,7 +86,7 @@ export default async function get(
   const service =
     typeof getService === 'function' ? getService(type, serviceId) : null
   if (!service) {
-    return createUnknownServiceError(type, serviceId, 'GET')
+    return createUnknownServiceError(exchange, type, serviceId, 'GET')
   }
 
   const id = getIdFromExchange(exchange)
@@ -87,27 +102,9 @@ export default async function get(
     service.mapFromService
   )
 
-  const mapOneOrMany = async (exchange: Exchange): Promise<Exchange> =>
-    Array.isArray(id) &&
-    exchange.authorized &&
-    !isMembersScope(exchange.endpoint)
-      ? combineExchanges(
-          exchange,
-          await Promise.all(
-            id.map(oneId =>
-              mapPerId(
-                service.assignEndpointMapper(setIdOnExchange(exchange, oneId))
-              )
-            )
-          )
-        )
-      : mapPerId(exchange)
-
-  const nextExchange = await pPipe<Exchange, Exchange, Exchange, Exchange>(
+  return pPipe<Exchange, Exchange, Exchange, Exchange>(
     service.authorizeExchange,
     service.assignEndpointMapper,
-    mapOneOrMany
+    mapOneOrMany(id, mapPerId, service)
   )(setIdOnExchange(exchange, id))
-
-  return responseFromExchange(nextExchange)
 }

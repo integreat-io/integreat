@@ -1,16 +1,19 @@
-const getIdent = async (ident, dispatch) => {
-  const response = await dispatch({
-    type: 'GET_IDENT',
-    payload: {},
-    meta: { ident }
-  })
+import { completeExchange } from '../utils/exchangeMapping'
+import { InternalDispatch, Middleware, Ident } from '../types'
 
-  return (response.status === 'ok')
-    ? response.access && response.access.ident
-    : null
+const getIdent = async (ident: Ident, dispatch: InternalDispatch) => {
+  const response = await dispatch(
+    completeExchange({
+      type: 'GET_IDENT',
+      ident,
+    })
+  )
+
+  return response.status === 'ok' ? response?.ident : undefined
 }
 
-const isIdentGetable = (ident) => ident && (ident.id || ident.withToken)
+const isIdentGetable = (ident?: Ident): ident is Ident =>
+  Boolean(ident?.id || ident?.withToken)
 
 /**
  * Middleware that will complete the identity of the dispatched action.
@@ -28,22 +31,17 @@ const isIdentGetable = (ident) => ident && (ident.id || ident.withToken)
  * completion happens when the action is pulled from the queue. This way, you
  * make sure that the ident has not lost it's permissions between queueing and
  * final dispatch.
- *
- * @param {function} next - The next middleware
- * @returns {function} The middleware function, accepting an action as only arg
  */
-const completeIdent = (next) => async (action) => {
-  const { meta = {} } = action
-
-  if (isIdentGetable(meta.ident)) {
-    const ident = await getIdent(meta.ident, next)
+const completeIdent: Middleware = (next) => async (exchange) => {
+  if (isIdentGetable(exchange.ident)) {
+    const ident = await getIdent(exchange.ident, next)
 
     if (ident) {
-      action = { ...action, meta: { ...meta, ident } }
+      exchange = { ...exchange, ident }
     }
   }
 
-  return next(action)
+  return next(exchange)
 }
 
 export default completeIdent

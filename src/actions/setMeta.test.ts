@@ -3,6 +3,7 @@ import nock = require('nock')
 import Integreat from '..'
 import jsonAdapter from 'integreat-adapter-json'
 import { EndpointDef } from '../service/endpoints/types'
+import { completeExchange } from '../utils/exchangeMapping'
 
 import setMeta from './setMeta'
 
@@ -16,8 +17,8 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
       id: 'meta',
       service: 'store',
       shape: { lastSyncedAt: 'date', status: 'string' },
-      access: 'auth'
-    }
+      access: 'auth',
+    },
   ],
   services: [
     {
@@ -25,17 +26,17 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
       adapter: json,
       meta: meta || undefined,
       endpoints,
-      mappings: { meta: [{ $apply: 'cast_meta' }] }
+      mappings: { meta: [{ $apply: 'cast_meta' }] },
     },
     {
       id: 'entries',
       adapter: json,
       meta: 'meta',
       endpoints,
-      mappings: { meta: [{ $apply: 'cast_meta' }] }
-    }
+      mappings: { meta: [{ $apply: 'cast_meta' }] },
+    },
   ],
-  mappings: []
+  mappings: [],
 })
 
 const ident = { id: 'johnf' }
@@ -49,36 +50,35 @@ test.after(() => {
 // Tests
 
 // Waiting for a solution to onlyMappedValues
-test.failing('should set metadata on service', async t => {
+test.failing('should set metadata on service', async (t) => {
   const scope = nock('http://api1.test')
     .put('/database/meta%3Astore', {
       $type: 'meta',
       id: 'meta:store',
       lastSyncedAt: lastSyncedAt.toISOString(),
-      status: 'busy'
+      status: 'busy',
     })
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [{ options: { uri: 'http://api1.test/database/{id}' } }]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
-  const getService = (type: string, service: string) =>
-    service === 'store' || type === 'meta' ? great.services.store : null
-  const action = {
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' || type === 'meta' ? great.services.store : undefined
+  const exchange = completeExchange({
     type: 'SET_META',
-    payload: {
+    request: {
       service: 'store',
-      meta: { lastSyncedAt, status: 'busy' }
+      params: { meta: { lastSyncedAt, status: 'busy' } },
     },
-    meta: { ident }
-  }
+    ident,
+  })
 
-  const ret = await setMeta(action, great.dispatch, getService)
+  const ret = await setMeta(exchange, great.dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
 })
 
-test('should not set metadata on service when no meta type', async t => {
+test('should not set metadata on service when no meta type', async (t) => {
   const scope = nock('http://api2.test')
     .put('/database/meta%3Astore')
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
@@ -86,33 +86,32 @@ test('should not set metadata on service when no meta type', async t => {
   const great = Integreat.create(defs(endpoints, null), { adapters: { json } })
   const getService = (type: string, service: string) =>
     service === 'store' || type === 'meta' ? great.services.store : null
-  const action = {
+  const exchange = completeExchange({
     type: 'SET_META',
-    payload: {
+    request: {
       service: 'store',
-      meta: { lastSyncedAt }
+      params: { meta: { lastSyncedAt } },
     },
-    meta: { ident }
-  }
+    ident,
+  })
 
-  const ret = await setMeta(action, great.dispatch, getService)
+  const ret = await setMeta(exchange, great.dispatch, getService)
 
-  t.truthy(ret)
   t.is(ret.status, 'noaction')
   t.false(scope.isDone())
 })
 
 // Waiting for a solution to onlyMappedValues
-test.failing('should set metadata on other service', async t => {
+test.failing('should set metadata on other service', async (t) => {
   const scope = nock('http://api3.test')
     .put('/database/meta%3Aentries', {
       $type: 'meta',
       id: 'meta:entries',
-      lastSyncedAt: lastSyncedAt.toISOString()
+      lastSyncedAt: lastSyncedAt.toISOString(),
     })
     .reply(200, { okay: true, id: 'meta:entries', rev: '000001' })
   const endpoints = [
-    { id: 'setMeta', options: { uri: 'http://api3.test/database/{id}' } }
+    { id: 'setMeta', options: { uri: 'http://api3.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints, null), { adapters: { json } })
   const getService = (type: string, service: string) =>
@@ -121,83 +120,78 @@ test.failing('should set metadata on other service', async t => {
       : service === 'store' || type === 'meta'
       ? great.services.store
       : null
-  const action = {
+  const exchange = completeExchange({
     type: 'SET_META',
-    payload: {
+    request: {
       service: 'entries',
-      meta: { lastSyncedAt },
-      endpoint: 'setMeta'
+      params: { meta: { lastSyncedAt } },
     },
-    meta: { ident }
-  }
+    endpointId: 'setMeta',
+    ident,
+  })
 
-  const ret = await setMeta(action, great.dispatch, getService)
+  const ret = await setMeta(exchange, great.dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
 })
 
-test('should return status noaction when meta is set to an unknown schema', async t => {
+test('should return status noaction when meta is set to an unknown schema', async (t) => {
   const endpoints = []
   const great = Integreat.create(defs(endpoints, 'unknown'), {
-    adapters: { json }
+    adapters: { json },
   })
-  const getService = (type, service) =>
-    service === 'store' ? great.services.store : null
-  const action = {
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' ? great.services.store : undefined
+  const exchange = completeExchange({
     type: 'SET_META',
-    payload: {
+    request: {
       service: 'store',
-      meta: { lastSyncedAt }
+      params: { meta: { lastSyncedAt } },
     },
-    meta: { ident }
-  }
+    ident,
+  })
 
-  const ret = await setMeta(action, great.dispatch, getService)
+  const ret = await setMeta(exchange, great.dispatch, getService)
 
-  t.truthy(ret)
   t.is(ret.status, 'noaction')
 })
 
-test('should refuse setting metadata on service when not authorized', async t => {
+test('should refuse setting metadata on service when not authorized', async (t) => {
   const scope = nock('http://api4.test')
     .put('/database/meta%3Astore')
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [{ options: { uri: 'http://api4.test/database/{id}' } }]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
-  const getService = (type: string, service: string) =>
-    service === 'store' || type === 'meta' ? great.services.store : null
-  const action = {
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' || type === 'meta' ? great.services.store : undefined
+  const exchange = completeExchange({
     type: 'SET_META',
-    payload: {
+    request: {
       service: 'store',
-      meta: { lastSyncedAt, status: 'busy' }
+      params: { meta: { lastSyncedAt, status: 'busy' } },
     },
-    meta: {}
-  }
+  })
 
-  const ret = await setMeta(action, great.dispatch, getService)
+  const ret = await setMeta(exchange, great.dispatch, getService)
 
-  t.truthy(ret)
-  t.is(ret.status, 'noaccess', ret.error)
+  t.is(ret.status, 'noaccess', ret.response.error)
   t.false(scope.isDone())
 })
 
-test('should return error for unknown service', async t => {
+test('should return error for unknown service', async (t) => {
   const dispatch = async () => ({ status: 'ok' })
-  const getService = () => null
-  const action = {
+  const getService = () => undefined
+  const exchange = completeExchange({
     type: 'SET_META',
-    payload: {
+    request: {
       service: 'unknown',
-      meta: { lastSyncedAt }
+      params: { meta: { lastSyncedAt } },
     },
-    meta: { ident }
-  }
+    ident,
+  })
 
-  const ret = await setMeta(action, dispatch, getService)
+  const ret = await setMeta(exchange, dispatch, getService)
 
-  t.truthy(ret)
   t.is(ret.status, 'error')
 })

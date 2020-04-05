@@ -1,6 +1,7 @@
 import debugLib = require('debug')
 import createError from '../utils/createError'
-import { DataObject, Action, Dispatch } from '../types'
+import { exchangeFromAction } from '../utils/exchangeMapping'
+import { DataObject, Exchange, Dispatch } from '../types'
 import { GetService } from '../dispatch'
 import setHandler from './set'
 
@@ -10,17 +11,21 @@ const debug = debugLib('great')
  * Set metadata on a service, based on the given action object.
  */
 export default async function setMeta(
-  { payload, meta }: Action,
+  exchange: Exchange,
   dispatch: Dispatch,
   getService: GetService
-) {
-  const { service: serviceId, meta: metaAttrs, endpoint } = payload
+): Promise<Exchange> {
+  const {
+    request: { service: serviceId, params: { meta = {} } = {} },
+    endpointId,
+    ident,
+  } = exchange
   const id = `meta:${serviceId}`
 
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`SET_META: Service '${serviceId}' doesn't exist`)
-    return createError(`Service '${serviceId}' doesn't exist`)
+    return createError(exchange, `Service '${serviceId}' doesn't exist`)
   }
 
   const type = service.meta
@@ -31,15 +36,19 @@ export default async function setMeta(
     debug(
       `SET_META: Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`
     )
-    return { status: 'noaction' }
+    return createError(
+      exchange,
+      `Service '${serviceId}' doesn't support metdata`,
+      'noaction'
+    )
   }
 
-  const endpointDebug = endpoint
-    ? `endpoint '${endpoint}'`
+  const endpointDebug = endpointId
+    ? `endpoint '${endpointId}'`
     : `endpoint matching ${type} and ${id}`
   debug(
     "SET_META: Send metadata %o for service '%s' on service '%s' %s",
-    metaAttrs,
+    meta,
     service.id,
     metaService.id,
     endpointDebug
@@ -48,14 +57,14 @@ export default async function setMeta(
   const action = {
     type: 'SET',
     payload: {
-      keys: Object.keys(metaAttrs as DataObject),
+      keys: Object.keys(meta as DataObject),
       type,
       id,
-      data: { id, $type: type, ...(metaAttrs as DataObject) },
-      endpoint,
-      onlyMappedValues: true
+      data: { id, $type: type, ...(meta as DataObject) },
+      endpoint: endpointId,
+      onlyMappedValues: true,
     },
-    meta: { ident: meta?.ident }
+    meta: { ident },
   }
-  return setHandler(action, dispatch, getService)
+  return setHandler(exchangeFromAction(action), dispatch, getService)
 }

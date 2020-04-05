@@ -3,14 +3,20 @@ import setupGetService from './utils/getService'
 import {
   Dictionary,
   Dispatch,
-  Action,
-  Response,
+  InternalDispatch,
+  Exchange,
   IdentConfig,
-  Middleware
+  Middleware,
+  Action,
 } from './types'
+import {
+  exchangeFromAction,
+  responseFromExchange,
+} from './utils/exchangeMapping'
 import { Service } from './service/types'
 import { Schema } from './schema'
 import { ObjectWithId } from './utils/indexUtils'
+import createError from './utils/createError'
 
 const debug = debugLib('great')
 
@@ -18,22 +24,16 @@ const compose = (...fns) => fns.reduce((f, g) => (...args) => f(g(...args)))
 
 export interface ActionHandler {
   (
-    action: Action,
-    dispatch: Dispatch,
+    exchange: Exchange,
+    dispatch: InternalDispatch,
     getService: Function,
     identConfig?: IdentConfig
-  ): Promise<Response>
+  ): Promise<Exchange>
 }
 
 export interface GetService {
   (type?: string | string[], serviceId?: string): Service | undefined // TODO: Properly type Service
 }
-
-const completeAction = ({ type, payload = {}, meta = {} }: Action) => ({
-  type,
-  payload,
-  meta
-})
 
 function getActionHandlerFromType(
   type: string | undefined,
@@ -48,6 +48,16 @@ function getActionHandlerFromType(
   }
   return undefined
 }
+
+const wrapDispatch = (internalDispatch: InternalDispatch): Dispatch =>
+  async function dispatch(action: Action | null) {
+    if (!action) {
+      return { status: 'noaction', error: 'Dispatched no action' }
+    }
+    const isRev = action.type === 'REQUEST'
+    const exchange = await internalDispatch(exchangeFromAction(action, isRev))
+    return responseFromExchange(exchange, isRev)
+  }
 
 interface Resources {
   actionHandlers: Dictionary<ActionHandler>
@@ -68,29 +78,25 @@ export default function createDispatch({
   schemas = {},
   services = {},
   middlewares = [],
-  identConfig
+  identConfig,
 }: Resources) {
   const getService = setupGetService(schemas, services)
-  let dispatch: Dispatch
+  let internalDispatch: InternalDispatch
 
-  dispatch = async action => {
-    debug('Dispatch: %o', action)
+  internalDispatch = async (exchange: Exchange) => {
+    debug('Dispatch: %o', exchange)
 
-    if (!action) {
-      return { status: 'noaction', error: 'Dispatched no action' }
-    }
-
-    const handler = getActionHandlerFromType(action.type, actionHandlers)
+    const handler = getActionHandlerFromType(exchange.type, actionHandlers)
     if (!handler) {
-      return { status: 'noaction', error: 'Dispatched unknown action' }
+      return createError(exchange, 'Dispatched unknown action', 'noaction')
     }
 
-    return handler(completeAction(action), dispatch, getService, identConfig)
+    return handler(exchange, internalDispatch, getService, identConfig)
   }
 
   if (middlewares.length > 0) {
-    dispatch = compose(...middlewares)(dispatch)
+    internalDispatch = compose(...middlewares)(internalDispatch)
   }
 
-  return dispatch
+  return wrapDispatch(internalDispatch)
 }

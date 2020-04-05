@@ -6,7 +6,7 @@ import {
   Request,
   Response,
   Params,
-  ExchangeRequest
+  ExchangeRequest,
 } from '../types'
 
 // NOTE: The isRev logic is a temporar solution. A more robust way of handling
@@ -14,20 +14,38 @@ import {
 
 export function exchangeFromAction(action: Action, isRev = false): Exchange {
   const {
-    type,
-    payload: { endpoint, params, data, ...payload },
-    meta: actionMeta
+    type: actionType,
+    payload: {
+      type,
+      id,
+      service,
+      page,
+      pageSize,
+      endpoint,
+      params,
+      data,
+      ...rest
+    },
+    meta: actionMeta,
   } = action
   const { ident, ...meta } = actionMeta || {}
 
   return {
-    type,
+    type: actionType,
     status: null,
-    request: { ...payload, params, data },
+    request: {
+      ...(type ? { type } : {}),
+      ...(id ? { id } : {}),
+      ...(service ? { service } : {}),
+      ...(page ? { page } : {}),
+      ...(pageSize ? { pageSize } : {}),
+      ...(data ? { data } : {}),
+      params: { ...rest, ...params },
+    },
     response: isRev ? { params, data } : {},
     ident,
     endpointId: endpoint,
-    meta: meta as Dictionary<Data>
+    meta: meta as Dictionary<Data>,
   }
 }
 
@@ -36,7 +54,7 @@ export function requestFromExchange(exchange: Exchange): Request {
     type: action,
     request: { data, ...params },
     ident,
-    endpoint: { options: endpoint = {} } = {}
+    endpoint: { options: endpoint = {} } = {},
   } = exchange
 
   return {
@@ -44,7 +62,7 @@ export function requestFromExchange(exchange: Exchange): Request {
     params: { ...params.params, ...params } as Params, // Hack until params on requests are properly sorted
     data,
     endpoint,
-    access: ident ? { ident } : undefined
+    access: ident ? { ident } : undefined,
   }
 }
 
@@ -62,14 +80,15 @@ export function responseToExchange(
       : { ...exchange.response, ...responseObject },
     request: isRev
       ? { ...exchange.request, ...responseObject }
-      : exchange.request
+      : exchange.request,
   }
 }
 
+// TODO: Should `error` exist on Request?
 const responseFromRequest = ({ data, params, error }: ExchangeRequest) => ({
   ...(data !== undefined ? { data } : {}),
   ...(params ? { params } : {}),
-  ...(error ? { error } : {})
+  ...(error ? { error } : {}),
 })
 
 export function responseFromExchange(
@@ -79,7 +98,7 @@ export function responseFromExchange(
   return {
     ...(isRev ? responseFromRequest(request) : response),
     status,
-    access: { ident }
+    access: { ident },
   }
 }
 
@@ -88,13 +107,31 @@ export function mappingObjectFromExchange(exchange: Exchange, data: Data) {
     type: action,
     request: { data: reqData, params, ...reqParams },
     endpoint: { options = undefined } = {},
-    ident
+    ident,
   } = exchange
   return {
     action,
     params: { ...reqParams, ...params },
     data,
     options,
-    ident
+    ident,
   }
 }
+
+export const completeExchange = <ReqData = Data, RespData = Data>({
+  type,
+  status = null,
+  request = {},
+  response = {},
+  endpointId,
+  ident,
+  meta = {},
+}: Partial<Exchange<ReqData, RespData>>) => ({
+  type: type as string,
+  status,
+  request,
+  response,
+  endpointId,
+  ident,
+  meta,
+})
