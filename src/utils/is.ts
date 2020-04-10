@@ -1,12 +1,5 @@
-import {
-  DataObject,
-  TypedData,
-  Reference,
-  Shape,
-  PropertyShape,
-  Action,
-  Exchange
-} from '../types'
+import { DataObject, TypedData, Reference, Action, Exchange } from '../types'
+import { Shape, PropertyShape } from '../schema/types'
 
 export const isDataObject = (value: unknown): value is DataObject =>
   typeof value === 'object' &&

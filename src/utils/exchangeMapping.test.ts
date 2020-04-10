@@ -6,7 +6,7 @@ import {
   requestFromExchange,
   responseToExchange,
   mappingObjectFromExchange,
-  responseFromExchange
+  responseFromExchange,
 } from './exchangeMapping'
 
 // Setup
@@ -15,21 +15,21 @@ const exchangeDefaults = {
   status: null,
   request: {},
   response: {},
-  meta: {}
+  meta: {},
 }
 
 // Tests
 
-test('should create exchange from action', t => {
+test('should create exchange from action', (t) => {
   const action = {
     type: 'SET',
     payload: {
       id: 'johnf',
       type: 'user',
       data: { name: 'John F.' },
-      endpoint: 'superuser'
+      endpoint: 'superuser',
     },
-    meta: { ident: { id: 'johnf' } }
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     ...exchangeDefaults,
@@ -38,10 +38,11 @@ test('should create exchange from action', t => {
       id: 'johnf',
       type: 'user',
       data: { name: 'John F.' },
-      params: {}
+      params: {},
     },
     endpointId: 'superuser',
-    ident: { id: 'johnf' }
+    ident: { id: 'johnf' },
+    incoming: false,
   }
 
   const ret = exchangeFromAction(action)
@@ -49,26 +50,61 @@ test('should create exchange from action', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should create request from exchange', t => {
+test('should create incoming exchange from action', (t) => {
+  const incoming = true
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      type: 'user',
+      data: { name: 'John F.' },
+      endpoint: 'superuser',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    ...exchangeDefaults,
+    type: 'SET',
+    request: {
+      id: 'johnf',
+      type: 'user',
+      data: { name: 'John F.' },
+      params: {},
+    },
+    response: {
+      data: { name: 'John F.' }, // TODO: I'm NOT sure of this. Needs rethinking
+      params: undefined,
+    },
+    endpointId: 'superuser',
+    ident: { id: 'johnf' },
+    incoming: true,
+  }
+
+  const ret = exchangeFromAction(action, incoming)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should create request from exchange', (t) => {
   const exchange = {
     ...exchangeDefaults,
     type: 'SET',
     request: {
       id: 'johnf',
       type: 'user',
-      data: { name: 'John F.' }
+      data: { name: 'John F.' },
     },
     endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' }
+      options: { uri: 'http://some.api.com/1.0' },
     } as unknown) as Endpoint,
-    ident: { id: 'johnf' }
+    ident: { id: 'johnf' },
   }
   const expected = {
     action: 'SET',
     params: { id: 'johnf', type: 'user' },
     data: { name: 'John F.' },
     endpoint: { uri: 'http://some.api.com/1.0' },
-    access: { ident: { id: 'johnf' } }
+    access: { ident: { id: 'johnf' } },
   }
 
   const ret = requestFromExchange(exchange)
@@ -76,28 +112,28 @@ test('should create request from exchange', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should add ok response to exchange', t => {
+test('should add ok response to exchange', (t) => {
   const exchange = {
     ...exchangeDefaults,
     type: 'SET',
     request: {
       id: 'johnf',
       type: 'user',
-      data: { name: 'John F.' }
+      data: { name: 'John F.' },
     },
     endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' }
+      options: { uri: 'http://some.api.com/1.0' },
     } as unknown) as Endpoint,
-    ident: { id: 'johnf' }
+    ident: { id: 'johnf' },
   }
   const response = {
     status: 'ok',
-    data: [{ id: 'ent1', type: 'entry' }]
+    data: [{ id: 'ent1', type: 'entry' }],
   }
   const expected = {
     ...exchange,
     status: 'ok',
-    response: { data: [{ id: 'ent1', type: 'entry' }] }
+    response: { data: [{ id: 'ent1', type: 'entry' }] },
   }
 
   const ret = responseToExchange(exchange, response)
@@ -105,29 +141,29 @@ test('should add ok response to exchange', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should add error response to exchange', t => {
+test('should add error response to exchange', (t) => {
   const exchange = {
     ...exchangeDefaults,
     type: 'SET',
     request: {
       id: 'johnf',
       type: 'user',
-      data: { name: 'John F.' }
+      data: { name: 'John F.' },
     },
     response: { data: [] },
     endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' }
+      options: { uri: 'http://some.api.com/1.0' },
     } as unknown) as Endpoint,
-    ident: { id: 'johnf' }
+    ident: { id: 'johnf' },
   }
   const response = {
     status: 'badrequest',
-    error: 'Bad request!'
+    error: 'Bad request!',
   }
   const expected = {
     ...exchange,
     status: 'badrequest',
-    response: { error: 'Bad request!', data: [] }
+    response: { error: 'Bad request!', data: [] },
   }
 
   const ret = responseToExchange(exchange, response)
@@ -135,7 +171,7 @@ test('should add error response to exchange', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should create mapping object from exchange and data', t => {
+test('should create mapping object from exchange and data', (t) => {
   const data = { id: 'johnf', type: 'user', name: 'John F.' }
   const exchange = {
     ...exchangeDefaults,
@@ -143,20 +179,20 @@ test('should create mapping object from exchange and data', t => {
     request: {
       id: 'johnf',
       type: 'user',
-      params: { searchDeleted: true }
+      params: { searchDeleted: true },
     },
     response: { data: { users: [data] } },
     endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' }
+      options: { uri: 'http://some.api.com/1.0' },
     } as unknown) as Endpoint,
-    ident: { id: 'johnf' }
+    ident: { id: 'johnf' },
   }
   const expected = {
     action: 'GET',
     params: { id: 'johnf', type: 'user', searchDeleted: true },
     data,
     options: { uri: 'http://some.api.com/1.0' },
-    ident: { id: 'johnf' }
+    ident: { id: 'johnf' },
   }
 
   const ret = mappingObjectFromExchange(exchange, data)
@@ -164,7 +200,7 @@ test('should create mapping object from exchange and data', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should return ok response from exchange', t => {
+test('should return ok response from exchange', (t) => {
   const exchange = {
     ...exchangeDefaults,
     type: 'SET',
@@ -172,20 +208,20 @@ test('should return ok response from exchange', t => {
     request: {
       id: 'johnf',
       type: 'user',
-      data: { name: 'John F.' }
+      data: { name: 'John F.' },
     },
     response: {
-      data: [{ id: 'ent1', type: 'entry' }]
+      data: [{ id: 'ent1', type: 'entry' }],
     },
     endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' }
+      options: { uri: 'http://some.api.com/1.0' },
     } as unknown) as Endpoint,
-    ident: { id: 'johnf' }
+    ident: { id: 'johnf' },
   }
   const expected = {
     status: 'ok',
     data: [{ id: 'ent1', type: 'entry' }],
-    access: { ident: { id: 'johnf' } }
+    access: { ident: { id: 'johnf' } },
   }
 
   const ret = responseFromExchange(exchange)
@@ -193,7 +229,7 @@ test('should return ok response from exchange', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should return error response from exchange', t => {
+test('should return error response from exchange', (t) => {
   const exchange = {
     ...exchangeDefaults,
     type: 'GET',
@@ -201,20 +237,20 @@ test('should return error response from exchange', t => {
     request: {
       id: 'johnf',
       type: 'user',
-      data: { name: 'John F.' }
+      data: { name: 'John F.' },
     },
     response: {
-      error: 'No access'
+      error: 'No access',
     },
     endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' }
+      options: { uri: 'http://some.api.com/1.0' },
     } as unknown) as Endpoint,
-    ident: { id: 'johnf' }
+    ident: { id: 'johnf' },
   }
   const expected = {
     status: 'noaccess',
     error: 'No access',
-    access: { ident: { id: 'johnf' } }
+    access: { ident: { id: 'johnf' } },
   }
 
   const ret = responseFromExchange(exchange)

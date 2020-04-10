@@ -1,6 +1,7 @@
 import createCastMapping from './createCastMapping'
+import accessForAction from './accessForAction'
 import { MapDefinition } from 'map-transform'
-import { SchemaDef, PropertyShape, Shape } from '../types'
+import { SchemaDef, PropertyShape, Shape, Access } from './types'
 import { isSchema } from '../utils/is'
 import { nanoid } from 'nanoid'
 
@@ -28,6 +29,7 @@ export interface Schema {
   shape: Shape
   access?: string | object
   mapping: MapDefinition
+  accessForAction: (actionType?: string) => Access
 }
 
 /**
@@ -41,7 +43,7 @@ export default function createSchema({
   service,
   shape,
   access,
-  internal = false
+  internal = false,
 }: SchemaDef): Schema {
   return {
     id,
@@ -52,17 +54,18 @@ export default function createSchema({
       ...expandFields(shape || {}),
       id: { $cast: 'string' },
       createdAt: { $cast: 'date' },
-      updatedAt: { $cast: 'date' }
+      updatedAt: { $cast: 'date' },
     },
     access,
+    accessForAction: accessForAction(access),
     mapping: createCastMapping(
       {
         ...shape,
         id: { $cast: 'string', $default: defaultId },
         createdAt: { $cast: 'date', $default: defaultDate },
-        updatedAt: { $cast: 'date', $default: defaultDate }
+        updatedAt: { $cast: 'date', $default: defaultDate },
       },
       id
-    )
+    ),
   }
 }

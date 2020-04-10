@@ -1,14 +1,15 @@
 import mapAny = require('map-any')
 import R = require('ramda')
 import { MapObject, transform, fwd, rev, filter } from 'map-transform'
-import { Shape, PropertyShape, Data } from '../types'
+import { Data } from '../types'
+import { Shape, PropertyShape } from './types'
 import {
   isSchema,
   isPropertySchema,
   isDataObject,
   isTypedData,
   isNullOrUndefined,
-  not
+  not,
 } from '../utils/is'
 
 const { compose } = R
@@ -65,8 +66,8 @@ const mappingFromSchema = (schema: Shape): MapObject =>
       [realField]: [
         realField,
         defaultFromProp(prop),
-        transformFromType(realType)
-      ].filter(Boolean)
+        transformFromType(realType),
+      ].filter(Boolean),
     }
   }, {})
 
@@ -87,7 +88,7 @@ const cleanUpCast = (type: string) =>
         $type: type,
         ...shape,
         ...(isNew === true ? { isNew } : {}),
-        ...(isDeleted === true ? { isDeleted } : {})
+        ...(isDeleted === true ? { isDeleted } : {}),
       }
     } else {
       return item
@@ -105,9 +106,9 @@ export default function createCastMapping(schema: Shape, type: string) {
       $iterate: true,
       ...mappingFromSchema(schema),
       isNew: ['isNew', { $transform: 'boolean' }],
-      isDeleted: ['isDeleted', { $transform: 'boolean' }]
+      isDeleted: ['isDeleted', { $transform: 'boolean' }],
     },
     fwd(cleanUpTransform),
-    rev(filterItem)
+    rev(filterItem),
   ]
 }

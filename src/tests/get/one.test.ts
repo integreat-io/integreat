@@ -14,9 +14,13 @@ const json = jsonAdapter()
 const createdAt = '2017-11-18T18:43:01Z'
 const updatedAt = '2017-11-24T07:11:43Z'
 
+test.after.always(() => {
+  nock.restore()
+})
+
 // Tests
 
-test('should get one entry from service', async t => {
+test('should get one entry from service', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
@@ -24,7 +28,7 @@ test('should get one entry from service', async t => {
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
-    meta: { ident: { root: true } }
+    meta: { ident: { id: 'root', root: true } },
   }
   const expected = {
     $type: 'entry',
@@ -36,8 +40,8 @@ test('should get one entry from service', async t => {
     author: { id: 'johnf', $ref: 'user' },
     sections: [
       { id: 'news', $ref: 'section' },
-      { id: 'sports', $ref: 'section' }
-    ]
+      { id: 'sports', $ref: 'section' },
+    ],
   }
 
   const great = Integreat.create(defs, { adapters })
@@ -45,11 +49,9 @@ test('should get one entry from service', async t => {
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, expected)
-
-  nock.restore()
 })
 
-test('should get one user from service', async t => {
+test('should get one user from service', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/users/johnf')
@@ -58,7 +60,7 @@ test('should get one user from service', async t => {
   const action = {
     type: 'GET',
     payload: { id: 'johnf', type: 'user' },
-    meta: { ident: { id: 'johnf' } }
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     $type: 'user',
@@ -74,8 +76,8 @@ test('should get one user from service', async t => {
     tokens: ['twitter|23456', 'facebook|12345'],
     feeds: [
       { id: 'news', $ref: 'feed' },
-      { id: 'social', $ref: 'feed' }
-    ]
+      { id: 'social', $ref: 'feed' },
+    ],
   }
 
   const great = Integreat.create(defs, { adapters })
@@ -83,6 +85,4 @@ test('should get one user from service', async t => {
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, expected)
-
-  nock.restore()
 })

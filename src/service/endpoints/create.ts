@@ -7,9 +7,10 @@ import {
   validate,
   MapDefinition,
   MapObject,
-  MapTransform
+  MapTransform,
 } from 'map-transform'
-import { MapOptions, Dictionary, Exchange } from '../../types'
+import { Dictionary, Exchange } from '../../types'
+import { MapOptions } from '../types'
 import { EndpointDef, Endpoint, EndpointOptions } from './types'
 import mapToService from './mapToService'
 import mapFromService from './mapFromService'
@@ -27,24 +28,32 @@ const pathOrMapping = (mapping?: MapDefinition) =>
 const wrapWithPath = (mapping: MapDefinition, to: boolean) =>
   to ? [mapping, set('request')] : ['response', mapping]
 
-const createMapper = (
+export function createMapper(
   mapping?: MapDefinition,
   mapOptions?: MapOptions,
   to = false
-) => (mapping ? mapTransform(wrapWithPath(mapping, to), mapOptions) : null)
+) {
+  const preparedMapping = pathOrMapping(mapping)
+  return preparedMapping
+    ? mapTransform(wrapWithPath(preparedMapping, to), mapOptions)
+    : null
+}
 
 const mappingFromDef = (def: MapDefinition | undefined) =>
   [
     fwd('data'),
     typeof def === 'string' ? { $apply: def } : def,
-    rev(set('data'))
+    rev(set('data')),
   ] as MapDefinition
 
-const prepareMappings = (mappingsDef: MapObject, mapOptions?: MapOptions) =>
+export const prepareMappings = (
+  mappingsDef: MapObject,
+  mapOptions?: MapOptions
+) =>
   Object.entries(mappingsDef).reduce(
     (mappings, [type, def]) => ({
       ...mappings,
-      [type]: mapTransform(mappingFromDef(def as MapDefinition), mapOptions)
+      [type]: mapTransform(mappingFromDef(def as MapDefinition), mapOptions),
     }),
     {} as Mappings
   )
@@ -54,7 +63,7 @@ const validateNoStatus = validate('status', { const: null })
 const preparePipeline = (defs: MapDefinition) =>
   ([] as MapDefinition[])
     .concat(defs)
-    .map(fn =>
+    .map((fn) =>
       typeof fn === 'string'
         ? ifelse(validateNoStatus, { $transform: fn })
         : typeof fn === 'function'
@@ -78,19 +87,11 @@ export default function createEndpoint(
   serviceMappings: Dictionary<string | MapDefinition>,
   serviceOptions: EndpointOptions,
   mapOptions: MapOptions,
-  prepareOptions: PrepareOptions = options => options
+  prepareOptions: PrepareOptions = (options) => options
 ) {
   return (endpointDef: EndpointDef): Endpoint => {
-    const fromMapper = createMapper(
-      pathOrMapping(endpointDef.fromMapping),
-      mapOptions,
-      false
-    )
-    const toMapper = createMapper(
-      pathOrMapping(endpointDef.toMapping),
-      mapOptions,
-      true
-    )
+    const fromMapper = createMapper(endpointDef.fromMapping, mapOptions, false)
+    const toMapper = createMapper(endpointDef.toMapping, mapOptions, true)
     const mappings = prepareMappings(
       { ...serviceMappings, ...endpointDef.mappings },
       mapOptions
@@ -100,7 +101,7 @@ export default function createEndpoint(
 
     const options = prepareOptions({
       ...serviceOptions,
-      ...endpointDef.options
+      ...endpointDef.options,
     })
 
     return {
@@ -110,7 +111,7 @@ export default function createEndpoint(
       mapToService: mapToService(toMapper, mappings),
       mapFromService: mapFromService(fromMapper, mappings),
       validate,
-      isMatch: isMatch(endpointDef)
+      isMatch: isMatch(endpointDef),
     }
   }
 }

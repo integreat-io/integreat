@@ -12,7 +12,7 @@ import {
 // NOTE: The isRev logic is a temporar solution. A more robust way of handling
 // mapping from a request and to a response, should be found.
 
-export function exchangeFromAction(action: Action, isRev = false): Exchange {
+export function exchangeFromAction(action: Action, incoming = false): Exchange {
   const {
     type: actionType,
     payload: {
@@ -42,10 +42,11 @@ export function exchangeFromAction(action: Action, isRev = false): Exchange {
       ...(data ? { data } : {}),
       params: { ...rest, ...params },
     },
-    response: isRev ? { params, data } : {},
+    response: incoming ? { params, data } : {},
     ident,
     endpointId: endpoint,
     meta: meta as Dictionary<Data>,
+    incoming,
   }
 }
 
@@ -69,16 +70,16 @@ export function requestFromExchange(exchange: Exchange): Request {
 export function responseToExchange(
   exchange: Exchange,
   response: Response,
-  isRev = false
+  incoming = false
 ): Exchange {
   const { status, ...responseObject } = response
   return {
     ...exchange,
     status,
-    response: isRev
+    response: incoming
       ? exchange.response
       : { ...exchange.response, ...responseObject },
-    request: isRev
+    request: incoming
       ? { ...exchange.request, ...responseObject }
       : exchange.request,
   }
@@ -126,6 +127,7 @@ export const completeExchange = <ReqData = Data, RespData = Data>({
   endpointId,
   ident,
   meta = {},
+  auth,
 }: Partial<Exchange<ReqData, RespData>>) => ({
   type: type as string,
   status,
@@ -134,4 +136,5 @@ export const completeExchange = <ReqData = Data, RespData = Data>({
   endpointId,
   ident,
   meta,
+  auth,
 })

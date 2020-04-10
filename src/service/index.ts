@@ -5,22 +5,14 @@ import {
   responseToExchange,
 } from '../utils/exchangeMapping'
 import createError from '../utils/createError'
-import {
-  Dictionary,
-  ServiceDef,
-  Response,
-  Exchange,
-  Ident,
-  Adapter,
-  MapOptions,
-  Connection,
-} from '../types'
-import { Service } from './types'
+import { Dictionary, Response, Exchange } from '../types'
+import { Service, ServiceDef, Adapter, MapOptions, Connection } from './types'
 import { CustomFunction } from 'map-transform'
 import { Schema } from '../schema'
 import { Auth } from '../auth/types'
 import { lookupById } from '../utils/indexUtils'
-import { doAuth, getScheme } from './authorizeScheme'
+import * as authorizeData from './authorize/data'
+import authorizeExchange from './authorize/exchange'
 
 const isConnectionError = (
   connection: Connection | null
@@ -34,14 +26,6 @@ interface Resources {
   schemas: Dictionary<Schema>
   mapOptions?: MapOptions
 }
-
-const authorize = (exchange: Exchange, schemas: Dictionary<Schema>) =>
-  typeof exchange.request.type !== 'string' ||
-  doAuth(
-    getScheme(schemas[exchange.request.type], exchange.type),
-    exchange.ident,
-    !!exchange.auth
-  )
 
 /**
  * Create a service with the given id and adapter.
@@ -70,6 +54,10 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
 
   // TODO: Reimplement auth
   const auth = lookupById(authId, auths) || {}
+  const requireAuth = !!authId
+
+  const authorizeDataFromService = authorizeData.fromService(schemas)
+  const authorizeDataToService = authorizeData.toService(schemas)
 
   const getEndpointMapper = prepareEndpointMappers(
     endpointDefs,
@@ -122,22 +110,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
      * Authorize the exchange. Sets the authorized flag if okay, otherwise sets
      * an appropriate status and error.
      */
-    authorizeExchange(exchange: Exchange): Exchange {
-      const ident = exchange.ident || ({} as Ident)
-      if (ident.root || authorize(exchange, schemas)) {
-        return { ...exchange, authorized: true }
-      } else {
-        return {
-          ...exchange,
-          authorized: false,
-          status: 'noaccess',
-          response: {
-            ...exchange.response,
-            error: "Anonymous user don't have access to perform this action",
-          },
-        }
-      }
-    },
+    authorizeExchange: authorizeExchange(schemas, requireAuth),
 
     /**
      * Map response data coming from the service
@@ -149,8 +122,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
           ? exchange
           : createError(exchange, 'No endpoint provided')
       }
-      return endpoint.mapFromService(exchange)
-      // TODO: Authenticate
+      return authorizeDataFromService(endpoint.mapFromService(exchange))
     },
 
     /**
@@ -163,8 +135,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
           ? exchange
           : createError(exchange, 'No endpoint provided')
       }
-      // TODO: Authenticate
-      return endpoint.mapToService(exchange)
+      return endpoint.mapToService(authorizeDataToService(exchange))
     },
 
     /**

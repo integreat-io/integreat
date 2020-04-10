@@ -1,10 +1,5 @@
-import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
-import { AuthDef, Auth, Authentication } from './auth/types'
-import {
-  EndpointDef,
-  EndpointOptions,
-  Endpoint,
-} from './service/endpoints/types'
+import { Auth, Authentication } from './auth/types'
+import { Endpoint } from './service/endpoints/types'
 
 export interface Dictionary<T> {
   [key: string]: T
@@ -41,82 +36,11 @@ export interface DataFunction {
   (): Data
 }
 
-export interface PropertyShape {
-  $cast: string
-  $default?: Data | DataFunction
-  $const?: Data | DataFunction
-}
-
-export interface Shape {
-  [key: string]: Shape | PropertyShape | string | undefined
-}
-
 export interface TransformFunction<
   T extends DataObject = DataObject,
   U extends Data = Data
 > {
   (operands: T): (value: Data) => U
-}
-
-export interface Connection extends Dictionary<unknown> {
-  status: string
-}
-
-export interface Adapter {
-  authentication: string
-  prepareEndpoint: (
-    options: EndpointOptions,
-    serviceOptions?: EndpointOptions
-  ) => EndpointOptions
-  connect: (
-    options: EndpointOptions,
-    authentication: Authentication | null,
-    connection: Connection | null
-  ) => Promise<Connection | null>
-  send: (request: Request, connection: Connection | null) => Promise<Response>
-}
-
-export interface MappingDef {
-  id: string
-  type?: string
-  service?: string
-  mapping: MapDefinition
-}
-
-export interface SchemaDef {
-  id: string
-  plural?: string
-  service?: string
-  shape?: Shape
-  access?: string | object
-  internal?: boolean
-}
-
-export interface IdentConfig {
-  type: string
-  props?: {
-    id?: string
-    roles?: string
-    tokens?: string
-  }
-}
-
-export interface MapOptions {
-  pipelines?: Dictionary<MapDefinition>
-  functions?: Dictionary<CustomFunction>
-  dictionaries?: Dictionaries
-}
-
-export type MapDefinitions = Dictionary<string | MapDefinition>
-
-export interface ServiceDef {
-  id: string
-  adapter: string | Adapter
-  auth?: AuthDef | string | null
-  meta?: string
-  options?: { [key: string]: unknown }
-  endpoints: EndpointDef[]
-  mappings: MapDefinitions
 }
 
 export interface Ident {
@@ -162,7 +86,9 @@ export interface ExchangeRequest<T = Data> {
 
 export interface ExchangeResponse<T = Data> {
   data?: T
+  reason?: string
   error?: string
+  warning?: string
   paging?: object
   params?: Params
 }
@@ -181,6 +107,7 @@ export interface Exchange<ReqData = Data, RespData = Data> {
   endpointId?: string
   endpoint?: Endpoint
   authorized?: boolean
+  incoming?: boolean
 }
 
 export interface Payload extends Dictionary<Data> {

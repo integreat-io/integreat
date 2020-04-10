@@ -13,7 +13,7 @@ const json = jsonAdapter()
 
 // Tests
 
-test('should get with ident token', async t => {
+test('should get with ident token', async (t) => {
   const adapters = { json }
   const middlewares = [completeIdent]
   nock('http://some.api')
@@ -25,7 +25,7 @@ test('should get with ident token', async t => {
   const action = {
     type: 'GET',
     payload: { id: 'johnf', type: 'user' },
-    meta: { ident: { withToken: 'twitter|23456' } }
+    meta: { ident: { withToken: 'twitter|23456' } },
   }
 
   const great = Integreat.create(defs, { adapters }, middlewares)

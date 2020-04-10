@@ -54,9 +54,11 @@ const wrapDispatch = (internalDispatch: InternalDispatch): Dispatch =>
     if (!action) {
       return { status: 'noaction', error: 'Dispatched no action' }
     }
-    const isRev = action.type === 'REQUEST'
-    const exchange = await internalDispatch(exchangeFromAction(action, isRev))
-    return responseFromExchange(exchange, isRev)
+    const incoming = action.type === 'REQUEST'
+    const exchange = await internalDispatch(
+      exchangeFromAction(action, incoming)
+    )
+    return responseFromExchange(exchange, incoming)
   }
 
 interface Resources {
