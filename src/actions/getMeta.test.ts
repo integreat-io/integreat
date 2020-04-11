@@ -280,8 +280,7 @@ test('should return error for unknown service', async (t) => {
   t.is(ret.status, 'error')
 })
 
-// Waiting for a solution to authorization
-test.failing('should respond with noaccess when not authorized', async (t) => {
+test('should respond with noaccess when not authorized', async (t) => {
   nock('http://api8.test')
     .get('/database/meta%3Astore')
     .reply(200, { id: 'meta:store', _rev: '000001', ...metadata })
@@ -296,12 +295,12 @@ test.failing('should respond with noaccess when not authorized', async (t) => {
       params: { keys: 'lastSyncedAt' },
     },
   })
-  const expectedAccess = { status: 'refused', ident: null, scheme: 'auth' }
 
   const ret = await getMeta(exchange, great.dispatch, getService)
 
   t.is(ret.status, 'noaccess', ret.response.error)
   t.is(typeof ret.response.error, 'string')
+  t.is(ret.response.reason, 'NO_IDENT')
   t.falsy(ret.response.data)
-  t.deepEqual(ret.access, expectedAccess)
+  t.is(ret.access, undefined)
 })

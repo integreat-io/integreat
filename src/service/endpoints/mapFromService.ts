@@ -19,13 +19,13 @@ const mapByType = (
   mappings: Mappings
 ) =>
   Array.isArray(type)
-    ? flatten(type.map(type => mapOneType(response, type, mappings))).filter(
+    ? flatten(type.map((type) => mapOneType(response, type, mappings))).filter(
         Boolean
       )
     : mapOneType(response, type, mappings)
 
-const isErrorStatus = (status?: string | null) =>
-  status !== null && status !== undefined && !['ok', 'queued'].includes(status)
+const errorIfErrorMessage = (status?: string | null, error?: string) =>
+  (!status || status === 'ok') && error ? 'error' : status
 
 export default function mapFromService(
   fromMapper: MapTransform | null,
@@ -47,8 +47,8 @@ export default function mapFromService(
     const mappedData = type
       ? mapByType(mappingObjectFromExchange(exchange, data), type, mappings)
       : data
-    const status = mappedStatus || exchange.status
     const error = mappedError || exchange.response.error
+    const status = errorIfErrorMessage(mappedStatus || exchange.status, error)
 
     return {
       ...exchange,
@@ -57,8 +57,8 @@ export default function mapFromService(
         ...exchange.response,
         ...response,
         data: mappedData,
-        ...(isErrorStatus(status) ? { error } : {})
-      }
+        ...(error ? { error } : {}),
+      },
     }
   }
 }

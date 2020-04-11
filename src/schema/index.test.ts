@@ -7,7 +7,7 @@ import schema from '.'
 
 // Tests
 
-test('should setup schema', t => {
+test('should setup schema', (t) => {
   const def = {
     id: 'entry',
     plural: 'entries',
@@ -16,23 +16,23 @@ test('should setup schema', t => {
       attributes: {
         title: 'string',
         text: { $cast: 'string' },
-        age: 'integer'
+        age: 'integer',
       },
       relationships: {
         author: 'user',
-        comments: { $cast: 'comment' }
-      }
+        comments: { $cast: 'comment' },
+      },
     },
-    access: 'auth'
+    access: 'auth',
   }
   const expectedAttributes = {
     title: { $cast: 'string' },
     text: { $cast: 'string' },
-    age: { $cast: 'integer' }
+    age: { $cast: 'integer' },
   }
   const expectedRelationships = {
     author: { $cast: 'user' },
-    comments: { $cast: 'comment' }
+    comments: { $cast: 'comment' },
   }
 
   const ret = schema(def)
@@ -48,11 +48,27 @@ test('should setup schema', t => {
   t.deepEqual(ret.shape.relationships, expectedRelationships)
 })
 
-test('should set internal prop', t => {
+test('should provide accessForAction method', (t) => {
+  const def = {
+    id: 'entry',
+    shape: {
+      title: 'string',
+    },
+    access: { allow: 'all', actions: { SET: 'auth' } },
+  }
+
+  const ret = schema(def)
+
+  t.is(typeof ret.accessForAction, 'function')
+  t.deepEqual(ret.accessForAction('GET'), { allow: 'all' })
+  t.deepEqual(ret.accessForAction('SET'), { allow: 'auth' })
+})
+
+test('should set internal prop', (t) => {
   const def = {
     id: 'entry',
     service: 'entries',
-    internal: true
+    internal: true,
   }
 
   const ret = schema(def)
@@ -60,10 +76,10 @@ test('should set internal prop', t => {
   t.true(ret.internal)
 })
 
-test('should infer plural when not set', t => {
+test('should infer plural when not set', (t) => {
   const type = {
     id: 'article',
-    shape: {}
+    shape: {},
   }
 
   const ret = schema(type)
@@ -72,16 +88,16 @@ test('should infer plural when not set', t => {
   t.is(ret.plural, 'articles')
 })
 
-test('should include base fields', t => {
+test('should include base fields', (t) => {
   const type = {
     id: 'entry',
     service: 'entries',
-    shape: {}
+    shape: {},
   }
   const expected = {
     id: { $cast: 'string' },
     createdAt: { $cast: 'date' },
-    updatedAt: { $cast: 'date' }
+    updatedAt: { $cast: 'date' },
   }
 
   const ret = schema(type)
@@ -89,20 +105,20 @@ test('should include base fields', t => {
   t.deepEqual(ret.shape, expected)
 })
 
-test('should override base fields in definition', t => {
+test('should override base fields in definition', (t) => {
   const type = {
     id: 'entry',
     service: 'entries',
     shape: {
       id: 'date',
       createdAt: 'boolean',
-      updatedAt: 'boolean'
-    }
+      updatedAt: 'boolean',
+    },
   }
   const expected = {
     id: { $cast: 'string' },
     createdAt: { $cast: 'date' },
-    updatedAt: { $cast: 'date' }
+    updatedAt: { $cast: 'date' },
   }
 
   const ret = schema(type)
@@ -112,7 +128,7 @@ test('should override base fields in definition', t => {
 
 // Tests -- cast mapping
 
-test('should provide cast mapping', t => {
+test('should provide cast mapping', (t) => {
   const date = new Date('2019-01-18T03:43:52Z')
   const def = {
     id: 'entry',
@@ -123,9 +139,9 @@ test('should provide cast mapping', t => {
       text: 'string',
       age: { $cast: 'integer' },
       author: 'user',
-      comments: { $cast: 'comment[]' }
+      comments: { $cast: 'comment[]' },
     },
-    access: 'auth'
+    access: 'auth',
   }
   const data = [
     {
@@ -135,8 +151,8 @@ test('should provide cast mapping', t => {
       createdAt: date,
       updatedAt: date,
       author: 'maryk',
-      comments: 'comment23'
-    }
+      comments: 'comment23',
+    },
   ]
   const expected = [
     {
@@ -148,8 +164,8 @@ test('should provide cast mapping', t => {
       createdAt: date,
       updatedAt: date,
       author: { id: 'maryk', $ref: 'user' },
-      comments: [{ id: 'comment23', $ref: 'comment' }]
-    }
+      comments: [{ id: 'comment23', $ref: 'comment' }],
+    },
   ]
 
   const mapping = schema(def).mapping
@@ -158,7 +174,7 @@ test('should provide cast mapping', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should set createdAt and updatedAt to now when not set', t => {
+test('should set createdAt and updatedAt to now when not set', (t) => {
   const def = {
     id: 'entry',
     plural: 'entries',
@@ -167,12 +183,12 @@ test('should set createdAt and updatedAt to now when not set', t => {
       id: 'string',
       title: 'string',
       createdAt: 'date',
-      updatedAt: 'date'
-    }
+      updatedAt: 'date',
+    },
   }
   const data = {
     id: 12345,
-    title: 'Entry 1'
+    title: 'Entry 1',
   }
   const before = Date.now()
 
@@ -189,19 +205,19 @@ test('should set createdAt and updatedAt to now when not set', t => {
   t.true((updatedAt as Date).getTime() <= after)
 })
 
-test('should cast id to string', t => {
+test('should cast id to string', (t) => {
   const def = {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
     shape: {
       id: 'string',
-      title: 'string'
-    }
+      title: 'string',
+    },
   }
   const data = {
     id: 35,
-    title: 'Entry 1'
+    title: 'Entry 1',
   }
 
   const mapping = schema(def).mapping
@@ -211,18 +227,18 @@ test('should cast id to string', t => {
   t.is(id, '35')
 })
 
-test('should generate id when not set', t => {
+test('should generate id when not set', (t) => {
   const def = {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
     shape: {
       id: 'string',
-      title: 'string'
-    }
+      title: 'string',
+    },
   }
   const data = {
-    title: 'Entry 1'
+    title: 'Entry 1',
   }
 
   const mapping = schema(def).mapping
@@ -233,15 +249,15 @@ test('should generate id when not set', t => {
   t.true((id as string).length >= 21)
 })
 
-test('should not cast undefined', t => {
+test('should not cast undefined', (t) => {
   const def = {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $cast: 'string', $default: 'Entry with no name' }
+      title: { $cast: 'string', $default: 'Entry with no name' },
     },
-    access: 'auth'
+    access: 'auth',
   }
   const data = undefined
   const expected = undefined
@@ -252,15 +268,15 @@ test('should not cast undefined', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should not cast null', t => {
+test('should not cast null', (t) => {
   const def = {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $cast: 'string', $default: 'Entry with no name' }
+      title: { $cast: 'string', $default: 'Entry with no name' },
     },
-    access: 'auth'
+    access: 'auth',
   }
   const data = null
   const expected = undefined
@@ -271,16 +287,16 @@ test('should not cast null', t => {
   t.deepEqual(ret, expected)
 })
 
-test('should not cast undefined in array', t => {
+test('should not cast undefined in array', (t) => {
   const date = new Date('2019-01-18T03:43:52Z')
   const def = {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $cast: 'string', $default: 'Entry with no name' }
+      title: { $cast: 'string', $default: 'Entry with no name' },
     },
-    access: 'auth'
+    access: 'auth',
   }
   const data = [undefined, { id: 12345, createdAt: date, updatedAt: date }]
   const expected = [
@@ -289,8 +305,8 @@ test('should not cast undefined in array', t => {
       id: '12345',
       title: 'Entry with no name',
       createdAt: date,
-      updatedAt: date
-    }
+      updatedAt: date,
+    },
   ]
 
   const mapping = schema(def).mapping

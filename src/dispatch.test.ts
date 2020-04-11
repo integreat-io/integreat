@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon = require('sinon')
 import { completeExchange } from './utils/exchangeMapping'
-import { InternalDispatch, Exchange, Middleware } from './types'
+import { Middleware } from './types'
 
 import dispatch from './dispatch'
 
@@ -72,6 +72,7 @@ test('should call action handler with exchange, dispatch, getService, and identC
     endpointId: undefined,
     ident,
     meta: {},
+    incoming: false,
   }
 
   await dispatch({ actionHandlers, services, schemas, identConfig })(action)

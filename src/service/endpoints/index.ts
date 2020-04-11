@@ -1,4 +1,5 @@
-import { MapDefinitions, MapOptions, Exchange } from '../../types'
+import { Exchange } from '../../types'
+import { MapDefinitions, MapOptions } from '../types'
 import { EndpointDef, EndpointOptions, Endpoint } from './types'
 import createEndpoint, { PrepareOptions } from './create'
 import compareEndpoints from './compare'
@@ -22,5 +23,5 @@ export default function getEndpointMapper(
     )
 
   return (exchange: Exchange): Endpoint | undefined =>
-    endpoints.find(endpoint => endpoint.isMatch(exchange))
+    endpoints.find((endpoint) => endpoint.isMatch(exchange))
 }

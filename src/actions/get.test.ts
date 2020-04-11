@@ -445,8 +445,7 @@ test('should return error when no getService', async (t) => {
   t.is(ret.status, 'error')
 })
 
-// Authorization not implemented yet
-test.failing('should get only authorized items', async (t) => {
+test('should get only authorized items', async (t) => {
   const date = new Date()
   nock('http://api9.test')
     .get('/database')
@@ -478,25 +477,19 @@ test.failing('should get only authorized items', async (t) => {
   const svc = setupService('http://api9.test/database', {}, { id: 'accounts' })
   const getService = (_type?: string | string[], service?: string) =>
     service === 'accounts' ? svc : null
-  const expected = {
-    ...exchange,
-    status: 'ok',
-    response: {
-      data: [
-        {
-          $type: 'account',
-          id: 'johnf',
-          name: 'John F.',
-          createdAt: date,
-          updatedAt: date,
-        },
-      ],
+  const expectedData = [
+    {
+      $type: 'account',
+      id: 'johnf',
+      name: 'John F.',
+      createdAt: date,
+      updatedAt: date,
     },
-    ident,
-    // access: { status: 'partially', scheme: 'data' },
-  }
+  ]
 
   const ret = await get(exchange, dispatch, getService)
 
-  t.deepEqual(ret, expected)
+  t.is(ret.status, 'ok', ret.response.error)
+  const data = ret.response.data
+  t.deepEqual(data, expectedData)
 })

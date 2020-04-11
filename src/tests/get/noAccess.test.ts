@@ -17,7 +17,7 @@ test.after.always(() => {
 
 // Tests
 
-test('should respond with noaccess when no ident', async t => {
+test('should respond with noaccess when no ident', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
   const adapters = { json }
@@ -26,7 +26,7 @@ test('should respond with noaccess when no ident', async t => {
     .reply(200, { data: { ...johnfData, createdAt, updatedAt } })
   const action = {
     type: 'GET',
-    payload: { id: 'johnf', type: 'user' }
+    payload: { id: 'johnf', type: 'user' },
   }
 
   const great = Integreat.create(defs, { adapters })
@@ -37,7 +37,7 @@ test('should respond with noaccess when no ident', async t => {
   t.falsy(ret.data)
 })
 
-test.failing('should respond with only authorized data', async t => {
+test('should respond with only authorized data', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
   const adapters = { json }
@@ -46,18 +46,16 @@ test.failing('should respond with only authorized data', async t => {
     .reply(200, {
       data: [
         { ...johnfData, createdAt, updatedAt },
-        { ...bettyData, createdAt, updatedAt }
-      ]
+        { ...bettyData, createdAt, updatedAt },
+      ],
     })
   const action = {
     type: 'GET',
     payload: { type: 'user' },
-    meta: { ident: { id: 'johnf' } }
+    meta: { ident: { id: 'johnf' } },
   }
   const expectedAccess = {
-    status: 'partially',
     ident: { id: 'johnf' },
-    scheme: 'data'
   }
 
   const great = Integreat.create(defs, { adapters })

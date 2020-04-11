@@ -300,7 +300,7 @@ test('should skip null values in data array', async (t) => {
   t.is(ret.status, 'noaction')
 })
 
-// Waiting for solution to authentication
+// Waiting for removal of $type to service
 test.failing(
   'should only delete items the ident is authorized to',
   async (t) => {

@@ -309,7 +309,7 @@ test('should return error when specified service does not exist', async (t) => {
   t.is(ret.response.error, "Service with id 'entries' does not exist")
 })
 
-// Waiting for authentication to service
+// Waiting for removal of $type to service
 test.failing('should authenticate items', async (t) => {
   const scope = nock('http://api6.test')
     .post('/database/_bulk_docs', {
