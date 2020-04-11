@@ -5,10 +5,10 @@ import {
   Dispatch,
   InternalDispatch,
   Exchange,
-  IdentConfig,
   Middleware,
   Action,
 } from './types'
+import { IdentConfig } from './service/types'
 import {
   exchangeFromAction,
   responseFromExchange,
@@ -54,11 +54,8 @@ const wrapDispatch = (internalDispatch: InternalDispatch): Dispatch =>
     if (!action) {
       return { status: 'noaction', error: 'Dispatched no action' }
     }
-    const incoming = action.type === 'REQUEST'
-    const exchange = await internalDispatch(
-      exchangeFromAction(action, incoming)
-    )
-    return responseFromExchange(exchange, incoming)
+    const exchange = await internalDispatch(exchangeFromAction(action))
+    return responseFromExchange(exchange)
   }
 
 interface Resources {

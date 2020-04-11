@@ -4,6 +4,7 @@ import jsonAdapter from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
+import { Data } from '../../types'
 
 import Integreat from '../..'
 
@@ -18,7 +19,7 @@ const entry1Item = {
   id: 'ent1',
   title: 'Entry 1',
   createdAt: new Date(date),
-  updatedAt: new Date(date)
+  updatedAt: new Date(date),
 }
 
 const entry1Mapped = {
@@ -27,18 +28,18 @@ const entry1Mapped = {
   originalTitle: 'Entry 1',
   createdAt: date,
   updatedAt: date,
-  sections: []
+  sections: [],
 }
 
 // Tests
 
-test('should set data with request mapping', async t => {
+test('should set data with request mapping', async (t) => {
   const requestData = {
     content: {
       items: [entry1Mapped],
       footnote: '',
-      meta: '{"datatype":"entry"}'
-    }
+      meta: '{"datatype":"entry"}',
+    },
   }
   nock('http://some.api')
     .put('/entries/ent1', requestData)
@@ -46,25 +47,25 @@ test('should set data with request mapping', async t => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
-    meta: { ident: { root: true } }
+    meta: { ident: { root: true } },
   }
   const resources = {
     adapters: { json },
     transformers: {
-      stringify: () => value => JSON.stringify(value)
-    }
+      stringify: () => (value: Data) => JSON.stringify(value),
+    },
   }
   const toMapping = [
     'data',
     {
       data: 'content.items[]',
       none0: ['content.footnote', { $transform: 'fixed', value: '' }],
-      type: [
+      'params.type': [
         'content.meta',
         { $transform: 'stringify', $direction: 'rev' },
-        'datatype'
-      ]
-    }
+        'datatype',
+      ],
+    },
   ]
   const defs = {
     schemas: [entrySchema],
@@ -74,12 +75,12 @@ test('should set data with request mapping', async t => {
         endpoints: [
           {
             toMapping,
-            options: { uri: '/entries/{id}' }
-          }
-        ]
-      }
+            options: { uri: '/entries/{id}' },
+          },
+        ],
+      },
     ],
-    mappings: [entriesMapping]
+    mappings: [entriesMapping],
   }
 
   const great = Integreat.create(defs, resources)

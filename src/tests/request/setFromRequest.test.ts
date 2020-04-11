@@ -20,7 +20,7 @@ const serializeData = ({
   createdAt,
   updatedAt,
   authorId,
-  sections
+  sections,
 }) => ({
   key,
   headline,
@@ -29,15 +29,15 @@ const serializeData = ({
   createdAt: new Date(createdAt),
   updatedAt: new Date(updatedAt),
   authorId,
-  sections
+  sections,
 })
 
 // Tests
 
-test.failing('should dispatch set action and return respons', async t => {
+test('should dispatch set action and return respons', async (t) => {
   const send = sinon.stub().resolves({
     status: 'ok',
-    data: { data: { ...ent1Data, createdAt, updatedAt } }
+    data: { data: { ...ent1Data, createdAt, updatedAt } },
   })
   const resources = { adapters: { json: { ...json, send } } }
   const action = {
@@ -48,17 +48,17 @@ test.failing('should dispatch set action and return respons', async t => {
         key: 'ent1',
         headline: 'Entry 1',
         createdAt: createdAt,
-        updatedAt: updatedAt
+        updatedAt: updatedAt,
       },
-      requestMethod: 'POST' // TODO: How to map this to Exchange?
+      requestMethod: 'POST',
     },
-    meta: { ident: { root: true } }
+    meta: { ident: { root: true } },
   }
   const expectedRequestParams = {
     type: 'entry',
     // onlyMappedValues: true, // TODO: Figure out how this should be implemented
-    params: undefined,
-    id: 'ent1'
+    requestMethod: 'POST',
+    id: 'ent1',
   }
   const expectedRequestData = JSON.stringify({
     key: 'ent1',
@@ -66,7 +66,7 @@ test.failing('should dispatch set action and return respons', async t => {
     originalTitle: 'Entry 1',
     createdAt: createdAt,
     updatedAt: updatedAt,
-    sections: []
+    sections: [],
   })
   const expectedResponseData = serializeData({
     key: 'ent1',
@@ -75,15 +75,15 @@ test.failing('should dispatch set action and return respons', async t => {
     authorId: { id: 'johnf', $ref: 'user' },
     sections: [
       { id: 'news', $ref: 'section' },
-      { id: 'sports', $ref: 'section' }
+      { id: 'sports', $ref: 'section' },
     ],
     createdAt,
-    updatedAt
+    updatedAt,
   })
   const expectedResponse = {
     status: 'ok',
     data: expectedResponseData,
-    access: { ident: { root: true } } // status: 'granted', scheme: 'data'
+    access: { ident: { root: true } },
   }
 
   const great = Integreat.create(defs, resources)

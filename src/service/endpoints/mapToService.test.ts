@@ -205,8 +205,42 @@ test('should map data to service with no specified type', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should map incoming exchange to service', (t) => {
+  const toMapper = createMapper('content.data', mapOptions, true)
+  const incomingExchange = {
+    ...exchange,
+    request: { type: 'entry' },
+    response: {
+      data: exchange.request.data,
+    },
+    incoming: true,
+  }
+  const expected = {
+    ...incomingExchange,
+    response: {
+      data: {
+        content: {
+          data: {
+            items: [
+              { key: 'ent1', header: 'Entry 1', one: 1, two: undefined },
+              { key: 'ent2', header: 'Entry 2', one: 1, two: undefined },
+            ],
+          },
+        },
+      },
+    },
+  }
+
+  const ret = mapToService(toMapper, mappings)(incomingExchange)
+
+  t.deepEqual(ret, expected)
+})
+
 test.failing('should map to service when one is array', (t) => {
-  const mappings = prepareMappings({ entry: 'entry2', account: 'account' }, mapOptions)
+  const mappings = prepareMappings(
+    { entry: 'entry2', account: 'account' },
+    mapOptions
+  )
   const toMapper = null
   const exchangeWithTypes = {
     ...exchange,

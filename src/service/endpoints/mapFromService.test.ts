@@ -179,7 +179,7 @@ test('should not map data with no corresponding type mapping', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should map with all types on the service when exchange has no type', (t) => {
+test('should return raw data when exchange has no type', (t) => {
   const fromMapper = createMapper('content.data', mapOptions)
   const exchangeNoType = {
     ...exchange,
@@ -211,7 +211,7 @@ test('should return undefined when mapping from non-existing path', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should map response object with fromMapping', (t) => {
+test('should map exchange props with fromMapping', (t) => {
   const fromMapper = createMapper(
     {
       data: 'data.content',
@@ -238,7 +238,7 @@ test('should map response object with fromMapping', (t) => {
   t.is(ret.status, 'badrequest')
   t.is(ret.response.error, "You can't do it like this")
   t.is((ret.response.data as TypedData[]).length, 1)
-  t.is(ret.response.params?.id, '7839')
+  t.is(ret.request.id, '7839')
 })
 
 test('should keep response props not overriden by mapping', (t) => {
@@ -321,6 +321,62 @@ test('should map paging with fromMapping', (t) => {
   const ret = mapFromService(fromMapper, mappings)(exchangeWithPaging)
 
   t.deepEqual(ret.response.paging, expectedPaging)
+})
+
+test('should map incoming request with mappings', (t) => {
+  const mappings = prepareMappings({ entry: 'entry' }, mapOptions)
+  const fromMapper = createMapper('content', mapOptions)
+  const incomingExchange = {
+    ...exchange,
+    request: {
+      type: 'entry',
+      data: {
+        content: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+      },
+    },
+    response: {},
+    incoming: true,
+  }
+
+  const ret = mapFromService(fromMapper, mappings)(incomingExchange)
+
+  const data = ret.request.data as TypedData[]
+  t.is(data.length, 1)
+  t.is(data[0].$type, 'entry')
+  t.is(data[0].id, 'ent1')
+  t.is(data[0].title, 'Entry 1')
+})
+
+test('should map incoming request object with fromMapping', (t) => {
+  const fromMapper = createMapper(
+    {
+      data: 'data.content',
+      status: 'data.result',
+      error: 'data.message',
+      'params.id': 'data.key',
+    },
+    mapOptions
+  )
+  const incomingExchange = {
+    ...exchange,
+    request: {
+      type: 'entry',
+      data: {
+        content: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+        key: '7839',
+        result: 'badrequest',
+        message: "You can't do it like this",
+      },
+    },
+    incoming: true,
+  }
+
+  const ret = mapFromService(fromMapper, mappings)(incomingExchange)
+
+  t.is(ret.status, 'badrequest')
+  t.is((ret.request.data as TypedData[]).length, 1)
+  t.is(ret.request.id, '7839')
+  t.is(ret.response.error, "You can't do it like this")
 })
 
 test.todo('should cast one item to array') // Or not ...?

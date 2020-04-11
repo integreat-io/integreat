@@ -52,8 +52,8 @@ export default {
       match: {
         action: 'REQUEST',
         filters: {
-          data: { type: 'object', required: ['key'] },
-          'request.requestMethod': { const: 'GET' },
+          'request.data': { type: 'object', required: ['key'] },
+          'request.params.requestMethod': { const: 'GET' },
         },
       },
       fromMapping: [
@@ -68,7 +68,7 @@ export default {
         action: 'REQUEST',
         filters: {
           'request.type': { const: 'entry' },
-          'request.requestMethod': { const: 'POST' },
+          'request.params.requestMethod': { const: 'POST' },
         },
       },
       options: { actionType: 'SET', actionPayload: { type: 'entry' } },

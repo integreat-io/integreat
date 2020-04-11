@@ -21,7 +21,7 @@ const serializeData = ({
   createdAt,
   updatedAt,
   authorId,
-  sections
+  sections,
 }) =>
   JSON.stringify({
     key,
@@ -31,7 +31,7 @@ const serializeData = ({
     createdAt,
     updatedAt,
     authorId,
-    sections
+    sections,
   })
 
 test.after.always(() => {
@@ -40,21 +40,22 @@ test.after.always(() => {
 
 // Tests
 
-test.failing('should dispatch get action and return respons', async t => {
+// Waiting for a replacement for adapter.serialize and adapter.normalize
+test.failing('should dispatch get action and return respons', async (t) => {
   const send = sinon.stub().resolves({
     status: 'ok',
-    data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } })
+    data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),
   })
   const resources = { adapters: { json: { ...json, send } } }
   const action = {
     type: 'REQUEST',
     payload: { type: 'entry', data: '{"key":"ent1"}', requestMethod: 'GET' },
-    meta: { ident: { id: 'johnf' } }
+    meta: { ident: { id: 'johnf' } },
   }
   const expectedRequestParams = {
     type: 'entry',
     id: 'ent1',
-    onlyMappedValues: false
+    onlyMappedValues: false,
   }
   const expectedResponseData = serializeData({
     key: 'ent1',
@@ -63,23 +64,23 @@ test.failing('should dispatch get action and return respons', async t => {
     authorId: { id: 'johnf', $ref: 'user' },
     sections: [
       { id: 'news', $ref: 'section' },
-      { id: 'sports', $ref: 'section' }
+      { id: 'sports', $ref: 'section' },
     ],
     createdAt,
-    updatedAt
+    updatedAt,
   })
   const expectedResponse = {
     status: 'ok',
     data: expectedResponseData,
-    access: { status: 'granted', ident: { id: 'johnf' }, scheme: 'data' }
+    access: { ident: { id: 'johnf' } },
   }
 
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
+  t.deepEqual(ret, expectedResponse)
   t.is(send.callCount, 1)
   const sentRequest = send.args[0][0]
   t.is(sentRequest.action, 'GET')
   t.deepEqual(sentRequest.params, expectedRequestParams)
-  t.deepEqual(ret, expectedResponse)
 })

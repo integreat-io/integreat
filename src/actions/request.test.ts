@@ -3,7 +3,8 @@ import sinon = require('sinon')
 import setupService from '../service'
 import schema from '../schema'
 import jsonAdapter from 'integreat-adapter-json'
-import { completeExchange } from '../utils/exchangeMapping'
+import { completeExchange, responseToExchange } from '../utils/exchangeMapping'
+import { DataObject } from '../types'
 
 import request from './request'
 
@@ -14,7 +15,7 @@ const json = jsonAdapter()
 const schemas = {
   entry: schema({
     id: 'entry',
-    plural: 'entries',
+    service: 'entries',
     shape: {
       title: 'string',
       one: { $cast: 'integer', $default: 1 },
@@ -50,51 +51,100 @@ const mapOptions = {
 
 // Tests
 
-test.failing(
-  'should dispatch action from options and map response',
-  async (t) => {
-    const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
-    const service = setupService({ mapOptions, schemas })({
-      id: 'entries',
-      endpoints: [
-        {
-          match: { action: 'REQUEST' },
-          fromMapping: { 'params.id': 'data.items[0].key' },
-          options: {
-            actionType: 'GET',
-            actionPayload: { type: 'entry' },
-            actionMeta: { project: 'project1' },
-          },
+test('should dispatch action from options and map response', async (t) => {
+  const service = setupService({ mapOptions, schemas })({
+    id: 'entries',
+    adapter: json,
+    mappings: { entry: 'entry' },
+    endpoints: [
+      {
+        match: { action: 'REQUEST' },
+        fromMapping: { 'params.id': 'data.items[0].key' },
+        options: {
+          actionType: 'GET',
+          actionPayload: { type: 'entry' },
+          actionMeta: { project: 'project1' },
         },
-      ],
-      adapter: json,
-    })
-    const getService = (type?: string | string[], _serviceId?: string) =>
-      type === 'hook' ? service : undefined
-    const exchange = completeExchange({
-      type: 'REQUEST',
-      request: { type: 'hook' },
-      response: {
-        data: { items: [{ key: 'ent1' }] },
       },
-      ident: { id: 'johnf' },
-    })
-    const expected = {
-      type: 'GET',
-      payload: {
-        id: 'ent1',
-        type: 'entry',
+    ],
+  })
+  const getService = (type?: string | string[], _serviceId?: string) =>
+    type === 'entry' ? service : undefined
+  const exchange = completeExchange({
+    type: 'REQUEST',
+    request: { type: 'entry', data: { items: [{ key: 'ent1' }] } },
+    ident: { id: 'johnf' },
+    incoming: true,
+  })
+  const expected = completeExchange({
+    type: 'GET',
+    request: {
+      id: 'ent1',
+      type: 'entry',
+      data: [],
+    },
+    ident: { id: 'johnf' },
+    meta: { project: 'project1' },
+  })
+  const dispatch = sinon
+    .stub()
+    .resolves(responseToExchange(expected, { status: 'ok', data: [] }))
+
+  const ret = await request(exchange, dispatch, getService)
+
+  t.deepEqual(ret.status, 'ok')
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expected)
+})
+
+test('should return exchange mapped to service', async (t) => {
+  const service = setupService({ mapOptions, schemas })({
+    id: 'entries',
+    adapter: json,
+    mappings: { entry: 'entry' },
+    endpoints: [
+      {
+        match: { action: 'REQUEST' },
+        fromMapping: { 'params.id': 'data.items[0].key' },
+        options: {
+          actionType: 'GET',
+          actionPayload: { type: 'entry' },
+          actionMeta: { project: 'project1' },
+        },
       },
-      meta: { ident: { id: 'johnf' }, project: 'project1' },
-    }
+    ],
+  })
+  const getService = (type?: string | string[], _serviceId?: string) =>
+    type === 'entry' ? service : undefined
+  const exchange = completeExchange({
+    type: 'REQUEST',
+    request: { type: 'entry', data: { items: [{ key: 'ent1' }] } },
+    ident: { id: 'johnf' },
+    incoming: true,
+  })
+  const response = completeExchange({
+    type: 'GET',
+    status: 'ok',
+    request: {
+      id: 'ent1',
+      type: 'entry',
+    },
+    response: {
+      data: [{ $type: 'entry', id: 'ent1', title: 'Entry 1' }],
+    },
+    ident: { id: 'johnf' },
+    meta: { project: 'project1' },
+  })
+  const dispatch = sinon.stub().resolves(response)
 
-    const ret = await request(exchange, dispatch, getService)
+  const ret = await request(exchange, dispatch, getService)
 
-    t.deepEqual(ret.status, 'ok', ret.response.error)
-    t.is(dispatch.callCount, 1)
-    t.deepEqual(dispatch.args[0][0], expected)
-  }
-)
+  t.is(ret.status, 'ok', ret.response.error)
+  const items = (ret.response.data as DataObject).items as DataObject[]
+  t.is(items.length, 1)
+  t.is(items[0].key, 'ent1')
+  t.is(items[0].header, 'Entry 1')
+})
 
 // Waiting for solution to unmappedOnly
 test.failing(
@@ -103,22 +153,22 @@ test.failing(
     const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
     const service = setupService({ mapOptions, schemas })({
       id: 'entries',
+      adapter: json,
+      mappings: { entry: 'entry' },
       endpoints: [
         {
           match: { action: 'REQUEST' },
           options: { actionType: 'SET', actionPayload: { type: 'hook' } },
         },
       ],
-      adapter: json,
-      mappings: { entry: 'entry' },
     })
     const getService = () => service
     const exchange = completeExchange({
       type: 'REQUEST',
       request: {
         type: 'entry',
+        data: { items: [{ key: 'ent1', header: 'Entry 1' }] },
       },
-      response: { data: { items: [{ key: 'ent1', header: 'Entry 1' }] } },
       ident: { id: 'johnf' },
       meta: { project: 'project1' },
     })
@@ -162,6 +212,8 @@ test.failing('should respond with mapped data', async (t) => {
   })
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
+    adapter: json,
+    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -170,14 +222,11 @@ test.failing('should respond with mapped data', async (t) => {
         options: { actionType: 'GET', actionPayload: { type: 'entry' } },
       },
     ],
-    adapter: json,
-    mappings: { entry: 'entry' },
   })
   const getService = () => service
   const exchange = completeExchange({
     type: 'REQUEST',
-    request: { type: 'entry' },
-    response: { data: '{"key":"ent1"}' },
+    request: { type: 'entry', data: '{"key":"ent1"}' },
     ident: { id: 'johnf' },
   })
   const expectedResponse = {
@@ -196,6 +245,8 @@ test('should use type from request action if not set on endpoint', async (t) => 
   const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
+    adapter: json,
+    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -203,23 +254,24 @@ test('should use type from request action if not set on endpoint', async (t) => 
         options: { actionType: 'GET' },
       },
     ],
-    adapter: json,
   })
   const getService = () => service
   const exchange = completeExchange({
     type: 'REQUEST',
-    request: { type: 'entry' },
-    response: { data: { items: [{ key: 'ent1' }] } },
+    request: { type: 'entry', data: { items: [{ key: 'ent1' }] } },
+    response: {},
     ident: { id: 'johnf' },
+    incoming: true,
   })
-  const expected = {
+  const expected = completeExchange({
     type: 'GET',
-    payload: {
+    request: {
       id: 'ent1',
       type: 'entry',
+      data: [],
     },
-    meta: { ident: { id: 'johnf' } },
-  }
+    ident: { id: 'johnf' },
+  })
 
   await request(exchange, dispatch, getService)
 
@@ -235,6 +287,8 @@ test('should respond with noaction when no action type is set on endpoint', asyn
   })
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
+    adapter: json,
+    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -242,14 +296,11 @@ test('should respond with noaction when no action type is set on endpoint', asyn
         toMapping: { 'data.items': 'content.entries' },
       },
     ],
-    adapter: json,
-    mappings: { entry: 'entry' },
   })
   const getService = () => service
   const exchange = completeExchange({
     type: 'REQUEST',
-    request: { type: 'entry' },
-    response: { data: '{"key":"ent1"}' },
+    request: { type: 'entry', data: '{"key":"ent1"}' },
     ident: { id: 'johnf' },
   })
 
@@ -264,11 +315,12 @@ test('should respond with noaction when no endpoint matches', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     adapter: json,
+    mappings: { entry: 'entry' },
   })
   const getService = () => service
   const exchange = completeExchange({
     type: 'REQUEST',
-    response: { data: { items: [{ key: 'ent1' }] } },
+    request: { data: { items: [{ key: 'ent1' }] } },
     ident: { id: 'johnf' },
   })
 
@@ -290,6 +342,8 @@ test.failing('should map and pass on error from dispatch', async (t) => {
   })
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
+    adapter: json,
+    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -303,14 +357,11 @@ test.failing('should map and pass on error from dispatch', async (t) => {
         options: { actionType: 'GET', actionPayload: { type: 'entry' } },
       },
     ],
-    adapter: json,
-    mappings: { entry: 'entry' },
   })
   const getService = () => service
   const exchange = completeExchange({
     type: 'REQUEST',
-    request: { type: 'entry' },
-    response: { data: { key: 'ent1' } },
+    request: { type: 'entry', data: { key: 'ent1' } },
     ident: { id: 'johnf' },
   })
   const expectedResponse = {
@@ -327,10 +378,12 @@ test.failing('should map and pass on error from dispatch', async (t) => {
 
 test.todo('should run options through adapter.prepareOptions')
 
-test.failing('should get service by service id', async (t) => {
+test('should get service by service id', async (t) => {
   const dispatch = async () => ({ status: 'ok', data: [] })
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
+    adapter: json,
+    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -340,15 +393,14 @@ test.failing('should get service by service id', async (t) => {
         },
       },
     ],
-    adapter: json,
   })
   const getService = (_type?: string | string[], serviceId?: string) =>
     serviceId === 'entries' ? service : undefined
   const exchange = completeExchange({
     type: 'REQUEST',
-    request: { service: 'entries', type: 'hook' },
-    response: { data: 'ent1' },
+    request: { service: 'entries', type: 'entry', data: 'ent1' },
     ident: { id: 'johnf' },
+    incoming: true,
   })
 
   const ret = await request(exchange, dispatch, getService)
@@ -361,17 +413,14 @@ test('should return error on unknown service', async (t) => {
   const dispatch = async () => ({ status: 'ok' })
   const exchange = completeExchange({
     type: 'REQUEST',
-    request: { type: 'entry' },
-    response: { data: '{"key":"ent1"}' },
+    request: { type: 'entry', data: '{"key":"ent1"}' },
     ident: { id: 'johnf' },
+    incoming: true,
   })
-  const expectedResponse = {
-    error: "No service exists for type 'entry'",
-    data: '{"key":"ent1"}',
-  }
 
   const ret = await request(exchange, dispatch, getService)
 
   t.is(ret.status, 'error')
-  t.deepEqual(ret.response, expectedResponse)
+  t.is(ret.response.error, "No service exists for type 'entry'")
+  t.is(ret.request.data, '{"key":"ent1"}')
 })

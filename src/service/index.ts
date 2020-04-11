@@ -131,7 +131,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
     mapToService(exchange: Exchange): Exchange {
       const { endpoint } = exchange
       if (!endpoint) {
-        return exchange.status
+        return exchange.status && exchange.status !== 'ok'
           ? exchange
           : createError(exchange, 'No endpoint provided')
       }

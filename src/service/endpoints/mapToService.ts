@@ -1,51 +1,68 @@
 import { MapTransform } from 'map-transform'
+import { Exchange, Dictionary, DataObject } from '../../types'
 import {
-  Exchange,
-  ExchangeRequest,
-  Dictionary,
-  Data,
-  TypedData
-} from '../../types'
+  mappingObjectFromExchange,
+  exchangeFromMappingObject,
+  MappingObject,
+} from '../../utils/exchangeMapping'
 import { Mappings } from './create'
 
-const mapOneType = (items: TypedData[], type: string, mappings: Mappings) => {
+const mapOneType = (
+  mappingObject: MappingObject,
+  type: string,
+  mappings: Mappings
+) => {
   const mapping =
     type && mappings.hasOwnProperty(type) ? mappings[type] : undefined // eslint-disable-line security/detect-object-injection
   return mapping && typeof mapping.rev === 'function'
-    ? mapping.rev(items)
+    ? mapping.rev(mappingObject)
     : undefined
 }
 
 const mapByType = (
-  request: ExchangeRequest,
+  mapObject: MappingObject,
   type: string | string[],
   mappings: Mappings
 ) =>
   Array.isArray(type)
     ? type.reduce(
-        (target, type) => ({
+        (target, aType) => ({
           ...target,
-          ...mapOneType(request, type, mappings)
+          ...mapOneType(mapObject, aType, mappings),
         }),
-        {} as Data
+        {} as DataObject
       )
-    : mapOneType(request, type, mappings)
+    : mapOneType(mapObject, type, mappings)
 
 export default function mapToService(
   toMapper: MapTransform | null,
   mappings: Dictionary<MapTransform>
 ) {
   return (exchange: Exchange) => {
-    const { type } = exchange.request
-    const data = type
-      ? mapByType(exchange.request, type, mappings)
-      : exchange.request.data
-    const request = toMapper
-      ? toMapper.rev({
-          ...exchange,
-          request: { ...exchange.request, data }
-        })
-      : { ...exchange.request, data }
-    return { ...exchange, request: { ...exchange.request, ...request } }
+    const mappingObject = mappingObjectFromExchange(exchange, true)
+
+    if (exchange.request.type) {
+      mappingObject.data = mapByType(
+        mappingObject,
+        exchange.request.type,
+        mappings
+      )
+    }
+    if (typeof toMapper?.rev === 'function') {
+      const mapped = toMapper.rev(mappingObject)
+      if (typeof mapped === 'object' && mapped !== null) {
+        mappingObject.data = mapped.data
+        mappingObject.status = mapped.status || mappingObject.status
+        mappingObject.error = mapped.error || mappingObject.error
+        if (mapped.hasOwnProperty('params')) {
+          mappingObject.params = mapped.params
+        }
+        if (mapped.hasOwnProperty('paging')) {
+          mappingObject.paging = mapped.paging
+        }
+      }
+    }
+
+    return exchangeFromMappingObject(exchange, mappingObject, true)
   }
 }

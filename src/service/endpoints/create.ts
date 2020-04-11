@@ -25,18 +25,9 @@ export interface PrepareOptions {
 const pathOrMapping = (mapping?: MapDefinition) =>
   typeof mapping === 'string' ? [`data.${mapping}`, set('data')] : mapping
 
-const wrapWithPath = (mapping: MapDefinition, to: boolean) =>
-  to ? [mapping, set('request')] : ['response', mapping]
-
-export function createMapper(
-  mapping?: MapDefinition,
-  mapOptions?: MapOptions,
-  to = false
-) {
+export function createMapper(mapping?: MapDefinition, mapOptions?: MapOptions) {
   const preparedMapping = pathOrMapping(mapping)
-  return preparedMapping
-    ? mapTransform(wrapWithPath(preparedMapping, to), mapOptions)
-    : null
+  return preparedMapping ? mapTransform(preparedMapping, mapOptions) : null
 }
 
 const mappingFromDef = (def: MapDefinition | undefined) =>
@@ -90,8 +81,8 @@ export default function createEndpoint(
   prepareOptions: PrepareOptions = (options) => options
 ) {
   return (endpointDef: EndpointDef): Endpoint => {
-    const fromMapper = createMapper(endpointDef.fromMapping, mapOptions, false)
-    const toMapper = createMapper(endpointDef.toMapping, mapOptions, true)
+    const fromMapper = createMapper(endpointDef.fromMapping, mapOptions)
+    const toMapper = createMapper(endpointDef.toMapping, mapOptions)
     const mappings = prepareMappings(
       { ...serviceMappings, ...endpointDef.mappings },
       mapOptions

@@ -1,10 +1,10 @@
 import debugLib = require('debug')
 import pPipe = require('p-pipe')
-import { responseToExchange } from '../utils/exchangeMapping'
 import createError from '../utils/createError'
-import { Exchange, Dispatch, Payload, Meta } from '../types'
+import { Exchange, InternalDispatch, DataObject, Meta } from '../types'
 import { GetService } from '../dispatch'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
+import { completeExchange } from '../utils/exchangeMapping'
 
 const debug = debugLib('great')
 
@@ -21,19 +21,27 @@ const ensureActionType = (serviceId?: string) =>
     }
   }
 
-const createNextAction = (exchange: Exchange) => ({
-  type: exchange.endpoint?.options.actionType as string,
-  payload: {
-    type: exchange.request.type,
-    ...(exchange.endpoint?.options.actionPayload as Payload),
-    ...exchange.response.params,
-    ...(exchange.response.data ? { data: exchange.response.data } : {}),
-  },
-  meta: {
-    ...exchange.meta,
+const exchangeToDispatch = (exchange: Exchange) =>
+  completeExchange({
+    type: exchange.endpoint?.options.actionType as string,
+    request: {
+      ...exchange.request,
+      type: exchange.request.type,
+      ...(exchange.endpoint?.options.actionPayload as DataObject),
+      ...exchange.request.params,
+      ...(exchange.request.data ? { data: exchange.request.data } : {}),
+    },
     ident: exchange.ident,
-    ...(exchange.endpoint?.options.actionMeta as Meta),
-  },
+    meta: {
+      ...exchange.meta,
+      ...(exchange.endpoint?.options.actionMeta as Meta),
+    },
+  })
+
+const exchangeToReturn = (exchange: Exchange, response: Exchange) => ({
+  ...exchange,
+  status: response.status || exchange.status,
+  response: response.response || exchange.response,
 })
 
 /**
@@ -41,10 +49,9 @@ const createNextAction = (exchange: Exchange) => ({
  */
 export default async function request(
   exchange: Exchange,
-  dispatch: Dispatch,
+  dispatch: InternalDispatch,
   getService: GetService
 ): Promise<Exchange> {
-  const isRev = true
   const {
     request: { service: serviceId, type },
     endpoint,
@@ -79,7 +86,7 @@ export default async function request(
     return nextExchange
   }
 
-  const nextAction = createNextAction(nextExchange)
-  const response = await dispatch(nextAction)
-  return service.mapToService(responseToExchange(nextExchange, response, isRev))
+  const responseExchange = await dispatch(exchangeToDispatch(nextExchange))
+
+  return service.mapToService(exchangeToReturn(nextExchange, responseExchange))
 }
