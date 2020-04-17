@@ -78,7 +78,7 @@ declare namespace integreat {
   export interface Queue {
     queue: object,
     setDispatch: (dispatch: Dispatch) => Promise<void>,
-    middleware: (next: Middleware) => Response,
+    middleware: (next: Middleware) => Dispatch,
     schedule: (schedule: object) => Response
   }
 
@@ -87,7 +87,7 @@ declare namespace integreat {
   }
 
   export interface Middleware {
-    (next: (value: any) => any): any
+    (next: Dispatch): Dispatch
   }
 
   export type DataProperty = string | number | boolean | Date | null
