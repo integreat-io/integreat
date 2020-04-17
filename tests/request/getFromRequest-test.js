@@ -26,10 +26,10 @@ test('should dispatch get action and return respons', async (t) => {
   const resources = { adapters: { json: { ...json(), send } } }
   const action = {
     type: 'REQUEST',
-    payload: { type: 'entry', data: '{"key":"ent1"}', requestMethod: 'GET' },
+    payload: { type: 'entry', data: '{"key":"ent1"}', requestMethod: 'GET', topic: 'sports' },
     meta: { ident: { id: 'johnf' } }
   }
-  const expectedRequestParams = { type: 'entry', id: 'ent1', onlyMappedValues: false }
+  const expectedRequestParams = { type: 'entry', id: 'ent1', onlyMappedValues: false, topic: 'sports' }
   const expectedResponse = {
     status: 'ok',
     data: serializeData({ ...ent1Data, createdAt, updatedAt }),

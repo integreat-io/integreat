@@ -48,7 +48,8 @@ module.exports = {
         }
       },
       responseMapping: {
-        'params.id': 'key'
+        'params.id': 'key',
+        'params.topic': '$params.topic'
       },
       incoming: true,
       options: { actionType: 'GET', actionPayload: { type: 'entry' } }

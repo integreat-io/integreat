@@ -26,13 +26,14 @@ test('should map with response mapping', async (t) => {
     })
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent1' }
+    payload: { type: 'entry', id: 'ent1', topic: 'sports' }
   }
   const responseMapping = {
     status: 'reponseValue',
     data: {
       path: 'responseContent.articles[]'
     },
+    'params.topic': { path: '$params.topic' },
     error: 'responseMessage'
   }
   const defs = {
@@ -46,6 +47,7 @@ test('should map with response mapping', async (t) => {
     }],
     mappings: [entriesMapping]
   }
+  const expectedParams = { topic: 'sports' }
 
   const great = integreat(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -56,6 +58,7 @@ test('should map with response mapping', async (t) => {
   const item = ret.data[0]
   t.is(item.id, 'ent1')
   t.is(item.attributes.title, 'Entry 1')
+  t.deepEqual(ret.params, expectedParams)
 
   nock.restore()
 })
