@@ -28,7 +28,7 @@ other services, and schedule syncs between the store and the other services.
 
 Finally, there will be different interface modules available, that will plug
 into the `dispatch()` function and offer other ways of reaching data from the
-services – such as out of the box REST or GraphQL APSs.
+services – such as out of the box REST or GraphQL APIs.
 
 ```
             _________________
@@ -426,7 +426,7 @@ cast to the right type. E.g. returning `'3'` for an integer is okay, as
 Integreat will cast it with `parseInt()`.
 
 The `param` property is an alternative to specifying a `path`, and refers to a
-param passed to the `retreive` method. Instead of retrieving a value from the
+param passed to the `retrieve` method. Instead of retrieving a value from the
 service data, an attribute or relationship with `param` will get its value from
 the corresponding parameter. When sending data _to_ a service, this
 attribute/relationship will be disregarded.
