@@ -428,18 +428,19 @@ test('sendExchange should connect before sending request', async (t) => {
     { Authorization }: Authentication,
     _connection: Connection | null
   ) => ({ status: 'ok', value, token: Authorization })
-  const adapters = {
-    json: {
-      ...json,
-      connect: connect,
-      send: sinon.stub().resolves({ status: 'ok', data: {} }),
-    },
-  }
-  const service = setupService({ mapOptions, schemas, adapters, auths })({
+  const send = sinon.stub().resolves({ status: 'ok', data: {} })
+  const adapters = { json: { ...json, connect, send } }
+  const service = setupService({
+    mapOptions,
+    schemas,
+    adapters,
+    auths,
+  })({
     id: 'entries',
     endpoints: [
-      { options: { uri: 'http://some.api/1.0', value: 'Value from options' } },
+      { options: { uri: 'http://some.api/1.0', value: 'Value from endpoint' } },
     ],
+    options: { value: 'Value from service' },
     adapter: 'json',
     auth: 'granting',
     mappings: { entry: 'entry' },
@@ -452,15 +453,17 @@ test('sendExchange should connect before sending request', async (t) => {
       authorized: true,
     })
   )
-
-  await service.sendExchange(exchange)
-
-  t.is(adapters.json.send.callCount, 1)
-  t.deepEqual(adapters.json.send.args[0][1], {
+  const expected = {
     status: 'ok',
-    value: 'Value from options',
+    value: 'Value from service',
     token: 'Bearer t0k3n',
-  })
+  }
+
+  const ret = await service.sendExchange(exchange)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.is(send.callCount, 1)
+  t.deepEqual(send.args[0][1], expected)
 })
 
 test('sendExchange should store connection', async (t) => {
@@ -526,7 +529,10 @@ test('sendExchange should return error when connection fails', async (t) => {
   const ret = await service.sendExchange(exchange)
 
   t.is(ret.status, 'error')
-  t.is(ret.response.error, "Could not connect to service 'entries': Not found")
+  t.is(
+    ret.response.error,
+    "Could not connect to service 'entries'. [notfound] Not found"
+  )
 })
 
 test('sendExchange should retrieve error response from service', async (t) => {

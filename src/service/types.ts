@@ -18,6 +18,7 @@ export interface Adapter {
     authentication: object | null,
     connection: Connection | null
   ) => Promise<Connection | null>
+  disconnect: (connection: Connection | null) => Promise<void>
   send: (request: Request, connection: Connection | null) => Promise<Response>
 }
 

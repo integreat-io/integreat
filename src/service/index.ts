@@ -1,4 +1,5 @@
 import EventEmitter = require('events')
+import { CustomFunction } from 'map-transform'
 import prepareEndpointMappers from './endpoints'
 import {
   requestFromExchange,
@@ -6,18 +7,13 @@ import {
 } from '../utils/exchangeMapping'
 import createError from '../utils/createError'
 import { Dictionary, Response, Exchange } from '../types'
-import { Service, ServiceDef, Adapter, MapOptions, Connection } from './types'
-import { CustomFunction } from 'map-transform'
+import { Service, ServiceDef, Adapter, MapOptions } from './types'
+import Connection from './Connection'
 import { Schema } from '../schema'
 import Auth from './Auth'
 import { lookupById } from '../utils/indexUtils'
 import * as authorizeData from './authorize/data'
 import authorizeExchange from './authorize/exchange'
-
-const isConnectionError = (
-  connection: Connection | null
-): connection is Connection =>
-  !!connection && !['ok', 'noaction'].includes(connection.status)
 
 interface Resources {
   adapters?: Dictionary<Adapter>
@@ -66,20 +62,8 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
     adapter.prepareEndpoint
   )
 
-  let connection: Connection | null = null
+  const connection = new Connection(adapter, options)
   const emitter = new EventEmitter()
-
-  // const sendOptions = {
-  //   serviceId,
-  //   schemas,
-  //   adapter,
-  //   auth,
-  //   setConnection: (conn: Connection | null) => {
-  //     connection = conn
-  //   },
-  //   serviceOptions: options,
-  //   emit: emitter.emit.bind(emitter)
-  // }
 
   // Create the service instance
   return {
@@ -163,26 +147,19 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
         }
       }
 
-      const { endpoint: { options = {} } = {} } = exchange
       let response: Response
-
       try {
-        const nextConnection = await adapter.connect(
-          options,
-          exchange.auth || null,
-          connection
-        )
-        if (isConnectionError(nextConnection)) {
-          connection = null
+        if (await connection.connect(exchange.auth)) {
+          const request = await adapter.serialize(requestFromExchange(exchange))
+          response = await adapter.send(request, connection.object)
+          response = await adapter.normalize(response, request)
+        } else {
           return createError(
             exchange,
-            `Could not connect to service '${serviceId}': ${nextConnection.error}`
+            `Could not connect to service '${serviceId}'. [${
+              connection.status
+            }] ${connection.error || ''}`.trim()
           )
-        } else {
-          connection = nextConnection
-          const request = await adapter.serialize(requestFromExchange(exchange))
-          response = await adapter.send(request, connection)
-          response = await adapter.normalize(response, request)
         }
       } catch (error) {
         return createError(
@@ -288,26 +265,3 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
 //   args.request && knownActions.includes(args.request.action)
 //     ? args
 //     : { ...args, response: { status: 'noaction' } }
-
-// export const afterService = composeWithOptions(
-//   awaitAndAssign('response', authorizeResponse),
-//   emitRequestAndResponse('mappedFromService'),
-//   awaitAndAssign('response', mapFromService),
-//   emitRequestAndResponse('mapFromService')
-// )
-//
-// export const sendToService = composeWithOptions(
-//   awaitAndAssign('response', normalizeResponse),
-//   awaitAndAssign('response', sendRequest),
-//   awaitAndAssign(null, connect),
-//   awaitAndAssign(null, authenticate)
-// )
-//
-// export const beforeService = composeWithOptions(
-//   awaitAndAssign(null, serializeRequest),
-//   emitRequestAndResponse('mappedToService'),
-//   awaitAndAssign('request', mapToService),
-//   emitRequestAndResponse('mapToService'),
-//   awaitAndAssign('authorizedRequestData', extractRequestData),
-//   awaitAndAssign(null, authorizeRequest)
-// )
