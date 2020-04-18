@@ -1,20 +1,22 @@
 import { Dictionaries, CustomFunction } from 'map-transform'
+import { Dictionary, Middleware } from './types'
 import {
-  Dictionary,
   MappingDef,
-  SchemaDef,
   ServiceDef,
   IdentConfig,
   Adapter,
-  Middleware
-} from './types'
-import { AuthDef, Auth, Authenticator } from './auth/types'
+  AuthDef,
+  Authenticator,
+} from './service/types'
+import { SchemaDef } from './schema/types'
+import Auth from './service/Auth'
 import builtinActionHandlers from './actions'
 import builtinTransformers from './transformers/builtIns'
 import createSchema, { Schema } from './schema'
 import createService from './service'
 import createMapOptions from './utils/createMapOptions'
-import createAuth from './auth'
+import { lookupById } from './utils/indexUtils'
+// import createAuth from './auth'
 import createDispatch, { ActionHandler } from './dispatch'
 import { indexById, ObjectWithId } from './utils/indexUtils'
 
@@ -44,7 +46,7 @@ export default function create(
     mappings,
     auths: authDefs,
     identConfig,
-    dictionaries
+    dictionaries,
   }: Definitions,
   { adapters, transformers, actionHandlers, authenticators }: Resources,
   middlewares: Middleware[] = []
@@ -71,7 +73,14 @@ export default function create(
   // Setup auths object from auth defs
   const auths = Array.isArray(authDefs)
     ? authDefs
-        .map(auth => createAuth(auth, authenticators))
+        .map(
+          (def) =>
+            new Auth(
+              def.id,
+              lookupById(def.authenticator, authenticators),
+              def.options
+            )
+        )
         .reduce(indexById, {} as Dictionary<Auth>)
     : undefined
 
@@ -83,7 +92,7 @@ export default function create(
         auths,
         transformers, // Provided for validation pipeline only
         schemas,
-        mapOptions
+        mapOptions,
       })
     )
     .reduce(indexById, {} as Dictionary<ObjectWithId>) // TODO: Properly type Service
@@ -94,7 +103,7 @@ export default function create(
     schemas,
     services,
     actionHandlers: { ...builtinActionHandlers, ...actionHandlers },
-    middlewares
+    middlewares,
   })
 
   // Return instance
@@ -102,7 +111,7 @@ export default function create(
     services,
     schemas,
     identType: identConfig && identConfig.type,
-    dispatch
+    dispatch,
 
     // on(eventName, serviceId, listener) {
     //   // eslint-disable-next-line security/detect-object-injection

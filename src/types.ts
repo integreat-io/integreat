@@ -1,4 +1,4 @@
-import { Auth, Authentication } from './auth/types'
+import Auth from './service/Auth'
 import { Endpoint } from './service/endpoints/types'
 
 export interface Dictionary<T> {
@@ -102,7 +102,7 @@ export interface Exchange<ReqData = Data, RespData = Data> {
   request: ExchangeRequest<ReqData>
   response: ExchangeResponse<RespData>
   ident?: Ident
-  auth?: Authentication
+  auth?: object | null
   meta: Meta
   endpointId?: string
   endpoint?: Endpoint

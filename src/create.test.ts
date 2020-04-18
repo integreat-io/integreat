@@ -14,8 +14,8 @@ const services = [
     id: 'entries',
     adapter: 'json',
     mappings: { entry: 'entries_entry' },
-    endpoints: [{ options: { uri: 'http://some.api/entries' } }]
-  }
+    endpoints: [{ options: { uri: 'http://some.api/entries' } }],
+  },
 ]
 
 const schemas = [
@@ -26,17 +26,17 @@ const schemas = [
       title: 'string',
       text: 'string',
       sections: 'string[]',
-      author: 'user'
+      author: 'user',
     },
-    access: 'all'
+    access: 'all',
   },
   {
     id: 'article',
     shape: {
-      title: 'string'
+      title: 'string',
     },
-    access: 'all'
-  }
+    access: 'all',
+  },
 ]
 
 const mappings = [
@@ -52,29 +52,29 @@ const mappings = [
         'sections[]': ['type', { $transform: 'map', dictionary: 'section' }],
         unknown: [],
         author: 'creator',
-        createdAt: 'date'
+        createdAt: 'date',
       },
-      { $apply: 'cast_entry' }
-    ]
-  }
+      { $apply: 'cast_entry' },
+    ],
+  },
 ]
 
 const dictionaries = {
-  section: [['newsitem', 'news'] as const, ['fashionblog', 'fashion'] as const]
+  section: [['newsitem', 'news'] as const, ['fashionblog', 'fashion'] as const],
 }
 
 const transformers = {
   exclamate: () => (value: Data) =>
-    typeof value === 'string' ? `${value}!` : value
+    typeof value === 'string' ? `${value}!` : value,
 }
 
 const adapters = {
-  json
+  json,
 }
 
 // Tests
 
-test('should return object with dispatch, schemas, services, and identType', t => {
+test('should return object with dispatch, schemas, services, and identType', (t) => {
   const identConfig = { type: 'account' }
   const great = create({ services, schemas, identConfig }, { adapters })
 
@@ -86,19 +86,19 @@ test('should return object with dispatch, schemas, services, and identType', t =
   t.is(great.identType, 'account')
 })
 
-test('should throw when no services', t => {
+test('should throw when no services', (t) => {
   t.throws(() => {
     create({ schemas } as any, { adapters })
   })
 })
 
-test('should throw when no schemas', t => {
+test('should throw when no schemas', (t) => {
   t.throws(() => {
     create({ services } as any, { adapters })
   })
 })
 
-test('should dispatch with resources', async t => {
+test('should dispatch with resources', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const actionHandler = sinon.stub().resolves({ status: 'ok' })
   const actionHandlers = { TEST: actionHandler }
@@ -114,7 +114,7 @@ test('should dispatch with resources', async t => {
   t.deepEqual(actionHandler.args[0][3], identConfig)
 })
 
-test('should dispatch with builtin actionHandler', async t => {
+test('should dispatch with builtin actionHandler', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok', data: '[]' })
   const adapters = { json: { ...json, send } }
   const action = { type: 'GET', payload: { type: 'entry' } }
@@ -125,13 +125,13 @@ test('should dispatch with builtin actionHandler', async t => {
   t.is(send.callCount, 1) // If the send method was called, the GET action was dispatched
 })
 
-test('should call middleware', async t => {
+test('should call middleware', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const otherAction = sinon.stub().resolves({ status: 'ok' })
   const actionHandlers = { OTHER: otherAction }
   const middlewares = [
     (next: Dispatch) => async (_action: Action) =>
-      next({ type: 'OTHER', payload: {} })
+      next({ type: 'OTHER', payload: {} }),
   ]
 
   const great = create(
@@ -144,24 +144,24 @@ test('should call middleware', async t => {
   t.is(otherAction.callCount, 1) // If other action handler was called, middleware changed action
 })
 
-test('should map data', async t => {
+test('should map data', async (t) => {
   const data0 = {
     key: 'ent1',
     headline: 'Entry 1',
     body: 'The first article',
     type: 'newsitem',
-    date: '2019-10-11T18:43:00Z'
+    date: '2019-10-11T18:43:00Z',
   }
   const adapters = {
     json: {
       ...json,
-      send: async () => ({ status: 'ok', data: JSON.stringify([data0]) })
-    }
+      send: async () => ({ status: 'ok', data: JSON.stringify([data0]) }),
+    },
   }
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
-    meta: { ident: { id: 'johnf' } }
+    meta: { ident: { id: 'johnf' } },
   }
 
   const great = create(
@@ -180,36 +180,36 @@ test('should map data', async t => {
   t.deepEqual(item.createdAt, new Date('2019-10-11T18:43:00Z'))
 })
 
-test.failing('should use auth', async t => {
+test('should use auth', async (t) => {
   const adapters = {
     json: {
       ...json,
-      send: async () => ({ status: 'ok', data: '[]' })
-    }
+      send: async () => ({ status: 'ok', data: '[]' }),
+    },
   }
   const authServices = [
     {
       ...services[0],
-      auth: 'mauth'
-    }
+      auth: 'mauth',
+    },
   ]
   const auths = [
     {
       id: 'mauth',
       authenticator: 'mock',
-      options: { status: 'refused' }
-    }
+      options: { status: 'refused' },
+    },
   ]
   const authenticators = {
     mock: {
       authenticate: async ({ status }) => ({ status }),
-      isAuthenticated: () => false
-    }
+      isAuthenticated: () => false,
+    },
   }
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
-    meta: { ident: { id: 'johnf' } }
+    meta: { ident: { id: 'johnf' } },
   }
 
   const great = create(
@@ -221,7 +221,7 @@ test.failing('should use auth', async t => {
   t.is(ret.status, 'noaccess', ret.error)
 })
 
-test.skip('should subscribe to event on service', t => {
+test.skip('should subscribe to event on service', (t) => {
   const great = create({ services, schemas, mappings }, { adapters })
   const cb = () => {}
   const onStub = sinon.stub(great.services.entries, 'on')
@@ -233,7 +233,7 @@ test.skip('should subscribe to event on service', t => {
   t.is(onStub.args[0][1], cb)
 })
 
-test.skip('should not subscribe to anything for unknown service', t => {
+test.skip('should not subscribe to anything for unknown service', (t) => {
   const great = create({ services, schemas, mappings }, { adapters })
 
   t.notThrows(() => {

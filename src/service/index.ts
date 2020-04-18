@@ -9,7 +9,7 @@ import { Dictionary, Response, Exchange } from '../types'
 import { Service, ServiceDef, Adapter, MapOptions, Connection } from './types'
 import { CustomFunction } from 'map-transform'
 import { Schema } from '../schema'
-import { Auth } from '../auth/types'
+import Auth from './Auth'
 import { lookupById } from '../utils/indexUtils'
 import * as authorizeData from './authorize/data'
 import authorizeExchange from './authorize/exchange'
@@ -52,8 +52,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
 
   mapOptions = { mutateNull: false, ...mapOptions }
 
-  // TODO: Reimplement auth
-  const auth = lookupById(authId, auths) || {}
+  const auth = lookupById(authId, auths)
   const requireAuth = !!authId
 
   const authorizeDataFromService = authorizeData.fromService(schemas)
@@ -147,16 +146,32 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
         return exchange
       }
 
-      // TODO: Authenticate
+      if (!exchange.authorized) {
+        return {
+          ...exchange,
+          status: 'error',
+          response: { error: 'Not authorized' },
+        }
+      }
 
-      const {
-        endpoint: { options = {} } = {},
-        auth = { status: 'ok' },
-      } = exchange
+      // When an authenticator is set: Authenticate and apply result to exchange
+      if (auth) {
+        await auth.authenticate()
+        exchange = auth.applyToExchange(exchange, adapter)
+        if (exchange.status) {
+          return exchange
+        }
+      }
+
+      const { endpoint: { options = {} } = {} } = exchange
       let response: Response
 
       try {
-        const nextConnection = await adapter.connect(options, auth, connection)
+        const nextConnection = await adapter.connect(
+          options,
+          exchange.auth || null,
+          connection
+        )
         if (isConnectionError(nextConnection)) {
           connection = null
           return createError(

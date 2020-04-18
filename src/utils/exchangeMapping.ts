@@ -55,6 +55,7 @@ export function requestFromExchange(exchange: Exchange): Request {
     type: action,
     request: { data, params, ...rest },
     ident,
+    auth,
     endpoint: { options: endpoint = {} } = {},
   } = exchange
 
@@ -63,6 +64,7 @@ export function requestFromExchange(exchange: Exchange): Request {
     params: { ...params, ...rest } as Params, // Hack until params on requests are properly sorted
     data,
     endpoint,
+    auth,
     access: ident ? { ident } : undefined,
   }
 }
@@ -177,6 +179,7 @@ export const completeExchange = <ReqData = Data, RespData = Data>({
   meta = {},
   auth,
   incoming = false,
+  authorized = false,
 }: Partial<Exchange<ReqData, RespData>>) => ({
   type: type as string,
   status,
@@ -187,4 +190,5 @@ export const completeExchange = <ReqData = Data, RespData = Data>({
   meta,
   auth,
   incoming,
+  authorized,
 })

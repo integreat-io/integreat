@@ -1,11 +1,14 @@
 import { DataObject, TypedData, Reference, Action, Exchange } from '../types'
 import { Shape, PropertyShape } from '../schema/types'
 
+export const isObject = (value: unknown): value is object =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+export const isEmptyObject = (value: unknown): value is {} =>
+  isObject(value) && Object.keys(value).length === 0
+
 export const isDataObject = (value: unknown): value is DataObject =>
-  typeof value === 'object' &&
-  value !== null &&
-  !(value instanceof Date) &&
-  !Array.isArray(value)
+  isObject(value) && !(value instanceof Date)
 
 export const isTypedData = (value: unknown): value is TypedData =>
   isDataObject(value) && value.hasOwnProperty('$type')
@@ -32,9 +35,6 @@ export const isExchange = (exchange: unknown): exchange is Exchange =>
   typeof exchange.type === 'string' &&
   isDataObject(exchange.request) &&
   (typeof exchange.status === 'string' || exchange.status === null)
-
-export const isEmptyObject = (value: unknown): value is {} =>
-  isDataObject(value) && Object.keys(value).length === 0
 
 export const isTruthy = (value: unknown) => !!value
 export const isFalsy = (value: unknown) => !value

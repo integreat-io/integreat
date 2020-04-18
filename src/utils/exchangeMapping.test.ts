@@ -91,6 +91,7 @@ test('should create request from exchange', (t) => {
       type: 'user',
       data: { name: 'John F.' },
     },
+    auth: { Authorization: 't0k3n' },
     endpoint: ({
       options: { uri: 'http://some.api.com/1.0' },
     } as unknown) as Endpoint,
@@ -101,6 +102,7 @@ test('should create request from exchange', (t) => {
     params: { id: 'johnf', type: 'user' },
     data: { name: 'John F.' },
     endpoint: { uri: 'http://some.api.com/1.0' },
+    auth: { Authorization: 't0k3n' },
     access: { ident: { id: 'johnf' } },
   }
 

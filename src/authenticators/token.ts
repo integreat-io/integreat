@@ -1,4 +1,4 @@
-import { Authenticator, Authentication, AuthOptions } from '../auth/types'
+import { Authenticator, Authentication } from '../service/types'
 
 interface TokenAuthentication extends Authentication {
   token?: string | null
@@ -13,7 +13,7 @@ const getTypeAndToken = (authentication: TokenAuthentication | null) => {
   }
   return {
     token: encode ? Buffer.from(token).toString('base64') : token,
-    type
+    type,
   }
 }
 
@@ -27,7 +27,7 @@ const tokenAuth: Authenticator = {
    * Would normaly perform an authentication request and set the token received,
    * but in tokenAuth the token is set as from the options object.
    */
-  async authenticate(options: AuthOptions | null) {
+  async authenticate(options) {
     const { token = null, type = 'Bearer', encode = false } = options || {}
     return token
       ? { status: 'granted', token, type, encode }
@@ -67,8 +67,8 @@ const tokenAuth: Authenticator = {
     asHttpHeaders(authentication: TokenAuthentication | null) {
       const { type, token } = getTypeAndToken(authentication)
       return token ? { Authorization: `${type} ${token}` } : {}
-    }
-  }
+    },
+  },
 }
 
 export default tokenAuth

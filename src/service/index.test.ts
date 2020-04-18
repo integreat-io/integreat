@@ -3,10 +3,11 @@ import sinon = require('sinon')
 import jsonAdapter from 'integreat-adapter-json'
 import functions from '../transformers/builtIns'
 import createSchema from '../schema'
-import { Connection } from './types'
+import { Connection, Authentication } from './types'
 import { EndpointOptions } from '../service/endpoints/types'
-import { Authentication } from '../auth/types'
 import { completeExchange } from '../utils/exchangeMapping'
+import Auth from './Auth'
+import tokenAuth from '../authenticators/token'
 
 import setupService from '.'
 
@@ -110,6 +111,11 @@ const endpoints = [
     options: { uri: 'http://some.api/1.0/untyped' },
   },
 ]
+
+const auths = {
+  granting: new Auth('granting', tokenAuth, { token: 't0k3n' }),
+  refusing: new Auth('refusing', tokenAuth, {}),
+}
 
 // Tests
 
@@ -289,7 +295,7 @@ test('authorizeExchange should refuse based on schema', async (t) => {
       type: 'GET',
       request: { type: 'account' },
       ident: { id: 'johnf', roles: ['user'] },
-      auth: {},
+      auth: { status: 'granted' },
     })
   )
   const expectedExchange = {
@@ -321,9 +327,10 @@ test('sendExchange should retrieve data from service', async (t) => {
       send: async () => ({ status: 'ok', data }),
     },
   }
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, adapters, auths })({
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    auth: 'granting',
     adapter: 'json',
     mappings: { entry: 'entry' },
   })
@@ -332,12 +339,82 @@ test('sendExchange should retrieve data from service', async (t) => {
       type: 'GET',
       request: { id: 'ent1', type: 'entry', service: 'thenews' },
       ident: { id: 'johnf' },
+      authorized: true,
     })
   )
   const expected = {
     ...exchange,
     status: 'ok',
     response: { data },
+    auth: {
+      Authorization: 'Bearer t0k3n',
+    },
+  }
+
+  const ret = await service.sendExchange(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+test('sendExchange should authenticate and return with error', async (t) => {
+  const data = {
+    content: {
+      data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+    },
+  }
+  const adapters = {
+    json: {
+      ...json,
+      send: async () => ({ status: 'ok', data }),
+    },
+  }
+  const service = setupService({ mapOptions, schemas, adapters, auths })({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    auth: 'refusing',
+    adapter: 'json',
+    mappings: { entry: 'entry' },
+  })
+  const exchange = service.assignEndpointMapper(
+    completeExchange({
+      type: 'GET',
+      request: { id: 'ent1', type: 'entry', service: 'thenews' },
+      ident: { id: 'johnf' },
+      authorized: true,
+    })
+  )
+  const expected = {
+    ...exchange,
+    status: 'noaccess',
+    response: { error: "Authentication attempt for 'refusing' was refused." },
+    auth: null,
+  }
+
+  const ret = await service.sendExchange(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+test('sendExchange should fail when not authorized', async (t) => {
+  const service = setupService({ mapOptions, schemas, adapters, auths })({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    auth: 'granting',
+    adapter: 'json',
+    mappings: { entry: 'entry' },
+  })
+  const exchange = service.assignEndpointMapper(
+    completeExchange({
+      type: 'GET',
+      request: { id: 'ent1', type: 'entry', service: 'thenews' },
+      ident: { id: 'johnf' },
+      authorized: false,
+    })
+  )
+  const expected = {
+    ...exchange,
+    status: 'error',
+    response: { error: 'Not authorized' },
   }
 
   const ret = await service.sendExchange(exchange)
@@ -348,9 +425,9 @@ test('sendExchange should retrieve data from service', async (t) => {
 test('sendExchange should connect before sending request', async (t) => {
   const connect = async (
     { value }: EndpointOptions,
-    { token }: Authentication,
+    { Authorization }: Authentication,
     _connection: Connection | null
-  ) => ({ status: 'ok', value, token })
+  ) => ({ status: 'ok', value, token: Authorization })
   const adapters = {
     json: {
       ...json,
@@ -358,12 +435,13 @@ test('sendExchange should connect before sending request', async (t) => {
       send: sinon.stub().resolves({ status: 'ok', data: {} }),
     },
   }
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, adapters, auths })({
     id: 'entries',
     endpoints: [
       { options: { uri: 'http://some.api/1.0', value: 'Value from options' } },
     ],
     adapter: 'json',
+    auth: 'granting',
     mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
@@ -371,7 +449,7 @@ test('sendExchange should connect before sending request', async (t) => {
       type: 'GET',
       request: { id: 'ent1', type: 'entry', service: 'thenews' },
       ident: { id: 'johnf' },
-      auth: { status: 'ok', token: 't0k3n' },
+      authorized: true,
     })
   )
 
@@ -381,7 +459,7 @@ test('sendExchange should connect before sending request', async (t) => {
   t.deepEqual(adapters.json.send.args[0][1], {
     status: 'ok',
     value: 'Value from options',
-    token: 't0k3n',
+    token: 'Bearer t0k3n',
   })
 })
 
@@ -406,7 +484,8 @@ test('sendExchange should store connection', async (t) => {
       type: 'GET',
       request: { id: 'ent1', type: 'entry', service: 'thenews' },
       ident: { id: 'johnf' },
-      auth: { status: 'ok', token: 't0k3n' },
+      auth: { status: 'granted', token: 't0k3n' },
+      authorized: true,
     })
   )
 
@@ -439,7 +518,8 @@ test('sendExchange should return error when connection fails', async (t) => {
       type: 'GET',
       request: { id: 'ent1', type: 'entry', service: 'thenews' },
       ident: { id: 'johnf' },
-      auth: { status: 'ok', token: 't0k3n' },
+      auth: { status: 'granted', token: 't0k3n' },
+      authorized: true,
     })
   )
 
@@ -470,6 +550,7 @@ test('sendExchange should retrieve error response from service', async (t) => {
       type: 'GET',
       request: { id: 'ent1', type: 'entry', service: 'thenews' },
       ident: { id: 'johnf' },
+      authorized: true,
     })
   )
   const expected = {
@@ -503,6 +584,7 @@ test('sendExchange should return with error when adapter throws', async (t) => {
       type: 'GET',
       request: { id: 'ent1', type: 'entry', service: 'thenews' },
       ident: { id: 'johnf' },
+      authorized: true,
     })
   )
   const expected = {
@@ -541,6 +623,7 @@ test('sendExchange should do nothing when exchange has a status', async (t) => {
       request: { id: 'ent1', type: 'entry', service: 'thenews' },
       response: { error: 'Bad request catched early' },
       ident: { id: 'johnf' },
+      authorized: true,
     })
   )
   const expected = exchange

@@ -1,4 +1,4 @@
-import { Authenticator, Authentication, AuthOptions } from '../auth/types'
+import { Authenticator } from '../service/types'
 
 /**
  * The options authenticator. Will always be authenticated, and will return the
@@ -12,7 +12,7 @@ const optionsAuth: Authenticator = {
    * received, but in optionsAuth the given options object is returned as the
    * authentication object.
    */
-  async authenticate(options: AuthOptions | null) {
+  async authenticate(options) {
     return { status: 'granted', ...options }
   },
 
@@ -32,7 +32,7 @@ const optionsAuth: Authenticator = {
      * For OptionsStrategy, this will simply be the options object given on
      * creation.
      */
-    asObject(authentication: Authentication | null) {
+    asObject(authentication) {
       const { status, ...options } = authentication || {}
       return status === 'granted' ? options : {}
     },
@@ -43,8 +43,8 @@ const optionsAuth: Authenticator = {
      */
     asHttpHeaders(_authentication) {
       return {}
-    }
-  }
+    },
+  },
 }
 
 export default optionsAuth

@@ -1,4 +1,4 @@
-import { Authenticator, Authentication, AuthOptions } from '../../auth/types'
+import { Authenticator, Authentication, AuthOptions } from '../../service/types'
 import authenticate from './authenticate'
 
 interface OAuthAuthentication extends Authentication {
@@ -63,8 +63,8 @@ const oauth2Auth: Authenticator = {
         return { Authorization: `Bearer ${token}` }
       }
       return {}
-    }
-  }
+    },
+  },
 }
 
 export default oauth2Auth

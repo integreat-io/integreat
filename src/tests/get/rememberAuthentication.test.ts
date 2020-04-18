@@ -6,6 +6,8 @@ import tokenAuth from '../../authenticators/token'
 import defs from '../helpers/defs'
 import entriesService from '../helpers/defs/services/entries'
 import entriesData from '../helpers/data/entries'
+import { TypedData } from '../../types'
+import { ServiceDef } from '../../service/types'
 
 import Integreat from '../..'
 
@@ -15,11 +17,11 @@ const json = jsonAdapter()
 
 // Tests
 
-test.failing('should not authenticate twice', async t => {
+test('should not authenticate twice', async (t) => {
   nock('http://some.api', {
     reqheaders: {
-      authorization: 'Bearer t0k3n'
-    }
+      authorization: 'Bearer t0k3n',
+    },
   })
     .get('/entries')
     .times(2)
@@ -31,20 +33,20 @@ test.failing('should not authenticate twice', async t => {
     services: [
       {
         ...entriesService,
-        auth: 'entriesToken'
-      }
+        auth: 'entriesToken',
+      } as ServiceDef,
     ],
     auths: [
       {
         id: 'entriesToken',
         authenticator: 'token',
-        options: { token: 't0k3n' }
-      }
-    ]
+        options: { token: 't0k3n' },
+      },
+    ],
   }
   const action = {
     type: 'GET',
-    payload: { type: 'entry' }
+    payload: { type: 'entry' },
   }
   const authSpy = sinon.spy(tokenAuth, 'authenticate')
 
@@ -54,7 +56,7 @@ test.failing('should not authenticate twice', async t => {
 
   t.is(authSpy.callCount, 1)
   t.is(ret.status, 'ok', ret.error)
-  t.is(ret.data.length, 3)
+  t.is((ret.data as TypedData[]).length, 3)
 
   nock.restore()
 })

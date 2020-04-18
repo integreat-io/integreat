@@ -1,8 +1,7 @@
 import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
 import { MapTransform } from 'map-transform'
-import { Request, Response, Exchange, Dictionary } from '../types'
+import { Request, Response, Exchange, Dictionary, Data } from '../types'
 import { EndpointDef, EndpointOptions } from './endpoints/types'
-import { AuthDef, Authentication } from '../auth/types'
 
 export interface Connection extends Dictionary<unknown> {
   status: string
@@ -16,7 +15,7 @@ export interface Adapter {
   ) => EndpointOptions
   connect: (
     options: EndpointOptions,
-    authentication: Authentication | null,
+    authentication: object | null,
     connection: Connection | null
   ) => Promise<Connection | null>
   send: (request: Request, connection: Connection | null) => Promise<Response>
@@ -66,14 +65,25 @@ export interface AsyncExchangeMapper {
   (exchange: Exchange): Promise<Exchange>
 }
 
-export interface Service {
+export type AuthOptions = Dictionary<Data>
+
+export interface Authentication extends AuthOptions {
+  status: string
+  error?: string
+}
+
+export interface Authenticator {
+  authenticate: (options: AuthOptions | null) => Promise<Authentication>
+  isAuthenticated: (authentication: Authentication | null) => boolean
+  authentication: {
+    [asFunction: string]: (authentication: Authentication | null) => object
+  }
+}
+
+export interface AuthDef {
   id: string
-  meta?: string
-  assignEndpointMapper: ExchangeMapper
-  authorizeExchange: ExchangeMapper
-  mapFromService: ExchangeMapper
-  mapToService: ExchangeMapper
-  sendExchange: AsyncExchangeMapper
+  authenticator: string
+  options: AuthOptions
 }
 
 export interface ServiceDef {
@@ -84,4 +94,14 @@ export interface ServiceDef {
   options?: { [key: string]: unknown }
   endpoints: EndpointDef[]
   mappings: MapDefinitions
+}
+
+export interface Service {
+  id: string
+  meta?: string
+  assignEndpointMapper: ExchangeMapper
+  authorizeExchange: ExchangeMapper
+  mapFromService: ExchangeMapper
+  mapToService: ExchangeMapper
+  sendExchange: AsyncExchangeMapper
 }
