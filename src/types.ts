@@ -53,65 +53,6 @@ export interface Ident {
 
 export type Params = Dictionary<Data>
 
-export interface Request<T = Data> {
-  action: string
-  params: Params
-  endpoint: Dictionary<unknown>
-  data?: T
-  auth?: Auth | boolean | null
-  access?: { ident: Ident }
-}
-
-export interface Response<T = Data> {
-  status: string | null
-  data?: T
-  error?: string
-  responses?: Response[]
-  access?: object
-  params?: Params
-}
-
-export interface ExchangeRequest<T = Data> {
-  type?: string | string[]
-  id?: string | string[]
-  service?: string
-  params?: Params
-  data?: T
-  uri?: string
-  method?: string
-  headers?: Dictionary<string>
-  page?: number
-  pageSize?: number
-  sendNoDefaults?: boolean
-}
-
-export interface ExchangeResponse<T = Data> {
-  data?: T
-  reason?: string
-  error?: string
-  warning?: string
-  paging?: object
-  params?: Params
-  returnNoDefaults?: boolean
-}
-
-export type Meta = Dictionary<Data>
-
-export interface Exchange<ReqData = Data, RespData = Data> {
-  type: string
-  id?: string
-  status: string | null
-  request: ExchangeRequest<ReqData>
-  response: ExchangeResponse<RespData>
-  ident?: Ident
-  auth?: object | null
-  meta: Meta
-  endpointId?: string
-  endpoint?: Endpoint
-  authorized?: boolean
-  incoming?: boolean
-}
-
 export interface Payload extends Dictionary<Data> {
   type?: string | string[]
   id?: string | string[]
@@ -133,6 +74,71 @@ export interface Action {
   type: string
   payload: Payload
   meta?: ActionMeta
+}
+
+export interface Paging {
+  next?: Payload
+  prev?: Payload
+}
+
+export interface Request<T = Data> {
+  action: string
+  params: Params
+  endpoint: Dictionary<unknown>
+  data?: T
+  auth?: Auth | boolean | null
+  access?: { ident: Ident }
+}
+
+export interface Response<T = Data> {
+  status: string | null
+  data?: T
+  error?: string
+  responses?: Response[]
+  access?: object
+  params?: Params
+  paging?: Paging
+}
+
+export interface ExchangeRequest<T = Data> {
+  type?: string | string[]
+  id?: string | string[]
+  service?: string
+  params?: Params
+  data?: T
+  uri?: string
+  method?: string
+  headers?: Dictionary<string>
+  page?: number
+  pageSize?: number
+  sendNoDefaults?: boolean
+}
+
+export interface ExchangeResponse<T = Data> {
+  data?: T
+  reason?: string
+  error?: string
+  warning?: string
+  paging?: Paging
+  params?: Params
+  returnNoDefaults?: boolean
+}
+
+export type Meta = Dictionary<Data>
+
+export interface Exchange<ReqData = Data, RespData = Data> {
+  type: string
+  id?: string
+  status: string | null
+  request: ExchangeRequest<ReqData>
+  response: ExchangeResponse<RespData>
+  ident?: Ident
+  auth?: object | null
+  meta: Meta
+  endpointId?: string
+  endpoint?: Endpoint
+  authorized?: boolean
+  incoming?: boolean
 }
 
 export interface Dispatch<T extends Data = Data> {

@@ -9,28 +9,30 @@ export default {
   },
   endpoints: [
     {
-      match: { action: 'GET', scope: 'collection', params: { offset: true } },
+      match: { action: 'GET', scope: 'collection', params: { offset: false } },
       responseMapping: [
         'data',
         {
           data: 'data[]',
-          'paging.next.type': [{ $transform: 'fixed', value: 'entry' }],
-          'paging.next.offset': 'offset',
+          paging: {
+            next: [
+              { $filter: 'compare', path: 'next', operator: '!=', value: null },
+              {
+                type: '^params.type',
+                offset: 'next',
+              },
+            ],
+            prev: [
+              { $filter: 'compare', path: 'prev', operator: '!=', value: null },
+              {
+                type: '^params.type',
+                offset: 'prev',
+              },
+            ],
+          },
         },
       ],
       options: { uri: '/entries{?offset=offset?}' },
-    },
-    {
-      match: { action: 'GET', scope: 'collection' },
-      responseMapping: [
-        'data',
-        {
-          data: 'data[]',
-          'paging.next.type': [{ $transform: 'fixed', value: 'entry' }],
-          'paging.next.offset': 'offset',
-        },
-      ],
-      options: { uri: '/entries' },
     },
     {
       match: { action: 'SET', scope: 'collection' },
