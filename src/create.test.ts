@@ -100,21 +100,21 @@ test('should throw when no schemas', (t) => {
 
 test('should dispatch with resources', async (t) => {
   const action = { type: 'TEST', payload: {} }
-  const actionHandler = sinon.stub().resolves({ status: 'ok' })
-  const actionHandlers = { TEST: actionHandler }
+  const handler = sinon.stub().resolves({ status: 'ok' })
+  const handlers = { TEST: handler }
   const identConfig = { type: 'account' }
 
   const great = create(
     { services, schemas, mappings, identConfig },
-    { actionHandlers, adapters }
+    { handlers, adapters }
   )
   await great.dispatch(action)
 
-  t.is(actionHandler.callCount, 1) // If the action handler was called, the action was dispatched
-  t.deepEqual(actionHandler.args[0][3], identConfig)
+  t.is(handler.callCount, 1) // If the action handler was called, the action was dispatched
+  t.deepEqual(handler.args[0][3], identConfig)
 })
 
-test('should dispatch with builtin actionHandler', async (t) => {
+test('should dispatch with builtin exchange handler', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok', data: '[]' })
   const adapters = { json: { ...json, send } }
   const action = { type: 'GET', payload: { type: 'entry' } }
@@ -128,7 +128,7 @@ test('should dispatch with builtin actionHandler', async (t) => {
 test('should call middleware', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const otherAction = sinon.stub().resolves({ status: 'ok' })
-  const actionHandlers = { OTHER: otherAction }
+  const handlers = { OTHER: otherAction }
   const middlewares = [
     (next: Dispatch) => async (_action: Action) =>
       next({ type: 'OTHER', payload: {} }),
@@ -136,7 +136,7 @@ test('should call middleware', async (t) => {
 
   const great = create(
     { services, schemas, mappings },
-    { actionHandlers, adapters },
+    { handlers, adapters },
     middlewares
   )
   await great.dispatch(action)

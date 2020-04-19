@@ -21,7 +21,7 @@ test('should route to GET action', async (t) => {
       type: 'entry',
     },
   }
-  const actionHandlers = {
+  const handlers = {
     GET: async () =>
       completeExchange({
         status: 'ok',
@@ -29,7 +29,7 @@ test('should route to GET action', async (t) => {
       }),
   }
 
-  const ret = await dispatch({ actionHandlers, services, schemas })(action)
+  const ret = await dispatch({ handlers, services, schemas })(action)
 
   t.is(ret.status, 'ok')
   t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
@@ -37,9 +37,9 @@ test('should route to GET action', async (t) => {
 
 test('should return status noaction when no action', async (t) => {
   const action = null
-  const actionHandlers = {}
+  const handlers = {}
 
-  const ret = await dispatch({ actionHandlers, services, schemas })(action)
+  const ret = await dispatch({ handlers, services, schemas })(action)
 
   t.is(ret.status, 'noaction')
   t.is(ret.error, 'Dispatched no action')
@@ -48,9 +48,9 @@ test('should return status noaction when no action', async (t) => {
 test('should return noaction when unknown action', async (t) => {
   const action = { type: 'UNKNOWN', payload: {} }
   const services = {}
-  const actionHandlers = {}
+  const handlers = {}
 
-  const ret = await dispatch({ actionHandlers, services, schemas })(action)
+  const ret = await dispatch({ handlers, services, schemas })(action)
 
   t.is(ret.status, 'noaction')
   t.is(ret.error, 'Dispatched unknown action')
@@ -58,7 +58,7 @@ test('should return noaction when unknown action', async (t) => {
 
 test('should call action handler with exchange, dispatch, getService, and identConfig', async (t) => {
   const getHandler = sinon.stub().resolves({ status: 'ok' })
-  const actionHandlers = { GET: getHandler }
+  const handlers = { GET: getHandler }
   const services = {}
   const schemas = {}
   const identConfig = { type: 'account' }
@@ -75,7 +75,7 @@ test('should call action handler with exchange, dispatch, getService, and identC
     incoming: false,
   }
 
-  await dispatch({ actionHandlers, services, schemas, identConfig })(action)
+  await dispatch({ handlers, services, schemas, identConfig })(action)
 
   t.is(getHandler.callCount, 1)
   t.deepEqual(getHandler.args[0][0], expected)
@@ -86,7 +86,7 @@ test('should call action handler with exchange, dispatch, getService, and identC
 
 test('should call middlewares with exchange', async (t) => {
   const action = { type: 'TEST', payload: {} }
-  const actionHandlers = {
+  const handlers = {
     TEST: async () => completeExchange({ status: 'fromAction' }),
   }
   const middlewares: Middleware[] = [
@@ -100,7 +100,7 @@ test('should call middlewares with exchange', async (t) => {
     }),
   ]
   const ret = await dispatch({
-    actionHandlers,
+    handlers,
     services,
     schemas,
     middlewares,
@@ -111,26 +111,26 @@ test('should call middlewares with exchange', async (t) => {
 
 test('should allow middlewares to abort middleware chain', async (t) => {
   const action = { type: 'TEST', payload: {} }
-  const actionHandler = sinon.stub().resolves({ status: 'ok' })
-  const actionHandlers = { TEST: actionHandler }
+  const handler = sinon.stub().resolves({ status: 'ok' })
+  const handlers = { TEST: handler }
   const middlewares: Middleware[] = [
     (_next) => async (exchange) => ({ ...exchange, status: 'error' }),
   ]
 
   const ret = await dispatch({
-    actionHandlers,
+    handlers,
     services,
     schemas,
     middlewares,
   })(action)
 
   t.is(ret.status, 'error')
-  t.is(actionHandler.callCount, 0)
+  t.is(handler.callCount, 0)
 })
 
 test('should dispatch to middleware from action handlers', async (t) => {
   const action = { type: 'DISPATCHER', payload: {}, meta: {} }
-  const actionHandlers = {
+  const handlers = {
     TEST: async () => completeExchange({ status: 'fromAction' }),
     DISPATCHER: async (action, dispatch) =>
       dispatch({ type: 'TEST', payload: {}, meta: {} }),
@@ -143,7 +143,7 @@ test('should dispatch to middleware from action handlers', async (t) => {
   ]
 
   const ret = await dispatch({
-    actionHandlers,
+    handlers,
     services,
     schemas,
     middlewares,

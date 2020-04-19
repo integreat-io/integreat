@@ -10,14 +10,14 @@ import {
 } from './service/types'
 import { SchemaDef } from './schema/types'
 import Auth from './service/Auth'
-import builtinActionHandlers from './actions'
+import builtinHandlers from './handlers'
 import builtinTransformers from './transformers/builtIns'
 import createSchema, { Schema } from './schema'
 import createService from './service'
 import createMapOptions from './utils/createMapOptions'
 import { lookupById } from './utils/indexUtils'
 // import createAuth from './auth'
-import createDispatch, { ActionHandler } from './dispatch'
+import createDispatch, { ExchangeHandler } from './dispatch'
 import { indexById, ObjectWithId } from './utils/indexUtils'
 
 interface Definitions {
@@ -31,7 +31,7 @@ interface Definitions {
 
 interface Resources {
   adapters?: Dictionary<Adapter>
-  actionHandlers?: Dictionary<ActionHandler>
+  handlers?: Dictionary<ExchangeHandler>
   authenticators?: Dictionary<Authenticator>
   transformers?: Dictionary<CustomFunction>
 }
@@ -48,7 +48,7 @@ export default function create(
     identConfig,
     dictionaries,
   }: Definitions,
-  { adapters, transformers, actionHandlers, authenticators }: Resources,
+  { adapters, transformers, handlers, authenticators }: Resources,
   middlewares: Middleware[] = []
 ) {
   if (!Array.isArray(serviceDefs) || !Array.isArray(schemaDefs)) {
@@ -102,7 +102,7 @@ export default function create(
     identConfig,
     schemas,
     services,
-    actionHandlers: { ...builtinActionHandlers, ...actionHandlers },
+    handlers: { ...builtinHandlers, ...handlers },
     middlewares,
   })
 

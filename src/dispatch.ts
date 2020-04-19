@@ -22,7 +22,7 @@ const debug = debugLib('great')
 
 const compose = (...fns) => fns.reduce((f, g) => (...args) => f(g(...args)))
 
-export interface ActionHandler {
+export interface ExchangeHandler {
   (
     exchange: Exchange,
     dispatch: InternalDispatch,
@@ -35,15 +35,15 @@ export interface GetService {
   (type?: string | string[], serviceId?: string): Service | undefined // TODO: Properly type Service
 }
 
-function getActionHandlerFromType(
+function getExchangeHandlerFromType(
   type: string | undefined,
-  actionHandlers: Dictionary<ActionHandler>
+  handlers: Dictionary<ExchangeHandler>
 ) {
   if (type) {
     // eslint-disable-next-line security/detect-object-injection
-    const actionHandler = actionHandlers[type]
-    if (typeof actionHandler === 'function') {
-      return actionHandler
+    const handler = handlers[type]
+    if (typeof handler === 'function') {
+      return handler
     }
   }
   return undefined
@@ -59,7 +59,7 @@ const wrapDispatch = (internalDispatch: InternalDispatch): Dispatch =>
   }
 
 interface Resources {
-  actionHandlers: Dictionary<ActionHandler>
+  handlers: Dictionary<ExchangeHandler>
   schemas: Dictionary<Schema>
   services: Dictionary<ObjectWithId> // TODO: Properly type Service
   middlewares?: Middleware[]
@@ -73,7 +73,7 @@ interface Resources {
  * @returns Dispatch function, accepting an action as only argument
  */
 export default function createDispatch({
-  actionHandlers = {},
+  handlers = {},
   schemas = {},
   services = {},
   middlewares = [],
@@ -85,7 +85,7 @@ export default function createDispatch({
   internalDispatch = async (exchange: Exchange) => {
     debug('Dispatch: %o', exchange)
 
-    const handler = getActionHandlerFromType(exchange.type, actionHandlers)
+    const handler = getExchangeHandlerFromType(exchange.type, handlers)
     if (!handler) {
       return createError(exchange, 'Dispatched unknown action', 'noaction')
     }
