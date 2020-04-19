@@ -1,6 +1,6 @@
 import debugLib = require('debug')
 import createError from '../utils/createError'
-import { exchangeFromAction } from '../utils/exchangeMapping'
+import { completeExchange } from '../utils/exchangeMapping'
 import { DataObject, Exchange, Dispatch } from '../types'
 import { GetService } from '../dispatch'
 import setHandler from './set'
@@ -54,17 +54,19 @@ export default async function setMeta(
     endpointDebug
   )
 
-  const action = {
+  const setExchange = completeExchange({
     type: 'SET',
-    payload: {
-      keys: Object.keys(meta as DataObject),
-      type,
+    request: {
       id,
+      type,
       data: { id, $type: type, ...(meta as DataObject) },
-      endpoint: endpointId,
-      onlyMappedValues: true,
+      sendNoDefaults: true,
+      params: {
+        keys: Object.keys(meta as DataObject),
+      },
     },
-    meta: { ident },
-  }
-  return setHandler(exchangeFromAction(action), dispatch, getService)
+    endpointId,
+    ident,
+  })
+  return setHandler(setExchange, dispatch, getService)
 }

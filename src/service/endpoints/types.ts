@@ -20,6 +20,8 @@ export interface EndpointDef {
   options?: EndpointOptions
   requestMapping?: MapDefinition
   responseMapping?: MapDefinition
+  sendNoDefaults?: boolean
+  returnNoDefaults?: boolean
   mappings?: Dictionary<string | MapDefinition>
 }
 

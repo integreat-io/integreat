@@ -23,6 +23,7 @@ export function exchangeFromAction(action: Action): Exchange {
       endpoint,
       params,
       data,
+      returnNoDefaults,
       ...rest
     },
     meta: actionMeta,
@@ -42,7 +43,9 @@ export function exchangeFromAction(action: Action): Exchange {
       ...(data ? { data } : {}),
       params: { ...rest, ...params },
     },
-    response: {},
+    response: {
+      ...(typeof returnNoDefaults === 'boolean' ? { returnNoDefaults } : {}),
+    },
     ident,
     endpointId: endpoint,
     meta: meta as Dictionary<Data>,

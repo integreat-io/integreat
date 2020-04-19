@@ -7,49 +7,60 @@ import {
 } from '../../utils/exchangeMapping'
 import { Mappings } from './create'
 
+const getMapperFn = (
+  mapping: MapTransform | null | undefined,
+  sendNoDefaults: boolean
+) => (sendNoDefaults ? mapping?.rev.onlyMappedValues : mapping?.rev)
+
 const mapOneType = (
   mappingObject: MappingObject,
   type: string,
-  mappings: Mappings
+  mappings: Mappings,
+  sendNoDefaults: boolean
 ) => {
   const mapping =
     type && mappings.hasOwnProperty(type) ? mappings[type] : undefined // eslint-disable-line security/detect-object-injection
-  return mapping && typeof mapping.rev === 'function'
-    ? mapping.rev(mappingObject)
-    : undefined
+  const mapperFn = getMapperFn(mapping, sendNoDefaults)
+  return typeof mapperFn === 'function' ? mapperFn(mappingObject) : undefined
 }
 
 const mapByType = (
   mapObject: MappingObject,
   type: string | string[],
-  mappings: Mappings
+  mappings: Mappings,
+  sendNoDefaults: boolean
 ) =>
   Array.isArray(type)
     ? type.reduce(
         (target, aType) => ({
           ...target,
-          ...mapOneType(mapObject, aType, mappings),
+          ...mapOneType(mapObject, aType, mappings, sendNoDefaults),
         }),
         {} as DataObject
       )
-    : mapOneType(mapObject, type, mappings)
+    : mapOneType(mapObject, type, mappings, sendNoDefaults)
 
 export default function mapRequest(
   requestMapper: MapTransform | null,
-  mappings: Dictionary<MapTransform>
+  mappings: Dictionary<MapTransform>,
+  endpointSendNoDefaults = false
 ) {
   return (exchange: Exchange) => {
+    const sendNoDefaults =
+      exchange.request.sendNoDefaults ?? endpointSendNoDefaults
     const mappingObject = mappingObjectFromExchange(exchange, true)
 
     if (exchange.request.type) {
       mappingObject.data = mapByType(
         mappingObject,
         exchange.request.type,
-        mappings
+        mappings,
+        sendNoDefaults
       )
     }
-    if (typeof requestMapper?.rev === 'function') {
-      const mapped = requestMapper.rev(mappingObject)
+    const mapperFn = getMapperFn(requestMapper, sendNoDefaults)
+    if (typeof mapperFn === 'function') {
+      const mapped = mapperFn(mappingObject)
       if (typeof mapped === 'object' && mapped !== null) {
         mappingObject.data = mapped.data
         mappingObject.status = mapped.status || mappingObject.status

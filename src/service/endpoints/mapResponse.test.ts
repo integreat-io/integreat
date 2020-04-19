@@ -143,6 +143,41 @@ test('should map several types', (t) => {
   t.is(data[2].id, 'account1')
 })
 
+test('should map from service without defaults', (t) => {
+  const returnNoDefaults = true
+  const mappings = prepareMappings({ entry: 'entry' }, mapOptions)
+  const fromMapper = createMapper('content.data', mapOptions)
+
+  const ret = mapResponse(fromMapper, mappings, returnNoDefaults)(exchange)
+
+  const data = ret.response.data as TypedData[]
+  t.is(data[0].one, undefined) // Should not have default
+  t.is(data[0].two, 2)
+})
+
+test('should use returnNoDefaults from exchange when set', (t) => {
+  const returnNoDefaults = true
+  const mappings = prepareMappings({ entry: 'entry' }, mapOptions)
+  const fromMapper = createMapper('content.data', mapOptions)
+  const exchangeWithDefaults = {
+    ...exchange,
+    response: {
+      ...exchange.response,
+      returnNoDefaults: false,
+    },
+  }
+
+  const ret = mapResponse(
+    fromMapper,
+    mappings,
+    returnNoDefaults
+  )(exchangeWithDefaults)
+
+  const data = ret.response.data as TypedData[]
+  t.is(data[0].one, 1) // Should have default
+  t.is(data[0].two, 2)
+})
+
 test('should skip unknown types', (t) => {
   const fromMapper = null
   const exchangeUnknownType = {

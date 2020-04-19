@@ -4,6 +4,7 @@ import jsonAdapter from 'integreat-adapter-json'
 import functions from '../transformers/builtIns'
 import createSchema from '../schema'
 import { Connection, Authentication } from './types'
+import { TypedData } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
 import { completeExchange } from '../utils/exchangeMapping'
 import Auth from './Auth'
@@ -933,31 +934,34 @@ test('should authorize typed data object from service', async (t) => {
   t.is(ret.response.error, "Authentication was refused for type 'account'")
 })
 
-// test.skip('mapResponse should map with default values', async t => {
-//   const send = async () => ({
-//     status: 'ok',
-//     data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] }
-//   })
-//   const service = setupService({ mapOptions, schemas })({
-//     id: 'entries',
-//     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-//     adapter: { ...json, send },
-//     mappings: { entry: 'entry' }
-//   })
-//   const action = {
-//     type: 'GET',
-//     payload: { id: 'ent1', type: 'entry', onlyMappedValues: false },
-//     meta: { ident: { id: 'johnf' } }
-//   }
-//
-//   const { response } = await service.send(action)
-//
-//   const { data } = response
-//   t.is(data[0].one, 1)
-//   // TODO: Fix dates
-//   // t.true(data[0].createdAt instanceof Date)
-//   // t.true(data[0].updatedAt instanceof Date)
-// })
+test('mapResponse should map without default values', async (t) => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    adapter: 'json',
+    mappings: { entry: 'entry' },
+  })
+  const exchange = service.assignEndpointMapper(
+    completeExchange({
+      type: 'GET',
+      status: 'ok',
+      request: { id: 'ent1', type: 'entry' },
+      response: {
+        returnNoDefaults: true,
+        data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+      },
+      ident: { id: 'johnf' },
+      authorized: true,
+    })
+  )
+
+  const ret = await service.mapResponse(exchange)
+
+  const data = ret.response.data as TypedData[]
+  t.is(data[0].one, undefined)
+  t.is(data[0].createdAt, undefined)
+  t.is(data[0].updatedAt, undefined)
+})
 
 // test.skip('mapResponse should not map response data when unmapped is true', async t => {
 //   const send = async () => ({

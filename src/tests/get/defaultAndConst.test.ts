@@ -4,6 +4,7 @@ import jsonAdapter from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
+import { TypedData, DataObject } from '../../types'
 
 import Integreat from '../..'
 
@@ -12,12 +13,35 @@ import Integreat from '../..'
 const json = jsonAdapter()
 
 const entryNoHeadline = {
-  key: 'ent2'
+  key: 'ent2',
 }
+
+const mapping = [
+  {
+    $iterate: true,
+    id: 'key',
+    title: ['headline', { $alt: 'value', value: 'No title' }],
+    text: 'body',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    author: [{ $transform: 'fixed', value: 'admin' }],
+    sections: 'sections[]',
+  },
+  { $apply: 'cast_entry' },
+]
+
+const defs = {
+  schemas: [entrySchema],
+  services: [{ ...entriesService, mappings: { entry: mapping } }],
+}
+
+test.after.always(() => {
+  nock.restore()
+})
 
 // Tests
 
-test('should transform entry', async t => {
+test('should transform entry', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries')
@@ -25,40 +49,44 @@ test('should transform entry', async t => {
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
-    meta: { ident: { id: 'johnf' } }
-  }
-  const mapping = [
-    {
-      $iterate: true,
-      id: 'key',
-      title: ['headline', { $alt: 'value', value: 'No title' }],
-      text: 'body',
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt',
-      author: [{ $transform: 'fixed', value: 'admin' }],
-      sections: 'sections[]'
-    },
-    { $apply: 'cast_entry' }
-  ]
-  const defs = {
-    schemas: [entrySchema],
-    services: [{ ...entriesService, mappings: { entry: mapping } }]
+    meta: { ident: { id: 'johnf' } },
   }
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-  t.is(ret.data.length, 2)
-  const item0 = ret.data[0]
+  const data = ret.data as TypedData[]
+  t.is(data.length, 2)
+  const item0 = data[0]
   t.is(item0.id, 'ent1')
   t.is(item0.title, 'Entry 1')
-  t.is(item0.author.id, 'admin')
-  t.is(item0.author.$ref, 'user')
-  const item1 = ret.data[1]
+  t.is((item0.author as DataObject).id, 'admin')
+  t.is((item0.author as DataObject).$ref, 'user')
+  const item1 = data[1]
   t.is(item1.id, 'ent2')
   t.is(item1.title, 'No title')
-  t.is(item1.author.id, 'admin')
+  t.is((item1.author as DataObject).id, 'admin')
+})
 
-  nock.restore()
+test('should transform entry without defaults', async (t) => {
+  const adapters = { json }
+  nock('http://some.api')
+    .get('/entries/ent2')
+    .reply(200, { data: [entryNoHeadline] })
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent2', returnNoDefaults: true },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const great = Integreat.create(defs, { adapters })
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  const data = ret.data as TypedData[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'ent2')
+  t.is(data[0].title, undefined) // Default -- should not be mapped
+  t.is((data[0].author as DataObject).id, 'admin') // Fixed -- should be mapped
 })

@@ -90,7 +90,7 @@ export interface AuthDef {
 export interface ServiceDef {
   id: string
   adapter: string | Adapter
-  auth?: AuthDef | string | null
+  auth?: boolean | AuthDef | string | null
   meta?: string
   options?: { [key: string]: unknown }
   endpoints: EndpointDef[]

@@ -56,7 +56,6 @@ test('should dispatch set action and return respons', async (t) => {
   }
   const expectedRequestParams = {
     type: 'entry',
-    // onlyMappedValues: true, // TODO: Figure out how this should be implemented
     requestMethod: 'POST',
     id: 'ent1',
   }

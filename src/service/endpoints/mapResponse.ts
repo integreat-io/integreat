@@ -8,32 +8,44 @@ import {
   MappingObject,
 } from '../../utils/exchangeMapping'
 
-const mapOneType = (
+const getMapperFn = (
+  mapping: MapTransform | null | undefined,
+  sendNoDefaults: boolean
+) => (sendNoDefaults ? mapping?.onlyMappedValues : mapping)
+
+function mapOneType(
   mappingObject: MappingObject,
   type: string,
-  mappings: Mappings
-) =>
-  type && mappings.hasOwnProperty(type) && typeof mappings[type] === 'function' // eslint-disable-line security/detect-object-injection
-    ? mappings[type](mappingObject) // eslint-disable-line security/detect-object-injection
-    : undefined
+  mappings: Mappings,
+  returnNoDefaults: boolean
+) {
+  const mapping =
+    type && mappings.hasOwnProperty(type) ? mappings[type] : undefined // eslint-disable-line security/detect-object-injection
+  const mapperFn = getMapperFn(mapping, returnNoDefaults)
+  return typeof mapperFn === 'function' ? mapperFn(mappingObject) : undefined
+}
 
 const mapByType = (
   mappingObject: MappingObject,
   type: string | string[],
-  mappings: Mappings
+  mappings: Mappings,
+  returnNoDefaults: boolean
 ) =>
   Array.isArray(type)
     ? flatten(
-        type.map((type) => mapOneType(mappingObject, type, mappings))
+        type.map((type) =>
+          mapOneType(mappingObject, type, mappings, returnNoDefaults)
+        )
       ).filter(Boolean)
-    : mapOneType(mappingObject, type, mappings)
+    : mapOneType(mappingObject, type, mappings, returnNoDefaults)
 
 const errorIfErrorMessage = (status: string | null, error?: string) =>
   (!status || status === 'ok') && error ? 'error' : status
 
 export default function mapResponse(
   fromMapper: MapTransform | null,
-  mappings: Dictionary<MapTransform>
+  mappings: Dictionary<MapTransform>,
+  endpointReturnNoDefaults = false
 ) {
   return (exchange: Exchange) => {
     // Map nothing if this is a dryrun
@@ -41,10 +53,13 @@ export default function mapResponse(
       return exchange
     }
 
+    const returnNoDefaults =
+      exchange.response.returnNoDefaults ?? endpointReturnNoDefaults
     const mappingObject = mappingObjectFromExchange(exchange)
 
-    if (typeof fromMapper === 'function') {
-      const mapped = fromMapper(mappingObject)
+    const mapperFn = getMapperFn(fromMapper, returnNoDefaults)
+    if (typeof mapperFn === 'function') {
+      const mapped = mapperFn(mappingObject)
       if (typeof mapped === 'object' && mapped !== null) {
         mappingObject.data = mapped.data
         mappingObject.status = mapped.status || mappingObject.status
@@ -66,7 +81,12 @@ export default function mapResponse(
     if (exchange.request.type) {
       return exchangeFromMappingObject(exchange, {
         ...mappingObject,
-        data: mapByType(mappingObject, exchange.request.type, mappings),
+        data: mapByType(
+          mappingObject,
+          exchange.request.type,
+          mappings,
+          returnNoDefaults
+        ),
       })
     } else {
       return exchangeFromMappingObject(exchange, mappingObject)

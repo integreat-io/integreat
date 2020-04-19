@@ -234,7 +234,7 @@ test('should pass on ident when getting from id array', async (t) => {
   })
   sinon.stub(svc, 'sendExchange').callsFake(async (exchange: Exchange) => ({
     ...exchange,
-    response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
   }))
   const getService = () => svc
 
@@ -308,8 +308,7 @@ test('should get default values from type', async (t) => {
   t.is((ret.response.data as DataObject[])[0].byline, 'Somebody')
 })
 
-// Waiting for a solution for onlyMappedValues
-test.failing('should not get default values from type', async (t) => {
+test('should not get default values from type', async (t) => {
   nock('http://api1.test')
     .get('/database')
     .reply(200, [{ id: 'ent1', type: 'entry' }])
@@ -318,8 +317,8 @@ test.failing('should not get default values from type', async (t) => {
     request: {
       type: 'entry',
       service: 'entries',
-      params: { onlyMappedValues: true }, // TODO: What to do with this?
     },
+    response: { returnNoDefaults: true },
   })
   const svc = setupService('http://api1.test/database')
   const getService = () => svc

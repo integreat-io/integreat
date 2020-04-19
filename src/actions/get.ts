@@ -81,8 +81,6 @@ export default async function get(
     endpointId,
   } = exchange
 
-  // const onlyMappedValues = false // TODO: Figure out how and if to set this
-
   const service =
     typeof getService === 'function' ? getService(type, serviceId) : null
   if (!service) {

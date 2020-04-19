@@ -51,8 +51,7 @@ test.after(() => {
 
 // Tests
 
-// Waiting for a solution to onlyMappedValues
-test.failing('should set metadata on service', async (t) => {
+test('should set metadata on service', async (t) => {
   const scope = nock('http://api1.test')
     .put('/database/meta%3Astore', {
       $type: 'meta',
@@ -103,8 +102,7 @@ test('should not set metadata on service when no meta type', async (t) => {
   t.false(scope.isDone())
 })
 
-// Waiting for a solution to onlyMappedValues
-test.failing('should set metadata on other service', async (t) => {
+test('should set metadata on other service', async (t) => {
   const scope = nock('http://api3.test')
     .put('/database/meta%3Aentries', {
       $type: 'meta',

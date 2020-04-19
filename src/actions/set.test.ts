@@ -126,32 +126,7 @@ test('should map and set items to service', async (t) => {
   t.true(scope.isDone())
 })
 
-// Failing due to missing onlyMappedValues
-test.failing('should map and set one item to service', async (t) => {
-  const scope = nock('http://api5.test')
-    .put('/database/entry:ent1', { id: 'ent1' })
-    .reply(200, { okay: true, id: 'ent1', rev: '000001' })
-  const exchange = completeExchange({
-    type: 'SET',
-    request: {
-      type: 'entry',
-      data: { $type: 'entry', id: 'ent1' },
-    },
-  })
-  const src = setupService('http://api5.test/database/{type}:{id}', {
-    method: 'PUT',
-    path: undefined,
-  })
-  const getService = (type?: string | string[], _service?: string) =>
-    type === 'entry' ? src : null
-
-  const ret = await set(exchange, dispatch, getService)
-
-  t.is(ret.status, 'ok', ret.response.error)
-  t.true(scope.isDone())
-})
-
-test('should map with default values from type', async (t) => {
+test('should map and set one item to service', async (t) => {
   const scope = nock('http://api4.test')
     .post('/database/_bulk_docs', {
       docs: [{ id: 'ent1', header: 'A title' }],
@@ -163,12 +138,36 @@ test('should map with default values from type', async (t) => {
       service: 'entries',
       type: 'entry',
       data: [{ $type: 'entry', id: 'ent1' }],
-      params: { onlyMappedValues: false }, // TODO: How to do this?
     },
     ident: { id: 'johnf' },
   })
   const src = setupService('http://api4.test/database/_bulk_docs')
   const getService = () => src
+
+  const ret = await set(exchange, dispatch, getService)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.true(scope.isDone())
+})
+
+test('should send without default values', async (t) => {
+  const scope = nock('http://api5.test')
+    .put('/database/entry:ent1', { docs: [{ id: 'ent1' }] })
+    .reply(200, { okay: true, id: 'ent1', rev: '000001' })
+  const exchange = completeExchange({
+    type: 'SET',
+    request: {
+      type: 'entry',
+      data: { $type: 'entry', id: 'ent1' },
+      sendNoDefaults: true,
+    },
+  })
+  const src = setupService('http://api5.test/database/{type}:{id}', {
+    method: 'PUT',
+    path: undefined,
+  })
+  const getService = (type?: string | string[], _service?: string) =>
+    type === 'entry' ? src : null
 
   const ret = await set(exchange, dispatch, getService)
 

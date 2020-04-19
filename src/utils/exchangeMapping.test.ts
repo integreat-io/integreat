@@ -29,6 +29,7 @@ test('should create exchange from action', (t) => {
       type: 'user',
       data: { name: 'John F.' },
       endpoint: 'superuser',
+      returnNoDefaults: true,
     },
     meta: { ident: { id: 'johnf' } },
   }
@@ -40,6 +41,9 @@ test('should create exchange from action', (t) => {
       type: 'user',
       data: { name: 'John F.' },
       params: {},
+    },
+    response: {
+      returnNoDefaults: true,
     },
     endpointId: 'superuser',
     ident: { id: 'johnf' },

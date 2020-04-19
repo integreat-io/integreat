@@ -63,7 +63,6 @@ export default async function set(
   const {
     request: { service: serviceId, data },
     endpoint,
-    // onlyMappedValues = true
   } = exchange
 
   const type = extractType(exchange, data)

@@ -67,8 +67,6 @@ export default async function request(
     : `endpoint matching type '${type}'`
   debug('REQUEST: Fetch from service %s at %s', service.id, endpointDebug)
 
-  // const { response } = await service.receive(action, dispatch)
-
   const nextExchange = await pPipe<
     Exchange,
     Exchange,

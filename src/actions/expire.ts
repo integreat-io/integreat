@@ -1,55 +1,52 @@
-import action from '../utils/createAction'
 import createError from '../utils/createError'
-import { responseToExchange } from '../utils/exchangeMapping'
-import { Exchange, Dispatch, Ident, Response, TypedData } from '../types'
+import { completeExchange } from '../utils/exchangeMapping'
+import { isTypedData } from '../utils/is'
+import { Exchange, InternalDispatch, Ident, TypedData } from '../types'
+
+const isTypedDataArray = (value: unknown): value is TypedData[] =>
+  Array.isArray(value) && isTypedData(value[0])
 
 const getExpired = async (
   service: string,
   type: string | string[],
   endpointId: string,
   msFromNow: number,
-  dispatch: Dispatch<TypedData[]>,
+  dispatch: InternalDispatch,
   ident?: Ident
-): Promise<Response<TypedData[]>> => {
+): Promise<Exchange> => {
   const timestamp = Date.now() + msFromNow
   const isodate = new Date(timestamp).toISOString()
-  const payloadGet = {
-    service,
-    type,
-    endpoint: endpointId,
-    onlyMappedValues: true,
-    timestamp,
-    isodate,
-  }
-
-  return dispatch(action('GET', payloadGet, { ident }))
+  return dispatch(
+    completeExchange({
+      type: 'GET',
+      request: {
+        type,
+        service,
+        params: { timestamp, isodate },
+      },
+      response: { returnNoDefaults: true },
+      endpointId,
+      ident,
+    })
+  )
 }
 
 const deleteExpired = async (
-  exchange: Exchange,
-  response: Response<TypedData[]>,
+  data: TypedData[],
   service: string,
-  dispatch: Dispatch,
+  dispatch: InternalDispatch,
   ident?: Ident
-) => {
-  if (response.status !== 'ok' || !Array.isArray(response.data)) {
-    return createError(
-      exchange,
-      `Could not get items from service '${service}'. Reason: ${response.status} ${response.error}`,
-      'noaction'
-    )
-  }
-  if (response.data.length === 0) {
-    return createError(
-      exchange,
-      `No items to expire from service '${service}'`,
-      'noaction'
-    )
-  }
+): Promise<Exchange> => {
+  const deleteData = data.map((item) => ({ id: item.id, $type: item.$type }))
 
-  const data = response.data.map((item) => ({ id: item.id, type: item.type }))
+  const deleteExchange = completeExchange({
+    type: 'DELETE',
+    request: { service, data: deleteData },
+    ident,
+    meta: { queue: true },
+  })
 
-  return dispatch(action('DELETE', { service, data }, { queue: true, ident }))
+  return dispatch(deleteExchange)
 }
 
 /**
@@ -66,7 +63,7 @@ const deleteExpired = async (
  */
 export default async function expire(
   exchange: Exchange,
-  dispatch: Dispatch<TypedData[]>
+  dispatch: InternalDispatch
 ): Promise<Exchange> {
   const {
     ident,
@@ -94,7 +91,7 @@ export default async function expire(
     )
   }
 
-  const expiredResponse = await getExpired(
+  const expiredExchange = await getExpired(
     service,
     type,
     endpointId,
@@ -103,13 +100,30 @@ export default async function expire(
     ident
   )
 
-  const response = await deleteExpired(
-    exchange,
-    expiredResponse,
-    service,
-    dispatch,
-    ident
-  )
+  if (expiredExchange.status !== 'ok') {
+    return createError(
+      exchange,
+      `Could not get items from service '${service}'. Reason: ${expiredExchange.status} ${expiredExchange.response.error}`,
+      'noaction'
+    )
+  }
+  const data = expiredExchange.response.data
+  if (!isTypedDataArray(data)) {
+    return createError(
+      exchange,
+      `No items to expire from service '${service}'`,
+      'noaction'
+    )
+  }
 
-  return responseToExchange(exchange, response)
+  const responseExchange = await deleteExpired(data, service, dispatch, ident)
+
+  return {
+    ...exchange,
+    status: responseExchange.status,
+    response: {
+      ...exchange.response,
+      ...responseExchange.response,
+    },
+  }
 }

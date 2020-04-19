@@ -82,6 +82,7 @@ export interface ExchangeRequest<T = Data> {
   headers?: Dictionary<string>
   page?: number
   pageSize?: number
+  sendNoDefaults?: boolean
 }
 
 export interface ExchangeResponse<T = Data> {
@@ -91,6 +92,7 @@ export interface ExchangeResponse<T = Data> {
   warning?: string
   paging?: object
   params?: Params
+  returnNoDefaults?: boolean
 }
 
 export type Meta = Dictionary<Data>

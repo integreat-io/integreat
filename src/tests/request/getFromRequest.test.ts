@@ -55,7 +55,6 @@ test.failing('should dispatch get action and return respons', async (t) => {
   const expectedRequestParams = {
     type: 'entry',
     id: 'ent1',
-    onlyMappedValues: false,
   }
   const expectedResponseData = serializeData({
     key: 'ent1',

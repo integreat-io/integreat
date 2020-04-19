@@ -84,8 +84,8 @@ const schemas = [
   {
     id: 'message',
     service: 'helloworld',
-    shape: { text: 'string' }
-  }
+    shape: { text: 'string' },
+  },
 ]
 
 const services = [
@@ -94,9 +94,9 @@ const services = [
     adapter: 'json',
     endpoints: [{ options: { uri: 'https://api.helloworld.io/json' } }],
     mappings: {
-      message: { text: 'message' }
-    }
-  }
+      message: { text: 'message' },
+    },
+  },
 ]
 
 const adapters = { json: json(console) }
@@ -104,7 +104,7 @@ const adapters = { json: json(console) }
 const great = Integreat.create({ schemas, services }, { adapters })
 const action = { type: 'GET', payload: { type: 'message' } }
 
-great.dispatch(action).then(data => console.log(data.text))
+great.dispatch(action).then((data) => console.log(data.text))
 //--> Hello world
 ```
 
@@ -291,6 +291,13 @@ that this is an authenticated service.
     filters: []
   },
   validate: [],
+  requestMapping: <path string | mapping object>,
+  responseMapping: <path string | mapping object>,
+  sendNoDefaults: <boolean>,
+  returnNoDefaults: <boolean>,
+  mappings: {
+    <schema id>: <mapping definition | mapping id>,
+  },
   options: {...}
 }
 ```
@@ -798,7 +805,7 @@ with the `completeIdent` middleware:
 
 ```javascript
 const great = Integreat.create(defs, resources, [
-  integreat.middleware.completeIdent
+  integreat.middleware.completeIdent,
 ])
 ```
 
@@ -940,7 +947,7 @@ The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
 
 By default, the returned data will be cast with default values, but set
-`onlyMappedValues: true` on the action payload to get only values mapped from
+`returnNoDefaults: true` on the action payload to get only values mapped from
 the service data.
 
 #### `GET_UNMAPPED`
@@ -1044,9 +1051,11 @@ may be removed in future versions of Integreat.
 The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
 
-By default, only fields mapped from the action data will be sent to the service,
-but set `onlyMappedValues: false` to cast the data going to the service with
-default values. This will also affect the data coming back from the action.
+To send only fields mapped from the action data to the service, set
+`sendNoDefaults: true` on the endpoint config to cast the data going to the
+service without using default values. This will not affect the data coming back
+from the action, but set `returnNoDefaults: true` to leave defaults out of the
+response data.
 
 #### `SET_META`
 
@@ -1381,7 +1390,7 @@ requirement is that the functions returns a valid Integreat response object.
 Example implementation of a very simple logger middleware:
 
 ```javascript
-const logger = next => async action => {
+const logger = (next) => async (action) => {
   console.log('Dispatch was called with action', action)
   const response = await next(action)
   console.log('Dispatch completed with response', response)

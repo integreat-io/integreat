@@ -3,6 +3,7 @@ import createSchema from '../../schema'
 import builtInFunctions from '../../transformers/builtIns'
 import { completeExchange } from '../../utils/exchangeMapping'
 import { prepareMappings, createMapper } from './create'
+import { DataArray, DataObject } from '../../types'
 
 import mapRequest from './mapRequest'
 
@@ -120,6 +121,47 @@ test('should map to service with mappings and specified type', (t) => {
   const ret = mapRequest(requestMapper, mappings)(exchange)
 
   t.deepEqual(ret, expected)
+})
+
+test('should map to service without defaults', (t) => {
+  const sendNoDefaults = true
+  const requestMapper = createMapper('content.data', mapOptions)
+  const expectedData = [
+    { key: 'ent1', header: 'Entry 1' },
+    { key: 'ent2', header: 'Entry 2' },
+  ]
+
+  const ret = mapRequest(requestMapper, mappings, sendNoDefaults)(exchange)
+
+  const data = ((ret.request.data as DataObject).content as DataObject)
+    .data as DataObject
+  t.deepEqual(data.items, expectedData)
+})
+
+test('should use sendNoDefaults from exchange when set', (t) => {
+  const sendNoDefaults = true
+  const requestMapper = createMapper('content.data', mapOptions)
+  const exchangeWithDefaults = {
+    ...exchange,
+    request: {
+      ...exchange.request,
+      sendNoDefaults: false,
+    },
+  }
+  const expectedData = [
+    { key: 'ent1', header: 'Entry 1', one: 1, two: undefined },
+    { key: 'ent2', header: 'Entry 2', one: 1, two: undefined },
+  ]
+
+  const ret = mapRequest(
+    requestMapper,
+    mappings,
+    sendNoDefaults
+  )(exchangeWithDefaults)
+
+  const data = ((ret.request.data as DataObject).content as DataObject)
+    .data as DataObject
+  t.deepEqual(data.items, expectedData)
 })
 
 test('should not map by type when no type is specified', (t) => {
