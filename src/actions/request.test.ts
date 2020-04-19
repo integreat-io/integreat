@@ -59,7 +59,7 @@ test('should dispatch action from options and map response', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        responseMapping: { 'params.id': 'data.items[0].key' },
+        requestMapping: { 'params.id': 'data.items[0].key' },
         options: {
           actionType: 'GET',
           actionPayload: { type: 'entry' },
@@ -68,11 +68,11 @@ test('should dispatch action from options and map response', async (t) => {
       },
     ],
   })
-  const getService = (type?: string | string[], _serviceId?: string) =>
-    type === 'entry' ? service : undefined
+  const getService = (type?: string | string[], serviceId?: string) =>
+    type === 'entry' || serviceId === 'entries' ? service : undefined
   const exchange = completeExchange({
     type: 'REQUEST',
-    request: { type: 'entry', data: { items: [{ key: 'ent1' }] } },
+    request: { service: 'entries', data: { items: [{ key: 'ent1' }] } },
     ident: { id: 'johnf' },
     incoming: true,
   })
@@ -81,8 +81,10 @@ test('should dispatch action from options and map response', async (t) => {
     request: {
       id: 'ent1',
       type: 'entry',
-      data: [],
+      data: undefined,
+      service: 'entries',
     },
+    response: {},
     ident: { id: 'johnf' },
     meta: { project: 'project1' },
   })
@@ -92,7 +94,7 @@ test('should dispatch action from options and map response', async (t) => {
 
   const ret = await request(exchange, dispatch, getService)
 
-  t.deepEqual(ret.status, 'ok')
+  t.deepEqual(ret.status, 'ok', ret.response.error)
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expected)
 })
@@ -105,7 +107,7 @@ test('should return exchange mapped to service', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        responseMapping: { 'params.id': 'data.items[0].key' },
+        requestMapping: { 'params.id': 'data.items[0].key' },
         options: {
           actionType: 'GET',
           actionPayload: { type: 'entry' },
@@ -122,20 +124,20 @@ test('should return exchange mapped to service', async (t) => {
     ident: { id: 'johnf' },
     incoming: true,
   })
-  const response = completeExchange({
-    type: 'GET',
-    status: 'ok',
-    request: {
-      id: 'ent1',
-      type: 'entry',
-    },
-    response: {
-      data: [{ $type: 'entry', id: 'ent1', title: 'Entry 1' }],
-    },
-    ident: { id: 'johnf' },
-    meta: { project: 'project1' },
-  })
-  const dispatch = sinon.stub().resolves(response)
+  const dispatch = async () =>
+    completeExchange({
+      type: 'GET',
+      status: 'ok',
+      request: {
+        id: 'ent1',
+        type: 'entry',
+      },
+      response: {
+        data: [{ $type: 'entry', id: 'ent1', title: 'Entry 1' }],
+      },
+      ident: { id: 'johnf' },
+      meta: { project: 'project1' },
+    })
 
   const ret = await request(exchange, dispatch, getService)
 
@@ -217,8 +219,8 @@ test.failing('should respond with mapped data', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        responseMapping: { 'params.id': 'data.key' },
-        requestMapping: ['data', { data: { items: 'content.entries' } }],
+        requestMapping: { 'params.id': 'data.key' },
+        responseMapping: ['data', { data: { items: 'content.entries' } }],
         options: { actionType: 'GET', actionPayload: { type: 'entry' } },
       },
     ],
@@ -250,7 +252,7 @@ test('should use type from request action if not set on endpoint', async (t) => 
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        responseMapping: { 'params.id': 'data.items[0].key' },
+        requestMapping: { 'params.id': 'data.items[0].key' },
         options: { actionType: 'GET' },
       },
     ],
@@ -292,8 +294,8 @@ test('should respond with noaction when no action type is set on endpoint', asyn
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        responseMapping: { 'params.id': 'data.key' },
-        requestMapping: { 'data.items': 'content.entries' },
+        requestMapping: { 'params.id': 'data.key' },
+        responseMapping: { 'data.items': 'content.entries' },
       },
     ],
   })
@@ -347,7 +349,7 @@ test.failing('should map and pass on error from dispatch', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        requestMapping: [
+        responseMapping: [
           'data',
           {
             'data.items': 'content',

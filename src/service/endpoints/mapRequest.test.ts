@@ -3,7 +3,7 @@ import createSchema from '../../schema'
 import builtInFunctions from '../../transformers/builtIns'
 import { completeExchange } from '../../utils/exchangeMapping'
 import { prepareMappings, createMapper } from './create'
-import { DataArray, DataObject } from '../../types'
+import { DataObject } from '../../types'
 
 import mapRequest from './mapRequest'
 
@@ -247,35 +247,30 @@ test('should map data to service with no specified type', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should map incoming exchange to service', (t) => {
+test('should map request from incoming exchange from service', (t) => {
+  const rawData = {
+    content: {
+      data: {
+        items: [{ id: 'ent1', $type: 'entry', title: 'Entry 1' }],
+        accounts: [{ id: 'account1', name: 'John F.' }],
+      },
+    },
+  }
   const requestMapper = createMapper('content.data', mapOptions)
   const incomingExchange = {
     ...exchange,
-    request: { type: 'entry' },
-    response: {
-      data: exchange.request.data,
-    },
+    type: 'EXCHANGE',
+    request: { type: 'account', data: rawData },
     incoming: true,
-  }
-  const expected = {
-    ...incomingExchange,
-    response: {
-      data: {
-        content: {
-          data: {
-            items: [
-              { key: 'ent1', header: 'Entry 1', one: 1, two: undefined },
-              { key: 'ent2', header: 'Entry 2', one: 1, two: undefined },
-            ],
-          },
-        },
-      },
-    },
   }
 
   const ret = mapRequest(requestMapper, mappings)(incomingExchange)
 
-  t.deepEqual(ret, expected)
+  const data = ret.request.data as DataObject[]
+  t.is(data.length, 1)
+  t.is(data[0]?.id, 'account1')
+  t.is(data[0]?.$type, 'account')
+  t.is(data[0]?.name, 'John F.')
 })
 
 test.failing('should map to service when one is array', (t) => {

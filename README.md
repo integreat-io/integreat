@@ -461,7 +461,7 @@ is a useful shorthand for this. I.e. `{title: 'article.headline'}` translates to
 The `toService` section behaves just like `attributes` and `relationships`,
 except that it is only used when mapping _to_ a service. This is where you'll
 put mappings that don't have a corresponding field in the schema you map
-to/from, e.g. root paths like `$params.service`.
+to/from, e.g. root paths like `^params.service`.
 
 Mappings relate to both services and schemas, as the thing that binds them
 together, but it is the service definition that "owns" them. The `mappings`
@@ -524,8 +524,8 @@ adapter.
 Arrays are reconstructed with any object or value at the first index, unless a
 single, non-negative index is specified in the path.
 
-Prefix a path with `$` to map with values from the request object, e.g.
-`$params.service`.
+Prefix a path with `^` to map with values from the mapping object, e.g.
+`^params.service`.
 
 You may optionally supply alternative paths by providing an array of paths. If
 the first one does not match any properties in the data, the next path is tried,

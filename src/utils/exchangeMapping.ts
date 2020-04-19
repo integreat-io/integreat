@@ -115,7 +115,7 @@ export interface MappingObject {
 
 export function mappingObjectFromExchange(
   exchange: Exchange,
-  isTo = false
+  isRequest = false
 ): MappingObject {
   const {
     type: action,
@@ -124,13 +124,12 @@ export function mappingObjectFromExchange(
     response: { data: responseData, error, paging },
     endpoint: { options = undefined } = {},
     ident,
-    incoming,
   } = exchange
   return {
     action,
     status,
     params: { ...reqParams, ...params },
-    data: (isTo ? !incoming : incoming) ? requestData : responseData,
+    data: isRequest ? requestData : responseData,
     error,
     paging,
     options,
@@ -141,9 +140,8 @@ export function mappingObjectFromExchange(
 export function exchangeFromMappingObject(
   exchange: Exchange,
   mappingObject: MappingObject,
-  isTo = false
+  isRequest = false
 ): Exchange {
-  const { incoming = false } = exchange
   const {
     status,
     data,
@@ -157,7 +155,7 @@ export function exchangeFromMappingObject(
     status,
     request: {
       ...exchange.request,
-      ...((isTo ? !incoming : incoming) && { data }),
+      ...(isRequest && { data }),
       ...(id && { id }),
       ...(type && { type }),
       ...(service && { service }),
@@ -165,7 +163,7 @@ export function exchangeFromMappingObject(
     },
     response: {
       ...exchange.response,
-      ...((!isTo ? !incoming : incoming) && { data }),
+      ...(!isRequest && { data }),
       ...(paging ? { paging } : {}),
       ...(error ? { error } : {}),
     },

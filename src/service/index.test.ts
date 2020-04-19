@@ -934,6 +934,44 @@ test('should authorize typed data object from service', async (t) => {
   t.is(ret.response.error, "Authentication was refused for type 'account'")
 })
 
+test('should authorize typed data in array to service', async (t) => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'accounts',
+    endpoints: [
+      {
+        options: { uri: 'http://some.api/1.0' },
+      },
+    ],
+    adapter: 'json',
+    mappings: { account: 'account' },
+  })
+  const exchange = service.assignEndpointMapper(
+    completeExchange({
+      type: 'SET',
+      status: 'ok',
+      request: { type: 'account' },
+      response: {
+        data: [
+          { id: 'johnf', $type: 'account', name: 'John F.' },
+          { id: 'maryk', $type: 'account', name: 'Mary K.' },
+        ],
+      },
+      ident: { id: 'johnf' },
+      incoming: true,
+    })
+  )
+
+  const ret = await service.mapResponse(exchange)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.is(ret.response.data.accounts.length, 1)
+  t.is(ret.response.data.accounts[0].id, 'johnf')
+  t.is(
+    ret.response.warning,
+    '1 item was removed from response data due to lack of access'
+  )
+})
+
 test('mapResponse should map without default values', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
@@ -1167,6 +1205,44 @@ test('mapRequest should authorize data object going to service', async (t) => {
   const ret = await service.mapRequest(exchange)
 
   t.is(ret.request.data.accounts, undefined)
+  t.deepEqual(ret.response, expectedResponse)
+})
+
+test('mapRequest should authorize data array coming from service', async (t) => {
+  const service = setupService({ mapOptions, schemas, adapters })({
+    id: 'accounts',
+    adapter: 'json',
+    auth: { id: 'auth1' },
+    mappings: { account: 'account' },
+    endpoints,
+  })
+  const exchange = service.assignEndpointMapper(
+    completeExchange({
+      type: 'SET',
+      request: {
+        type: 'account',
+        data: {
+          accounts: [
+            { id: 'johnf', name: 'John F.' },
+            { id: 'lucyk', name: 'Lucy K.' },
+          ],
+        },
+      },
+      ident: { id: 'johnf', roles: ['admin'] },
+      authorized: true,
+      incoming: true,
+    })
+  )
+  const expectedResponse = {
+    warning: '1 item was removed from request data due to lack of access',
+  }
+
+  const ret = await service.mapRequest(exchange)
+
+  t.is(ret.status, null, ret.response.error)
+  t.is(ret.request.data.length, 1)
+  t.is(ret.request.data[0].id, 'johnf')
+  t.is(ret.request.data[0].$type, 'account')
   t.deepEqual(ret.response, expectedResponse)
 })
 

@@ -77,7 +77,7 @@ export default async function request(
     service.authorizeExchange,
     service.assignEndpointMapper,
     ensureActionType(serviceId),
-    service.mapResponse
+    service.mapRequest
   )(exchange)
 
   if (nextExchange.status) {
@@ -86,5 +86,5 @@ export default async function request(
 
   const responseExchange = await dispatch(exchangeToDispatch(nextExchange))
 
-  return service.mapRequest(exchangeToReturn(nextExchange, responseExchange))
+  return service.mapResponse(exchangeToReturn(nextExchange, responseExchange))
 }

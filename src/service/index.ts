@@ -96,29 +96,43 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
     authorizeExchange: authorizeExchange(schemas, requireAuth),
 
     /**
-     * Map request
+     * Map request. Will authorize data and map exchange – in that order – when
+     * this is an outgoing requst, and will do it in reverse for an incoming
+     * request.
      */
     mapRequest(exchange: Exchange): Exchange {
+      // Require endpoint
       const { endpoint } = exchange
       if (!endpoint) {
         return exchange.status && exchange.status !== 'ok'
           ? exchange
           : createError(exchange, 'No endpoint provided')
       }
-      return endpoint.mapRequest(authorizeDataToService(exchange))
+
+      // Authorize and map in right order
+      return exchange.incoming
+        ? authorizeDataToService(endpoint.mapRequest(exchange))
+        : endpoint.mapRequest(authorizeDataToService(exchange))
     },
 
     /**
-     * Map response
+     * Map response. Will map exchange and authorize data – in the order – when
+     * this is the response from an outgoing request. Will do it in the reverse
+     * order for a response to an incoming request.
      */
     mapResponse(exchange: Exchange): Exchange {
+      // Require endpoint
       const { endpoint } = exchange
       if (!endpoint) {
         return exchange.status
           ? exchange
           : createError(exchange, 'No endpoint provided')
       }
-      return authorizeDataFromService(endpoint.mapResponse(exchange))
+
+      // Authorize and map in right order
+      return exchange.incoming
+        ? endpoint.mapResponse(authorizeDataFromService(exchange))
+        : authorizeDataFromService(endpoint.mapResponse(exchange))
     },
 
     /**

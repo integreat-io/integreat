@@ -234,44 +234,8 @@ test('should return error response from exchange', (t) => {
 
 // Tests -- mappingObjectFromExchange
 
-test('should create mapping object from exchange for mapping from service', (t) => {
-  const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
-  const exchange = {
-    ...exchangeDefaults,
-    type: 'GET',
-    status: null,
-    request: {
-      id: 'johnf',
-      type: 'user',
-      params: { searchDeleted: true },
-      data: {},
-    },
-    response: {
-      data,
-      paging: { next: { offset: 'page2', type: 'entry' } },
-    },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
-    ident: { id: 'johnf' },
-  }
-  const expected = {
-    action: 'GET',
-    status: null,
-    params: { id: 'johnf', type: 'user', searchDeleted: true },
-    data,
-    paging: { next: { offset: 'page2', type: 'entry' } },
-    error: undefined,
-    options: { uri: 'http://some.api.com/1.0' },
-    ident: { id: 'johnf' },
-  }
-
-  const ret = mappingObjectFromExchange(exchange)
-
-  t.deepEqual(ret, expected)
-})
-
-test('should create mapping object from exchange for mapping to service', (t) => {
+test('should create mapping object from exchange for request mapping to service', (t) => {
+  const isRequest = true
   const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
   const exchange = {
     ...exchangeDefaults,
@@ -306,12 +270,51 @@ test('should create mapping object from exchange for mapping to service', (t) =>
     ident: { id: 'johnf' },
   }
 
-  const ret = mappingObjectFromExchange(exchange, true)
+  const ret = mappingObjectFromExchange(exchange, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
-test('should create mapping object from incoming exchange for mapping from service', (t) => {
+test('should create mapping object from exchange for response mapping from service', (t) => {
+  const isRequest = false
+  const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
+  const exchange = {
+    ...exchangeDefaults,
+    type: 'GET',
+    status: null,
+    request: {
+      id: 'johnf',
+      type: 'user',
+      params: { searchDeleted: true },
+      data: {},
+    },
+    response: {
+      data,
+      paging: { next: { offset: 'page2', type: 'entry' } },
+    },
+    endpoint: ({
+      options: { uri: 'http://some.api.com/1.0' },
+    } as unknown) as Endpoint,
+    ident: { id: 'johnf' },
+  }
+  const expected = {
+    action: 'GET',
+    status: null,
+    params: { id: 'johnf', type: 'user', searchDeleted: true },
+    data,
+    paging: { next: { offset: 'page2', type: 'entry' } },
+    error: undefined,
+    options: { uri: 'http://some.api.com/1.0' },
+    ident: { id: 'johnf' },
+  }
+
+  const ret = mappingObjectFromExchange(exchange, isRequest)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should create mapping object from incoming exchange for request mapping from service', (t) => {
+  const isRequest = true
   const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
   const exchange = {
     ...exchangeDefaults,
@@ -341,12 +344,13 @@ test('should create mapping object from incoming exchange for mapping from servi
     ident: { id: 'johnf' },
   }
 
-  const ret = mappingObjectFromExchange(exchange)
+  const ret = mappingObjectFromExchange(exchange, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
-test('should create mapping object from incoming exchange for mapping to service', (t) => {
+test('should create mapping object from incoming exchange for response mapping to service', (t) => {
+  const isRequest = false
   const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
   const exchange = {
     ...exchangeDefaults,
@@ -376,14 +380,15 @@ test('should create mapping object from incoming exchange for mapping to service
     ident: { id: 'johnf' },
   }
 
-  const ret = mappingObjectFromExchange(exchange, true)
+  const ret = mappingObjectFromExchange(exchange, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
 // Tests -- exchangeFromMappingObject
 
-test('should populate exchange from mapping object from service', (t) => {
+test('should populate exchange from mapping object from response from service', (t) => {
+  const isRequest = false
   const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
   const exchange = {
     ...exchangeDefaults,
@@ -430,12 +435,13 @@ test('should populate exchange from mapping object from service', (t) => {
     ident: { id: 'johnf' },
   }
 
-  const ret = exchangeFromMappingObject(exchange, mappingObject)
+  const ret = exchangeFromMappingObject(exchange, mappingObject, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
-test('should populate exchange from mapping object to service', (t) => {
+test('should populate exchange from mapping object from request to service', (t) => {
+  const isRequest = true
   const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
   const exchange = {
     ...exchangeDefaults,
@@ -483,66 +489,13 @@ test('should populate exchange from mapping object to service', (t) => {
     ident: { id: 'johnf' },
   }
 
-  const ret = exchangeFromMappingObject(exchange, mappingObject, true)
+  const ret = exchangeFromMappingObject(exchange, mappingObject, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
-test('should populate incoming exchange from mapping object from service', (t) => {
-  const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
-  const exchange = {
-    ...exchangeDefaults,
-    type: 'GET',
-    status: null,
-    request: {
-      data: { id: 'johnf' },
-    },
-    response: {
-      data: null,
-    },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
-    ident: { id: 'johnf' },
-    incoming: true,
-  }
-  const mappingObject = {
-    action: 'GET',
-    status: 'ok',
-    params: { id: 'johnf', type: 'user', searchDeleted: true },
-    data,
-    paging: { next: { offset: 'page2', type: 'entry' } },
-    error: undefined,
-    options: { uri: 'http://some.api.com/1.0' },
-    ident: { id: 'johnf' },
-  }
-  const expected = {
-    ...exchangeDefaults,
-    type: 'GET',
-    status: 'ok',
-    request: {
-      id: 'johnf',
-      type: 'user',
-      params: { searchDeleted: true },
-      data,
-    },
-    response: {
-      data: null,
-      paging: { next: { offset: 'page2', type: 'entry' } },
-    },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
-    ident: { id: 'johnf' },
-    incoming: true,
-  }
-
-  const ret = exchangeFromMappingObject(exchange, mappingObject)
-
-  t.deepEqual(ret, expected)
-})
-
-test('should populate incoming exchange from mapping object to service', (t) => {
+test('should populate incoming exchange from mapping object from response to service', (t) => {
+  const isRequest = false
   const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
   const exchange = {
     ...exchangeDefaults,
@@ -594,7 +547,62 @@ test('should populate incoming exchange from mapping object to service', (t) => 
     incoming: true,
   }
 
-  const ret = exchangeFromMappingObject(exchange, mappingObject, true)
+  const ret = exchangeFromMappingObject(exchange, mappingObject, isRequest)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should populate incoming exchange from mapping object from request from service', (t) => {
+  const isRequest = true
+  const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
+  const exchange = {
+    ...exchangeDefaults,
+    type: 'GET',
+    status: null,
+    request: {
+      data: { id: 'johnf' },
+    },
+    response: {
+      data: null,
+    },
+    endpoint: ({
+      options: { uri: 'http://some.api.com/1.0' },
+    } as unknown) as Endpoint,
+    ident: { id: 'johnf' },
+    incoming: true,
+  }
+  const mappingObject = {
+    action: 'GET',
+    status: 'ok',
+    params: { id: 'johnf', type: 'user', searchDeleted: true },
+    data,
+    paging: { next: { offset: 'page2', type: 'entry' } },
+    error: undefined,
+    options: { uri: 'http://some.api.com/1.0' },
+    ident: { id: 'johnf' },
+  }
+  const expected = {
+    ...exchangeDefaults,
+    type: 'GET',
+    status: 'ok',
+    request: {
+      id: 'johnf',
+      type: 'user',
+      params: { searchDeleted: true },
+      data,
+    },
+    response: {
+      data: null,
+      paging: { next: { offset: 'page2', type: 'entry' } },
+    },
+    endpoint: ({
+      options: { uri: 'http://some.api.com/1.0' },
+    } as unknown) as Endpoint,
+    ident: { id: 'johnf' },
+    incoming: true,
+  }
+
+  const ret = exchangeFromMappingObject(exchange, mappingObject, isRequest)
 
   t.deepEqual(ret, expected)
 })

@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon = require('sinon')
+import { transform } from 'map-transform'
 import createSchema from '../../schema'
 import builtInFunctions from '../../transformers/builtIns'
 import { completeExchange } from '../../utils/exchangeMapping'
@@ -92,7 +93,7 @@ test('should map from service with mappings', (t) => {
   const clock = sinon.useFakeTimers()
 
   const mappings = prepareMappings({ entry: 'entry' }, mapOptions)
-  const fromMapper = createMapper('content.data', mapOptions)
+  const responseMapper = createMapper('content.data', mapOptions)
   const expected = {
     ...exchange,
     response: {
@@ -110,14 +111,14 @@ test('should map from service with mappings', (t) => {
     },
   }
 
-  const ret = mapResponse(fromMapper, mappings)(exchange)
+  const ret = mapResponse(responseMapper, mappings)(exchange)
 
   t.deepEqual(ret, expected)
   clock.restore()
 })
 
 test('should map several types', (t) => {
-  const fromMapper = null
+  const responseMapper = null
   const exchangeWithTypes = {
     ...exchange,
     request: {
@@ -134,7 +135,7 @@ test('should map several types', (t) => {
     },
   }
 
-  const ret = mapResponse(fromMapper, mappings)(exchangeWithTypes)
+  const ret = mapResponse(responseMapper, mappings)(exchangeWithTypes)
 
   const data = ret.response.data as TypedData[]
   t.is(data.length, 3)
@@ -146,9 +147,9 @@ test('should map several types', (t) => {
 test('should map from service without defaults', (t) => {
   const returnNoDefaults = true
   const mappings = prepareMappings({ entry: 'entry' }, mapOptions)
-  const fromMapper = createMapper('content.data', mapOptions)
+  const responseMapper = createMapper('content.data', mapOptions)
 
-  const ret = mapResponse(fromMapper, mappings, returnNoDefaults)(exchange)
+  const ret = mapResponse(responseMapper, mappings, returnNoDefaults)(exchange)
 
   const data = ret.response.data as TypedData[]
   t.is(data[0].one, undefined) // Should not have default
@@ -158,7 +159,7 @@ test('should map from service without defaults', (t) => {
 test('should use returnNoDefaults from exchange when set', (t) => {
   const returnNoDefaults = true
   const mappings = prepareMappings({ entry: 'entry' }, mapOptions)
-  const fromMapper = createMapper('content.data', mapOptions)
+  const responseMapper = createMapper('content.data', mapOptions)
   const exchangeWithDefaults = {
     ...exchange,
     response: {
@@ -168,7 +169,7 @@ test('should use returnNoDefaults from exchange when set', (t) => {
   }
 
   const ret = mapResponse(
-    fromMapper,
+    responseMapper,
     mappings,
     returnNoDefaults
   )(exchangeWithDefaults)
@@ -179,7 +180,7 @@ test('should use returnNoDefaults from exchange when set', (t) => {
 })
 
 test('should skip unknown types', (t) => {
-  const fromMapper = null
+  const responseMapper = null
   const exchangeUnknownType = {
     ...exchange,
     request: {
@@ -192,7 +193,7 @@ test('should skip unknown types', (t) => {
     },
   }
 
-  const ret = mapResponse(fromMapper, mappings)(exchangeUnknownType)
+  const ret = mapResponse(responseMapper, mappings)(exchangeUnknownType)
 
   const data = ret.response.data as TypedData[]
   t.is(data.length, 1)
@@ -201,7 +202,7 @@ test('should skip unknown types', (t) => {
 
 test('should not map data with no corresponding type mapping', (t) => {
   const mappings = prepareMappings({}, mapOptions)
-  const fromMapper = createMapper('content.data', mapOptions)
+  const responseMapper = createMapper('content.data', mapOptions)
   const expected = {
     ...exchange,
     response: {
@@ -209,13 +210,13 @@ test('should not map data with no corresponding type mapping', (t) => {
     },
   }
 
-  const ret = mapResponse(fromMapper, mappings)(exchange)
+  const ret = mapResponse(responseMapper, mappings)(exchange)
 
   t.deepEqual(ret, expected)
 })
 
 test('should return raw data when exchange has no type', (t) => {
-  const fromMapper = createMapper('content.data', mapOptions)
+  const responseMapper = createMapper('content.data', mapOptions)
   const exchangeNoType = {
     ...exchange,
     request: {},
@@ -227,13 +228,13 @@ test('should return raw data when exchange has no type', (t) => {
     },
   }
 
-  const ret = mapResponse(fromMapper, mappings)(exchangeNoType)
+  const ret = mapResponse(responseMapper, mappings)(exchangeNoType)
 
   t.deepEqual(ret, expected)
 })
 
 test('should return undefined when mapping from non-existing path', (t) => {
-  const fromMapper = createMapper('content.unknown', mapOptions)
+  const responseMapper = createMapper('content.unknown', mapOptions)
   const expected = {
     ...exchange,
     response: {
@@ -241,13 +242,13 @@ test('should return undefined when mapping from non-existing path', (t) => {
     },
   }
 
-  const ret = mapResponse(fromMapper, mappings)(exchange)
+  const ret = mapResponse(responseMapper, mappings)(exchange)
 
   t.deepEqual(ret, expected)
 })
 
 test('should map exchange props with responseMapping', (t) => {
-  const fromMapper = createMapper(
+  const responseMapper = createMapper(
     {
       data: 'data.content',
       status: 'data.result',
@@ -268,7 +269,7 @@ test('should map exchange props with responseMapping', (t) => {
     },
   }
 
-  const ret = mapResponse(fromMapper, mappings)(exchangeWithStatus)
+  const ret = mapResponse(responseMapper, mappings)(exchangeWithStatus)
 
   t.is(ret.status, 'badrequest')
   t.is(ret.response.error, "You can't do it like this")
@@ -277,7 +278,7 @@ test('should map exchange props with responseMapping', (t) => {
 })
 
 test('should keep response props not overriden by mapping', (t) => {
-  const fromMapper = createMapper({ data: 'data.content' }, mapOptions)
+  const responseMapper = createMapper({ data: 'data.content' }, mapOptions)
   const exchangeWithStatus = {
     ...exchange,
     status: 'error',
@@ -289,7 +290,7 @@ test('should keep response props not overriden by mapping', (t) => {
     },
   }
 
-  const ret = mapResponse(fromMapper, mappings)(exchangeWithStatus)
+  const ret = mapResponse(responseMapper, mappings)(exchangeWithStatus)
 
   t.is(ret.status, 'error')
   t.is(ret.response.error, 'Well. It failed')
@@ -297,7 +298,7 @@ test('should keep response props not overriden by mapping', (t) => {
 })
 
 test('should not include error prop when no error', (t) => {
-  const fromMapper = createMapper({ error: 'data.message' }, mapOptions)
+  const responseMapper = createMapper({ error: 'data.message' }, mapOptions)
   const exchangeWithNoError = {
     ...exchange,
     status: 'queued',
@@ -306,7 +307,7 @@ test('should not include error prop when no error', (t) => {
     },
   }
 
-  const ret = mapResponse(fromMapper, mappings)(exchangeWithNoError)
+  const ret = mapResponse(responseMapper, mappings)(exchangeWithNoError)
 
   t.is(ret.status, 'queued')
   t.false(
@@ -316,7 +317,7 @@ test('should not include error prop when no error', (t) => {
 })
 
 test('should set error status when error prop is set', (t) => {
-  const fromMapper = createMapper({ error: 'data.message' }, mapOptions)
+  const responseMapper = createMapper({ error: 'data.message' }, mapOptions)
   const exchangeWithNoError = {
     ...exchange,
     status: 'ok',
@@ -325,14 +326,14 @@ test('should set error status when error prop is set', (t) => {
     },
   }
 
-  const ret = mapResponse(fromMapper, mappings)(exchangeWithNoError)
+  const ret = mapResponse(responseMapper, mappings)(exchangeWithNoError)
 
   t.is(ret.status, 'error')
   t.is(ret.response.error, 'This did not go well')
 })
 
 test('should map paging with responseMapping', (t) => {
-  const fromMapper = createMapper(
+  const responseMapper = createMapper(
     {
       data: 'data.content',
       'paging.next': {
@@ -353,65 +354,83 @@ test('should map paging with responseMapping', (t) => {
   }
   const expectedPaging = { next: { offset: 'page2', type: 'entry' } }
 
-  const ret = mapResponse(fromMapper, mappings)(exchangeWithPaging)
+  const ret = mapResponse(responseMapper, mappings)(exchangeWithPaging)
 
   t.deepEqual(ret.response.paging, expectedPaging)
 })
 
-test('should map incoming request with mappings', (t) => {
+test('should map response to incoming exchange from service', (t) => {
   const mappings = prepareMappings({ entry: 'entry' }, mapOptions)
-  const fromMapper = createMapper('content', mapOptions)
+  const responseMapper = createMapper('content', mapOptions)
   const incomingExchange = {
     ...exchange,
     request: {
       type: 'entry',
-      data: {
-        content: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
-      },
     },
-    response: {},
+    response: {
+      data: [
+        {
+          $type: 'entry',
+          id: 'ent1',
+          title: 'Entry 1',
+          two: 2,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+    },
     incoming: true,
   }
+  const expectedData = {
+    content: { items: [{ key: 'ent1', header: 'Entry 1', one: 1, two: 2 }] },
+  }
 
-  const ret = mapResponse(fromMapper, mappings)(incomingExchange)
+  const ret = mapResponse(responseMapper, mappings)(incomingExchange)
 
-  const data = ret.request.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].$type, 'entry')
-  t.is(data[0].id, 'ent1')
-  t.is(data[0].title, 'Entry 1')
+  t.is(ret.status, 'ok', ret.response.error)
+  t.deepEqual(ret.response.data, expectedData)
 })
 
-test('should map incoming request object with responseMapping', (t) => {
-  const fromMapper = createMapper(
+test('should map response to incoming exchange with responseMapping', (t) => {
+  const statusFromId = (id: unknown) => (id === '404' ? 'notfound' : 'ok')
+  const responseMapper = createMapper(
     {
+      $flip: true,
+      $iterate: false,
       data: 'data.content',
-      status: 'data.result',
-      error: 'data.message',
-      'params.id': 'data.key',
+      status: ['data.items[0].key', transform(statusFromId)],
+      error: 'data.items[0].header',
+      'params.id': 'data.items[0].key',
     },
     mapOptions
   )
   const incomingExchange = {
     ...exchange,
+    type: 'REQUEST',
     request: {
       type: 'entry',
-      data: {
-        content: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
-        key: '7839',
-        result: 'badrequest',
-        message: "You can't do it like this",
-      },
+    },
+    response: {
+      data: [
+        {
+          $type: 'entry',
+          id: '404',
+          title: 'Not found',
+          one: 1,
+          two: 2,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
     },
     incoming: true,
   }
 
-  const ret = mapResponse(fromMapper, mappings)(incomingExchange)
+  const ret = mapResponse(responseMapper, mappings)(incomingExchange)
 
-  t.is(ret.status, 'badrequest')
-  t.is((ret.request.data as TypedData[]).length, 1)
-  t.is(ret.request.id, '7839')
-  t.is(ret.response.error, "You can't do it like this")
+  t.is(ret.status, 'notfound')
+  t.is(ret.response.error, 'Not found')
+  t.is(ret.request.id, '404') // TODO: Is this correct behavior?
 })
 
 test.todo('should cast one item to array') // Or not ...?
