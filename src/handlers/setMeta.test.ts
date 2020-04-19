@@ -42,8 +42,8 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
 })
 
 const ident = { id: 'johnf' }
-
 const lastSyncedAt = new Date()
+const dispatch = async () => completeExchange({ status: 'ok' })
 
 test.after(() => {
   nock.restore()
@@ -72,7 +72,7 @@ test('should set metadata on service', async (t) => {
     ident,
   })
 
-  const ret = await setMeta(exchange, great.dispatch, getService)
+  const ret = await setMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
@@ -95,7 +95,7 @@ test('should not set metadata on service when no meta type', async (t) => {
     ident,
   })
 
-  const ret = await setMeta(exchange, great.dispatch, getService)
+  const ret = await setMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'noaction')
   t.false(scope.isDone())
@@ -128,7 +128,7 @@ test('should set metadata on other service', async (t) => {
     ident,
   })
 
-  const ret = await setMeta(exchange, great.dispatch, getService)
+  const ret = await setMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'ok', ret.response.error)
   t.true(scope.isDone())
@@ -150,7 +150,7 @@ test('should return status noaction when meta is set to an unknown schema', asyn
     ident,
   })
 
-  const ret = await setMeta(exchange, great.dispatch, getService)
+  const ret = await setMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'noaction')
 })
@@ -171,14 +171,13 @@ test('should refuse setting metadata on service when not authorized', async (t) 
     },
   })
 
-  const ret = await setMeta(exchange, great.dispatch, getService)
+  const ret = await setMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'noaccess', ret.response.error)
   t.false(scope.isDone())
 })
 
 test('should return error for unknown service', async (t) => {
-  const dispatch = async () => ({ status: 'ok' })
   const getService = () => undefined
   const exchange = completeExchange({
     type: 'SET_META',

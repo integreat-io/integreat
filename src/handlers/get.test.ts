@@ -74,7 +74,7 @@ const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
     mappings: id === 'accounts' ? { account: 'account' } : { entry: 'entry' },
   })
 
-const dispatch = async () => ({ status: 'ok' })
+const dispatch = async () => completeExchange({ status: 'ok' })
 
 test.after.always(() => {
   nock.restore()

@@ -40,8 +40,8 @@ const exchangeToDispatch = (exchange: Exchange) =>
 
 const exchangeToReturn = (exchange: Exchange, response: Exchange) => ({
   ...exchange,
-  status: response.status || exchange.status,
-  response: response.response || exchange.response,
+  status: response.status ?? exchange.status,
+  response: response.response ?? exchange.response,
 })
 
 /**

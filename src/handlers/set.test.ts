@@ -88,7 +88,7 @@ const setupService = (
   })
 }
 
-const dispatch = async () => ({ status: 'ok' })
+const dispatch = async () => completeExchange({ status: 'ok' })
 
 test.after(() => {
   nock.restore()

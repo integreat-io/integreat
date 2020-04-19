@@ -10,6 +10,7 @@ import getMeta from './getMeta'
 // Setup
 
 const json = jsonAdapter()
+const dispatch = async () => completeExchange({ status: 'ok' })
 
 const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
   schemas: [
@@ -76,7 +77,7 @@ test('should get metadata for service', async (t) => {
     data: { service: 'store', meta: { lastSyncedAt } },
   }
 
-  const ret = await getMeta(exchange, great.dispatch, getService)
+  const ret = await getMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'ok')
   t.deepEqual(ret.response, expectedResponse)
@@ -103,7 +104,7 @@ test('should get several metadata for service', async (t) => {
   })
   const expected = { service: 'store', meta: { lastSyncedAt, count: 5 } }
 
-  const ret = await getMeta(exchange, great.dispatch, getService)
+  const ret = await getMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'ok', ret.response.error)
   t.deepEqual(ret.response.data, expected)
@@ -131,7 +132,7 @@ test('should get all metadata for service', async (t) => {
     meta: { lastSyncedAt, count: 5, status: 'ready' },
   }
 
-  const ret = await getMeta(exchange, great.dispatch, getService)
+  const ret = await getMeta(exchange, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.response.error)
@@ -158,7 +159,7 @@ test('should return null for metadata when not set on service', async (t) => {
   })
   const expected = { service: 'store', meta: { lastSyncedAt: null } }
 
-  const ret = await getMeta(exchange, great.dispatch, getService)
+  const ret = await getMeta(exchange, dispatch, getService)
 
   t.truthy(ret)
   t.is(ret.status, 'ok', ret.response.error)
@@ -182,7 +183,7 @@ test('should return reply from service when not ok', async (t) => {
     ident,
   })
 
-  const ret = await getMeta(exchange, great.dispatch, getService)
+  const ret = await getMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'notfound', ret.response.error)
 })
@@ -206,7 +207,7 @@ test('should return error when when no meta type is set', async (t) => {
     meta: { ident },
   })
 
-  const ret = await getMeta(exchange, great.dispatch, getService)
+  const ret = await getMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'error')
   t.false(scope.isDone())
@@ -236,7 +237,7 @@ test('should get metadata from other service', async (t) => {
   })
   const expected = { service: 'entries', meta: { lastSyncedAt } }
 
-  const ret = await getMeta(exchange, great.dispatch, getService)
+  const ret = await getMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'ok', ret.response.error)
   t.deepEqual(ret.response.data, expected)
@@ -258,13 +259,12 @@ test('should return error when meta is set to an unknown type', async (t) => {
     ident,
   })
 
-  const ret = await getMeta(exchange, great.dispatch, getService)
+  const ret = await getMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'error')
 })
 
 test('should return error for unknown service', async (t) => {
-  const dispatch = async () => ({ status: 'ok' })
   const getService = () => undefined
   const exchange = completeExchange({
     type: 'GET_META',
@@ -296,7 +296,7 @@ test('should respond with noaccess when not authorized', async (t) => {
     },
   })
 
-  const ret = await getMeta(exchange, great.dispatch, getService)
+  const ret = await getMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'noaccess', ret.response.error)
   t.is(typeof ret.response.error, 'string')
