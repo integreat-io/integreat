@@ -80,12 +80,12 @@ const includeInCasting = (type: string) =>
         !isNullOrUndefined(data) && noSchemaOrEqualType(data, type)
     : compose(not, isNullOrUndefined)
 
-const cleanUpCast = (type: string) =>
+const cleanUpCast = (type: string, isFwd: boolean) =>
   mapAny((item: Data) => {
     if (isDataObject(item)) {
-      const { isNew, isDeleted, ...shape } = item
+      const { $type, isNew, isDeleted, ...shape } = item
       return {
-        $type: type,
+        ...(isFwd && { $type: type }),
         ...shape,
         ...(isNew === true ? { isNew } : {}),
         ...(isDeleted === true ? { isDeleted } : {}),
@@ -97,7 +97,10 @@ const cleanUpCast = (type: string) =>
 
 export default function createCastMapping(schema: Shape, type: string) {
   const filterItem = filter(includeInCasting(type))
-  const cleanUpTransform = transform(cleanUpCast(type))
+  const cleanUpTransform = transform(
+    cleanUpCast(type, true), // Forward
+    cleanUpCast(type, false) // Reverse
+  )
 
   return [
     fwd(filterItem),

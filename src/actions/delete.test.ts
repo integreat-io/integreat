@@ -2,7 +2,7 @@ import test from 'ava'
 import nock = require('nock')
 import jsonAdapter from 'integreat-adapter-json'
 import createService from '../service'
-import schema from '../schema'
+import createSchema from '../schema'
 import functions from '../transformers/builtIns'
 import { completeExchange } from '../utils/exchangeMapping'
 
@@ -13,13 +13,13 @@ import deleteFn from './delete'
 const json = jsonAdapter()
 
 const schemas = {
-  entry: schema({
+  entry: createSchema({
     id: 'entry',
     shape: {
       title: { $cast: 'string', $default: 'A title' },
     },
   }),
-  account: schema({
+  account: createSchema({
     id: 'account',
     shape: {
       name: 'string',
@@ -300,7 +300,7 @@ test('should skip null values in data array', async (t) => {
   t.is(ret.status, 'noaction')
 })
 
-// Waiting for removal of $type to service
+// Waiting for mapping of items on an exchange wihtout specified type
 test.failing(
   'should only delete items the ident is authorized to',
   async (t) => {

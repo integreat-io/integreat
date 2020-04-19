@@ -4,7 +4,7 @@ import transformFunctions from '../transformers/builtIns'
 
 import createCastMapping from './createCastMapping'
 
-test('should create mapping definition from schema', t => {
+test('should create mapping definition from schema', (t) => {
   const schema = {
     id: 'string',
     type: { $cast: 'string', $const: 'entry' },
@@ -16,7 +16,7 @@ test('should create mapping definition from schema', t => {
     active: 'boolean',
     createdAt: 'date',
     author: 'user',
-    comments: 'comment[]'
+    comments: 'comment[]',
   }
   const data = [
     {
@@ -30,15 +30,15 @@ test('should create mapping definition from schema', t => {
       active: 'true',
       createdAt: '2019-03-11T18:43:09Z',
       author: 'johnf',
-      comments: [{ id: 'comment12', $ref: 'comment' }, { id: 'comment13' }]
+      comments: [{ id: 'comment12', $ref: 'comment' }, { id: 'comment13' }],
     },
     {
       id: 'ent2',
       age: 244511383,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: 'maryk',
-      comments: 'comment23'
-    }
+      comments: 'comment23',
+    },
   ]
   const expected = [
     {
@@ -55,8 +55,8 @@ test('should create mapping definition from schema', t => {
       author: { id: 'johnf', $ref: 'user' },
       comments: [
         { id: 'comment12', $ref: 'comment' },
-        { id: 'comment13', $ref: 'comment' }
-      ]
+        { id: 'comment13', $ref: 'comment' },
+      ],
     },
     {
       $type: 'entry',
@@ -70,18 +70,18 @@ test('should create mapping definition from schema', t => {
       active: undefined,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk', $ref: 'user' },
-      comments: [{ id: 'comment23', $ref: 'comment' }]
-    }
+      comments: [{ id: 'comment23', $ref: 'comment' }],
+    },
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   })(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should map props in given order', t => {
+test('should map props in given order', (t) => {
   const schema = {
     id: 'string',
     type: { $cast: 'string', $const: 'entry' },
@@ -93,7 +93,7 @@ test('should map props in given order', t => {
     active: 'boolean',
     createdAt: 'date',
     author: 'user',
-    comments: 'comment[]'
+    comments: 'comment[]',
   }
   const data = {
     id: 12345,
@@ -106,7 +106,7 @@ test('should map props in given order', t => {
     active: 'true',
     createdAt: '2019-03-11T18:43:09Z',
     author: 'johnf',
-    comments: [{ id: 'comment12', $ref: 'comment' }, { id: 'comment13' }]
+    comments: [{ id: 'comment12', $ref: 'comment' }, { id: 'comment13' }],
   }
   const expectedProps = [
     '$type',
@@ -120,17 +120,17 @@ test('should map props in given order', t => {
     'active',
     'createdAt',
     'author',
-    'comments'
+    'comments',
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   })(data)
 
   t.deepEqual(Object.keys(ret as object), expectedProps)
 })
 
-test('should reverse transform with mapping definition from schema', t => {
+test('should reverse transform with mapping definition from schema', (t) => {
   const schema = {
     id: 'string',
     type: { $cast: 'string', $const: 'entry' },
@@ -142,7 +142,7 @@ test('should reverse transform with mapping definition from schema', t => {
     active: 'boolean',
     createdAt: 'date',
     author: 'user',
-    comments: 'comment[]'
+    comments: 'comment[]',
   }
   const data = [
     {
@@ -157,7 +157,7 @@ test('should reverse transform with mapping definition from schema', t => {
       active: 'true',
       createdAt: '2019-03-11T18:43:09Z',
       author: 'johnf',
-      comments: ['comment12', { id: 'comment13', $ref: 'comment' }]
+      comments: ['comment12', { id: 'comment13', $ref: 'comment' }],
     },
     {
       $type: 'entry',
@@ -165,12 +165,11 @@ test('should reverse transform with mapping definition from schema', t => {
       age: 244511383,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk' },
-      comments: [{ id: 'comment23', $ref: 'comment' }]
-    }
+      comments: [{ id: 'comment23', $ref: 'comment' }],
+    },
   ]
   const expected = [
     {
-      $type: 'entry',
       id: '12345',
       type: 'entry',
       title: 'Entry 1',
@@ -183,11 +182,10 @@ test('should reverse transform with mapping definition from schema', t => {
       author: { id: 'johnf', $ref: 'user' },
       comments: [
         { id: 'comment12', $ref: 'comment' },
-        { id: 'comment13', $ref: 'comment' }
-      ]
+        { id: 'comment13', $ref: 'comment' },
+      ],
     },
     {
-      $type: 'entry',
       id: 'ent2',
       title: 'Entry with no name',
       type: 'entry',
@@ -198,64 +196,64 @@ test('should reverse transform with mapping definition from schema', t => {
       active: undefined,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk', $ref: 'user' },
-      comments: [{ id: 'comment23', $ref: 'comment' }]
-    }
+      comments: [{ id: 'comment23', $ref: 'comment' }],
+    },
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   }).rev(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should be iteratable', t => {
+test('should be iteratable', (t) => {
   const schema = {
     id: 'string',
-    title: 'string'
+    title: 'string',
   }
   const data = [
     {
       id: 1,
-      title: 'Entry 1'
+      title: 'Entry 1',
     },
     {
       id: 2,
-      title: 'Entry 2'
-    }
+      title: 'Entry 2',
+    },
   ]
   const expected = [
     {
       $type: 'entry',
       id: '1',
-      title: 'Entry 1'
+      title: 'Entry 1',
     },
     {
       $type: 'entry',
       id: '2',
-      title: 'Entry 2'
-    }
+      title: 'Entry 2',
+    },
   ]
 
   const ret = mapTransform([createCastMapping(schema, 'entry')], {
-    functions: transformFunctions
+    functions: transformFunctions,
   })(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should create mapping definition from nested schema', t => {
+test('should create mapping definition from nested schema', (t) => {
   const schema = {
     id: 'string',
     type: { $cast: 'string', $const: 'entry' },
     attributes: {
       title: { $cast: 'string', $default: 'Entry with no name' },
-      age: 'integer'
+      age: 'integer',
     },
     relationships: {
       author: 'user',
-      comments: 'comment[]'
-    }
+      comments: 'comment[]',
+    },
   }
   const data = [
     {
@@ -266,19 +264,19 @@ test('should create mapping definition from nested schema', t => {
         author: { id: 'johnf', $ref: 'user' },
         comments: [
           { id: 'comment12', $ref: 'comment' },
-          { id: 'comment13', $ref: 'comment' }
+          { id: 'comment13', $ref: 'comment' },
         ],
-        unknown: 'Drop this'
-      }
+        unknown: 'Drop this',
+      },
     },
     {
       id: 'ent2',
       attributes: { age: 244511383 },
       relationships: {
         author: 'maryk',
-        comments: 'comment23'
-      }
-    }
+        comments: 'comment23',
+      },
+    },
   ]
   const expected = [
     {
@@ -290,9 +288,9 @@ test('should create mapping definition from nested schema', t => {
         author: { id: 'johnf', $ref: 'user' },
         comments: [
           { id: 'comment12', $ref: 'comment' },
-          { id: 'comment13', $ref: 'comment' }
-        ]
-      }
+          { id: 'comment13', $ref: 'comment' },
+        ],
+      },
     },
     {
       $type: 'entry',
@@ -301,26 +299,26 @@ test('should create mapping definition from nested schema', t => {
       attributes: { title: 'Entry with no name', age: 244511383 },
       relationships: {
         author: { id: 'maryk', $ref: 'user' },
-        comments: [{ id: 'comment23', $ref: 'comment' }]
-      }
-    }
+        comments: [{ id: 'comment23', $ref: 'comment' }],
+      },
+    },
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   })(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should skip properties with invalid $cast', t => {
+test('should skip properties with invalid $cast', (t) => {
   const schema = {
     id: 'string',
     title: 'string',
     abstract: null,
     age: undefined,
     active: 1,
-    author: { $cast: 78 }
+    author: { $cast: 78 },
   }
   const data = [
     {
@@ -329,121 +327,126 @@ test('should skip properties with invalid $cast', t => {
       abstract: 'The first entry',
       age: '180734118',
       active: true,
-      author: 'johnf'
-    }
+      author: 'johnf',
+    },
   ]
   const expected = [
     {
       $type: 'entry',
       id: '12345',
-      title: 'Entry 1'
-    }
+      title: 'Entry 1',
+    },
   ]
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ret = mapTransform(createCastMapping(schema as any, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   })(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should skip items already cast with another $type', t => {
+test('should skip items already cast with another $type', (t) => {
   const schema = {
     id: 'string',
-    title: 'string'
+    title: 'string',
   }
   const data = [
     {
       $type: 'user',
       id: 'johnf',
-      name: 'John F.'
-    }
+      name: 'John F.',
+    },
   ]
   const expected = []
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   })(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should pass on items already cast with this $type', t => {
+test('should pass on items already cast with this $type', (t) => {
   const schema = {
     id: 'string',
-    title: 'string'
+    title: 'string',
   }
   const data = [
     {
       $type: 'entry',
       id: 'ent1',
-      title: 'Entry 1'
-    }
+      title: 'Entry 1',
+    },
   ]
   const expected = data
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   })(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should skip items already cast with another $type in reverse', t => {
+test('should skip items already cast with another $type in reverse', (t) => {
   const schema = {
     id: 'string',
-    title: 'string'
+    title: 'string',
   }
   const data = [
     {
       $type: 'user',
       id: 'johnf',
-      name: 'John F.'
-    }
+      name: 'John F.',
+    },
   ]
   const expected = []
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   }).rev(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should pass on items already cast with this $type in reverse', t => {
+test('should remove $type when casting in reverse', (t) => {
   const schema = {
     id: 'string',
-    title: 'string'
+    title: 'string',
   }
   const data = [
     {
       $type: 'entry',
       id: 'ent1',
-      title: 'Entry 1'
-    }
+      title: 'Entry 1',
+    },
   ]
-  const expected = data
+  const expected = [
+    {
+      id: 'ent1',
+      title: 'Entry 1',
+    },
+  ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   }).rev(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should keep isNew and isDeleted when true', t => {
+test('should keep isNew and isDeleted when true', (t) => {
   const schema = {
     id: 'string',
-    title: 'string'
+    title: 'string',
   }
   const data = [
     {
       id: '12345',
       title: 'Entry 1',
       isNew: true,
-      isDeleted: true
-    }
+      isDeleted: true,
+    },
   ]
   const expected = [
     {
@@ -451,140 +454,137 @@ test('should keep isNew and isDeleted when true', t => {
       id: '12345',
       title: 'Entry 1',
       isNew: true,
-      isDeleted: true
-    }
+      isDeleted: true,
+    },
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   })(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should remove isNew and isDeleted when false', t => {
+test('should remove isNew and isDeleted when false', (t) => {
   const schema = {
     id: 'string',
-    title: 'string'
+    title: 'string',
   }
   const data = [
     {
       id: '12345',
       title: 'Entry 1',
       isNew: false,
-      isDeleted: false
-    }
+      isDeleted: false,
+    },
   ]
   const expected = [
     {
       $type: 'entry',
       id: '12345',
-      title: 'Entry 1'
-    }
+      title: 'Entry 1',
+    },
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   })(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should keep isNew and isDeleted when true in reverse', t => {
+test('should keep isNew and isDeleted when true in reverse', (t) => {
   const schema = {
     id: 'string',
-    title: 'string'
+    title: 'string',
   }
   const data = [
     {
       id: '12345',
       title: 'Entry 1',
       isNew: true,
-      isDeleted: true
-    }
+      isDeleted: true,
+    },
   ]
   const expected = [
     {
-      $type: 'entry',
       id: '12345',
       title: 'Entry 1',
       isNew: true,
-      isDeleted: true
-    }
+      isDeleted: true,
+    },
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   }).rev(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should remove isNew and isDeleted when false in reverse', t => {
+test('should remove isNew and isDeleted when false in reverse', (t) => {
   const schema = {
     id: 'string',
-    title: 'string'
+    title: 'string',
   }
   const data = [
     {
       id: '12345',
       title: 'Entry 1',
       isNew: false,
-      isDeleted: false
-    }
+      isDeleted: false,
+    },
   ]
   const expected = [
     {
-      $type: 'entry',
       id: '12345',
-      title: 'Entry 1'
-    }
+      title: 'Entry 1',
+    },
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   }).rev(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should not cast null or undefined', t => {
+test('should not cast null or undefined', (t) => {
   const schema = {
     id: 'string',
-    title: { $cast: 'string', $default: 'Entry with no name' }
+    title: { $cast: 'string', $default: 'Entry with no name' },
   }
   const data = [null, undefined, { id: 'ent1' }]
   const expected = [
     {
       $type: 'entry',
       id: 'ent1',
-      title: 'Entry with no name'
-    }
+      title: 'Entry with no name',
+    },
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   })(data)
 
   t.deepEqual(ret, expected)
 })
 
-test('should not cast null or undefined in reverse', t => {
+test('should not cast null or undefined in reverse', (t) => {
   const schema = {
     id: 'string',
-    title: { $cast: 'string', $default: 'Entry with no name' }
+    title: { $cast: 'string', $default: 'Entry with no name' },
   }
   const data = [null, undefined, { id: 'ent1' }]
   const expected = [
     {
-      $type: 'entry',
       id: 'ent1',
-      title: 'Entry with no name'
-    }
+      title: 'Entry with no name',
+    },
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions
+    functions: transformFunctions,
   }).rev(data)
 
   t.deepEqual(ret, expected)

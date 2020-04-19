@@ -59,5 +59,4 @@ export default async function deleteFn(
     service.sendExchange,
     service.mapResponse
   )(setDataOnExchange(exchange, data))
-  // return response.status === 'ok' ? { status: 'ok' } : response
 }
