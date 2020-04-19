@@ -57,7 +57,7 @@ const mapOptions = { pipelines, functions }
 interface Options {
   method?: string
   path?: string
-  fromMapping?: string | null
+  responseMapping?: string | null
   id?: string
 }
 
@@ -66,7 +66,7 @@ const setupService = (
   {
     method = 'POST',
     path = 'docs[]',
-    fromMapping = null,
+    responseMapping = null,
     id = 'entries',
   }: Options = {}
 ) => {
@@ -78,8 +78,8 @@ const setupService = (
     adapter: json,
     endpoints: [
       {
-        toMapping: path,
-        fromMapping,
+        requestMapping: path,
+        responseMapping,
         options: { uri, method },
       },
       { id: 'other', options: { uri: 'http://api1.test/other/_bulk_docs' } },
@@ -416,7 +416,7 @@ test.failing('should merge request data with response data', async (t) => {
   ]
   const src = setupService('http://api9.test/database/_bulk_docs', {
     id: 'accounts',
-    fromMapping: '.',
+    responseMapping: '.',
   })
   const getService = () => src
 

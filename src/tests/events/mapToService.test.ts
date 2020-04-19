@@ -18,13 +18,13 @@ const entry1Item = {
   author: { id: 'johnf', $ref: 'user' },
   sections: [
     { id: 'news', $ref: 'section' },
-    { id: 'sports', $ref: 'section' }
-  ]
+    { id: 'sports', $ref: 'section' },
+  ],
 }
 
 // Tests
 
-test.skip('should emit request before mapping to service', async t => {
+test.skip('should emit request before mapping to service', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .put('/entries/ent1')
@@ -32,13 +32,13 @@ test.skip('should emit request before mapping to service', async t => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
-    meta: { ident: { root: true } }
+    meta: { ident: { root: true } },
   }
   const handler = sinon.stub()
   const expectedData = entry1Item
 
   const great = Integreat.create(defs, { adapters })
-  great.on('mapToService', 'entries', handler)
+  great.on('mapRequest', 'entries', handler)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -50,7 +50,7 @@ test.skip('should emit request before mapping to service', async t => {
   nock.restore()
 })
 
-test.skip('should emit request after mapping to service', async t => {
+test.skip('should emit request after mapping to service', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .put('/entries/ent2')
@@ -58,7 +58,7 @@ test.skip('should emit request after mapping to service', async t => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: { ...entry1Item, id: 'ent2' } },
-    meta: { ident: { root: true } }
+    meta: { ident: { root: true } },
   }
   const handler = sinon.stub()
 

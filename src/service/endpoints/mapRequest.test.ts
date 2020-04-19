@@ -4,7 +4,7 @@ import builtInFunctions from '../../transformers/builtIns'
 import { completeExchange } from '../../utils/exchangeMapping'
 import { prepareMappings, createMapper } from './create'
 
-import mapToService from './mapToService'
+import mapRequest from './mapRequest'
 
 // Setup
 
@@ -99,7 +99,7 @@ const exchange = completeExchange({
 // Tests
 
 test('should map to service with mappings and specified type', (t) => {
-  const toMapper = createMapper('content.data', mapOptions, true)
+  const requestMapper = createMapper('content.data', mapOptions)
   const expected = {
     ...exchange,
     request: {
@@ -117,13 +117,13 @@ test('should map to service with mappings and specified type', (t) => {
     },
   }
 
-  const ret = mapToService(toMapper, mappings)(exchange)
+  const ret = mapRequest(requestMapper, mappings)(exchange)
 
   t.deepEqual(ret, expected)
 })
 
 test('should not map by type when no type is specified', (t) => {
-  const toMapper = createMapper('content.data', mapOptions, true)
+  const requestMapper = createMapper('content.data', mapOptions)
   const exchangeWithoutType = {
     ...exchange,
     request: {
@@ -143,14 +143,14 @@ test('should not map by type when no type is specified', (t) => {
     },
   }
 
-  const ret = mapToService(toMapper, mappings)(exchangeWithoutType)
+  const ret = mapRequest(requestMapper, mappings)(exchangeWithoutType)
 
   t.deepEqual(ret, expected)
 })
 
 test('should map to service with array as root path', (t) => {
   const mappings = prepareMappings({ entry: 'entry2' }, mapOptions)
-  const toMapper = null
+  const requestMapper = null
   const expected = {
     ...exchange,
     request: {
@@ -162,13 +162,13 @@ test('should map to service with array as root path', (t) => {
     },
   }
 
-  const ret = mapToService(toMapper, mappings)(exchange)
+  const ret = mapRequest(requestMapper, mappings)(exchange)
 
   t.deepEqual(ret, expected)
 })
 
 test('should map to service with several types', (t) => {
-  const toMapper = null
+  const requestMapper = null
   const exchangeWithTypes = {
     ...exchange,
     request: {
@@ -184,13 +184,13 @@ test('should map to service with several types', (t) => {
     accounts: [{ id: 'account1', name: 'John F.' }],
   }
 
-  const ret = mapToService(toMapper, mappings)(exchangeWithTypes)
+  const ret = mapRequest(requestMapper, mappings)(exchangeWithTypes)
 
   t.deepEqual(ret.request.data, expectedData)
 })
 
 test('should map data to service with no specified type', (t) => {
-  const toMapper = null
+  const requestMapper = null
   const exchangeWithTypes = {
     ...exchange,
     request: {
@@ -200,13 +200,13 @@ test('should map data to service with no specified type', (t) => {
   }
   const expected = exchangeWithTypes
 
-  const ret = mapToService(toMapper, mappings)(exchangeWithTypes)
+  const ret = mapRequest(requestMapper, mappings)(exchangeWithTypes)
 
   t.deepEqual(ret, expected)
 })
 
 test('should map incoming exchange to service', (t) => {
-  const toMapper = createMapper('content.data', mapOptions, true)
+  const requestMapper = createMapper('content.data', mapOptions)
   const incomingExchange = {
     ...exchange,
     request: { type: 'entry' },
@@ -231,7 +231,7 @@ test('should map incoming exchange to service', (t) => {
     },
   }
 
-  const ret = mapToService(toMapper, mappings)(incomingExchange)
+  const ret = mapRequest(requestMapper, mappings)(incomingExchange)
 
   t.deepEqual(ret, expected)
 })
@@ -241,7 +241,7 @@ test.failing('should map to service when one is array', (t) => {
     { entry: 'entry2', account: 'account' },
     mapOptions
   )
-  const toMapper = null
+  const requestMapper = null
   const exchangeWithTypes = {
     ...exchange,
     request: {
@@ -255,7 +255,7 @@ test.failing('should map to service when one is array', (t) => {
     { accounts: [{ id: 'account1', name: 'John F.' }] },
   ]
 
-  const ret = mapToService(toMapper, mappings)(exchangeWithTypes)
+  const ret = mapRequest(requestMapper, mappings)(exchangeWithTypes)
 
   t.deepEqual(ret.request.data, expectedData)
 })

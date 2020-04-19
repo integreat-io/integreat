@@ -31,7 +31,7 @@ const mapByType = (
 const errorIfErrorMessage = (status: string | null, error?: string) =>
   (!status || status === 'ok') && error ? 'error' : status
 
-export default function mapFromService(
+export default function mapResponse(
   fromMapper: MapTransform | null,
   mappings: Dictionary<MapTransform>
 ) {

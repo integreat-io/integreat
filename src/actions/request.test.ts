@@ -59,7 +59,7 @@ test('should dispatch action from options and map response', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        fromMapping: { 'params.id': 'data.items[0].key' },
+        responseMapping: { 'params.id': 'data.items[0].key' },
         options: {
           actionType: 'GET',
           actionPayload: { type: 'entry' },
@@ -105,7 +105,7 @@ test('should return exchange mapped to service', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        fromMapping: { 'params.id': 'data.items[0].key' },
+        responseMapping: { 'params.id': 'data.items[0].key' },
         options: {
           actionType: 'GET',
           actionPayload: { type: 'entry' },
@@ -217,8 +217,8 @@ test.failing('should respond with mapped data', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        fromMapping: { 'params.id': 'data.key' },
-        toMapping: ['data', { data: { items: 'content.entries' } }],
+        responseMapping: { 'params.id': 'data.key' },
+        requestMapping: ['data', { data: { items: 'content.entries' } }],
         options: { actionType: 'GET', actionPayload: { type: 'entry' } },
       },
     ],
@@ -250,7 +250,7 @@ test('should use type from request action if not set on endpoint', async (t) => 
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        fromMapping: { 'params.id': 'data.items[0].key' },
+        responseMapping: { 'params.id': 'data.items[0].key' },
         options: { actionType: 'GET' },
       },
     ],
@@ -292,8 +292,8 @@ test('should respond with noaction when no action type is set on endpoint', asyn
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        fromMapping: { 'params.id': 'data.key' },
-        toMapping: { 'data.items': 'content.entries' },
+        responseMapping: { 'params.id': 'data.key' },
+        requestMapping: { 'data.items': 'content.entries' },
       },
     ],
   })
@@ -347,7 +347,7 @@ test.failing('should map and pass on error from dispatch', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
-        toMapping: [
+        requestMapping: [
           'data',
           {
             'data.items': 'content',

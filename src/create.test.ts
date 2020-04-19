@@ -226,10 +226,10 @@ test.skip('should subscribe to event on service', (t) => {
   const cb = () => {}
   const onStub = sinon.stub(great.services.entries, 'on')
 
-  great.on('mapToService', 'entries', cb)
+  great.on('mapRequest', 'entries', cb)
 
   t.is(onStub.callCount, 1)
-  t.is(onStub.args[0][0], 'mapToService')
+  t.is(onStub.args[0][0], 'mapRequest')
   t.is(onStub.args[0][1], cb)
 })
 
@@ -237,6 +237,6 @@ test.skip('should not subscribe to anything for unknown service', (t) => {
   const great = create({ services, schemas, mappings }, { adapters })
 
   t.notThrows(() => {
-    great.on('mapToService', 'unknown', () => {})
+    great.on('mapRequest', 'unknown', () => {})
   })
 })

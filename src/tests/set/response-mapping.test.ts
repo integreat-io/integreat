@@ -14,19 +14,19 @@ const json = jsonAdapter()
 const entry1Item = {
   $type: 'entry',
   id: 'ent1',
-  title: 'Entry 1'
+  title: 'Entry 1',
 }
 
 const entry1FromService = {
   key: 'ent1',
   headline: 'Entry 1',
-  body: 'Text from entry 1'
+  body: 'Text from entry 1',
 }
 
 // Tests
 
 // Waiting for solution on results from SET
-test.failing('should map response and merge with request data', async t => {
+test.failing('should map response and merge with request data', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .put('/entries/ent1')
@@ -34,7 +34,7 @@ test.failing('should map response and merge with request data', async t => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
-    meta: { ident: { root: true } }
+    meta: { ident: { root: true } },
   }
   const defs = {
     schemas: [entrySchema],
@@ -43,13 +43,13 @@ test.failing('should map response and merge with request data', async t => {
         ...entriesService,
         endpoints: [
           {
-            fromMapping: 'content.items',
-            options: { uri: '/entries/{id}' }
-          }
-        ]
-      }
+            responseMapping: 'content.items',
+            options: { uri: '/entries/{id}' },
+          },
+        ],
+      },
     ],
-    mappings: [entriesMapping]
+    mappings: [entriesMapping],
   }
   const expectedData = [
     {
@@ -57,8 +57,8 @@ test.failing('should map response and merge with request data', async t => {
       id: 'ent1',
       title: 'Entry 1',
       text: 'Text from entry 1',
-      sections: []
-    }
+      sections: [],
+    },
   ]
 
   const great = Integreat.create(defs, { adapters })

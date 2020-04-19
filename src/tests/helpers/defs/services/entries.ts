@@ -10,7 +10,7 @@ export default {
   endpoints: [
     {
       match: { action: 'GET', scope: 'collection', params: { offset: true } },
-      fromMapping: [
+      responseMapping: [
         'data',
         {
           data: 'data[]',
@@ -22,7 +22,7 @@ export default {
     },
     {
       match: { action: 'GET', scope: 'collection' },
-      fromMapping: [
+      responseMapping: [
         'data',
         {
           data: 'data[]',
@@ -34,18 +34,18 @@ export default {
     },
     {
       match: { action: 'SET', scope: 'collection' },
-      toMapping: 'data[]',
-      fromMapping: 'data[]',
+      requestMapping: 'data[]',
+      responseMapping: 'data[]',
       options: { uri: '/entries', method: 'POST' },
     },
     {
       match: { scope: 'member' },
-      fromMapping: 'data',
+      responseMapping: 'data',
       options: { uri: '/entries/{id}' },
     },
     {
       match: { action: 'GET', params: { author: true } },
-      fromMapping: 'data',
+      responseMapping: 'data',
       options: { uri: '/entries{?author}' },
     },
     {
@@ -56,7 +56,7 @@ export default {
           'request.params.requestMethod': { const: 'GET' },
         },
       },
-      fromMapping: [
+      responseMapping: [
         {
           'params.id': 'data.key',
         },

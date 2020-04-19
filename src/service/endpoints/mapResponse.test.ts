@@ -6,7 +6,7 @@ import { completeExchange } from '../../utils/exchangeMapping'
 import { TypedData } from '../../types'
 import { prepareMappings, createMapper } from './create'
 
-import mapFromService from './mapFromService'
+import mapResponse from './mapResponse'
 
 // Setup
 
@@ -110,7 +110,7 @@ test('should map from service with mappings', (t) => {
     },
   }
 
-  const ret = mapFromService(fromMapper, mappings)(exchange)
+  const ret = mapResponse(fromMapper, mappings)(exchange)
 
   t.deepEqual(ret, expected)
   clock.restore()
@@ -134,7 +134,7 @@ test('should map several types', (t) => {
     },
   }
 
-  const ret = mapFromService(fromMapper, mappings)(exchangeWithTypes)
+  const ret = mapResponse(fromMapper, mappings)(exchangeWithTypes)
 
   const data = ret.response.data as TypedData[]
   t.is(data.length, 3)
@@ -157,7 +157,7 @@ test('should skip unknown types', (t) => {
     },
   }
 
-  const ret = mapFromService(fromMapper, mappings)(exchangeUnknownType)
+  const ret = mapResponse(fromMapper, mappings)(exchangeUnknownType)
 
   const data = ret.response.data as TypedData[]
   t.is(data.length, 1)
@@ -174,7 +174,7 @@ test('should not map data with no corresponding type mapping', (t) => {
     },
   }
 
-  const ret = mapFromService(fromMapper, mappings)(exchange)
+  const ret = mapResponse(fromMapper, mappings)(exchange)
 
   t.deepEqual(ret, expected)
 })
@@ -192,7 +192,7 @@ test('should return raw data when exchange has no type', (t) => {
     },
   }
 
-  const ret = mapFromService(fromMapper, mappings)(exchangeNoType)
+  const ret = mapResponse(fromMapper, mappings)(exchangeNoType)
 
   t.deepEqual(ret, expected)
 })
@@ -206,12 +206,12 @@ test('should return undefined when mapping from non-existing path', (t) => {
     },
   }
 
-  const ret = mapFromService(fromMapper, mappings)(exchange)
+  const ret = mapResponse(fromMapper, mappings)(exchange)
 
   t.deepEqual(ret, expected)
 })
 
-test('should map exchange props with fromMapping', (t) => {
+test('should map exchange props with responseMapping', (t) => {
   const fromMapper = createMapper(
     {
       data: 'data.content',
@@ -233,7 +233,7 @@ test('should map exchange props with fromMapping', (t) => {
     },
   }
 
-  const ret = mapFromService(fromMapper, mappings)(exchangeWithStatus)
+  const ret = mapResponse(fromMapper, mappings)(exchangeWithStatus)
 
   t.is(ret.status, 'badrequest')
   t.is(ret.response.error, "You can't do it like this")
@@ -254,7 +254,7 @@ test('should keep response props not overriden by mapping', (t) => {
     },
   }
 
-  const ret = mapFromService(fromMapper, mappings)(exchangeWithStatus)
+  const ret = mapResponse(fromMapper, mappings)(exchangeWithStatus)
 
   t.is(ret.status, 'error')
   t.is(ret.response.error, 'Well. It failed')
@@ -271,7 +271,7 @@ test('should not include error prop when no error', (t) => {
     },
   }
 
-  const ret = mapFromService(fromMapper, mappings)(exchangeWithNoError)
+  const ret = mapResponse(fromMapper, mappings)(exchangeWithNoError)
 
   t.is(ret.status, 'queued')
   t.false(
@@ -290,13 +290,13 @@ test('should set error status when error prop is set', (t) => {
     },
   }
 
-  const ret = mapFromService(fromMapper, mappings)(exchangeWithNoError)
+  const ret = mapResponse(fromMapper, mappings)(exchangeWithNoError)
 
   t.is(ret.status, 'error')
   t.is(ret.response.error, 'This did not go well')
 })
 
-test('should map paging with fromMapping', (t) => {
+test('should map paging with responseMapping', (t) => {
   const fromMapper = createMapper(
     {
       data: 'data.content',
@@ -318,7 +318,7 @@ test('should map paging with fromMapping', (t) => {
   }
   const expectedPaging = { next: { offset: 'page2', type: 'entry' } }
 
-  const ret = mapFromService(fromMapper, mappings)(exchangeWithPaging)
+  const ret = mapResponse(fromMapper, mappings)(exchangeWithPaging)
 
   t.deepEqual(ret.response.paging, expectedPaging)
 })
@@ -338,7 +338,7 @@ test('should map incoming request with mappings', (t) => {
     incoming: true,
   }
 
-  const ret = mapFromService(fromMapper, mappings)(incomingExchange)
+  const ret = mapResponse(fromMapper, mappings)(incomingExchange)
 
   const data = ret.request.data as TypedData[]
   t.is(data.length, 1)
@@ -347,7 +347,7 @@ test('should map incoming request with mappings', (t) => {
   t.is(data[0].title, 'Entry 1')
 })
 
-test('should map incoming request object with fromMapping', (t) => {
+test('should map incoming request object with responseMapping', (t) => {
   const fromMapper = createMapper(
     {
       data: 'data.content',
@@ -371,7 +371,7 @@ test('should map incoming request object with fromMapping', (t) => {
     incoming: true,
   }
 
-  const ret = mapFromService(fromMapper, mappings)(incomingExchange)
+  const ret = mapResponse(fromMapper, mappings)(incomingExchange)
 
   t.is(ret.status, 'badrequest')
   t.is((ret.request.data as TypedData[]).length, 1)

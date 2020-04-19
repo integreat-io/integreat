@@ -639,15 +639,15 @@ test('sendExchange should do nothing when exchange has a status', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-// Tests -- mapFromService
+// Tests -- mapResponse
 
-test.serial('mapFromService should map data array from service', async (t) => {
+test.serial('mapResponse should map data array from service', async (t) => {
   const theDate = new Date()
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     endpoints: [
       {
-        fromMapping: 'content.data',
+        responseMapping: 'content.data',
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -698,17 +698,17 @@ test.serial('mapFromService should map data array from service', async (t) => {
     ident: { id: 'johnf' },
   }
 
-  const ret = await service.mapFromService(exchange)
+  const ret = await service.mapResponse(exchange)
 
   t.deepEqual(ret, expected)
 })
 
-test('mapFromService should map data object from service', async (t) => {
+test('mapResponse should map data object from service', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'accounts',
     endpoints: [
       {
-        fromMapping: 'content.data',
+        responseMapping: 'content.data',
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -731,19 +731,19 @@ test('mapFromService should map data object from service', async (t) => {
     })
   )
 
-  const ret = await service.mapFromService(exchange)
+  const ret = await service.mapResponse(exchange)
 
   t.false(Array.isArray(ret.response.data))
   t.is(ret.response.data.id, 'johnf')
   t.is(ret.response.data.$type, 'account')
 })
 
-test('mapFromService should map data with overridden mapping on endpoint', async (t) => {
+test('mapResponse should map data with overridden mapping on endpoint', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     endpoints: [
       {
-        fromMapping: 'content.data',
+        responseMapping: 'content.data',
         options: { uri: 'http://some.api/1.0' },
         mappings: { entry: 'entry2' },
       },
@@ -771,12 +771,12 @@ test('mapFromService should map data with overridden mapping on endpoint', async
     })
   )
 
-  const ret = await service.mapFromService(exchange)
+  const ret = await service.mapResponse(exchange)
 
   t.is(ret.response.data[0].title, 'Subheader 1')
 })
 
-test('mapFromService should use mapping defined in service definition', async (t) => {
+test('mapResponse should use mapping defined in service definition', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     adapter: 'json',
@@ -800,13 +800,13 @@ test('mapFromService should use mapping defined in service definition', async (t
     })
   )
 
-  const ret = await service.mapFromService(exchange)
+  const ret = await service.mapResponse(exchange)
 
   t.is(ret.response.data.length, 1)
   t.is(ret.response.data[0].id, 'ent1')
 })
 
-test('mapFromService send should skip mappings referenced by unknown id', async (t) => {
+test('mapResponse send should skip mappings referenced by unknown id', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     adapter: 'json',
@@ -822,12 +822,12 @@ test('mapFromService send should skip mappings referenced by unknown id', async 
     })
   )
 
-  const ret = await service.mapFromService(exchange)
+  const ret = await service.mapResponse(exchange)
 
   t.is(ret.response.data, undefined)
 })
 
-test('mapFromService should map null to undefined', async (t) => {
+test('mapResponse should map null to undefined', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'accounts',
     endpoints: [
@@ -857,7 +857,7 @@ test('mapFromService should map null to undefined', async (t) => {
     ident: { id: 'johnf' },
   }
 
-  const ret = await service.mapFromService(exchange)
+  const ret = await service.mapResponse(exchange)
 
   t.deepEqual(ret, expected)
 })
@@ -890,7 +890,7 @@ test('should authorize typed data in array from service', async (t) => {
     })
   )
 
-  const ret = await service.mapFromService(exchange)
+  const ret = await service.mapResponse(exchange)
 
   t.is(ret.status, 'ok')
   t.is(ret.response.data.length, 1)
@@ -926,14 +926,14 @@ test('should authorize typed data object from service', async (t) => {
     })
   )
 
-  const ret = await service.mapFromService(exchange)
+  const ret = await service.mapResponse(exchange)
 
   t.is(ret.status, 'noaccess')
   t.is(ret.response.data, undefined)
   t.is(ret.response.error, "Authentication was refused for type 'account'")
 })
 
-// test.skip('mapFromService should map with default values', async t => {
+// test.skip('mapResponse should map with default values', async t => {
 //   const send = async () => ({
 //     status: 'ok',
 //     data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] }
@@ -959,7 +959,7 @@ test('should authorize typed data object from service', async (t) => {
 //   // t.true(data[0].updatedAt instanceof Date)
 // })
 
-// test.skip('mapFromService should not map response data when unmapped is true', async t => {
+// test.skip('mapResponse should not map response data when unmapped is true', async t => {
 //   const send = async () => ({
 //     status: 'ok',
 //     data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] }
@@ -986,12 +986,12 @@ test('should authorize typed data object from service', async (t) => {
 //   t.deepEqual(response, expected)
 // })
 
-test('mapFromService should respond with error when no endpoint and no error', async (t) => {
+test('mapResponse should respond with error when no endpoint and no error', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     endpoints: [
       {
-        fromMapping: 'content.data',
+        responseMapping: 'content.data',
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -1020,21 +1020,21 @@ test('mapFromService should respond with error when no endpoint and no error', a
     },
   }
 
-  const ret = await service.mapFromService(exchange)
+  const ret = await service.mapResponse(exchange)
 
   t.deepEqual(ret, expected)
 })
 
-// Tests -- mapToService
+// Tests -- mapRequest
 
-test('mapToService should cast and map request data', async (t) => {
+test('mapRequest should cast and map request data', async (t) => {
   const theDate = new Date()
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     adapter: 'json',
     endpoints: [
       {
-        toMapping: 'content.data[].createOrMutate',
+        requestMapping: 'content.data[].createOrMutate',
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -1086,14 +1086,14 @@ test('mapToService should cast and map request data', async (t) => {
     },
   }
 
-  const ret = await service.mapToService(exchange)
+  const ret = await service.mapRequest(exchange)
 
   t.deepEqual(ret, expectedExchange)
 })
 
 test.todo('should strip undefined from data array')
 
-test('mapToService should authorize data array going to service', async (t) => {
+test('mapRequest should authorize data array going to service', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'accounts',
     adapter: 'json',
@@ -1126,14 +1126,14 @@ test('mapToService should authorize data array going to service', async (t) => {
     warning: '1 item was removed from request data due to lack of access',
   }
 
-  const ret = await service.mapToService(exchange)
+  const ret = await service.mapRequest(exchange)
 
   t.is(ret.request.data.accounts.length, 1)
   t.is(ret.request.data.accounts[0].id, 'johnf')
   t.deepEqual(ret.response, expectedResponse)
 })
 
-test('mapToService should authorize data object going to service', async (t) => {
+test('mapRequest should authorize data object going to service', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'accounts',
     adapter: 'json',
@@ -1160,19 +1160,19 @@ test('mapToService should authorize data object going to service', async (t) => 
     reason: 'WRONG_IDENT',
   }
 
-  const ret = await service.mapToService(exchange)
+  const ret = await service.mapRequest(exchange)
 
   t.is(ret.request.data.accounts, undefined)
   t.deepEqual(ret.response, expectedResponse)
 })
 
-test('mapToService should use toMapping pipeline', async (t) => {
+test('mapRequest should use requestMapping pipeline', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     adapter: 'json',
     endpoints: [
       {
-        toMapping: [
+        requestMapping: [
           'data',
           {
             data: [
@@ -1197,18 +1197,18 @@ test('mapToService should use toMapping pipeline', async (t) => {
     StupidSoapOperator: { StupidSoapEmptyArgs: {} },
   }
 
-  const ret = await service.mapToService(exchange)
+  const ret = await service.mapRequest(exchange)
 
   t.deepEqual(ret.request.data, expectedData)
 })
 
-test('mapToService should respond with error when no endpoint', async (t) => {
+test('mapRequest should respond with error when no endpoint', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     adapter: 'json',
     endpoints: [
       {
-        toMapping: 'content.data[].createOrMutate',
+        requestMapping: 'content.data[].createOrMutate',
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -1231,7 +1231,7 @@ test('mapToService should respond with error when no endpoint', async (t) => {
     },
   }
 
-  const ret = await service.mapToService(exchange)
+  const ret = await service.mapRequest(exchange)
 
   t.deepEqual(ret, expected)
 })

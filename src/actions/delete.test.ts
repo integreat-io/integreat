@@ -71,7 +71,7 @@ test('should delete items from service', async (t) => {
     endpoints: [
       {
         match: { action: 'DELETE' },
-        toMapping: 'docs[]',
+        requestMapping: 'docs[]',
         options: {
           uri: 'http://api1.test/database/bulk_delete',
           method: 'POST',
@@ -146,7 +146,7 @@ test('should infer service id from type', async (t) => {
     endpoints: [
       {
         match: { action: 'DELETE' },
-        toMapping: 'docs[]',
+        requestMapping: 'docs[]',
         options: {
           uri: 'http://api2.test/database/bulk_delete',
           method: 'POST',
@@ -227,7 +227,7 @@ test('should return error from response', async (t) => {
     endpoints: [
       {
         id: 'delete',
-        toMapping: 'docs[]',
+        requestMapping: 'docs[]',
         options: {
           uri: 'http://api5.test/database/bulk_delete',
           method: 'POST',
@@ -316,7 +316,7 @@ test.failing(
       endpoints: [
         {
           match: { action: 'DELETE' },
-          toMapping: 'docs[]',
+          requestMapping: 'docs[]',
           options: {
             uri: 'http://api4.test/database/bulk_delete',
             method: 'POST',

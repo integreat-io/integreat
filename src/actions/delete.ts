@@ -2,7 +2,7 @@ import debugLib = require('debug')
 import pPipe = require('p-pipe')
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
-import { Exchange, ExchangeRequest, Dispatch, Data } from '../types'
+import { Exchange, ExchangeRequest, InternalDispatch, Data } from '../types'
 import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
@@ -24,7 +24,7 @@ const setDataOnExchange = (exchange: Exchange, data?: Data | Data[]) => ({
  */
 export default async function deleteFn(
   exchange: Exchange,
-  _dispatch: Dispatch,
+  _dispatch: InternalDispatch,
   getService: GetService
 ): Promise<Exchange> {
   const {
@@ -55,9 +55,9 @@ export default async function deleteFn(
   return pPipe<Exchange, Exchange, Exchange, Exchange, Exchange, Exchange>(
     service.authorizeExchange,
     service.assignEndpointMapper,
-    service.mapToService,
+    service.mapRequest,
     service.sendExchange,
-    service.mapFromService
+    service.mapResponse
   )(setDataOnExchange(exchange, data))
   // return response.status === 'ok' ? { status: 'ok' } : response
 }

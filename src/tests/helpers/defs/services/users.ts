@@ -6,22 +6,22 @@ export default {
   endpoints: [
     {
       match: { action: 'GET', params: { tokens: true } },
-      fromMapping: 'data',
+      responseMapping: 'data',
       options: { uri: '/users{?tokens}' },
     },
     {
       match: { action: 'GET', scope: 'collection' },
-      fromMapping: 'data',
+      responseMapping: 'data',
       options: { uri: '/users' },
     },
     {
       match: { action: 'SET', scope: 'collection' },
-      fromMapping: 'data',
+      responseMapping: 'data',
       options: { uri: '/users', method: 'POST' },
     },
     {
       match: { action: 'GET', scope: 'member' },
-      fromMapping: 'data',
+      responseMapping: 'data',
       options: { uri: '/users/{id}' },
     },
   ],

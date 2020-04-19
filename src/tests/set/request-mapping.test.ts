@@ -55,7 +55,7 @@ test('should set data with request mapping', async (t) => {
       stringify: () => (value: Data) => JSON.stringify(value),
     },
   }
-  const toMapping = [
+  const requestMapping = [
     'data',
     {
       data: 'content.items[]',
@@ -74,7 +74,7 @@ test('should set data with request mapping', async (t) => {
         ...entriesService,
         endpoints: [
           {
-            toMapping,
+            requestMapping,
             options: { uri: '/entries/{id}' },
           },
         ],

@@ -80,8 +80,8 @@ export default async function set(
   return pPipe<Exchange, Exchange, Exchange, Exchange, Exchange, Exchange>(
     service.authorizeExchange,
     service.assignEndpointMapper,
-    service.mapToService,
+    service.mapRequest,
     service.sendExchange,
-    service.mapFromService
+    service.mapResponse
   )(setIdAndTypeOnExchange(exchange, id, type))
 }

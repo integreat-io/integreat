@@ -97,9 +97,9 @@ export default async function get(
   debug('GET: Fetch from service %s at %s', service.id, endpointDebug)
 
   const mapPerId = pPipe<Exchange, Exchange, Exchange, Exchange>(
-    service.mapToService,
+    service.mapRequest,
     service.sendExchange,
-    service.mapFromService
+    service.mapResponse
   )
 
   return pPipe<Exchange, Exchange, Exchange, Exchange>(

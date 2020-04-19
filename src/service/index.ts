@@ -96,29 +96,29 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
     authorizeExchange: authorizeExchange(schemas, requireAuth),
 
     /**
-     * Map response data coming from the service
+     * Map request
      */
-    mapFromService(exchange: Exchange): Exchange {
-      const { endpoint } = exchange
-      if (!endpoint) {
-        return exchange.status
-          ? exchange
-          : createError(exchange, 'No endpoint provided')
-      }
-      return authorizeDataFromService(endpoint.mapFromService(exchange))
-    },
-
-    /**
-     * Map response data coming from the service
-     */
-    mapToService(exchange: Exchange): Exchange {
+    mapRequest(exchange: Exchange): Exchange {
       const { endpoint } = exchange
       if (!endpoint) {
         return exchange.status && exchange.status !== 'ok'
           ? exchange
           : createError(exchange, 'No endpoint provided')
       }
-      return endpoint.mapToService(authorizeDataToService(exchange))
+      return endpoint.mapRequest(authorizeDataToService(exchange))
+    },
+
+    /**
+     * Map response
+     */
+    mapResponse(exchange: Exchange): Exchange {
+      const { endpoint } = exchange
+      if (!endpoint) {
+        return exchange.status
+          ? exchange
+          : createError(exchange, 'No endpoint provided')
+      }
+      return authorizeDataFromService(endpoint.mapResponse(exchange))
     },
 
     /**

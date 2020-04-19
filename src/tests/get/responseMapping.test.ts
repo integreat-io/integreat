@@ -16,46 +16,46 @@ const json = jsonAdapter()
 
 const transformers = { jsonTransform }
 
-const fromMapping = [
+const responseMapping = [
   'data',
   {
     status: 'responseValue',
     data: 'responseContent.articles[]',
-    error: 'responseMessage'
-  }
+    error: 'responseMessage',
+  },
 ]
 
-const defsWithFromMapping = fromMapping => ({
+const defsWithResponseMapping = (responseMapping) => ({
   schemas: [entrySchema],
   services: [
     {
       ...entriesService,
       endpoints: [
         {
-          fromMapping,
-          options: { uri: '/entries/{id}' }
-        }
-      ]
-    }
+          responseMapping,
+          options: { uri: '/entries/{id}' },
+        },
+      ],
+    },
   ],
-  mappings: [entriesMapping]
+  mappings: [entriesMapping],
 })
 
 // Tests
 
-test('should map with response mapping', async t => {
+test('should map with response mapping', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {
       responseContent: { articles: [entry1] },
-      responseValue: 'ok'
+      responseValue: 'ok',
     })
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent1' }
+    payload: { type: 'entry', id: 'ent1' },
   }
-  const defs = defsWithFromMapping(fromMapping)
+  const defs = defsWithResponseMapping(responseMapping)
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -70,20 +70,20 @@ test('should map with response mapping', async t => {
   nock.restore()
 })
 
-test('should use status code mapped from data', async t => {
+test('should use status code mapped from data', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent2')
     .reply(200, {
       responseContent: { articles: [entry1] },
       responseValue: 'error',
-      responseMessage: 'Oh no!'
+      responseMessage: 'Oh no!',
     })
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent2' }
+    payload: { type: 'entry', id: 'ent2' },
   }
-  const defs = defsWithFromMapping(fromMapping)
+  const defs = defsWithResponseMapping(responseMapping)
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -94,19 +94,17 @@ test('should use status code mapped from data', async t => {
   nock.restore()
 })
 
-test('should not override adapter error with data status', async t => {
+test('should not override adapter error with data status', async (t) => {
   const adapters = { json }
-  nock('http://some.api')
-    .get('/entries/ent2')
-    .reply(404, {
-      responseContent: null,
-      responseValue: 'ok'
-    })
+  nock('http://some.api').get('/entries/ent2').reply(404, {
+    responseContent: null,
+    responseValue: 'ok',
+  })
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent2' }
+    payload: { type: 'entry', id: 'ent2' },
   }
-  const defs = defsWithFromMapping(fromMapping)
+  const defs = defsWithResponseMapping(responseMapping)
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -118,25 +116,25 @@ test('should not override adapter error with data status', async t => {
   nock.restore()
 })
 
-test('should map with sub mapping', async t => {
+test('should map with sub mapping', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent3')
     .reply(200, {
-      responseContent: JSON.stringify({ articles: [entry1, entry2] })
+      responseContent: JSON.stringify({ articles: [entry1, entry2] }),
     })
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent3' }
+    payload: { type: 'entry', id: 'ent3' },
   }
-  const fromMapping = {
+  const responseMapping = {
     'data[]': [
       'data.responseContent',
       { $transform: 'jsonTransform' },
-      'articles[]'
-    ]
+      'articles[]',
+    ],
   }
-  const defs = defsWithFromMapping(fromMapping)
+  const defs = defsWithResponseMapping(responseMapping)
 
   const great = Integreat.create(defs, { adapters, transformers })
   const ret = await great.dispatch(action)

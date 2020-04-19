@@ -34,8 +34,8 @@ const mapByType = (
       )
     : mapOneType(mapObject, type, mappings)
 
-export default function mapToService(
-  toMapper: MapTransform | null,
+export default function mapRequest(
+  requestMapper: MapTransform | null,
   mappings: Dictionary<MapTransform>
 ) {
   return (exchange: Exchange) => {
@@ -48,8 +48,8 @@ export default function mapToService(
         mappings
       )
     }
-    if (typeof toMapper?.rev === 'function') {
-      const mapped = toMapper.rev(mappingObject)
+    if (typeof requestMapper?.rev === 'function') {
+      const mapped = requestMapper.rev(mappingObject)
       if (typeof mapped === 'object' && mapped !== null) {
         mappingObject.data = mapped.data
         mappingObject.status = mapped.status || mappingObject.status

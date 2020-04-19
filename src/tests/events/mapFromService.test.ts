@@ -13,20 +13,18 @@ const json = jsonAdapter()
 
 // Tests
 
-test.skip('should emit request and response before mapping from service', async t => {
+test.skip('should emit request and response before mapping from service', async (t) => {
   const adapters = { json }
-  nock('http://some.api')
-    .get('/entries/ent1')
-    .reply(200, { data: ent1Data })
+  nock('http://some.api').get('/entries/ent1').reply(200, { data: ent1Data })
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
-    meta: { ident: { root: true } }
+    meta: { ident: { root: true } },
   }
   const handler = sinon.stub()
 
   const great = Integreat.create(defs, { adapters })
-  great.on('mapFromService', 'entries', handler)
+  great.on('mapResponse', 'entries', handler)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -38,15 +36,13 @@ test.skip('should emit request and response before mapping from service', async 
   nock.restore()
 })
 
-test.skip('should emit request and response after mapping from service', async t => {
+test.skip('should emit request and response after mapping from service', async (t) => {
   const adapters = { json }
-  nock('http://some.api')
-    .get('/entries/ent1')
-    .reply(200, { data: ent1Data })
+  nock('http://some.api').get('/entries/ent1').reply(200, { data: ent1Data })
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
-    meta: { ident: { root: true } }
+    meta: { ident: { root: true } },
   }
   const handler = sinon.stub()
 

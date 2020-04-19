@@ -16,10 +16,10 @@ const schemas = {
       title: 'string',
       one: { $cast: 'integer', $default: 1 },
       two: 'integer',
-      service: 'service'
+      service: 'service',
     },
-    access: 'auth'
-  })
+    access: 'auth',
+  }),
 }
 
 const entryMapping = [
@@ -31,17 +31,17 @@ const entryMapping = [
     one: 'one',
     two: 'two',
     service: '^params.service',
-    author: '^access.ident.id'
+    author: '^access.ident.id',
   },
-  { $apply: 'cast_entry' }
+  { $apply: 'cast_entry' },
 ]
 
 const mapOptions = {
   pipelines: {
     ['cast_entry']: schemas.entry.mapping,
-    entry: entryMapping
+    entry: entryMapping,
   },
-  functions: {}
+  functions: {},
 }
 
 const exchangeDefaults = {
@@ -49,7 +49,7 @@ const exchangeDefaults = {
   request: {},
   response: {},
   options: {},
-  meta: {}
+  meta: {},
 }
 
 const serviceMappings = { entry: 'entry' }
@@ -57,26 +57,26 @@ const serviceOptions = {}
 
 // Tests
 
-test('should return match function', t => {
+test('should return match function', (t) => {
   const endpointDefs = [
     {
       id: 'endpoint1',
       match: { type: 'entry' },
-      options: { uri: 'http://test.api/1' }
+      options: { uri: 'http://test.api/1' },
     },
     {
       id: 'endpoint2',
       match: { type: 'entry', scope: 'member' },
-      options: { uri: 'http://test.api/2' }
-    }
+      options: { uri: 'http://test.api/2' },
+    },
   ]
   const exchange = {
     ...exchangeDefaults,
     type: 'GET',
     request: {
       type: 'entry',
-      id: 'ent1'
-    }
+      id: 'ent1',
+    },
   }
 
   const matchFn = getEndpointMapper(
@@ -91,24 +91,24 @@ test('should return match function', t => {
   t.is((mapping as Endpoint).id, 'endpoint2')
 })
 
-test('should use mappings from service', t => {
+test('should use mappings from service', (t) => {
   const endpointDefs = [
     {
       match: {},
       options: {},
-      mappings: { account: 'user' } // To make sure service and endpoint mappings are merged
-    }
+      mappings: { account: 'user' }, // To make sure service and endpoint mappings are merged
+    },
   ]
   const serviceMappings = { entry: 'entry' }
   const exchange = {
     ...exchangeDefaults,
     type: 'GET',
     request: {
-      type: 'entry'
+      type: 'entry',
     },
     response: {
-      data: { items: [{ key: 'ent1' }] }
-    }
+      data: { items: [{ key: 'ent1' }] },
+    },
   }
 
   const matchFn = getEndpointMapper(
@@ -118,7 +118,7 @@ test('should use mappings from service', t => {
     mapOptions
   )
   const mapping = matchFn(exchange)
-  const ret = (mapping as Endpoint).mapFromService(exchange)
+  const ret = (mapping as Endpoint).mapResponse(exchange)
 
   t.truthy(ret.response.data)
   const data = (ret.response.data as TypedData[])[0]
@@ -126,24 +126,24 @@ test('should use mappings from service', t => {
   t.is(data.$type, 'entry')
 })
 
-test('should use mappings from endpoint', t => {
+test('should use mappings from endpoint', (t) => {
   const endpointDefs = [
     {
       match: {},
       options: {},
-      mappings: { entry: 'entry' }
-    }
+      mappings: { entry: 'entry' },
+    },
   ]
   const serviceMappings = { entry: 'unknown' }
   const exchange = {
     ...exchangeDefaults,
     type: 'GET',
     request: {
-      type: 'entry'
+      type: 'entry',
     },
     response: {
-      data: { items: [{ key: 'ent1' }] }
-    }
+      data: { items: [{ key: 'ent1' }] },
+    },
   }
 
   const matchFn = getEndpointMapper(
@@ -153,7 +153,7 @@ test('should use mappings from endpoint', t => {
     mapOptions
   )
   const mapping = matchFn(exchange)
-  const ret = (mapping as Endpoint).mapFromService(exchange)
+  const ret = (mapping as Endpoint).mapResponse(exchange)
 
   t.truthy(ret.response.data)
   const data = (ret.response.data as TypedData[])[0]
@@ -163,7 +163,7 @@ test('should use mappings from endpoint', t => {
 
 test.todo('should merge options')
 
-test('should use validate functions', t => {
+test('should use validate functions', (t) => {
   const badResponse = { status: 'badrequest', error: 'No token' }
   const mapOptionsWithFunction = {
     ...mapOptions,
@@ -172,30 +172,30 @@ test('should use validate functions', t => {
       shouldHaveToken: () => (exchange: Data) =>
         !isExchange(exchange) || exchange.request.params?.token
           ? exchange
-          : { ...(exchange as Exchange), ...badResponse }
-    }
+          : { ...(exchange as Exchange), ...badResponse },
+    },
   }
   const endpointDefs = [
-    { match: {}, validate: ['alwaysOk', 'shouldHaveToken'] }
+    { match: {}, validate: ['alwaysOk', 'shouldHaveToken'] },
   ]
   const badExchange = {
     ...exchangeDefaults,
     type: 'GET',
     request: {
-      type: 'entry'
-    }
+      type: 'entry',
+    },
   }
   const okExchange = {
     ...exchangeDefaults,
     type: 'GET',
     request: {
       type: 'entries',
-      params: { token: 's0m3th1ng' }
-    }
+      params: { token: 's0m3th1ng' },
+    },
   }
   const badExpected = {
     ...badExchange,
-    ...badResponse
+    ...badResponse,
   }
   const okExpected = okExchange
 
@@ -212,14 +212,14 @@ test('should use validate functions', t => {
   t.is(validate(okExchange), okExpected)
 })
 
-test('should pass validation when no validate pipelines', t => {
+test('should pass validation when no validate pipelines', (t) => {
   const endpointDefs = [{ match: {} }]
   const badExchange = {
     ...exchangeDefaults,
     type: 'GET',
     request: {
-      type: 'entry'
-    }
+      type: 'entry',
+    },
   }
 
   const matchFn = getEndpointMapper(

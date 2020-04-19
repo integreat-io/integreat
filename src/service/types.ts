@@ -102,7 +102,7 @@ export interface Service {
   meta?: string
   assignEndpointMapper: ExchangeMapper
   authorizeExchange: ExchangeMapper
-  mapFromService: ExchangeMapper
-  mapToService: ExchangeMapper
+  mapRequest: ExchangeMapper
+  mapResponse: ExchangeMapper
   sendExchange: AsyncExchangeMapper
 }

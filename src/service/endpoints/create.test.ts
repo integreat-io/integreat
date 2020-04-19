@@ -219,12 +219,12 @@ test('should return false when no match to exchange', (t) => {
   t.false(endpoint.isMatch(exchange))
 })
 
-// Tests -- mapFromService
+// Tests -- mapResponse
 
 test('should map from service with service mappings', (t) => {
   const serviceMappings = { entry: 'entry' }
   const endpointDef = {
-    fromMapping: 'content.data',
+    responseMapping: 'content.data',
     options: { uri: 'http://some.api/1.0' },
   }
   const theTime = new Date()
@@ -249,7 +249,7 @@ test('should map from service with service mappings', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mapFromService(exchange)
+  const ret = endpoint.mapResponse(exchange)
 
   clock.restore()
   t.deepEqual(ret, expected)
@@ -258,7 +258,7 @@ test('should map from service with service mappings', (t) => {
 test('should map from service with endpoint mappings', (t) => {
   const serviceMappings = { entry: 'entry' }
   const endpointDef = {
-    fromMapping: 'content.data',
+    responseMapping: 'content.data',
     options: { uri: 'http://some.api/1.0' },
     mappings: { entry: 'entry2' },
   }
@@ -284,18 +284,18 @@ test('should map from service with endpoint mappings', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mapFromService(exchange)
+  const ret = endpoint.mapResponse(exchange)
 
   clock.restore()
   t.deepEqual(ret, expected)
 })
 
-// Tests -- mapToService
+// Tests -- mapRequest
 
 test('should map to service with service mappings and specified type', (t) => {
   const serviceMappings = { entry: 'entry' }
   const endpointDef = {
-    toMapping: 'content.data',
+    requestMapping: 'content.data',
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = {
@@ -320,7 +320,7 @@ test('should map to service with service mappings and specified type', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mapToService(exchange)
+  const ret = endpoint.mapRequest(exchange)
 
   t.deepEqual(ret, expected)
 })

@@ -18,9 +18,8 @@ export interface EndpointDef {
   match?: MatchObject
   validate?: MapDefinition
   options?: EndpointOptions
-  toMapping?: MapDefinition
-  fromMapping?: MapDefinition
-  incoming?: boolean
+  requestMapping?: MapDefinition
+  responseMapping?: MapDefinition
   mappings?: Dictionary<string | MapDefinition>
 }
 
@@ -28,8 +27,8 @@ export interface Endpoint {
   id?: string
   match?: MatchObject
   options: EndpointOptions
-  mapToService: (exchange: Exchange) => Exchange
-  mapFromService: (exchange: Exchange) => Exchange
+  mapRequest: (exchange: Exchange) => Exchange
+  mapResponse: (exchange: Exchange) => Exchange
   validate: (exchange: Exchange) => Exchange
   isMatch: (exchange: Exchange) => boolean
 }

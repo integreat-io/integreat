@@ -12,8 +12,8 @@ import {
 import { Dictionary, Exchange } from '../../types'
 import { MapOptions } from '../types'
 import { EndpointDef, Endpoint, EndpointOptions } from './types'
-import mapToService from './mapToService'
-import mapFromService from './mapFromService'
+import mapRequest from './mapRequest'
+import mapResponse from './mapResponse'
 import isMatch from './match'
 
 export type Mappings = Dictionary<MapTransform>
@@ -81,8 +81,8 @@ export default function createEndpoint(
   prepareOptions: PrepareOptions = (options) => options
 ) {
   return (endpointDef: EndpointDef): Endpoint => {
-    const fromMapper = createMapper(endpointDef.fromMapping, mapOptions)
-    const toMapper = createMapper(endpointDef.toMapping, mapOptions)
+    const requestMapper = createMapper(endpointDef.requestMapping, mapOptions)
+    const responseMapper = createMapper(endpointDef.responseMapping, mapOptions)
     const mappings = prepareMappings(
       { ...serviceMappings, ...endpointDef.mappings },
       mapOptions
@@ -99,8 +99,8 @@ export default function createEndpoint(
       id: endpointDef.id,
       match: endpointDef.match,
       options,
-      mapToService: mapToService(toMapper, mappings),
-      mapFromService: mapFromService(fromMapper, mappings),
+      mapRequest: mapRequest(requestMapper, mappings),
+      mapResponse: mapResponse(responseMapper, mappings),
       validate,
       isMatch: isMatch(endpointDef),
     }
