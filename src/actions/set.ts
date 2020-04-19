@@ -3,7 +3,7 @@ import pPipe = require('p-pipe')
 // import { mergeDeepWith } from 'ramda'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { isTypedData } from '../utils/is'
-import { Exchange, Dispatch, Data } from '../types'
+import { Exchange, InternalDispatch, Data } from '../types'
 import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
@@ -57,7 +57,7 @@ const setIdAndTypeOnExchange = (
  */
 export default async function set(
   exchange: Exchange,
-  _dispatch: Dispatch,
+  _dispatch: InternalDispatch,
   getService: GetService
 ): Promise<Exchange> {
   const {

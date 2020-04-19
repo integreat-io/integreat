@@ -2,14 +2,8 @@ import util = require('util')
 import getField from '../utils/getField'
 import createError from '../utils/createError'
 import { exchangeFromAction } from '../utils/exchangeMapping'
-import {
-  Exchange,
-  Dispatch,
-  IdentConfig,
-  Data,
-  Ident,
-  Dictionary,
-} from '../types'
+import { Exchange, InternalDispatch, Data, Ident, Dictionary } from '../types'
+import { IdentConfig } from '../service/types'
 import { GetService } from '../dispatch'
 import getHandler from './get'
 
@@ -73,7 +67,7 @@ const prepareResponse = (
  */
 export default async function getIdent(
   exchange: Exchange,
-  dispatch: Dispatch,
+  dispatch: InternalDispatch,
   getService: GetService,
   identConfig?: IdentConfig
 ): Promise<Exchange> {

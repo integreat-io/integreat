@@ -45,7 +45,7 @@ export interface IdentConfig {
   type: string
   props?: {
     id?: string
-    roles?: string | string[]
+    roles?: string
     tokens?: string
   }
 }

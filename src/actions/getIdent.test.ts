@@ -15,6 +15,7 @@ const json = jsonAdapter()
 
 const great = Integreat.create(defs, { adapters: { json } })
 const getService = () => great.services.users
+const dispatch = async () => completeExchange({ status: 'ok' })
 const identConfig = { type: 'user' }
 
 const johnfIdent = {
@@ -29,7 +30,7 @@ test.after.always(() => {
 
 // Tests
 
-test.failing('should complete ident with token', async (t) => {
+test('should complete ident with token', async (t) => {
   const scope = nock('http://some.api')
     .get('/users')
     .query({ tokens: 'twitter|23456' })
@@ -39,17 +40,16 @@ test.failing('should complete ident with token', async (t) => {
     request: {},
     ident: { withToken: 'twitter|23456' },
   })
-  const expectedAccess = { status: 'granted', ident: johnfIdent }
 
-  const ret = await getIdent(exchange, great.dispatch, getService, identConfig)
+  const ret = await getIdent(exchange, dispatch, getService, identConfig)
 
   t.is(ret.status, 'ok', ret.response.error)
-  t.deepEqual(ret.access, expectedAccess)
+  t.deepEqual(ret.ident, johnfIdent)
   t.is(ret.response.data.id, 'johnf')
   t.true(scope.isDone())
 })
 
-test.failing('should complete ident with id', async (t) => {
+test('should complete ident with id', async (t) => {
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: { ...johnfData } })
@@ -58,40 +58,30 @@ test.failing('should complete ident with id', async (t) => {
     request: {},
     ident: { id: 'johnf' },
   })
-  const expectedAccess = { status: 'granted', ident: johnfIdent }
 
-  const ret = await getIdent(exchange, great.dispatch, getService, identConfig)
+  const ret = await getIdent(exchange, dispatch, getService, identConfig)
 
   t.is(ret.status, 'ok', ret.response.error)
-  t.deepEqual(ret.access, expectedAccess)
+  t.deepEqual(ret.ident, johnfIdent)
   t.is(ret.response.data.id, 'johnf')
 })
 
-test.failing(
-  'should complete ident with id when more props are present',
-  async (t) => {
-    nock('http://some.api')
-      .get('/users/johnf')
-      .reply(200, { data: { ...johnfData } })
-    const exchange = completeExchange({
-      type: 'GET_IDENT',
-      request: {},
-      ident: { id: 'johnf', withToken: 'other|34567' },
-    })
-    const expectedAccess = { status: 'granted', ident: johnfIdent }
+test('should complete ident with id when more props are present', async (t) => {
+  nock('http://some.api')
+    .get('/users/johnf')
+    .reply(200, { data: { ...johnfData } })
+  const exchange = completeExchange({
+    type: 'GET_IDENT',
+    request: {},
+    ident: { id: 'johnf', withToken: 'other|34567' },
+  })
 
-    const ret = await getIdent(
-      exchange,
-      great.dispatch,
-      getService,
-      identConfig
-    )
+  const ret = await getIdent(exchange, dispatch, getService, identConfig)
 
-    t.is(ret.status, 'ok', ret.response.error)
-    t.deepEqual(ret.access, expectedAccess)
-    t.is(ret.response.data.id, 'johnf')
-  }
-)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.deepEqual(ret.ident, johnfIdent)
+  t.is(ret.response.data.id, 'johnf')
+})
 
 test('should return noaction when no props', async (t) => {
   const exchange = completeExchange({
@@ -113,7 +103,7 @@ test('should return noaction when null', async (t) => {
     ident: undefined,
   })
 
-  const ret = await getIdent(exchange, great.dispatch, getService, identConfig)
+  const ret = await getIdent(exchange, dispatch, getService, identConfig)
 
   t.is(ret.status, 'noaction')
   t.is(typeof ret.response.error, 'string')
@@ -126,7 +116,7 @@ test('should return noaction when no ident options', async (t) => {
     ident: { withToken: 'twitter|23456' },
   })
 
-  const ret = await getIdent(exchange, great.dispatch, getService, undefined)
+  const ret = await getIdent(exchange, dispatch, getService, undefined)
 
   t.is(ret.status, 'noaction')
   t.is(typeof ret.response.error, 'string')
@@ -139,14 +129,14 @@ test('should return notfound when ident not found', async (t) => {
     ident: { id: 'unknown' },
   })
 
-  const ret = await getIdent(exchange, great.dispatch, getService, identConfig)
+  const ret = await getIdent(exchange, dispatch, getService, identConfig)
 
   t.truthy(ret)
   t.is(ret.status, 'notfound')
   t.is(typeof ret.response.error, 'string')
 })
 
-test.failing('should complete ident with other prop keys', async (t) => {
+test('should complete ident with other prop keys', async (t) => {
   nock('http://some.api')
     .get('/entries')
     .query({ author: 'johnf' })
@@ -165,15 +155,16 @@ test.failing('should complete ident with other prop keys', async (t) => {
     },
   }
   const getService = () => great.services.entries
-  const expectedAccess = {
-    status: 'granted',
-    ident: { id: 'johnf', roles: ['news', 'sports'], tokens: undefined },
+  const expectedIdent = {
+    id: 'johnf',
+    roles: ['news', 'sports'],
+    tokens: undefined,
   }
 
-  const ret = await getIdent(exchange, great.dispatch, getService, identConfig)
+  const ret = await getIdent(exchange, dispatch, getService, identConfig)
 
   t.is(ret.status, 'ok', ret.response.error)
-  t.deepEqual(ret.access, expectedAccess)
+  t.deepEqual(ret.ident, expectedIdent)
 })
 
 // TODO: Best way to treat missing user?
@@ -189,7 +180,7 @@ test('should return notfound when unknown service', async (t) => {
     ident: { withToken: 'twitter|23456' },
   })
 
-  const ret = await getIdent(exchange, great.dispatch, getService, identConfig)
+  const ret = await getIdent(exchange, dispatch, getService, identConfig)
 
   t.is(ret.status, 'notfound')
   t.is(typeof ret.response.error, 'string')

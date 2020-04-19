@@ -1,7 +1,7 @@
 import util = require('util')
 import debugLib = require('debug')
 import createError from '../utils/createError'
-import { Exchange, DataObject, Dispatch, Data } from '../types'
+import { Exchange, DataObject, InternalDispatch, Data } from '../types'
 import { GetService } from '../dispatch'
 import getHandler from './get'
 import { isDataObject } from '../utils/is'
@@ -32,7 +32,7 @@ const extractMeta = (meta: Data, keys: unknown): DataObject =>
  */
 export default async function getMeta(
   exchange: Exchange,
-  dispatch: Dispatch,
+  dispatch: InternalDispatch,
   getService: GetService
 ): Promise<Exchange> {
   debug('Action: GET_META')

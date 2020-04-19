@@ -1,7 +1,7 @@
 import debugLib = require('debug')
 import createError from '../utils/createError'
 import { completeExchange } from '../utils/exchangeMapping'
-import { DataObject, Exchange, Dispatch } from '../types'
+import { DataObject, Exchange, InternalDispatch } from '../types'
 import { GetService } from '../dispatch'
 import setHandler from './set'
 
@@ -12,7 +12,7 @@ const debug = debugLib('great')
  */
 export default async function setMeta(
   exchange: Exchange,
-  dispatch: Dispatch,
+  dispatch: InternalDispatch,
   getService: GetService
 ): Promise<Exchange> {
   const {

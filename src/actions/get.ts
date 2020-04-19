@@ -2,7 +2,7 @@ import debugLib = require('debug')
 import pPipe = require('p-pipe')
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
-import { Exchange, Dispatch } from '../types'
+import { Exchange, InternalDispatch } from '../types'
 import { Service } from '../service/types'
 import { Endpoint } from '../service/endpoints/types'
 import { GetService } from '../dispatch'
@@ -73,7 +73,7 @@ const mapOneOrMany = (
  */
 export default async function get(
   exchange: Exchange,
-  _dispatch: Dispatch,
+  _dispatch: InternalDispatch,
   getService: GetService
 ): Promise<Exchange> {
   const {
