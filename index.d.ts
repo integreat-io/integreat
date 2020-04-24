@@ -9,14 +9,14 @@ declare function integreat (
 
 declare namespace integreat {
   const resources: () => Resources
-  const adapters: () => any
-  const middleware: any
+  const adapters: () => object
+  const middleware: { [key: string]: Middleware }
   const action: (type: string, payload: object, meta: object) => Action<Payload>
   const queue: (config: object) => Queue
   const mergeResources: (...resources: Partial<Resources>[]) => Resources
 
   export interface Payload {
-    [key: string]: any
+    [key: string]: unknown
   }
 
   export interface Ident {
@@ -27,7 +27,7 @@ declare namespace integreat {
   export interface Meta {
     queue?: boolean,
     ident?: Ident,
-    [key: string]: any
+    [key: string]: unknown
   }
 
   export interface Action<P = Payload> {
@@ -75,19 +75,19 @@ declare namespace integreat {
     actions?: any
   }
 
+  export interface Middleware {
+    (next: Dispatch): Dispatch
+  }
+
   export interface Queue {
     queue: object,
     setDispatch: (dispatch: Dispatch) => Promise<void>,
-    middleware: (next: Middleware) => Dispatch,
-    schedule: (schedule: object) => Response
+    middleware: Middleware,
+    schedule: (schedule: object) => Promise<Response>
   }
 
   export interface Dispatch {
     (action: Action<Payload>): Promise<Response>
-  }
-
-  export interface Middleware {
-    (next: Dispatch): Dispatch
   }
 
   export type DataProperty = string | number | boolean | Date | null
