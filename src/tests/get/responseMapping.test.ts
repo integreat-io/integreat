@@ -7,6 +7,8 @@ import entry1 from '../helpers/data/entry1'
 import entry2 from '../helpers/data/entry2'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 import jsonTransform from '../helpers/resources/transformers/jsonTransform'
+import { TypedData } from '../../types'
+import { MapDefinition } from 'map-transform'
 
 import Integreat from '../..'
 
@@ -25,7 +27,7 @@ const responseMapping = [
   },
 ]
 
-const defsWithResponseMapping = (responseMapping) => ({
+const defsWithResponseMapping = (responseMapping: MapDefinition) => ({
   schemas: [entrySchema],
   services: [
     {
@@ -61,9 +63,10 @@ test('should map with response mapping', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')
-  t.true(Array.isArray(ret.data))
-  t.is(ret.data.length, 1)
-  const item = ret.data[0]
+  const data = ret.data as TypedData[]
+  t.true(Array.isArray(data))
+  t.is(data.length, 1)
+  const item = data[0]
   t.is(item.id, 'ent1')
   t.is(item.title, 'Entry 1')
 
@@ -140,12 +143,13 @@ test('should map with sub mapping', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')
-  t.true(Array.isArray(ret.data))
-  t.is(ret.data.length, 2)
-  t.is(ret.data[0].id, 'ent1')
-  t.is(ret.data[0].title, 'Entry 1')
-  t.is(ret.data[1].id, 'ent2')
-  t.is(ret.data[1].title, 'Entry 2')
+  const data = ret.data as TypedData[]
+  t.true(Array.isArray(data))
+  t.is(data.length, 2)
+  t.is(data[0].id, 'ent1')
+  t.is(data[0].title, 'Entry 1')
+  t.is(data[1].id, 'ent2')
+  t.is(data[1].title, 'Entry 2')
 
   nock.restore()
 })

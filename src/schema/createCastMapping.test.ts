@@ -1,6 +1,7 @@
 import test from 'ava'
 import { mapTransform } from 'map-transform'
 import transformFunctions from '../transformers/builtIns'
+import { TypedData } from '../types'
 
 import createCastMapping from './createCastMapping'
 
@@ -358,7 +359,7 @@ test('should skip items already cast with another $type', (t) => {
       name: 'John F.',
     },
   ]
-  const expected = []
+  const expected = [] as TypedData[]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     functions: transformFunctions,
@@ -400,7 +401,7 @@ test('should skip items already cast with another $type in reverse', (t) => {
       name: 'John F.',
     },
   ]
-  const expected = []
+  const expected = [] as TypedData[]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     functions: transformFunctions,

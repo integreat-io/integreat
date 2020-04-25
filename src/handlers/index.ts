@@ -1,4 +1,6 @@
 import deleteFn from './delete'
+import { Dictionary } from '../types'
+import { ExchangeHandler } from '../dispatch'
 
 export default {
   GET: require('./get').default,
@@ -10,5 +12,5 @@ export default {
   DEL: deleteFn,
   REQUEST: require('./request').default,
   SYNC: require('./sync').default,
-  EXPIRE: require('./expire').default
-}
+  EXPIRE: require('./expire').default,
+} as Dictionary<ExchangeHandler>

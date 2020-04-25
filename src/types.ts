@@ -1,4 +1,5 @@
 import { Endpoint } from './service/endpoints/types'
+import { ScheduleObject } from './queue/types'
 
 export interface Dictionary<T> {
   [key: string]: T
@@ -66,9 +67,10 @@ export interface Payload extends Dictionary<Data> {
 
 export interface ActionMeta {
   [key: string]: unknown
+  id?: string
   ident?: Ident
   queue?: boolean | number
-  id?: string
+  schedule?: ScheduleObject | null
 }
 
 export interface Action {

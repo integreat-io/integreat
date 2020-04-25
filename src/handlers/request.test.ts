@@ -7,7 +7,6 @@ import { completeExchange } from '../utils/exchangeMapping'
 import { DataObject } from '../types'
 
 import request from './request'
-import completeIdent from 'src/middleware/completeIdent'
 
 // Setup
 
@@ -240,7 +239,7 @@ test.failing('should respond with mapped data', async (t) => {
   const ret = await request(exchange, dispatch, getService)
 
   t.is(ret.status, 'ok')
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret.response.data, expectedResponse)
 })
 
 test('should use type from request action if not set on endpoint', async (t) => {

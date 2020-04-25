@@ -3,6 +3,7 @@ import sinon = require('sinon')
 import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import ent1Data from '../helpers/data/entry1'
+import { DataObject } from '../../types'
 
 import Integreat from '../..'
 
@@ -21,13 +22,13 @@ const serializeData = ({
   updatedAt,
   authorId,
   sections,
-}) => ({
+}: DataObject) => ({
   key,
   headline,
   originalTitle: headline,
   body,
-  createdAt: new Date(createdAt),
-  updatedAt: new Date(updatedAt),
+  createdAt: new Date(createdAt as string | number | Date),
+  updatedAt: new Date(updatedAt as string | number | Date),
   authorId,
   sections,
 })

@@ -5,6 +5,7 @@ import defs from '../helpers/defs'
 import usersUserMapping from '../helpers/defs/mappings/users-user'
 import entry1Data from '../helpers/data/entry1'
 import johnfData from '../helpers/data/userJohnf'
+import { TypedData } from '../../types'
 
 import Integreat from '../..'
 
@@ -28,33 +29,33 @@ defs.mappings[0] = {
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
       author: ['author', { $apply: 'entries-user' }],
-      'sections.id': 'sections[]'
+      'sections.id': 'sections[]',
     },
-    { $apply: 'cast_entry' }
-  ]
+    { $apply: 'cast_entry' },
+  ],
 }
 defs.mappings.push({
   ...usersUserMapping,
-  id: 'entries-user'
+  id: 'entries-user',
 })
 
 // Tests
 
-test('should get all entries from service', async t => {
+test('should get all entries from service', async (t) => {
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {
       data: [
         {
           ...entry1Data,
-          author: { ...johnfData, createdAt, updatedAt, creator: 'bettyk' }
-        }
-      ]
+          author: { ...johnfData, createdAt, updatedAt, creator: 'bettyk' },
+        },
+      ],
     })
   const adapters = { json }
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent1' }
+    payload: { type: 'entry', id: 'ent1' },
   }
   const expectedRel = {
     $type: 'user',
@@ -70,17 +71,18 @@ test('should get all entries from service', async t => {
     tokens: ['twitter|23456', 'facebook|12345'],
     feeds: [
       { id: 'news', $ref: 'feed' },
-      { id: 'social', $ref: 'feed' }
-    ]
+      { id: 'social', $ref: 'feed' },
+    ],
   }
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-  t.is(ret.data.length, 1)
-  t.is(ret.data[0].id, 'ent1')
-  t.deepEqual(ret.data[0].author, expectedRel)
+  const data = ret.data as TypedData[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'ent1')
+  t.deepEqual(data[0].author, expectedRel)
 
   nock.restore()
 })

@@ -4,6 +4,7 @@ import jsonAdapter from 'integreat-adapter-json'
 import completeIdent from '../../middleware/completeIdent'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
+import { TypedData } from '../../types'
 
 import Integreat from '../..'
 
@@ -32,7 +33,7 @@ test('should get with ident token', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-  t.is(ret.data.id, 'johnf')
+  t.is((ret.data as TypedData).id, 'johnf')
 
   nock.restore()
 })

@@ -6,6 +6,7 @@ import { completeExchange } from '../utils/exchangeMapping'
 import defs from '../tests/helpers/defs'
 import johnfData from '../tests/helpers/data/userJohnf'
 import ent1Data from '../tests/helpers/data/entry1'
+import { TypedData } from '../types'
 
 import getIdent from './getIdent'
 
@@ -45,7 +46,7 @@ test('should complete ident with token', async (t) => {
 
   t.is(ret.status, 'ok', ret.response.error)
   t.deepEqual(ret.ident, johnfIdent)
-  t.is(ret.response.data.id, 'johnf')
+  t.is((ret.response.data as TypedData).id, 'johnf')
   t.true(scope.isDone())
 })
 
@@ -63,7 +64,7 @@ test('should complete ident with id', async (t) => {
 
   t.is(ret.status, 'ok', ret.response.error)
   t.deepEqual(ret.ident, johnfIdent)
-  t.is(ret.response.data.id, 'johnf')
+  t.is((ret.response.data as TypedData).id, 'johnf')
 })
 
 test('should complete ident with id when more props are present', async (t) => {
@@ -80,7 +81,7 @@ test('should complete ident with id when more props are present', async (t) => {
 
   t.is(ret.status, 'ok', ret.response.error)
   t.deepEqual(ret.ident, johnfIdent)
-  t.is(ret.response.data.id, 'johnf')
+  t.is((ret.response.data as TypedData).id, 'johnf')
 })
 
 test('should return noaction when no props', async (t) => {
@@ -90,7 +91,7 @@ test('should return noaction when no props', async (t) => {
     ident: {},
   })
 
-  const ret = await getIdent(exchange, great.dispatch, getService, identConfig)
+  const ret = await getIdent(exchange, dispatch, getService, identConfig)
 
   t.is(ret.status, 'noaction')
   t.is(typeof ret.response.error, 'string')
@@ -151,7 +152,7 @@ test('should complete ident with other prop keys', async (t) => {
     props: {
       id: 'author',
       roles: 'sections',
-      tokens: null,
+      tokens: undefined,
     },
   }
   const getService = () => great.services.entries
@@ -173,7 +174,7 @@ test('should return notfound when unknown service', async (t) => {
     .get('/users')
     .query({ tokens: 'twitter|23456' })
     .reply(200, { data: { ...johnfData } })
-  const getService = () => null
+  const getService = () => undefined
   const exchange = completeExchange({
     type: 'GET_IDENT',
     request: {},

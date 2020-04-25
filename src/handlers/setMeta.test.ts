@@ -84,8 +84,8 @@ test('should not set metadata on service when no meta type', async (t) => {
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [{ options: { uri: 'http://api2.test/database/{id}' } }]
   const great = Integreat.create(defs(endpoints, null), { adapters: { json } })
-  const getService = (type: string, service: string) =>
-    service === 'store' || type === 'meta' ? great.services.store : null
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' || type === 'meta' ? great.services.store : undefined
   const exchange = completeExchange({
     type: 'SET_META',
     request: {
@@ -112,12 +112,12 @@ test('should set metadata on other service', async (t) => {
     { id: 'setMeta', options: { uri: 'http://api3.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints, null), { adapters: { json } })
-  const getService = (type: string, service: string) =>
+  const getService = (type?: string | string[], service?: string) =>
     service === 'entries'
       ? great.services.entries
       : service === 'store' || type === 'meta'
       ? great.services.store
-      : null
+      : undefined
   const exchange = completeExchange({
     type: 'SET_META',
     request: {
@@ -135,11 +135,11 @@ test('should set metadata on other service', async (t) => {
 })
 
 test('should return status noaction when meta is set to an unknown schema', async (t) => {
-  const endpoints = []
+  const endpoints = [] as {}[]
   const great = Integreat.create(defs(endpoints, 'unknown'), {
     adapters: { json },
   })
-  const getService = (type?: string | string[], service?: string) =>
+  const getService = (_type?: string | string[], service?: string) =>
     service === 'store' ? great.services.store : undefined
   const exchange = completeExchange({
     type: 'SET_META',

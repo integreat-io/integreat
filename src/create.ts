@@ -7,6 +7,7 @@ import {
   Adapter,
   AuthDef,
   Authenticator,
+  Service,
 } from './service/types'
 import { SchemaDef } from './schema/types'
 import Auth from './service/Auth'
@@ -16,9 +17,8 @@ import createSchema, { Schema } from './schema'
 import createService from './service'
 import createMapOptions from './utils/createMapOptions'
 import { lookupById } from './utils/indexUtils'
-// import createAuth from './auth'
 import createDispatch, { ExchangeHandler } from './dispatch'
-import { indexById, ObjectWithId } from './utils/indexUtils'
+import { indexById } from './utils/indexUtils'
 
 export interface Definitions {
   schemas: SchemaDef[]
@@ -95,7 +95,7 @@ export default function create(
         mapOptions,
       })
     )
-    .reduce(indexById, {} as Dictionary<ObjectWithId>) // TODO: Properly type Service
+    .reduce(indexById, {} as Dictionary<Service>)
 
   // Create dispatch
   const dispatch = createDispatch({

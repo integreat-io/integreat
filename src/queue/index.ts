@@ -1,6 +1,6 @@
 import middleware from './middleware'
 import schedule from './schedule'
-import { Queue } from './types'
+import { Queue, ScheduleDef } from './types'
 import { Dispatch } from '../types'
 
 /**
@@ -38,10 +38,8 @@ function setupQueue(queue: Queue) {
      * Schedule actions from the given defs.
      * Actions are enqueued with a timestamp, and are ran at the
      * set time.
-     * @param {array} defs - An array of schedule definitions
-     * @returns {array} Array of returned responses
      */
-    async schedule(defs) {
+    async schedule(defs: ScheduleDef | ScheduleDef[]) {
       return schedule(defs, queue)
     },
   }

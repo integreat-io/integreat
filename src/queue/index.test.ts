@@ -286,8 +286,16 @@ test('schedule should enqueue scheduled action', async (t) => {
 test('should return response objects with status queued', async (t) => {
   const queue = setupQueue(mockQueue())
   const defs = [
-    { id: 'sched1', schedule: 'at 2:00 am', action: { type: 'SYNC' } },
-    { id: 'sched2', schedule: { h: [3] }, action: { type: 'EXPIRE' } },
+    {
+      id: 'sched1',
+      schedule: 'at 2:00 am',
+      action: { type: 'SYNC', payload: {} },
+    },
+    {
+      id: 'sched2',
+      schedule: { h: [3] },
+      action: { type: 'EXPIRE', payload: {} },
+    },
   ]
   const expected = [
     { status: 'queued', data: { id: 'sched1' } },
@@ -302,7 +310,11 @@ test('should return response objects with status queued', async (t) => {
 test('should return response objects with status error when invalid schedule', async (t) => {
   const queue = setupQueue(mockQueue())
   const defs = [
-    { id: 'sched1', schedule: 'at 42 am', action: { type: 'SYNC' } },
+    {
+      id: 'sched1',
+      schedule: 'at 42 am',
+      action: { type: 'SYNC', payload: {} },
+    },
   ]
 
   const ret = await queue.schedule(defs)
@@ -316,7 +328,7 @@ test('should accept single schedule definition object', async (t) => {
   const defs = {
     id: 'sched1',
     schedule: 'at 2:00 am',
-    action: { type: 'SYNC' },
+    action: { type: 'SYNC', payload: {} },
   }
   const expected = [{ status: 'queued', data: { id: 'sched1' } }]
 

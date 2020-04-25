@@ -91,8 +91,8 @@ test('should get several metadata for service', async (t) => {
     { id: 'getMeta', options: { uri: 'http://api2.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
-  const getService = (type: string, service: string) =>
-    service === 'store' || type === 'meta' ? great.services.store : null
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' || type === 'meta' ? great.services.store : undefined
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
@@ -118,8 +118,8 @@ test('should get all metadata for service', async (t) => {
     { id: 'getMeta', options: { uri: 'http://api3.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
-  const getService = (type: string, service: string) =>
-    service === 'store' || type === 'meta' ? great.services.store : null
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' || type === 'meta' ? great.services.store : undefined
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
@@ -147,8 +147,8 @@ test('should return null for metadata when not set on service', async (t) => {
     { id: 'getMeta', options: { uri: 'http://api4.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
-  const getService = (type: string, service: string) =>
-    service === 'store' || type === 'meta' ? great.services.store : null
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' || type === 'meta' ? great.services.store : undefined
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
@@ -172,8 +172,8 @@ test('should return reply from service when not ok', async (t) => {
     { id: 'getMeta', options: { uri: 'http://api5.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
-  const getService = (type: string, service: string) =>
-    service === 'store' || type === 'meta' ? great.services.store : null
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' || type === 'meta' ? great.services.store : undefined
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
@@ -196,8 +196,8 @@ test('should return error when when no meta type is set', async (t) => {
     { id: 'getMeta', options: { uri: 'http://api6.test/database/{{id}' } },
   ]
   const great = Integreat.create(defs(endpoints, null), { adapters: { json } })
-  const getService = (_type: string, service: string) =>
-    service === 'store' ? great.services.store : null
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'store' ? great.services.store : undefined
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
@@ -221,12 +221,12 @@ test('should get metadata from other service', async (t) => {
     { id: 'getMeta', options: { uri: 'http://api7.test/database/{id}' } },
   ]
   const great = Integreat.create(defs(endpoints, null), { adapters: { json } })
-  const getService = (type: string, service: string) =>
+  const getService = (type?: string | string[], service?: string) =>
     service === 'entries'
       ? great.services.entries
       : service === 'store' || type === 'meta'
       ? great.services.store
-      : null
+      : undefined
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
@@ -244,11 +244,11 @@ test('should get metadata from other service', async (t) => {
 })
 
 test('should return error when meta is set to an unknown type', async (t) => {
-  const endpoints = []
+  const endpoints = [] as {}[]
   const great = Integreat.create(defs(endpoints, 'unknown'), {
     adapters: { json },
   })
-  const getService = (_type?: string | string, service?: string) =>
+  const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? great.services.store : undefined
   const exchange = completeExchange({
     type: 'GET_META',
@@ -286,8 +286,8 @@ test('should respond with noaccess when not authorized', async (t) => {
     .reply(200, { id: 'meta:store', _rev: '000001', ...metadata })
   const endpoints = [{ options: { uri: 'http://api8.test/database/{id}' } }]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
-  const getService = (type: string, service: string) =>
-    service === 'store' || type === 'meta' ? great.services.store : null
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' || type === 'meta' ? great.services.store : undefined
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
@@ -302,5 +302,4 @@ test('should respond with noaccess when not authorized', async (t) => {
   t.is(typeof ret.response.error, 'string')
   t.is(ret.response.reason, 'NO_IDENT')
   t.falsy(ret.response.data)
-  t.is(ret.access, undefined)
 })

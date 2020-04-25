@@ -4,6 +4,7 @@ import nock = require('nock')
 import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import ent1Data from '../helpers/data/entry1'
+import { DataObject } from '../../types'
 
 import Integreat from '../..'
 
@@ -22,7 +23,7 @@ const serializeData = ({
   updatedAt,
   authorId,
   sections,
-}) =>
+}: DataObject) =>
   JSON.stringify({
     key,
     headline,

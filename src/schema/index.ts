@@ -12,7 +12,7 @@ const expandField = (val: Shape | PropertyShape | string | undefined) =>
     ? expandFields(val) // eslint-disable-line @typescript-eslint/no-use-before-define
     : val
 
-const expandFields = (vals: Shape) =>
+const expandFields = (vals: Shape): Shape =>
   Object.entries(vals).reduce(
     (newVals, [key, def]) => ({ ...newVals, [key]: expandField(def) }),
     {}

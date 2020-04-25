@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon = require('sinon')
 import { completeExchange } from './utils/exchangeMapping'
-import { Middleware } from './types'
+import { Middleware, Exchange, InternalDispatch } from './types'
 
 import dispatch from './dispatch'
 
@@ -132,8 +132,8 @@ test('should dispatch to middleware from action handlers', async (t) => {
   const action = { type: 'DISPATCHER', payload: {}, meta: {} }
   const handlers = {
     TEST: async () => completeExchange({ status: 'fromAction' }),
-    DISPATCHER: async (action, dispatch) =>
-      dispatch({ type: 'TEST', payload: {}, meta: {} }),
+    DISPATCHER: async (_exchange: Exchange, dispatch: InternalDispatch) =>
+      dispatch(completeExchange({ type: 'TEST' })),
   }
   const middlewares: Middleware[] = [
     (next) => async (exchange) => ({

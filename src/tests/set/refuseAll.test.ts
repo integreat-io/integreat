@@ -18,13 +18,13 @@ const entry1Item = {
   author: { id: 'johnf', type: 'user' },
   sections: [
     { id: 'news', type: 'section' },
-    { id: 'sports', type: 'section' }
-  ]
+    { id: 'sports', type: 'section' },
+  ],
 }
 
 // Tests
 
-test('should refuse request to set entry with no ident', async t => {
+test('should refuse request to set entry with no ident', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/users/johnf')
@@ -34,7 +34,7 @@ test('should refuse request to set entry with no ident', async t => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
-    meta: { ident: null }
+    meta: { ident: undefined },
   }
 
   const great = Integreat.create(defs, { adapters })

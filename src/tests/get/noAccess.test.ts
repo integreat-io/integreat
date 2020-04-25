@@ -4,6 +4,7 @@ import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
 import johnfData from '../helpers/data/userJohnf'
 import bettyData from '../helpers/data/userBetty'
+import { TypedData } from '../../types'
 
 import Integreat from '../..'
 
@@ -63,6 +64,7 @@ test('should respond with only authorized data', async (t) => {
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.access, expectedAccess)
-  t.is(ret.data.length, 1)
-  t.is(ret.data[0].id, 'johnf')
+  const data = ret.data as TypedData[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'johnf')
 })

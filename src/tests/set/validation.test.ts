@@ -2,6 +2,7 @@ import test from 'ava'
 import nock = require('nock')
 import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
+import { Action, DataObject } from '../../types'
 
 import Integreat from '../..'
 
@@ -18,7 +19,7 @@ const entryWithAuthor = {
   title: 'Entry 1',
   createdAt,
   updatedAt,
-  author: { id: 'johnf', type: 'user' }
+  author: { id: 'johnf', type: 'user' },
 }
 
 const entryWithoutAuthor = {
@@ -26,7 +27,7 @@ const entryWithoutAuthor = {
   id: 'ent2',
   title: 'Entry 2',
   createdAt,
-  updatedAt
+  updatedAt,
 }
 
 test.after.always(() => {
@@ -35,12 +36,12 @@ test.after.always(() => {
 
 const alwaysOk = () => () => null
 
-const shouldHaveAuthor = () => action =>
-  action.payload.data && action.payload.data.author
+const shouldHaveAuthor = () => (action: Action) =>
+  (action.payload.data as DataObject).author
     ? null
     : { status: 'badrequest', error: 'Error from validator' }
 
-const isNumericId = () => action =>
+const isNumericId = () => (action: Action) =>
   isNaN(action.payload.id)
     ? { status: 'badrequest', error: 'Not number' }
     : null
@@ -64,14 +65,14 @@ const transformers = { alwaysOk, shouldHaveAuthor, isNumericId }
 // TODO: Solution for validations
 test.failing(
   'should respond with response from validation when not validated',
-  async t => {
+  async (t) => {
     const scope = nock('http://some.api')
       .put('/entries/ent2')
       .reply(201, { data: { key: 'ent2', ok: true } })
     const action = {
       type: 'SET',
       payload: { type: 'entry', data: entryWithoutAuthor },
-      meta: { ident: { root: true } }
+      meta: { ident: { root: true } },
     }
 
     const great = Integreat.create(defs, { adapters, transformers })
@@ -83,14 +84,14 @@ test.failing(
   }
 )
 
-test('should respond with ok when validated', async t => {
+test('should respond with ok when validated', async (t) => {
   const scope = nock('http://some.api')
     .put('/entries/ent1')
     .reply(201, { data: { key: 'ent1', ok: true } })
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entryWithAuthor },
-    meta: { ident: { root: true } }
+    meta: { ident: { root: true } },
   }
 
   const great = Integreat.create(defs, { adapters, transformers })
@@ -104,11 +105,11 @@ test('should respond with ok when validated', async t => {
 // TODO: Solution for validations
 test.failing(
   'should respond with response from validation when not validated - REQUEST',
-  async t => {
+  async (t) => {
     const action = {
       type: 'REQUEST',
       payload: { type: 'entry', id: 'invalid' },
-      meta: { ident: { root: true } }
+      meta: { ident: { root: true } },
     }
 
     const great = Integreat.create(defs, { adapters, transformers })
