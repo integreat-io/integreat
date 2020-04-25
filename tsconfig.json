@@ -9,7 +9,7 @@
     "outDir": "./dist",
     "noEmitOnError": false,
     "strict": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "noImplicitThis": true,
     "noUnusedParameters": true,
     "strictNullChecks": true,
