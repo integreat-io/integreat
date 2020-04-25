@@ -3,11 +3,11 @@ import sinon = require('sinon')
 
 import nextSchedule from './nextSchedule'
 
-test('should exist', t => {
+test('should exist', (t) => {
   t.is(typeof nextSchedule, 'function')
 })
 
-test('should return the next time', t => {
+test('should return the next time', (t) => {
   const schedule = { schedules: [{ h: [2] }] }
   const now = new Date('2017-07-10T17:03:46.018Z').getTime()
   const expected = new Date('2017-07-11T02:00:00.000Z').getTime()
@@ -21,7 +21,7 @@ test('should return the next time', t => {
   clock.restore()
 })
 
-test('should return now as next time', t => {
+test('should return now as next time', (t) => {
   const schedule = { schedules: [{ h: [2] }] }
   const now = new Date('2017-07-10T02:00:00.000Z').getTime()
   const expected = new Date('2017-07-11T02:00:00.000Z').getTime()
@@ -34,7 +34,7 @@ test('should return now as next time', t => {
   clock.restore()
 })
 
-test('should return now as next time if allowed', t => {
+test('should return now as next time if allowed', (t) => {
   const schedule = { schedules: [{ h: [2] }] }
   const now = new Date('2017-07-10T02:00:00.000Z').getTime()
   const clock = sinon.useFakeTimers(now)
@@ -46,13 +46,13 @@ test('should return now as next time if allowed', t => {
   clock.restore()
 })
 
-test('should return null when no schedule', t => {
+test('should return null when no schedule', (t) => {
   const ret = nextSchedule()
 
   t.is(ret, null)
 })
 
-test('should throw on invalid schedule', t => {
+test('should throw on invalid schedule', (t) => {
   const schedule = { schedules: [{ x: [0] }] }
 
   const error = t.throws(() => nextSchedule(schedule))
@@ -60,7 +60,7 @@ test('should throw on invalid schedule', t => {
   t.is(error.message, 'Invalid schedule definition')
 })
 
-test('should return null when schedule is ended', t => {
+test('should return null when schedule is ended', (t) => {
   const schedule = { schedules: [{ ['Y_b']: [2015] }] }
 
   const ret = nextSchedule(schedule)

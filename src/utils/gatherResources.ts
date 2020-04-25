@@ -1,5 +1,10 @@
-export default function gatherResources(resources: string[], dir: string) {
-  return (...ids: string[]) => {
+import { Dictionary } from '../types'
+
+export default function gatherResources<T = unknown>(
+  resources: string[],
+  dir: string
+) {
+  return (...ids: string[]): Dictionary<T> => {
     if (ids.length === 0) {
       ids = resources
     }

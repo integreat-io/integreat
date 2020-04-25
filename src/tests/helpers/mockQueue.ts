@@ -1,24 +1,38 @@
+import { Queue, JobHandler } from '../../queue/types'
+
 // Quick mock implementation of the Integreat queue interface supported by
 // integreat.queue. Will push payload directly to the subscribed handler.
 // Supports only one subscribe handler at the time.
 
-export default () => {
-  let handlerFn = null
+export default (): Queue => {
+  let handlerFn: JobHandler | null = null
   return {
-    async push (payload, timestamp = null, id = null) {
+    queue: {},
+
+    namespace: 'test',
+
+    async push(payload, _timestamp, id) {
       if (typeof handlerFn === 'function') {
         handlerFn(payload)
       }
       return id || 'queued1'
     },
-    subscribe (handler) {
+
+    async subscribe(handler) {
       handlerFn = handler
       return 'handle1'
     },
-    unsubscribe (handle) {
+
+    async unsubscribe(handle) {
       if (handle === 'handle1') {
         handlerFn = null
       }
-    }
+    },
+
+    clean: async () => undefined,
+
+    flush: async () => [],
+
+    flushScheduled: async () => undefined,
   }
 }

@@ -20,7 +20,7 @@ import { lookupById } from './utils/indexUtils'
 import createDispatch, { ExchangeHandler } from './dispatch'
 import { indexById, ObjectWithId } from './utils/indexUtils'
 
-interface Definitions {
+export interface Definitions {
   schemas: SchemaDef[]
   services: ServiceDef[]
   mappings?: MappingDef[]
@@ -29,7 +29,7 @@ interface Definitions {
   dictionaries?: Dictionaries
 }
 
-interface Resources {
+export interface Resources {
   adapters?: Dictionary<Adapter>
   handlers?: Dictionary<ExchangeHandler>
   authenticators?: Dictionary<Authenticator>

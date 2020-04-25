@@ -1,3 +1,4 @@
+import { TransformFunction } from '../types'
 import gatherResources from '../utils/gatherResources'
 
 const transformers = [
@@ -6,7 +7,7 @@ const transformers = [
   'lowercase',
   'removeTypePrefixOnId',
   'trim',
-  'uppercase'
+  'uppercase',
 ]
 
-export default gatherResources(transformers, __dirname)
+export default gatherResources<TransformFunction>(transformers, __dirname)

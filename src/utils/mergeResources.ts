@@ -1,10 +1,15 @@
 import R = require('ramda')
+import { Dictionary, TransformFunction } from '../types'
+import { Adapter } from '../service/types'
 
-const mergeResources = (...resources) => {
-  return resources.reduce(
-    (resources, external) => R.mergeDeepRight(resources, external),
-    {}
-  )
+export interface Resources {
+  adapters?: Dictionary<Adapter>
+  transformers?: Dictionary<TransformFunction>
 }
 
-export default mergeResources
+export default function mergeResources(...resources: Resources[]) {
+  return resources.reduce(
+    (resources, external) => R.mergeDeepRight(resources, external),
+    {} as Resources
+  )
+}

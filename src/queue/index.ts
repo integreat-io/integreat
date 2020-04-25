@@ -1,14 +1,13 @@
 import middleware from './middleware'
 import schedule from './schedule'
+import { Queue } from './types'
+import { Dispatch } from '../types'
 
 /**
  * Set up Integreat queue interface.
- *
- * @param {Object} queue - A supported queue implementation
- * @returns {Object} An Integreat queue instance with setDispatch and middleware methods
  */
-function setupQueue(queue) {
-  let dispatch = null
+function setupQueue(queue: Queue) {
+  let dispatch: Dispatch | null = null
   let subscribed = false
 
   return {
@@ -17,7 +16,7 @@ function setupQueue(queue) {
     /**
      * Set dispatch function to use for dequeuing
      */
-    setDispatch(dispatchFn) {
+    setDispatch(dispatchFn: Dispatch | null) {
       dispatch = dispatchFn
 
       if (!subscribed && typeof dispatch === 'function') {
@@ -30,10 +29,8 @@ function setupQueue(queue) {
      * Middleware interface for Integreat. Will push queuable actions to queue,
      * and pass the rest on to the next() function.
      *
-     * @param {function} next - The next middleware
-     * @returns {Object} A response object
      */
-    middleware(next) {
+    middleware(next: Dispatch) {
       return middleware(next, queue)
     },
 
@@ -46,7 +43,7 @@ function setupQueue(queue) {
      */
     async schedule(defs) {
       return schedule(defs, queue)
-    }
+    },
   }
 }
 

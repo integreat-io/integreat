@@ -1,4 +1,3 @@
-import Auth from './service/Auth'
 import { Endpoint } from './service/endpoints/types'
 
 export interface Dictionary<T> {
@@ -68,6 +67,8 @@ export interface Payload extends Dictionary<Data> {
 export interface ActionMeta {
   [key: string]: unknown
   ident?: Ident
+  queue?: boolean | number
+  id?: string
 }
 
 export interface Action {
@@ -86,7 +87,7 @@ export interface Request<T = Data> {
   params: Params
   endpoint: Dictionary<unknown>
   data?: T
-  auth?: Auth | boolean | null
+  auth?: object | null
   access?: { ident: Ident }
 }
 

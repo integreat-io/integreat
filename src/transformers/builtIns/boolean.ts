@@ -5,7 +5,7 @@ const castBoolean = (value: Data) => {
   if (value === null || value === undefined) {
     return value
   } else {
-    return (value === 'false') ? false : Boolean(value)
+    return value === 'false' ? false : Boolean(value)
   }
 }
 

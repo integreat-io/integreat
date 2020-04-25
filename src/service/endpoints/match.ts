@@ -2,13 +2,12 @@ import { validate } from 'map-transform'
 import { lookupById } from '../../utils/indexUtils'
 import { Exchange, Params, Dictionary } from '../../types'
 import { EndpointDef } from './types'
+import { arrayIncludes } from '../../utils/array'
 
 type FilterFn = (exchange: Exchange) => boolean
 
-const matchValue = (match?: string | string[], value?: string) =>
-  Array.isArray(match) && typeof value === 'string'
-    ? match.includes(value)
-    : match === value
+const matchValue = (match?: string | string[], value?: string | string[]) =>
+  arrayIncludes(match, value)
 
 const hasParam = (params: Params | undefined, key: string) =>
   params && params[key] !== undefined // eslint-disable-line security/detect-object-injection
@@ -45,7 +44,7 @@ const matchParams = (
   )
 
 const matchFilters = (filters: FilterFn[], exchange: Exchange) =>
-  filters.every(filter => filter(exchange))
+  filters.every((filter) => filter(exchange))
 
 /**
  * Return the first matching endpoint from an array of endpoints that has
@@ -58,7 +57,7 @@ export default function isMatch(endpoint: EndpointDef) {
   const filters = match.filters
     ? Object.keys(match.filters).map(
         // eslint-disable-next-line security/detect-object-injection
-        path =>
+        (path) =>
           validate(
             path,
             lookupById(path, match.filters as Dictionary<object>) || false

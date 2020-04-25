@@ -1,4 +1,5 @@
 import test from 'ava'
+import createSchema from '../schema'
 
 import createMapOptions from './createMapOptions'
 
@@ -11,9 +12,9 @@ const mappings = [
     mapping: [
       {
         id: 'id',
-        title: 'headline'
-      }
-    ]
+        title: 'headline',
+      },
+    ],
   },
   {
     id: 'entries_user',
@@ -21,54 +22,35 @@ const mappings = [
     mapping: [
       {
         id: 'username',
-        name: 'fullName'
-      }
-    ]
-  }
-]
-
-const entryMapping = [
-  { $filter: 'equalOrNoSchema', type: 'entry' },
-  {
-    $iterate: true,
-    id: { $transform: 'string' },
-    title: { $transform: 'string' }
-  }
-]
-const userMapping = [
-  { $filter: 'equalOrNoSchema', type: 'user' },
-  {
-    $iterate: true,
-    id: { $transform: 'string' },
-    name: { $transform: 'string' }
-  }
+        name: 'fullName',
+      },
+    ],
+  },
 ]
 
 const schemas = {
-  entry: {
+  entry: createSchema({
     id: 'entry',
-    mapping: entryMapping
-  },
-  user: {
+  }),
+  user: createSchema({
     id: 'user',
-    mapping: userMapping
-  }
+  }),
 }
 
 const transformFunctions = {
-  string: () => (value: unknown) => String(value)
+  string: () => (value: unknown) => String(value),
 }
 
 const dictionaries = {
-  userRole: [['super', 'admin'] as const, ['readwrite', 'editor'] as const]
+  userRole: [['super', 'admin'] as const, ['readwrite', 'editor'] as const],
 }
 
 // Tests
 
-test('should return map options with pipelines from mappings', t => {
+test('should return map options with pipelines from mappings', (t) => {
   const expected = {
     ['entries_entry']: mappings[0].mapping,
-    ['entries_user']: mappings[1].mapping
+    ['entries_user']: mappings[1].mapping,
   }
 
   const ret = createMapOptions({}, mappings, transformFunctions)
@@ -76,12 +58,12 @@ test('should return map options with pipelines from mappings', t => {
   t.deepEqual(ret.pipelines, expected)
 })
 
-test('should include schema cast mappings in pipelines', t => {
+test('should include schema cast mappings in pipelines', (t) => {
   const expected = {
     ['entries_entry']: mappings[0].mapping,
     ['entries_user']: mappings[1].mapping,
-    ['cast_entry']: entryMapping,
-    ['cast_user']: userMapping
+    ['cast_entry']: schemas.entry.mapping,
+    ['cast_user']: schemas.user.mapping,
   }
 
   const ret = createMapOptions(schemas, mappings, transformFunctions)
@@ -89,13 +71,13 @@ test('should include schema cast mappings in pipelines', t => {
   t.deepEqual(ret.pipelines, expected)
 })
 
-test('should include transform functions', t => {
+test('should include transform functions', (t) => {
   const ret = createMapOptions(schemas, mappings, transformFunctions)
 
   t.is(ret.functions, transformFunctions)
 })
 
-test('should include dictionaries functions', t => {
+test('should include dictionaries functions', (t) => {
   const ret = createMapOptions(
     schemas,
     mappings,

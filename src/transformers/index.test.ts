@@ -1,17 +1,12 @@
 import test from 'ava'
-import { TransformFunction } from '../types'
 
 import transformers from '.'
 
-interface TransformersLib {
-  [key: string]: TransformFunction
-}
-
-test('should return object with transformers', t => {
-  const ret: TransformersLib = transformers()
+test('should return object with transformers', (t) => {
+  const ret = transformers()
 
   t.true(Object.keys(ret).length > 0)
-  Object.keys(ret).forEach(key => {
+  Object.keys(ret).forEach((key) => {
     // eslint-disable-next-line security/detect-object-injection
     const fn = ret[key]
     t.is(typeof fn, 'function')

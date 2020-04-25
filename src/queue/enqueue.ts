@@ -1,24 +1,26 @@
 import debugLib = require('debug')
+import { Action, ActionMeta } from '../types'
+import { Queue } from './types'
 
 const debug = debugLib('great')
 
-const prepareMetaForQueue = ({ queue, ...rest }) => ({
+const prepareMetaForQueue = ({ queue, ...rest }: ActionMeta = {}) => ({
   ...rest,
   queuedAt: Date.now(),
 })
 
-const prepareForQueue = (action) => ({
+const prepareForQueue = (action: Action) => ({
   ...action,
-  meta: prepareMetaForQueue(action.meta),
+  meta: prepareMetaForQueue(action?.meta),
 })
 
-const enqueue = async (queue, action) => {
+export default async function enqueue(queue: Queue, action: Action) {
   const { meta } = action
   const queuedAction = prepareForQueue(action)
-  const timestamp = typeof meta.queue === 'boolean' ? null : meta.queue
-  const actionId = meta.id || null
+  const timestamp = typeof meta?.queue === 'boolean' ? undefined : meta?.queue
+  const actionId = meta?.id || undefined
 
-  let id
+  let id: string | null
   try {
     id = await queue.push(queuedAction, timestamp, actionId)
   } catch (error) {
@@ -39,5 +41,3 @@ const enqueue = async (queue, action) => {
   )
   return { status: 'queued', data: { id } }
 }
-
-export default enqueue

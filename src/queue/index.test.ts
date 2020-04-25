@@ -7,7 +7,9 @@ import setupQueue from '.'
 
 // Helpers
 
-let clock
+const middleware = async () => ({ status: 'ok', data: [] })
+
+let clock: sinon.SinonFakeTimers
 
 test.before(() => {
   clock = sinon.useFakeTimers(Date.now())
@@ -68,8 +70,8 @@ test('middleware should queue queuable action', async (t) => {
   t.is(dispatch.callCount, 0)
   t.is(push.callCount, 1)
   t.deepEqual(push.args[0][0], expected)
-  t.is(push.args[0][1], null)
-  t.is(push.args[0][2], null)
+  t.is(push.args[0][1], undefined)
+  t.is(push.args[0][2], undefined)
 })
 
 test('middleware should dispatch unqueuable actions and return response', async (t) => {
@@ -96,7 +98,7 @@ test('middleware should queue with timestamp', async (t) => {
     meta: { queue: 1516113629153 },
   }
 
-  await queue.middleware(() => {})(action)
+  await queue.middleware(middleware)(action)
 
   t.is(push.callCount, 1)
   t.is(push.args[0][1], 1516113629153)
@@ -111,7 +113,7 @@ test('middleware should queue with id', async (t) => {
     meta: { queue: true, id: 'action1' },
   }
 
-  await queue.middleware(() => {})(action)
+  await queue.middleware(middleware)(action)
 
   t.is(push.callCount, 1)
   t.is(push.args[0][2], 'action1')
@@ -130,7 +132,7 @@ test('middleware should return error response when underlying queue throws', asy
     error: 'Could not push to queue. Error: The horror',
   }
 
-  const response = await queue.middleware(() => {})(action)
+  const response = await queue.middleware(middleware)(action)
 
   t.deepEqual(response, expected)
 })
@@ -147,9 +149,9 @@ test('middleware should reschedule repeating action', async (t) => {
       schedule,
     },
   }
-  const nextTime = later.schedule(schedule).next().getTime()
+  const nextTime = (later.schedule(schedule).next(1) as Date).getTime()
 
-  await queue.middleware(() => {})(action)
+  await queue.middleware(middleware)(action)
 
   t.is(push.callCount, 1)
   const nextAction = push.args[0][0]
@@ -170,7 +172,7 @@ test('middleware should not reschedule when schedule is ended', async (t) => {
     },
   }
 
-  await queue.middleware(() => {})(action)
+  await queue.middleware(middleware)(action)
 
   t.is(push.callCount, 0)
 })
@@ -187,7 +189,7 @@ test('middleware should not reschedule with invalid schedule definition', async 
     },
   }
 
-  await queue.middleware(() => {})(action)
+  await queue.middleware(middleware)(action)
 
   t.is(push.callCount, 0)
 })
@@ -258,13 +260,13 @@ test('schedule should enqueue scheduled action', async (t) => {
   const queue = setupQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const defs = [
-    { schedule: 'at 2:00 am', action: { type: 'SYNC' } },
-    { schedule: { h: [3] }, action: { type: 'EXPIRE' } },
+    { schedule: 'at 2:00 am', action: { type: 'SYNC', payload: {} } },
+    { schedule: { h: [3] }, action: { type: 'EXPIRE', payload: {} } },
   ]
   const expected = {
     type: 'SYNC',
+    payload: {},
     meta: {
-      id: null,
       schedule: {
         exceptions: [],
         schedules: [{ t: [7200] }],
@@ -277,7 +279,7 @@ test('schedule should enqueue scheduled action', async (t) => {
 
   t.is(push.callCount, 2)
   t.deepEqual(push.args[0][0], expected)
-  t.true(Number.isInteger(push.args[0][1]))
+  t.true(Number.isInteger(push.args[0][1] as number))
   t.truthy(push.args[1][0])
 })
 

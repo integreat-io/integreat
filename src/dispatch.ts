@@ -15,24 +15,24 @@ import {
 } from './utils/exchangeMapping'
 import { Service } from './service/types'
 import { Schema } from './schema'
-import { ObjectWithId } from './utils/indexUtils'
 import createError from './utils/createError'
 
 const debug = debugLib('great')
 
-const compose = (...fns) => fns.reduce((f, g) => (...args) => f(g(...args)))
+const compose = (...fns: Function[]) =>
+  fns.reduce((f, g) => (...args: Function[]) => f(g(...args)))
+
+export interface GetService {
+  (type?: string | string[], serviceId?: string): Service | undefined
+}
 
 export interface ExchangeHandler {
   (
     exchange: Exchange,
     dispatch: InternalDispatch,
-    getService: Function,
+    getService: GetService,
     identConfig?: IdentConfig
   ): Promise<Exchange>
-}
-
-export interface GetService {
-  (type?: string | string[], serviceId?: string): Service | undefined // TODO: Properly type Service
 }
 
 function getExchangeHandlerFromType(
@@ -58,10 +58,10 @@ const wrapDispatch = (internalDispatch: InternalDispatch): Dispatch =>
     return responseFromExchange(exchange)
   }
 
-interface Resources {
+export interface Resources {
   handlers: Dictionary<ExchangeHandler>
   schemas: Dictionary<Schema>
-  services: Dictionary<ObjectWithId> // TODO: Properly type Service
+  services: Dictionary<Service>
   middlewares?: Middleware[]
   identConfig?: IdentConfig
 }

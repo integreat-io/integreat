@@ -1,10 +1,10 @@
 import debugLib = require('debug')
-import nextSchedule from '../utils/nextSchedule'
+import nextSchedule from './nextSchedule'
 import enqueue from './enqueue'
 
 const debug = debugLib('great')
 
-const getNextTime = action => {
+const getNextTime = (action) => {
   if (action.meta && action.meta.schedule) {
     try {
       return nextSchedule(action.meta.schedule, true)
@@ -21,7 +21,7 @@ const enqueueNext = (queue, action) => {
   if (nextTime) {
     const nextAction = {
       ...action,
-      meta: { ...action.meta, queue: nextTime.getTime() }
+      meta: { ...action.meta, queue: nextTime.getTime() },
     }
     return enqueue(queue, nextAction)
   }
@@ -29,7 +29,7 @@ const enqueueNext = (queue, action) => {
 }
 
 function middleware(next, queue) {
-  return async action => {
+  return async (action) => {
     if (action.meta && action.meta.queue) {
       return enqueue(queue, action)
     } else {

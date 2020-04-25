@@ -1,23 +1,32 @@
 import debugLib = require('debug')
-import createError from '../utils/createError'
-import scheduleToAction from '../utils/scheduleToAction'
+import scheduleToAction from './scheduleToAction'
 import enqueue from './enqueue'
+import { Queue, ScheduleDef } from './types'
+import { Response } from '../types'
 
 const debug = debugLib('great')
 
-async function schedule(defs, queue) {
-  defs = [].concat(defs)
+export default async function schedule(
+  defs: ScheduleDef | ScheduleDef[],
+  queue: Queue
+): Promise<Response[]> {
+  defs = ([] as ScheduleDef[]).concat(defs)
   debug('Schedule: %d schedules', defs.length)
 
   return Promise.all(
-    defs.map(def => {
+    defs.map((def) => {
       try {
-        return enqueue(queue, scheduleToAction(def))
+        const action = scheduleToAction(def)
+        if (!action) {
+          return {
+            status: 'noaction',
+            error: 'Schedule did not result in a queuable action',
+          }
+        }
+        return enqueue(queue, action)
       } catch (error) {
-        return createError(error)
+        return { status: 'error', error }
       }
     })
   )
 }
-
-export default schedule

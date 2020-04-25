@@ -1,6 +1,7 @@
 import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
 import { Schema } from '../schema'
-import { Dictionary, MappingDef } from '../types'
+import { Dictionary } from '../types'
+import { MappingDef } from '../service/types'
 
 const pipelinesFromMappings = (
   mappings: MappingDef[] = []
@@ -8,7 +9,7 @@ const pipelinesFromMappings = (
   mappings.reduce(
     (pipelines, def) => ({
       ...pipelines,
-      [def.id]: def.mapping
+      [def.id]: def.mapping,
     }),
     {}
   )
@@ -30,9 +31,9 @@ export default function createMapOptions(
   return {
     pipelines: {
       ...pipelinesFromMappings(mappings),
-      ...pipelinesFromSchemas(schemas)
+      ...pipelinesFromSchemas(schemas),
     },
     functions,
-    dictionaries
+    dictionaries,
   }
 }

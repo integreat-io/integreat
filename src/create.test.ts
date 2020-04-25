@@ -1,9 +1,9 @@
 import test from 'ava'
 import sinon = require('sinon')
 import jsonAdapter from 'integreat-adapter-json'
-import { Action, Dispatch, Data } from './types'
+import { Action, Dispatch, Data, DataObject, Dictionary } from './types'
 
-import create from './create'
+import create, { Definitions } from './create'
 
 // Setup
 
@@ -88,13 +88,13 @@ test('should return object with dispatch, schemas, services, and identType', (t)
 
 test('should throw when no services', (t) => {
   t.throws(() => {
-    create({ schemas } as any, { adapters })
+    create(({ schemas } as unknown) as Definitions, { adapters })
   })
 })
 
 test('should throw when no schemas', (t) => {
   t.throws(() => {
-    create({ services } as any, { adapters })
+    create(({ services } as unknown) as Definitions, { adapters })
   })
 })
 
@@ -171,8 +171,9 @@ test('should map data', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-  t.is(ret.data.length, 1)
-  const item = ret.data[0]
+  const data = ret.data as DataObject[]
+  t.is(data.length, 1)
+  const item = data[0]
   t.is(item.id, 'ent1')
   t.is(item.title, 'Entry 1!')
   t.is(item.text, 'The first article')
@@ -202,8 +203,11 @@ test('should use auth', async (t) => {
   ]
   const authenticators = {
     mock: {
-      authenticate: async ({ status }) => ({ status }),
+      authenticate: async (options: Dictionary<Data> | null) => ({
+        status: options?.status as string,
+      }),
       isAuthenticated: () => false,
+      authentication: {},
     },
   }
   const action = {
@@ -223,7 +227,7 @@ test('should use auth', async (t) => {
 
 test.skip('should subscribe to event on service', (t) => {
   const great = create({ services, schemas, mappings }, { adapters })
-  const cb = () => {}
+  const cb = () => undefined
   const onStub = sinon.stub(great.services.entries, 'on')
 
   great.on('mapRequest', 'entries', cb)

@@ -1,11 +1,8 @@
-function uppercase (value) {
+function uppercase(value: unknown) {
   if (typeof value === 'string') {
     return value.toLowerCase()
   }
   return value
 }
 
-export default Object.assign(
-  uppercase,
-  { rev: uppercase }
-)
+export default Object.assign(uppercase, { rev: uppercase })

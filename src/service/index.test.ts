@@ -148,7 +148,7 @@ test('should throw when no id', (t) => {
 
 test('should throw when no adapter', (t) => {
   t.throws(() => {
-    setupService({ mapOptions })({ id: 'entries' })
+    setupService({ mapOptions, schemas })({ id: 'entries' })
   })
 })
 
