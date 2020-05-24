@@ -32,7 +32,8 @@ const mapping = [
 
 const defs = {
   schemas: [entrySchema],
-  services: [{ ...entriesService, mappings: { entry: mapping } }],
+  services: [entriesService],
+  mappings: [{ id: 'entries-entry', mapping }],
 }
 
 test.after.always(() => {

@@ -95,20 +95,24 @@ const endpoints = [
   {
     id: 'endpoint1',
     match: { type: 'entry' },
+    mutation: { data: ['data', { $apply: 'entry' }] },
     options: { uri: 'http://test.api/1' },
   },
   {
     id: 'endpoint2',
     match: { type: 'entry', scope: 'member' },
+    mutation: { data: ['data', { $apply: 'entry' }] },
     options: { uri: 'http://test.api/2' },
   },
   {
     id: 'endpoint3',
     match: { type: 'account' },
+    mutation: { data: ['data', { $apply: 'account' }] },
     options: { uri: 'http://some.api/1.0' },
   },
   {
     match: { action: 'SET' },
+    mutation: { data: ['data', { $apply: 'entry' }] },
     options: { uri: 'http://some.api/1.0/untyped' },
   },
 ]
@@ -653,7 +657,7 @@ test.serial('mapResponse should map data array from service', async (t) => {
     id: 'entries',
     endpoints: [
       {
-        responseMapping: 'content.data',
+        mutation: { data: ['data.content.data', { $apply: 'entry' }] },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -714,7 +718,7 @@ test('mapResponse should map data object from service', async (t) => {
     id: 'accounts',
     endpoints: [
       {
-        responseMapping: 'content.data',
+        mutation: { data: ['data.content.data', { $apply: 'account' }] },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -744,100 +748,12 @@ test('mapResponse should map data object from service', async (t) => {
   t.is(ret.response.data.$type, 'account')
 })
 
-test('mapResponse should map data with overridden mapping on endpoint', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
-    id: 'entries',
-    endpoints: [
-      {
-        responseMapping: 'content.data',
-        options: { uri: 'http://some.api/1.0' },
-        mappings: { entry: 'entry2' },
-      },
-    ],
-    adapter: 'json',
-    mappings: { entry: 'entry' },
-  })
-  const exchange = service.assignEndpointMapper(
-    completeExchange({
-      type: 'GET',
-      status: 'ok',
-      request: { id: 'ent1', type: 'entry', service: 'thenews' },
-      response: {
-        data: {
-          content: {
-            data: {
-              items: [
-                { key: 'ent1', header: 'Entry 1', subheader: 'Subheader 1' },
-              ],
-            },
-          },
-        },
-      },
-      ident: { id: 'johnf' },
-    })
-  )
-
-  const ret = await service.mapResponse(exchange)
-
-  t.is(ret.response.data[0].title, 'Subheader 1')
-})
-
-test('mapResponse should use mapping defined in service definition', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
-    id: 'entries',
-    adapter: 'json',
-    endpoints,
-    mappings: {
-      entry: [
-        {
-          $iterate: true,
-          id: 'key',
-        },
-        { $apply: 'cast_entry' },
-      ],
-    },
-  })
-  const exchange = service.assignEndpointMapper(
-    completeExchange({
-      type: 'GET',
-      request: { type: 'entry' },
-      response: { data: [{ key: 'ent1' }] },
-      ident: { id: 'johnf' },
-    })
-  )
-
-  const ret = await service.mapResponse(exchange)
-
-  t.is(ret.response.data.length, 1)
-  t.is(ret.response.data[0].id, 'ent1')
-})
-
-test('mapResponse send should skip mappings referenced by unknown id', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
-    id: 'entries',
-    adapter: 'json',
-    endpoints,
-    mappings: { entry: 'unknown' },
-  })
-  const exchange = service.assignEndpointMapper(
-    completeExchange({
-      type: 'GET',
-      request: { type: 'entry' },
-      response: { data: [{ key: 'ent1' }] },
-      ident: { id: 'johnf' },
-    })
-  )
-
-  const ret = await service.mapResponse(exchange)
-
-  t.is(ret.response.data, undefined)
-})
-
 test('mapResponse should map null to undefined', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'accounts',
     endpoints: [
       {
+        mutation: { data: ['data', { $apply: 'account' }] },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -873,6 +789,7 @@ test('should authorize typed data in array from service', async (t) => {
     id: 'accounts',
     endpoints: [
       {
+        mutation: { data: ['data', { $apply: 'account' }] },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -912,6 +829,7 @@ test('should authorize typed data object from service', async (t) => {
     id: 'accounts',
     endpoints: [
       {
+        mutation: { data: ['data', { $apply: 'account' }] },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -944,6 +862,7 @@ test('should authorize typed data in array to service', async (t) => {
     id: 'accounts',
     endpoints: [
       {
+        mutation: { data: ['data', { $apply: 'account' }] },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -980,7 +899,12 @@ test('should authorize typed data in array to service', async (t) => {
 test('mapResponse should map without default values', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    endpoints: [
+      {
+        mutation: { data: ['data', { $apply: 'entry' }] },
+        options: { uri: 'http://some.api/1.0' },
+      },
+    ],
     adapter: 'json',
     mappings: { entry: 'entry' },
   })
@@ -1038,7 +962,7 @@ test('mapResponse should respond with error when no endpoint and no error', asyn
     id: 'entries',
     endpoints: [
       {
-        responseMapping: 'content.data',
+        mutation: { data: ['data.content.data', { $apply: 'entry' }] },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -1081,7 +1005,9 @@ test('mapRequest should cast and map request data', async (t) => {
     adapter: 'json',
     endpoints: [
       {
-        requestMapping: 'content.data[].createOrMutate',
+        mutation: {
+          data: ['data.content.data[].createOrMutate', { $apply: 'entry' }],
+        },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -1251,13 +1177,13 @@ test('mapRequest should authorize data array coming from service', async (t) => 
   t.deepEqual(ret.response, expectedResponse)
 })
 
-test('mapRequest should use requestMapping pipeline', async (t) => {
+test('mapRequest should use mutation pipeline', async (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     adapter: 'json',
     endpoints: [
       {
-        requestMapping: [
+        mutation: [
           'data',
           {
             data: [
@@ -1265,6 +1191,7 @@ test('mapRequest should use requestMapping pipeline', async (t) => {
               { $alt: 'value', value: {} },
             ],
           },
+          { $apply: 'entry' },
         ],
         options: { uri: 'http://soap.api/1.1' },
       },
@@ -1293,7 +1220,7 @@ test('mapRequest should respond with error when no endpoint', async (t) => {
     adapter: 'json',
     endpoints: [
       {
-        requestMapping: 'content.data[].createOrMutate',
+        mutation: ['data.content.data[].createOrMutate', { $apply: 'entry' }],
         options: { uri: 'http://some.api/1.0' },
       },
     ],

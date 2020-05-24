@@ -18,19 +18,22 @@ export interface EndpointDef {
   match?: MatchObject
   validate?: MapDefinition
   options?: EndpointOptions
-  requestMapping?: MapDefinition
-  responseMapping?: MapDefinition
+  mutation?: MapDefinition
+  requestMapping?: MapDefinition // TODO: Remove
+  responseMapping?: MapDefinition // TODO: Remove
   sendNoDefaults?: boolean
   returnNoDefaults?: boolean
-  mappings?: Dictionary<string | MapDefinition>
+  mappings?: Dictionary<string | MapDefinition> // TODO: Remove
 }
 
 export interface Endpoint {
   id?: string
   match?: MatchObject
   options: EndpointOptions
-  mapRequest: (exchange: Exchange) => Exchange
-  mapResponse: (exchange: Exchange) => Exchange
-  validate: (exchange: Exchange) => Exchange
+  mapRequest: (exchange: Exchange) => Exchange // TODO: Remove
+  mapResponse: (exchange: Exchange) => Exchange // TODO: Remove
+  mutateRequest: (exchange: Exchange) => Exchange
+  mutateResponse: (exchange: Exchange) => Exchange
+  validate: (exchange: Exchange) => Exchange // TODO: Remove
   isMatch: (exchange: Exchange) => boolean
 }

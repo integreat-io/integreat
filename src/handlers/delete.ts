@@ -16,7 +16,7 @@ const prepareData = ({ type, id, data }: ExchangeRequest) =>
 
 const setDataOnExchange = (exchange: Exchange, data?: Data | Data[]) => ({
   ...exchange,
-  request: { ...exchange.request, data },
+  request: { ...exchange.request, data, sendNoDefaults: true },
 })
 
 /**

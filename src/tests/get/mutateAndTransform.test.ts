@@ -28,19 +28,17 @@ const transformers = {
         : ''
       item.text = `${item.text} - ${sections}`
       return item
-    })
+    }),
 }
 
 // Tests
 
-test('should transform entry', async t => {
+test('should transform entry', async (t) => {
   const adapters = { json }
-  nock('http://some.api')
-    .get('/entries/ent1')
-    .reply(200, { data: entry1 })
+  nock('http://some.api').get('/entries/ent1').reply(200, { data: entry1 })
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent1' }
+    payload: { type: 'entry', id: 'ent1' },
   }
   const mapping = [
     {
@@ -51,14 +49,15 @@ test('should transform entry', async t => {
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
       author: 'authorId',
-      sections: 'sections[]'
+      sections: 'sections[]',
     },
     { $transform: 'addSectionsToText' },
-    { $apply: 'cast_entry' }
+    { $apply: 'cast_entry' },
   ]
   const defs = {
     schemas: [entrySchema],
-    services: [{ ...entriesService, mappings: { entry: mapping } }]
+    services: [entriesService],
+    mappings: [{ id: 'entries-entry', mapping }],
   }
 
   const great = Integreat.create(defs, { adapters, transformers })
@@ -73,14 +72,14 @@ test('should transform entry', async t => {
   nock.restore()
 })
 
-test('should transform array of entries', async t => {
+test('should transform array of entries', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries')
     .reply(200, { data: [entry1, entry2] })
   const action = {
     type: 'GET',
-    payload: { type: 'entry' }
+    payload: { type: 'entry' },
   }
   const mapping = [
     {
@@ -91,14 +90,15 @@ test('should transform array of entries', async t => {
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
       author: 'authorId',
-      sections: 'sections[]'
+      sections: 'sections[]',
     },
     { $transform: 'addSectionsToText' },
-    { $apply: 'cast_entry' }
+    { $apply: 'cast_entry' },
   ]
   const defs = {
     schemas: [entrySchema],
-    services: [{ ...entriesService, mappings: { entry: mapping } }]
+    services: [entriesService],
+    mappings: [{ id: 'entries-entry', mapping }],
   }
 
   const great = Integreat.create(defs, { adapters, transformers })

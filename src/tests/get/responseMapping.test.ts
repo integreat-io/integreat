@@ -18,23 +18,21 @@ const json = jsonAdapter()
 
 const transformers = { jsonTransform }
 
-const responseMapping = [
-  'data',
-  {
-    status: 'responseValue',
-    data: 'responseContent.articles[]',
-    error: 'responseMessage',
-  },
-]
+const mutation = {
+  $direction: 'fwd',
+  status: 'data.responseValue',
+  data: ['data.responseContent.articles', { $apply: 'entries-entry' }],
+  error: 'data.responseMessage',
+}
 
-const defsWithResponseMapping = (responseMapping: MapDefinition) => ({
+const defsWithMutation = (mutation: MapDefinition) => ({
   schemas: [entrySchema],
   services: [
     {
       ...entriesService,
       endpoints: [
         {
-          responseMapping,
+          mutation,
           options: { uri: '/entries/{id}' },
         },
       ],
@@ -57,12 +55,12 @@ test('should map with response mapping', async (t) => {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' },
   }
-  const defs = defsWithResponseMapping(responseMapping)
+  const defs = defsWithMutation(mutation)
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   const data = ret.data as TypedData[]
   t.true(Array.isArray(data))
   t.is(data.length, 1)
@@ -86,7 +84,7 @@ test('should use status code mapped from data', async (t) => {
     type: 'GET',
     payload: { type: 'entry', id: 'ent2' },
   }
-  const defs = defsWithResponseMapping(responseMapping)
+  const defs = defsWithMutation(mutation)
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -107,7 +105,7 @@ test('should not override adapter error with data status', async (t) => {
     type: 'GET',
     payload: { type: 'entry', id: 'ent2' },
   }
-  const defs = defsWithResponseMapping(responseMapping)
+  const defs = defsWithMutation(mutation)
 
   const great = Integreat.create(defs, { adapters })
   const ret = await great.dispatch(action)
@@ -130,14 +128,16 @@ test('should map with sub mapping', async (t) => {
     type: 'GET',
     payload: { type: 'entry', id: 'ent3' },
   }
-  const responseMapping = {
+  const mutation = {
+    $direction: 'fwd',
     'data[]': [
       'data.responseContent',
       { $transform: 'jsonTransform' },
       'articles[]',
+      { $apply: 'entries-entry' },
     ],
   }
-  const defs = defsWithResponseMapping(responseMapping)
+  const defs = defsWithMutation(mutation)
 
   const great = Integreat.create(defs, { adapters, transformers })
   const ret = await great.dispatch(action)

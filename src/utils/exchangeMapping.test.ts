@@ -8,18 +8,64 @@ import {
   mappingObjectFromExchange,
   exchangeFromMappingObject,
   responseFromExchange,
+  completeExchange,
 } from './exchangeMapping'
 
 // Setup
 
 const exchangeDefaults = {
+  id: undefined,
   status: null,
   request: {},
   response: {},
   meta: {},
+  auth: undefined,
+  endpoint: undefined,
+  endpointId: undefined,
+  incoming: false,
+  authorized: false,
 }
 
 // Tests
+
+test('should complete exchange', (t) => {
+  const exchange = {
+    type: 'SET',
+  }
+  const expected = {
+    type: 'SET',
+    id: undefined,
+    status: null,
+    request: {},
+    response: {},
+    endpoint: undefined,
+    endpointId: undefined,
+    ident: undefined,
+    meta: {},
+    auth: undefined,
+    incoming: false,
+    authorized: false,
+  }
+
+  const ret = completeExchange(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not include error when status is ok', (t) => {
+  const exchange = {
+    type: 'SET',
+    status: 'ok',
+    response: {
+      error: 'Not ok – or is it?',
+    },
+  }
+
+  const ret = completeExchange(exchange)
+
+  t.is(ret.status, 'ok')
+  t.deepEqual(ret.response, {})
+})
 
 test('should create exchange from action', (t) => {
   const action = {

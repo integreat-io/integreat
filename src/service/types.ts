@@ -1,5 +1,9 @@
-import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
-import { MapTransform } from 'map-transform'
+import {
+  MapTransform,
+  MapDefinition,
+  CustomFunction,
+  Dictionaries,
+} from 'map-transform'
 import { Request, Response, Exchange, Dictionary, Data } from '../types'
 import { EndpointDef, EndpointOptions } from './endpoints/types'
 
@@ -34,6 +38,7 @@ export interface MapOptions {
 
 export type MapDefinitions = Dictionary<string | MapDefinition>
 
+// TODO: Rethink
 export interface MappingDef {
   id: string
   type?: string
@@ -53,9 +58,10 @@ export interface IdentConfig {
 export interface SendOptions {
   request: Request
   response?: Response
-  mappings: Mappings
-  responseMapper?: MapTransform
-  requestMapper?: MapTransform
+  mappings: Mappings // TODO: Remove
+  responseMapper?: MapTransform // TODO: Remove
+  requestMapper?: MapTransform // TODO: Remove
+  mutator: MapTransform
 }
 
 export interface ExchangeMapper {
@@ -93,10 +99,12 @@ export interface ServiceDef {
   auth?: boolean | AuthDef | string | null
   meta?: string
   options?: { [key: string]: unknown }
+  mutation?: MapDefinition
   endpoints: EndpointDef[]
-  mappings: MapDefinitions
+  mappings: MapDefinitions // TODO: Remove
 }
 
+// TODO: Rethink
 export interface Service {
   id: string
   meta?: string

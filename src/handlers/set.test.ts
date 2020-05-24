@@ -54,22 +54,10 @@ const pipelines = {
 
 const mapOptions = { pipelines, functions }
 
-interface Options {
-  method?: string
-  path?: string
-  responseMapping?: string | null
-  id?: string
-}
+const typeMappingFromServiceId = (serviceId: string) =>
+  serviceId === 'accounts' ? 'account' : 'entry'
 
-const setupService = (
-  uri: string,
-  {
-    method = 'POST',
-    path = 'docs[]',
-    responseMapping = null,
-    id = 'entries',
-  }: Options = {}
-) => {
+const setupService = (uri: string, id = 'entries', method = 'POST') => {
   return createService({
     schemas,
     mapOptions,
@@ -78,11 +66,23 @@ const setupService = (
     adapter: json,
     endpoints: [
       {
-        requestMapping: path,
-        responseMapping,
+        mutation: [
+          {
+            $direction: 'rev',
+            data: ['data.docs[]', { $apply: typeMappingFromServiceId(id) }],
+          },
+          {
+            $direction: 'fwd',
+            data: ['data', { $apply: typeMappingFromServiceId(id) }],
+          },
+        ],
         options: { uri, method },
       },
-      { id: 'other', options: { uri: 'http://api1.test/other/_bulk_docs' } },
+      {
+        id: 'other',
+        options: { uri: 'http://api1.test/other/_bulk_docs' },
+        mutation: { data: ['data', { $apply: 'entry' }] },
+      },
     ],
     mappings: id === 'accounts' ? { account: 'account' } : { entry: 'entry' },
   })
@@ -162,10 +162,11 @@ test('should send without default values', async (t) => {
       sendNoDefaults: true,
     },
   })
-  const src = setupService('http://api5.test/database/{type}:{id}', {
-    method: 'PUT',
-    path: undefined,
-  })
+  const src = setupService(
+    'http://api5.test/database/{type}:{id}',
+    undefined,
+    'PUT'
+  )
   const getService = (type?: string | string[], _service?: string) =>
     type === 'entry' ? src : null
 
@@ -326,9 +327,7 @@ test('should authenticate items', async (t) => {
     },
     ident: { id: 'johnf' },
   })
-  const src = setupService('http://api6.test/database/_bulk_docs', {
-    id: 'accounts',
-  })
+  const src = setupService('http://api6.test/database/_bulk_docs', 'accounts')
   const getService = (_type?: string | string[], service?: string) =>
     service === 'accounts' ? src : undefined
 
@@ -341,9 +340,7 @@ test('should authenticate items', async (t) => {
 // TODO: Decide how to treat return from SET
 test.failing('should set authorized data on response', async (t) => {
   nock('http://api8.test').post('/database/_bulk_docs').reply(201, '{}')
-  const src = setupService('http://api8.test/database/_bulk_docs', {
-    id: 'accounts',
-  })
+  const src = setupService('http://api8.test/database/_bulk_docs', 'accounts')
   const getService = (_type?: string | string[], service?: string) =>
     service === 'accounts' ? src : undefined
   const exchange = completeExchange({
@@ -413,10 +410,7 @@ test.failing('should merge request data with response data', async (t) => {
       posts: [{ id: 'ent1', $ref: 'entry' }],
     },
   ]
-  const src = setupService('http://api9.test/database/_bulk_docs', {
-    id: 'accounts',
-    responseMapping: '.',
-  })
+  const src = setupService('http://api9.test/database/_bulk_docs', 'accounts')
   const getService = () => src
 
   const ret = await set(exchange, dispatch, getService)
@@ -426,7 +420,7 @@ test.failing('should merge request data with response data', async (t) => {
 })
 
 // TODO: Decide on correct approach to mapping null to array
-test.failing('should allow null as request data', async (t) => {
+test('should allow null as request data', async (t) => {
   const scope = nock('http://api1.test')
     .post('/database/_bulk_docs', '{"docs":[]}')
     .reply(201, [{ ok: true }, { ok: true }])

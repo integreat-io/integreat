@@ -55,10 +55,11 @@ test('should set data with request mapping', async (t) => {
       stringify: () => (value: Data) => JSON.stringify(value),
     },
   }
-  const requestMapping = [
+  const mutation = [
     'data',
     {
-      data: 'content.items[]',
+      $direction: 'rev',
+      data: ['content.items[]', { $apply: 'entries-entry' }],
       none0: ['content.footnote', { $transform: 'fixed', value: '' }],
       'params.type': [
         'content.meta',
@@ -74,7 +75,7 @@ test('should set data with request mapping', async (t) => {
         ...entriesService,
         endpoints: [
           {
-            requestMapping,
+            mutation,
             options: { uri: '/entries/{id}' },
           },
         ],

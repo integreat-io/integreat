@@ -111,8 +111,8 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
 
       // Authorize and map in right order
       return exchange.incoming
-        ? authorizeDataToService(endpoint.mapRequest(exchange))
-        : endpoint.mapRequest(authorizeDataToService(exchange))
+        ? authorizeDataToService(endpoint.mutateRequest(exchange))
+        : endpoint.mutateRequest(authorizeDataToService(exchange))
     },
 
     /**
@@ -131,8 +131,8 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
 
       // Authorize and map in right order
       return exchange.incoming
-        ? endpoint.mapResponse(authorizeDataFromService(exchange))
-        : authorizeDataFromService(endpoint.mapResponse(exchange))
+        ? endpoint.mutateResponse(authorizeDataFromService(exchange))
+        : authorizeDataFromService(endpoint.mutateResponse(exchange))
     },
 
     /**

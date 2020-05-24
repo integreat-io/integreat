@@ -64,7 +64,7 @@ test('should call action handler with exchange, dispatch, getService, and identC
   const identConfig = { type: 'account' }
   const ident = { id: 'ident1', roles: [], tokens: [] }
   const action = { type: 'GET', payload: {}, meta: { ident } }
-  const expected = {
+  const expected = completeExchange({
     type: 'GET',
     status: null,
     request: { params: {} },
@@ -73,7 +73,7 @@ test('should call action handler with exchange, dispatch, getService, and identC
     ident,
     meta: {},
     incoming: false,
-  }
+  })
 
   await dispatch({ handlers, services, schemas, identConfig })(action)
 

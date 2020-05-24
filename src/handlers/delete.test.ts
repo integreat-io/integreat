@@ -56,10 +56,7 @@ test.after.always(() => {
 test('should delete items from service', async (t) => {
   const scope = nock('http://api1.test')
     .post('/database/bulk_delete', {
-      docs: [
-        { id: 'ent1', $type: 'entry' },
-        { id: 'ent2', $type: 'entry' },
-      ],
+      docs: [{ id: 'ent1' }, { id: 'ent2' }],
     })
     .reply(200, [
       { ok: true, id: 'ent1', rev: '2-000001' },
@@ -71,6 +68,10 @@ test('should delete items from service', async (t) => {
     endpoints: [
       {
         match: { action: 'DELETE' },
+        mutation: {
+          $direction: 'rev',
+          data: ['data.docs[]', { $apply: 'entry' }],
+        },
         requestMapping: 'docs[]',
         options: {
           uri: 'http://api1.test/database/bulk_delete',
@@ -112,6 +113,7 @@ test('should delete one item from service', async (t) => {
           action: 'DELETE',
           scope: 'member',
         },
+        mutation: { data: ['data', { $apply: 'entry' }] },
         options: {
           uri: 'http://api1.test/database/{id}',
           method: 'DELETE',
@@ -146,6 +148,10 @@ test('should infer service id from type', async (t) => {
     endpoints: [
       {
         match: { action: 'DELETE' },
+        mutation: {
+          $direction: 'rev',
+          data: ['data.docs[', { $apply: 'entry' }],
+        },
         requestMapping: 'docs[]',
         options: {
           uri: 'http://api2.test/database/bulk_delete',
@@ -188,6 +194,7 @@ test('should delete with other endpoint and uri params', async (t) => {
     endpoints: [
       {
         id: 'other',
+        mutation: { data: ['data', { $apply: 'entry' }] },
         options: {
           uri: 'http://api3.test/{typefolder}/bulk_delete',
           method: 'POST',
@@ -227,6 +234,10 @@ test('should return error from response', async (t) => {
     endpoints: [
       {
         id: 'delete',
+        mutation: {
+          $direction: 'rev',
+          data: ['data.docs[]', { $apply: 'entry' }],
+        },
         requestMapping: 'docs[]',
         options: {
           uri: 'http://api5.test/database/bulk_delete',
@@ -261,6 +272,7 @@ test('should return noaction when nothing to delete', async (t) => {
     endpoints: [
       {
         id: 'delete',
+        mutation: { data: ['data', { $apply: 'entry' }] },
         options: { uri: 'http://api1.test/database/bulk_delete' },
       },
     ],
@@ -284,6 +296,7 @@ test('should skip null values in data array', async (t) => {
     endpoints: [
       {
         id: 'delete',
+        mutation: { data: ['data', { $apply: 'entry' }] },
         options: { uri: 'http://api1.test/database/bulk_delete' },
       },
     ],
@@ -300,51 +313,51 @@ test('should skip null values in data array', async (t) => {
   t.is(ret.status, 'noaction')
 })
 
-// Waiting for mapping of items on an exchange wihtout specified type
-test.failing(
-  'should only delete items the ident is authorized to',
-  async (t) => {
-    const scope = nock('http://api4.test')
-      .post('/database/bulk_delete', { docs: [{ id: 'johnf' }] })
-      .reply(200, [
-        { ok: true, id: 'ent1', rev: '2-000001' },
-        { ok: true, id: 'ent2', rev: '2-000001' },
-      ])
-    const src = setupService({
-      id: 'accounts',
-      adapter: json,
-      endpoints: [
-        {
-          match: { action: 'DELETE' },
-          requestMapping: 'docs[]',
-          options: {
-            uri: 'http://api4.test/database/bulk_delete',
-            method: 'POST',
-          },
+test('should only delete items the ident is authorized to', async (t) => {
+  const scope = nock('http://api4.test')
+    .post('/database/bulk_delete', { docs: [{ id: 'johnf' }] })
+    .reply(200, [
+      { ok: true, id: 'ent1', rev: '2-000001' },
+      { ok: true, id: 'ent2', rev: '2-000001' },
+    ])
+  const src = setupService({
+    id: 'accounts',
+    adapter: json,
+    endpoints: [
+      {
+        match: { action: 'DELETE' },
+        mutation: {
+          $direction: 'rev',
+          data: ['data.docs[', { $apply: 'account' }],
         },
-      ],
-      mappings: { account: 'account' },
-    })
-    const getService = (_type?: string | string[], service?: string) =>
-      service === 'accounts' ? src : undefined
-    const exchange = completeExchange({
-      type: 'DELETE',
-      request: {
-        data: [
-          { id: 'johnf', $type: 'account' },
-          { id: 'betty', $type: 'account' },
-        ],
-        service: 'accounts',
+        requestMapping: 'docs[]',
+        options: {
+          uri: 'http://api4.test/database/bulk_delete',
+          method: 'POST',
+        },
       },
-      ident: { id: 'johnf' },
-    })
+    ],
+    mappings: { account: 'account' },
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'accounts' ? src : undefined
+  const exchange = completeExchange({
+    type: 'DELETE',
+    request: {
+      data: [
+        { id: 'johnf', $type: 'account' },
+        { id: 'betty', $type: 'account' },
+      ],
+      service: 'accounts',
+    },
+    ident: { id: 'johnf' },
+  })
 
-    const ret = await deleteFn(exchange, dispatch, getService)
+  const ret = await deleteFn(exchange, dispatch, getService)
 
-    t.is(ret.status, 'ok', ret.response.error)
-    t.true(scope.isDone())
-  }
-)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.true(scope.isDone())
+})
 
 test('should return error when no service exists for a type', async (t) => {
   const getService = () => undefined

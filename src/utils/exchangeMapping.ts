@@ -8,8 +8,59 @@ import {
   Response,
   Params,
   Ident,
+  ExchangeResponse,
 } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
+
+export interface MappingParams extends Params {
+  id?: string | string[]
+  type?: string | string[]
+  service?: string
+}
+
+export interface MappingObject {
+  action: string
+  status: null | string
+  params: MappingParams
+  data: Data
+  error?: string
+  paging?: object
+  options?: EndpointOptions
+  ident?: Ident
+}
+
+const isOkStatus = (status: string | null) =>
+  status !== null && ['ok', 'queued'].includes(status)
+
+const removeError = <T>({ error, ...response }: ExchangeResponse<T>) => response
+
+export const completeExchange = <ReqData = Data, RespData = Data>({
+  type,
+  id,
+  status = null,
+  request = {},
+  response = {},
+  endpointId,
+  endpoint,
+  ident,
+  meta = {},
+  auth,
+  incoming = false,
+  authorized = false,
+}: Partial<Exchange<ReqData, RespData>>): Exchange<ReqData, RespData> => ({
+  type: type as string,
+  id,
+  status,
+  request,
+  response: isOkStatus(status) ? removeError(response) : response,
+  endpointId,
+  endpoint,
+  ident,
+  meta,
+  auth,
+  incoming,
+  authorized,
+})
 
 export function exchangeFromAction(action: Action): Exchange {
   const {
@@ -25,15 +76,14 @@ export function exchangeFromAction(action: Action): Exchange {
       data,
       returnNoDefaults,
       ...rest
-    },
+    } = {},
     meta: actionMeta,
   } = action
   const { ident, ...meta } = actionMeta || {}
   const incoming = actionType === 'REQUEST'
 
-  return {
+  return completeExchange({
     type: actionType,
-    status: null,
     request: {
       ...(type ? { type } : {}),
       ...(id ? { id } : {}),
@@ -50,7 +100,7 @@ export function exchangeFromAction(action: Action): Exchange {
     endpointId: endpoint,
     meta: meta as Dictionary<Data>,
     incoming,
-  }
+  })
 }
 
 export function requestFromExchange(exchange: Exchange): Request {
@@ -77,11 +127,11 @@ export function responseToExchange(
   response: Response
 ): Exchange {
   const { status, ...responseObject } = response
-  return {
+  return completeExchange({
     ...exchange,
     status,
     response: { ...exchange.response, ...responseObject },
-  }
+  })
 }
 
 export function responseFromExchange({
@@ -94,23 +144,6 @@ export function responseFromExchange({
     status,
     access: { ident },
   }
-}
-
-export interface MappingParams extends Params {
-  id?: string | string[]
-  type?: string | string[]
-  service?: string
-}
-
-export interface MappingObject {
-  action: string
-  status: null | string
-  params: MappingParams
-  data: Data
-  error?: string
-  paging?: object
-  options?: EndpointOptions
-  ident?: Ident
 }
 
 export function mappingObjectFromExchange(
@@ -139,20 +172,23 @@ export function mappingObjectFromExchange(
 
 export function exchangeFromMappingObject(
   exchange: Exchange,
-  mappingObject: MappingObject,
+  mappingObject?: MappingObject,
   isRequest = false
 ): Exchange {
+  if (!mappingObject) {
+    return exchange
+  }
   const {
     status,
     data,
     paging,
     error,
-    params: { id, type, service, ...params },
+    params: { id, type, service, ...params } = {},
   } = mappingObject
 
-  return {
+  return completeExchange({
     ...exchange,
-    status,
+    ...(status && { status }),
     request: {
       ...exchange.request,
       ...(isRequest && { data }),
@@ -167,29 +203,5 @@ export function exchangeFromMappingObject(
       ...(paging ? { paging } : {}),
       ...(error ? { error } : {}),
     },
-  }
+  })
 }
-
-export const completeExchange = <ReqData = Data, RespData = Data>({
-  type,
-  status = null,
-  request = {},
-  response = {},
-  endpointId,
-  ident,
-  meta = {},
-  auth,
-  incoming = false,
-  authorized = false,
-}: Partial<Exchange<ReqData, RespData>>) => ({
-  type: type as string,
-  status,
-  request,
-  response,
-  endpointId,
-  ident,
-  meta,
-  auth,
-  incoming,
-  authorized,
-})

@@ -65,10 +65,17 @@ const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
     id,
     adapter: json,
     endpoints: [
-      { match, options: { uri } },
+      {
+        match,
+        options: { uri },
+        mutation: {
+          data: ['data', { $apply: id === 'accounts' ? 'account' : 'entry' }],
+        },
+      },
       {
         id: 'other',
         options: { uri: 'http://api5.test/other' },
+        mutation: { data: ['data', { $apply: 'entry' }] },
       },
     ],
     mappings: id === 'accounts' ? { account: 'account' } : { entry: 'entry' },

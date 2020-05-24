@@ -41,6 +41,8 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
   mappings: [],
 })
 
+const mutation = { data: ['data', { $apply: 'cast_meta' }] }
+
 const ident = { id: 'johnf' }
 const lastSyncedAt = new Date()
 const dispatch = async () => completeExchange({ status: 'ok' })
@@ -59,7 +61,9 @@ test('should set metadata on service', async (t) => {
       status: 'busy',
     })
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
-  const endpoints = [{ options: { uri: 'http://api1.test/database/{id}' } }]
+  const endpoints = [
+    { options: { uri: 'http://api1.test/database/{id}' }, mutation },
+  ]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
   const getService = (type?: string | string[], service?: string) =>
     service === 'store' || type === 'meta' ? great.services.store : undefined
@@ -82,7 +86,9 @@ test('should not set metadata on service when no meta type', async (t) => {
   const scope = nock('http://api2.test')
     .put('/database/meta%3Astore')
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
-  const endpoints = [{ options: { uri: 'http://api2.test/database/{id}' } }]
+  const endpoints = [
+    { options: { uri: 'http://api2.test/database/{id}' }, mutation },
+  ]
   const great = Integreat.create(defs(endpoints, null), { adapters: { json } })
   const getService = (type?: string | string[], service?: string) =>
     service === 'store' || type === 'meta' ? great.services.store : undefined
@@ -109,7 +115,11 @@ test('should set metadata on other service', async (t) => {
     })
     .reply(200, { okay: true, id: 'meta:entries', rev: '000001' })
   const endpoints = [
-    { id: 'setMeta', options: { uri: 'http://api3.test/database/{id}' } },
+    {
+      id: 'setMeta',
+      options: { uri: 'http://api3.test/database/{id}' },
+      mutation,
+    },
   ]
   const great = Integreat.create(defs(endpoints, null), { adapters: { json } })
   const getService = (type?: string | string[], service?: string) =>
@@ -134,7 +144,8 @@ test('should set metadata on other service', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should return status noaction when meta is set to an unknown schema', async (t) => {
+// Obsolete?
+test.skip('should return status noaction when meta is set to an unknown schema', async (t) => {
   const endpoints = [] as {}[]
   const great = Integreat.create(defs(endpoints, 'unknown'), {
     adapters: { json },
@@ -159,7 +170,9 @@ test('should refuse setting metadata on service when not authorized', async (t) 
   const scope = nock('http://api4.test')
     .put('/database/meta%3Astore')
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
-  const endpoints = [{ options: { uri: 'http://api4.test/database/{id}' } }]
+  const endpoints = [
+    { options: { uri: 'http://api4.test/database/{id}' }, mutation },
+  ]
   const great = Integreat.create(defs(endpoints), { adapters: { json } })
   const getService = (type?: string | string[], service?: string) =>
     service === 'store' || type === 'meta' ? great.services.store : undefined

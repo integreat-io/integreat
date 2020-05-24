@@ -49,6 +49,17 @@ const mapOptions = {
   },
 }
 
+const mutation = [
+  {
+    $direction: 'fwd',
+    'params.id': 'data.items[0].key',
+  },
+  {
+    $direction: 'rev',
+    data: ['data', { $apply: 'entry' }],
+  },
+]
+
 // Tests
 
 test('should dispatch action from options and map response', async (t) => {
@@ -59,6 +70,7 @@ test('should dispatch action from options and map response', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
+        mutation,
         requestMapping: { 'params.id': 'data.items[0].key' },
         options: {
           actionType: 'GET',
@@ -105,6 +117,7 @@ test('should return exchange mapped to service', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
+        mutation,
         requestMapping: { 'params.id': 'data.items[0].key' },
         options: {
           actionType: 'GET',
@@ -146,7 +159,7 @@ test('should return exchange mapped to service', async (t) => {
   t.is(items[0].header, 'Entry 1')
 })
 
-// Waiting for solution to unmappedOnly
+// Waiting for solution to access to raw data
 test.failing(
   'should dispatch action with mapped data by type from request action',
   async (t) => {
@@ -158,6 +171,7 @@ test.failing(
       endpoints: [
         {
           match: { action: 'REQUEST' },
+          mutation: { data: ['data.items', { $apply: 'entry' }] }, // ?
           options: { actionType: 'SET', actionPayload: { type: 'hook' } },
         },
       ],
@@ -195,7 +209,7 @@ test.failing(
   }
 )
 
-// Waiting for solution to unmappedOnly
+// Waiting for solution to access to raw data
 test.failing('should respond with mapped data', async (t) => {
   const data = [
     {
@@ -218,6 +232,13 @@ test.failing('should respond with mapped data', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
+        mutation: [
+          { $direction: 'fwd', 'params.id': 'data.key' },
+          {
+            $direction: 'rev',
+            'data.items': ['content.entries', { $apply: 'entry' }],
+          },
+        ],
         requestMapping: { 'params.id': 'data.key' },
         responseMapping: ['data', { data: { items: 'content.entries' } }],
         options: { actionType: 'GET', actionPayload: { type: 'entry' } },
@@ -238,7 +259,7 @@ test.failing('should respond with mapped data', async (t) => {
 
   const ret = await request(exchange, dispatch, getService)
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.response.error)
   t.deepEqual(ret.response.data, expectedResponse)
 })
 
@@ -251,6 +272,7 @@ test('should use type from request action if not set on endpoint', async (t) => 
     endpoints: [
       {
         match: { action: 'REQUEST' },
+        mutation,
         requestMapping: { 'params.id': 'data.items[0].key' },
         options: { actionType: 'GET' },
       },
@@ -269,7 +291,7 @@ test('should use type from request action if not set on endpoint', async (t) => 
     request: {
       id: 'ent1',
       type: 'entry',
-      data: [],
+      data: undefined,
     },
     ident: { id: 'johnf' },
   })
@@ -294,8 +316,9 @@ test('should respond with noaction when no action type is set on endpoint', asyn
     endpoints: [
       {
         match: { action: 'REQUEST' },
+        mutation,
         requestMapping: { 'params.id': 'data.key' },
-        responseMapping: { 'data.items': 'content.entries' },
+        // responseMapping: { 'data.items': 'content.entries' },
       },
     ],
   })
@@ -335,7 +358,7 @@ test('should respond with noaction when no endpoint matches', async (t) => {
   )
 })
 
-// Waiting for solution to unmappedOnly
+// Waiting for solution to access to raw data
 test.failing('should map and pass on error from dispatch', async (t) => {
   const dispatch = async () =>
     completeExchange({
@@ -350,6 +373,14 @@ test.failing('should map and pass on error from dispatch', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
+        mutation: [
+          { $direction: 'fwd', data: ['data', { $apply: 'entry' }] },
+          {
+            $direction: 'rev',
+            'data.items': ['data.content', { $apply: 'entry' }],
+            error: 'data.a:errorMessage',
+          },
+        ],
         responseMapping: [
           'data',
           {
@@ -375,7 +406,7 @@ test.failing('should map and pass on error from dispatch', async (t) => {
 
   const ret = await request(exchange, dispatch, getService)
 
-  t.is(ret.status, 'notfound')
+  t.is(ret.status, 'notfound', ret.response.error)
   t.deepEqual(ret.response, expectedResponse)
 })
 
@@ -403,6 +434,7 @@ test('should get service by service id', async (t) => {
     endpoints: [
       {
         match: { action: 'REQUEST' },
+        mutation,
         options: {
           actionType: 'GET',
           actionPayload: { type: 'entry' },
