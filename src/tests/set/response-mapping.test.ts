@@ -43,7 +43,10 @@ test.failing('should map response and merge with request data', async (t) => {
         ...entriesService,
         endpoints: [
           {
-            responseMapping: 'content.items',
+            mutation: {
+              $direction: 'fwd',
+              data: ['data.content.items', { $apply: 'entries-entry' }],
+            },
             options: { uri: '/entries/{id}' },
           },
         ],

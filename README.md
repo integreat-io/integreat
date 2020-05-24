@@ -291,8 +291,7 @@ that this is an authenticated service.
     filters: []
   },
   validate: [],
-  requestMapping: <path string | mapping object>,
-  responseMapping: <path string | mapping object>,
+  mutation: <mutation pipeline>,
   sendNoDefaults: <boolean>,
   returnNoDefaults: <boolean>,
   mappings: {

@@ -105,7 +105,6 @@ const exchange = completeExchange({
   ident: { id: 'johnf' },
 })
 
-const serviceMappings = {}
 const serviceOptions = {}
 
 // Tests -- props
@@ -115,7 +114,7 @@ test('should set id on endpoint', (t) => {
     id: 'endpoint1',
   }
 
-  const ret = createEndpoint(serviceMappings, serviceOptions, {})(endpointDef)
+  const ret = createEndpoint(serviceOptions, {})(endpointDef)
 
   t.is(ret.id, 'endpoint1')
 })
@@ -126,7 +125,7 @@ test('should set match on endpoint', (t) => {
     match: { scope: 'member' },
   }
 
-  const ret = createEndpoint(serviceMappings, serviceOptions, {})(endpointDef)
+  const ret = createEndpoint(serviceOptions, {})(endpointDef)
 
   t.deepEqual(ret.match, { scope: 'member' })
 })
@@ -144,7 +143,7 @@ test('should set options from service and endpoint', (t) => {
     uri: '/accounts',
   }
 
-  const ret = createEndpoint(serviceMappings, serviceOptions, {})(endpointDef)
+  const ret = createEndpoint(serviceOptions, {})(endpointDef)
 
   t.deepEqual(ret.options, expected)
 })
@@ -167,12 +166,7 @@ test('should set run options through prepareOptions', (t) => {
     prepared: true,
   }
 
-  const ret = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    {},
-    prepareOptions
-  )(endpointDef)
+  const ret = createEndpoint(serviceOptions, {}, prepareOptions)(endpointDef)
 
   t.deepEqual(ret.options, expected)
 })
@@ -191,11 +185,7 @@ test('should return true when endpoint is a match to an exchange', (t) => {
       data: { draft: false },
     },
   })
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
   t.true(endpoint.isMatch(exchange))
 })
@@ -211,11 +201,7 @@ test('should return false when no match to exchange', (t) => {
       type: 'entry',
     },
   })
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
   t.false(endpoint.isMatch(exchange))
 })
@@ -246,11 +232,7 @@ test('should map response from service with endpoint mutation', (t) => {
     },
   }
   const clock = sinon.useFakeTimers(theTime)
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
   const ret = endpoint.mutateResponse(exchange)
 
@@ -286,11 +268,7 @@ test('should map exchange props from response', (t) => {
   }
   const expectedPaging = { next: { offset: 'page2', type: 'entry' } }
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateResponse(exchangeWithProps)
 
   t.is(ret.status, 'badrequest')
@@ -320,11 +298,7 @@ test('should keep exchange props not mapped from response', (t) => {
     },
   }
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateResponse(exchangeWithProps)
 
   t.is(ret.status, 'error')
@@ -351,11 +325,7 @@ test('should not keep include error from response when not an error', (t) => {
     },
   }
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateResponse(exchangeWithProps)
 
   t.is(ret.status, 'queued')
@@ -374,11 +344,7 @@ test('should map to undefined from response when unknown path', (t) => {
     response: { data: undefined },
   }
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateResponse(exchange)
 
   t.deepEqual(ret, expected)
@@ -396,11 +362,7 @@ test('should map to empty array from service when unknown path and expecting arr
     response: { data: [] },
   }
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateResponse(exchange)
 
   t.deepEqual(ret, expected)
@@ -421,11 +383,7 @@ test('should map from service without defaults', (t) => {
     },
   }
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateResponse(exchangeWithoutDefaults)
 
   t.is(ret.response.data[0].published, undefined)
@@ -438,11 +396,7 @@ test('should not map from service when no mutation pipeline', (t) => {
   }
   const expected = exchange
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateResponse(exchange)
 
   t.deepEqual(ret, expected)
@@ -483,11 +437,7 @@ test('should map response to service (incoming)', (t) => {
   const expectedData = {
     content: { items: [{ key: '404', header: 'Not found', activated: true }] },
   }
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
   const ret = endpoint.mutateResponse(incomingExchange)
 
@@ -506,11 +456,7 @@ test('should not map response from service when direction is rev', (t) => {
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = exchange
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
   const ret = endpoint.mutateResponse(exchange)
 
@@ -543,11 +489,7 @@ test('should map request with endpoint mutation', (t) => {
     },
   }
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateRequest(exchange)
 
   t.deepEqual(ret, expected)
@@ -571,11 +513,7 @@ test('should map request with root array path', (t) => {
     },
   }
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateRequest(exchange)
 
   t.deepEqual(ret, expected)
@@ -597,11 +535,7 @@ test('should map to service with no defaults', (t) => {
     },
   }
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateRequest(exchangeWithoutDefaults)
 
   t.is(ret.request.data.content.data.items[0].activated, undefined)
@@ -615,11 +549,7 @@ test('should not map to service when no mutation pipeline', (t) => {
   }
   const expected = exchange
 
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateRequest(exchange)
 
   t.deepEqual(ret, expected)
@@ -640,11 +570,7 @@ test('should not map request with mutation when direction is set to fwd', (t) =>
       data: undefined,
     },
   }
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
   const ret = endpoint.mutateRequest(exchangeWithoutRequestData)
 
@@ -669,11 +595,7 @@ test('should map request from service (incoming)', (t) => {
     },
     incoming: true,
   }
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
   const ret = endpoint.mutateRequest(incomingExchange)
 
@@ -707,11 +629,7 @@ test.skip('should map request from service with types', (t) => {
     },
     incoming: true,
   }
-  const endpoint = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
   const ret = endpoint.mutateRequest(incomingExchange)
 
@@ -740,11 +658,7 @@ test('should run validation pipeline until error', (t) => {
     status: 'badrequest',
   }
 
-  const { validate } = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const { validate } = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = validate(exchange)
 
   t.deepEqual(ret, expected)
@@ -769,11 +683,7 @@ test('should run all validations when no error', (t) => {
     meta: { ok: true }, // Comes from `alwaysOk`
   }
 
-  const { validate } = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const { validate } = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = validate(exchange)
 
   t.deepEqual(ret, expected)
@@ -791,11 +701,7 @@ test('should support both functions and references in validation pipeline', (t) 
     },
   })
 
-  const { validate } = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const { validate } = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = validate(exchange)
 
   t.deepEqual(ret.status, 'badrequest')
@@ -813,11 +719,7 @@ test('should skip unknown references in validation pipeline', (t) => {
     },
   })
 
-  const { validate } = createEndpoint(
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
+  const { validate } = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = validate(exchange)
 
   t.deepEqual(ret.status, 'badrequest')

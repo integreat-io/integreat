@@ -1,57 +1,22 @@
 import {
   mapTransform,
-  set,
-  fwd,
-  rev,
   ifelse,
   validate,
   MapDefinition,
-  MapObject,
   MapTransform,
 } from 'map-transform'
-import { Dictionary, Exchange, Data } from '../../types'
+import { Exchange, Data } from '../../types'
 import { MapOptions } from '../types'
 import { EndpointDef, Endpoint, EndpointOptions } from './types'
-import mapRequest from './mapRequest'
-import mapResponse from './mapResponse'
 import isMatch from './match'
 import {
   mappingObjectFromExchange,
   exchangeFromMappingObject,
 } from '../../utils/exchangeMapping'
 
-export type Mappings = Dictionary<MapTransform>
-
 export interface PrepareOptions {
   (options: EndpointOptions): EndpointOptions
 }
-
-const pathOrMapping = (mapping?: MapDefinition) =>
-  typeof mapping === 'string' ? [`data.${mapping}`, set('data')] : mapping
-
-export function createMapper(mapping?: MapDefinition, mapOptions?: MapOptions) {
-  const preparedMapping = pathOrMapping(mapping)
-  return preparedMapping ? mapTransform(preparedMapping, mapOptions) : null
-}
-
-const mappingFromDef = (def: MapDefinition | undefined) =>
-  [
-    fwd('data'),
-    typeof def === 'string' ? { $apply: def } : def,
-    rev(set('data')),
-  ] as MapDefinition
-
-export const prepareMappings = (
-  mappingsDef: MapObject,
-  mapOptions?: MapOptions
-) =>
-  Object.entries(mappingsDef).reduce(
-    (mappings, [type, def]) => ({
-      ...mappings,
-      [type]: mapTransform(mappingFromDef(def as MapDefinition), mapOptions),
-    }),
-    {} as Mappings
-  )
 
 const validateNoStatus = validate('status', { const: null })
 
@@ -111,7 +76,6 @@ function mutateExchange(mutator: MapTransform | null, isRequest: boolean) {
  * Create endpoint from definition.
  */
 export default function createEndpoint(
-  serviceMappings: Dictionary<string | MapDefinition>,
   serviceOptions: EndpointOptions,
   mapOptions: MapOptions,
   prepareOptions: PrepareOptions = (options) => options
@@ -120,12 +84,6 @@ export default function createEndpoint(
     const mutator = endpointDef.mutation
       ? mapTransform(endpointDef.mutation, mapOptions)
       : null
-    const requestMapper = createMapper(endpointDef.requestMapping, mapOptions)
-    const responseMapper = createMapper(endpointDef.responseMapping, mapOptions)
-    const mappings = prepareMappings(
-      { ...serviceMappings, ...endpointDef.mappings },
-      mapOptions
-    )
 
     const validate = prepareValidate(endpointDef.validate, mapOptions)
 
@@ -140,8 +98,6 @@ export default function createEndpoint(
       options,
       mutateRequest: mutateExchange(mutator, /* isRequest: */ true),
       mutateResponse: mutateExchange(mutator, /* isRequest: */ false),
-      mapRequest: mapRequest(requestMapper, mappings),
-      mapResponse: mapResponse(responseMapper, mappings),
       validate,
       isMatch: isMatch(endpointDef),
     }

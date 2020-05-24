@@ -26,10 +26,6 @@ export interface Adapter {
   send: (request: Request, connection: Connection | null) => Promise<Response>
 }
 
-export interface Mappings {
-  [type: string]: MapTransform
-}
-
 export interface MapOptions {
   pipelines?: Dictionary<MapDefinition>
   functions?: Dictionary<CustomFunction>
@@ -58,9 +54,6 @@ export interface IdentConfig {
 export interface SendOptions {
   request: Request
   response?: Response
-  mappings: Mappings // TODO: Remove
-  responseMapper?: MapTransform // TODO: Remove
-  requestMapper?: MapTransform // TODO: Remove
   mutator: MapTransform
 }
 
@@ -101,7 +94,6 @@ export interface ServiceDef {
   options?: { [key: string]: unknown }
   mutation?: MapDefinition
   endpoints: EndpointDef[]
-  mappings: MapDefinitions // TODO: Remove
 }
 
 // TODO: Rethink

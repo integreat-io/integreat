@@ -1,10 +1,10 @@
 import test from 'ava'
 import { Endpoint } from './types'
-import { TypedData, Data, Exchange } from '../../types'
+import { Data, Exchange } from '../../types'
 import createSchema from '../../schema'
 import { isExchange } from '../../utils/is'
 
-import getEndpointMapper from '.'
+import createEndpointMappers from '.'
 
 // Setup
 
@@ -52,7 +52,6 @@ const exchangeDefaults = {
   meta: {},
 }
 
-const serviceMappings = { entry: 'entry' }
 const serviceOptions = {}
 
 // Tests
@@ -79,9 +78,8 @@ test('should return match function', (t) => {
     },
   }
 
-  const matchFn = getEndpointMapper(
+  const matchFn = createEndpointMappers(
     endpointDefs,
-    serviceMappings,
     serviceOptions,
     mapOptions
   )
@@ -89,76 +87,6 @@ test('should return match function', (t) => {
 
   t.truthy(mapping)
   t.is((mapping as Endpoint).id, 'endpoint2')
-})
-
-test('should use mappings from service', (t) => {
-  const endpointDefs = [
-    {
-      match: {},
-      options: {},
-      mappings: { account: 'user' }, // To make sure service and endpoint mappings are merged
-    },
-  ]
-  const serviceMappings = { entry: 'entry' }
-  const exchange = {
-    ...exchangeDefaults,
-    type: 'GET',
-    request: {
-      type: 'entry',
-    },
-    response: {
-      data: { items: [{ key: 'ent1' }] },
-    },
-  }
-
-  const matchFn = getEndpointMapper(
-    endpointDefs,
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )
-  const mapping = matchFn(exchange)
-  const ret = (mapping as Endpoint).mapResponse(exchange)
-
-  t.truthy(ret.response.data)
-  const data = (ret.response.data as TypedData[])[0]
-  t.is(data.id, 'ent1')
-  t.is(data.$type, 'entry')
-})
-
-test('should use mappings from endpoint', (t) => {
-  const endpointDefs = [
-    {
-      match: {},
-      options: {},
-      mappings: { entry: 'entry' },
-    },
-  ]
-  const serviceMappings = { entry: 'unknown' }
-  const exchange = {
-    ...exchangeDefaults,
-    type: 'GET',
-    request: {
-      type: 'entry',
-    },
-    response: {
-      data: { items: [{ key: 'ent1' }] },
-    },
-  }
-
-  const matchFn = getEndpointMapper(
-    endpointDefs,
-    serviceMappings,
-    serviceOptions,
-    mapOptions
-  )
-  const mapping = matchFn(exchange)
-  const ret = (mapping as Endpoint).mapResponse(exchange)
-
-  t.truthy(ret.response.data)
-  const data = (ret.response.data as TypedData[])[0]
-  t.is(data.id, 'ent1')
-  t.is(data.$type, 'entry')
 })
 
 test.todo('should merge options')
@@ -199,9 +127,8 @@ test('should use validate functions', (t) => {
   }
   const okExpected = okExchange
 
-  const matchFn = getEndpointMapper(
+  const matchFn = createEndpointMappers(
     endpointDefs,
-    serviceMappings,
     serviceOptions,
     mapOptionsWithFunction
   )
@@ -222,9 +149,8 @@ test('should pass validation when no validate pipelines', (t) => {
     },
   }
 
-  const matchFn = getEndpointMapper(
+  const matchFn = createEndpointMappers(
     endpointDefs,
-    serviceMappings,
     serviceOptions,
     mapOptions
   )

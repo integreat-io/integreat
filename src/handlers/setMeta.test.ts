@@ -27,7 +27,6 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
       auth: true,
       meta: meta || undefined,
       endpoints,
-      mappings: { meta: [{ $apply: 'cast_meta' }] },
     },
     {
       id: 'entries',
@@ -35,7 +34,6 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
       auth: true,
       meta: 'meta',
       endpoints,
-      mappings: { meta: [{ $apply: 'cast_meta' }] },
     },
   ],
   mappings: [],

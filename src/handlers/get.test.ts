@@ -78,7 +78,6 @@ const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
         mutation: { data: ['data', { $apply: 'entry' }] },
       },
     ],
-    mappings: id === 'accounts' ? { account: 'account' } : { entry: 'entry' },
   })
 
 const dispatch = async () => completeExchange({ status: 'ok' })

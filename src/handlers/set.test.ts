@@ -84,7 +84,6 @@ const setupService = (uri: string, id = 'entries', method = 'POST') => {
         mutation: { data: ['data', { $apply: 'entry' }] },
       },
     ],
-    mappings: id === 'accounts' ? { account: 'account' } : { entry: 'entry' },
   })
 }
 

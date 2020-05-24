@@ -19,7 +19,6 @@ const entries = createService({ schemas, adapters })({
   id: 'entries',
   adapter: 'json',
   endpoints: [],
-  mappings: {},
 })
 
 // Tests

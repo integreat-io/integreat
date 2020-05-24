@@ -66,12 +66,10 @@ test('should dispatch action from options and map response', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     adapter: json,
-    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
         mutation,
-        requestMapping: { 'params.id': 'data.items[0].key' },
         options: {
           actionType: 'GET',
           actionPayload: { type: 'entry' },
@@ -113,12 +111,10 @@ test('should return exchange mapped to service', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     adapter: json,
-    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
         mutation,
-        requestMapping: { 'params.id': 'data.items[0].key' },
         options: {
           actionType: 'GET',
           actionPayload: { type: 'entry' },
@@ -167,7 +163,6 @@ test.failing(
     const service = setupService({ mapOptions, schemas })({
       id: 'entries',
       adapter: json,
-      mappings: { entry: 'entry' },
       endpoints: [
         {
           match: { action: 'REQUEST' },
@@ -228,7 +223,6 @@ test.failing('should respond with mapped data', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     adapter: json,
-    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -239,8 +233,6 @@ test.failing('should respond with mapped data', async (t) => {
             'data.items': ['content.entries', { $apply: 'entry' }],
           },
         ],
-        requestMapping: { 'params.id': 'data.key' },
-        responseMapping: ['data', { data: { items: 'content.entries' } }],
         options: { actionType: 'GET', actionPayload: { type: 'entry' } },
       },
     ],
@@ -268,12 +260,10 @@ test('should use type from request action if not set on endpoint', async (t) => 
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     adapter: json,
-    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
         mutation,
-        requestMapping: { 'params.id': 'data.items[0].key' },
         options: { actionType: 'GET' },
       },
     ],
@@ -312,13 +302,10 @@ test('should respond with noaction when no action type is set on endpoint', asyn
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     adapter: json,
-    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
         mutation,
-        requestMapping: { 'params.id': 'data.key' },
-        // responseMapping: { 'data.items': 'content.entries' },
       },
     ],
   })
@@ -340,7 +327,6 @@ test('should respond with noaction when no endpoint matches', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     adapter: json,
-    mappings: { entry: 'entry' },
   })
   const getService = () => service
   const exchange = completeExchange({
@@ -369,7 +355,6 @@ test.failing('should map and pass on error from dispatch', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     adapter: json,
-    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -379,13 +364,6 @@ test.failing('should map and pass on error from dispatch', async (t) => {
             $direction: 'rev',
             'data.items': ['data.content', { $apply: 'entry' }],
             error: 'data.a:errorMessage',
-          },
-        ],
-        responseMapping: [
-          'data',
-          {
-            'data.items': 'content',
-            error: 'a:errorMessage',
           },
         ],
         options: { actionType: 'GET', actionPayload: { type: 'entry' } },
@@ -430,7 +408,6 @@ test('should get service by service id', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     adapter: json,
-    mappings: { entry: 'entry' },
     endpoints: [
       {
         match: { action: 'REQUEST' },

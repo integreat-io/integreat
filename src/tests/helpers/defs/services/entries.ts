@@ -4,10 +4,6 @@ export default {
   // transport: 'http',
   auth: true,
   options: { baseUri: 'http://some.api' },
-  mappings: {
-    entry: 'entries-entry',
-    user: 'users-user',
-  }, // TODO: Remove
   mutation: ['json'],
   endpoints: [
     {
@@ -42,28 +38,6 @@ export default {
           ],
         },
       },
-      responseMapping: [
-        'data',
-        {
-          data: 'data[]',
-          paging: {
-            next: [
-              { $filter: 'compare', path: 'next', operator: '!=', value: null },
-              {
-                type: '^params.type',
-                offset: 'next',
-              },
-            ],
-            prev: [
-              { $filter: 'compare', path: 'prev', operator: '!=', value: null },
-              {
-                type: '^params.type',
-                offset: 'prev',
-              },
-            ],
-          },
-        },
-      ], // TODO: Remove
       options: { uri: '/entries{?offset=offset?}' },
     },
     {
@@ -72,7 +46,6 @@ export default {
         $direction: 'fwd',
         data: ['data.data[]', { $apply: 'entries-entry' }],
       },
-      responseMapping: 'data[]', // TODO: Remove
       options: { uri: '/entries', method: 'POST' },
     },
     {
@@ -81,7 +54,6 @@ export default {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'entries-entry' }],
       },
-      responseMapping: 'data', // TODO: Remove
       options: { uri: '/entries/{id}' },
     },
     {
@@ -96,7 +68,6 @@ export default {
           data: ['data.data', { $apply: 'entries-entry' }],
         },
       ],
-      responseMapping: 'data', // TODO: Remove
       options: { uri: '/entries/{id}' },
     },
     {
@@ -105,7 +76,6 @@ export default {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'entries-entry' }],
       },
-      responseMapping: 'data', // TODO: Remove
       options: { uri: '/entries{?author}' },
     },
     {
@@ -117,7 +87,6 @@ export default {
         },
       },
       mutation: { $direction: 'fwd', params: { id: 'data.key' } },
-      responseMapping: [{ 'params.id': 'data.key' }], // TODO: Remove
       options: { actionType: 'GET', actionPayload: { type: 'entry' } },
     },
     {

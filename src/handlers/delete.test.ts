@@ -72,14 +72,12 @@ test('should delete items from service', async (t) => {
           $direction: 'rev',
           data: ['data.docs[]', { $apply: 'entry' }],
         },
-        requestMapping: 'docs[]',
         options: {
           uri: 'http://api1.test/database/bulk_delete',
           method: 'POST',
         },
       },
     ],
-    mappings: { entry: 'entry' },
   })
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -120,7 +118,6 @@ test('should delete one item from service', async (t) => {
         },
       },
     ],
-    mappings: { entry: 'entry' },
   })
   const getService = () => src
   const exchange = completeExchange({
@@ -152,14 +149,12 @@ test('should infer service id from type', async (t) => {
           $direction: 'rev',
           data: ['data.docs[', { $apply: 'entry' }],
         },
-        requestMapping: 'docs[]',
         options: {
           uri: 'http://api2.test/database/bulk_delete',
           method: 'POST',
         },
       },
     ],
-    mappings: { entry: 'entry' },
   })
   const getService = (type?: string | string[], _service?: string) =>
     type === 'entry' ? src : undefined
@@ -201,7 +196,6 @@ test('should delete with other endpoint and uri params', async (t) => {
         },
       },
     ],
-    mappings: { entry: 'entry' },
   })
   const getService = () => src
   const exchange = completeExchange({
@@ -238,14 +232,12 @@ test('should return error from response', async (t) => {
           $direction: 'rev',
           data: ['data.docs[]', { $apply: 'entry' }],
         },
-        requestMapping: 'docs[]',
         options: {
           uri: 'http://api5.test/database/bulk_delete',
           method: 'POST',
         },
       },
     ],
-    mappings: { entry: 'entry' },
   })
   const getService = () => src
   const exchange = completeExchange({
@@ -276,7 +268,6 @@ test('should return noaction when nothing to delete', async (t) => {
         options: { uri: 'http://api1.test/database/bulk_delete' },
       },
     ],
-    mappings: { entry: 'entry' },
   })
   const getService = () => src
   const exchange = completeExchange({
@@ -300,7 +291,6 @@ test('should skip null values in data array', async (t) => {
         options: { uri: 'http://api1.test/database/bulk_delete' },
       },
     ],
-    mappings: { entry: 'entry' },
   })
   const getService = () => src
   const exchange = completeExchange({
@@ -330,14 +320,12 @@ test('should only delete items the ident is authorized to', async (t) => {
           $direction: 'rev',
           data: ['data.docs[', { $apply: 'account' }],
         },
-        requestMapping: 'docs[]',
         options: {
           uri: 'http://api4.test/database/bulk_delete',
           method: 'POST',
         },
       },
     ],
-    mappings: { account: 'account' },
   })
   const getService = (_type?: string | string[], service?: string) =>
     service === 'accounts' ? src : undefined

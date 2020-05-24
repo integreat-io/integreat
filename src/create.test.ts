@@ -13,7 +13,6 @@ const services = [
   {
     id: 'entries',
     adapter: 'json',
-    mappings: { entry: 'entries_entry' },
     endpoints: [
       {
         options: { uri: 'http://some.api/entries' },

@@ -156,7 +156,6 @@ test('should throw when no adapter', (t) => {
       id: 'entries',
       adapter: 'unknown',
       endpoints: [],
-      mappings: {},
     })
   })
 })
@@ -167,7 +166,6 @@ test('assignEndpointMapper should assign an endpoint to the exchange', (t) => {
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     adapter: 'json',
-    mappings: { entry: 'entry' },
     endpoints,
   })
   const exchange = completeExchange({
@@ -190,7 +188,6 @@ test('assignEndpointMapper should set endpoint to undefined and status noaction 
   const service = setupService({ mapOptions, schemas, adapters })({
     id: 'entries',
     adapter: 'json',
-    mappings: { entry: 'entry' },
     endpoints,
   })
   const exchange = completeExchange({
@@ -227,7 +224,6 @@ test('assignEndpointMapper should pick the most specified endpoint', async (t) =
     id: 'entries',
     endpoints,
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = completeExchange({
     type: 'GET',
@@ -247,7 +243,6 @@ test('authorizeExchange should set authorized flag', async (t) => {
     id: 'accounts',
     adapter: 'json',
     auth: { id: 'auth1' },
-    mappings: { account: 'account' },
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -272,7 +267,6 @@ test('authorizeExchange should authorize exchange request without type', async (
     id: 'accounts',
     adapter: 'json',
     auth: { id: 'auth1' },
-    mappings: { account: 'account' },
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -297,7 +291,6 @@ test('authorizeExchange should refuse based on schema', async (t) => {
     id: 'accounts',
     adapter: 'json',
     auth: { id: 'auth1' },
-    mappings: { account: 'account' },
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -342,7 +335,6 @@ test('sendExchange should retrieve data from service', async (t) => {
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'granting',
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -383,7 +375,6 @@ test('sendExchange should authenticate and return with error', async (t) => {
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'refusing',
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -411,7 +402,6 @@ test('sendExchange should fail when not authorized', async (t) => {
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'granting',
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -453,7 +443,6 @@ test('sendExchange should connect before sending request', async (t) => {
     options: { value: 'Value from service' },
     adapter: 'json',
     auth: 'granting',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -490,7 +479,6 @@ test('sendExchange should store connection', async (t) => {
       { options: { uri: 'http://some.api/1.0', value: 'Value from options' } },
     ],
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -524,7 +512,6 @@ test('sendExchange should return error when connection fails', async (t) => {
       { options: { uri: 'http://some.api/1.0', value: 'Value from options' } },
     ],
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -559,7 +546,6 @@ test('sendExchange should retrieve error response from service', async (t) => {
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -593,7 +579,6 @@ test('sendExchange should return with error when adapter throws', async (t) => {
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -630,7 +615,6 @@ test('sendExchange should do nothing when exchange has a status', async (t) => {
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -662,7 +646,6 @@ test.serial('mapResponse should map data array from service', async (t) => {
       },
     ],
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -723,7 +706,6 @@ test('mapResponse should map data object from service', async (t) => {
       },
     ],
     adapter: 'json',
-    mappings: { account: 'account' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -758,7 +740,6 @@ test('mapResponse should map null to undefined', async (t) => {
       },
     ],
     adapter: 'json',
-    mappings: { account: 'account' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -794,7 +775,6 @@ test('should authorize typed data in array from service', async (t) => {
       },
     ],
     adapter: 'json',
-    mappings: { account: 'account' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -834,7 +814,6 @@ test('should authorize typed data object from service', async (t) => {
       },
     ],
     adapter: 'json',
-    mappings: { account: 'account' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -867,7 +846,6 @@ test('should authorize typed data in array to service', async (t) => {
       },
     ],
     adapter: 'json',
-    mappings: { account: 'account' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -906,7 +884,6 @@ test('mapResponse should map without default values', async (t) => {
       },
     ],
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -939,7 +916,6 @@ test('mapResponse should map without default values', async (t) => {
 //     id: 'entries',
 //     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
 //     adapter: { ...json, send },
-//     mappings: { entry: 'entry' }
 //   })
 //   const action = {
 //     type: 'GET',
@@ -967,7 +943,6 @@ test('mapResponse should respond with error when no endpoint and no error', asyn
       },
     ],
     adapter: 'json',
-    mappings: { entry: 'entry' },
   })
   const exchange = completeExchange({
     type: 'GET',
@@ -1011,7 +986,6 @@ test('mapRequest should cast and map request data', async (t) => {
         options: { uri: 'http://some.api/1.0' },
       },
     ],
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -1071,7 +1045,6 @@ test('mapRequest should authorize data array going to service', async (t) => {
     id: 'accounts',
     adapter: 'json',
     auth: { id: 'auth1' },
-    mappings: { account: 'account' },
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -1111,7 +1084,6 @@ test('mapRequest should authorize data object going to service', async (t) => {
     id: 'accounts',
     adapter: 'json',
     auth: { id: 'auth1' },
-    mappings: { account: 'account' },
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -1144,7 +1116,6 @@ test('mapRequest should authorize data array coming from service', async (t) => 
     id: 'accounts',
     adapter: 'json',
     auth: { id: 'auth1' },
-    mappings: { account: 'account' },
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -1196,7 +1167,6 @@ test('mapRequest should use mutation pipeline', async (t) => {
         options: { uri: 'http://soap.api/1.1' },
       },
     ],
-    mappings: { entry: 'entry' },
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -1224,7 +1194,6 @@ test('mapRequest should respond with error when no endpoint', async (t) => {
         options: { uri: 'http://some.api/1.0' },
       },
     ],
-    mappings: { entry: 'entry' },
   })
   const exchange = completeExchange({
     type: 'SET',

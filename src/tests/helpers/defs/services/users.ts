@@ -12,7 +12,6 @@ export default {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'users-user' }],
       },
-      responseMapping: 'data', // TODO: Remove
       options: { uri: '/users{?tokens}' },
     },
     {
@@ -21,7 +20,6 @@ export default {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'users-user' }],
       },
-      responseMapping: 'data', // TODO: Remove
       options: { uri: '/users' },
     },
     {
@@ -30,7 +28,6 @@ export default {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'users-user' }],
       },
-      responseMapping: 'data', // TODO: Remove
       options: { uri: '/users', method: 'POST' },
     },
     {
@@ -39,11 +36,7 @@ export default {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'users-user' }],
       },
-      responseMapping: 'data', // TODO: Remove
       options: { uri: '/users/{id}' },
     },
   ],
-  mappings: {
-    user: 'users-user',
-  }, // TODO: remove
 }

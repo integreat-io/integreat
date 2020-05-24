@@ -53,7 +53,6 @@ defs.services[0].endpoints.push({
       { $transform: 'shouldHaveAuthor' },
     ],
   },
-  responseMapping: 'data[]',
   options: { uri: '/entries/{id}' },
 })
 // defs.services[0].endpoints.push({

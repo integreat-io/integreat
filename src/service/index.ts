@@ -1,6 +1,6 @@
 import EventEmitter = require('events')
 import { CustomFunction } from 'map-transform'
-import prepareEndpointMappers from './endpoints'
+import createEndpointMappers from './endpoints'
 import {
   requestFromExchange,
   responseToExchange,
@@ -33,7 +33,6 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
   meta,
   options = {},
   endpoints: endpointDefs = [],
-  mappings: mappingsDef = {},
 }: ServiceDef): Service => {
   if (typeof serviceId !== 'string' || serviceId === '') {
     throw new TypeError(`Can't create service without an id.`)
@@ -54,9 +53,8 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
   const authorizeDataFromService = authorizeData.fromService(schemas)
   const authorizeDataToService = authorizeData.toService(schemas)
 
-  const getEndpointMapper = prepareEndpointMappers(
+  const getEndpointMapper = createEndpointMappers(
     endpointDefs,
-    mappingsDef,
     options,
     mapOptions,
     adapter.prepareEndpoint
