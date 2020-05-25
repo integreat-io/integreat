@@ -32,6 +32,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
   auth: authId,
   meta,
   options = {},
+  mutation,
   endpoints: endpointDefs = [],
 }: ServiceDef): Service => {
   if (typeof serviceId !== 'string' || serviceId === '') {
@@ -57,6 +58,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
     endpointDefs,
     options,
     mapOptions,
+    mutation,
     adapter.prepareEndpoint
   )
 

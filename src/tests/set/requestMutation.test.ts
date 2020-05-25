@@ -33,7 +33,7 @@ const entry1Mapped = {
 
 // Tests
 
-test('should set data with request mapping', async (t) => {
+test('should set data with endpoint mutation', async (t) => {
   const requestData = {
     content: {
       items: [entry1Mapped],
@@ -73,6 +73,67 @@ test('should set data with request mapping', async (t) => {
     services: [
       {
         ...entriesService,
+        endpoints: [
+          {
+            mutation,
+            options: { uri: '/entries/{id}' },
+          },
+        ],
+      },
+    ],
+    mappings: [entriesMapping],
+  }
+
+  const great = Integreat.create(defs, resources)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+
+  nock.restore()
+})
+
+test('should set data with service and endpoint mutation', async (t) => {
+  const requestData = {
+    content: {
+      items: [entry1Mapped],
+      footnote: '',
+      meta: '{"datatype":"entry"}',
+    },
+  }
+  nock('http://some.api')
+    .put('/entries/ent1', requestData)
+    .reply(201, { id: 'ent1', ok: true, rev: '1-12345' })
+  const action = {
+    type: 'SET',
+    payload: { type: 'entry', data: entry1Item },
+    meta: { ident: { root: true } },
+  }
+  const resources = {
+    adapters: { json },
+    transformers: {
+      stringify: () => (value: Data) => JSON.stringify(value),
+    },
+  }
+  const serviceMutation = { data: 'data.content' }
+  const mutation = [
+    'data',
+    {
+      $direction: 'rev',
+      data: ['items[]', { $apply: 'entries-entry' }],
+      none0: ['footnote', { $transform: 'fixed', value: '' }],
+      'params.type': [
+        'meta',
+        { $transform: 'stringify', $direction: 'rev' },
+        'datatype',
+      ],
+    },
+  ]
+  const defs = {
+    schemas: [entrySchema],
+    services: [
+      {
+        ...entriesService,
+        mutation: serviceMutation,
         endpoints: [
           {
             mutation,

@@ -53,6 +53,7 @@ const mutation = [
   {
     $direction: 'fwd',
     'params.id': 'data.items[0].key',
+    data: { $transform: 'value', value: undefined }, // TODO: Find a way to avoid this?
   },
   {
     $direction: 'rev',
@@ -62,7 +63,7 @@ const mutation = [
 
 // Tests
 
-test('should dispatch action from options and map response', async (t) => {
+test('should dispatch action based on options and map response', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     adapter: json,

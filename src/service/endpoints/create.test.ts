@@ -6,6 +6,7 @@ import builtInFunctions from '../../transformers/builtIns'
 import { Data, Exchange } from '../../types'
 import { MapOptions } from '../types'
 import { completeExchange } from '../../utils/exchangeMapping'
+import jsonTransform from '../../tests/helpers/resources/transformers/jsonTransform'
 
 import createEndpoint from './create'
 
@@ -80,6 +81,7 @@ const mapOptions = {
     ...builtInFunctions,
     shouldHaveToken,
     alwaysOk,
+    jsonTransform,
   },
 }
 
@@ -166,7 +168,12 @@ test('should set run options through prepareOptions', (t) => {
     prepared: true,
   }
 
-  const ret = createEndpoint(serviceOptions, {}, prepareOptions)(endpointDef)
+  const ret = createEndpoint(
+    serviceOptions,
+    {},
+    undefined,
+    prepareOptions
+  )(endpointDef)
 
   t.deepEqual(ret.options, expected)
 })
@@ -278,6 +285,72 @@ test('should map exchange props from response', (t) => {
   t.deepEqual(ret.response.paging, expectedPaging)
 })
 
+test('should map response from service with service and endpoint mutations', (t) => {
+  const serviceMutation = {
+    data: ['data', { $transform: 'jsonTransform' }],
+    error: 'params.message',
+  }
+  const endpointDef = {
+    mutation: {
+      data: ['data.content', { $apply: 'entry' }],
+      status: 'data.result',
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const exchangeWithProps = {
+    ...exchange,
+    request: {
+      params: { message: 'Too much' },
+    },
+    response: {
+      data: JSON.stringify({
+        content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
+        result: 'badrequest',
+      }),
+    },
+  }
+
+  const endpoint = createEndpoint(
+    serviceOptions,
+    mapOptions,
+    serviceMutation
+  )(endpointDef)
+  const ret = endpoint.mutateResponse(exchangeWithProps)
+
+  t.is(ret.response.data.length, 1)
+  t.is(ret.response.data[0].id, 'ent1')
+  t.is(ret.status, 'badrequest')
+  t.is(ret.response.error, 'Too much')
+})
+
+test('should map response from service with service mutation only', (t) => {
+  const endpointDef = {
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const exchangeWithProps = {
+    ...exchange,
+    response: {
+      data: {
+        content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
+      },
+    },
+  }
+  const serviceMutation = {
+    data: ['data.content', { $apply: 'entry' }],
+  }
+
+  const endpoint = createEndpoint(
+    serviceOptions,
+    mapOptions,
+    serviceMutation
+  )(endpointDef)
+  const ret = endpoint.mutateResponse(exchangeWithProps)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.is(ret.response.data.length, 1)
+  t.is(ret.response.data[0].id, 'ent1')
+})
+
 test('should keep exchange props not mapped from response', (t) => {
   const endpointDef = {
     mutation: {
@@ -306,7 +379,7 @@ test('should keep exchange props not mapped from response', (t) => {
   t.is(ret.response.data.length, 1)
 })
 
-test('should not keep include error from response when not an error', (t) => {
+test('should not include error from response when not an error', (t) => {
   const endpointDef = {
     mutation: {
       data: ['data.content', { $apply: 'entry' }],

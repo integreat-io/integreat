@@ -4,7 +4,7 @@ export default {
   // transport: 'http',
   auth: true,
   options: { baseUri: 'http://some.api' },
-  mutation: 'json',
+  // mutation: 'json',
   endpoints: [
     {
       match: { action: 'GET', params: { tokens: true } },

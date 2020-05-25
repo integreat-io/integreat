@@ -1,4 +1,5 @@
 import test from 'ava'
+import { set, MapDefinition } from 'map-transform'
 import nock = require('nock')
 import jsonAdapter from 'integreat-adapter-json'
 import entrySchema from '../helpers/defs/schemas/entry'
@@ -8,7 +9,6 @@ import entry2 from '../helpers/data/entry2'
 import entriesMapping from '../helpers/defs/mappings/entries-entry'
 import jsonTransform from '../helpers/resources/transformers/jsonTransform'
 import { TypedData } from '../../types'
-import { MapDefinition } from 'map-transform'
 
 import Integreat from '../..'
 
@@ -25,11 +25,15 @@ const mutation = {
   error: 'data.responseMessage',
 }
 
-const defsWithMutation = (mutation: MapDefinition) => ({
+const defsWithMutation = (
+  mutation: MapDefinition,
+  serviceMutation?: MapDefinition
+) => ({
   schemas: [entrySchema],
   services: [
     {
       ...entriesService,
+      ...(serviceMutation && { mutation: serviceMutation }),
       endpoints: [
         {
           mutation,
@@ -41,9 +45,13 @@ const defsWithMutation = (mutation: MapDefinition) => ({
   mappings: [entriesMapping],
 })
 
+test.after.always(() => {
+  nock.restore()
+})
+
 // Tests
 
-test('should map with response mapping', async (t) => {
+test('should map with endpoint mutation', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
@@ -67,8 +75,37 @@ test('should map with response mapping', async (t) => {
   const item = data[0]
   t.is(item.id, 'ent1')
   t.is(item.title, 'Entry 1')
+})
 
-  nock.restore()
+test('should map with service mutation', async (t) => {
+  const adapters = { json }
+  nock('http://some.api')
+    .get('/entries/ent1')
+    .reply(200, {
+      articles: [entry1],
+      result: 'queued',
+    })
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent1' },
+  }
+  const mutation = {
+    $direction: 'fwd',
+    data: ['data', { $apply: 'entries-entry' }],
+  }
+  const serviceMutation = {
+    $direction: 'fwd',
+    status: 'data.result',
+    data: 'data.articles',
+  }
+  const defs = defsWithMutation(mutation, serviceMutation)
+
+  const great = Integreat.create(defs, { adapters })
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'queued', ret.error)
+  t.is(ret.data.length, 1)
+  t.is(ret.data[0].id, 'ent1')
 })
 
 test('should use status code mapped from data', async (t) => {
@@ -91,8 +128,6 @@ test('should use status code mapped from data', async (t) => {
 
   t.is(ret.status, 'error')
   t.is(ret.error, 'Oh no!')
-
-  nock.restore()
 })
 
 test('should not override adapter error with data status', async (t) => {
@@ -113,11 +148,9 @@ test('should not override adapter error with data status', async (t) => {
   t.is(ret.status, 'notfound')
   t.is(typeof ret.error, 'string')
   t.falsy(ret.data)
-
-  nock.restore()
 })
 
-test('should map with sub mapping', async (t) => {
+test('should transform at paths within the data', async (t) => {
   const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent3')
@@ -150,6 +183,4 @@ test('should map with sub mapping', async (t) => {
   t.is(data[0].title, 'Entry 1')
   t.is(data[1].id, 'ent2')
   t.is(data[1].title, 'Entry 2')
-
-  nock.restore()
 })

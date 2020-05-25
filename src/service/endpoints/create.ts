@@ -2,6 +2,7 @@ import {
   mapTransform,
   ifelse,
   validate,
+  modify,
   MapDefinition,
   MapTransform,
 } from 'map-transform'
@@ -72,18 +73,24 @@ function mutateExchange(mutator: MapTransform | null, isRequest: boolean) {
     )
 }
 
+const flattenOne = <T>(arr: T[]): T | T[] => (arr.length <= 1 ? arr[0] : arr)
+
+const combineMutations = (
+  ...mutations: (MapDefinition | undefined)[]
+): MapDefinition => flattenOne(mutations.filter(Boolean).map(modify))
+
 /**
  * Create endpoint from definition.
  */
 export default function createEndpoint(
   serviceOptions: EndpointOptions,
   mapOptions: MapOptions,
+  serviceMutation?: MapDefinition,
   prepareOptions: PrepareOptions = (options) => options
 ) {
   return function (endpointDef: EndpointDef): Endpoint {
-    const mutator = endpointDef.mutation
-      ? mapTransform(endpointDef.mutation, mapOptions)
-      : null
+    const mutation = combineMutations(serviceMutation, endpointDef.mutation)
+    const mutator = mutation ? mapTransform(mutation, mapOptions) : null
 
     const validate = prepareValidate(endpointDef.validate, mapOptions)
 
