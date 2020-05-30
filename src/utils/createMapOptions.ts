@@ -1,18 +1,6 @@
 import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
 import { Schema } from '../schema'
 import { Dictionary } from '../types'
-import { MappingDef } from '../service/types'
-
-const pipelinesFromMappings = (
-  mappings: MappingDef[] = []
-): Dictionary<MapDefinition> =>
-  mappings.reduce(
-    (pipelines, def) => ({
-      ...pipelines,
-      [def.id]: def.mapping,
-    }),
-    {}
-  )
 
 const pipelinesFromSchemas = (
   schemas: Dictionary<Schema>
@@ -24,13 +12,13 @@ const pipelinesFromSchemas = (
 
 export default function createMapOptions(
   schemas: Dictionary<Schema>,
-  mappings?: MappingDef[],
+  mutations?: Record<string, MapDefinition>,
   functions?: Dictionary<CustomFunction>,
   dictionaries?: Dictionaries
 ) {
   return {
     pipelines: {
-      ...pipelinesFromMappings(mappings),
+      ...mutations,
       ...pipelinesFromSchemas(schemas),
     },
     functions,

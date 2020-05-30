@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon = require('sinon')
 import { jsonServiceDef } from './tests/helpers/json'
-import exchangeJsonMapping from './tests/helpers/defs/mappings/exchangeJson'
+import exchangeJsonMutation from './tests/helpers/defs/mutations/exchangeJson'
 import resources from './tests/helpers/resources'
 import { Action, Dispatch, Data, DataObject, Dictionary } from './types'
 
@@ -44,26 +44,22 @@ const schemas = [
   },
 ]
 
-const mappings = [
-  exchangeJsonMapping,
-  {
-    id: 'entries_entry',
-    schema: 'entry',
-    mapping: [
-      {
-        $iterate: true,
-        id: 'key',
-        title: ['headline', { $transform: 'exclamate' }],
-        text: 'body',
-        'sections[]': ['type', { $transform: 'map', dictionary: 'section' }],
-        unknown: [],
-        author: 'creator',
-        createdAt: 'date',
-      },
-      { $apply: 'cast_entry' },
-    ],
-  },
-]
+const mutations = {
+  'exchange:json': exchangeJsonMutation,
+  ['entries_entry']: [
+    {
+      $iterate: true,
+      id: 'key',
+      title: ['headline', { $transform: 'exclamate' }],
+      text: 'body',
+      'sections[]': ['type', { $transform: 'map', dictionary: 'section' }],
+      unknown: [],
+      author: 'creator',
+      createdAt: 'date',
+    },
+    { $apply: 'cast_entry' },
+  ],
+}
 
 const dictionaries = {
   section: [['newsitem', 'news'] as const, ['fashionblog', 'fashion'] as const],
@@ -111,7 +107,7 @@ test('should dispatch with resources', async (t) => {
   const identConfig = { type: 'account' }
 
   const great = create(
-    { services, schemas, mappings, identConfig },
+    { services, schemas, mutations, identConfig },
     { ...resourcesWithTrans, handlers }
   )
   await great.dispatch(action)
@@ -135,7 +131,7 @@ test('should dispatch with builtin exchange handler', async (t) => {
   const action = { type: 'GET', payload: { type: 'entry' } }
 
   const great = create(
-    { services, schemas, mappings },
+    { services, schemas, mutations },
     resourcesWithTransAndSend
   )
   await great.dispatch(action)
@@ -153,7 +149,7 @@ test('should call middleware', async (t) => {
   ]
 
   const great = create(
-    { services, schemas, mappings },
+    { services, schemas, mutations },
     { ...resourcesWithTrans, handlers },
     middlewares
   )
@@ -188,7 +184,7 @@ test('should map data', async (t) => {
   }
 
   const great = create(
-    { services, schemas, mappings, dictionaries },
+    { services, schemas, mutations, dictionaries },
     resourcesWithTransAndSend
   )
   const ret = await great.dispatch(action)
@@ -245,7 +241,7 @@ test('should use auth', async (t) => {
   }
 
   const great = create(
-    { services: authServices, schemas, mappings, auths },
+    { services: authServices, schemas, mutations, auths },
     resourcesWithTransSendAndAuth
   )
   const ret = await great.dispatch(action)
@@ -254,7 +250,7 @@ test('should use auth', async (t) => {
 })
 
 test.skip('should subscribe to event on service', (t) => {
-  const great = create({ services, schemas, mappings }, resourcesWithTrans)
+  const great = create({ services, schemas, mutations }, resourcesWithTrans)
   const cb = () => undefined
   const onStub = sinon.stub(great.services.entries, 'on')
 
@@ -266,7 +262,7 @@ test.skip('should subscribe to event on service', (t) => {
 })
 
 test.skip('should not subscribe to anything for unknown service', (t) => {
-  const great = create({ services, schemas, mappings }, resourcesWithTrans)
+  const great = create({ services, schemas, mutations }, resourcesWithTrans)
 
   t.notThrows(() => {
     great.on('mapRequest', 'unknown', () => {})

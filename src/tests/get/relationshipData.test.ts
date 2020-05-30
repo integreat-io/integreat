@@ -1,8 +1,8 @@
 import test from 'ava'
 import nock = require('nock')
-import defs from '../helpers/defs'
+import defsBase from '../helpers/defs'
 import resources from '../helpers/resources'
-import usersUserMapping from '../helpers/defs/mappings/users-user'
+import usersUserMapping from '../helpers/defs/mutations/users-user'
 import entry1Data from '../helpers/data/entry1'
 import johnfData from '../helpers/data/userJohnf'
 import { TypedData } from '../../types'
@@ -14,28 +14,26 @@ import Integreat from '../..'
 const createdAt = '2017-11-18T18:43:01Z'
 const updatedAt = '2017-11-24T07:11:43Z'
 
-defs.mappings[0] = {
-  id: 'entries-entry',
-  type: 'entry',
-  service: 'entries',
-  mapping: [
-    {
-      $iterate: true,
-      id: 'key',
-      title: ['headline', { $alt: 'value', value: 'An entry' }],
-      text: 'body',
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt',
-      author: ['author', { $apply: 'entries-user' }],
-      'sections.id': 'sections[]',
-    },
-    { $apply: 'cast_entry' },
-  ],
+const defs = {
+  ...defsBase,
+  mutations: {
+    ...defsBase.mutations,
+    'entries-entry': [
+      {
+        $iterate: true,
+        id: 'key',
+        title: ['headline', { $alt: 'value', value: 'An entry' }],
+        text: 'body',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt',
+        author: ['author', { $apply: 'entries-user' }],
+        'sections.id': 'sections[]',
+      },
+      { $apply: 'cast_entry' },
+    ],
+    'entries-user': usersUserMapping,
+  },
 }
-defs.mappings.push({
-  ...usersUserMapping,
-  id: 'entries-user',
-})
 
 // Tests
 

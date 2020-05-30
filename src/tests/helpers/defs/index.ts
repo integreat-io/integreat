@@ -4,14 +4,18 @@ import userSchema from './schemas/user'
 import entriesService from './services/entries'
 import usersService from './services/users'
 
-import entriesEntryMapping from './mappings/entries-entry'
-import exchangeJsonMapping from './mappings/exchangeJson'
-import usersUserMapping from './mappings/users-user'
+import entriesEntryMutation from './mutations/entries-entry'
+import exchangeJsonMutation from './mutations/exchangeJson'
+import usersUserMutation from './mutations/users-user'
 
 export default {
   schemas: [entrySchema, userSchema],
   services: [entriesService, usersService],
-  mappings: [entriesEntryMapping, usersUserMapping, exchangeJsonMapping],
+  mutations: {
+    'entries-entry': entriesEntryMutation,
+    'users-user': usersUserMutation,
+    'exchange:json': exchangeJsonMutation,
+  },
   dictionaries: {
     userRole: [['super', 'admin'] as const, ['readwrite', 'editor'] as const],
   },

@@ -2,10 +2,10 @@ import test from 'ava'
 import nock = require('nock')
 import resources from '../helpers/resources'
 import jsonTransform from '../helpers/resources/transformers/jsonTransform'
-import exchangeJsonMapping from '../helpers/defs/mappings/exchangeJson'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
-import entriesMapping from '../helpers/defs/mappings/entries-entry'
+import entriesMutation from '../helpers/defs/mutations/entries-entry'
+import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
 
 import Integreat from '../..'
 
@@ -86,7 +86,10 @@ test('should set data with endpoint mutation', async (t) => {
         ],
       },
     ],
-    mappings: [entriesMapping, exchangeJsonMapping],
+    mutations: {
+      'entries-entry': entriesMutation,
+      'exchange:json': exchangeJsonMutation,
+    },
   }
 
   const great = Integreat.create(defs, resourcesWithStringify)
@@ -139,7 +142,10 @@ test('should set data with service and endpoint mutation', async (t) => {
         ],
       },
     ],
-    mappings: [entriesMapping, exchangeJsonMapping],
+    mutations: {
+      'entries-entry': entriesMutation,
+      'exchange:json': exchangeJsonMutation,
+    },
   }
 
   const great = Integreat.create(defs, resourcesWithStringify)

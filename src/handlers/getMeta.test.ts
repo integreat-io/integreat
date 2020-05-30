@@ -2,7 +2,7 @@ import test from 'ava'
 import nock = require('nock')
 import Integreat from '..'
 import { jsonServiceDef } from '../tests/helpers/json'
-import exchangeJsonMapping from '../tests/helpers/defs/mappings/exchangeJson'
+import exchangeJsonMutation from '../tests/helpers/defs/mutations/exchangeJson'
 import resources from '../tests/helpers/resources'
 import { EndpointDef } from '../service/endpoints/types'
 import { completeExchange } from '../utils/exchangeMapping'
@@ -40,7 +40,7 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
       endpoints,
     },
   ],
-  mappings: [exchangeJsonMapping],
+  mutations: { 'exchange:json': exchangeJsonMutation },
 })
 
 const mutation = { data: ['data', { $apply: 'cast_meta' }] }

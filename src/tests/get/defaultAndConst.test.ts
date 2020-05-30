@@ -3,7 +3,7 @@ import nock = require('nock')
 import resources from '../helpers/resources'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
-import exchangeJsonMapping from '../helpers/defs/mappings/exchangeJson'
+import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
 import entry1 from '../helpers/data/entry1'
 import { TypedData, DataObject } from '../../types'
 
@@ -32,7 +32,10 @@ const mapping = [
 const defs = {
   schemas: [entrySchema],
   services: [entriesService],
-  mappings: [{ id: 'entries-entry', mapping }, exchangeJsonMapping],
+  mutations: {
+    'entries-entry': mapping,
+    'exchange:json': exchangeJsonMutation,
+  },
 }
 
 test.after.always(() => {

@@ -1,7 +1,7 @@
 import test from 'ava'
 import nock = require('nock')
 import resources from '../helpers/resources'
-import exchangeJsonMapping from '../helpers/defs/mappings/exchangeJson'
+import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
 
 import Integreat from '../..'
 
@@ -10,15 +10,10 @@ import Integreat from '../..'
 const defs = {
   schemas: [require('../helpers/defs/schemas/entry').default],
   services: [require('../helpers/defs/services/entries').default],
-  mappings: [
-    {
-      id: 'entries-entry',
-      type: 'entry',
-      service: 'entries',
-      mapping: [{ $apply: 'cast_entry' }],
-    },
-    exchangeJsonMapping,
-  ],
+  mutations: {
+    'entries-entry': [{ $apply: 'cast_entry' }],
+    'exchange:json': exchangeJsonMutation,
+  },
 }
 
 // Tests

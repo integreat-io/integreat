@@ -34,14 +34,6 @@ export interface MapOptions {
 
 export type MapDefinitions = Dictionary<string | MapDefinition>
 
-// TODO: Rethink
-export interface MappingDef {
-  id: string
-  type?: string
-  service?: string
-  mapping: MapDefinition
-}
-
 export interface IdentConfig {
   type: string
   props?: {

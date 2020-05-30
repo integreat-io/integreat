@@ -2,12 +2,12 @@ import test from 'ava'
 import { MapDefinition } from 'map-transform'
 import nock = require('nock')
 import resources from '../helpers/resources'
-import exchangeJsonMapping from '../helpers/defs/mappings/exchangeJson'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
 import entry2 from '../helpers/data/entry2'
-import entriesMapping from '../helpers/defs/mappings/entries-entry'
+import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
+import entriesMutation from '../helpers/defs/mutations/entries-entry'
 import jsonTransform from '../helpers/resources/transformers/jsonTransform'
 import { TypedData } from '../../types'
 
@@ -47,7 +47,10 @@ const defsWithMutation = (
       ],
     },
   ],
-  mappings: [entriesMapping, exchangeJsonMapping],
+  mutations: {
+    'entries-entry': entriesMutation,
+    'exchange:json': exchangeJsonMutation,
+  },
 })
 
 test.after.always(() => {

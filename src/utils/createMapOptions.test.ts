@@ -5,28 +5,20 @@ import createMapOptions from './createMapOptions'
 
 // Setup
 
-const mappings = [
-  {
-    id: 'entries_entry',
-    type: 'entry',
-    mapping: [
-      {
-        id: 'id',
-        title: 'headline',
-      },
-    ],
-  },
-  {
-    id: 'entries_user',
-    type: 'user',
-    mapping: [
-      {
-        id: 'username',
-        name: 'fullName',
-      },
-    ],
-  },
-]
+const mutations = {
+  entries_entry: [
+    {
+      id: 'id',
+      title: 'headline',
+    },
+  ],
+  entries_user: [
+    {
+      id: 'username',
+      name: 'fullName',
+    },
+  ],
+}
 
 const schemas = {
   entry: createSchema({
@@ -47,32 +39,27 @@ const dictionaries = {
 
 // Tests
 
-test('should return map options with pipelines from mappings', (t) => {
-  const expected = {
-    ['entries_entry']: mappings[0].mapping,
-    ['entries_user']: mappings[1].mapping,
-  }
-
-  const ret = createMapOptions({}, mappings, transformFunctions)
+test('should return map options with pipelines from mutations', (t) => {
+  const expected = mutations
+  const ret = createMapOptions({}, mutations, transformFunctions)
 
   t.deepEqual(ret.pipelines, expected)
 })
 
-test('should include schema cast mappings in pipelines', (t) => {
+test('should include schema cast mutations in pipelines', (t) => {
   const expected = {
-    ['entries_entry']: mappings[0].mapping,
-    ['entries_user']: mappings[1].mapping,
+    ...mutations,
     ['cast_entry']: schemas.entry.mapping,
     ['cast_user']: schemas.user.mapping,
   }
 
-  const ret = createMapOptions(schemas, mappings, transformFunctions)
+  const ret = createMapOptions(schemas, mutations, transformFunctions)
 
   t.deepEqual(ret.pipelines, expected)
 })
 
 test('should include transform functions', (t) => {
-  const ret = createMapOptions(schemas, mappings, transformFunctions)
+  const ret = createMapOptions(schemas, mutations, transformFunctions)
 
   t.is(ret.functions, transformFunctions)
 })
@@ -80,7 +67,7 @@ test('should include transform functions', (t) => {
 test('should include dictionaries functions', (t) => {
   const ret = createMapOptions(
     schemas,
-    mappings,
+    mutations,
     transformFunctions,
     dictionaries
   )

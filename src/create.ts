@@ -1,7 +1,6 @@
-import { Dictionaries, CustomFunction } from 'map-transform'
+import { Dictionaries, CustomFunction, MapDefinition } from 'map-transform'
 import { Dictionary, Middleware } from './types'
 import {
-  MappingDef,
   ServiceDef,
   IdentConfig,
   Adapter,
@@ -23,7 +22,7 @@ import { indexById } from './utils/indexUtils'
 export interface Definitions {
   schemas: SchemaDef[]
   services: ServiceDef[]
-  mappings?: MappingDef[]
+  mutations?: Record<string, MapDefinition>
   auths?: AuthDef[]
   identConfig?: IdentConfig
   dictionaries?: Dictionaries
@@ -43,7 +42,7 @@ export default function create(
   {
     services: serviceDefs,
     schemas: schemaDefs,
-    mappings,
+    mutations,
     auths: authDefs,
     identConfig,
     dictionaries,
@@ -65,7 +64,7 @@ export default function create(
   // Prepare map options
   const mapOptions = createMapOptions(
     schemas,
-    mappings,
+    mutations,
     { ...builtinTransformers, ...transformers },
     dictionaries
   )

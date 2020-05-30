@@ -3,7 +3,7 @@ import nock = require('nock')
 import resources from '../helpers/resources'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
-import entriesMapping from '../helpers/defs/mappings/entries-entry'
+import entriesMutation from '../helpers/defs/mutations/entries-entry'
 
 import Integreat from '../..'
 
@@ -53,7 +53,7 @@ test.failing('should map response and merge with request data', async (t) => {
         ],
       },
     ],
-    mappings: [entriesMapping],
+    mutations: { 'entries-entry': entriesMutation },
   }
   const expectedData = [
     {

@@ -1,41 +1,39 @@
 import test from 'ava'
 import nock = require('nock')
 import resources from '../helpers/resources'
-import defs from '../helpers/defs'
+import defsBase from '../helpers/defs'
 
 import Integreat from '../..'
 
 // Setup
 
-const entryMapping = {
-  id: 'entries-entry',
-  type: 'entry',
-  service: 'entries',
-  mapping: [
-    {
-      $iterate: true,
-      id: 'key',
-      title: ['headline', { $alt: 'value', value: 'An entry' }],
-      text: 'body',
-      author: ['author', { $apply: 'entries-user' }],
-    },
-    { $apply: 'cast_entry' },
-  ],
-}
+const entryMutation = [
+  {
+    $iterate: true,
+    id: 'key',
+    title: ['headline', { $alt: 'value', value: 'An entry' }],
+    text: 'body',
+    author: ['author', { $apply: 'entries-user' }],
+  },
+  { $apply: 'cast_entry' },
+]
 
-const userMapping = {
-  id: 'entries-user',
-  path: 'author',
-  type: 'user',
-  service: 'users',
-  mapping: [
-    {
-      $iterate: true,
-      id: 'username',
-      firstname: 'forename',
-    },
-    { $apply: 'cast_user' },
-  ],
+const userMutation = [
+  {
+    $iterate: true,
+    id: 'username',
+    firstname: 'forename',
+  },
+  { $apply: 'cast_user' },
+]
+
+const defs = {
+  ...defsBase,
+  mutations: {
+    ...defsBase.mutations,
+    'entries-entry': entryMutation,
+    'entries-user': userMutation,
+  },
 }
 
 const entry1Item = {
@@ -68,8 +66,6 @@ test.failing('should map full relationship item to service', async (t) => {
   nock('http://some.api')
     .put('/entries/ent1', putData)
     .reply(201, { data: { key: 'ent1', ok: true } })
-  defs.mappings[0] = entryMapping
-  defs.mappings.push(userMapping)
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
