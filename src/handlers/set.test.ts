@@ -1,7 +1,11 @@
 import test from 'ava'
 import nock = require('nock')
 import createService from '../service'
-import jsonAdapter from 'integreat-adapter-json'
+import {
+  jsonServiceDef,
+  jsonPipelines,
+  jsonFunctions,
+} from '../tests/helpers/json'
 import schema from '../schema'
 import functions from '../transformers/builtIns'
 import { completeExchange } from '../utils/exchangeMapping'
@@ -9,8 +13,6 @@ import { completeExchange } from '../utils/exchangeMapping'
 import set from './set'
 
 // Setup
-
-const json = jsonAdapter()
 
 const schemas = {
   entry: schema({
@@ -30,29 +32,31 @@ const schemas = {
   }),
 }
 
-const pipelines = {
-  entry: [
-    {
-      $iterate: true,
-      id: 'id',
-      title: 'header',
-    },
-    { $apply: 'cast_entry' },
-  ],
-  account: [
-    {
-      $iterate: true,
-      id: 'id',
-      name: 'name',
-      posts: 'entries',
-    },
-    { $apply: 'cast_account' },
-  ],
-  ['cast_entry']: schemas.entry.mapping,
-  ['cast_account']: schemas.account.mapping,
+const mapOptions = {
+  pipelines: {
+    ...jsonPipelines,
+    entry: [
+      {
+        $iterate: true,
+        id: 'id',
+        title: 'header',
+      },
+      { $apply: 'cast_entry' },
+    ],
+    account: [
+      {
+        $iterate: true,
+        id: 'id',
+        name: 'name',
+        posts: 'entries',
+      },
+      { $apply: 'cast_account' },
+    ],
+    ['cast_entry']: schemas.entry.mapping,
+    ['cast_account']: schemas.account.mapping,
+  },
+  functions: { ...functions, ...jsonFunctions },
 }
-
-const mapOptions = { pipelines, functions }
 
 const typeMappingFromServiceId = (serviceId: string) =>
   serviceId === 'accounts' ? 'account' : 'entry'
@@ -63,7 +67,7 @@ const setupService = (uri: string, id = 'entries', method = 'POST') => {
     mapOptions,
   })({
     id,
-    adapter: json,
+    ...jsonServiceDef,
     endpoints: [
       {
         mutation: [

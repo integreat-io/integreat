@@ -1,17 +1,18 @@
 import test from 'ava'
 import sinon = require('sinon')
-import jsonAdapter from 'integreat-adapter-json'
+import { jsonServiceDef } from './tests/helpers/json'
+import exchangeJsonMapping from './tests/helpers/defs/mappings/exchangeJson'
+import resources from './tests/helpers/resources'
 import { Action, Dispatch, Data, DataObject, Dictionary } from './types'
 
 import create, { Definitions } from './create'
 
 // Setup
 
-const json = jsonAdapter()
-
 const services = [
   {
     id: 'entries',
+    ...jsonServiceDef,
     adapter: 'json',
     endpoints: [
       {
@@ -44,6 +45,7 @@ const schemas = [
 ]
 
 const mappings = [
+  exchangeJsonMapping,
   {
     id: 'entries_entry',
     schema: 'entry',
@@ -67,20 +69,20 @@ const dictionaries = {
   section: [['newsitem', 'news'] as const, ['fashionblog', 'fashion'] as const],
 }
 
-const transformers = {
-  exclamate: () => (value: Data) =>
-    typeof value === 'string' ? `${value}!` : value,
-}
-
-const adapters = {
-  json,
+const resourcesWithTrans = {
+  ...resources,
+  transformers: {
+    ...resources.transformers,
+    exclamate: () => (value: Data) =>
+      typeof value === 'string' ? `${value}!` : value,
+  },
 }
 
 // Tests
 
 test('should return object with dispatch, schemas, services, and identType', (t) => {
   const identConfig = { type: 'account' }
-  const great = create({ services, schemas, identConfig }, { adapters })
+  const great = create({ services, schemas, identConfig }, resourcesWithTrans)
 
   t.is(typeof great.dispatch, 'function')
   t.truthy(great.schemas)
@@ -92,13 +94,13 @@ test('should return object with dispatch, schemas, services, and identType', (t)
 
 test('should throw when no services', (t) => {
   t.throws(() => {
-    create(({ schemas } as unknown) as Definitions, { adapters })
+    create(({ schemas } as unknown) as Definitions, resourcesWithTrans)
   })
 })
 
 test('should throw when no schemas', (t) => {
   t.throws(() => {
-    create(({ services } as unknown) as Definitions, { adapters })
+    create(({ services } as unknown) as Definitions, resourcesWithTrans)
   })
 })
 
@@ -110,7 +112,7 @@ test('should dispatch with resources', async (t) => {
 
   const great = create(
     { services, schemas, mappings, identConfig },
-    { handlers, adapters }
+    { ...resourcesWithTrans, handlers }
   )
   await great.dispatch(action)
 
@@ -120,10 +122,22 @@ test('should dispatch with resources', async (t) => {
 
 test('should dispatch with builtin exchange handler', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok', data: '[]' })
-  const adapters = { json: { ...json, send } }
+  const resourcesWithTransAndSend = {
+    ...resourcesWithTrans,
+    adapters: {
+      ...resourcesWithTrans.adapters,
+      json: {
+        ...resourcesWithTrans.adapters.json,
+        send,
+      },
+    },
+  }
   const action = { type: 'GET', payload: { type: 'entry' } }
 
-  const great = create({ services, schemas, mappings }, { adapters })
+  const great = create(
+    { services, schemas, mappings },
+    resourcesWithTransAndSend
+  )
   await great.dispatch(action)
 
   t.is(send.callCount, 1) // If the send method was called, the GET action was dispatched
@@ -140,7 +154,7 @@ test('should call middleware', async (t) => {
 
   const great = create(
     { services, schemas, mappings },
-    { handlers, adapters },
+    { ...resourcesWithTrans, handlers },
     middlewares
   )
   await great.dispatch(action)
@@ -156,12 +170,17 @@ test('should map data', async (t) => {
     type: 'newsitem',
     date: '2019-10-11T18:43:00Z',
   }
-  const adapters = {
-    json: {
-      ...json,
-      send: async () => ({ status: 'ok', data: JSON.stringify([data0]) }),
+  const resourcesWithTransAndSend = {
+    ...resourcesWithTrans,
+    adapters: {
+      ...resourcesWithTrans.adapters,
+      json: {
+        ...resourcesWithTrans.adapters.json,
+        send: async () => ({ status: 'ok', data: JSON.stringify([data0]) }),
+      },
     },
   }
+
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
@@ -170,7 +189,7 @@ test('should map data', async (t) => {
 
   const great = create(
     { services, schemas, mappings, dictionaries },
-    { adapters, transformers }
+    resourcesWithTransAndSend
   )
   const ret = await great.dispatch(action)
 
@@ -186,10 +205,24 @@ test('should map data', async (t) => {
 })
 
 test('should use auth', async (t) => {
-  const adapters = {
-    json: {
-      ...json,
-      send: async () => ({ status: 'ok', data: '[]' }),
+  const authenticators = {
+    mock: {
+      authenticate: async (options: Dictionary<Data> | null) => ({
+        status: options?.status as string,
+      }),
+      isAuthenticated: () => false,
+      authentication: {},
+    },
+  }
+  const resourcesWithTransSendAndAuth = {
+    ...resourcesWithTrans,
+    authenticators,
+    adapters: {
+      ...resourcesWithTrans.transformers,
+      json: {
+        ...resourcesWithTrans.adapters.json,
+        send: async () => ({ status: 'ok', data: '[]' }),
+      },
     },
   }
   const authServices = [
@@ -205,15 +238,6 @@ test('should use auth', async (t) => {
       options: { status: 'refused' },
     },
   ]
-  const authenticators = {
-    mock: {
-      authenticate: async (options: Dictionary<Data> | null) => ({
-        status: options?.status as string,
-      }),
-      isAuthenticated: () => false,
-      authentication: {},
-    },
-  }
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -222,7 +246,7 @@ test('should use auth', async (t) => {
 
   const great = create(
     { services: authServices, schemas, mappings, auths },
-    { adapters, authenticators }
+    resourcesWithTransSendAndAuth
   )
   const ret = await great.dispatch(action)
 
@@ -230,7 +254,7 @@ test('should use auth', async (t) => {
 })
 
 test.skip('should subscribe to event on service', (t) => {
-  const great = create({ services, schemas, mappings }, { adapters })
+  const great = create({ services, schemas, mappings }, resourcesWithTrans)
   const cb = () => undefined
   const onStub = sinon.stub(great.services.entries, 'on')
 
@@ -242,7 +266,7 @@ test.skip('should subscribe to event on service', (t) => {
 })
 
 test.skip('should not subscribe to anything for unknown service', (t) => {
-  const great = create({ services, schemas, mappings }, { adapters })
+  const great = create({ services, schemas, mappings }, resourcesWithTrans)
 
   t.notThrows(() => {
     great.on('mapRequest', 'unknown', () => {})

@@ -1,15 +1,13 @@
 import test from 'ava'
 import sinon = require('sinon')
-import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
+import resources from '../helpers/resources'
 import ent1Data from '../helpers/data/entry1'
 import { DataObject } from '../../types'
 
 import Integreat from '../..'
 
 // Setup
-
-const json = jsonAdapter()
 
 const createdAt = '2017-11-18T18:43:01.000Z'
 const updatedAt = '2017-11-24T07:11:43.000Z'
@@ -22,25 +20,25 @@ const serializeData = ({
   updatedAt,
   authorId,
   sections,
-}: DataObject) => ({
-  key,
-  headline,
-  originalTitle: headline,
-  body,
-  createdAt: new Date(createdAt as string | number | Date),
-  updatedAt: new Date(updatedAt as string | number | Date),
-  authorId,
-  sections,
-})
+}: DataObject) =>
+  JSON.stringify({
+    key,
+    headline,
+    originalTitle: headline,
+    body,
+    createdAt: new Date(createdAt as string | number | Date),
+    updatedAt: new Date(updatedAt as string | number | Date),
+    authorId,
+    sections,
+  })
 
 // Tests
 
 test('should dispatch set action and return respons', async (t) => {
-  const send = sinon.stub().resolves({
+  const send = sinon.stub(resources.adapters.json, 'send').resolves({
     status: 'ok',
     data: { data: { ...ent1Data, createdAt, updatedAt } },
   })
-  const resources = { adapters: { json: { ...json, send } } }
   const action = {
     type: 'REQUEST',
     payload: {

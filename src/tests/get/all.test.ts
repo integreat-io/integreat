@@ -1,7 +1,7 @@
 import test from 'ava'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
+import resources from '../helpers/resources'
 import entriesData from '../helpers/data/entries'
 import { TypedData } from '../../types'
 
@@ -9,12 +9,13 @@ import Integreat from '../..'
 
 // Setup
 
-const json = jsonAdapter()
+test.after.always(() => {
+  nock.restore()
+})
 
 // Tests
 
 test('should get all entries from service', async (t) => {
-  const adapters = { json }
   nock('http://some.api').get('/entries').reply(200, { data: entriesData })
   const action = {
     type: 'GET',
@@ -22,7 +23,7 @@ test('should get all entries from service', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

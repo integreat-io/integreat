@@ -4,7 +4,7 @@ export default {
   // transport: 'http',
   auth: true,
   options: { baseUri: 'http://some.api' },
-  // mutation: ['json'],
+  mutation: [{ $apply: 'exchange:json' }],
   endpoints: [
     {
       match: { action: 'GET', scope: 'collection', params: { offset: false } },

@@ -1,16 +1,15 @@
 import test from 'ava'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
+import resources from '../helpers/resources'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
+import exchangeJsonMapping from '../helpers/defs/mappings/exchangeJson'
 import entry1 from '../helpers/data/entry1'
 import { TypedData, DataObject } from '../../types'
 
 import Integreat from '../..'
 
 // Setup
-
-const json = jsonAdapter()
 
 const entryNoHeadline = {
   key: 'ent2',
@@ -33,7 +32,7 @@ const mapping = [
 const defs = {
   schemas: [entrySchema],
   services: [entriesService],
-  mappings: [{ id: 'entries-entry', mapping }],
+  mappings: [{ id: 'entries-entry', mapping }, exchangeJsonMapping],
 }
 
 test.after.always(() => {
@@ -43,7 +42,6 @@ test.after.always(() => {
 // Tests
 
 test('should transform entry', async (t) => {
-  const adapters = { json }
   nock('http://some.api')
     .get('/entries')
     .reply(200, { data: [entry1, entryNoHeadline] })
@@ -53,7 +51,7 @@ test('should transform entry', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -71,7 +69,6 @@ test('should transform entry', async (t) => {
 })
 
 test('should transform entry without defaults', async (t) => {
-  const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent2')
     .reply(200, { data: [entryNoHeadline] })
@@ -81,7 +78,7 @@ test('should transform entry without defaults', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

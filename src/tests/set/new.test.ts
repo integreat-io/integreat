@@ -1,16 +1,14 @@
 import test from 'ava'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
 import completeIdent from '../../middleware/completeIdent'
 import defs from '../helpers/defs'
+import resources from '../helpers/resources'
 import johnfData from '../helpers/data/userJohnf'
 import { TypedData } from '../../types'
 
 import Integreat from '../..'
 
 // Setup
-
-const json = jsonAdapter()
 
 const createdAt = new Date()
 const updatedAt = new Date()
@@ -50,7 +48,6 @@ test.after.always(() => {
 
 // TODO: Figure out how to handle return data from SET
 test.failing('should set new entry', async (t) => {
-  const adapters = { json }
   const middlewares = [completeIdent]
   const putData = {
     key: 'ent1',
@@ -85,7 +82,6 @@ test.failing('should set new entry', async (t) => {
 })
 
 test('should set new entries', async (t) => {
-  const adapters = { json }
   nock('http://some.api')
     .post('/entries')
     .reply(201, {
@@ -100,10 +96,7 @@ test('should set new entries', async (t) => {
     meta: { ident: { root: true } },
   }
 
-  const great = Integreat.create(defs, {
-    adapters,
-    middlewares: [completeIdent],
-  })
+  const great = Integreat.create(defs, resources, [completeIdent])
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

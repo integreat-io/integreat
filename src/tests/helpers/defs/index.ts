@@ -1,20 +1,21 @@
+import entrySchema from './schemas/entry'
+import userSchema from './schemas/user'
+
+import entriesService from './services/entries'
+import usersService from './services/users'
+
+import entriesEntryMapping from './mappings/entries-entry'
+import exchangeJsonMapping from './mappings/exchangeJson'
+import usersUserMapping from './mappings/users-user'
+
 export default {
-  schemas: [
-    require('./schemas/entry').default,
-    require('./schemas/user').default
-  ],
-  services: [
-    require('./services/entries').default,
-    require('./services/users').default
-  ],
-  mappings: [
-    require('./mappings/entries-entry').default,
-    require('./mappings/users-user').default
-  ],
+  schemas: [entrySchema, userSchema],
+  services: [entriesService, usersService],
+  mappings: [entriesEntryMapping, usersUserMapping, exchangeJsonMapping],
   dictionaries: {
-    userRole: [['super', 'admin'] as const, ['readwrite', 'editor'] as const]
+    userRole: [['super', 'admin'] as const, ['readwrite', 'editor'] as const],
   },
   identConfig: {
-    type: 'user'
-  }
+    type: 'user',
+  },
 }

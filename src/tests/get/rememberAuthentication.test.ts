@@ -1,19 +1,15 @@
 import test from 'ava'
 import sinon = require('sinon')
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
 import tokenAuth from '../../authenticators/token'
 import defs from '../helpers/defs'
+import resources from '../helpers/resources'
 import entriesService from '../helpers/defs/services/entries'
 import entriesData from '../helpers/data/entries'
 import { TypedData } from '../../types'
 import { ServiceDef } from '../../service/types'
 
 import Integreat from '../..'
-
-// Setup
-
-const json = jsonAdapter()
 
 // Tests
 
@@ -26,8 +22,10 @@ test('should not authenticate twice', async (t) => {
     .get('/entries')
     .times(2)
     .reply(200, { data: entriesData })
-  const adapters = { json }
-  const authenticators = { token: tokenAuth }
+  const resourcesWithAuth = {
+    ...resources,
+    authenticators: { token: tokenAuth },
+  }
   const defsWithAuth = {
     ...defs,
     services: [
@@ -50,7 +48,7 @@ test('should not authenticate twice', async (t) => {
   }
   const authSpy = sinon.spy(tokenAuth, 'authenticate')
 
-  const great = Integreat.create(defsWithAuth, { adapters, authenticators })
+  const great = Integreat.create(defsWithAuth, resourcesWithAuth)
   await great.dispatch(action)
   const ret = await great.dispatch(action)
 

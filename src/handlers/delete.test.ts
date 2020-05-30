@@ -1,6 +1,10 @@
 import test from 'ava'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
+import {
+  jsonServiceDef,
+  jsonPipelines,
+  jsonFunctions,
+} from '../tests/helpers/json'
 import createService from '../service'
 import createSchema from '../schema'
 import functions from '../transformers/builtIns'
@@ -9,8 +13,6 @@ import { completeExchange } from '../utils/exchangeMapping'
 import deleteFn from './delete'
 
 // Setup
-
-const json = jsonAdapter()
 
 const schemas = {
   entry: createSchema({
@@ -28,20 +30,22 @@ const schemas = {
   }),
 }
 
-const pipelines = {
-  entry: [
-    { $iterate: true, id: 'id', title: 'header' },
-    { $apply: 'cast_entry' },
-  ],
-  account: [
-    { $iterate: true, id: 'id', name: 'name' },
-    { $apply: 'cast_account' },
-  ],
-  ['cast_entry']: schemas.entry.mapping,
-  ['cast_account']: schemas.account.mapping,
+const mapOptions = {
+  pipelines: {
+    ...jsonPipelines,
+    entry: [
+      { $iterate: true, id: 'id', title: 'header' },
+      { $apply: 'cast_entry' },
+    ],
+    account: [
+      { $iterate: true, id: 'id', name: 'name' },
+      { $apply: 'cast_account' },
+    ],
+    ['cast_entry']: schemas.entry.mapping,
+    ['cast_account']: schemas.account.mapping,
+  },
+  functions: { ...functions, ...jsonFunctions },
 }
-
-const mapOptions = { pipelines, functions }
 
 const setupService = createService({ schemas, mapOptions })
 
@@ -64,7 +68,7 @@ test('should delete items from service', async (t) => {
     ])
   const src = setupService({
     id: 'entries',
-    adapter: json,
+    ...jsonServiceDef,
     endpoints: [
       {
         match: { action: 'DELETE' },
@@ -104,7 +108,7 @@ test('should delete one item from service', async (t) => {
     .reply(200, { ok: true, id: 'ent1', rev: '000001' })
   const src = setupService({
     id: 'entries',
-    adapter: json,
+    ...jsonServiceDef,
     endpoints: [
       {
         match: {
@@ -141,7 +145,7 @@ test('should infer service id from type', async (t) => {
     ])
   const src = setupService({
     id: 'entries',
-    adapter: json,
+    ...jsonServiceDef,
     endpoints: [
       {
         match: { action: 'DELETE' },
@@ -185,7 +189,7 @@ test('should delete with other endpoint and uri params', async (t) => {
     ])
   const src = setupService({
     id: 'entries',
-    adapter: json,
+    ...jsonServiceDef,
     endpoints: [
       {
         id: 'other',
@@ -224,7 +228,7 @@ test('should return error from response', async (t) => {
     .reply(404)
   const src = setupService({
     id: 'entries',
-    adapter: json,
+    ...jsonServiceDef,
     endpoints: [
       {
         id: 'delete',
@@ -260,7 +264,7 @@ test('should return error from response', async (t) => {
 test('should return noaction when nothing to delete', async (t) => {
   const src = setupService({
     id: 'entries',
-    adapter: json,
+    ...jsonServiceDef,
     endpoints: [
       {
         id: 'delete',
@@ -283,7 +287,7 @@ test('should return noaction when nothing to delete', async (t) => {
 test('should skip null values in data array', async (t) => {
   const src = setupService({
     id: 'entries',
-    adapter: json,
+    ...jsonServiceDef,
     endpoints: [
       {
         id: 'delete',
@@ -312,7 +316,7 @@ test('should only delete items the ident is authorized to', async (t) => {
     ])
   const src = setupService({
     id: 'accounts',
-    adapter: json,
+    ...jsonServiceDef,
     endpoints: [
       {
         match: { action: 'DELETE' },

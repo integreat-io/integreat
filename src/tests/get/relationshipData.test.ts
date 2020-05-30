@@ -1,7 +1,7 @@
 import test from 'ava'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
+import resources from '../helpers/resources'
 import usersUserMapping from '../helpers/defs/mappings/users-user'
 import entry1Data from '../helpers/data/entry1'
 import johnfData from '../helpers/data/userJohnf'
@@ -10,8 +10,6 @@ import { TypedData } from '../../types'
 import Integreat from '../..'
 
 // Setup
-
-const json = jsonAdapter()
 
 const createdAt = '2017-11-18T18:43:01Z'
 const updatedAt = '2017-11-24T07:11:43Z'
@@ -52,7 +50,6 @@ test('should get all entries from service', async (t) => {
         },
       ],
     })
-  const adapters = { json }
   const action = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' },
@@ -75,7 +72,7 @@ test('should get all entries from service', async (t) => {
     ],
   }
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

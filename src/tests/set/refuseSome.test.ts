@@ -1,14 +1,12 @@
 import test from 'ava'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
+import resources from '../helpers/resources'
 import defs from '../helpers/defs'
 import { TypedData } from '../../types'
 
 import Integreat from '../..'
 
 // Setup
-
-const json = jsonAdapter()
 
 const johnfItem = {
   $type: 'user',
@@ -27,7 +25,6 @@ const bettyItem = {
 test.failing(
   'should refuse to set entries where ident has no access',
   async (t) => {
-    const adapters = { json }
     nock('http://some.api').post('/users').reply(201, { ok: true })
     const action = {
       type: 'SET',
@@ -35,7 +32,7 @@ test.failing(
       meta: { ident: { id: 'johnf' } },
     }
 
-    const great = Integreat.create(defs, { adapters })
+    const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
     t.is(ret.status, 'ok', ret.error)

@@ -1,12 +1,10 @@
 import test from 'ava'
-import jsonAdapter from 'integreat-adapter-json'
+import resources from '../helpers/resources'
 import defs from '../helpers/defs'
 
 import Integreat from '../..'
 
 // Setup
-
-const json = jsonAdapter()
 
 const createdAt = new Date()
 const updatedAt = new Date()
@@ -29,7 +27,6 @@ const entry1Item = {
 
 // Does not survive mapping. Should it?
 test.failing('should set new entry', async (t) => {
-  const adapters = { json }
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item, dryrun: true },
@@ -57,7 +54,7 @@ test.failing('should set new entry', async (t) => {
     retries: 0,
   }
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'dryrun', ret.error)

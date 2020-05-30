@@ -1,12 +1,11 @@
 import test from 'ava'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
+import resources from '../helpers/resources'
+import exchangeJsonMapping from '../helpers/defs/mappings/exchangeJson'
 
 import Integreat from '../..'
 
 // Setup
-
-const json = jsonAdapter()
 
 const defs = {
   schemas: [require('../helpers/defs/schemas/entry').default],
@@ -16,17 +15,17 @@ const defs = {
       id: 'entries-entry',
       type: 'entry',
       service: 'entries',
-      mapping: [{ $apply: 'cast_entry' }]
-    }
-  ]
+      mapping: [{ $apply: 'cast_entry' }],
+    },
+    exchangeJsonMapping,
+  ],
 }
 
 // Tests
 
-test('should get one entry from service', async t => {
+test('should get one entry from service', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
-  const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {
@@ -37,12 +36,12 @@ test('should get one entry from service', async t => {
         text: 'The first entry ever created',
         createdAt,
         updatedAt,
-        author: { id: 'johnf', $ref: 'user' }
-      }
+        author: { id: 'johnf', $ref: 'user' },
+      },
     })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry' }
+    payload: { id: 'ent1', type: 'entry' },
   }
   const expected = {
     $type: 'entry',
@@ -52,10 +51,10 @@ test('should get one entry from service', async t => {
     createdAt: new Date(createdAt),
     updatedAt: new Date(updatedAt),
     author: { id: 'johnf', $ref: 'user' },
-    sections: []
+    sections: [],
   }
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

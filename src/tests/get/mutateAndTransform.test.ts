@@ -1,7 +1,8 @@
 import test from 'ava'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
 import mapAny = require('map-any')
+import resources from '../helpers/resources'
+import exchangeJsonMapping from '../helpers/defs/mappings/exchangeJson'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
@@ -12,8 +13,6 @@ import { TypedData } from '../../types'
 import Integreat from '../..'
 
 // Setup
-
-const json = jsonAdapter()
 
 const transformers = {
   upperCase: () => (value: unknown) =>
@@ -31,10 +30,21 @@ const transformers = {
     }),
 }
 
+const resourcesWithTrans = {
+  ...resources,
+  transformers: {
+    ...resources.transformers,
+    ...transformers,
+  },
+}
+
+test.after.always(() => {
+  nock.restore()
+})
+
 // Tests
 
 test('should transform entry', async (t) => {
-  const adapters = { json }
   nock('http://some.api').get('/entries/ent1').reply(200, { data: entry1 })
   const action = {
     type: 'GET',
@@ -57,10 +67,10 @@ test('should transform entry', async (t) => {
   const defs = {
     schemas: [entrySchema],
     services: [entriesService],
-    mappings: [{ id: 'entries-entry', mapping }],
+    mappings: [{ id: 'entries-entry', mapping }, exchangeJsonMapping],
   }
 
-  const great = Integreat.create(defs, { adapters, transformers })
+  const great = Integreat.create(defs, resourcesWithTrans)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')
@@ -68,12 +78,9 @@ test('should transform entry', async (t) => {
   t.is(item.id, 'ent1')
   t.is(item.title, 'ENTRY 1')
   t.is(item.text, 'The text of entry 1 - news|sports')
-
-  nock.restore()
 })
 
 test('should transform array of entries', async (t) => {
-  const adapters = { json }
   nock('http://some.api')
     .get('/entries')
     .reply(200, { data: [entry1, entry2] })
@@ -98,10 +105,10 @@ test('should transform array of entries', async (t) => {
   const defs = {
     schemas: [entrySchema],
     services: [entriesService],
-    mappings: [{ id: 'entries-entry', mapping }],
+    mappings: [{ id: 'entries-entry', mapping }, exchangeJsonMapping],
   }
 
-  const great = Integreat.create(defs, { adapters, transformers })
+  const great = Integreat.create(defs, resourcesWithTrans)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -114,6 +121,4 @@ test('should transform array of entries', async (t) => {
   t.is(data[1].id, 'ent2')
   t.is(data[1].title, 'ENTRY 2')
   t.is(data[1].text, 'The text of entry 2 - ')
-
-  nock.restore()
 })

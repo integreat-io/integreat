@@ -2,7 +2,11 @@ import test from 'ava'
 import sinon = require('sinon')
 import nock = require('nock')
 import createService from '../service'
-import jsonAdapter from 'integreat-adapter-json'
+import {
+  jsonServiceDef,
+  jsonPipelines,
+  jsonFunctions,
+} from '../tests/helpers/json'
 import schema from '../schema'
 import functions from '../transformers/builtIns'
 import { completeExchange } from '../utils/exchangeMapping'
@@ -11,8 +15,6 @@ import { Exchange, DataObject } from '../types'
 import get from './get'
 
 // Setup
-
-const json = jsonAdapter()
 
 const schemas = {
   entry: schema({
@@ -33,6 +35,7 @@ const schemas = {
 }
 
 const pipelines = {
+  ...jsonPipelines,
   entry: [
     {
       $iterate: true,
@@ -58,12 +61,12 @@ const pipelines = {
   ['cast_account']: schemas.account.mapping,
 }
 
-const mapOptions = { pipelines, functions }
+const mapOptions = { pipelines, functions: { ...functions, ...jsonFunctions } }
 
 const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
   createService({ schemas, mapOptions })({
     id,
-    adapter: json,
+    ...jsonServiceDef,
     endpoints: [
       {
         match,

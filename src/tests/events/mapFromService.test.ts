@@ -1,20 +1,21 @@
 import test from 'ava'
 import sinon = require('sinon')
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
+import resources from '../helpers/resources'
 import ent1Data from '../helpers/data/entry1'
 
 import Integreat from '../..'
 
 // Setup
 
-const json = jsonAdapter()
+test.after.always(() => {
+  nock.restore()
+})
 
 // Tests
 
 test.skip('should emit request and response before mapping from service', async (t) => {
-  const adapters = { json }
   nock('http://some.api').get('/entries/ent1').reply(200, { data: ent1Data })
   const action = {
     type: 'GET',
@@ -23,7 +24,7 @@ test.skip('should emit request and response before mapping from service', async 
   }
   const handler = sinon.stub()
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   great.on('mapResponse', 'entries', handler)
   const ret = await great.dispatch(action)
 
@@ -32,12 +33,9 @@ test.skip('should emit request and response before mapping from service', async 
   const response = handler.args[0][1]
   t.truthy(response.data)
   t.is(response.data.data.key, 'ent1')
-
-  nock.restore()
 })
 
 test.skip('should emit request and response after mapping from service', async (t) => {
-  const adapters = { json }
   nock('http://some.api').get('/entries/ent1').reply(200, { data: ent1Data })
   const action = {
     type: 'GET',
@@ -46,7 +44,7 @@ test.skip('should emit request and response after mapping from service', async (
   }
   const handler = sinon.stub()
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   great.on('mappedFromService', 'entries', handler)
   const ret = await great.dispatch(action)
 
@@ -55,6 +53,4 @@ test.skip('should emit request and response after mapping from service', async (
   const response = handler.args[0][1]
   t.truthy(response.data)
   t.is(response.data.id, 'ent1')
-
-  nock.restore()
 })

@@ -161,12 +161,13 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
         }
       }
 
-      let response: Response
       try {
         if (await connection.connect(exchange.auth)) {
-          const request = await adapter.serialize(requestFromExchange(exchange))
-          response = await adapter.send(request, connection.object)
-          response = await adapter.normalize(response, request)
+          const response = await adapter.send(
+            requestFromExchange(exchange),
+            connection.object
+          )
+          return responseToExchange(exchange, response)
         } else {
           return createError(
             exchange,
@@ -181,7 +182,6 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
           `Error retrieving from service '${serviceId}': ${error.message}`
         )
       }
-      return responseToExchange(exchange, response)
     },
 
     /**

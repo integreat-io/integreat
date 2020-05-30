@@ -1,13 +1,11 @@
 import test from 'ava'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
+import resources from '../helpers/resources'
 import defs from '../helpers/defs'
 
 import Integreat from '../..'
 
 // Setup
-
-const json = jsonAdapter()
 
 const entryMapping = {
   id: 'entries-entry',
@@ -19,10 +17,10 @@ const entryMapping = {
       id: 'key',
       title: ['headline', { $alt: 'value', value: 'An entry' }],
       text: 'body',
-      author: ['author', { $apply: 'entries-user' }]
+      author: ['author', { $apply: 'entries-user' }],
     },
-    { $apply: 'cast_entry' }
-  ]
+    { $apply: 'cast_entry' },
+  ],
 }
 
 const userMapping = {
@@ -34,10 +32,10 @@ const userMapping = {
     {
       $iterate: true,
       id: 'username',
-      firstname: 'forename'
+      firstname: 'forename',
     },
-    { $apply: 'cast_user' }
-  ]
+    { $apply: 'cast_user' },
+  ],
 }
 
 const entry1Item = {
@@ -48,9 +46,9 @@ const entry1Item = {
   author: {
     $type: 'user',
     id: 'johnf',
-    firstname: 'John'
+    firstname: 'John',
   },
-  sections: []
+  sections: [],
 }
 
 test.after.always(() => {
@@ -60,27 +58,26 @@ test.after.always(() => {
 // Tests
 
 // Waiting for solution on returns from SET
-test.failing('should map full relationship item to service', async t => {
+test.failing('should map full relationship item to service', async (t) => {
   const putData = {
     key: 'ent1',
     headline: 'Entry 1',
     body: 'The text of entry 1',
-    author: { username: 'johnf', forename: 'John' }
+    author: { username: 'johnf', forename: 'John' },
   }
   nock('http://some.api')
     .put('/entries/ent1', putData)
     .reply(201, { data: { key: 'ent1', ok: true } })
-  const adapters = { json }
   defs.mappings[0] = entryMapping
   defs.mappings.push(userMapping)
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
-    meta: { ident: { root: true } }
+    meta: { ident: { root: true } },
   }
   const expected = [entry1Item]
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

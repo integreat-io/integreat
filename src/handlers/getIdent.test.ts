@@ -1,9 +1,9 @@
 import test from 'ava'
 import nock = require('nock')
 import Integreat from '..'
-import jsonAdapter from 'integreat-adapter-json'
 import { completeExchange } from '../utils/exchangeMapping'
 import defs from '../tests/helpers/defs'
+import resources from '../tests/helpers/resources'
 import johnfData from '../tests/helpers/data/userJohnf'
 import ent1Data from '../tests/helpers/data/entry1'
 import { TypedData } from '../types'
@@ -12,9 +12,7 @@ import getIdent from './getIdent'
 
 // Setup
 
-const json = jsonAdapter()
-
-const great = Integreat.create(defs, { adapters: { json } })
+const great = Integreat.create(defs, resources)
 const getService = () => great.services.users
 const dispatch = async () => completeExchange({ status: 'ok' })
 const identConfig = { type: 'user' }

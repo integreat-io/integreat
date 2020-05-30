@@ -558,7 +558,7 @@ test('sendExchange should retrieve error response from service', async (t) => {
   const expected = {
     ...exchange,
     status: 'badrequest',
-    response: { error: 'Real bad request', data: null },
+    response: { error: 'Real bad request' },
   }
 
   const ret = await service.sendExchange(exchange)

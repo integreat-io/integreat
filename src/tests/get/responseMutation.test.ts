@@ -1,7 +1,8 @@
 import test from 'ava'
-import { set, MapDefinition } from 'map-transform'
+import { MapDefinition } from 'map-transform'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
+import resources from '../helpers/resources'
+import exchangeJsonMapping from '../helpers/defs/mappings/exchangeJson'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
@@ -14,9 +15,13 @@ import Integreat from '../..'
 
 // Setup
 
-const json = jsonAdapter()
-
-const transformers = { jsonTransform }
+const resourcesWithTrans = {
+  ...resources,
+  transformers: {
+    ...resources.transformers,
+    jsonTransform,
+  },
+}
 
 const mutation = {
   $direction: 'fwd',
@@ -33,7 +38,7 @@ const defsWithMutation = (
   services: [
     {
       ...entriesService,
-      ...(serviceMutation && { mutation: serviceMutation }),
+      mutation: [...entriesService.mutation, serviceMutation],
       endpoints: [
         {
           mutation,
@@ -42,7 +47,7 @@ const defsWithMutation = (
       ],
     },
   ],
-  mappings: [entriesMapping],
+  mappings: [entriesMapping, exchangeJsonMapping],
 })
 
 test.after.always(() => {
@@ -52,7 +57,6 @@ test.after.always(() => {
 // Tests
 
 test('should map with endpoint mutation', async (t) => {
-  const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {
@@ -65,7 +69,7 @@ test('should map with endpoint mutation', async (t) => {
   }
   const defs = defsWithMutation(mutation)
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -78,7 +82,6 @@ test('should map with endpoint mutation', async (t) => {
 })
 
 test('should map with service mutation', async (t) => {
-  const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {
@@ -100,7 +103,7 @@ test('should map with service mutation', async (t) => {
   }
   const defs = defsWithMutation(mutation, serviceMutation)
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'queued', ret.error)
@@ -109,7 +112,6 @@ test('should map with service mutation', async (t) => {
 })
 
 test('should use status code mapped from data', async (t) => {
-  const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent2')
     .reply(200, {
@@ -123,7 +125,7 @@ test('should use status code mapped from data', async (t) => {
   }
   const defs = defsWithMutation(mutation)
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'error')
@@ -131,7 +133,6 @@ test('should use status code mapped from data', async (t) => {
 })
 
 test('should not override adapter error with data status', async (t) => {
-  const adapters = { json }
   nock('http://some.api').get('/entries/ent2').reply(404, {
     responseContent: null,
     responseValue: 'ok',
@@ -142,7 +143,7 @@ test('should not override adapter error with data status', async (t) => {
   }
   const defs = defsWithMutation(mutation)
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'notfound')
@@ -151,7 +152,6 @@ test('should not override adapter error with data status', async (t) => {
 })
 
 test('should transform at paths within the data', async (t) => {
-  const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent3')
     .reply(200, {
@@ -172,7 +172,7 @@ test('should transform at paths within the data', async (t) => {
   }
   const defs = defsWithMutation(mutation)
 
-  const great = Integreat.create(defs, { adapters, transformers })
+  const great = Integreat.create(defs, resourcesWithTrans)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok')

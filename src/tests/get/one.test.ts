@@ -1,15 +1,13 @@
 import test from 'ava'
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
 import defs from '../helpers/defs'
+import resources from '../helpers/resources'
 import johnfData from '../helpers/data/userJohnf'
 import ent1Data from '../helpers/data/entry1'
 
 import Integreat from '../..'
 
 // Setup
-
-const json = jsonAdapter()
 
 const createdAt = '2017-11-18T18:43:01Z'
 const updatedAt = '2017-11-24T07:11:43Z'
@@ -21,7 +19,6 @@ test.after.always(() => {
 // Tests
 
 test('should get one entry from service', async (t) => {
-  const adapters = { json }
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, { data: { ...ent1Data, createdAt, updatedAt } })
@@ -44,7 +41,7 @@ test('should get one entry from service', async (t) => {
     ],
   }
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -52,7 +49,6 @@ test('should get one entry from service', async (t) => {
 })
 
 test('should get one user from service', async (t) => {
-  const adapters = { json }
   nock('http://some.api')
     .get('/users/johnf')
     .times(2)
@@ -80,7 +76,7 @@ test('should get one user from service', async (t) => {
     ],
   }
 
-  const great = Integreat.create(defs, { adapters })
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon = require('sinon')
 import nock = require('nock')
-import jsonAdapter from 'integreat-adapter-json'
+import resources from '../helpers/resources'
 import defs from '../helpers/defs'
 import { DataObject, Data } from '../../types'
 
@@ -61,15 +61,16 @@ defs.services[0].endpoints.push({
 //   options: { uri: '/entries/{id}', actionType: 'GET' }
 // })
 
-const adapters = { json: jsonAdapter() }
-const transformers = { shouldHaveAuthor }
+const resourcesWithTransformer = {
+  ...resources,
+  transformers: { ...resources.transformers, shouldHaveAuthor },
+}
 
 // Tests
 
 test.failing(
   'should respond with response from validation when not validated',
   async (t) => {
-    const adapters = { json: jsonAdapter() }
     const scope = nock('http://some.api')
       .put('/entries/ent2')
       .reply(201, { data: { key: 'ent2', ok: true } })
@@ -78,9 +79,9 @@ test.failing(
       payload: { type: 'entry', data: entryWithoutAuthor },
       meta: { ident: { root: true } },
     }
-    const dispatch = sinon.spy(adapters.json, 'send')
+    const dispatch = sinon.spy(resources.adapters.json, 'send')
 
-    const great = Integreat.create(defs, { adapters, transformers })
+    const great = Integreat.create(defs, resourcesWithTransformer)
     const ret = await great.dispatch(action)
 
     t.is(ret.status, 'badrequest', ret.error)
@@ -100,7 +101,7 @@ test('should respond with ok when validated', async (t) => {
     meta: { ident: { root: true } },
   }
 
-  const great = Integreat.create(defs, { adapters, transformers })
+  const great = Integreat.create(defs, resourcesWithTransformer)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -118,7 +119,7 @@ test.failing(
       meta: { ident: { root: true } },
     }
 
-    const great = Integreat.create(defs, { adapters, transformers })
+    const great = Integreat.create(defs, resourcesWithTransformer)
     const ret = await great.dispatch(action)
 
     t.is(ret.status, 'badrequest', ret.error)
