@@ -1,12 +1,11 @@
 {
   "compilerOptions": {
-    "target": "es2018",
+    "target": "es2019",
     "module": "commonjs",
-    "lib": ["es2018"],
     "moduleResolution": "node",
+    "lib": ["es2020"],
     "declaration": true,
     "sourceMap": true,
-    "outDir": "./dist",
     "noEmitOnError": false,
     "strict": true,
     "noImplicitAny": true,
@@ -21,6 +20,5 @@
     "paths": {
       "*": ["node_modules/*"]
     }
-  },
-  "include": ["src/**/*"]
+  }
 }

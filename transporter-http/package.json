@@ -1,0 +1,42 @@
+{
+  "name": "integreat-transporter-http",
+  "version": "0.1.0",
+  "description": "HTTP transporter for Integreat",
+  "keywords": [
+    "integreat",
+    "http",
+    "https"
+  ],
+  "author": "Kjell-Morten Bratsberg Thorsen <kjellmorten@integreat.io> (https://integreat.io/)",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "npm run build && nyc --reporter=text-summary ava --config ./ava-dist.config.js",
+    "test:inspect": "node --inspect node_modules/ava/profile.js",
+    "test:watch": "npm run dev",
+    "dev": "ava --watch",
+    "build": "tsc",
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "nyc:report": "nyc report --reporter=text --reporter=html"
+  },
+  "engines": {
+    "node": ">= 10"
+  },
+  "dependencies": {
+    "@types/debug": "^4.1.5",
+    "debug": "^4.1.1",
+    "got": "^11.1.4",
+    "great-uri-template": "^0.1.5"
+  },
+  "devDependencies": {
+    "@types/sinon": "^9.0.0",
+    "ava": "^3.7.1",
+    "coveralls": "^3.0.11",
+    "nock": "^12.0.3",
+    "nyc": "^15.0.1",
+    "sinon": "^9.0.2",
+    "ts-node": "^8.8.2",
+    "typescript": "^3.8.3"
+  }
+}
