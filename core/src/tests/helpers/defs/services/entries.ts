@@ -1,7 +1,6 @@
 export default {
   id: 'entries',
-  adapter: 'json',
-  // transport: 'http',
+  transporter: 'http',
   auth: true,
   options: { baseUri: 'http://some.api' },
   mutation: [{ $apply: 'exchange:json' }],
@@ -82,7 +81,7 @@ export default {
       match: {
         action: 'REQUEST',
         filters: {
-          'request.data': { type: 'object', required: ['key'] },
+          // 'request.data': { type: 'object', required: ['key'] },
           'request.params.requestMethod': { const: 'GET' },
         },
       },

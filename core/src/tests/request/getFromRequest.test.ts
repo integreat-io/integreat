@@ -4,7 +4,7 @@ import nock = require('nock')
 import defs from '../helpers/defs'
 import resources from '../helpers/resources'
 import ent1Data from '../helpers/data/entry1'
-import { DataObject } from '../../types'
+import { DataObject, Exchange } from '../../types'
 
 import Integreat from '../..'
 
@@ -39,12 +39,28 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for a replacement for adapter.serialize and adapter.normalize
+// Waiting for solution to raw data access
 test.failing('should dispatch get action and return respons', async (t) => {
-  const send = sinon.stub(resources.adapters.json, 'send').resolves({
-    status: 'ok',
-    data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),
-  })
+  const resourcesWithSend = {
+    ...resources,
+    transporters: {
+      ...resources.transporters,
+      http: {
+        ...resources.transporters.http,
+        send: async (exchange: Exchange) => ({
+          ...exchange,
+          status: 'ok',
+          response: {
+            ...exchange.response,
+            data: JSON.stringify({
+              data: { ...ent1Data, createdAt, updatedAt },
+            }),
+          },
+        }),
+      },
+    },
+  }
+  const sendSpy = sinon.spy(resourcesWithSend.transporters.http, 'send')
   const action = {
     type: 'REQUEST',
     payload: { type: 'entry', data: '{"key":"ent1"}', requestMethod: 'GET' },
@@ -72,12 +88,12 @@ test.failing('should dispatch get action and return respons', async (t) => {
     access: { ident: { id: 'johnf' } },
   }
 
-  const great = Integreat.create(defs, resources)
+  const great = Integreat.create(defs, resourcesWithSend)
   const ret = await great.dispatch(action)
 
   t.deepEqual(ret, expectedResponse)
-  t.is(send.callCount, 1)
-  const sentRequest = send.args[0][0]
-  t.is(sentRequest.action, 'GET')
-  t.deepEqual(sentRequest.params, expectedRequestParams)
+  t.is(sendSpy.callCount, 1)
+  const sentRequest = sendSpy.args[0][0]
+  t.is(sentRequest.type, 'GET')
+  t.deepEqual(sentRequest.request.params, expectedRequestParams)
 })

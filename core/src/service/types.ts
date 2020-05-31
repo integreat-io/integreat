@@ -4,35 +4,16 @@ import {
   CustomFunction,
   Dictionaries,
 } from 'map-transform'
-import { Request, Response, Exchange, Dictionary, Data } from '../types'
-import { EndpointDef, EndpointOptions } from './endpoints/types'
-
-export interface Connection extends Dictionary<unknown> {
-  status: string
-}
-
-export interface Adapter {
-  authentication: string
-  prepareEndpoint: (
-    options: EndpointOptions,
-    serviceOptions?: EndpointOptions
-  ) => EndpointOptions
-  connect: (
-    options: EndpointOptions,
-    authentication: object | null,
-    connection: Connection | null
-  ) => Promise<Connection | null>
-  disconnect: (connection: Connection | null) => Promise<void>
-  send: (request: Request, connection: Connection | null) => Promise<Response>
-}
+import { Request, Response, Exchange, Data, Transporter } from '../types'
+import { EndpointDef } from './endpoints/types'
 
 export interface MapOptions {
-  pipelines?: Dictionary<MapDefinition>
-  functions?: Dictionary<CustomFunction>
+  pipelines?: Record<string, MapDefinition>
+  functions?: Record<string, CustomFunction>
   dictionaries?: Dictionaries
 }
 
-export type MapDefinitions = Dictionary<string | MapDefinition>
+export type MapDefinitions = Record<string, string | MapDefinition>
 
 export interface IdentConfig {
   type: string
@@ -57,7 +38,7 @@ export interface AsyncExchangeMapper {
   (exchange: Exchange): Promise<Exchange>
 }
 
-export type AuthOptions = Dictionary<Data>
+export type AuthOptions = Record<string, Data>
 
 export interface Authentication extends AuthOptions {
   status: string
@@ -68,7 +49,9 @@ export interface Authenticator {
   authenticate: (options: AuthOptions | null) => Promise<Authentication>
   isAuthenticated: (authentication: Authentication | null) => boolean
   authentication: {
-    [asFunction: string]: (authentication: Authentication | null) => object
+    [asFunction: string]: (
+      authentication: Authentication | null
+    ) => Record<string, unknown>
   }
 }
 
@@ -80,7 +63,7 @@ export interface AuthDef {
 
 export interface ServiceDef {
   id: string
-  adapter: string | Adapter
+  transporter: string | Transporter
   auth?: boolean | AuthDef | string | null
   meta?: string
   options?: { [key: string]: unknown }

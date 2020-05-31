@@ -102,7 +102,8 @@ test('should delete items from service', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should delete one item from service', async (t) => {
+// Waiting for url template solution
+test.failing('should delete one item from service', async (t) => {
   const scope = nock('http://api1.test')
     .delete('/database/ent1')
     .reply(200, { ok: true, id: 'ent1', rev: '000001' })
@@ -180,7 +181,8 @@ test('should infer service id from type', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should delete with other endpoint and uri params', async (t) => {
+// Waiting for url template solution
+test.failing('should delete with other endpoint and uri params', async (t) => {
   const scope = nock('http://api3.test')
     .post('/entries/bulk_delete')
     .reply(200, [

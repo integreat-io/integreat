@@ -91,7 +91,8 @@ test.failing(
   }
 )
 
-test('should respond with ok when validated', async (t) => {
+// Waiting for uri template solution
+test.failing('should respond with ok when validated', async (t) => {
   const scope = nock('http://some.api')
     .put('/entries/ent1')
     .reply(201, { data: { key: 'ent1', ok: true } })

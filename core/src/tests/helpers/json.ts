@@ -1,11 +1,11 @@
+import httpTransporter from '../../../../transporter-http/src/transporter'
 import exchangeJsonMutation from './defs/mutations/exchangeJson'
-import jsonAdapter from 'integreat-adapter-json'
 import jsonTransformer from './resources/transformers/json'
 
 export const jsonPipelines = { 'exchange:json': exchangeJsonMutation }
 
 export const jsonServiceDef = {
-  adapter: jsonAdapter(),
+  transporter: httpTransporter,
   mutation: [{ $apply: 'exchange:json' }],
 }
 

@@ -51,7 +51,8 @@ test.after(() => {
 
 // Tests
 
-test('should set metadata on service', async (t) => {
+// Waiting for url template solution
+test.failing('should set metadata on service', async (t) => {
   const scope = nock('http://api1.test')
     .put('/database/meta%3Astore', {
       id: 'meta:store',
@@ -105,7 +106,8 @@ test('should not set metadata on service when no meta type', async (t) => {
   t.false(scope.isDone())
 })
 
-test('should set metadata on other service', async (t) => {
+// Waiting for url template solution
+test.failing('should set metadata on other service', async (t) => {
   const scope = nock('http://api3.test')
     .put('/database/meta%3Aentries', {
       id: 'meta:entries',

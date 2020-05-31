@@ -1,13 +1,9 @@
 import EventEmitter = require('events')
 import { CustomFunction } from 'map-transform'
 import createEndpointMappers from './endpoints'
-import {
-  requestFromExchange,
-  responseToExchange,
-} from '../utils/exchangeMapping'
 import createError from '../utils/createError'
-import { Dictionary, Response, Exchange } from '../types'
-import { Service, ServiceDef, Adapter, MapOptions } from './types'
+import { Exchange, Transporter } from '../types'
+import { Service, ServiceDef, MapOptions } from './types'
 import Connection from './Connection'
 import { Schema } from '../schema'
 import Auth from './Auth'
@@ -16,19 +12,24 @@ import * as authorizeData from './authorize/data'
 import authorizeExchange from './authorize/exchange'
 
 interface Resources {
-  adapters?: Dictionary<Adapter>
-  auths?: Dictionary<Auth>
-  transformers?: Dictionary<CustomFunction>
-  schemas: Dictionary<Schema>
+  transporters?: Record<string, Transporter>
+  auths?: Record<string, Auth>
+  transformers?: Record<string, CustomFunction>
+  schemas: Record<string, Schema>
   mapOptions?: MapOptions
 }
 
 /**
- * Create a service with the given id and adapter.
+ * Create a service with the given id and transporter.
  */
-export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
+export default ({
+  transporters,
+  auths,
+  schemas,
+  mapOptions = {},
+}: Resources) => ({
   id: serviceId,
-  adapter: adapterId,
+  transporter: transporterId,
   auth: authId,
   meta,
   options = {},
@@ -39,10 +40,10 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
     throw new TypeError(`Can't create service without an id.`)
   }
 
-  const adapter = lookupById(adapterId, adapters) || adapterId
-  if (typeof adapter !== 'object' || adapter === null) {
+  const transporter = lookupById(transporterId, transporters) || transporterId
+  if (typeof transporter !== 'object' || transporter === null) {
     throw new TypeError(
-      `Can't create service '${serviceId}' without an adapter.`
+      `Can't create service '${serviceId}' without a transporter.`
     )
   }
 
@@ -59,10 +60,10 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
     options,
     mapOptions,
     mutation,
-    adapter.prepareEndpoint
+    transporter.prepareOptions
   )
 
-  const connection = new Connection(adapter, options)
+  const connection = new Connection(transporter, options)
   const emitter = new EventEmitter()
 
   // Create the service instance
@@ -136,8 +137,8 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
     },
 
     /**
-     * The given exchange is sent to the service via the relevant adapter, and
-     * the exchange is updated with the response from the service.
+     * The given exchange is sent to the service via the relevant transporter,
+     * and the exchange is updated with the response from the service.
      */
     async sendExchange(exchange: Exchange): Promise<Exchange> {
       if (exchange.status) {
@@ -155,7 +156,7 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
       // When an authenticator is set: Authenticate and apply result to exchange
       if (auth) {
         await auth.authenticate()
-        exchange = auth.applyToExchange(exchange, adapter)
+        exchange = auth.applyToExchange(exchange, transporter)
         if (exchange.status) {
           return exchange
         }
@@ -163,11 +164,8 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
 
       try {
         if (await connection.connect(exchange.auth)) {
-          const response = await adapter.send(
-            requestFromExchange(exchange),
-            connection.object
-          )
-          return responseToExchange(exchange, response)
+          const ret = await transporter.send(exchange, connection.object)
+          return ret
         } else {
           return createError(
             exchange,
@@ -184,13 +182,6 @@ export default ({ adapters, auths, schemas, mapOptions = {} }: Resources) => ({
       }
     },
 
-    /**
-     * The given action is prepared, authenticated, and mapped, before it is
-     * sent to the service via the adapter. The response from the adapter is then
-     * mapped, authenticated, and returned.
-     *
-     * The prepared and authenticated request is also returned.
-     */
     // async send(action: Action) {
     //   const endpoint = matchEndpoint(oldEndpoints)(action)
     //   if (!endpoint) {

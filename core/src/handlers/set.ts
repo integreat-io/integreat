@@ -76,7 +76,7 @@ export default async function set(
   const endpointDebug = endpoint ? `at endpoint '${endpoint}'` : ''
   debug('SET: Send to service %s %s', service.id, endpointDebug)
 
-  return pPipe<Exchange, Exchange, Exchange, Exchange, Exchange, Exchange>(
+  return pPipe(
     service.authorizeExchange,
     service.assignEndpointMapper,
     service.mapRequest,

@@ -1,9 +1,8 @@
 import { Dictionaries, CustomFunction, MapDefinition } from 'map-transform'
-import { Dictionary, Middleware } from './types'
+import { Middleware, Transporter } from './types'
 import {
   ServiceDef,
   IdentConfig,
-  Adapter,
   AuthDef,
   Authenticator,
   Service,
@@ -29,10 +28,10 @@ export interface Definitions {
 }
 
 export interface Resources {
-  adapters?: Dictionary<Adapter>
-  handlers?: Dictionary<ExchangeHandler>
-  authenticators?: Dictionary<Authenticator>
-  transformers?: Dictionary<CustomFunction>
+  transporters?: Record<string, Transporter>
+  handlers?: Record<string, ExchangeHandler>
+  authenticators?: Record<string, Authenticator>
+  transformers?: Record<string, CustomFunction>
 }
 
 /*
@@ -47,7 +46,7 @@ export default function create(
     identConfig,
     dictionaries,
   }: Definitions,
-  { adapters, transformers, handlers, authenticators }: Resources,
+  { transporters, transformers, handlers, authenticators }: Resources,
   middlewares: Middleware[] = []
 ) {
   if (!Array.isArray(serviceDefs) || !Array.isArray(schemaDefs)) {
@@ -59,7 +58,7 @@ export default function create(
   // Prepare schemas
   const schemas = schemaDefs
     .map(createSchema)
-    .reduce(indexById, {} as Dictionary<Schema>)
+    .reduce(indexById, {} as Record<string, Schema>)
 
   // Prepare map options
   const mapOptions = createMapOptions(
@@ -80,21 +79,21 @@ export default function create(
               def.options
             )
         )
-        .reduce(indexById, {} as Dictionary<Auth>)
+        .reduce(indexById, {} as Record<string, Auth>)
     : undefined
 
   // Prepare services
   const services = serviceDefs
     .map(
       createService({
-        adapters,
+        transporters,
         auths,
         transformers, // Provided for validation pipeline only
         schemas,
         mapOptions,
       })
     )
-    .reduce(indexById, {} as Dictionary<Service>)
+    .reduce(indexById, {} as Record<string, Service>)
 
   // Create dispatch
   const dispatch = createDispatch({

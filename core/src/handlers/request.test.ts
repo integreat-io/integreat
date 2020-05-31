@@ -2,15 +2,13 @@ import test from 'ava'
 import sinon = require('sinon')
 import setupService from '../service'
 import schema from '../schema'
-import jsonAdapter from 'integreat-adapter-json'
 import { completeExchange } from '../utils/exchangeMapping'
 import { DataObject } from '../types'
+import httpTransporter from '../../../transporter-http/src/transporter'
 
 import request from './request'
 
 // Setup
-
-const json = jsonAdapter()
 
 const schemas = {
   entry: schema({
@@ -66,7 +64,7 @@ const mutation = [
 test('should dispatch action based on options and map response', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
-    adapter: json,
+    transporter: httpTransporter,
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -111,7 +109,7 @@ test('should dispatch action based on options and map response', async (t) => {
 test('should return exchange mapped to service', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
-    adapter: json,
+    transporter: httpTransporter,
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -163,7 +161,7 @@ test.failing(
     const dispatch = sinon.stub().resolves(completeExchange({ status: 'ok' }))
     const service = setupService({ mapOptions, schemas })({
       id: 'entries',
-      adapter: json,
+      transporter: httpTransporter,
       endpoints: [
         {
           match: { action: 'REQUEST' },
@@ -223,7 +221,7 @@ test.failing('should respond with mapped data', async (t) => {
     })
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
-    adapter: json,
+    transporter: httpTransporter,
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -260,7 +258,7 @@ test('should use type from request action if not set on endpoint', async (t) => 
   const dispatch = sinon.stub().resolves(completeExchange({ status: 'ok' }))
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
-    adapter: json,
+    transporter: httpTransporter,
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -302,7 +300,7 @@ test('should respond with noaction when no action type is set on endpoint', asyn
     })
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
-    adapter: json,
+    transporter: httpTransporter,
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -327,7 +325,7 @@ test('should respond with noaction when no endpoint matches', async (t) => {
   const dispatch = sinon.stub().resolves(completeExchange({ status: 'ok' }))
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
-    adapter: json,
+    transporter: httpTransporter,
   })
   const getService = () => service
   const exchange = completeExchange({
@@ -355,7 +353,7 @@ test.failing('should map and pass on error from dispatch', async (t) => {
     })
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
-    adapter: json,
+    transporter: httpTransporter,
     endpoints: [
       {
         match: { action: 'REQUEST' },
@@ -389,7 +387,7 @@ test.failing('should map and pass on error from dispatch', async (t) => {
   t.deepEqual(ret.response, expectedResponse)
 })
 
-test.todo('should run options through adapter.prepareOptions')
+test.todo('should run options through transporter.prepareOptions')
 
 test('should get service by service id', async (t) => {
   const exchange = completeExchange({
@@ -408,7 +406,7 @@ test('should get service by service id', async (t) => {
     })
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
-    adapter: json,
+    transporter: httpTransporter,
     endpoints: [
       {
         match: { action: 'REQUEST' },

@@ -1,8 +1,8 @@
-import jsonAdapter from 'integreat-adapter-json'
+import httpTransporter from '../../../../../transporter-http/src/transporter'
 
 import json from './transformers/json'
 
 export default {
-  adapters: { json: jsonAdapter() },
+  transporters: { http: httpTransporter },
   transformers: { json },
 }

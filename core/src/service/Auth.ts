@@ -1,6 +1,5 @@
 import { Authenticator, AuthOptions, Authentication } from './types'
-import { Adapter } from '../service/types'
-import { Exchange } from '../types'
+import { Exchange, Transporter } from '../types'
 import { isObject } from '../utils/is'
 
 const MAX_RETRIES = 1
@@ -49,7 +48,7 @@ export default class Auth {
     return this.#authentication?.status === 'granted'
   }
 
-  applyToExchange(exchange: Exchange, adapter: Adapter): Exchange {
+  applyToExchange(exchange: Exchange, transporter: Transporter): Exchange {
     const auth = this.#authentication
     if (!auth) {
       return { ...exchange, status: 'noaccess', auth: null }
@@ -59,7 +58,7 @@ export default class Auth {
       const authenticator = this.#authenticator
       const fn =
         isObject(authenticator?.authentication) &&
-        authenticator.authentication[adapter.authentication]
+        authenticator.authentication[transporter.authentication]
       return { ...exchange, auth: typeof fn === 'function' ? fn(auth) : null }
     }
 

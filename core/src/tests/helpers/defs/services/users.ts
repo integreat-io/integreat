@@ -1,7 +1,6 @@
 export default {
   id: 'users',
-  adapter: 'json',
-  // transport: 'http',
+  transporter: 'http',
   auth: true,
   options: { baseUri: 'http://some.api' },
   mutation: [{ $apply: 'exchange:json' }],

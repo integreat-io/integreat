@@ -3,7 +3,14 @@ import sinon = require('sinon')
 import { jsonServiceDef } from './tests/helpers/json'
 import exchangeJsonMutation from './tests/helpers/defs/mutations/exchangeJson'
 import resources from './tests/helpers/resources'
-import { Action, Dispatch, Data, DataObject, Dictionary } from './types'
+import {
+  Action,
+  Dispatch,
+  Data,
+  DataObject,
+  Dictionary,
+  Exchange,
+} from './types'
 
 import create, { Definitions } from './create'
 
@@ -13,7 +20,7 @@ const services = [
   {
     id: 'entries',
     ...jsonServiceDef,
-    adapter: 'json',
+    transporter: 'http',
     endpoints: [
       {
         options: { uri: 'http://some.api/entries' },
@@ -120,10 +127,10 @@ test('should dispatch with builtin exchange handler', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok', data: '[]' })
   const resourcesWithTransAndSend = {
     ...resourcesWithTrans,
-    adapters: {
-      ...resourcesWithTrans.adapters,
-      json: {
-        ...resourcesWithTrans.adapters.json,
+    transporters: {
+      ...resourcesWithTrans.transporters,
+      http: {
+        ...resourcesWithTrans.transporters.http,
         send,
       },
     },
@@ -168,11 +175,15 @@ test('should map data', async (t) => {
   }
   const resourcesWithTransAndSend = {
     ...resourcesWithTrans,
-    adapters: {
-      ...resourcesWithTrans.adapters,
-      json: {
-        ...resourcesWithTrans.adapters.json,
-        send: async () => ({ status: 'ok', data: JSON.stringify([data0]) }),
+    transporters: {
+      ...resourcesWithTrans.transporters,
+      http: {
+        ...resourcesWithTrans.transporters.http,
+        send: async (exchange: Exchange) => ({
+          ...exchange,
+          status: 'ok',
+          response: { ...exchange.response, data: JSON.stringify([data0]) },
+        }),
       },
     },
   }
@@ -213,10 +224,10 @@ test('should use auth', async (t) => {
   const resourcesWithTransSendAndAuth = {
     ...resourcesWithTrans,
     authenticators,
-    adapters: {
+    transporters: {
       ...resourcesWithTrans.transformers,
-      json: {
-        ...resourcesWithTrans.adapters.json,
+      http: {
+        ...resourcesWithTrans.transporters.http,
         send: async () => ({ status: 'ok', data: '[]' }),
       },
     },

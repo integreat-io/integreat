@@ -1,7 +1,7 @@
 import test from 'ava'
 import createSchema from '../schema'
 import createService from '../service'
-import { Adapter } from '../service/types'
+import { Transporter } from '../types'
 
 import getService from './getService'
 
@@ -11,13 +11,13 @@ const schemas = {
   entry: createSchema({ id: 'entry', plural: 'entries', service: 'entries' }),
 }
 
-const adapters = {
-  json: {} as Adapter,
+const transporters = {
+  http: {} as Transporter,
 }
 
-const entries = createService({ schemas, adapters })({
+const entries = createService({ schemas, transporters })({
   id: 'entries',
-  adapter: 'json',
+  transporter: 'http',
   endpoints: [],
 })
 

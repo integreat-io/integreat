@@ -1,10 +1,9 @@
 import R = require('ramda')
-import { Dictionary, TransformFunction } from '../types'
-import { Adapter } from '../service/types'
+import { TransformFunction, Transporter } from '../types'
 
 export interface Resources {
-  adapters?: Dictionary<Adapter>
-  transformers?: Dictionary<TransformFunction>
+  transporters?: Record<string, Transporter>
+  transformers?: Record<string, TransformFunction>
 }
 
 export default function mergeResources(...resources: Resources[]) {

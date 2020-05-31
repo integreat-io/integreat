@@ -52,7 +52,7 @@ export default async function deleteFn(
     : `endpoint matching ${type} and ${id}`
   debug("DELETE: Delete from service '%s' at %s.", service.id, endpointDebug)
 
-  return pPipe<Exchange, Exchange, Exchange, Exchange, Exchange, Exchange>(
+  return pPipe(
     service.authorizeExchange,
     service.assignEndpointMapper,
     service.mapRequest,

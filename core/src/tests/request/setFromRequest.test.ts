@@ -3,7 +3,7 @@ import sinon = require('sinon')
 import defs from '../helpers/defs'
 import resources from '../helpers/resources'
 import ent1Data from '../helpers/data/entry1'
-import { DataObject } from '../../types'
+import { DataObject, Exchange } from '../../types'
 
 import Integreat from '../..'
 
@@ -35,10 +35,25 @@ const serializeData = ({
 // Tests
 
 test('should dispatch set action and return respons', async (t) => {
-  const send = sinon.stub(resources.adapters.json, 'send').resolves({
-    status: 'ok',
-    data: { data: { ...ent1Data, createdAt, updatedAt } },
-  })
+  // Using nock instead of this spagetti stubbing?
+  const resourcesWithSend = {
+    ...resources,
+    transporters: {
+      ...resources.transporters,
+      http: {
+        ...resources.transporters.http,
+        send: async (exchange: Exchange) => ({
+          ...exchange,
+          status: 'ok',
+          response: {
+            ...exchange.response,
+            data: { data: { ...ent1Data, createdAt, updatedAt } },
+          },
+        }),
+      },
+    },
+  }
+  const send = sinon.spy(resourcesWithSend.transporters.http, 'send')
   const action = {
     type: 'REQUEST',
     payload: {
@@ -52,11 +67,6 @@ test('should dispatch set action and return respons', async (t) => {
       requestMethod: 'POST',
     },
     meta: { ident: { root: true } },
-  }
-  const expectedRequestParams = {
-    type: 'entry',
-    requestMethod: 'POST',
-    id: 'ent1',
   }
   const expectedRequestData = JSON.stringify({
     key: 'ent1',
@@ -84,14 +94,16 @@ test('should dispatch set action and return respons', async (t) => {
     access: { ident: { root: true } },
   }
 
-  const great = Integreat.create(defs, resources)
+  const great = Integreat.create(defs, resourcesWithSend)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)
-  const sentRequest = send.args[0][0]
-  t.is(sentRequest.action, 'SET')
-  t.deepEqual(sentRequest.params, expectedRequestParams)
-  t.is(sentRequest.data, expectedRequestData)
+  const sentExchange = send.args[0][0]
+  t.is(sentExchange.type, 'SET')
+  t.deepEqual(sentExchange.request.id, 'ent1')
+  t.deepEqual(sentExchange.request.type, 'entry')
+  t.deepEqual(sentExchange.request.params, { requestMethod: 'POST' })
+  t.is(sentExchange.request.data, expectedRequestData)
   t.deepEqual(ret, expectedResponse)
 })

@@ -2,7 +2,7 @@ import test from 'ava'
 import sinon = require('sinon')
 import { completeExchange } from '../utils/exchangeMapping'
 import { Authenticator, Authentication, AuthOptions } from './types'
-import { Adapter } from '../service/types'
+import { Transporter } from '../types'
 
 import Auth from './Auth'
 
@@ -24,9 +24,9 @@ const authenticator: Authenticator = {
   },
 }
 
-const adapter = ({
+const transporter = ({
   authentication: 'asHttpHeaders',
-} as unknown) as Adapter
+} as unknown) as Transporter
 
 const exchange = completeExchange({
   type: 'GET',
@@ -148,13 +148,13 @@ test('should set auth object to exchange', async (t) => {
   }
 
   await auth.authenticate()
-  const ret = auth.applyToExchange(exchange, adapter)
+  const ret = auth.applyToExchange(exchange, transporter)
 
   t.deepEqual(ret, expected)
 })
 
 test('should set auth object to null for unkown auth method', async (t) => {
-  const strangeAdapter = { ...adapter, authentication: 'asUnknown' }
+  const strangeAdapter = { ...transporter, authentication: 'asUnknown' }
   const auth = new Auth(id, authenticator, options)
   const expected = {
     ...exchange,
@@ -175,7 +175,7 @@ test('should set status noaccess and auth object to null when not authenticated'
     auth: null,
   }
 
-  const ret = auth.applyToExchange(exchange, adapter)
+  const ret = auth.applyToExchange(exchange, transporter)
 
   t.deepEqual(ret, expected)
 })
@@ -199,7 +199,7 @@ test('should set status noaccess and auth object to null when authentication was
   }
 
   await auth.authenticate()
-  const ret = auth.applyToExchange(exchange, adapter)
+  const ret = auth.applyToExchange(exchange, transporter)
 
   t.deepEqual(ret, expected)
 })
@@ -223,7 +223,7 @@ test('should set status autherror and auth object to null on auth error', async 
   }
 
   await auth.authenticate()
-  const ret = auth.applyToExchange(exchange, adapter)
+  const ret = auth.applyToExchange(exchange, transporter)
 
   t.deepEqual(ret, expected)
 })

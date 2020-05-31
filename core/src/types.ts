@@ -51,9 +51,9 @@ export interface Ident {
   tokens?: string[]
 }
 
-export type Params = Dictionary<Data>
+export type Params = Record<string, Data>
 
-export interface Payload extends Dictionary<Data> {
+export interface Payload extends Record<string, Data> {
   type?: string | string[]
   id?: string | string[]
   data?: Data
@@ -87,7 +87,7 @@ export interface Paging {
 export interface Request<T = Data> {
   action: string
   params: Params
-  endpoint: Dictionary<unknown>
+  endpoint: Record<string, unknown>
   data?: T
   auth?: object | null
   access?: { ident: Ident }
@@ -111,7 +111,7 @@ export interface ExchangeRequest<T = Data> {
   data?: T
   uri?: string
   method?: string
-  headers?: Dictionary<string>
+  headers?: Record<string, string>
   page?: number
   pageSize?: number
   sendNoDefaults?: boolean
@@ -127,7 +127,7 @@ export interface ExchangeResponse<T = Data> {
   returnNoDefaults?: boolean
 }
 
-export type Meta = Dictionary<Data>
+export type Meta = Record<string, Data>
 
 export interface Exchange<ReqData = Data, RespData = Data> {
   type: string
@@ -136,7 +136,7 @@ export interface Exchange<ReqData = Data, RespData = Data> {
   request: ExchangeRequest<ReqData>
   response: ExchangeResponse<RespData>
   ident?: Ident
-  auth?: object | null
+  auth?: Record<string, unknown> | boolean | null
   meta: Meta
   endpointId?: string
   endpoint?: Endpoint
@@ -154,4 +154,20 @@ export interface InternalDispatch {
 
 export interface Middleware {
   (next: InternalDispatch): InternalDispatch
+}
+
+export interface Connection extends Record<string, unknown> {
+  status: string
+}
+
+export interface Transporter {
+  authentication: string // ?
+  prepareOptions: (options: Record<string, unknown>) => Record<string, unknown>
+  connect: (
+    options: Record<string, unknown>,
+    authentication: object | null,
+    connection: Connection | null
+  ) => Promise<Connection | null>
+  send: (exchange: Exchange, connection: Connection | null) => Promise<Exchange>
+  disconnect: (connection: Connection | null) => Promise<void>
 }

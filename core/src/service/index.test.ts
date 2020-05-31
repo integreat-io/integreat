@@ -1,12 +1,12 @@
 import test from 'ava'
 import sinon = require('sinon')
-import jsonAdapter from 'integreat-adapter-json'
+import jsonResources from '../tests/helpers/resources'
 import functions from '../transformers/builtIns'
 import createSchema from '../schema'
-import { Connection, Authentication } from './types'
-import { TypedData } from '../types'
+import { Authentication, ServiceDef } from './types'
+import { TypedData, Connection, Exchange } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
-import { completeExchange } from '../utils/exchangeMapping'
+import { completeExchange, responseToExchange } from '../utils/exchangeMapping'
 import Auth from './Auth'
 import tokenAuth from '../authenticators/token'
 
@@ -88,9 +88,6 @@ const mapOptions = {
   functions,
 }
 
-const json = jsonAdapter()
-const adapters = { json }
-
 const endpoints = [
   {
     id: 'endpoint1',
@@ -128,10 +125,10 @@ test('should return service object with id and meta', (t) => {
   const endpoints = [
     { id: 'endpoint1', options: { uri: 'http://some.api/1.0' } },
   ]
-  const def = { id: 'entries', adapter: 'json', endpoints, meta: 'meta' }
+  const def = { id: 'entries', transporter: 'http', endpoints, meta: 'meta' }
 
   const service = setupService({
-    adapters,
+    ...jsonResources,
     mapOptions,
     schemas,
   })(def)
@@ -143,18 +140,18 @@ test('should return service object with id and meta', (t) => {
 test('should throw when no id', (t) => {
   t.throws(() => {
     setupService({
-      adapters,
+      ...jsonResources,
       mapOptions,
       schemas,
-    })({ adapter: 'json' })
+    })(({ transporter: 'http' } as unknown) as ServiceDef)
   })
 })
 
-test('should throw when no adapter', (t) => {
+test('should throw when no transporter', (t) => {
   t.throws(() => {
     setupService({ mapOptions, schemas })({
       id: 'entries',
-      adapter: 'unknown',
+      transporter: 'unknown',
       endpoints: [],
     })
   })
@@ -163,9 +160,9 @@ test('should throw when no adapter', (t) => {
 // Tests -- assignEndpointMapper
 
 test('assignEndpointMapper should assign an endpoint to the exchange', (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
-    adapter: 'json',
+    transporter: 'http',
     endpoints,
   })
   const exchange = completeExchange({
@@ -185,9 +182,9 @@ test('assignEndpointMapper should assign an endpoint to the exchange', (t) => {
 })
 
 test('assignEndpointMapper should set endpoint to undefined and status noaction on no match', (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
-    adapter: 'json',
+    transporter: 'http',
     endpoints,
   })
   const exchange = completeExchange({
@@ -220,10 +217,10 @@ test('assignEndpointMapper should pick the most specified endpoint', async (t) =
       options: { uri: 'http://test.api/2', correct: true },
     },
   ]
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
     endpoints,
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = completeExchange({
     type: 'GET',
@@ -233,15 +230,15 @@ test('assignEndpointMapper should pick the most specified endpoint', async (t) =
 
   const ret = service.assignEndpointMapper(exchange)
 
-  t.true(ret.endpoint.options.correct)
+  t.true(ret.endpoint?.options.correct)
 })
 
 // Tests -- authorizeExchange
 
-test('authorizeExchange should set authorized flag', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+test('authorizeExchange should set authorized flag', (t) => {
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
-    adapter: 'json',
+    transporter: 'http',
     auth: { id: 'auth1' },
     endpoints,
   })
@@ -257,15 +254,15 @@ test('authorizeExchange should set authorized flag', async (t) => {
     authorized: true,
   }
 
-  const ret = await service.authorizeExchange(exchange)
+  const ret = service.authorizeExchange(exchange)
 
   t.deepEqual(ret, expectedExchange)
 })
 
-test('authorizeExchange should authorize exchange request without type', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+test('authorizeExchange should authorize exchange request without type', (t) => {
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
-    adapter: 'json',
+    transporter: 'http',
     auth: { id: 'auth1' },
     endpoints,
   })
@@ -281,15 +278,15 @@ test('authorizeExchange should authorize exchange request without type', async (
     authorized: true,
   }
 
-  const ret = await service.authorizeExchange(exchange)
+  const ret = service.authorizeExchange(exchange)
 
   t.deepEqual(ret, expectedExchange)
 })
 
-test('authorizeExchange should refuse based on schema', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+test('authorizeExchange should refuse based on schema', (t) => {
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
-    adapter: 'json',
+    transporter: 'http',
     auth: { id: 'auth1' },
     endpoints,
   })
@@ -311,7 +308,7 @@ test('authorizeExchange should refuse based on schema', async (t) => {
     },
   }
 
-  const ret = await service.authorizeExchange(exchange)
+  const ret = service.authorizeExchange(exchange)
 
   t.deepEqual(ret, expectedExchange)
 })
@@ -324,17 +321,25 @@ test('sendExchange should retrieve data from service', async (t) => {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const adapters = {
-    json: {
-      ...json,
-      send: async () => ({ status: 'ok', data }),
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        send: async (exchange: Exchange) =>
+          responseToExchange(exchange, { status: 'ok', data }),
+      },
     },
+    mapOptions,
+    schemas,
+    auths,
   }
-  const service = setupService({ mapOptions, schemas, adapters, auths })({
+  const service = setupService(resources)({
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'granting',
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -364,17 +369,25 @@ test('sendExchange should authenticate and return with error', async (t) => {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const adapters = {
-    json: {
-      ...json,
-      send: async () => ({ status: 'ok', data }),
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        send: async (exchange: Exchange) =>
+          responseToExchange(exchange, { status: 'ok', data }),
+      },
     },
+    mapOptions,
+    schemas,
+    auths,
   }
-  const service = setupService({ mapOptions, schemas, adapters, auths })({
+  const service = setupService(resources)({
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'refusing',
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -397,11 +410,16 @@ test('sendExchange should authenticate and return with error', async (t) => {
 })
 
 test('sendExchange should fail when not authorized', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters, auths })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    ...jsonResources,
+    auths,
+  })({
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'granting',
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -423,42 +441,46 @@ test('sendExchange should fail when not authorized', async (t) => {
 })
 
 test('sendExchange should connect before sending request', async (t) => {
+  const exchange = completeExchange({
+    type: 'GET',
+    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    ident: { id: 'johnf' },
+    authorized: true,
+  })
   const connect = async (
     { value }: EndpointOptions,
     { Authorization }: Authentication,
     _connection: Connection | null
   ) => ({ status: 'ok', value, token: Authorization })
-  const send = sinon.stub().resolves({ status: 'ok', data: {} })
-  const adapters = { json: { ...json, connect, send } }
-  const service = setupService({
+  const send = sinon
+    .stub()
+    .resolves(responseToExchange(exchange, { status: 'ok', data: {} }))
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: { ...jsonResources.transporters.http, connect, send },
+    },
     mapOptions,
     schemas,
-    adapters,
     auths,
-  })({
+  }
+  const service = setupService(resources)({
     id: 'entries',
     endpoints: [
       { options: { uri: 'http://some.api/1.0', value: 'Value from endpoint' } },
     ],
     options: { value: 'Value from service' },
-    adapter: 'json',
+    transporter: 'http',
     auth: 'granting',
   })
-  const exchange = service.assignEndpointMapper(
-    completeExchange({
-      type: 'GET',
-      request: { id: 'ent1', type: 'entry', service: 'thenews' },
-      ident: { id: 'johnf' },
-      authorized: true,
-    })
-  )
   const expected = {
     status: 'ok',
     value: 'Value from service',
     token: 'Bearer t0k3n',
   }
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.sendExchange(service.assignEndpointMapper(exchange))
 
   t.is(ret.status, 'ok', ret.response.error)
   t.is(send.callCount, 1)
@@ -466,19 +488,27 @@ test('sendExchange should connect before sending request', async (t) => {
 })
 
 test('sendExchange should store connection', async (t) => {
-  const adapters = {
-    json: {
-      ...json,
-      connect: sinon.stub().returns({ status: 'ok' }),
-      send: async () => ({ status: 'ok', data: {} }),
+  const connect = sinon.stub().returns({ status: 'ok' })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        connect,
+        send: async (exchange: Exchange) =>
+          responseToExchange(exchange, { status: 'ok', data: {} }),
+      },
     },
+    mapOptions,
+    schemas,
   }
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService(resources)({
     id: 'entries',
     endpoints: [
       { options: { uri: 'http://some.api/1.0', value: 'Value from options' } },
     ],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -493,25 +523,32 @@ test('sendExchange should store connection', async (t) => {
   await service.sendExchange(exchange)
   await service.sendExchange(exchange)
 
-  t.is(adapters.json.connect.callCount, 2)
-  t.deepEqual(adapters.json.connect.args[0][2], null)
-  t.deepEqual(adapters.json.connect.args[1][2], { status: 'ok' })
+  t.is(connect.callCount, 2)
+  t.deepEqual(connect.args[0][2], null)
+  t.deepEqual(connect.args[1][2], { status: 'ok' })
 })
 
 test('sendExchange should return error when connection fails', async (t) => {
-  const adapters = {
-    json: {
-      ...json,
-      connect: async () => ({ status: 'notfound', error: 'Not found' }),
-      send: async () => ({ status: 'ok', data: {} }),
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        connect: async () => ({ status: 'notfound', error: 'Not found' }),
+        send: async (exchange: Exchange) =>
+          responseToExchange(exchange, { status: 'ok', data: {} }),
+      },
     },
+    mapOptions,
+    schemas,
   }
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService(resources)({
     id: 'entries',
     endpoints: [
       { options: { uri: 'http://some.api/1.0', value: 'Value from options' } },
     ],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -533,19 +570,26 @@ test('sendExchange should return error when connection fails', async (t) => {
 })
 
 test('sendExchange should retrieve error response from service', async (t) => {
-  const adapters = {
-    json: {
-      ...json,
-      send: async () => ({
-        status: 'badrequest',
-        error: 'Real bad request',
-      }),
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        send: async (exchange: Exchange) =>
+          responseToExchange(exchange, {
+            status: 'badrequest',
+            error: 'Real bad request',
+          }),
+      },
     },
+    mapOptions,
+    schemas,
   }
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService(resources)({
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -566,19 +610,25 @@ test('sendExchange should retrieve error response from service', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('sendExchange should return with error when adapter throws', async (t) => {
-  const adapters = {
-    json: {
-      ...json,
-      send: async () => {
-        throw new Error('We did not expect this')
+test('sendExchange should return with error when transport throws', async (t) => {
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        send: async (_exchange: Exchange) => {
+          throw new Error('We did not expect this')
+        },
       },
     },
+    mapOptions,
+    schemas,
   }
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService(resources)({
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -602,19 +652,26 @@ test('sendExchange should return with error when adapter throws', async (t) => {
 })
 
 test('sendExchange should do nothing when exchange has a status', async (t) => {
-  const adapters = {
-    json: {
-      ...json,
-      send: sinon.stub().resolves({
-        status: 'error',
-        error: 'Should not be called',
-      }),
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        send: async (exchange: Exchange) =>
+          responseToExchange(exchange, {
+            status: 'error',
+            error: 'Should not be called',
+          }),
+      },
     },
+    mapOptions,
+    schemas,
   }
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService(resources)({
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -637,7 +694,7 @@ test('sendExchange should do nothing when exchange has a status', async (t) => {
 
 test.serial('mapResponse should map data array from service', async (t) => {
   const theDate = new Date()
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
     endpoints: [
       {
@@ -645,7 +702,7 @@ test.serial('mapResponse should map data array from service', async (t) => {
         options: { uri: 'http://some.api/1.0' },
       },
     ],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -697,7 +754,7 @@ test.serial('mapResponse should map data array from service', async (t) => {
 })
 
 test('mapResponse should map data object from service', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     endpoints: [
       {
@@ -705,7 +762,7 @@ test('mapResponse should map data object from service', async (t) => {
         options: { uri: 'http://some.api/1.0' },
       },
     ],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -731,7 +788,7 @@ test('mapResponse should map data object from service', async (t) => {
 })
 
 test('mapResponse should map null to undefined', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     endpoints: [
       {
@@ -739,7 +796,7 @@ test('mapResponse should map null to undefined', async (t) => {
         options: { uri: 'http://some.api/1.0' },
       },
     ],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -766,7 +823,7 @@ test('mapResponse should map null to undefined', async (t) => {
 })
 
 test('should authorize typed data in array from service', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     endpoints: [
       {
@@ -774,7 +831,7 @@ test('should authorize typed data in array from service', async (t) => {
         options: { uri: 'http://some.api/1.0' },
       },
     ],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -805,7 +862,7 @@ test('should authorize typed data in array from service', async (t) => {
 })
 
 test('should authorize typed data object from service', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     endpoints: [
       {
@@ -813,7 +870,7 @@ test('should authorize typed data object from service', async (t) => {
         options: { uri: 'http://some.api/1.0' },
       },
     ],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -837,7 +894,7 @@ test('should authorize typed data object from service', async (t) => {
 })
 
 test('should authorize typed data in array to service', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     endpoints: [
       {
@@ -845,7 +902,7 @@ test('should authorize typed data in array to service', async (t) => {
         options: { uri: 'http://some.api/1.0' },
       },
     ],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -875,7 +932,7 @@ test('should authorize typed data in array to service', async (t) => {
 })
 
 test('mapResponse should map without default values', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
     endpoints: [
       {
@@ -883,7 +940,7 @@ test('mapResponse should map without default values', async (t) => {
         options: { uri: 'http://some.api/1.0' },
       },
     ],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = service.assignEndpointMapper(
     completeExchange({
@@ -934,7 +991,7 @@ test('mapResponse should map without default values', async (t) => {
 // })
 
 test('mapResponse should respond with error when no endpoint and no error', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
     endpoints: [
       {
@@ -942,7 +999,7 @@ test('mapResponse should respond with error when no endpoint and no error', asyn
         options: { uri: 'http://some.api/1.0' },
       },
     ],
-    adapter: 'json',
+    transporter: 'http',
   })
   const exchange = completeExchange({
     type: 'GET',
@@ -975,9 +1032,9 @@ test('mapResponse should respond with error when no endpoint and no error', asyn
 
 test('mapRequest should cast and map request data', async (t) => {
   const theDate = new Date()
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
-    adapter: 'json',
+    transporter: 'http',
     endpoints: [
       {
         mutation: {
@@ -1041,9 +1098,9 @@ test('mapRequest should cast and map request data', async (t) => {
 test.todo('should strip undefined from data array')
 
 test('mapRequest should authorize data array going to service', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
-    adapter: 'json',
+    transporter: 'http',
     auth: { id: 'auth1' },
     endpoints,
   })
@@ -1080,9 +1137,9 @@ test('mapRequest should authorize data array going to service', async (t) => {
 })
 
 test('mapRequest should authorize data object going to service', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
-    adapter: 'json',
+    transporter: 'http',
     auth: { id: 'auth1' },
     endpoints,
   })
@@ -1112,9 +1169,9 @@ test('mapRequest should authorize data object going to service', async (t) => {
 })
 
 test('mapRequest should authorize data array coming from service', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
-    adapter: 'json',
+    transporter: 'http',
     auth: { id: 'auth1' },
     endpoints,
   })
@@ -1149,9 +1206,9 @@ test('mapRequest should authorize data array coming from service', async (t) => 
 })
 
 test('mapRequest should use mutation pipeline', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
-    adapter: 'json',
+    transporter: 'http',
     endpoints: [
       {
         mutation: [
@@ -1185,9 +1242,9 @@ test('mapRequest should use mutation pipeline', async (t) => {
 })
 
 test('mapRequest should respond with error when no endpoint', async (t) => {
-  const service = setupService({ mapOptions, schemas, adapters })({
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
-    adapter: 'json',
+    transporter: 'http',
     endpoints: [
       {
         mutation: ['data.content.data[].createOrMutate', { $apply: 'entry' }],

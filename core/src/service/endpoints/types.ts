@@ -1,7 +1,7 @@
 import { MapDefinition } from 'map-transform'
-import { Dictionary, Exchange } from '../../types'
+import { Exchange } from '../../types'
 
-export type EndpointOptions = Dictionary<unknown>
+export type EndpointOptions = Record<string, unknown>
 
 export type JsonSchema = object | string | boolean
 
@@ -10,7 +10,7 @@ export interface MatchObject {
   type?: string | string[]
   scope?: string | string[]
   params?: { [key: string]: boolean }
-  filters?: Dictionary<JsonSchema>
+  filters?: Record<string, JsonSchema>
 }
 
 export interface EndpointDef {
