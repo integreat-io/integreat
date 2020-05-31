@@ -6,7 +6,7 @@ import builtInFunctions from '../../transformers/builtIns'
 import { Data, Exchange } from '../../types'
 import { MapOptions } from '../types'
 import { completeExchange } from '../../utils/exchangeMapping'
-import jsonTransform from '../../tests/helpers/resources/transformers/jsonTransform'
+import json from '../../transformers/json'
 
 import createEndpoint from './create'
 
@@ -81,7 +81,7 @@ const mapOptions = {
     ...builtInFunctions,
     shouldHaveToken,
     alwaysOk,
-    jsonTransform,
+    json,
   },
 }
 
@@ -287,7 +287,7 @@ test('should map exchange props from response', (t) => {
 
 test('should map response from service with service and endpoint mutations', (t) => {
   const serviceMutation = {
-    data: ['data', { $transform: 'jsonTransform' }],
+    data: ['data', { $transform: 'json' }],
     error: 'params.message',
   }
   const endpointDef = {

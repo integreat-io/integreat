@@ -47,7 +47,9 @@ test('should dispatch set action and return respons', async (t) => {
           status: 'ok',
           response: {
             ...exchange.response,
-            data: { data: { ...ent1Data, createdAt, updatedAt } },
+            data: JSON.stringify({
+              data: { ...ent1Data, createdAt, updatedAt },
+            }),
           },
         }),
       },
@@ -58,12 +60,12 @@ test('should dispatch set action and return respons', async (t) => {
     type: 'REQUEST',
     payload: {
       type: 'entry',
-      data: {
+      data: JSON.stringify({
         key: 'ent1',
         headline: 'Entry 1',
         createdAt: createdAt,
         updatedAt: updatedAt,
-      },
+      }),
       requestMethod: 'POST',
     },
     meta: { ident: { root: true } },

@@ -8,7 +8,7 @@ import entry1 from '../helpers/data/entry1'
 import entry2 from '../helpers/data/entry2'
 import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
 import entriesMutation from '../helpers/defs/mutations/entries-entry'
-import jsonTransform from '../helpers/resources/transformers/jsonTransform'
+import json from '../../transformers/json'
 import { TypedData } from '../../types'
 
 import Integreat from '../..'
@@ -19,7 +19,7 @@ const resourcesWithTrans = {
   ...resources,
   transformers: {
     ...resources.transformers,
-    jsonTransform,
+    json,
   },
 }
 
@@ -176,7 +176,7 @@ test.failing('should transform at paths within the data', async (t) => {
     $direction: 'fwd',
     'data[]': [
       'data.responseContent',
-      { $transform: 'jsonTransform' },
+      { $transform: 'json' },
       'articles[]',
       { $apply: 'entries-entry' },
     ],

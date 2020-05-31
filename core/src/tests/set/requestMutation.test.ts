@@ -1,7 +1,6 @@
 import test from 'ava'
 import nock = require('nock')
 import resources from '../helpers/resources'
-import jsonTransform from '../helpers/resources/transformers/jsonTransform'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entriesMutation from '../helpers/defs/mutations/entries-entry'
@@ -28,14 +27,6 @@ const entry1Mapped = {
   createdAt: date,
   updatedAt: date,
   sections: [],
-}
-
-const resourcesWithStringify = {
-  ...resources,
-  transformers: {
-    ...resources.transformers,
-    stringify: jsonTransform,
-  },
 }
 
 test.after.always(() => {
@@ -69,7 +60,7 @@ test.failing('should set data with endpoint mutation', async (t) => {
       none0: ['content.footnote', { $transform: 'fixed', value: '' }],
       'params.type': [
         'content.meta',
-        { $transform: 'stringify', $direction: 'rev' },
+        { $transform: 'json', $direction: 'rev' },
         'datatype',
       ],
     },
@@ -93,7 +84,7 @@ test.failing('should set data with endpoint mutation', async (t) => {
     },
   }
 
-  const great = Integreat.create(defs, resourcesWithStringify)
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
@@ -127,7 +118,7 @@ test.failing(
         none0: ['footnote', { $transform: 'fixed', value: '' }],
         'params.type': [
           'meta',
-          { $transform: 'stringify', $direction: 'rev' },
+          { $transform: 'json', $direction: 'rev' },
           'datatype',
         ],
       },
@@ -152,7 +143,7 @@ test.failing(
       },
     }
 
-    const great = Integreat.create(defs, resourcesWithStringify)
+    const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
     t.is(ret.status, 'ok', ret.error)
