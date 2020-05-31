@@ -1,6 +1,7 @@
 import got, { HTTPError, Response } from 'got'
+import queryString = require('query-string')
 import { Exchange, Data, Connection } from '../../core/src'
-import { Options } from './types'
+import { EndpointOptions } from './types'
 
 const extractFromError = (error: HTTPError | Error) =>
   error instanceof HTTPError
@@ -66,30 +67,53 @@ function updateExchangeWithError(
   return updateExchange(exchange, response.status, undefined, response.error)
 }
 
-const createQueryString = (params: Record<string, string>) =>
-  Object.keys(params)
-    // eslint-disable-next-line security/detect-object-injection
-    .map((key) => `${key.toLowerCase()}=${encodeURIComponent(params[key])}`)
-    .join('&')
-
-const appendQueryParams = (uri: string, params: Record<string, string>) =>
-  `${uri}${uri.indexOf('?') >= 0 ? '&' : '?'}${createQueryString(params)}`
-
 const removeLeadingSlashIf = (uri: string | undefined, doRemove: boolean) =>
   doRemove && typeof uri === 'string' && uri.startsWith('/')
     ? uri.substr(1)
     : uri
 
-const generateUrlFromEndpoint = (
-  { uri, baseUri, authAsQuery }: Options = {},
-  auth?: Record<string, string> | boolean | null
-) =>
-  removeLeadingSlashIf(
-    uri && authAsQuery && auth && auth !== true
-      ? appendQueryParams(uri, auth)
-      : uri,
-    !!baseUri // Remove leading slash if baseUri
+const generateUrl = ({ uri, baseUri }: EndpointOptions = {}) =>
+  removeLeadingSlashIf(uri, !!baseUri)
+
+function extractQueryParamsFromUri(uri?: string) {
+  if (typeof uri === 'string') {
+    const position = uri.indexOf('?')
+    if (position > -1) {
+      return queryString.parse(uri.substr(position))
+    }
+  }
+  return {}
+}
+
+const isValidQueryValue = (value: unknown) =>
+  ['string', 'number', 'boolean'].includes(typeof value) || value === null
+
+const prepareQueryValue = (value: unknown) =>
+  value instanceof Date
+    ? value.toISOString()
+    : isValidQueryValue(value)
+    ? value
+    : JSON.stringify(value)
+
+const prepareQueryParams = (params: Record<string, unknown>) =>
+  Object.entries(params).reduce(
+    (params, [key, value]) =>
+      value === undefined
+        ? params // Don't include undefined
+        : { ...params, [key]: prepareQueryValue(value) },
+    {}
   )
+
+const generateQueryParams = (
+  { queryParams, authAsQuery, uri }: EndpointOptions = {},
+  auth?: Record<string, unknown> | boolean | null
+) =>
+  prepareQueryParams({
+    ...extractQueryParamsFromUri(uri),
+    ...queryParams,
+    ...(authAsQuery && auth && auth !== true ? auth : {}),
+  })
+
 const removeContentTypeIf = (
   headers: Record<string, string>,
   doRemove: boolean
@@ -105,7 +129,7 @@ const removeContentTypeIf = (
     : headers
 
 const createHeaders = (
-  endpoint?: Options,
+  endpoint?: EndpointOptions,
   data?: unknown,
   headers?: object,
   auth?: object | boolean | null
@@ -118,17 +142,18 @@ const createHeaders = (
   ...(auth === true || endpoint?.authAsQuery ? {} : auth),
 })
 
-const selectMethod = (endpoint?: Options, data?: unknown) =>
+const selectMethod = (endpoint?: EndpointOptions, data?: unknown) =>
   endpoint?.method || (data ? ('PUT' as const) : ('GET' as const))
 
 const prepareBody = (data: unknown) =>
   typeof data === 'string' || data === undefined ? data : JSON.stringify(data)
 
-function optionsFromEndpoint(exchange: Exchange, endpoint?: Options) {
+function optionsFromEndpoint(exchange: Exchange, endpoint?: EndpointOptions) {
   const method = selectMethod(endpoint, exchange.request.data)
   return {
     prefixUrl: endpoint?.baseUri,
-    url: generateUrlFromEndpoint(endpoint, exchange.auth),
+    url: generateUrl(endpoint),
+    searchParams: generateQueryParams(endpoint, exchange.auth),
     method,
     body: prepareBody(exchange.request.data),
     headers: removeContentTypeIf(

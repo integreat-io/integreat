@@ -27,7 +27,8 @@
     "@types/debug": "^4.1.5",
     "debug": "^4.1.1",
     "got": "^11.1.4",
-    "great-uri-template": "^0.1.5"
+    "great-uri-template": "^0.1.5",
+    "query-string": "^6.12.1"
   },
   "devDependencies": {
     "@types/sinon": "^9.0.0",

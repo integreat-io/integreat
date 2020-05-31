@@ -133,6 +133,144 @@ test('should support base url', async (t) => {
   t.true(scope.isDone())
 })
 
+test('should set query params from options', async (t) => {
+  const scope = nock('http://json20.test')
+    .get('/entries')
+    .query({ createdAfter: '2020-04-18T11:19:45.000Z', order: 'desc' })
+    .reply(200, [{ id: 'ent1' }])
+  const exchange = {
+    type: 'GET',
+    status: null,
+    request: { type: 'entry' },
+    response: {},
+    meta: {},
+    endpoint: createEndpoint({
+      baseUri: 'http://json20.test',
+      uri: '/entries',
+      queryParams: {
+        createdAfter: '2020-04-18T11:19:45.000Z',
+        order: 'desc',
+      },
+    }),
+  }
+
+  const ret = await send(exchange, null)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.true(scope.isDone())
+})
+
+test('should encode query params correctly', async (t) => {
+  const scope = nock('http://json21.test')
+    .get(
+      '/entries?order=desc&query=*%5B_type%3D%3D%27table%27%26%26key%3D%3D%24table%5D%5B0%5D.fields%7Bkey%2Cname%2Ctype%7D'
+    )
+    .reply(200, [{ id: 'ent1' }])
+  const exchange = {
+    type: 'GET',
+    status: null,
+    request: { type: 'entry' },
+    response: {},
+    meta: {},
+    endpoint: createEndpoint({
+      baseUri: 'http://json21.test',
+      uri: '/entries',
+      queryParams: {
+        order: 'desc',
+        query: "*[_type=='table'&&key==$table][0].fields{key,name,type}",
+      },
+    }),
+  }
+
+  const ret = await send(exchange, null)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.true(scope.isDone())
+})
+
+test('should force query param values to string', async (t) => {
+  const scope = nock('http://json22.test')
+    .get('/entries')
+    .query({
+      createdAfter: '2020-04-18T11:19:45.000Z',
+      desc: 'true',
+      obj: '{}',
+    })
+    .reply(200, [{ id: 'ent1' }])
+  const exchange = {
+    type: 'GET',
+    status: null,
+    request: { type: 'entry' },
+    response: {},
+    meta: {},
+    endpoint: createEndpoint({
+      baseUri: 'http://json22.test',
+      uri: '/entries',
+      queryParams: {
+        createdAfter: new Date('2020-04-18T11:19:45.000Z'),
+        desc: true,
+        obj: {},
+      },
+    }),
+  }
+
+  const ret = await send(exchange, null)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.true(scope.isDone())
+})
+
+test('should exclude query params with undefined value', async (t) => {
+  const scope = nock('http://json23.test')
+    .get('/entries')
+    .query({ order: 'desc' })
+    .reply(200, [{ id: 'ent1' }])
+  const exchange = {
+    type: 'GET',
+    status: null,
+    request: { type: 'entry' },
+    response: {},
+    meta: {},
+    endpoint: createEndpoint({
+      baseUri: 'http://json23.test',
+      uri: '/entries',
+      queryParams: {
+        order: 'desc',
+        exclude: undefined,
+      },
+    }),
+  }
+
+  const ret = await send(exchange, null)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.true(scope.isDone())
+})
+
+test('should set query params from options when uri has query string', async (t) => {
+  const scope = nock('http://json17.test')
+    .get('/entries')
+    .query({ page: 1, order: 'desc' })
+    .reply(200, [{ id: 'ent1' }])
+  const exchange = {
+    type: 'GET',
+    status: null,
+    request: { type: 'entry' },
+    response: {},
+    meta: {},
+    endpoint: createEndpoint({
+      baseUri: 'http://json17.test',
+      uri: '/entries?page=1',
+      queryParams: { order: 'desc' },
+    }),
+  }
+
+  const ret = await send(exchange, null)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.true(scope.isDone())
+})
+
 test('should return ok status on all 200-range statuses', async (t) => {
   const data = '{"id":"ent2","title":"Entry 2"}'
   const scope = nock('http://json4.test')
@@ -396,7 +534,11 @@ test('should retrieve with headers from exchange', async (t) => {
 test('should retrieve with auth params in querystring', async (t) => {
   nock('http://json16.test')
     .put('/entries/ent1', '{}')
-    .query({ authorization: 'Th@&t0k3n', timestamp: '1554407539' })
+    .query({
+      order: 'desc',
+      Authorization: 'Th@&t0k3n',
+      timestamp: '1554407539',
+    })
     .reply(200)
   const exchange = {
     type: 'SET',
@@ -407,29 +549,7 @@ test('should retrieve with auth params in querystring', async (t) => {
     endpoint: createEndpoint({
       uri: 'http://json16.test/entries/ent1',
       authAsQuery: true,
-    }),
-    auth: { Authorization: 'Th@&t0k3n', timestamp: '1554407539' },
-  }
-
-  const ret = await send(exchange, null)
-
-  t.is(ret.status, 'ok', ret.response.error)
-})
-
-test('should retrieve with auth params in querystring when uri has querystring', async (t) => {
-  nock('http://json17.test')
-    .put('/entries/ent1', '{}')
-    .query({ page: 1, authorization: 'Th@&t0k3n', timestamp: '1554407539' })
-    .reply(200)
-  const exchange = {
-    type: 'SET',
-    status: null,
-    request: { type: 'entry', data: '{}' },
-    response: {},
-    meta: {},
-    endpoint: createEndpoint({
-      uri: 'http://json17.test/entries/ent1?page=1',
-      authAsQuery: true,
+      queryParams: { order: 'desc' },
     }),
     auth: { Authorization: 'Th@&t0k3n', timestamp: '1554407539' },
   }
