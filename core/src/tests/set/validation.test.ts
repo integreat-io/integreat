@@ -1,8 +1,8 @@
 import test from 'ava'
 import sinon = require('sinon')
 import nock = require('nock')
-import resources from '../helpers/resources'
 import defs from '../helpers/defs'
+import resources from '../helpers/resources'
 import { DataObject, Data } from '../../types'
 
 import Integreat from '../..'
@@ -53,7 +53,7 @@ defs.services[0].endpoints.push({
       { $transform: 'shouldHaveAuthor' },
     ],
   },
-  options: { uri: '/entries/{id}' },
+  options: { uri: '/entries/{{params.id}}' },
 })
 // defs.services[0].endpoints.push({
 //   match: { action: 'REQUEST', filters: { 'params.id': { type: 'string' } } },
@@ -68,6 +68,7 @@ const resourcesWithTransformer = {
 
 // Tests
 
+// TODO: Solution for validations
 test.failing(
   'should respond with response from validation when not validated',
   async (t) => {
@@ -91,8 +92,7 @@ test.failing(
   }
 )
 
-// Waiting for uri template solution
-test.failing('should respond with ok when validated', async (t) => {
+test('should respond with ok when validated', async (t) => {
   const scope = nock('http://some.api')
     .put('/entries/ent1')
     .reply(201, { data: { key: 'ent1', ok: true } })

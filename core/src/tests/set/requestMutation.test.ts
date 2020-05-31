@@ -5,6 +5,7 @@ import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entriesMutation from '../helpers/defs/mutations/entries-entry'
 import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
+import exchangeUriMutation from '../helpers/defs/mutations/exchangeUri'
 
 import Integreat from '../..'
 
@@ -35,8 +36,7 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should set data with endpoint mutation', async (t) => {
+test('should set data with endpoint mutation', async (t) => {
   const requestData = JSON.stringify({
     content: {
       items: [entry1Mapped],
@@ -73,7 +73,7 @@ test.failing('should set data with endpoint mutation', async (t) => {
         endpoints: [
           {
             mutation,
-            options: { uri: '/entries/{id}' },
+            options: { uri: '/entries/{{params.id}}' },
           },
         ],
       },
@@ -81,6 +81,7 @@ test.failing('should set data with endpoint mutation', async (t) => {
     mutations: {
       'entries-entry': entriesMutation,
       'exchange:json': exchangeJsonMutation,
+      'exchange:uri': exchangeUriMutation,
     },
   }
 
@@ -90,62 +91,59 @@ test.failing('should set data with endpoint mutation', async (t) => {
   t.is(ret.status, 'ok', ret.error)
 })
 
-// Waiting for uri template solution
-test.failing(
-  'should set data with service and endpoint mutation',
-  async (t) => {
-    const requestData = JSON.stringify({
-      content: {
-        items: [entry1Mapped],
-        footnote: '',
-        meta: '{"datatype":"entry"}',
-      },
-    })
-    nock('http://some.api')
-      .put('/entries/ent1', requestData)
-      .reply(201, { id: 'ent1', ok: true, rev: '1-12345' })
-    const action = {
-      type: 'SET',
-      payload: { type: 'entry', data: entry1Item },
-      meta: { ident: { root: true } },
-    }
-    const serviceMutation = { data: 'data.content' }
-    const mutation = [
-      'data',
+test('should set data with service and endpoint mutation', async (t) => {
+  const requestData = JSON.stringify({
+    content: {
+      items: [entry1Mapped],
+      footnote: '',
+      meta: '{"datatype":"entry"}',
+    },
+  })
+  nock('http://some.api')
+    .put('/entries/ent1', requestData)
+    .reply(201, { id: 'ent1', ok: true, rev: '1-12345' })
+  const action = {
+    type: 'SET',
+    payload: { type: 'entry', data: entry1Item },
+    meta: { ident: { root: true } },
+  }
+  const serviceMutation = { data: 'data.content' }
+  const mutation = [
+    'data',
+    {
+      $direction: 'rev',
+      data: ['items[]', { $apply: 'entries-entry' }],
+      none0: ['footnote', { $transform: 'fixed', value: '' }],
+      'params.type': [
+        'meta',
+        { $transform: 'json', $direction: 'rev' },
+        'datatype',
+      ],
+    },
+  ]
+  const defs = {
+    schemas: [entrySchema],
+    services: [
       {
-        $direction: 'rev',
-        data: ['items[]', { $apply: 'entries-entry' }],
-        none0: ['footnote', { $transform: 'fixed', value: '' }],
-        'params.type': [
-          'meta',
-          { $transform: 'json', $direction: 'rev' },
-          'datatype',
+        ...entriesService,
+        mutation: [...entriesService.mutation, serviceMutation],
+        endpoints: [
+          {
+            mutation,
+            options: { uri: '/entries/{{params.id}}' },
+          },
         ],
       },
-    ]
-    const defs = {
-      schemas: [entrySchema],
-      services: [
-        {
-          ...entriesService,
-          mutation: [...entriesService.mutation, serviceMutation],
-          endpoints: [
-            {
-              mutation,
-              options: { uri: '/entries/{id}' },
-            },
-          ],
-        },
-      ],
-      mutations: {
-        'entries-entry': entriesMutation,
-        'exchange:json': exchangeJsonMutation,
-      },
-    }
-
-    const great = Integreat.create(defs, resources)
-    const ret = await great.dispatch(action)
-
-    t.is(ret.status, 'ok', ret.error)
+    ],
+    mutations: {
+      'entries-entry': entriesMutation,
+      'exchange:json': exchangeJsonMutation,
+      'exchange:uri': exchangeUriMutation,
+    },
   }
-)
+
+  const great = Integreat.create(defs, resources)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+})

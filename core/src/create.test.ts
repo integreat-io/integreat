@@ -2,6 +2,7 @@ import test from 'ava'
 import sinon = require('sinon')
 import { jsonServiceDef } from './tests/helpers/json'
 import exchangeJsonMutation from './tests/helpers/defs/mutations/exchangeJson'
+import exchangeUriMutation from './tests/helpers/defs/mutations/exchangeUri'
 import resources from './tests/helpers/resources'
 import {
   Action,
@@ -53,6 +54,7 @@ const schemas = [
 
 const mutations = {
   'exchange:json': exchangeJsonMutation,
+  'exchange:uri': exchangeUriMutation,
   ['entries_entry']: [
     {
       $iterate: true,

@@ -2,6 +2,7 @@ import test from 'ava'
 import nock = require('nock')
 import resources from '../helpers/resources'
 import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
+import exchangeUriMutation from '../helpers/defs/mutations/exchangeUri'
 
 import Integreat from '../..'
 
@@ -13,6 +14,7 @@ const defs = {
   mutations: {
     'entries-entry': [{ $apply: 'cast_entry' }],
     'exchange:json': exchangeJsonMutation,
+    'exchange:uri': exchangeUriMutation,
   },
 }
 
@@ -22,8 +24,7 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should get one entry from service', async (t) => {
+test('should get one entry from service', async (t) => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
   nock('http://some.api')

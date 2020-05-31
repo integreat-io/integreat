@@ -153,8 +153,7 @@ test('should map and set one item to service', async (t) => {
   t.true(scope.isDone())
 })
 
-// Waiting for url template solution
-test.failing('should send without default values', async (t) => {
+test('should send without default values', async (t) => {
   const scope = nock('http://api5.test')
     .put('/database/entry:ent1', { docs: [{ id: 'ent1' }] })
     .reply(200, { okay: true, id: 'ent1', rev: '000001' })
@@ -167,7 +166,7 @@ test.failing('should send without default values', async (t) => {
     },
   })
   const src = setupService(
-    'http://api5.test/database/{type}:{id}',
+    'http://api5.test/database/{{params.type}}:{{params.id}}',
     undefined,
     'PUT'
   )
@@ -225,8 +224,7 @@ test('should set to specified endpoint', async (t) => {
   t.true(scope.isDone())
 })
 
-// Waiting for url template solution
-test.failing('should set to uri with params', async (t) => {
+test('should set to uri with params', async (t) => {
   const scope = nock('http://api3.test')
     .post('/entries/_bulk_docs')
     .reply(201, [{ ok: true }])
@@ -238,7 +236,7 @@ test.failing('should set to uri with params', async (t) => {
       params: { typefolder: 'entries' },
     },
   })
-  const src = setupService('http://api3.test/{typefolder}/_bulk_docs')
+  const src = setupService('http://api3.test/{{params.typefolder}}/_bulk_docs')
   const getService = () => src
 
   const ret = await set(exchange, dispatch, getService)

@@ -436,6 +436,7 @@ test('should create mapping object from incoming exchange for response mapping t
 test('should populate exchange from mapping object from response from service', (t) => {
   const isRequest = false
   const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
+  const isMatch = () => true
   const exchange = {
     ...exchangeDefaults,
     type: 'GET',
@@ -447,7 +448,8 @@ test('should populate exchange from mapping object from response from service', 
       data: { id: 'johnf' },
     },
     endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
+      options: { uri: 'http://some.api.com/1.0/users/{{params.id}}' },
+      isMatch,
     } as unknown) as Endpoint,
     ident: { id: 'johnf' },
   }
@@ -458,7 +460,10 @@ test('should populate exchange from mapping object from response from service', 
     data,
     paging: { next: { offset: 'page2', type: 'entry' } },
     error: undefined,
-    options: { uri: 'http://some.api.com/1.0' },
+    options: {
+      uri: 'http://some.api.com/1.0/users/johnf',
+      queryParams: { order: 'desc' },
+    },
     ident: { id: 'johnf' },
   }
   const expected = {
@@ -476,7 +481,11 @@ test('should populate exchange from mapping object from response from service', 
       paging: { next: { offset: 'page2', type: 'entry' } },
     },
     endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
+      options: {
+        uri: 'http://some.api.com/1.0/users/johnf',
+        queryParams: { order: 'desc' },
+      },
+      isMatch,
     } as unknown) as Endpoint,
     ident: { id: 'johnf' },
   }

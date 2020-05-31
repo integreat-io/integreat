@@ -140,8 +140,7 @@ test('should get all items from service', async (t) => {
   t.true(scope.isDone())
 })
 
-// Waiting for url template solution
-test.failing('should get item by id from service', async (t) => {
+test('should get item by id from service', async (t) => {
   nock('http://api1.test')
     .get('/database/entry:ent1')
     .reply(200, { id: 'ent1', type: 'entry' })
@@ -153,7 +152,9 @@ test.failing('should get item by id from service', async (t) => {
       service: 'entries',
     },
   })
-  const svc = setupService('http://api1.test/database/{type}:{id}')
+  const svc = setupService(
+    'http://api1.test/database/{{params.type}}:{{params.id}}'
+  )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
 
@@ -163,78 +164,70 @@ test.failing('should get item by id from service', async (t) => {
   t.is((ret.response.data as DataObject).id, 'ent1')
 })
 
-// Waiting for url template solution
-test.failing(
-  'should get items by id array from service from member_s_ endpoint',
-  async (t) => {
-    nock('http://api12.test')
-      .get('/entries')
-      .query({ id: 'ent1,ent2' })
-      .reply(200, [
-        { id: 'ent1', type: 'entry' },
-        { id: 'ent2', type: 'entry' },
-      ])
-    const exchange = completeExchange({
-      type: 'GET',
-      request: {
-        id: ['ent1', 'ent2'],
-        type: 'entry',
-        service: 'entries',
-      },
-    })
-    const svc = setupService('http://api12.test/entries{?id}', {
-      scope: 'members',
-    })
-    const getService = () => svc
+test('should get items by id array from service from member_s_ endpoint', async (t) => {
+  nock('http://api12.test')
+    .get('/entries')
+    .query({ id: 'ent1,ent2' })
+    .reply(200, [
+      { id: 'ent1', type: 'entry' },
+      { id: 'ent2', type: 'entry' },
+    ])
+  const exchange = completeExchange({
+    type: 'GET',
+    request: {
+      id: ['ent1', 'ent2'],
+      type: 'entry',
+      service: 'entries',
+    },
+  })
+  const svc = setupService('http://api12.test/entries?id={{params.id}}', {
+    scope: 'members',
+  })
+  const getService = () => svc
 
-    const ret = await get(exchange, dispatch, getService)
+  const ret = await get(exchange, dispatch, getService)
 
-    t.is(ret.status, 'ok', ret.response.error)
-    t.true(Array.isArray(ret.response.data))
-    const data = ret.response.data as DataObject[]
-    t.is(data.length, 2)
-    t.is(data[0].id, 'ent1')
-    t.is(data[1].id, 'ent2')
-  }
-)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.true(Array.isArray(ret.response.data))
+  const data = ret.response.data as DataObject[]
+  t.is(data.length, 2)
+  t.is(data[0].id, 'ent1')
+  t.is(data[1].id, 'ent2')
+})
 
-// Waiting for url template solution
-test.failing(
-  'should get items by id array from member endpoints',
-  async (t) => {
-    const scope = nock('http://api6.test')
-      .get('/entries/ent1')
-      .reply(200, { id: 'ent1', type: 'entry' })
-      .get('/entries/ent2')
-      .reply(200, { id: 'ent2', type: 'entry' })
-      .get('/entries/ent3')
-      .reply(404, undefined)
-    const exchange = completeExchange({
-      type: 'GET',
-      request: {
-        id: ['ent1', 'ent2', 'ent3'],
-        type: 'entry',
-        service: 'entries',
-      },
-    })
-    const svc = setupService('http://api6.test/entries/{id}', {
-      scope: 'member',
-    })
-    const getService = (_type?: string | string[], service?: string) =>
-      service === 'entries' ? svc : undefined
+test('should get items by id array from member endpoints', async (t) => {
+  const scope = nock('http://api6.test')
+    .get('/entries/ent1')
+    .reply(200, { id: 'ent1', type: 'entry' })
+    .get('/entries/ent2')
+    .reply(200, { id: 'ent2', type: 'entry' })
+    .get('/entries/ent3')
+    .reply(404, undefined)
+  const exchange = completeExchange({
+    type: 'GET',
+    request: {
+      id: ['ent1', 'ent2', 'ent3'],
+      type: 'entry',
+      service: 'entries',
+    },
+  })
+  const svc = setupService('http://api6.test/entries/{{params.id}}', {
+    scope: 'member',
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? svc : undefined
 
-    const ret = await get(exchange, dispatch, getService)
+  const ret = await get(exchange, dispatch, getService)
 
-    t.is(ret.status, 'ok', ret.response.error)
-    t.true(Array.isArray(ret.response.data))
-    const data = ret.response.data as DataObject[]
-    t.is(data.length, 3)
-    t.is(data[0].id, 'ent1')
-    t.is(data[1].id, 'ent2')
-    t.is(data[2], undefined)
-    t.true(scope.isDone())
-  }
-)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.true(Array.isArray(ret.response.data))
+  const data = ret.response.data as DataObject[]
+  t.is(data.length, 3)
+  t.is(data[0].id, 'ent1')
+  t.is(data[1].id, 'ent2')
+  t.is(data[2], undefined)
+  t.true(scope.isDone())
+})
 
 test('should pass on ident when getting from id array', async (t) => {
   const ident = { id: 'johnf' }
@@ -286,32 +279,28 @@ test('should return error when one or more requests for individual ids fails', a
   t.is(ret.status, 'error')
 })
 
-// Waiting for url template solution
-test.failing(
-  'should get item by id from service when id is array of one',
-  async (t) => {
-    nock('http://api7.test')
-      .get('/entries/ent1')
-      .reply(200, { id: 'ent1', type: 'entry' })
-    const exchange = completeExchange({
-      type: 'GET',
-      request: {
-        id: ['ent1'],
-        type: 'entry',
-        service: 'entries',
-      },
-    })
-    const svc = setupService('http://api7.test/entries/{id}', {
-      scope: 'member',
-    })
-    const getService = () => svc
+test('should get item by id from service when id is array of one', async (t) => {
+  nock('http://api7.test')
+    .get('/entries/ent1')
+    .reply(200, { id: 'ent1', type: 'entry' })
+  const exchange = completeExchange({
+    type: 'GET',
+    request: {
+      id: ['ent1'],
+      type: 'entry',
+      service: 'entries',
+    },
+  })
+  const svc = setupService('http://api7.test/entries/{{params.id}}', {
+    scope: 'member',
+  })
+  const getService = () => svc
 
-    const ret = await get(exchange, dispatch, getService)
+  const ret = await get(exchange, dispatch, getService)
 
-    t.is(ret.status, 'ok', ret.response.error)
-    t.is((ret.response.data as DataObject).id, 'ent1')
-  }
-)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.is((ret.response.data as DataObject).id, 'ent1')
+})
 
 test('should get default values from type', async (t) => {
   nock('http://api1.test')
@@ -379,30 +368,6 @@ test('should get from other endpoint', async (t) => {
     endpointId: 'other',
   })
   const svc = setupService('http://api5.test/database')
-  const getService = () => svc
-
-  const ret = await get(exchange, dispatch, getService)
-
-  t.is(ret.status, 'ok', ret.response.error)
-  t.is((ret.response.data as DataObject[])[0].id, 'ent1')
-})
-
-// Waiting for url template solution
-test.failing('should get with uri params', async (t) => {
-  nock('http://api1.test')
-    .get('/database?first=20&max=10&type=entry')
-    .reply(200, [{ id: 'ent1', type: 'entry' }])
-  const exchange = completeExchange({
-    type: 'GET',
-    request: {
-      type: 'entry',
-      params: {
-        first: 20,
-        max: 10,
-      },
-    },
-  })
-  const svc = setupService('http://api1.test/database{?first,max,type}')
   const getService = () => svc
 
   const ret = await get(exchange, dispatch, getService)

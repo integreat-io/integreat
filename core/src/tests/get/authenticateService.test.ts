@@ -18,47 +18,43 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for uri template solution
-test.failing(
-  'should get entries from service requiring authentication',
-  async (t) => {
-    nock('http://some.api', {
-      reqheaders: {
-        authorization: 'Bearer t0k3n',
-      },
-    })
-      .get('/entries')
-      .reply(200, { data: entriesData })
-    const resourcesWithAuth = {
-      ...resources,
-      authenticators: { token: tokenAuth },
-    }
-    const defsWithAuth = {
-      ...defs,
-      services: [
-        {
-          ...entriesService,
-          auth: 'entriesToken',
-        } as ServiceDef,
-      ],
-      auths: [
-        {
-          id: 'entriesToken',
-          authenticator: 'token',
-          options: { token: 't0k3n' },
-        },
-      ],
-    }
-    const action = {
-      type: 'GET',
-      payload: { type: 'entry' },
-      meta: { ident: { id: 'johnf' } },
-    }
-
-    const great = Integreat.create(defsWithAuth, resourcesWithAuth)
-    const ret = await great.dispatch(action)
-
-    t.is(ret.status, 'ok', ret.error)
-    t.is((ret.data as TypedData[]).length, 3)
+test('should get entries from service requiring authentication', async (t) => {
+  nock('http://some.api', {
+    reqheaders: {
+      authorization: 'Bearer t0k3n',
+    },
+  })
+    .get('/entries')
+    .reply(200, { data: entriesData })
+  const resourcesWithAuth = {
+    ...resources,
+    authenticators: { token: tokenAuth },
   }
-)
+  const defsWithAuth = {
+    ...defs,
+    services: [
+      {
+        ...entriesService,
+        auth: 'entriesToken',
+      } as ServiceDef,
+    ],
+    auths: [
+      {
+        id: 'entriesToken',
+        authenticator: 'token',
+        options: { token: 't0k3n' },
+      },
+    ],
+  }
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const great = Integreat.create(defsWithAuth, resourcesWithAuth)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 3)
+})

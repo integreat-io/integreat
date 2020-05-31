@@ -3,15 +3,25 @@ export default {
   transporter: 'http',
   auth: true,
   options: { baseUri: 'http://some.api' },
-  mutation: [{ $apply: 'exchange:json' }],
+  mutation: [{ $apply: 'exchange:json' }, { $apply: 'exchange:uri' }],
   endpoints: [
     {
       match: { action: 'GET', params: { tokens: true } },
-      mutation: {
-        $direction: 'fwd',
-        data: ['data.data', { $apply: 'users-user' }],
-      },
-      options: { uri: '/users{?tokens}' },
+      mutation: [
+        {
+          $direction: 'rev',
+          $flip: true,
+          options: {
+            uri: 'options.uri',
+            'queryParams.tokens': 'params.tokens',
+          },
+        },
+        {
+          $direction: 'fwd',
+          data: ['data.data', { $apply: 'users-user' }],
+        },
+      ],
+      options: { uri: '/users' },
     },
     {
       match: { action: 'GET', scope: 'collection' },
@@ -35,7 +45,7 @@ export default {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'users-user' }],
       },
-      options: { uri: '/users/{id}' },
+      options: { uri: '/users/{{params.id}}' },
     },
   ],
 }

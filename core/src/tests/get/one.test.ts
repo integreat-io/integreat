@@ -18,8 +18,7 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should get one entry from service', async (t) => {
+test('should get one entry from service', async (t) => {
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, { data: { ...ent1Data, createdAt, updatedAt } })
@@ -49,8 +48,7 @@ test.failing('should get one entry from service', async (t) => {
   t.deepEqual(ret.data, expected)
 })
 
-// Waiting for uri template solution
-test.failing('should get one user from service', async (t) => {
+test('should get one user from service', async (t) => {
   nock('http://some.api')
     .get('/users/johnf')
     .times(2)

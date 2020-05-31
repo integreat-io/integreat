@@ -4,6 +4,7 @@ import resources from '../helpers/resources'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
+import exchangeUriMutation from '../helpers/defs/mutations/exchangeUri'
 import entry1 from '../helpers/data/entry1'
 import { TypedData, DataObject } from '../../types'
 
@@ -35,6 +36,7 @@ const defs = {
   mutations: {
     'entries-entry': mapping,
     'exchange:json': exchangeJsonMutation,
+    'exchange:uri': exchangeUriMutation,
   },
 }
 
@@ -44,8 +46,7 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should transform entry', async (t) => {
+test('should transform entry', async (t) => {
   nock('http://some.api')
     .get('/entries')
     .reply(200, { data: [entry1, entryNoHeadline] })
@@ -72,8 +73,7 @@ test.failing('should transform entry', async (t) => {
   t.is((item1.author as DataObject).id, 'admin')
 })
 
-// Waiting for uri template solution
-test.failing('should transform entry without defaults', async (t) => {
+test('should transform entry without defaults', async (t) => {
   nock('http://some.api')
     .get('/entries/ent2')
     .reply(200, { data: [entryNoHeadline] })

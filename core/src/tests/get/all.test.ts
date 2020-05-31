@@ -15,8 +15,7 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should get all entries from service', async (t) => {
+test('should get all entries from service', async (t) => {
   nock('http://some.api').get('/entries').reply(200, { data: entriesData })
   const action = {
     type: 'GET',

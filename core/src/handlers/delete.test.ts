@@ -102,8 +102,7 @@ test('should delete items from service', async (t) => {
   t.true(scope.isDone())
 })
 
-// Waiting for url template solution
-test.failing('should delete one item from service', async (t) => {
+test('should delete one item from service', async (t) => {
   const scope = nock('http://api1.test')
     .delete('/database/ent1')
     .reply(200, { ok: true, id: 'ent1', rev: '000001' })
@@ -118,7 +117,7 @@ test.failing('should delete one item from service', async (t) => {
         },
         mutation: { data: ['data', { $apply: 'entry' }] },
         options: {
-          uri: 'http://api1.test/database/{id}',
+          uri: 'http://api1.test/database/{{params.id}}',
           method: 'DELETE',
         },
       },
@@ -181,8 +180,7 @@ test('should infer service id from type', async (t) => {
   t.true(scope.isDone())
 })
 
-// Waiting for url template solution
-test.failing('should delete with other endpoint and uri params', async (t) => {
+test('should delete with other endpoint and uri params', async (t) => {
   const scope = nock('http://api3.test')
     .post('/entries/bulk_delete')
     .reply(200, [
@@ -197,7 +195,7 @@ test.failing('should delete with other endpoint and uri params', async (t) => {
         id: 'other',
         mutation: { data: ['data', { $apply: 'entry' }] },
         options: {
-          uri: 'http://api3.test/{typefolder}/bulk_delete',
+          uri: 'http://api3.test/{{params.typefolder}}/bulk_delete',
           method: 'POST',
         },
       },

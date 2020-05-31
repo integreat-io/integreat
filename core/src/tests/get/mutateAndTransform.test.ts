@@ -3,6 +3,7 @@ import nock = require('nock')
 import mapAny = require('map-any')
 import resources from '../helpers/resources'
 import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
+import exchangeUriMutation from '../helpers/defs/mutations/exchangeUri'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
@@ -44,8 +45,7 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should transform entry', async (t) => {
+test('should transform entry', async (t) => {
   nock('http://some.api').get('/entries/ent1').reply(200, { data: entry1 })
   const action = {
     type: 'GET',
@@ -71,6 +71,7 @@ test.failing('should transform entry', async (t) => {
     mutations: {
       'entries-entry': mapping,
       'exchange:json': exchangeJsonMutation,
+      'exchange:uri': exchangeUriMutation,
     },
   }
 
@@ -84,8 +85,7 @@ test.failing('should transform entry', async (t) => {
   t.is(item.text, 'The text of entry 1 - news|sports')
 })
 
-// Waiting for uri template solution
-test.failing('should transform array of entries', async (t) => {
+test('should transform array of entries', async (t) => {
   nock('http://some.api')
     .get('/entries')
     .reply(200, { data: [entry1, entry2] })
@@ -113,6 +113,7 @@ test.failing('should transform array of entries', async (t) => {
     mutations: {
       'entries-entry': mapping,
       'exchange:json': exchangeJsonMutation,
+      'exchange:uri': exchangeUriMutation,
     },
   }
 

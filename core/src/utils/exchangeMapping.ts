@@ -184,6 +184,7 @@ export function exchangeFromMappingObject(
     paging,
     error,
     params: { id, type, service, ...params } = {},
+    options,
   } = mappingObject
 
   return completeExchange({
@@ -203,5 +204,13 @@ export function exchangeFromMappingObject(
       ...(paging ? { paging } : {}),
       ...(error ? { error } : {}),
     },
+    endpoint: exchange.endpoint
+      ? {
+          ...exchange.endpoint,
+          ...(options && {
+            options: { ...exchange.endpoint?.options, ...options },
+          }),
+        }
+      : undefined,
   })
 }

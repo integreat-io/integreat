@@ -10,8 +10,7 @@ import Integreat from '../..'
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should connect to service and reuse connection', async (t) => {
+test('should connect to service and reuse connection', async (t) => {
   let count = 1
   const connect = async (
     _options: object,
@@ -23,12 +22,12 @@ test.failing('should connect to service and reuse connection', async (t) => {
     status: 'ok',
     response: {
       ...exchange.response,
-      data: entriesData,
+      data: JSON.stringify(entriesData),
     },
   })
   const resourcesWithConnect = {
     ...resources,
-    adapters: {
+    transporters: {
       ...resources.transporters,
       http: {
         ...resources.transporters.http,
@@ -38,7 +37,7 @@ test.failing('should connect to service and reuse connection', async (t) => {
     },
     authenticators: { token: tokenAuth },
   }
-  const sendSpy = sinon.spy(resources.transporters.http, 'send')
+  const sendSpy = sinon.spy(resourcesWithConnect.transporters.http, 'send')
   const action = {
     type: 'GET',
     payload: { type: 'entry' },

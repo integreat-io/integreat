@@ -3,41 +3,53 @@ export default {
   transporter: 'http',
   auth: true,
   options: { baseUri: 'http://some.api' },
-  mutation: [{ $apply: 'exchange:json' }],
+  mutation: [{ $apply: 'exchange:json' }, { $apply: 'exchange:uri' }],
   endpoints: [
     {
       match: { action: 'GET', scope: 'collection', params: { offset: false } },
-      mutation: {
-        $direction: 'fwd',
-        data: ['data.data[]', { $apply: 'entries-entry' }],
-        paging: {
-          next: [
-            {
-              $filter: 'compare',
-              path: 'data.next',
-              operator: '!=',
-              value: null,
+      mutation: [
+        {
+          $direction: 'rev',
+          $flip: true,
+          options: {
+            uri: 'options.uri', // TODO: Find a way to avoid this
+            queryParams: {
+              offset: 'params.offset',
             },
-            {
-              type: 'params.type',
-              offset: 'data.next',
-            },
-          ],
-          prev: [
-            {
-              $filter: 'compare',
-              path: 'data.prev',
-              operator: '!=',
-              value: null,
-            },
-            {
-              type: 'params.type',
-              offset: 'data.prev',
-            },
-          ],
+          },
         },
-      },
-      options: { uri: '/entries{?offset=offset?}' },
+        {
+          $direction: 'fwd',
+          data: ['data.data[]', { $apply: 'entries-entry' }],
+          paging: {
+            next: [
+              {
+                $filter: 'compare',
+                path: 'data.next',
+                operator: '!=',
+                value: null,
+              },
+              {
+                type: 'params.type',
+                offset: 'data.next',
+              },
+            ],
+            prev: [
+              {
+                $filter: 'compare',
+                path: 'data.prev',
+                operator: '!=',
+                value: null,
+              },
+              {
+                type: 'params.type',
+                offset: 'data.prev',
+              },
+            ],
+          },
+        },
+      ],
+      options: { uri: '/entries' },
     },
     {
       match: { action: 'SET', scope: 'collection' },
@@ -53,7 +65,7 @@ export default {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'entries-entry' }],
       },
-      options: { uri: '/entries/{id}' },
+      options: { uri: '/entries/{{params.id}}' },
     },
     {
       match: { action: 'SET', scope: 'member' },
@@ -67,7 +79,7 @@ export default {
           data: ['data.data', { $apply: 'entries-entry' }],
         },
       ],
-      options: { uri: '/entries/{id}' },
+      options: { uri: '/entries/{{params.id}}' },
     },
     {
       match: { action: 'GET', params: { author: true } },
@@ -75,7 +87,7 @@ export default {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'entries-entry' }],
       },
-      options: { uri: '/entries{?author}' },
+      options: { uri: '/entries?author={{params.author}}' },
     },
     {
       match: {

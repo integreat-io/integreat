@@ -3,6 +3,7 @@ import nock = require('nock')
 import Integreat from '..'
 import { jsonServiceDef } from '../tests/helpers/json'
 import exchangeJsonMutation from '../tests/helpers/defs/mutations/exchangeJson'
+import exchangeUriMutation from '../tests/helpers/defs/mutations/exchangeUri'
 import resources from '../tests/helpers/resources'
 import { EndpointDef } from '../service/endpoints/types'
 import { completeExchange } from '../utils/exchangeMapping'
@@ -36,7 +37,10 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
       endpoints,
     },
   ],
-  mutations: { 'exchange:json': exchangeJsonMutation },
+  mutations: {
+    'exchange:json': exchangeJsonMutation,
+    'exchange:uri': exchangeUriMutation,
+  },
 })
 
 const mutation = { data: ['data', { $apply: 'cast_meta' }] }
@@ -51,17 +55,16 @@ test.after(() => {
 
 // Tests
 
-// Waiting for url template solution
-test.failing('should set metadata on service', async (t) => {
+test('should set metadata on service', async (t) => {
   const scope = nock('http://api1.test')
-    .put('/database/meta%3Astore', {
+    .put('/database/meta:store', {
       id: 'meta:store',
       lastSyncedAt: lastSyncedAt.toISOString(),
       status: 'busy',
     })
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [
-    { options: { uri: 'http://api1.test/database/{id}' }, mutation },
+    { options: { uri: 'http://api1.test/database/{{params.id}}' }, mutation },
   ]
   const great = Integreat.create(defs(endpoints), resources)
   const getService = (type?: string | string[], service?: string) =>
@@ -106,10 +109,9 @@ test('should not set metadata on service when no meta type', async (t) => {
   t.false(scope.isDone())
 })
 
-// Waiting for url template solution
-test.failing('should set metadata on other service', async (t) => {
+test('should set metadata on other service', async (t) => {
   const scope = nock('http://api3.test')
-    .put('/database/meta%3Aentries', {
+    .put('/database/meta:entries', {
       id: 'meta:entries',
       lastSyncedAt: lastSyncedAt.toISOString(),
     })
@@ -117,7 +119,7 @@ test.failing('should set metadata on other service', async (t) => {
   const endpoints = [
     {
       id: 'setMeta',
-      options: { uri: 'http://api3.test/database/{id}' },
+      options: { uri: 'http://api3.test/database/{{params.id}}' },
       mutation,
     },
   ]

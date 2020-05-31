@@ -7,8 +7,7 @@ import Integreat from '../..'
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should get error object for unknown entry', async (t) => {
+test('should get error object for unknown entry', async (t) => {
   nock('http://some.api').get('/entries/ent0').reply(404)
   const action = {
     type: 'GET',

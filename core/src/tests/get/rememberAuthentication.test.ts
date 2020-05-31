@@ -13,8 +13,7 @@ import Integreat from '../..'
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should not authenticate twice', async (t) => {
+test('should not authenticate twice', async (t) => {
   nock('http://some.api', {
     reqheaders: {
       authorization: 'Bearer t0k3n',

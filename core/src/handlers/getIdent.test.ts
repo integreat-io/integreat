@@ -29,8 +29,7 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should complete ident with token', async (t) => {
+test('should complete ident with token', async (t) => {
   const scope = nock('http://some.api')
     .get('/users')
     .query({ tokens: 'twitter|23456' })
@@ -49,8 +48,7 @@ test.failing('should complete ident with token', async (t) => {
   t.true(scope.isDone())
 })
 
-// Waiting for uri template solution
-test.failing('should complete ident with id', async (t) => {
+test('should complete ident with id', async (t) => {
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: { ...johnfData } })
@@ -67,26 +65,22 @@ test.failing('should complete ident with id', async (t) => {
   t.is((ret.response.data as TypedData).id, 'johnf')
 })
 
-// Waiting for uri template solution
-test.failing(
-  'should complete ident with id when more props are present',
-  async (t) => {
-    nock('http://some.api')
-      .get('/users/johnf')
-      .reply(200, { data: { ...johnfData } })
-    const exchange = completeExchange({
-      type: 'GET_IDENT',
-      request: {},
-      ident: { id: 'johnf', withToken: 'other|34567' },
-    })
+test('should complete ident with id when more props are present', async (t) => {
+  nock('http://some.api')
+    .get('/users/johnf')
+    .reply(200, { data: { ...johnfData } })
+  const exchange = completeExchange({
+    type: 'GET_IDENT',
+    request: {},
+    ident: { id: 'johnf', withToken: 'other|34567' },
+  })
 
-    const ret = await getIdent(exchange, dispatch, getService, identConfig)
+  const ret = await getIdent(exchange, dispatch, getService, identConfig)
 
-    t.is(ret.status, 'ok', ret.response.error)
-    t.deepEqual(ret.ident, johnfIdent)
-    t.is((ret.response.data as TypedData).id, 'johnf')
-  }
-)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.deepEqual(ret.ident, johnfIdent)
+  t.is((ret.response.data as TypedData).id, 'johnf')
+})
 
 test('should return noaction when no props', async (t) => {
   const exchange = completeExchange({
@@ -141,8 +135,7 @@ test('should return notfound when ident not found', async (t) => {
   t.is(typeof ret.response.error, 'string')
 })
 
-// Waiting for uri template solution
-test.failing('should complete ident with other prop keys', async (t) => {
+test('should complete ident with other prop keys', async (t) => {
   nock('http://some.api')
     .get('/entries')
     .query({ author: 'johnf' })

@@ -7,6 +7,7 @@ import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
 import entry2 from '../helpers/data/entry2'
 import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
+import exchangeUriMutation from '../helpers/defs/mutations/exchangeUri'
 import entriesMutation from '../helpers/defs/mutations/entries-entry'
 import json from '../../transformers/json'
 import { TypedData } from '../../types'
@@ -42,7 +43,7 @@ const defsWithMutation = (
       endpoints: [
         {
           mutation,
-          options: { uri: '/entries/{id}' },
+          options: { uri: '/entries/{{params.id}}' },
         },
       ],
     },
@@ -50,6 +51,7 @@ const defsWithMutation = (
   mutations: {
     'entries-entry': entriesMutation,
     'exchange:json': exchangeJsonMutation,
+    'exchange:uri': exchangeUriMutation,
   },
 })
 
@@ -59,8 +61,7 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should map with endpoint mutation', async (t) => {
+test('should map with endpoint mutation', async (t) => {
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {
@@ -85,8 +86,7 @@ test.failing('should map with endpoint mutation', async (t) => {
   t.is(item.title, 'Entry 1')
 })
 
-// Waiting for uri template solution
-test.failing('should map with service mutation', async (t) => {
+test('should map with service mutation', async (t) => {
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {
@@ -116,8 +116,7 @@ test.failing('should map with service mutation', async (t) => {
   t.is(ret.data[0].id, 'ent1')
 })
 
-// Waiting for uri template solution
-test.failing('should use status code mapped from data', async (t) => {
+test('should use status code mapped from data', async (t) => {
   nock('http://some.api')
     .get('/entries/ent2')
     .reply(200, {
@@ -138,31 +137,26 @@ test.failing('should use status code mapped from data', async (t) => {
   t.is(ret.error, 'Oh no!')
 })
 
-// Waiting for uri template solution
-test.failing(
-  'should not override transporter error with data status',
-  async (t) => {
-    nock('http://some.api').get('/entries/ent2').reply(404, {
-      responseContent: null,
-      responseValue: 'ok',
-    })
-    const action = {
-      type: 'GET',
-      payload: { type: 'entry', id: 'ent2' },
-    }
-    const defs = defsWithMutation(mutation)
-
-    const great = Integreat.create(defs, resources)
-    const ret = await great.dispatch(action)
-
-    t.is(ret.status, 'notfound')
-    t.is(typeof ret.error, 'string')
-    t.falsy(ret.data)
+test('should not override transporter error with data status', async (t) => {
+  nock('http://some.api').get('/entries/ent2').reply(404, {
+    responseContent: null,
+    responseValue: 'ok',
+  })
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent2' },
   }
-)
+  const defs = defsWithMutation(mutation)
 
-// Waiting for uri template solution
-test.failing('should transform at paths within the data', async (t) => {
+  const great = Integreat.create(defs, resources)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'notfound')
+  t.is(typeof ret.error, 'string')
+  t.falsy(ret.data)
+})
+
+test('should transform at paths within the data', async (t) => {
   nock('http://some.api')
     .get('/entries/ent3')
     .reply(200, {

@@ -14,6 +14,7 @@ import {
   mappingObjectFromExchange,
   exchangeFromMappingObject,
 } from '../../utils/exchangeMapping'
+import { ensureArray } from '../../utils/array'
 
 export interface PrepareOptions {
   (options: EndpointOptions): EndpointOptions
@@ -89,7 +90,10 @@ export default function createEndpoint(
   prepareOptions: PrepareOptions = (options) => options
 ) {
   return function (endpointDef: EndpointDef): Endpoint {
-    const mutation = combineMutations(serviceMutation, endpointDef.mutation)
+    const mutation = combineMutations(
+      ...ensureArray(serviceMutation),
+      endpointDef.mutation
+    )
     const mutator = mutation ? mapTransform(mutation, mapOptions) : null
 
     const validate = prepareValidate(endpointDef.validate, mapOptions)

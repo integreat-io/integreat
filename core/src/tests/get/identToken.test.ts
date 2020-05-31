@@ -10,8 +10,7 @@ import Integreat from '../..'
 
 // Tests
 
-// Waiting for uri template solution
-test.failing('should get with ident token', async (t) => {
+test('should get with ident token', async (t) => {
   const middlewares = [completeIdent]
   nock('http://some.api')
     .get('/users')

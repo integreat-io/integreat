@@ -286,10 +286,13 @@ test('should map exchange props from response', (t) => {
 })
 
 test('should map response from service with service and endpoint mutations', (t) => {
-  const serviceMutation = {
-    data: ['data', { $transform: 'json' }],
-    error: 'params.message',
-  }
+  const serviceMutation = [
+    {
+      data: ['data', { $transform: 'json' }],
+      error: 'params.message',
+    },
+    { status: 'status' }, // Just to check that we're not missing any props
+  ]
   const endpointDef = {
     mutation: {
       data: ['data.content', { $apply: 'entry' }],
