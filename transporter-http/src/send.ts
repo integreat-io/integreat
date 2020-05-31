@@ -1,5 +1,5 @@
 import got, { HTTPError, Response } from 'got'
-import { Exchange, Connection } from '../../core/src'
+import { Exchange, Data, Connection } from '../../core/src'
 import { Options } from './types'
 
 const extractFromError = (error: HTTPError | Error) =>
@@ -16,9 +16,9 @@ const extractFromError = (error: HTTPError | Error) =>
 const updateExchange = (
   exchange: Exchange,
   status: string,
-  data: unknown,
+  data: Data,
   error?: string
-) => ({
+): Exchange => ({
   ...exchange,
   status,
   response: {
@@ -75,17 +75,21 @@ const createQueryString = (params: Record<string, string>) =>
 const appendQueryParams = (uri: string, params: Record<string, string>) =>
   `${uri}${uri.indexOf('?') >= 0 ? '&' : '?'}${createQueryString(params)}`
 
-const addAuthToUri = (
-  url?: string,
-  endpoint?: Options,
-  auth?: Record<string, string> | boolean | null
-) => {
-  if (url && endpoint?.authAsQuery && auth && auth !== true) {
-    return appendQueryParams(url, auth)
-  }
-  return url
-}
+const removeLeadingSlashIf = (uri: string | undefined, doRemove: boolean) =>
+  doRemove && typeof uri === 'string' && uri.startsWith('/')
+    ? uri.substr(1)
+    : uri
 
+const generateUrlFromEndpoint = (
+  { uri, baseUri, authAsQuery }: Options = {},
+  auth?: Record<string, string> | boolean | null
+) =>
+  removeLeadingSlashIf(
+    uri && authAsQuery && auth && auth !== true
+      ? appendQueryParams(uri, auth)
+      : uri,
+    !!baseUri // Remove leading slash if baseUri
+  )
 const removeContentTypeIf = (
   headers: Record<string, string>,
   doRemove: boolean
@@ -123,7 +127,8 @@ const prepareBody = (data: unknown) =>
 function optionsFromEndpoint(exchange: Exchange, endpoint?: Options) {
   const method = selectMethod(endpoint, exchange.request.data)
   return {
-    url: addAuthToUri(endpoint?.uri, endpoint, exchange.auth),
+    prefixUrl: endpoint?.baseUri,
+    url: generateUrlFromEndpoint(endpoint, exchange.auth),
     method,
     body: prepareBody(exchange.request.data),
     headers: removeContentTypeIf(
@@ -142,7 +147,7 @@ function optionsFromEndpoint(exchange: Exchange, endpoint?: Options) {
 export default async function send(
   exchange: Exchange,
   _connection: Connection | null
-) {
+): Promise<Exchange> {
   const { url, ...options } = optionsFromEndpoint(
     exchange,
     exchange.endpoint?.options

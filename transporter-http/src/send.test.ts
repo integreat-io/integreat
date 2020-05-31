@@ -109,6 +109,30 @@ test('should use method from endpoint', async (t) => {
   t.true(scope.isDone())
 })
 
+test('should support base url', async (t) => {
+  const scope = nock('http://json19.test', {
+    reqheaders: { 'Content-Type': 'text/plain' },
+  })
+    .put('/entries/ent1')
+    .reply(200, { id: 'ent1' })
+  const exchange = {
+    type: 'SET',
+    status: null,
+    request: { type: 'entry', data: '{"id":"ent1","title":"Entry 1"}' },
+    response: {},
+    meta: {},
+    endpoint: createEndpoint({
+      baseUri: 'http://json19.test/',
+      uri: '/entries/ent1',
+    }),
+  }
+
+  const ret = await send(exchange, null)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.true(scope.isDone())
+})
+
 test('should return ok status on all 200-range statuses', async (t) => {
   const data = '{"id":"ent2","title":"Entry 2"}'
   const scope = nock('http://json4.test')

@@ -1,3 +1,4 @@
+import send from './send'
 import { Transporter } from '../../core/src'
 import { Options } from './types'
 
@@ -11,7 +12,7 @@ const httpTransporter: Transporter = {
 
   connect: async (_options, _authentication, connection) => connection,
 
-  send: async (exchange, _connection) => exchange,
+  send,
 
   disconnect: async (_connection) => undefined,
 }
