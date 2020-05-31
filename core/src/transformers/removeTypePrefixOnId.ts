@@ -1,6 +1,8 @@
+import { CustomFunction } from 'map-transform'
 import { isTypedData } from '../utils/is'
+import { Data } from '../types'
 
-const removeTypePrefixOnId = (item: unknown) => {
+const removeTypePrefixOnIdFwd = (item: Data) => {
   if (isTypedData(item)) {
     const { id, $type: type } = item
 
@@ -13,7 +15,7 @@ const removeTypePrefixOnId = (item: unknown) => {
   return item
 }
 
-const removeTypePrefixOnIdRev = (item: unknown) => {
+const removeTypePrefixOnIdRev = (item: Data) => {
   if (isTypedData(item)) {
     const { id, $type: type } = item
 
@@ -26,6 +28,10 @@ const removeTypePrefixOnIdRev = (item: unknown) => {
   return item
 }
 
-export default Object.assign(removeTypePrefixOnId, {
-  rev: removeTypePrefixOnIdRev,
-})
+const removeTypePrefixOnId: CustomFunction = (_operands, _options) => (
+  value,
+  context
+) =>
+  context.rev ? removeTypePrefixOnIdRev(value) : removeTypePrefixOnIdFwd(value)
+
+export default removeTypePrefixOnId

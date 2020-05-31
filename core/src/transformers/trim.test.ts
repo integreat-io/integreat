@@ -2,38 +2,35 @@ import test from 'ava'
 
 import trim from './trim'
 
-// Tests -- from service
+// Setup
+
+const operands = {}
+const options = {}
+const context = {
+  rev: false,
+  onlyMappedValues: false,
+}
+
+// Tests
 
 test('should trim from service', (t) => {
-  t.is(trim(' Space on each side '), 'Space on each side')
-  t.is(trim(' Space in front'), 'Space in front')
-  t.is(trim('Space on the end '), 'Space on the end')
-  t.is(trim('No space'), 'No space')
-  t.is(trim(' '), '')
+  t.is(
+    trim(operands, options)(' Space on each side ', context),
+    'Space on each side'
+  )
+  t.is(trim(operands, options)(' Space in front', context), 'Space in front')
+  t.is(
+    trim(operands, options)('Space on the end ', context),
+    'Space on the end'
+  )
+  t.is(trim(operands, options)('No space', context), 'No space')
+  t.is(trim(operands, options)(' ', context), '')
 })
 
 test('should not touch things that are not string from service', (t) => {
-  t.is(trim(3), 3)
-  t.is(trim(true), true)
-  t.is(trim(null), null)
-  t.is(trim(undefined), undefined)
-  t.deepEqual(trim({}), {})
-})
-
-// Tests -- to service
-
-test('should trim to service', (t) => {
-  t.is(trim.rev(' Space on each side '), 'Space on each side')
-  t.is(trim.rev(' Space in front'), 'Space in front')
-  t.is(trim.rev('Space on the end '), 'Space on the end')
-  t.is(trim.rev('No space'), 'No space')
-  t.is(trim.rev(' '), '')
-})
-
-test('should not touch things that are not string to service', (t) => {
-  t.is(trim.rev(3), 3)
-  t.is(trim.rev(true), true)
-  t.is(trim.rev(null), null)
-  t.is(trim.rev(undefined), undefined)
-  t.deepEqual(trim.rev({}), {})
+  t.is(trim(operands, options)(3, context), 3)
+  t.is(trim(operands, options)(true, context), true)
+  t.is(trim(operands, options)(null, context), null)
+  t.is(trim(operands, options)(undefined, context), undefined)
+  t.deepEqual(trim(operands, options)({}, context), {})
 })

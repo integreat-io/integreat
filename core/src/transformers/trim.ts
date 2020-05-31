@@ -1,5 +1,6 @@
-function trim(value: unknown) {
-  return typeof value === 'string' ? value.trim() : value
-}
+import { CustomFunction } from 'map-transform'
 
-export default Object.assign(trim, { rev: trim })
+const trim: CustomFunction = (_operands, _options) => (value, _context) =>
+  typeof value === 'string' ? value.trim() : value
+
+export default trim

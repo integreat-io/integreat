@@ -1,3 +1,5 @@
-export default Object.assign((value: unknown) => !value, {
-  rev: (value: unknown) => !value,
-})
+import { CustomFunction } from 'map-transform'
+
+const not: CustomFunction = (_operands, _options) => (value, _context) => !value
+
+export default not

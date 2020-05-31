@@ -1,8 +1,10 @@
-function uppercase(value: unknown) {
-  if (typeof value === 'string') {
-    return value.toLowerCase()
-  }
-  return value
-}
+import mapAny = require('map-any')
+import { CustomFunction } from 'map-transform'
 
-export default Object.assign(uppercase, { rev: uppercase })
+const lowercase: CustomFunction = (_operands, _options) => (value, _context) =>
+  mapAny(
+    (value) => (typeof value === 'string' ? value.toLowerCase() : value),
+    value
+  )
+
+export default lowercase
