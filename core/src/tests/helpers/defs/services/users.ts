@@ -12,7 +12,7 @@ export default {
           $direction: 'rev',
           $flip: true,
           options: {
-            uri: 'options.uri',
+            '.': 'options', // TODO: Find a better way to do this?
             'queryParams.tokens': 'params.tokens',
           },
         },

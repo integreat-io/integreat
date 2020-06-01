@@ -2,8 +2,7 @@ import test from 'ava'
 import nock = require('nock')
 import mapAny = require('map-any')
 import resources from '../helpers/resources'
-import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
-import exchangeUriMutation from '../helpers/defs/mutations/exchangeUri'
+import mutations from '../../mutations'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
@@ -69,9 +68,8 @@ test('should transform entry', async (t) => {
     schemas: [entrySchema],
     services: [entriesService],
     mutations: {
+      ...mutations,
       'entries-entry': mapping,
-      'exchange:json': exchangeJsonMutation,
-      'exchange:uri': exchangeUriMutation,
     },
   }
 
@@ -111,9 +109,8 @@ test('should transform array of entries', async (t) => {
     schemas: [entrySchema],
     services: [entriesService],
     mutations: {
+      ...mutations,
       'entries-entry': mapping,
-      'exchange:json': exchangeJsonMutation,
-      'exchange:uri': exchangeUriMutation,
     },
   }
 

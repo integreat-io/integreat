@@ -5,8 +5,8 @@ import entriesService from './services/entries'
 import usersService from './services/users'
 
 import entriesEntryMutation from './mutations/entries-entry'
-import exchangeJsonMutation from './mutations/exchangeJson'
-import exchangeUriMutation from './mutations/exchangeUri'
+import exchangeJsonMutation from '../../../mutations/exchangeJson'
+import exchangeUriMutation from '../../../mutations/exchangeUri'
 import usersUserMutation from './mutations/users-user'
 
 export default {

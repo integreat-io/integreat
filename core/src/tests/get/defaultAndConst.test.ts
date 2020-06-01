@@ -3,8 +3,7 @@ import nock = require('nock')
 import resources from '../helpers/resources'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
-import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
-import exchangeUriMutation from '../helpers/defs/mutations/exchangeUri'
+import mutations from '../../mutations'
 import entry1 from '../helpers/data/entry1'
 import { TypedData, DataObject } from '../../types'
 
@@ -35,8 +34,7 @@ const defs = {
   services: [entriesService],
   mutations: {
     'entries-entry': mapping,
-    'exchange:json': exchangeJsonMutation,
-    'exchange:uri': exchangeUriMutation,
+    ...mutations,
   },
 }
 

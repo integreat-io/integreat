@@ -1,11 +1,9 @@
 import httpTransporter from '../../../../transporter-http/src/transporter'
-import exchangeJsonMutation from './defs/mutations/exchangeJson'
-import exchangeUriMutation from './defs/mutations/exchangeUri'
+import mutations from '../../mutations'
 import json from '../../transformers/json'
 
 export const jsonPipelines = {
-  'exchange:json': exchangeJsonMutation,
-  'exchange:uri': exchangeUriMutation,
+  ...mutations,
 }
 
 export const jsonServiceDef = {

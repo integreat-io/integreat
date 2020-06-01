@@ -4,8 +4,7 @@ import resources from '../helpers/resources'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entriesMutation from '../helpers/defs/mutations/entries-entry'
-import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
-import exchangeUriMutation from '../helpers/defs/mutations/exchangeUri'
+import mutations from '../../mutations'
 
 import Integreat from '../..'
 
@@ -79,9 +78,8 @@ test('should set data with endpoint mutation', async (t) => {
       },
     ],
     mutations: {
+      ...mutations,
       'entries-entry': entriesMutation,
-      'exchange:json': exchangeJsonMutation,
-      'exchange:uri': exchangeUriMutation,
     },
   }
 
@@ -136,9 +134,8 @@ test('should set data with service and endpoint mutation', async (t) => {
       },
     ],
     mutations: {
+      ...mutations,
       'entries-entry': entriesMutation,
-      'exchange:json': exchangeJsonMutation,
-      'exchange:uri': exchangeUriMutation,
     },
   }
 

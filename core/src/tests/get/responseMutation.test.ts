@@ -6,8 +6,7 @@ import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
 import entry2 from '../helpers/data/entry2'
-import exchangeJsonMutation from '../helpers/defs/mutations/exchangeJson'
-import exchangeUriMutation from '../helpers/defs/mutations/exchangeUri'
+import mutations from '../../mutations'
 import entriesMutation from '../helpers/defs/mutations/entries-entry'
 import json from '../../transformers/json'
 import { TypedData } from '../../types'
@@ -49,9 +48,8 @@ const defsWithMutation = (
     },
   ],
   mutations: {
+    ...mutations,
     'entries-entry': entriesMutation,
-    'exchange:json': exchangeJsonMutation,
-    'exchange:uri': exchangeUriMutation,
   },
 })
 
