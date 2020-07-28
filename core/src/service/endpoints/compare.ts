@@ -4,12 +4,13 @@ const hasArray = (prop: unknown) => Number(Array.isArray(prop) && prop.length)
 const hasParams = ({ params }: MatchObject, required: boolean) =>
   Number(
     !!params &&
-      Object.values(params).filter(isRequired => isRequired === required).length
+      Object.values(params).filter((isRequired) => isRequired === required)
+        .length
   )
 const hasFilters = ({ filters }: MatchObject) =>
   Number(!!filters && Object.keys(filters).length)
 
-export default (a: EndpointDef, b: EndpointDef) => {
+export default (a: EndpointDef, b: EndpointDef): number => {
   const matchA = a.match || {}
   const matchB = b.match || {}
 

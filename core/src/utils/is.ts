@@ -1,9 +1,10 @@
 import { DataObject, TypedData, Reference, Action, Exchange } from '../types'
 import { Shape, PropertyShape } from '../schema/types'
 
-export const isObject = (value: unknown): value is object =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
+export const isObject = (value: unknown): value is Record<string, unknown> =>
+  Object.prototype.toString.call(value) === '[object Object]'
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export const isEmptyObject = (value: unknown): value is {} =>
   isObject(value) && Object.keys(value).length === 0
 
@@ -36,6 +37,6 @@ export const isExchange = (exchange: unknown): exchange is Exchange =>
   isDataObject(exchange.request) &&
   (typeof exchange.status === 'string' || exchange.status === null)
 
-export const isTruthy = (value: unknown) => !!value
-export const isFalsy = (value: unknown) => !value
+export const isTruthy = (value: unknown): boolean => !!value
+export const isFalsy = (value: unknown): boolean => !value
 export const not = isFalsy

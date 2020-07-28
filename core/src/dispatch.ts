@@ -1,7 +1,6 @@
 import debugLib = require('debug')
 import setupGetService from './utils/getService'
 import {
-  Dictionary,
   Dispatch,
   InternalDispatch,
   Exchange,
@@ -19,8 +18,8 @@ import createError from './utils/createError'
 
 const debug = debugLib('great')
 
-const compose = (...fns: Function[]) =>
-  fns.reduce((f, g) => (...args: Function[]) => f(g(...args)))
+const compose = (...fns: Middleware[]) =>
+  fns.reduce((f, g) => (...args) => f(g(...args)))
 
 export interface GetService {
   (type?: string | string[], serviceId?: string): Service | undefined
@@ -37,7 +36,7 @@ export interface ExchangeHandler {
 
 function getExchangeHandlerFromType(
   type: string | undefined,
-  handlers: Dictionary<ExchangeHandler>
+  handlers: Record<string, ExchangeHandler>
 ) {
   if (type) {
     // eslint-disable-next-line security/detect-object-injection
@@ -59,9 +58,9 @@ const wrapDispatch = (internalDispatch: InternalDispatch): Dispatch =>
   }
 
 export interface Resources {
-  handlers: Dictionary<ExchangeHandler>
-  schemas: Dictionary<Schema>
-  services: Dictionary<Service>
+  handlers: Record<string, ExchangeHandler>
+  schemas: Record<string, Schema>
+  services: Record<string, Service>
   middlewares?: Middleware[]
   identConfig?: IdentConfig
 }
@@ -78,7 +77,7 @@ export default function createDispatch({
   services = {},
   middlewares = [],
   identConfig,
-}: Resources) {
+}: Resources): Dispatch {
   const getService = setupGetService(schemas, services)
   let internalDispatch: InternalDispatch
 

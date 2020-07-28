@@ -2,7 +2,7 @@ import debugLib = require('debug')
 import nextSchedule from './nextSchedule'
 import enqueue from './enqueue'
 import { Queue } from './types'
-import { Action, Dispatch } from '../types'
+import { Action, Dispatch, Response } from '../types'
 
 const debug = debugLib('great')
 
@@ -31,7 +31,7 @@ const enqueueNext = (queue: Queue, action: Action) => {
 }
 
 export default function middleware(next: Dispatch, queue: Queue) {
-  return async (action: Action) => {
+  return async (action: Action): Promise<Response> => {
     if (action.meta && action.meta.queue) {
       return enqueue(queue, action)
     } else {

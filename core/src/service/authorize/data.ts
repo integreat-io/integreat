@@ -1,7 +1,7 @@
 import getField from '../../utils/getField'
 import { arrayIncludes } from '../../utils/array'
 import { isTypedData, isNullOrUndefined } from '../../utils/is'
-import { Dictionary, Exchange, Data, TypedData, Ident } from '../../types'
+import { Exchange, Data, TypedData, Ident } from '../../types'
 import { Schema } from '../../schema'
 
 const isStringOrArray = (value: unknown): value is string | string[] =>
@@ -17,7 +17,7 @@ function getValueAndCompare(
 }
 
 const authorizeItem = (
-  schemas: Dictionary<Schema>,
+  schemas: Record<string, Schema>,
   actionType: string,
   ident?: Ident
 ) => (item: Data): string | undefined => {
@@ -38,15 +38,23 @@ const authorizeItem = (
   }
 
   // Get validation results for the required methods
-  const identResult = !validateIdent || getValueAndCompare(item, identFromField as string, ident?.id)
-  const roleResult = !validateRole || getValueAndCompare(item, roleFromField as string, ident?.roles)
+  const identResult =
+    !validateIdent ||
+    getValueAndCompare(item, identFromField as string, ident?.id)
+  const roleResult =
+    !validateRole ||
+    getValueAndCompare(item, roleFromField as string, ident?.roles)
 
   // Authorize if either ident or role validation passes
   if (validateIdent && validateRole && (identResult || roleResult)) {
     return undefined
   }
   // We are supposed to validate by only one of the methods - do it
-  return !identResult && 'WRONG_IDENT' || !roleResult && 'MISSING_ROLE' || undefined
+  return (
+    (!identResult && 'WRONG_IDENT') ||
+    (!roleResult && 'MISSING_ROLE') ||
+    undefined
+  )
 }
 
 const generateWarning = (removedCount: number, isToService: boolean) =>
@@ -95,7 +103,10 @@ function getAuthedWithResponse(
 const isError = (status?: string | null) =>
   typeof status === 'string' && status !== 'ok'
 
-const authorizeDataBase = (schemas: Dictionary<Schema>, isToService: boolean) =>
+const authorizeDataBase = (
+  schemas: Record<string, Schema>,
+  isToService: boolean
+) =>
   function authorizeData(exchange: Exchange): Exchange {
     if (exchange.ident?.root) {
       return exchange
@@ -125,8 +136,10 @@ const authorizeDataBase = (schemas: Dictionary<Schema>, isToService: boolean) =>
     }
   }
 
-export const fromService = (schemas: Dictionary<Schema>) =>
-  authorizeDataBase(schemas, false)
+export const fromService = (
+  schemas: Record<string, Schema>
+): ((exchange: Exchange) => Exchange) => authorizeDataBase(schemas, false)
 
-export const toService = (schemas: Dictionary<Schema>) =>
-  authorizeDataBase(schemas, true)
+export const toService = (
+  schemas: Record<string, Schema>
+): ((exchange: Exchange) => Exchange) => authorizeDataBase(schemas, true)

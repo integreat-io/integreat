@@ -1,6 +1,12 @@
 import mapAny = require('map-any')
-import R = require('ramda')
-import { MapObject, transform, fwd, rev, filter } from 'map-transform'
+import {
+  MapObject,
+  MapDefinition,
+  transform,
+  fwd,
+  rev,
+  filter,
+} from 'map-transform'
 import { Data } from '../types'
 import { Shape, PropertyShape } from './types'
 import {
@@ -9,10 +15,7 @@ import {
   isDataObject,
   isTypedData,
   isNullOrUndefined,
-  not,
 } from '../utils/is'
-
-const { compose } = R
 
 const primitiveTypes = ['string', 'integer', 'number', 'boolean', 'date']
 
@@ -78,7 +81,7 @@ const includeInCasting = (type: string) =>
   type
     ? (data: Data) =>
         !isNullOrUndefined(data) && noSchemaOrEqualType(data, type)
-    : compose(not, isNullOrUndefined)
+    : (data: Data) => !isNullOrUndefined(data)
 
 const cleanUpCast = (type: string, isFwd: boolean) =>
   mapAny((item: Data) => {
@@ -95,7 +98,10 @@ const cleanUpCast = (type: string, isFwd: boolean) =>
     }
   })
 
-export default function createCastMapping(schema: Shape, type: string) {
+export default function createCastMapping(
+  schema: Shape,
+  type: string
+): MapDefinition {
   const filterItem = filter(includeInCasting(type))
   const cleanUpTransform = transform(
     cleanUpCast(type, true), // Forward

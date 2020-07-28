@@ -1,4 +1,4 @@
-import { Dictionary, Data, DataFunction } from '../types'
+import { Data, DataFunction } from '../types'
 
 export interface PropertyShape {
   $cast: string
@@ -19,7 +19,7 @@ interface AccessDefBase {
 }
 
 export interface AccessDef extends AccessDefBase {
-  actions?: Dictionary<string | AccessDefBase>
+  actions?: Record<string, string | AccessDefBase>
 }
 
 export interface Access {

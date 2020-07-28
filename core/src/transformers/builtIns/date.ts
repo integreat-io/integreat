@@ -16,6 +16,8 @@ function castDate(value: Data): Date | null | undefined {
   }
 }
 
-export default function date(_operands: object) {
+export default function date(
+  _operands: Record<string, unknown>
+): (data: Data) => Data {
   return mapAny(castDate)
 }

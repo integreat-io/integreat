@@ -1,10 +1,9 @@
-import { Dictionary } from '../types'
-
+/* eslint-disable @typescript-eslint/no-var-requires */
 export default function gatherResources<T = unknown>(
   resources: string[],
   dir: string
 ) {
-  return (...ids: string[]): Dictionary<T> => {
+  return (...ids: string[]): Record<string, T> => {
     if (ids.length === 0) {
       ids = resources
     }

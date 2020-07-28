@@ -2,10 +2,10 @@ import { isEmptyObject } from './is'
 import {
   Action,
   Exchange,
-  Dictionary,
   Data,
   Request,
   Response,
+  Paging,
   Params,
   Ident,
   ExchangeResponse,
@@ -24,7 +24,7 @@ export interface MappingObject {
   params: MappingParams
   data: Data
   error?: string
-  paging?: object
+  paging?: Paging
   options?: EndpointOptions
   ident?: Ident
 }
@@ -98,7 +98,7 @@ export function exchangeFromAction(action: Action): Exchange {
     },
     ident,
     endpointId: endpoint,
-    meta: meta as Dictionary<Data>,
+    meta: meta as Record<string, Data>,
     incoming,
   })
 }

@@ -1,10 +1,6 @@
 import { Endpoint } from './service/endpoints/types'
 import { ScheduleObject } from './queue/types'
 
-export interface Dictionary<T> {
-  [key: string]: T
-}
-
 export type DataValue = string | number | boolean | Date | null | undefined
 
 export interface DataObject {
@@ -89,7 +85,7 @@ export interface Request<T = Data> {
   params: Params
   endpoint: Record<string, unknown>
   data?: T
-  auth?: object | null
+  auth?: Record<string, unknown> | null
   access?: { ident: Ident }
 }
 
@@ -98,7 +94,7 @@ export interface Response<T = Data> {
   data?: T
   error?: string
   responses?: Response[]
-  access?: object
+  access?: Record<string, unknown>
   params?: Params
   paging?: Paging
 }
@@ -165,7 +161,7 @@ export interface Transporter {
   prepareOptions: (options: Record<string, unknown>) => Record<string, unknown>
   connect: (
     options: Record<string, unknown>,
-    authentication: object | null,
+    authentication: Record<string, unknown> | null,
     connection: Connection | null
   ) => Promise<Connection | null>
   send: (exchange: Exchange, connection: Connection | null) => Promise<Exchange>

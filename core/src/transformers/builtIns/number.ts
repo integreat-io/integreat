@@ -19,6 +19,8 @@ function castNumber(value: Data): number | null | undefined {
   }
 }
 
-export default function number(_operands: object) {
+export default function number(
+  _operands: Record<string, unknown>
+): (data: Data) => Data {
   return mapAny(castNumber)
 }

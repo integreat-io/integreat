@@ -2,7 +2,7 @@ import mapAny = require('map-any')
 import { Data } from '../../types'
 import { isDataObject, isTypedData, isReference } from '../../utils/is'
 
-interface Operands {
+interface Operands extends Record<string, unknown> {
   type?: string
 }
 
@@ -19,7 +19,7 @@ function extractProps(value: Data) {
     const { isNew, isDeleted } = value
     return {
       ...(isNew === true ? { isNew } : {}),
-      ...(isDeleted === true ? { isDeleted } : {})
+      ...(isDeleted === true ? { isDeleted } : {}),
     }
   }
   return {}
@@ -40,7 +40,7 @@ const castItem = (type: string | undefined) => (value: Data) => {
     return {
       id: String(id),
       $ref: type,
-      ...extractProps(value)
+      ...extractProps(value),
     }
   } else if (id === null) {
     return null
@@ -50,5 +50,6 @@ const castItem = (type: string | undefined) => (value: Data) => {
 }
 
 export default function reference({ type }: Operands) {
-  return (value: Data, _context: object): Data => mapAny(castItem(type), value)
+  return (value: Data, _context: Record<string, unknown>): Data =>
+    mapAny(castItem(type), value)
 }

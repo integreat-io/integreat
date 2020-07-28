@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import middleware from './middleware'
 import schedule from './schedule'
 import { Queue, ScheduleDef } from './types'
@@ -6,7 +7,7 @@ import { Dispatch } from '../types'
 /**
  * Set up Integreat queue interface.
  */
-function setupQueue(queue: Queue) {
+export default function setupQueue(queue: Queue) {
   let dispatch: Dispatch | null = null
   let subscribed = false
 
@@ -44,5 +45,3 @@ function setupQueue(queue: Queue) {
     },
   }
 }
-
-export default setupQueue

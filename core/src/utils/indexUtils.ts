@@ -1,22 +1,20 @@
-import { Dictionary } from '../types'
-
 export interface ObjectWithId {
   id: string
 }
 
 export function indexById<T extends ObjectWithId>(
-  obj: Dictionary<T>,
+  obj: Record<string, T>,
   item: T
-): Dictionary<T> {
+): Record<string, T> {
   return {
     ...obj,
-    [item.id]: item
+    [item.id]: item,
   }
 }
 
 export function lookupById<T extends unknown>(
-  id: string | unknown,
-  resource?: Dictionary<T>
+  id: string,
+  resource?: Record<string, T>
 ): T | undefined {
   // eslint-disable-next-line security/detect-object-injection
   return typeof id === 'string' && resource ? resource[id] : undefined

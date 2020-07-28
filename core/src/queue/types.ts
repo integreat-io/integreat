@@ -6,7 +6,7 @@ export interface JobHandler {
   (data: Action): Promise<Response>
 }
 
-export interface Queue<Q = object> {
+export interface Queue<Q = Record<string, unknown>> {
   queue: Q
   namespace: string
 
@@ -28,13 +28,18 @@ export interface Queue<Q = object> {
 }
 
 export interface ScheduleObject {
-  schedules?: object[]
-  exceptions?: object[]
+  schedules?: Record<string, unknown>[]
+  exceptions?: Record<string, unknown>[]
   error?: number
 }
 
 export interface ScheduleDef {
   id?: string
-  schedule: string | object | object[] | ScheduleObject | null
+  schedule:
+    | string
+    | Record<string, unknown>
+    | Record<string, unknown>[]
+    | ScheduleObject
+    | null
   action: Action
 }

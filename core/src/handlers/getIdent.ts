@@ -2,10 +2,15 @@ import util = require('util')
 import getField from '../utils/getField'
 import createError from '../utils/createError'
 import { exchangeFromAction } from '../utils/exchangeMapping'
-import { Exchange, InternalDispatch, Data, Ident, Dictionary } from '../types'
+import { Exchange, InternalDispatch, Data, Ident } from '../types'
 import { IdentConfig } from '../service/types'
 import { GetService } from '../dispatch'
 import getHandler from './get'
+
+interface IdentParams {
+  id?: string
+  params?: Record<string, string>
+}
 
 const preparePropKeys = ({
   id = 'id',
@@ -19,7 +24,10 @@ const preparePropKeys = ({
 
 // Will set any key that is not `id` on a params object. Not necessarily the
 // best way to go about this.
-const prepareParams = (ident: Ident, keys: Dictionary<string>) =>
+const prepareParams = (
+  ident: Ident,
+  keys: Record<string, string>
+): IdentParams | null =>
   ident.id
     ? keys.id === 'id'
       ? { [keys.id]: ident.id }
@@ -28,7 +36,7 @@ const prepareParams = (ident: Ident, keys: Dictionary<string>) =>
     ? { params: { [keys.tokens]: ident.withToken } }
     : null
 
-const wrapOk = (exchange: Exchange, data: Data | Data[], ident: object) => ({
+const wrapOk = (exchange: Exchange, data: Data | Data[], ident: Ident) => ({
   ...exchange,
   status: 'ok',
   response: { ...exchange.response, data },
@@ -39,8 +47,8 @@ const getFirstIfArray = (data: Data) => (Array.isArray(data) ? data[0] : data)
 
 const prepareResponse = (
   exchange: Exchange,
-  params: object,
-  propKeys: Dictionary<string>
+  params: IdentParams,
+  propKeys: Record<string, string>
 ): Exchange => {
   const data = getFirstIfArray(exchange.response.data)
 
@@ -49,7 +57,7 @@ const prepareResponse = (
       id: getField(data, propKeys.id),
       roles: getField(data, propKeys.roles),
       tokens: getField(data, propKeys.tokens),
-    }
+    } as Ident
     return wrapOk(exchange, data, completeIdent)
   } else {
     return createError(

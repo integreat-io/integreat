@@ -13,8 +13,8 @@ import Integreat from '../..'
 test('should connect to service and reuse connection', async (t) => {
   let count = 1
   const connect = async (
-    _options: object,
-    _args: object | null,
+    _options: Record<string, unknown>,
+    _args: Record<string, unknown> | null,
     conn: Connection | null
   ) => conn || { status: 'ok', value: `Call ${count++}` }
   const send = async (exchange: Exchange) => ({

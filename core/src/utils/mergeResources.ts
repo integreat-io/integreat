@@ -6,9 +6,9 @@ export interface Resources {
   transformers?: Record<string, TransformFunction>
 }
 
-export default function mergeResources(...resources: Resources[]) {
+export default function mergeResources(...resources: Resources[]): Resources {
   return resources.reduce(
-    (resources, external) => R.mergeDeepRight(resources, external),
-    {} as Resources
+    (resources, resource) => R.mergeDeepRight(resources, resource),
+    {}
   )
 }

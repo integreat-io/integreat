@@ -7,8 +7,10 @@ const cleanSchedule = ({ schedules, exceptions }: ScheduleObject) => ({
   schedules,
   exceptions,
 })
-const wrapSimpleSchedule = (schedule: object | object[]) => ({
-  schedules: ([] as object[]).concat(schedule),
+const wrapSimpleSchedule = (
+  schedule: Record<string, unknown> | Record<string, unknown>[]
+) => ({
+  schedules: ([] as Record<string, unknown>[]).concat(schedule),
 })
 
 function parseStringDef(def: string) {
@@ -19,14 +21,17 @@ function parseStringDef(def: string) {
   return cleanSchedule(schedule)
 }
 
-const isScheduleObject = (
-  def: object | object[] | ScheduleObject
-): def is ScheduleObject =>
+const isScheduleObject = (def: unknown): def is ScheduleObject =>
   (def as ScheduleObject).schedules !== undefined ||
   (def as ScheduleObject).exceptions !== undefined
 
 function parseSchedule(
-  def: string | object | object[] | ScheduleObject | null
+  def:
+    | string
+    | Record<string, unknown>
+    | Record<string, unknown>[]
+    | ScheduleObject
+    | null
 ): ScheduleObject | null {
   if (typeof def === 'string') {
     return parseStringDef(def)

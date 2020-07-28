@@ -466,7 +466,6 @@ test('should map from service without defaults', (t) => {
 })
 
 test('should not map from service when no mutation pipeline', (t) => {
-  const serviceMappings = { entry: 'entry' }
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
@@ -596,7 +595,6 @@ test('should map request with root array path', (t) => {
 })
 
 test('should map to service with no defaults', (t) => {
-  const serviceMappings = { entry: 'entry' }
   const endpointDef = {
     mutation: {
       data: ['data.content.data', { $apply: 'entry' }],
@@ -619,7 +617,6 @@ test('should map to service with no defaults', (t) => {
 })
 
 test('should not map to service when no mutation pipeline', (t) => {
-  const serviceMappings = { entry: 'entry' }
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }

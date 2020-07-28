@@ -1,4 +1,5 @@
-import { Authenticator } from '../service/types'
+import { Authenticator, Authentication } from '../service/types'
+import { isObject } from '../utils/is'
 
 /**
  * The options authenticator. Will always be authenticated, and will return the
@@ -32,16 +33,23 @@ const optionsAuth: Authenticator = {
      * For OptionsStrategy, this will simply be the options object given on
      * creation.
      */
-    asObject(authentication) {
-      const { status, ...options } = authentication || {}
-      return status === 'granted' ? options : {}
+    asObject(authentication: Authentication | null): Record<string, unknown> {
+      if (isObject(authentication)) {
+        const { status, ...options } = authentication
+        if (status === 'granted') {
+          return options
+        }
+      }
+      return {}
     },
 
     /**
      * Return a headers object with the headers needed for authenticated requests
      * with this strategy. For OptionsStrategy, there will be no headers.
      */
-    asHttpHeaders(_authentication) {
+    asHttpHeaders(
+      _authentication: Authentication | null
+    ): Record<string, unknown> {
       return {}
     },
   },

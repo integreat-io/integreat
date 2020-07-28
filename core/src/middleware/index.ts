@@ -1,3 +1,5 @@
+import completeIdent from './completeIdent'
+
 export default {
-  completeIdent: require('./completeIdent').default
+  completeIdent,
 }

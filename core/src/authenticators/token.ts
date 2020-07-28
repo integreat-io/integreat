@@ -6,6 +6,15 @@ interface TokenAuthentication extends Authentication {
   encode?: boolean
 }
 
+export interface TokenObject extends Record<string, unknown> {
+  token?: string | null
+  type?: string
+}
+
+export interface TokenHeaders extends Record<string, unknown> {
+  Authorization?: string
+}
+
 const getTypeAndToken = (authentication: TokenAuthentication | null) => {
   const { status, token, type, encode } = authentication || {}
   if (status !== 'granted' || !token) {
@@ -54,7 +63,7 @@ const tokenAuth: Authenticator = {
      * seperate properties. The token will be encoded when the `encode` option is
      * set true.
      */
-    asObject(authentication: TokenAuthentication | null) {
+    asObject(authentication: TokenAuthentication | null): TokenObject {
       return getTypeAndToken(authentication)
     },
 
@@ -64,7 +73,7 @@ const tokenAuth: Authenticator = {
      * `Authorization`, which will consist of the type and the token, the latter
      * encoded if the `encode` option is true.
      */
-    asHttpHeaders(authentication: TokenAuthentication | null) {
+    asHttpHeaders(authentication: TokenAuthentication | null): TokenHeaders {
       const { type, token } = getTypeAndToken(authentication)
       return token ? { Authorization: `${type} ${token}` } : {}
     },

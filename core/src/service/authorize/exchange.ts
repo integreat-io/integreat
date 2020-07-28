@@ -1,5 +1,5 @@
 import { ensureArray } from '../../utils/array'
-import { Dictionary, Exchange, Ident } from '../../types'
+import { Exchange, Ident } from '../../types'
 import { AccessDef } from '../../schema/types'
 import { Schema } from '../../schema'
 
@@ -99,7 +99,7 @@ function authorizeByOneSchema(
 
 function authorizeBySchema(
   ident: Ident | undefined,
-  schemas: Dictionary<Schema>,
+  schemas: Record<string, Schema>,
   actionTypes: string[],
   action: string,
   requireAuth: boolean
@@ -119,7 +119,7 @@ function authorizeBySchema(
   return { reason: undefined, error: undefined }
 }
 
-export default (schemas: Dictionary<Schema>, requireAuth: boolean) =>
+export default (schemas: Record<string, Schema>, requireAuth: boolean) =>
   function authorizeExchange(exchange: Exchange): Exchange {
     const {
       ident,

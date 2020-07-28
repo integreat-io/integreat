@@ -30,7 +30,7 @@ export default class Auth {
     this.#authentication = null
   }
 
-  async authenticate() {
+  async authenticate(): Promise<boolean> {
     if (
       this.#authentication?.status === 'granted' &&
       this.#authenticator.isAuthenticated(this.#authentication)

@@ -1,5 +1,5 @@
 import debugLib = require('debug')
-import { Action, ActionMeta } from '../types'
+import { Action, ActionMeta, Response } from '../types'
 import { Queue } from './types'
 
 const debug = debugLib('great')
@@ -14,7 +14,10 @@ const prepareForQueue = (action: Action) => ({
   meta: prepareMetaForQueue(action?.meta),
 })
 
-export default async function enqueue(queue: Queue, action: Action) {
+export default async function enqueue(
+  queue: Queue,
+  action: Action
+): Promise<Response> {
   const { meta } = action
   const queuedAction = prepareForQueue(action)
   const timestamp = typeof meta?.queue === 'boolean' ? undefined : meta?.queue

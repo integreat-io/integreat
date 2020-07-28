@@ -1,7 +1,7 @@
 import createCastMapping from './createCastMapping'
 import accessForAction from './accessForAction'
 import { MapDefinition } from 'map-transform'
-import { SchemaDef, PropertyShape, Shape, Access } from './types'
+import { SchemaDef, PropertyShape, Shape, Access, AccessDef } from './types'
 import { isSchema } from '../utils/is'
 import { nanoid } from 'nanoid'
 
@@ -27,7 +27,7 @@ export interface Schema {
   service?: string
   internal: boolean
   shape: Shape
-  access?: string | object
+  access?: string | AccessDef
   mapping: MapDefinition
   accessForAction: (actionType?: string) => Access
 }

@@ -11,6 +11,14 @@ export interface OauthOptions extends AuthOptions {
   uri?: string
 }
 
+export interface OAuthTokenObject extends Record<string, unknown> {
+  token?: string
+}
+
+export interface OAuthHeadersObject extends Record<string, unknown> {
+  Authorization?: string
+}
+
 /**
  * The OAuth2 strategy. Will retrieve an access token through the
  * client_credentials approach, and include the token as a Bearer on every
@@ -45,7 +53,7 @@ const oauth2Auth: Authenticator = {
      * Return an object with the information needed for authenticated requests
      * with this authenticator.
      */
-    asObject(authentication: OAuthAuthentication | null) {
+    asObject(authentication: OAuthAuthentication | null): OAuthTokenObject {
       const { status, token } = authentication || {}
       if (status === 'granted' && token) {
         return { token }
@@ -57,7 +65,9 @@ const oauth2Auth: Authenticator = {
      * Return a headers object with the headers needed for authenticated requests
      * with this authenticator.
      */
-    asHttpHeaders(authentication: OAuthAuthentication | null) {
+    asHttpHeaders(
+      authentication: OAuthAuthentication | null
+    ): OAuthHeadersObject {
       const { status, token } = authentication || {}
       if (status === 'granted' && token) {
         return { Authorization: `Bearer ${token}` }

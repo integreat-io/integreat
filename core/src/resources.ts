@@ -1,9 +1,8 @@
 import transformers from './transformers'
+import authenticators from './authenticators'
 
-const resources = () => ({
+export default (): Record<string, unknown> => ({
   adapters: {},
-  authenticators: require('./authenticators').default(),
+  authenticators: authenticators(),
   transformers,
 })
-
-export default resources

@@ -269,7 +269,7 @@ test('should get metadata from other service', async (t) => {
 
 // Obsolete?
 test.skip('should return error when meta is set to an unknown type', async (t) => {
-  const endpoints = [] as {}[]
+  const endpoints = [] as EndpointDef[]
   const great = Integreat.create(defs(endpoints, 'unknown'), resources)
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? great.services.store : undefined

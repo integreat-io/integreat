@@ -1,16 +1,25 @@
-import deleteFn from './delete'
-import { Dictionary } from '../types'
+import GET from './get'
+import GET_META from './getMeta'
+import GET_IDENT from './getIdent'
+import SET from './set'
+import SET_META from './setMeta'
+import DELETE from './delete'
+import REQUEST from './request'
+import SYNC from './sync'
+import EXPIRE from './expire'
 import { ExchangeHandler } from '../dispatch'
 
-export default {
-  GET: require('./get').default,
-  GET_META: require('./getMeta').default,
-  GET_IDENT: require('./getIdent').default,
-  SET: require('./set').default,
-  SET_META: require('./setMeta').default,
-  DELETE: deleteFn,
-  DEL: deleteFn,
-  REQUEST: require('./request').default,
-  SYNC: require('./sync').default,
-  EXPIRE: require('./expire').default,
-} as Dictionary<ExchangeHandler>
+const handlers: Record<string, ExchangeHandler> = {
+  GET,
+  GET_META,
+  GET_IDENT,
+  SET,
+  SET_META,
+  DELETE,
+  DEL: DELETE,
+  REQUEST,
+  SYNC,
+  EXPIRE,
+}
+
+export default handlers

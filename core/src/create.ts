@@ -1,5 +1,5 @@
 import { Dictionaries, CustomFunction, MapDefinition } from 'map-transform'
-import { Middleware, Transporter } from './types'
+import { Middleware, Transporter, Dispatch } from './types'
 import {
   ServiceDef,
   IdentConfig,
@@ -34,6 +34,13 @@ export interface Resources {
   transformers?: Record<string, CustomFunction>
 }
 
+export interface Instance {
+  services: Record<string, Service>
+  schemas: Record<string, Schema>
+  identType?: string
+  dispatch: Dispatch
+}
+
 /*
  * Create an Integreat instance.
  */
@@ -48,7 +55,7 @@ export default function create(
   }: Definitions,
   { transporters, transformers, handlers, authenticators }: Resources,
   middlewares: Middleware[] = []
-) {
+): Instance {
   if (!Array.isArray(serviceDefs) || !Array.isArray(schemaDefs)) {
     throw new TypeError(
       'Please provide Integreat with at least services and schemas'

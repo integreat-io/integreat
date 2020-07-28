@@ -1,6 +1,6 @@
 # HTTP transport for Integreat
 
-Adapter that lets
+Transporter that lets
 [Integreat](https://github.com/integreat-io/integreat) send and receive data
 over http/https.
 

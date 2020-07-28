@@ -5,10 +5,14 @@ import { OauthOptions } from '.'
 const debug = debugLib('great:auth')
 
 interface Body {
-  access_token: string
+  access_token?: string
 }
 
-export default async function authenticate({ uri, key, secret }: OauthOptions) {
+export default async function authenticate({
+  uri,
+  key,
+  secret,
+}: OauthOptions): Promise<string | null> {
   if (!key || !secret || !uri) {
     return null
   }
@@ -17,7 +21,7 @@ export default async function authenticate({ uri, key, secret }: OauthOptions) {
   const credentials64 = Buffer.from(credentials).toString('base64')
 
   try {
-    const body: Body = await got
+    const body = (await got
       .post(uri, {
         body: 'grant_type=client_credentials',
         headers: {
@@ -26,8 +30,8 @@ export default async function authenticate({ uri, key, secret }: OauthOptions) {
         },
         retry: 0,
       })
-      .json()
-    return body.access_token
+      .json()) as Body
+    return body.access_token ?? null
   } catch (error) {
     debug(`Oauth2: Server returned an error. ${error}`)
     return null

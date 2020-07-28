@@ -9,6 +9,8 @@ const castBoolean = (value: Data) => {
   }
 }
 
-export default function (_operands: object) {
+export default function (
+  _operands: Record<string, unknown>
+): (data: Data) => Data {
   return mapAny(castBoolean)
 }

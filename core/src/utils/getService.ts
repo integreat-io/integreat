@@ -1,9 +1,8 @@
 /* eslint-disable security/detect-object-injection */
-import { Dictionary } from '../types'
 import { Schema } from '../schema'
 import { Service } from '../service/types'
 
-function serviceIdFromSchema(schemas: Dictionary<Schema>, type?: string) {
+function serviceIdFromSchema(schemas: Record<string, Schema>, type?: string) {
   const schema = type ? schemas[type] : undefined
   return schema?.service
 }
@@ -12,14 +11,14 @@ function serviceIdFromSchema(schemas: Dictionary<Schema>, type?: string) {
  * Get service from type or service id.
  */
 export default function getService(
-  schemas?: Dictionary<Schema>,
-  services?: Dictionary<Service>
-) {
+  schemas?: Record<string, Schema>,
+  services?: Record<string, Service>
+): (types?: string | string[], serviceId?: string) => Service | undefined {
   if (!services) {
     return () => undefined
   }
 
-  return (types?: string | string[], serviceId?: string) => {
+  return (types, serviceId) => {
     if (!serviceId && schemas && types) {
       if (Array.isArray(types)) {
         for (const type of types) {

@@ -144,7 +144,7 @@ test('should set metadata on other service', async (t) => {
 
 // Obsolete?
 test.skip('should return status noaction when meta is set to an unknown schema', async (t) => {
-  const endpoints = [] as {}[]
+  const endpoints = [] as EndpointDef[]
   const great = Integreat.create(defs(endpoints, 'unknown'), resources)
   const getService = (_type?: string | string[], service?: string) =>
     service === 'store' ? great.services.store : undefined

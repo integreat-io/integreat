@@ -19,6 +19,8 @@ function castInteger(value: Data): number | null | undefined {
   }
 }
 
-export default function integer(_operands: object) {
+export default function integer(
+  _operands: Record<string, unknown>
+): (data: Data) => Data {
   return mapAny(castInteger)
 }

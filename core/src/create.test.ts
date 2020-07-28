@@ -3,14 +3,7 @@ import sinon = require('sinon')
 import { jsonServiceDef } from './tests/helpers/json'
 import builtInMutations from './mutations'
 import resources from './tests/helpers/resources'
-import {
-  Action,
-  Dispatch,
-  Data,
-  DataObject,
-  Dictionary,
-  Exchange,
-} from './types'
+import { Action, Dispatch, Data, DataObject, Exchange } from './types'
 
 import create, { Definitions } from './create'
 
@@ -214,7 +207,7 @@ test('should map data', async (t) => {
 test('should use auth', async (t) => {
   const authenticators = {
     mock: {
-      authenticate: async (options: Dictionary<Data> | null) => ({
+      authenticate: async (options: Record<string, Data> | null) => ({
         status: options?.status as string,
       }),
       isAuthenticated: () => false,
@@ -276,6 +269,6 @@ test.skip('should not subscribe to anything for unknown service', (t) => {
   const great = create({ services, schemas, mutations }, resourcesWithTrans)
 
   t.notThrows(() => {
-    great.on('mapRequest', 'unknown', () => {})
+    great.on('mapRequest', 'unknown', () => undefined)
   })
 })

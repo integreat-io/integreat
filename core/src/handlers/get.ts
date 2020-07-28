@@ -3,7 +3,7 @@ import pPipe = require('p-pipe')
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { Exchange, InternalDispatch } from '../types'
-import { Service } from '../service/types'
+import { Service, IdentConfig } from '../service/types'
 import { Endpoint } from '../service/endpoints/types'
 import { GetService } from '../dispatch'
 
@@ -74,7 +74,8 @@ const mapOneOrMany = (
 export default async function get(
   exchange: Exchange,
   _dispatch: InternalDispatch,
-  getService: GetService
+  getService: GetService,
+  _identConfig?: IdentConfig
 ): Promise<Exchange> {
   const {
     request: { type, service: serviceId },

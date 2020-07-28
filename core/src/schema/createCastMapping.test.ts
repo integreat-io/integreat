@@ -128,7 +128,8 @@ test('should map props in given order', (t) => {
     functions: transformFunctions,
   })(data)
 
-  t.deepEqual(Object.keys(ret as object), expectedProps)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  t.deepEqual(Object.keys(ret!), expectedProps)
 })
 
 test('should reverse transform with mapping definition from schema', (t) => {

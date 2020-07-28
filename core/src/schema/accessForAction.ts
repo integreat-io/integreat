@@ -39,8 +39,10 @@ const getActionAccess = (access?: AccessDef | null, actionType?: string) =>
     ? access.actions[getActionPrefix(actionType)] || access // eslint-disable-line security/detect-object-injection
     : access
 
-export default function accessForAction(access?: string | AccessDef | null) {
+export default function accessForAction(
+  access?: string | AccessDef | null
+): (actionType?: string) => Access {
   const accessObject = typeof access === 'string' ? { allow: access } : access
-  return (actionType?: string): Access =>
+  return (actionType) =>
     ensureAccessObject(getActionAccess(accessObject, actionType))
 }

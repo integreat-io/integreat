@@ -1,6 +1,5 @@
 import { validate } from 'map-transform'
-import { lookupById } from '../../utils/indexUtils'
-import { Exchange, Params, Dictionary } from '../../types'
+import { Exchange, Params } from '../../types'
 import { EndpointDef } from './types'
 import { arrayIncludes } from '../../utils/array'
 
@@ -52,20 +51,17 @@ const matchFilters = (filters: FilterFn[], exchange: Exchange) =>
  * scope, which should match before action, but the order here is taken care of
  * by the required sorting.
  */
-export default function isMatch(endpoint: EndpointDef) {
+export default function isMatch(
+  endpoint: EndpointDef
+): (exchange: Exchange) => boolean {
   const match = endpoint.match || {}
   const filters = match.filters
-    ? Object.keys(match.filters).map(
-        // eslint-disable-next-line security/detect-object-injection
-        (path) =>
-          validate(
-            path,
-            lookupById(path, match.filters as Dictionary<object>) || false
-          )
+    ? Object.entries(match.filters).map(([path, filter]) =>
+        validate(path, filter)
       )
     : []
 
-  return (exchange: Exchange) =>
+  return (exchange) =>
     matchId(endpoint, exchange) &&
     matchType(endpoint, exchange) &&
     matchScope(endpoint, exchange) &&

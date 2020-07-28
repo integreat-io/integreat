@@ -3,6 +3,7 @@ import { EndpointOptions } from './endpoints/types'
 
 export interface ConnectionObject extends Record<string, unknown> {
   status: string
+  error?: string
 }
 
 const isSuccessStatus = (status?: string | null) =>
@@ -19,7 +20,7 @@ export default class Connection {
     this.#connection = null
   }
 
-  async connect(auth?: object | null) {
+  async connect(auth?: Record<string, unknown> | null): Promise<boolean> {
     if (typeof this.#transporter.connect === 'function') {
       this.#connection = (await this.#transporter.connect(
         this.#options,
@@ -32,22 +33,22 @@ export default class Connection {
     return isSuccessStatus(this.#connection?.status)
   }
 
-  async disconnect() {
+  async disconnect(): Promise<void> {
     if (typeof this.#transporter.disconnect === 'function') {
       await this.#transporter.disconnect(this.#connection)
     }
     this.#connection = null
   }
 
-  get status() {
+  get status(): string | null {
     return this.#connection?.status || null
   }
 
-  get error() {
+  get error(): string | null {
     return this.#connection?.error || null
   }
 
-  get object() {
+  get object(): ConnectionObject | null {
     return this.#connection || null
   }
 }

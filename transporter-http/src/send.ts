@@ -131,8 +131,8 @@ const removeContentTypeIf = (
 const createHeaders = (
   endpoint?: EndpointOptions,
   data?: unknown,
-  headers?: object,
-  auth?: object | boolean | null
+  headers?: Record<string, unknown>,
+  auth?: Record<string, unknown> | boolean | null
 ) => ({
   ...(typeof data === 'string'
     ? { 'Content-Type': 'text/plain' }
