@@ -39,8 +39,7 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for solution to raw data access
-test.failing('should dispatch get action and return respons', async (t) => {
+test('should dispatch get action and return respons', async (t) => {
   const resourcesWithSend = {
     ...resources,
     transporters: {
@@ -65,10 +64,6 @@ test.failing('should dispatch get action and return respons', async (t) => {
     type: 'REQUEST',
     payload: { type: 'entry', data: '{"key":"ent1"}', requestMethod: 'GET' },
     meta: { ident: { id: 'johnf' } },
-  }
-  const expectedRequestParams = {
-    type: 'entry',
-    id: 'ent1',
   }
   const expectedResponseData = serializeData({
     key: 'ent1',
@@ -95,5 +90,7 @@ test.failing('should dispatch get action and return respons', async (t) => {
   t.is(sendSpy.callCount, 1)
   const sentRequest = sendSpy.args[0][0]
   t.is(sentRequest.type, 'GET')
-  t.deepEqual(sentRequest.request.params, expectedRequestParams)
+  t.is(sentRequest.request.id, 'ent1')
+  t.is(sentRequest.request.type, 'entry')
+  t.deepEqual(sentRequest.request.params, { requestMethod: 'GET' })
 })

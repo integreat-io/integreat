@@ -154,56 +154,56 @@ test('should return exchange mapped to service', async (t) => {
   t.is(items[0].header, 'Entry 1')
 })
 
-// Waiting for solution to access to raw data
-test.failing(
-  'should dispatch action with mapped data by type from request action',
-  async (t) => {
-    const dispatch = sinon.stub().resolves(completeExchange({ status: 'ok' }))
-    const service = setupService({ mapOptions, schemas })({
-      id: 'entries',
-      transporter: httpTransporter,
-      endpoints: [
+test('should dispatch action with mapped data by type from request action', async (t) => {
+  const dispatch = sinon.stub().resolves(completeExchange({ status: 'ok' }))
+  const service = setupService({ mapOptions, schemas })({
+    id: 'entries',
+    transporter: httpTransporter,
+    endpoints: [
+      {
+        match: { action: 'REQUEST' },
+        mutation: { data: ['data', { $apply: 'entry' }] },
+        options: { actionType: 'SET', actionPayload: { type: 'hook' } },
+      },
+    ],
+  })
+  const getService = () => service
+  const exchange = completeExchange({
+    type: 'REQUEST',
+    request: {
+      type: 'entry',
+      data: { items: [{ key: 'ent1', header: 'Entry 1' }] },
+      sendNoDefaults: true,
+    },
+    ident: { id: 'johnf' },
+    meta: { project: 'project1' },
+    incoming: true,
+  })
+  const expected = completeExchange({
+    type: 'SET',
+    request: {
+      type: 'hook',
+      data: [
         {
-          match: { action: 'REQUEST' },
-          mutation: { data: ['data.items', { $apply: 'entry' }] }, // ?
-          options: { actionType: 'SET', actionPayload: { type: 'hook' } },
+          $type: 'entry',
+          id: 'ent1',
+          title: 'Entry 1',
         },
       ],
-    })
-    const getService = () => service
-    const exchange = completeExchange({
-      type: 'REQUEST',
-      request: {
-        type: 'entry',
-        data: { items: [{ key: 'ent1', header: 'Entry 1' }] },
-      },
-      ident: { id: 'johnf' },
-      meta: { project: 'project1' },
-    })
-    const expected = {
-      type: 'SET',
-      payload: {
-        type: 'hook',
-        data: [
-          {
-            $type: 'entry',
-            id: 'ent1',
-            title: 'Entry 1',
-          },
-        ],
-      },
-      meta: { ident: { id: 'johnf' }, project: 'project1' },
-    }
+      sendNoDefaults: true, // TODO: Should this really be included in next exchange?
+    },
+    ident: { id: 'johnf' },
+    meta: { project: 'project1' },
+  })
 
-    const ret = await request(exchange, dispatch, getService)
+  const ret = await request(exchange, dispatch, getService)
 
-    t.is(ret.status, 'ok', ret.response.error)
-    t.is(dispatch.callCount, 1)
-    t.deepEqual(dispatch.args[0][0], expected)
-  }
-)
+  t.is(ret.status, 'ok', ret.response.error)
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expected)
+})
 
-// Waiting for solution to access to raw data
+// TODO: Make returnNoDefaults work
 test.failing('should respond with mapped data', async (t) => {
   const data = [
     {
@@ -226,10 +226,14 @@ test.failing('should respond with mapped data', async (t) => {
       {
         match: { action: 'REQUEST' },
         mutation: [
-          { $direction: 'fwd', 'params.id': 'data.key' },
+          {
+            $direction: 'fwd',
+            'params.id': 'data.key',
+            data: { $transform: 'value', value: undefined },
+          },
           {
             $direction: 'rev',
-            'data.items': ['content.entries', { $apply: 'entry' }],
+            data: ['data.content.entries', { $apply: 'entry' }],
           },
         ],
         options: { actionType: 'GET', actionPayload: { type: 'entry' } },
@@ -240,18 +244,20 @@ test.failing('should respond with mapped data', async (t) => {
   const exchange = completeExchange({
     type: 'REQUEST',
     request: { type: 'entry', data: '{"key":"ent1"}' },
+    response: { returnNoDefaults: true },
     ident: { id: 'johnf' },
+    incoming: true,
   })
-  const expectedResponse = {
-    data: {
-      content: { entries: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+  const expectedData = {
+    content: {
+      entries: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
 
   const ret = await request(exchange, dispatch, getService)
 
   t.is(ret.status, 'ok', ret.response.error)
-  t.deepEqual(ret.response.data, expectedResponse)
+  t.deepEqual(ret.response.data, expectedData)
 })
 
 test('should use type from request action if not set on endpoint', async (t) => {
@@ -344,8 +350,7 @@ test('should respond with noaction when no endpoint matches', async (t) => {
   )
 })
 
-// Waiting for solution to access to raw data
-test.failing('should map and pass on error from dispatch', async (t) => {
+test('should map and pass on error from dispatch', async (t) => {
   const dispatch = async () =>
     completeExchange({
       status: 'notfound',
@@ -375,9 +380,10 @@ test.failing('should map and pass on error from dispatch', async (t) => {
     type: 'REQUEST',
     request: { type: 'entry', data: { key: 'ent1' } },
     ident: { id: 'johnf' },
+    incoming: true,
   })
   const expectedResponse = {
-    data: { 'a:errorMessage': 'Not found' },
+    data: { 'a:errorMessage': 'Not found', content: { items: [] } }, // TODO: Find way to avoid empty on error?
     error: 'Not found',
     // access: { status: 'granted', scheme: 'auth' }
   }

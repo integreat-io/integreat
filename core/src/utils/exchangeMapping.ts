@@ -15,6 +15,7 @@ export interface MappingParams extends Params {
   id?: string | string[]
   type?: string | string[]
   service?: string
+  sendNoDefaults?: boolean
 }
 
 export interface MappingObject {
@@ -163,7 +164,7 @@ export function exchangeFromMappingObject(
     data,
     paging,
     error,
-    params: { id, type, service, ...params } = {},
+    params: { id, type, service, sendNoDefaults, ...params } = {},
     options,
   } = mappingObject
 
@@ -176,6 +177,7 @@ export function exchangeFromMappingObject(
       ...(id && { id }),
       ...(type && { type }),
       ...(service && { service }),
+      ...(sendNoDefaults && { sendNoDefaults }),
       ...(!isEmptyObject(params) && { params }),
     },
     response: {

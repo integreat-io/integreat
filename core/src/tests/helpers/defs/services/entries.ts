@@ -97,7 +97,17 @@ export default {
           'request.params.requestMethod': { const: 'GET' },
         },
       },
-      mutation: { $direction: 'fwd', params: { id: 'data.key' } },
+      mutation: [
+        {
+          $direction: 'fwd',
+          params: { id: 'data.key' },
+          data: { $transform: 'value', value: undefined }, // TODO: Find a way to avoid this?
+        },
+        {
+          $direction: 'rev',
+          data: ['data', { $apply: 'entries-entry' }],
+        },
+      ],
       options: { actionType: 'GET', actionPayload: { type: 'entry' } },
     },
     {
