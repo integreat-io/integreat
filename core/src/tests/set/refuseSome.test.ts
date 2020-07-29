@@ -22,24 +22,21 @@ const bettyItem = {
 // Tests
 
 // Waiting for authentication to service and a solution on how to treat return from SET
-test.failing(
-  'should refuse to set entries where ident has no access',
-  async (t) => {
-    nock('http://some.api').post('/users').reply(201, { ok: true })
-    const action = {
-      type: 'SET',
-      payload: { type: 'user', data: [johnfItem, bettyItem] },
-      meta: { ident: { id: 'johnf' } },
-    }
-
-    const great = Integreat.create(defs, resources)
-    const ret = await great.dispatch(action)
-
-    t.is(ret.status, 'ok', ret.error)
-    const data = ret.data as TypedData[]
-    t.is(data.length, 1)
-    t.is(data[0].id, 'johnf')
-
-    nock.restore()
+test('should refuse to set entries where ident has no access', async (t) => {
+  nock('http://some.api').post('/users').reply(201, { ok: true })
+  const action = {
+    type: 'SET',
+    payload: { type: 'user', data: [johnfItem, bettyItem] },
+    meta: { ident: { id: 'johnf' } },
   }
-)
+
+  const great = Integreat.create(defs, resources)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  const data = ret.data as TypedData
+  t.false(Array.isArray(data))
+  t.is(data, undefined)
+
+  nock.restore()
+})

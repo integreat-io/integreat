@@ -1,42 +1,11 @@
 import debugLib = require('debug')
 import pPipe = require('p-pipe')
-// import { mergeDeepWith } from 'ramda'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { isTypedData } from '../utils/is'
 import { Exchange, InternalDispatch, Data } from '../types'
 import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
-
-// const isEmptyArray = (arr: unknown): arr is [] =>
-//   Array.isArray(arr) && arr.length === 0
-// const isNonEmptyArray = (arr: unknown): arr is [] =>
-//   Array.isArray(arr) && arr.length > 0
-//
-// const mergeDiff = (left: unknown, right: unknown) =>
-//   right === undefined || (isEmptyArray(right) && isNonEmptyArray(left))
-//     ? left
-//     : right
-//
-// const merge = (requestData, responseData) => {
-//   requestData = [].concat(requestData)
-//   if (!responseData || isEmptyArray(responseData)) {
-//     return requestData
-//   }
-//   responseData = [].concat(responseData)
-//
-//   return requestData.map(
-//     (data, index) =>
-//       data
-//         ? mergeDeepWith(mergeDiff, data, responseData[index]) // eslint-disable-line security/detect-object-injection
-//         : responseData[index] // eslint-disable-line security/detect-object-injection
-//   )
-// }
-//
-// const mergeRequestAndResponseData = (response, requestData) =>
-//   response.status === 'ok'
-//     ? { ...response, data: merge(requestData, response.data) }
-//     : response
 
 const extractType = (exchange: Exchange, data?: Data) =>
   exchange.request.type || (isTypedData(data) && data.$type) || undefined

@@ -9,8 +9,8 @@ export interface MatchObject {
   action?: string | string[]
   type?: string | string[]
   scope?: string | string[]
-  params?: { [key: string]: boolean }
-  filters?: Record<string, JsonSchema>
+  params?: Record<string, boolean | undefined>
+  filters?: Record<string, JsonSchema | undefined>
 }
 
 export interface EndpointDef {

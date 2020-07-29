@@ -9,6 +9,7 @@ import {
 import schema from '../schema'
 import functions from '../transformers/builtIns'
 import { completeExchange } from '../utils/exchangeMapping'
+import { TypedData } from '../types'
 
 import set from './set'
 
@@ -121,7 +122,7 @@ test('should map and set items to service', async (t) => {
   })
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = (_type?: string | string[], service?: string) =>
-    service === 'entries' ? src : null
+    service === 'entries' ? src : undefined
 
   const ret = await set(exchange, dispatch, getService)
 
@@ -171,7 +172,7 @@ test('should send without default values', async (t) => {
     'PUT'
   )
   const getService = (type?: string | string[], _service?: string) =>
-    type === 'entry' ? src : null
+    type === 'entry' ? src : undefined
 
   const ret = await set(exchange, dispatch, getService)
 
@@ -340,9 +341,8 @@ test('should authenticate items', async (t) => {
   t.true(scope.isDone())
 })
 
-// TODO: Decide how to treat return from SET
-test.failing('should set authorized data on response', async (t) => {
-  nock('http://api8.test').post('/database/_bulk_docs').reply(201, '{}')
+test('should return empty response from service', async (t) => {
+  nock('http://api8.test').post('/database/_bulk_docs').reply(201)
   const src = setupService('http://api8.test/database/_bulk_docs', 'accounts')
   const getService = (_type?: string | string[], service?: string) =>
     service === 'accounts' ? src : undefined
@@ -351,45 +351,24 @@ test.failing('should set authorized data on response', async (t) => {
     request: {
       service: 'accounts',
       data: [
-        {
-          $type: 'account',
-          id: 'johnf',
-          name: 'John F.',
-        },
-        {
-          $type: 'account',
-          id: 'betty',
-          name: 'Betty',
-        },
+        { id: 'johnf', $type: 'account', name: 'John F.' },
+        { id: 'betty', $type: 'account', name: 'Betty' },
       ],
     },
     ident: { id: 'johnf' },
   })
-  const expectedData = [
-    {
-      $type: 'account',
-      id: 'johnf',
-      name: 'John F.',
-    },
-  ]
 
   const ret = await set(exchange, dispatch, getService)
 
   t.is(ret.status, 'ok', ret.response.error)
-  t.deepEqual(ret.response.data, expectedData)
+  t.is(ret.response.data, undefined)
 })
 
-// TODO: Decide how to treat return from SET
-test.failing('should merge request data with response data', async (t) => {
+test('should map response data', async (t) => {
   nock('http://api9.test')
     .post('/database/_bulk_docs')
     .reply(201, [
-      {
-        id: 'johnf',
-        type: 'account',
-        name: 'John Fjon',
-        entries: [],
-      },
+      { id: 'johnf', type: 'account', name: 'John Fjon', entries: [] },
     ])
   const exchange = completeExchange({
     type: 'SET',
@@ -405,24 +384,48 @@ test.failing('should merge request data with response data', async (t) => {
     },
     ident: { root: true },
   })
-  const expectedData = [
-    {
-      $type: 'account',
-      id: 'johnf',
-      name: 'John Fjon',
-      posts: [{ id: 'ent1', $ref: 'entry' }],
-    },
-  ]
   const src = setupService('http://api9.test/database/_bulk_docs', 'accounts')
   const getService = () => src
 
   const ret = await set(exchange, dispatch, getService)
 
   t.is(ret.status, 'ok', ret.response.error)
-  t.deepEqual(ret.response.data, expectedData)
+  const data = ret.response.data as TypedData[]
+  t.true(Array.isArray(data))
+  t.is(data.length, 1)
+  t.is(data[0].$type, 'account')
+  t.is(data[0].id, 'johnf')
+  t.is(data[0].name, 'John Fjon')
 })
 
-// TODO: Decide on correct approach to mapping null to array
+test('should map non-array response data', async (t) => {
+  nock('http://api10.test').post('/database/_bulk_docs').reply(201, {
+    id: 'johnf',
+    type: 'account',
+    name: 'John Fjon',
+    entries: [],
+  })
+  const exchange = completeExchange({
+    type: 'SET',
+    request: {
+      service: 'accounts',
+      data: { $type: 'account', name: 'John F.' },
+    },
+    ident: { root: true },
+  })
+  const src = setupService('http://api10.test/database/_bulk_docs', 'accounts')
+  const getService = () => src
+
+  const ret = await set(exchange, dispatch, getService)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  const data = ret.response.data as TypedData
+  t.false(Array.isArray(data))
+  t.is(data.$type, 'account')
+  t.is(data.id, 'johnf')
+  t.is(data.name, 'John Fjon')
+})
+
 test('should allow null as request data', async (t) => {
   const scope = nock('http://api1.test')
     .post('/database/_bulk_docs', '{"docs":[]}')

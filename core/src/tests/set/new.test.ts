@@ -46,8 +46,7 @@ test.after.always(() => {
 
 // Tests
 
-// TODO: Figure out how to handle return data from SET
-test.failing('should set new entry', async (t) => {
+test('should set new entry', async (t) => {
   const middlewares = [completeIdent]
   const putData = {
     key: 'ent1',
@@ -72,13 +71,15 @@ test.failing('should set new entry', async (t) => {
     payload: { type: 'entry', data: entry1Item },
     meta: { ident: { id: 'johnf' } },
   }
-  const expected = [entry1Item]
 
-  const great = Integreat.create(defs, { adapters }, middlewares)
+  const great = Integreat.create(defs, resources, middlewares)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expected)
+  const data = ret.data as TypedData
+  t.false(Array.isArray(data))
+  t.is(data.id, 'ent1')
+  t.is(data.title, 'An entry') // Default value, as it is not provided in the response data
 })
 
 test('should set new entries', async (t) => {

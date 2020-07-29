@@ -7,10 +7,7 @@ export interface DataObject {
   [key: string]: Data
 }
 
-export type Data = DataValue | DataObject | DataArray
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface DataArray extends Array<Data> {}
+export type Data = DataValue | DataObject | Data[]
 
 export interface TypedData extends DataObject {
   $type: string
@@ -125,15 +122,15 @@ export interface ExchangeResponse<T = Data> {
 
 export type Meta = Record<string, Data>
 
-export interface Exchange<ReqData = Data, RespData = Data> {
+export interface Exchange<T = Data, U = Data, V extends Meta = Meta> {
   type: string
   id?: string
   status: string | null
-  request: ExchangeRequest<ReqData>
-  response: ExchangeResponse<RespData>
+  request: ExchangeRequest<T>
+  response: ExchangeResponse<U>
   ident?: Ident
   auth?: Record<string, unknown> | boolean | null
-  meta: Meta
+  meta: V
   endpointId?: string
   endpoint?: Endpoint
   authorized?: boolean

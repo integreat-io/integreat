@@ -55,8 +55,7 @@ test.after.always(() => {
 
 // Tests
 
-// Waiting for solution on returns from SET
-test.failing('should map full relationship item to service', async (t) => {
+test('should map full relationship item to service', async (t) => {
   const putData = {
     key: 'ent1',
     headline: 'Entry 1',
@@ -71,11 +70,8 @@ test.failing('should map full relationship item to service', async (t) => {
     payload: { type: 'entry', data: entry1Item },
     meta: { ident: { root: true } },
   }
-  const expected = [entry1Item]
-
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expected)
 })
