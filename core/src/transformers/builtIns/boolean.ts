@@ -1,4 +1,5 @@
 import mapAny = require('map-any')
+import { CustomFunction } from 'map-transform'
 import { Data } from '../../types'
 
 const castBoolean = (value: Data) => {
@@ -9,8 +10,6 @@ const castBoolean = (value: Data) => {
   }
 }
 
-export default function (
-  _operands: Record<string, unknown>
-): (data: Data) => Data {
-  return mapAny(castBoolean)
-}
+const boolean: CustomFunction = (_operands) => mapAny(castBoolean)
+
+export default boolean

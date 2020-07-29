@@ -1,4 +1,5 @@
 import mapAny = require('map-any')
+import { CustomFunction } from 'map-transform'
 import { Data } from '../../types'
 
 const numberOrUndefined = (value: number) => (isNaN(value) ? undefined : value)
@@ -19,8 +20,6 @@ function castNumber(value: Data): number | null | undefined {
   }
 }
 
-export default function number(
-  _operands: Record<string, unknown>
-): (data: Data) => Data {
-  return mapAny(castNumber)
-}
+const number: CustomFunction = (_operands) => mapAny(castNumber)
+
+export default number

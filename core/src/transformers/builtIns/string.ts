@@ -1,4 +1,5 @@
 import mapAny = require('map-any')
+import { CustomFunction } from 'map-transform'
 import { Data } from '../../types'
 
 function castString(value: Data): string | null | undefined {
@@ -11,8 +12,6 @@ function castString(value: Data): string | null | undefined {
   }
 }
 
-export default function string(
-  _operands: Record<string, unknown>
-): (data: Data) => Data {
-  return mapAny(castString)
-}
+const string: CustomFunction = (_operands) => mapAny(castString)
+
+export default string

@@ -1,4 +1,5 @@
 import mapAny = require('map-any')
+import { CustomFunction } from 'map-transform'
 import { Data } from '../../types'
 import { isDataObject, isTypedData, isReference } from '../../utils/is'
 
@@ -49,7 +50,7 @@ const castItem = (type: string | undefined) => (value: Data) => {
   }
 }
 
-export default function reference({ type }: Operands) {
-  return (value: Data, _context: Record<string, unknown>): Data =>
-    mapAny(castItem(type), value)
-}
+const reference: CustomFunction = ({ type }: Operands) => (value, _context) =>
+  mapAny(castItem(type), value)
+
+export default reference

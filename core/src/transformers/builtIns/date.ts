@@ -1,4 +1,5 @@
 import mapAny = require('map-any')
+import { CustomFunction } from 'map-transform'
 import { Data } from '../../types'
 
 function castDate(value: Data): Date | null | undefined {
@@ -16,8 +17,6 @@ function castDate(value: Data): Date | null | undefined {
   }
 }
 
-export default function date(
-  _operands: Record<string, unknown>
-): (data: Data) => Data {
-  return mapAny(castDate)
-}
+const date: CustomFunction = (_operands) => mapAny(castDate)
+
+export default date
