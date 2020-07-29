@@ -58,8 +58,7 @@ export interface Payload extends Record<string, Data> {
   pageSize?: number
 }
 
-export interface ActionMeta {
-  [key: string]: unknown
+export interface ActionMeta extends Record<string, unknown> {
   id?: string
   ident?: Ident
   queue?: boolean | number
@@ -75,15 +74,6 @@ export interface Action {
 export interface Paging {
   next?: Payload
   prev?: Payload
-}
-
-export interface Request<T = Data> {
-  action: string
-  params: Params
-  endpoint: Record<string, unknown>
-  data?: T
-  auth?: Record<string, unknown> | null
-  access?: { ident: Ident }
 }
 
 export interface Response<T = Data> {

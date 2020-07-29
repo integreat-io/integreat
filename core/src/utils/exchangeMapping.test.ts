@@ -3,7 +3,6 @@ import { Endpoint } from '../service/endpoints/types'
 
 import {
   exchangeFromAction,
-  requestFromExchange,
   responseToExchange,
   mappingObjectFromExchange,
   exchangeFromMappingObject,
@@ -128,35 +127,6 @@ test('should create incoming exchange from REQUEST action', (t) => {
   }
 
   const ret = exchangeFromAction(action)
-
-  t.deepEqual(ret, expected)
-})
-
-test('should create request from exchange', (t) => {
-  const exchange = {
-    ...exchangeDefaults,
-    type: 'SET',
-    request: {
-      id: 'johnf',
-      type: 'user',
-      data: { name: 'John F.' },
-    },
-    auth: { Authorization: 't0k3n' },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
-    ident: { id: 'johnf' },
-  }
-  const expected = {
-    action: 'SET',
-    params: { id: 'johnf', type: 'user' },
-    data: { name: 'John F.' },
-    endpoint: { uri: 'http://some.api.com/1.0' },
-    auth: { Authorization: 't0k3n' },
-    access: { ident: { id: 'johnf' } },
-  }
-
-  const ret = requestFromExchange(exchange)
 
   t.deepEqual(ret, expected)
 })

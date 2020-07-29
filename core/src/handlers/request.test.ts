@@ -326,6 +326,7 @@ test('should respond with noaction when no endpoint matches', async (t) => {
   const service = setupService({ mapOptions, schemas })({
     id: 'entries',
     transporter: httpTransporter,
+    endpoints: [],
   })
   const getService = () => service
   const exchange = completeExchange({

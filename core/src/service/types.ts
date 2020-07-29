@@ -1,10 +1,5 @@
-import {
-  MapTransform,
-  MapDefinition,
-  CustomFunction,
-  Dictionaries,
-} from 'map-transform'
-import { Request, Response, Exchange, Data, Transporter } from '../types'
+import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
+import { Exchange, Data, Transporter } from '../types'
 import { EndpointDef } from './endpoints/types'
 
 export interface MapOptions {
@@ -22,12 +17,6 @@ export interface IdentConfig {
     roles?: string
     tokens?: string
   }
-}
-
-export interface SendOptions {
-  request: Request
-  response?: Response
-  mutator: MapTransform
 }
 
 export interface ExchangeMapper {

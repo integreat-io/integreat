@@ -3,7 +3,6 @@ import {
   Action,
   Exchange,
   Data,
-  Request,
   Response,
   Paging,
   Params,
@@ -101,25 +100,6 @@ export function exchangeFromAction(action: Action): Exchange {
     meta: meta as Record<string, Data>,
     incoming,
   })
-}
-
-export function requestFromExchange(exchange: Exchange): Request {
-  const {
-    type: action,
-    request: { data, params, ...rest },
-    ident,
-    auth,
-    endpoint: { options: endpoint = {} } = {},
-  } = exchange
-
-  return {
-    action,
-    params: { ...params, ...rest } as Params, // Hack until params on requests are properly sorted
-    data,
-    endpoint,
-    auth,
-    access: ident ? { ident } : undefined,
-  }
 }
 
 export function responseToExchange(
