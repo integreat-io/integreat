@@ -1,20 +1,20 @@
 import test from 'ava'
 import sinon = require('sinon')
-import { Response, Action, Dispatch, Data, DataObject } from '../types'
+import { Exchange, InternalDispatch, Data, DataObject } from '../types'
 import { completeExchange } from '../utils/exchangeMapping'
 
 import sync from './sync'
 
 // Setup
 
-const responseFromArray = (responses: Response[] | Response) =>
+const responseFromArray = (responses: Exchange[] | Exchange) =>
   Array.isArray(responses) ? responses.shift() : responses
 
-const setupDispatch = (responses = {}): Dispatch => async (
-  action: Action | null
-) => {
-  const response = action ? responseFromArray(responses[action.type]) : null
-  return response || { status: 'ok', data: [] }
+const setupDispatch = (
+  responses: Record<string, Exchange[] | Exchange> = {}
+): InternalDispatch => async (exchange) => {
+  const response = exchange ? responseFromArray(responses[exchange.type]) : null
+  return response || completeExchange({ status: 'ok', response: { data: [] } })
 }
 
 const ident = { id: 'johnf' }
@@ -22,7 +22,6 @@ const ident = { id: 'johnf' }
 // Tests
 
 test('should dispatch GET to service', async (t) => {
-  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -36,15 +35,19 @@ test('should dispatch GET to service', async (t) => {
     ident,
     meta: { project: 'project1', queue: true },
   })
-  const expected = {
+  const dispatch = sinon
+    .stub()
+    .resolves({ ...exchange, response: { ...exchange.response, data: [] } })
+  const expected = completeExchange({
     type: 'GET',
-    payload: {
+    request: {
       service: 'users',
       type: 'user',
-      active: true,
+      params: { active: true },
     },
-    meta: { ident, project: 'project1' },
-  }
+    ident,
+    meta: { project: 'project1' },
+  })
 
   await sync(exchange, dispatch)
 
@@ -52,7 +55,6 @@ test('should dispatch GET to service', async (t) => {
 })
 
 test('should return error when GET responds with error', async (t) => {
-  const dispatch = sinon.stub().resolves({ status: 'notfound' })
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -60,6 +62,7 @@ test('should return error when GET responds with error', async (t) => {
       params: { from: 'users', to: 'store', retrieve: 'all' },
     },
   })
+  const dispatch = sinon.stub().resolves({ ...exchange, status: 'notfound' })
 
   const ret = await sync(exchange, dispatch)
 
@@ -71,12 +74,6 @@ test('should return error when GET responds with error', async (t) => {
 test('should queue SET to target', async (t) => {
   const johnData = { id: 'john', $type: 'user', name: 'John' }
   const jennyData = { id: 'jenny', $type: 'user', name: 'Jenny' }
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: { status: 'ok', data: [johnData, jennyData] },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -90,16 +87,27 @@ test('should queue SET to target', async (t) => {
     ident,
     meta: { project: 'project1' },
   })
-  const expected = {
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: [johnData, jennyData] },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
+  const expected = ({
     type: 'SET',
-    payload: {
+    request: {
       service: 'store',
       type: 'user',
       data: [johnData, jennyData],
-      language: 'no',
+      params: { language: 'no' },
     },
-    meta: { ident, project: 'project1' },
-  }
+    ident,
+    meta: { project: 'project1' },
+  } as unknown) as Exchange
 
   const ret = await sync(exchange, dispatch)
 
@@ -112,12 +120,6 @@ test('should queue SET to target', async (t) => {
 test.serial('should set lastSyncedAt on service', async (t) => {
   const lastSyncedAt = new Date()
   const clock = sinon.useFakeTimers(lastSyncedAt)
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: { status: 'ok', data: [{ id: 'john', type: 'user' }] },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -126,11 +128,24 @@ test.serial('should set lastSyncedAt on service', async (t) => {
     },
     ident,
   })
-  const expected = {
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: {
+        ...exchange,
+        status: 'ok',
+        response: {
+          ...exchange.response,
+          data: [{ id: 'john', type: 'user' }],
+        },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
+  const expected = ({
     type: 'SET_META',
-    payload: { service: 'users', meta: { lastSyncedAt } },
-    meta: { ident },
-  }
+    request: { service: 'users', params: { meta: { lastSyncedAt } } },
+    ident,
+  } as unknown) as Exchange
 
   await sync(exchange, dispatch)
 
@@ -140,12 +155,6 @@ test.serial('should set lastSyncedAt on service', async (t) => {
 })
 
 test('should do nothing when there is no updates', async (t) => {
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: { status: 'ok', data: [] },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -154,20 +163,24 @@ test('should do nothing when there is no updates', async (t) => {
     },
     ident,
   })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: [] },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
 
   const ret = await sync(exchange, dispatch)
 
-  t.false(dispatch.calledWithMatch({ type: 'SET_META' }))
+  t.false(dispatch.calledWithMatch(completeExchange({ type: 'SET_META' })))
   t.is(ret.status, 'noaction')
 })
 
 test('should set 0 items for empty array when syncNoData flag is set', async (t) => {
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: { status: 'ok', data: [] },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -181,6 +194,16 @@ test('should set 0 items for empty array when syncNoData flag is set', async (t)
     },
     ident,
   })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: [] },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
 
   const ret = await sync(exchange, dispatch)
 
@@ -191,12 +214,6 @@ test('should set 0 items for empty array when syncNoData flag is set', async (t)
 })
 
 test('should set 0 items for undefined when syncNoData flag is set', async (t) => {
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: { status: 'ok', data: undefined },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -210,6 +227,16 @@ test('should set 0 items for undefined when syncNoData flag is set', async (t) =
     },
     ident,
   })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: undefined },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
 
   const ret = await sync(exchange, dispatch)
 
@@ -222,13 +249,6 @@ test('should set 0 items for undefined when syncNoData flag is set', async (t) =
 test('should not set lastSyncedAt when there is no updates after date filter', async (t) => {
   const updatedAt = new Date('2017-05-12T13:04:32Z')
   const lastSyncedAt = new Date('2017-05-13T18:43:00Z')
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
-      GET: { status: 'ok', data: [{ id: 'john', $type: 'user', updatedAt }] },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -240,20 +260,32 @@ test('should not set lastSyncedAt when there is no updates after date filter', a
       },
     },
   })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: { meta: { lastSyncedAt } } },
+      },
+      GET: {
+        ...exchange,
+        status: 'ok',
+        response: {
+          ...exchange.response,
+          data: [{ id: 'john', $type: 'user', updatedAt }],
+        },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
 
   await sync(exchange, dispatch)
 
-  t.false(dispatch.calledWithMatch({ type: 'SET_META' }))
+  t.false(dispatch.calledWithMatch(completeExchange({ type: 'SET_META' })))
 })
 
 test('should pass updatedAfter as param when retrieving updated', async (t) => {
   const lastSyncedAt = new Date('2017-05-13T18:43:00Z')
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -265,14 +297,24 @@ test('should pass updatedAfter as param when retrieving updated', async (t) => {
       },
     },
   })
-  const expected = {
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: { meta: { lastSyncedAt } } },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
+  const expected = ({
     type: 'GET',
-    payload: {
+    request: {
       service: 'users',
       type: 'user',
-      updatedAfter: lastSyncedAt,
+      params: { updatedAfter: lastSyncedAt },
     },
-  }
+  } as unknown) as Exchange
 
   await sync(exchange, dispatch)
 
@@ -280,12 +322,6 @@ test('should pass updatedAfter as param when retrieving updated', async (t) => {
 })
 
 test('should not pass updatedAfter when not set as metadata', async (t) => {
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET_META: { status: 'ok', data: { meta: { lastSyncedAt: null } } },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -297,21 +333,30 @@ test('should not pass updatedAfter when not set as metadata', async (t) => {
       },
     },
   })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: {
+        ...exchange,
+        status: 'ok',
+        response: {
+          ...exchange.response,
+          data: { meta: { lastSyncedAt: null } },
+        },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
 
   await sync(exchange, dispatch)
 
   t.false(
-    dispatch.calledWithMatch({ payload: { updatedAfter: sinon.match.date } })
+    dispatch.calledWithMatch(({
+      request: { params: { updatedAfter: sinon.match.date } },
+    } as unknown) as Exchange)
   )
 })
 
 test('should not pass updatedAfter when metadata not found', async (t) => {
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET_META: { status: 'notfound', error: 'Not found' },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -323,11 +368,23 @@ test('should not pass updatedAfter when metadata not found', async (t) => {
       },
     },
   })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: {
+        ...exchange,
+        status: 'notfound',
+        response: { error: 'Not found' },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
 
   await sync(exchange, dispatch)
 
   t.false(
-    dispatch.calledWithMatch({ payload: { updatedAfter: sinon.match.date } })
+    dispatch.calledWithMatch(({
+      request: { params: { updatedAfter: sinon.match.date } },
+    } as unknown) as Exchange)
   )
 })
 
@@ -335,12 +392,6 @@ test('should pass on updatedAfter and updatedUntil when set on payload', async (
   const lastSyncedAt = new Date('2017-05-13T18:43:00Z')
   const updatedAfter = new Date('2017-05-13T23:59:59.999Z')
   const updatedUntil = new Date('2017-05-14T23:59:59.999Z')
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -354,18 +405,30 @@ test('should pass on updatedAfter and updatedUntil when set on payload', async (
       },
     },
   })
-  const expected = {
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: { meta: { lastSyncedAt } } },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
+  const expected = ({
     type: 'GET',
-    payload: {
+    request: {
       service: 'users',
       type: 'user',
-      updatedAfter,
-      updatedUntil,
+      params: {
+        updatedAfter,
+        updatedUntil,
+      },
     },
-  }
-  const notExpected = {
+  } as unknown) as Exchange
+  const notExpected = ({
     type: 'GET_META',
-  }
+  } as unknown) as Exchange
 
   await sync(exchange, dispatch)
 
@@ -377,12 +440,6 @@ test('should pass on updatedAfter and updatedUntil as dates when set as iso stri
   const lastSyncedAt = new Date('2017-05-13T18:43:00Z')
   const updatedAfter = '2017-05-13T23:59:59.999Z'
   const updatedUntil = '2017-05-14T23:59:59.999Z'
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -396,18 +453,30 @@ test('should pass on updatedAfter and updatedUntil as dates when set as iso stri
       },
     },
   })
-  const expected = {
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: { meta: { lastSyncedAt } } },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
+  const expected = ({
     type: 'GET',
-    payload: {
+    request: {
       service: 'users',
       type: 'user',
-      updatedAfter: new Date(updatedAfter),
-      updatedUntil: new Date(updatedUntil),
+      params: {
+        updatedAfter: new Date(updatedAfter),
+        updatedUntil: new Date(updatedUntil),
+      },
     },
-  }
-  const notExpected = {
+  } as unknown) as Exchange
+  const notExpected = ({
     type: 'GET_META',
-  }
+  } as unknown) as Exchange
 
   await sync(exchange, dispatch)
 
@@ -419,19 +488,6 @@ test('should filter out items before updatedAfter', async (t) => {
   const lastSyncedAt = new Date('2017-05-13T18:43:00Z')
   const date1 = new Date('2017-05-12T13:04:32Z')
   const date2 = new Date('2017-05-13T18:45:03Z')
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
-      GET: {
-        status: 'ok',
-        data: [
-          { id: 'ent1', updatedAt: date1 },
-          { id: 'ent2', updatedAt: date2 },
-        ],
-      },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -443,14 +499,35 @@ test('should filter out items before updatedAfter', async (t) => {
       },
     },
   })
-  const expected = {
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: { meta: { lastSyncedAt } } },
+      },
+      GET: {
+        ...exchange,
+        status: 'ok',
+        response: {
+          ...exchange.response,
+          data: [
+            { id: 'ent1', updatedAt: date1 },
+            { id: 'ent2', updatedAt: date2 },
+          ],
+        },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
+  const expected = ({
     type: 'SET',
-    payload: {
+    request: {
       data: sinon.match(
         (value) => value.length === 1 && value[0].id === 'ent2'
       ),
     },
-  }
+  } as unknown) as Exchange
 
   await sync(exchange, dispatch)
 
@@ -463,19 +540,6 @@ test('should filter out items before updatedAfter and after updatedUntil', async
   const date1 = new Date('2017-05-13T23:59:59.999Z')
   const date2 = new Date('2017-05-14T18:43:01Z')
   const date3 = new Date('2017-05-15T01:35:40Z')
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: {
-        status: 'ok',
-        data: [
-          { id: 'ent1', updatedAt: date1 },
-          { id: 'ent2', updatedAt: date2 },
-          { id: 'ent3', updatedAt: date3 },
-        ],
-      },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -489,28 +553,36 @@ test('should filter out items before updatedAfter and after updatedUntil', async
       },
     },
   })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: {
+        ...exchange,
+        status: 'ok',
+        response: {
+          ...exchange.response,
+          data: [
+            { id: 'ent1', updatedAt: date1 },
+            { id: 'ent2', updatedAt: date2 },
+            { id: 'ent3', updatedAt: date3 },
+          ],
+        },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
 
   await sync(exchange, dispatch)
 
   t.truthy(dispatch.args[2][0])
-  const action = dispatch.args[2][0] as Action
-  t.is(action.type, 'SET')
-  t.is((action.payload.data as DataObject[]).length, 1)
-  t.is((action.payload.data as DataObject[])[0].id, 'ent2')
+  const dispatched = dispatch.args[2][0]
+  t.is(dispatched.type, 'SET')
+  t.is((dispatched.request.data as DataObject[]).length, 1)
+  t.is((dispatched.request.data as DataObject[])[0].id, 'ent2')
 })
 
 test('should set updatedAfter and after updatedUntil on SET action', async (t) => {
   const updatedAfter = new Date('2017-05-13T23:59:59.999Z')
   const updatedUntil = new Date('2017-05-14T23:59:59.999Z')
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: {
-        status: 'ok',
-        data: [{ id: 'ent1', updatedAt: new Date('2017-05-14T18:43:01Z') }],
-      },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -524,25 +596,29 @@ test('should set updatedAfter and after updatedUntil on SET action', async (t) =
       },
     },
   })
-
-  await sync(exchange, dispatch)
-
-  const action = dispatch.args[2][0] as Action
-  t.is(action.type, 'SET')
-  t.deepEqual(action.payload.updatedAfter, updatedAfter)
-  t.deepEqual(action.payload.updatedUntil, updatedUntil)
-})
-
-test('should not set updatedAfter and after updatedUntil on SET action', async (t) => {
   const dispatch = sinon.spy(
     setupDispatch({
       GET: {
+        ...exchange,
         status: 'ok',
-        data: [{ id: 'ent1', updatedAt: new Date('2017-05-14T18:43:01Z') }],
+        response: {
+          ...exchange.response,
+          data: [{ id: 'ent1', updatedAt: new Date('2017-05-14T18:43:01Z') }],
+        },
       },
-      SET: { status: 'queued' },
+      SET: { ...exchange, status: 'queued' },
     })
   )
+
+  await sync(exchange, dispatch)
+
+  const dispatched = dispatch.args[2][0]
+  t.is(dispatched.type, 'SET')
+  t.deepEqual(dispatched.request.params?.updatedAfter, updatedAfter)
+  t.deepEqual(dispatched.request.params?.updatedUntil, updatedUntil)
+})
+
+test('should not set updatedAfter and after updatedUntil on SET action', async (t) => {
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -554,23 +630,30 @@ test('should not set updatedAfter and after updatedUntil on SET action', async (
       },
     },
   })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: {
+        ...exchange,
+        status: 'ok',
+        response: {
+          ...exchange.response,
+          data: [{ id: 'ent1', updatedAt: new Date('2017-05-14T18:43:01Z') }],
+        },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
 
   await sync(exchange, dispatch)
 
-  const action = dispatch.args[2][0] as Action
-  t.is(action.type, 'SET')
-  t.is(typeof action.payload.updatedAfter, 'undefined')
-  t.is(typeof action.payload.updatedUntil, 'undefined')
+  const dispatched = dispatch.args[2][0]
+  t.is(dispatched.type, 'SET')
+  t.is(dispatched.request.params?.updatedAfter, undefined)
+  t.is(dispatched.request.params?.updatedUntil, undefined)
 })
 
 test('should pass ident to GET_META', async (t) => {
   const lastSyncedAt = new Date('2017-05-13T18:43:00Z')
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -583,14 +666,24 @@ test('should pass ident to GET_META', async (t) => {
     },
     ident,
   })
-  const expected = {
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: { meta: { lastSyncedAt } } },
+      },
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
+  const expected = completeExchange({
     type: 'GET_META',
-    payload: {
+    request: {
       service: 'users',
-      keys: 'lastSyncedAt',
+      params: { keys: 'lastSyncedAt' },
     },
-    meta: { ident },
-  }
+    ident,
+  })
 
   await sync(exchange, dispatch)
 
@@ -601,28 +694,6 @@ test('should combine and set items from several from-actions', async (t) => {
   const lastSyncedAt = new Date('2017-05-13T18:43:00Z')
   const date1 = new Date('2017-05-12T13:04:32Z')
   const date2 = new Date('2017-05-13T18:45:03Z')
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
-      GET: [
-        {
-          status: 'ok',
-          data: [
-            { id: 'ent1', updatedAt: date1 },
-            { id: 'ent2', updatedAt: date2 },
-          ],
-        },
-        {
-          status: 'ok',
-          data: [
-            { id: 'ent3', updatedAt: date1 },
-            { id: 'ent4', updatedAt: date2 },
-          ],
-        },
-      ],
-      SET: { status: 'queued' },
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -637,15 +708,49 @@ test('should combine and set items from several from-actions', async (t) => {
       },
     },
   })
-  const expected = {
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: {
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: { meta: { lastSyncedAt } } },
+      },
+      GET: [
+        {
+          ...exchange,
+          status: 'ok',
+          response: {
+            ...exchange.response,
+            data: [
+              { id: 'ent1', updatedAt: date1 },
+              { id: 'ent2', updatedAt: date2 },
+            ],
+          },
+        },
+        {
+          ...exchange,
+          status: 'ok',
+          response: {
+            ...exchange.response,
+            data: [
+              { id: 'ent3', updatedAt: date1 },
+              { id: 'ent4', updatedAt: date2 },
+            ],
+          },
+        },
+      ],
+      SET: { ...exchange, status: 'queued' },
+    })
+  )
+  const expected = ({
     type: 'SET',
-    payload: {
+    request: {
       data: sinon.match(
         (value) =>
           value.length === 2 && value[0].id === 'ent2' && value[1].id === 'ent4'
       ),
     },
-  }
+  } as unknown) as Exchange
 
   await sync(exchange, dispatch)
 
@@ -655,20 +760,6 @@ test('should combine and set items from several from-actions', async (t) => {
 test.serial('should set meta on several services', async (t) => {
   const lastSyncedAt = new Date()
   const clock = sinon.useFakeTimers(lastSyncedAt)
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: [
-        {
-          status: 'ok',
-          data: [{ id: 'ent1' }, { id: 'ent2' }],
-        },
-        {
-          status: 'ok',
-          data: [{ id: 'ent3' }, { id: 'ent4' }],
-        },
-      ],
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -684,16 +775,38 @@ test.serial('should set meta on several services', async (t) => {
     },
     ident,
   })
-  const expected1 = {
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: [
+        {
+          ...exchange,
+          status: 'ok',
+          response: {
+            ...exchange.response,
+            data: [{ id: 'ent1' }, { id: 'ent2' }],
+          },
+        },
+        {
+          ...exchange,
+          status: 'ok',
+          response: {
+            ...exchange.response,
+            data: [{ id: 'ent3' }, { id: 'ent4' }],
+          },
+        },
+      ],
+    })
+  )
+  const expected1 = ({
     type: 'SET_META',
-    payload: { service: 'users', meta: { lastSyncedAt } },
-    meta: { ident },
-  }
-  const expected2 = {
+    request: { service: 'users', params: { meta: { lastSyncedAt } } },
+    ident,
+  } as unknown) as Exchange
+  const expected2 = ({
     type: 'SET_META',
-    payload: { service: 'accounts', meta: { lastSyncedAt } },
-    meta: { ident },
-  }
+    request: { service: 'accounts', params: { meta: { lastSyncedAt } } },
+    ident,
+  } as unknown) as Exchange
 
   await sync(exchange, dispatch)
 
@@ -704,17 +817,6 @@ test.serial('should set meta on several services', async (t) => {
 })
 
 test('should return error when one of several gets returns with error', async (t) => {
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: [
-        {
-          status: 'ok',
-          data: [{ id: 'ent1' }, { id: 'ent2' }],
-        },
-        { status: 'error', error: 'Could not do it' },
-      ],
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -729,6 +831,25 @@ test('should return error when one of several gets returns with error', async (t
       },
     },
   })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: [
+        {
+          ...exchange,
+          status: 'ok',
+          response: {
+            ...exchange.response,
+            data: [{ id: 'ent1' }, { id: 'ent2' }],
+          },
+        },
+        {
+          ...exchange,
+          status: 'error',
+          response: { error: 'Could not do it' },
+        },
+      ],
+    })
+  )
 
   const ret = await sync(exchange, dispatch)
 
@@ -737,14 +858,6 @@ test('should return error when one of several gets returns with error', async (t
 })
 
 test('should return error when all gets return with error', async (t) => {
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: [
-        { status: 'error', error: 'Terrible mistake' },
-        { status: 'error', error: 'Could not do it' },
-      ],
-    })
-  )
   const exchange = completeExchange({
     type: 'SYNC',
     request: {
@@ -759,6 +872,22 @@ test('should return error when all gets return with error', async (t) => {
       },
     },
   })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: [
+        {
+          ...exchange,
+          status: 'error',
+          response: { error: 'Terrible mistake' },
+        },
+        {
+          ...exchange,
+          status: 'error',
+          response: { error: 'Could not do it' },
+        },
+      ],
+    })
+  )
 
   const ret = await sync(exchange, dispatch)
 
