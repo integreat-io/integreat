@@ -21,6 +21,8 @@ export interface EndpointDef {
   mutation?: MapDefinition
   sendNoDefaults?: boolean
   returnNoDefaults?: boolean
+  allowRawRequest?: boolean
+  allowRawResponse?: boolean
 }
 
 export interface Endpoint {
@@ -30,4 +32,6 @@ export interface Endpoint {
   mutateRequest: (exchange: Exchange) => Exchange
   mutateResponse: (exchange: Exchange) => Exchange
   isMatch: (exchange: Exchange) => boolean
+  allowRawRequest?: boolean
+  allowRawResponse?: boolean
 }

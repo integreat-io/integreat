@@ -4,6 +4,10 @@ import { isTypedData, isNullOrUndefined } from '../../utils/is'
 import { Exchange, Data, TypedData, Ident } from '../../types'
 import { Schema } from '../../schema'
 
+export interface AuthorizeDataFn {
+  (exchange: Exchange, allowRaw?: boolean): Exchange
+}
+
 const isStringOrArray = (value: unknown): value is string | string[] =>
   typeof value === 'string' || Array.isArray(value)
 
@@ -19,10 +23,11 @@ function getValueAndCompare(
 const authorizeItem = (
   schemas: Record<string, Schema>,
   actionType: string,
+  allowRaw: boolean,
   ident?: Ident
 ) => (item: Data): string | undefined => {
   if (!isTypedData(item)) {
-    return 'RAW_DATA'
+    return allowRaw ? undefined : 'RAW_DATA'
   }
   const schema = schemas[item.$type]
   if (!schema) {
@@ -66,12 +71,16 @@ const generateWarning = (removedCount: number, isToService: boolean) =>
       } data due to lack of access`
     : undefined
 
-const generateErrorAndReason = (data: Data, isToService: boolean) =>
-  isTypedData(data)
-    ? `Authentication was refused for type '${data.$type}'`
-    : `Authentication was refused for raw ${
+const generateErrorAndReason = (
+  reason: string,
+  data: Data,
+  isToService: boolean
+) =>
+  reason === 'RAW_DATA'
+    ? `Authentication was refused for raw ${
         isToService ? 'request' : 'response'
       } data`
+    : `Authentication was refused for type '${(data as TypedData).$type}'`
 
 function getAuthedWithResponse(
   data: Data,
@@ -88,7 +97,7 @@ function getAuthedWithResponse(
 
   const reason = authFn(data)
   if (typeof reason === 'string') {
-    const error = generateErrorAndReason(data, isToService)
+    const error = generateErrorAndReason(reason, data, isToService)
     return {
       data: undefined,
       status: 'noaccess',
@@ -107,7 +116,7 @@ const authorizeDataBase = (
   schemas: Record<string, Schema>,
   isToService: boolean
 ) =>
-  function authorizeData(exchange: Exchange): Exchange {
+  function authorizeData(exchange: Exchange, allowRaw = false): Exchange {
     if (exchange.ident?.root) {
       return exchange
     }
@@ -115,7 +124,7 @@ const authorizeDataBase = (
     const { type: actionType, ident } = exchange
     const { data, status, error, reason, ...response } = getAuthedWithResponse(
       isToService ? exchange.request.data : exchange.response.data,
-      authorizeItem(schemas, actionType, ident),
+      authorizeItem(schemas, actionType, allowRaw, ident),
       isToService
     )
 
@@ -136,10 +145,8 @@ const authorizeDataBase = (
     }
   }
 
-export const fromService = (
-  schemas: Record<string, Schema>
-): ((exchange: Exchange) => Exchange) => authorizeDataBase(schemas, false)
+export const fromService = (schemas: Record<string, Schema>): AuthorizeDataFn =>
+  authorizeDataBase(schemas, false)
 
-export const toService = (
-  schemas: Record<string, Schema>
-): ((exchange: Exchange) => Exchange) => authorizeDataBase(schemas, true)
+export const toService = (schemas: Record<string, Schema>): AuthorizeDataFn =>
+  authorizeDataBase(schemas, true)

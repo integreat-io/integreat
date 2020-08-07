@@ -264,6 +264,21 @@ test('should not authorize non-typed data for regular user', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should authorize non-typed data for regular user when allowed', (t) => {
+  const allowRawResponse = true
+  const exchange = completeExchange({
+    type: 'GET',
+    request: { type: 'account' },
+    response: { data: { something: 'here' } },
+    ident: { id: 'johnf' },
+  })
+  const expected = exchange
+
+  const ret = fromService(schemas)(exchange, allowRawResponse)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should do nothing with no data', (t) => {
   const exchange = completeExchange({
     type: 'GET',
@@ -352,6 +367,21 @@ test('should not authorize non-typed request data for regular user', (t) => {
   }
 
   const ret = toService(schemas)(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should authorize non-typed request data for regular user when allowed', (t) => {
+  const allowRawRequest = true
+  const exchange = completeExchange({
+    type: 'GET',
+    request: { type: 'account', data: { something: 'here' } },
+    response: {},
+    ident: { id: 'johnf' },
+  })
+  const expected = exchange
+
+  const ret = toService(schemas)(exchange, allowRawRequest)
 
   t.deepEqual(ret, expected)
 })

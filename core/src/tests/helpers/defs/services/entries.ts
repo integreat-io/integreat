@@ -60,11 +60,38 @@ export default {
       options: { uri: '/entries', method: 'POST' },
     },
     {
+      // Endpoint that allows raw request data for all users
+      match: {
+        action: 'SET',
+        scope: 'collection',
+        params: { rawForAll: true },
+      },
+      mutation: {
+        $direction: 'fwd',
+        data: ['data.data[]', { $apply: 'entries-entry' }],
+      },
+      options: { uri: '/entries', method: 'POST' },
+      allowRawRequest: true,
+    },
+    {
       match: { action: 'GET', scope: 'member' },
       mutation: {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'entries-entry' }],
       },
+      options: { uri: '/entries/{{params.id}}' },
+    },
+    {
+      // Endpoint that returns raw response for all users
+      match: { action: 'GET', scope: 'member', params: { rawForAll: true } },
+      mutation: { $direction: 'fwd', data: 'data.data' },
+      options: { uri: '/entries/{{params.id}}' },
+      allowRawResponse: true,
+    },
+    {
+      // Endpoint that returns raw response for root user only
+      match: { action: 'GET', scope: 'member', params: { rawForRoot: true } },
+      mutation: { $direction: 'fwd', data: 'data.data' },
       options: { uri: '/entries/{{params.id}}' },
     },
     {

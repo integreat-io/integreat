@@ -111,14 +111,18 @@ const serviceOptions = {}
 
 // Tests -- props
 
-test('should set id on endpoint', (t) => {
+test('should set id, allowRawRequest, and allowRawResponse on endpoint', (t) => {
   const endpointDef = {
     id: 'endpoint1',
+    allowRawRequest: true,
+    allowRawResponse: true,
   }
 
   const ret = createEndpoint(serviceOptions, {})(endpointDef)
 
   t.is(ret.id, 'endpoint1')
+  t.true(ret.allowRawRequest)
+  t.true(ret.allowRawResponse)
 })
 
 test('should set match on endpoint', (t) => {

@@ -111,9 +111,10 @@ export default ({
       }
 
       // Authorize and map in right order
+      const { mutateRequest, allowRawRequest } = endpoint
       return exchange.incoming
-        ? authorizeDataToService(endpoint.mutateRequest(exchange))
-        : endpoint.mutateRequest(authorizeDataToService(exchange))
+        ? authorizeDataToService(mutateRequest(exchange), allowRawRequest)
+        : mutateRequest(authorizeDataToService(exchange, allowRawRequest))
     },
 
     /**
@@ -131,9 +132,10 @@ export default ({
       }
 
       // Authorize and map in right order
+      const { mutateResponse, allowRawResponse } = endpoint
       return exchange.incoming
-        ? endpoint.mutateResponse(authorizeDataFromService(exchange))
-        : authorizeDataFromService(endpoint.mutateResponse(exchange))
+        ? mutateResponse(authorizeDataFromService(exchange, allowRawResponse))
+        : authorizeDataFromService(mutateResponse(exchange), allowRawResponse)
     },
 
     /**

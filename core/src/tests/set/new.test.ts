@@ -46,7 +46,7 @@ test.after.always(() => {
 
 // Tests
 
-test('should set new entry', async (t) => {
+test('should set new entry (getting role from identity)', async (t) => {
   const middlewares = [completeIdent]
   const putData = {
     key: 'ent1',
@@ -94,10 +94,10 @@ test('should set new entries', async (t) => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entriesArr },
-    meta: { ident: { root: true } },
+    meta: { ident: { id: 'johnf', roles: ['editor'] } },
   }
 
-  const great = Integreat.create(defs, resources, [completeIdent])
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

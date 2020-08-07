@@ -105,6 +105,8 @@ export default function createEndpoint(
 
     return {
       id: endpointDef.id,
+      allowRawRequest: endpointDef.allowRawRequest || false,
+      allowRawResponse: endpointDef.allowRawResponse || false,
       match: endpointDef.match,
       options,
       mutateRequest: mutateExchange(mutator, /* isRequest: */ true),

@@ -25,7 +25,7 @@ test('should get one entry from service', async (t) => {
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
-    meta: { ident: { id: 'root', root: true } },
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     $type: 'entry',
