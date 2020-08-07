@@ -31,7 +31,11 @@ function mutate(
   }
 }
 
-function mutateExchange(mutator: MapTransform | null, isRequest: boolean) {
+function mutateExchange(
+  mutator: MapTransform | null,
+  isRequest: boolean,
+  mapNoDefaults: boolean
+) {
   if (!mutator) {
     return (exchange: Exchange) => exchange
   }
@@ -42,9 +46,10 @@ function mutateExchange(mutator: MapTransform | null, isRequest: boolean) {
         mutator,
         mappingObjectFromExchange(exchange, isRequest),
         isRequest ? !!exchange.incoming : !exchange.incoming,
-        isRequest
-          ? exchange.request.sendNoDefaults
-          : exchange.response.returnNoDefaults
+        mapNoDefaults ||
+          (isRequest
+            ? exchange.request.sendNoDefaults
+            : exchange.response.returnNoDefaults)
       ),
       isRequest
     )
@@ -77,14 +82,23 @@ export default function createEndpoint(
       ...endpointDef.options,
     })
 
+    const {
+      id,
+      allowRawRequest = false,
+      allowRawResponse = false,
+      sendNoDefaults = false,
+      returnNoDefaults = false,
+      match,
+    } = endpointDef
+
     return {
-      id: endpointDef.id,
-      allowRawRequest: endpointDef.allowRawRequest || false,
-      allowRawResponse: endpointDef.allowRawResponse || false,
-      match: endpointDef.match,
+      id,
+      allowRawRequest,
+      allowRawResponse,
+      match,
       options,
-      mutateRequest: mutateExchange(mutator, /* isRequest: */ true),
-      mutateResponse: mutateExchange(mutator, /* isRequest: */ false),
+      mutateRequest: mutateExchange(mutator, true, sendNoDefaults),
+      mutateResponse: mutateExchange(mutator, false, returnNoDefaults),
       isMatch: isMatch(endpointDef),
     }
   }

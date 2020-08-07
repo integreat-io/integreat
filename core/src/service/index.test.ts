@@ -4,7 +4,7 @@ import jsonResources from '../tests/helpers/resources'
 import functions from '../transformers/builtIns'
 import createSchema from '../schema'
 import { Authentication, ServiceDef } from './types'
-import { TypedData, Connection, Exchange } from '../types'
+import { TypedData, Connection, Exchange, DataObject } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
 import { completeExchange, responseToExchange } from '../utils/exchangeMapping'
 import Auth from './Auth'
@@ -964,31 +964,38 @@ test('mapResponse should map without default values', async (t) => {
   t.is(data[0].updatedAt, undefined)
 })
 
-// test.skip('mapResponse should not map response data when unmapped is true', async t => {
-//   const send = async () => ({
-//     status: 'ok',
-//     data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] }
-//   })
-//   const service = setupService({ mapOptions, schemas })({
-//     id: 'entries',
-//     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-//     adapter: { ...json, send },
-//   })
-//   const action = {
-//     type: 'GET',
-//     payload: { id: 'ent1', type: 'entry', service: 'thenews', unmapped: true },
-//     meta: { ident: { root: true } }
-//   }
-//   const expected = {
-//     status: 'ok',
-//     data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
-//     access: { status: 'granted', ident: { root: true }, scheme: 'unmapped' }
-//   }
-//
-//   const { response } = await service.send(action)
-//
-//   t.deepEqual(response, expected)
-// })
+test('mapResponse should map without default values - defined on endpoint', async (t) => {
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+    id: 'entries',
+    endpoints: [
+      {
+        mutation: { data: ['data', { $apply: 'entry' }] },
+        options: { uri: 'http://some.api/1.0' },
+        returnNoDefaults: true,
+      },
+    ],
+    transporter: 'http',
+  })
+  const exchange = service.assignEndpointMapper(
+    completeExchange({
+      type: 'GET',
+      status: 'ok',
+      request: { id: 'ent1', type: 'entry' },
+      response: {
+        data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+      },
+      ident: { id: 'johnf' },
+      authorized: true,
+    })
+  )
+
+  const ret = await service.mapResponse(exchange)
+
+  const data = ret.response.data as TypedData[]
+  t.is(data[0].one, undefined)
+  t.is(data[0].createdAt, undefined)
+  t.is(data[0].updatedAt, undefined)
+})
 
 test('mapResponse should respond with error when no endpoint and no error', async (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
@@ -1236,9 +1243,87 @@ test('mapRequest should use mutation pipeline', async (t) => {
     StupidSoapOperator: { StupidSoapEmptyArgs: {} },
   }
 
-  const ret = await service.mapRequest(exchange)
+  const ret = service.mapRequest(exchange)
 
   t.deepEqual(ret.request.data, expectedData)
+})
+
+test('mapRequest should map without default values', async (t) => {
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+    id: 'entries',
+    transporter: 'http',
+    endpoints: [
+      {
+        mutation: {
+          data: ['data.content.data[].createOrMutate', { $apply: 'entry' }],
+        },
+        options: { uri: 'http://some.api/1.0' },
+      },
+    ],
+  })
+  const exchange = service.assignEndpointMapper(
+    completeExchange({
+      type: 'SET',
+      request: {
+        type: 'entry',
+        data: [
+          {
+            $type: 'entry',
+            id: 'ent1',
+            title: 'The heading',
+          },
+        ],
+        sendNoDefaults: true,
+      },
+      ident: { id: 'johnf' },
+    })
+  )
+
+  const ret = service.mapRequest(exchange)
+
+  const data = ((ret.request.data as DataObject).content as DataObject)
+    .data as DataObject[]
+  const items = (data[0].createOrMutate as DataObject).items as DataObject[]
+  t.is(items[0].one, undefined)
+})
+
+test('mapRequest should map without default values - defined on enpoint', async (t) => {
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+    id: 'entries',
+    transporter: 'http',
+    endpoints: [
+      {
+        mutation: {
+          data: ['data.content.data[].createOrMutate', { $apply: 'entry' }],
+        },
+        options: { uri: 'http://some.api/1.0' },
+        sendNoDefaults: true,
+      },
+    ],
+  })
+  const exchange = service.assignEndpointMapper(
+    completeExchange({
+      type: 'SET',
+      request: {
+        type: 'entry',
+        data: [
+          {
+            $type: 'entry',
+            id: 'ent1',
+            title: 'The heading',
+          },
+        ],
+      },
+      ident: { id: 'johnf' },
+    })
+  )
+
+  const ret = service.mapRequest(exchange)
+
+  const data = ((ret.request.data as DataObject).content as DataObject)
+    .data as DataObject[]
+  const items = (data[0].createOrMutate as DataObject).items as DataObject[]
+  t.is(items[0].one, undefined)
 })
 
 test('mapRequest should respond with error when no endpoint', async (t) => {

@@ -203,8 +203,7 @@ test('should dispatch action with mapped data by type from request action', asyn
   t.deepEqual(dispatch.args[0][0], expected)
 })
 
-// TODO: Make returnNoDefaults work
-test.failing('should respond with mapped data', async (t) => {
+test('should respond with mapped data', async (t) => {
   const data = [
     {
       $type: 'entry',
@@ -237,6 +236,7 @@ test.failing('should respond with mapped data', async (t) => {
           },
         ],
         options: { actionType: 'GET', actionPayload: { type: 'entry' } },
+        returnNoDefaults: true,
       },
     ],
   })
@@ -244,7 +244,6 @@ test.failing('should respond with mapped data', async (t) => {
   const exchange = completeExchange({
     type: 'REQUEST',
     request: { type: 'entry', data: '{"key":"ent1"}' },
-    response: { returnNoDefaults: true },
     ident: { id: 'johnf' },
     incoming: true,
   })
