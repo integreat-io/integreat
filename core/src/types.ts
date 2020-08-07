@@ -51,7 +51,6 @@ export interface Payload extends Record<string, Data> {
   id?: string | string[]
   data?: Data
   service?: string
-  dryrun?: boolean
   endpoint?: string
   params?: Params
   page?: number
