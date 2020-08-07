@@ -116,13 +116,5 @@ export default function create(
     schemas,
     identType: identConfig && identConfig.type,
     dispatch,
-
-    // on(eventName, serviceId, listener) {
-    //   // eslint-disable-next-line security/detect-object-injection
-    //   const service = services[serviceId]
-    //   if (service && service.on) {
-    //     service.on(eventName, listener)
-    //   }
-    // }
   }
 }

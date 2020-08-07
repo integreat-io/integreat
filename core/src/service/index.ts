@@ -1,4 +1,3 @@
-import EventEmitter = require('events')
 import createEndpointMappers from './endpoints'
 import createError from '../utils/createError'
 import { Exchange, Transporter } from '../types'
@@ -63,13 +62,11 @@ export default ({
   )
 
   const connection = new Connection(transporter, options)
-  const emitter = new EventEmitter()
 
   // Create the service instance
   return {
     id: serviceId,
     meta,
-    on: emitter.on.bind(emitter),
 
     /**
      * Find the endpoint mapper that best matches the given exchange, and assign
