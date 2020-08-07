@@ -1,5 +1,4 @@
 import EventEmitter = require('events')
-import { CustomFunction } from 'map-transform'
 import createEndpointMappers from './endpoints'
 import createError from '../utils/createError'
 import { Exchange, Transporter } from '../types'
@@ -14,7 +13,6 @@ import authorizeExchange from './authorize/exchange'
 interface Resources {
   transporters?: Record<string, Transporter>
   auths?: Record<string, Auth>
-  transformers?: Record<string, CustomFunction>
   schemas: Record<string, Schema>
   mapOptions?: MapOptions
 }
@@ -30,7 +28,7 @@ export default ({
 }: Resources) => ({
   id: serviceId,
   transporter: transporterId,
-  auth: authId,
+  auth,
   meta,
   options = {},
   mutation,
@@ -49,8 +47,9 @@ export default ({
 
   mapOptions = { mutateNull: false, ...mapOptions }
 
-  const auth = lookupById(authId, auths)
-  const requireAuth = !!authId
+  const authorization =
+    typeof auth === 'string' ? lookupById(auth, auths) : undefined
+  const requireAuth = !!auth
 
   const authorizeDataFromService = authorizeData.fromService(schemas)
   const authorizeDataToService = authorizeData.toService(schemas)
@@ -156,9 +155,9 @@ export default ({
       }
 
       // When an authenticator is set: Authenticate and apply result to exchange
-      if (auth) {
-        await auth.authenticate()
-        exchange = auth.applyToExchange(exchange, transporter)
+      if (authorization) {
+        await authorization.authenticate()
+        exchange = authorization.applyToExchange(exchange, transporter)
         if (exchange.status) {
           return exchange
         }

@@ -6,6 +6,7 @@ export interface MapOptions {
   pipelines?: Record<string, MapDefinition>
   functions?: Record<string, CustomFunction>
   dictionaries?: Dictionaries
+  mutateNull?: boolean
 }
 
 export type MapDefinitions = Record<string, string | MapDefinition>

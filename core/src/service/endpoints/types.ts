@@ -16,7 +16,6 @@ export interface MatchObject {
 export interface EndpointDef {
   id?: string
   match?: MatchObject
-  validate?: MapDefinition
   options?: EndpointOptions
   mutation?: MapDefinition
   sendNoDefaults?: boolean

@@ -1,7 +1,5 @@
 import {
   mapTransform,
-  ifelse,
-  validate,
   modify,
   MapDefinition,
   MapTransform,
@@ -19,28 +17,6 @@ import { ensureArray } from '../../utils/array'
 export interface PrepareOptions {
   (options: EndpointOptions): EndpointOptions
 }
-
-const validateNoStatus = validate('status', { const: null })
-
-const preparePipeline = (defs: MapDefinition) =>
-  ([] as MapDefinition[])
-    .concat(defs)
-    .map((fn) =>
-      typeof fn === 'string'
-        ? ifelse(validateNoStatus, { $transform: fn })
-        : typeof fn === 'function'
-        ? ifelse(validateNoStatus, fn)
-        : undefined
-    )
-    .filter(Boolean) as MapDefinition
-
-const prepareValidate = (
-  validate: MapDefinition | undefined,
-  mapOptions: MapOptions
-) =>
-  validate
-    ? mapTransform(preparePipeline(validate), mapOptions)
-    : (exchange: Exchange) => exchange
 
 function mutate(
   mutator: MapTransform,
@@ -96,8 +72,6 @@ export default function createEndpoint(
     )
     const mutator = mutation ? mapTransform(mutation, mapOptions) : null
 
-    const validate = prepareValidate(endpointDef.validate, mapOptions)
-
     const options = prepareOptions({
       ...serviceOptions,
       ...endpointDef.options,
@@ -111,7 +85,6 @@ export default function createEndpoint(
       options,
       mutateRequest: mutateExchange(mutator, /* isRequest: */ true),
       mutateResponse: mutateExchange(mutator, /* isRequest: */ false),
-      validate,
       isMatch: isMatch(endpointDef),
     }
   }

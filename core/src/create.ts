@@ -95,7 +95,6 @@ export default function create(
       createService({
         transporters,
         auths,
-        transformers, // Provided for validation pipeline only
         schemas,
         mapOptions,
       })

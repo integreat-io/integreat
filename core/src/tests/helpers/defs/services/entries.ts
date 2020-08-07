@@ -109,6 +109,23 @@ export default {
       options: { uri: '/entries/{{params.id}}' },
     },
     {
+      match: { action: 'SET', scope: 'member', params: { doValidate: true } },
+      mutation: [
+        {
+          $direction: 'rev',
+          data: ['data', { $apply: 'entries-entry' }],
+          status: 'status', // TODO: Find a way to remove the need for this type of through-mapping
+          error: 'error',
+        },
+        {
+          $direction: 'fwd',
+          data: ['data.data', { $apply: 'entries-entry' }],
+        },
+        { $transform: 'shouldHaveAuthor', $direction: 'rev' },
+      ],
+      options: { uri: '/entries/{{params.id}}' },
+    },
+    {
       match: { action: 'GET', params: { author: true } },
       mutation: {
         $direction: 'fwd',

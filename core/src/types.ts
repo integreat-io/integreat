@@ -118,7 +118,7 @@ export interface Exchange<T = Data, U = Data, V extends Meta = Meta> {
   request: ExchangeRequest<T>
   response: ExchangeResponse<U>
   ident?: Ident
-  auth?: Record<string, unknown> | boolean | null
+  auth?: Record<string, unknown> | null
   meta: V
   endpointId?: string
   endpoint?: Endpoint
