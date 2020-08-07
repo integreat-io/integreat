@@ -1,5 +1,6 @@
 import debugLib = require('debug')
 import pPipe = require('p-pipe')
+import pLimit from 'p-limit'
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { Exchange, InternalDispatch } from '../types'
@@ -8,6 +9,7 @@ import { Endpoint } from '../service/endpoints/types'
 import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
+const limit = pLimit(1)
 
 const isErrorExchange = (exchange: Exchange) =>
   exchange.status !== 'ok' && exchange.status !== 'notfound'
@@ -44,20 +46,22 @@ const setIdOnExchange = (exchange: Exchange, id?: string | string[]) => ({
   request: { ...exchange.request, id },
 })
 
-const runAsIndividualExchanges = async (
+async function runAsIndividualExchanges(
   exchange: Exchange,
   id: string[],
   mapPerId: (exchange: Exchange) => Promise<Exchange>,
   service: Service
-) =>
-  combineExchanges(
+) {
+  const exchanges = id.map((oneId) => setIdOnExchange(exchange, oneId))
+  return combineExchanges(
     exchange,
     await Promise.all(
-      id.map((oneId) =>
-        mapPerId(service.assignEndpointMapper(setIdOnExchange(exchange, oneId)))
+      exchanges.map((exchange) =>
+        limit(() => mapPerId(service.assignEndpointMapper(exchange)))
       )
     )
   )
+}
 
 const mapOneOrMany = (
   id: string | string[] | undefined,

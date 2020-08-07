@@ -146,7 +146,7 @@ export function mappingObjectFromExchange(
     data: isRequest ? requestData : responseData,
     error,
     paging,
-    options,
+    options: { ...options }, // Clone options for each mapping
     ident,
   }
 }
@@ -167,7 +167,6 @@ export function exchangeFromMappingObject(
     params: { id, type, service, sendNoDefaults, ...params } = {},
     options,
   } = mappingObject
-
   return completeExchange({
     ...exchange,
     ...(status && { status }),
