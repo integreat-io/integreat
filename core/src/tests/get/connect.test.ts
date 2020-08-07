@@ -17,7 +17,7 @@ test('should connect to service and reuse connection', async (t) => {
     _args: Record<string, unknown> | null,
     conn: Connection | null
   ) => conn || { status: 'ok', value: `Call ${count++}` }
-  const send = async (exchange: Exchange) => ({
+  const send = async (exchange: Exchange, _connection: Connection | null) => ({
     ...exchange,
     status: 'ok',
     response: {

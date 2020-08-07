@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import nock = require('nock')
 import defs from '../helpers/defs'
@@ -29,10 +30,10 @@ test('should get all entries from service', async (t) => {
   t.is(ret.status, 'ok', ret.error)
   const data = ret.data as TypedData[]
   t.true(Array.isArray(data))
-  t.is(data.length, 3)
-  t.is(data[0].id, 'ent1')
-  t.is(data[1].id, 'ent2')
-  t.is(data[2].id, 'ent3')
+  t.is(data?.length, 3)
+  t.is(data![0].id, 'ent1')
+  t.is(data![1].id, 'ent2')
+  t.is(data![2].id, 'ent3')
 
   nock.restore()
 })

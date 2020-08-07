@@ -5,33 +5,44 @@ import date from './date'
 // Setup
 
 const operands = {}
+const options = {}
+const context = { rev: false, onlyMappedValues: false }
 
 const theDate = new Date('2019-05-22T13:43:11.345Z')
 
 // Tests
 
-test('should transform values to date', t => {
-  t.deepEqual(date(operands)(new Date('2019-05-22T13:43:11.345Z')), theDate)
-  t.deepEqual(date(operands)('2019-05-22T15:43:11.345+02:00'), theDate)
-  t.deepEqual(date(operands)(1558532591345), theDate)
+test('should transform values to date', (t) => {
+  t.deepEqual(
+    date(operands, options)(new Date('2019-05-22T13:43:11.345Z'), context),
+    theDate
+  )
+  t.deepEqual(
+    date(operands, options)('2019-05-22T15:43:11.345+02:00', context),
+    theDate
+  )
+  t.deepEqual(date(operands, options)(1558532591345, context), theDate)
 })
 
-test('should not touch null and undefined', t => {
-  t.is(date(operands)(null), null)
-  t.is(date(operands)(undefined), undefined)
+test('should not touch null and undefined', (t) => {
+  t.is(date(operands, options)(null, context), null)
+  t.is(date(operands, options)(undefined, context), undefined)
 })
 
-test('should transform illegal values to undefined', t => {
-  t.is(date(operands)('Not a date'), undefined)
-  t.is(date(operands)({}), undefined)
-  t.is(date(operands)({ id: '12345', title: 'Wrong' }), undefined)
-  t.is(date(operands)(new Date('Not a date')), undefined)
-  t.is(date(operands)(NaN), undefined)
-  t.is(date(operands)(true), undefined)
-  t.is(date(operands)(false), undefined)
+test('should transform illegal values to undefined', (t) => {
+  t.is(date(operands, options)('Not a date', context), undefined)
+  t.is(date(operands, options)({}, context), undefined)
+  t.is(
+    date(operands, options)({ id: '12345', title: 'Wrong' }, context),
+    undefined
+  )
+  t.is(date(operands, options)(new Date('Not a date'), context), undefined)
+  t.is(date(operands, options)(NaN, context), undefined)
+  t.is(date(operands, options)(true, context), undefined)
+  t.is(date(operands, options)(false, context), undefined)
 })
 
-test('should iterate arrays', t => {
+test('should iterate arrays', (t) => {
   const value = [
     new Date('2019-05-22T13:43:11.345Z'),
     '2019-05-22T15:43:11.345+02:00',
@@ -40,7 +51,7 @@ test('should iterate arrays', t => {
     'A string',
     undefined,
     true,
-    {}
+    {},
   ]
   const expected = [
     theDate,
@@ -50,10 +61,10 @@ test('should iterate arrays', t => {
     undefined,
     undefined,
     undefined,
-    undefined
+    undefined,
   ]
 
-  const ret = date(operands)(value)
+  const ret = date(operands, options)(value, context)
 
   t.deepEqual(ret, expected)
 })

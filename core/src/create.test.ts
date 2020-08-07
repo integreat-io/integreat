@@ -3,9 +3,10 @@ import sinon = require('sinon')
 import { jsonServiceDef } from './tests/helpers/json'
 import builtInMutations from './mutations'
 import resources from './tests/helpers/resources'
-import { Action, Dispatch, Data, DataObject, Exchange } from './types'
+import { InternalDispatch, Data, DataObject, Exchange } from './types'
 
 import create, { Definitions } from './create'
+import { completeExchange } from './utils/exchangeMapping'
 
 // Setup
 
@@ -144,8 +145,8 @@ test('should call middleware', async (t) => {
   const otherAction = sinon.stub().resolves({ status: 'ok' })
   const handlers = { OTHER: otherAction }
   const middlewares = [
-    (next: Dispatch) => async (_action: Action) =>
-      next({ type: 'OTHER', payload: {} }),
+    (next: InternalDispatch) => async (_exchange: Exchange) =>
+      next(completeExchange({ type: 'OTHER' })),
   ]
 
   const great = create(
@@ -218,10 +219,11 @@ test('should use auth', async (t) => {
     ...resourcesWithTrans,
     authenticators,
     transporters: {
-      ...resourcesWithTrans.transformers,
+      ...resourcesWithTrans.transporters,
       http: {
         ...resourcesWithTrans.transporters.http,
-        send: async () => ({ status: 'ok', data: '[]' }),
+        send: async () =>
+          completeExchange({ status: 'ok', response: { data: '[]' } }),
       },
     },
   }
@@ -251,24 +253,4 @@ test('should use auth', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'noaccess', ret.error)
-})
-
-test.skip('should subscribe to event on service', (t) => {
-  const great = create({ services, schemas, mutations }, resourcesWithTrans)
-  const cb = () => undefined
-  const onStub = sinon.stub(great.services.entries, 'on')
-
-  great.on('mapRequest', 'entries', cb)
-
-  t.is(onStub.callCount, 1)
-  t.is(onStub.args[0][0], 'mapRequest')
-  t.is(onStub.args[0][1], cb)
-})
-
-test.skip('should not subscribe to anything for unknown service', (t) => {
-  const great = create({ services, schemas, mutations }, resourcesWithTrans)
-
-  t.notThrows(() => {
-    great.on('mapRequest', 'unknown', () => undefined)
-  })
 })

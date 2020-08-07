@@ -61,7 +61,7 @@ export interface ActionMeta extends Record<string, unknown> {
   id?: string
   ident?: Ident
   queue?: boolean | number
-  schedule?: ScheduleObject | null
+  schedule?: ScheduleObject | string | null
 }
 
 export interface Action {
@@ -111,15 +111,19 @@ export interface ExchangeResponse<T = Data> {
 
 export type Meta = Record<string, Data>
 
-export interface Exchange<T = Data, U = Data, V extends Meta = Meta> {
+export interface Exchange<
+  RequestData = Data,
+  ResponseData = Data,
+  MetaData extends Meta = Meta
+> {
   type: string
   id?: string
   status: string | null
-  request: ExchangeRequest<T>
-  response: ExchangeResponse<U>
+  request: ExchangeRequest<RequestData>
+  response: ExchangeResponse<ResponseData>
   ident?: Ident
   auth?: Record<string, unknown> | null
-  meta: V
+  meta: MetaData
   endpointId?: string
   endpoint?: Endpoint
   authorized?: boolean

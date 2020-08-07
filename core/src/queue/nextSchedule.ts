@@ -16,7 +16,7 @@ const nextDate = (dates: Date | Date[], allowNow: boolean) => {
  * @returns The next Date
  */
 export default function nextSchedule(
-  schedule?: ScheduleObject | null,
+  schedule?: ScheduleObject | string | null,
   allowNow = false
 ): Date | null {
   if (schedule) {

@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon = require('sinon')
 import jsonResources from '../tests/helpers/resources'
 import functions from '../transformers/builtIns'
 import createSchema from '../schema'
-import { Authentication, ServiceDef } from './types'
-import { TypedData, Connection, Exchange, DataObject } from '../types'
+import { ServiceDef } from './types'
+import { TypedData, Connection, Exchange, DataObject, Data } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
 import { completeExchange, responseToExchange } from '../utils/exchangeMapping'
 import Auth from './Auth'
@@ -118,6 +119,8 @@ const auths = {
   granting: new Auth('granting', tokenAuth, { token: 't0k3n' }),
   refusing: new Auth('refusing', tokenAuth, {}),
 }
+
+const authDef = { id: 'auth1', authenticator: 'auth', options: {} }
 
 // Tests
 
@@ -239,7 +242,7 @@ test('authorizeExchange should set authorized flag', (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: { id: 'auth1' },
+    auth: authDef,
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -263,7 +266,7 @@ test('authorizeExchange should authorize exchange request without type', (t) => 
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: { id: 'auth1' },
+    auth: authDef,
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -287,7 +290,7 @@ test('authorizeExchange should refuse based on schema', (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: { id: 'auth1' },
+    auth: authDef,
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -449,9 +452,9 @@ test('sendExchange should connect before sending request', async (t) => {
   })
   const connect = async (
     { value }: EndpointOptions,
-    { Authorization }: Authentication,
+    authentication: Record<string, unknown> | null | undefined,
     _connection: Connection | null
-  ) => ({ status: 'ok', value, token: Authorization })
+  ) => ({ status: 'ok', value, token: authentication?.Authorization })
   const send = sinon
     .stub()
     .resolves(responseToExchange(exchange, { status: 'ok', data: {} }))
@@ -748,7 +751,7 @@ test.serial('mapResponse should map data array from service', async (t) => {
     ident: { id: 'johnf' },
   }
 
-  const ret = await service.mapResponse(exchange)
+  const ret = service.mapResponse(exchange)
 
   t.deepEqual(ret, expected)
 })
@@ -780,11 +783,11 @@ test('mapResponse should map data object from service', async (t) => {
     })
   )
 
-  const ret = await service.mapResponse(exchange)
+  const ret = service.mapResponse(exchange) as Exchange<Data, TypedData>
 
   t.false(Array.isArray(ret.response.data))
-  t.is(ret.response.data.id, 'johnf')
-  t.is(ret.response.data.$type, 'account')
+  t.is(ret.response.data?.id, 'johnf')
+  t.is(ret.response.data?.$type, 'account')
 })
 
 test('mapResponse should map null to undefined', async (t) => {
@@ -817,7 +820,7 @@ test('mapResponse should map null to undefined', async (t) => {
     ident: { id: 'johnf' },
   }
 
-  const ret = await service.mapResponse(exchange)
+  const ret = service.mapResponse(exchange)
 
   t.deepEqual(ret, expected)
 })
@@ -850,11 +853,11 @@ test('should authorize typed data in array from service', async (t) => {
     })
   )
 
-  const ret = await service.mapResponse(exchange)
+  const ret = service.mapResponse(exchange) as Exchange<Data, TypedData[]>
 
   t.is(ret.status, 'ok')
-  t.is(ret.response.data.length, 1)
-  t.is(ret.response.data[0].id, 'johnf')
+  t.is(ret.response.data?.length, 1)
+  t.is(ret.response.data![0].id, 'johnf')
   t.is(
     ret.response.warning,
     '1 item was removed from response data due to lack of access'
@@ -886,7 +889,7 @@ test('should authorize typed data object from service', async (t) => {
     })
   )
 
-  const ret = await service.mapResponse(exchange)
+  const ret = service.mapResponse(exchange)
 
   t.is(ret.status, 'noaccess')
   t.is(ret.response.data, undefined)
@@ -920,11 +923,12 @@ test('should authorize typed data in array to service', async (t) => {
     })
   )
 
-  const ret = await service.mapResponse(exchange)
+  const ret = service.mapResponse(exchange) as Exchange<Data, TypedData>
 
   t.is(ret.status, 'ok', ret.response.error)
-  t.is(ret.response.data.accounts.length, 1)
-  t.is(ret.response.data.accounts[0].id, 'johnf')
+  const accounts = ret.response.data?.accounts as DataObject[]
+  t.is(accounts.length, 1)
+  t.is(accounts[0].id, 'johnf')
   t.is(
     ret.response.warning,
     '1 item was removed from response data due to lack of access'
@@ -956,7 +960,7 @@ test('mapResponse should map without default values', async (t) => {
     })
   )
 
-  const ret = await service.mapResponse(exchange)
+  const ret = service.mapResponse(exchange)
 
   const data = ret.response.data as TypedData[]
   t.is(data[0].one, undefined)
@@ -989,7 +993,7 @@ test('mapResponse should map without default values - defined on endpoint', asyn
     })
   )
 
-  const ret = await service.mapResponse(exchange)
+  const ret = service.mapResponse(exchange)
 
   const data = ret.response.data as TypedData[]
   t.is(data[0].one, undefined)
@@ -1030,7 +1034,7 @@ test('mapResponse should respond with error when no endpoint and no error', asyn
     },
   }
 
-  const ret = await service.mapResponse(exchange)
+  const ret = service.mapResponse(exchange)
 
   t.deepEqual(ret, expected)
 })
@@ -1097,7 +1101,7 @@ test('mapRequest should cast and map request data', async (t) => {
     },
   }
 
-  const ret = await service.mapRequest(exchange)
+  const ret = service.mapRequest(exchange)
 
   t.deepEqual(ret, expectedExchange)
 })
@@ -1108,7 +1112,7 @@ test('mapRequest should authorize data array going to service', async (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: { id: 'auth1' },
+    auth: authDef,
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -1136,10 +1140,11 @@ test('mapRequest should authorize data array going to service', async (t) => {
     warning: '1 item was removed from request data due to lack of access',
   }
 
-  const ret = await service.mapRequest(exchange)
+  const ret = service.mapRequest(exchange) as Exchange<DataObject, Data>
 
-  t.is(ret.request.data.accounts.length, 1)
-  t.is(ret.request.data.accounts[0].id, 'johnf')
+  const accounts = ret.request.data?.accounts as DataObject[]
+  t.is(accounts.length, 1)
+  t.is(accounts[0].id, 'johnf')
   t.deepEqual(ret.response, expectedResponse)
 })
 
@@ -1147,7 +1152,7 @@ test('mapRequest should authorize data object going to service', async (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: { id: 'auth1' },
+    auth: authDef,
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -1169,9 +1174,9 @@ test('mapRequest should authorize data object going to service', async (t) => {
     reason: 'WRONG_IDENT',
   }
 
-  const ret = await service.mapRequest(exchange)
+  const ret = service.mapRequest(exchange) as Exchange<DataObject, Data>
 
-  t.is(ret.request.data.accounts, undefined)
+  t.is(ret.request.data?.accounts, undefined)
   t.deepEqual(ret.response, expectedResponse)
 })
 
@@ -1179,7 +1184,7 @@ test('mapRequest should authorize data array coming from service', async (t) => 
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: { id: 'auth1' },
+    auth: authDef,
     endpoints,
   })
   const exchange = service.assignEndpointMapper(
@@ -1203,12 +1208,12 @@ test('mapRequest should authorize data array coming from service', async (t) => 
     warning: '1 item was removed from request data due to lack of access',
   }
 
-  const ret = await service.mapRequest(exchange)
+  const ret = service.mapRequest(exchange) as Exchange<TypedData[], Data>
 
   t.is(ret.status, null, ret.response.error)
-  t.is(ret.request.data.length, 1)
-  t.is(ret.request.data[0].id, 'johnf')
-  t.is(ret.request.data[0].$type, 'account')
+  t.is(ret.request.data?.length, 1)
+  t.is(ret.request.data![0].id, 'johnf')
+  t.is(ret.request.data![0].$type, 'account')
   t.deepEqual(ret.response, expectedResponse)
 })
 
@@ -1354,7 +1359,7 @@ test('mapRequest should respond with error when no endpoint', async (t) => {
     },
   }
 
-  const ret = await service.mapRequest(exchange)
+  const ret = service.mapRequest(exchange)
 
   t.deepEqual(ret, expected)
 })

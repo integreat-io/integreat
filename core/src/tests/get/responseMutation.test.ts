@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
-import { MapDefinition } from 'map-transform'
 import nock = require('nock')
+import { MapDefinition, MapPipe } from 'map-transform'
 import resources from '../helpers/resources'
 import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
@@ -9,7 +10,7 @@ import entry2 from '../helpers/data/entry2'
 import mutations from '../../mutations'
 import entriesMutation from '../helpers/defs/mutations/entries-entry'
 import json from '../../transformers/json'
-import { TypedData } from '../../types'
+import { TypedData, Response } from '../../types'
 
 import Integreat from '../..'
 
@@ -38,7 +39,9 @@ const defsWithMutation = (
   services: [
     {
       ...entriesService,
-      mutation: [...entriesService.mutation, serviceMutation],
+      mutation: serviceMutation
+        ? ([...entriesService.mutation, serviceMutation] as MapPipe)
+        : entriesService.mutation,
       endpoints: [
         {
           mutation,
@@ -107,11 +110,11 @@ test('should map with service mutation', async (t) => {
   const defs = defsWithMutation(mutation, serviceMutation)
 
   const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
+  const ret = (await great.dispatch(action)) as Response<TypedData[]>
 
   t.is(ret.status, 'queued', ret.error)
-  t.is(ret.data.length, 1)
-  t.is(ret.data[0].id, 'ent1')
+  t.is(ret.data?.length, 1)
+  t.is(ret.data![0].id, 'ent1')
 })
 
 test('should use status code mapped from data', async (t) => {

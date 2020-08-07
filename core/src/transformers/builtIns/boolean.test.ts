@@ -5,46 +5,30 @@ import boolean from './boolean'
 // Setup
 
 const operands = {}
+const options = {}
+const context = { rev: false, onlyMappedValues: false }
 
 // Tests
 
-test('should transform values to boolean', t => {
-  t.true(boolean(operands)(true))
-  t.false(boolean(operands)(false))
-  t.true(boolean(operands)('true'))
-  t.false(boolean(operands)('false'))
-  t.true(boolean(operands)(1))
-  t.false(boolean(operands)(0))
+test('should transform values to boolean', (t) => {
+  t.true(boolean(operands, options)(true, context))
+  t.false(boolean(operands, options)(false, context))
+  t.true(boolean(operands, options)('true', context))
+  t.false(boolean(operands, options)('false', context))
+  t.true(boolean(operands, options)(1, context))
+  t.false(boolean(operands, options)(0, context))
 })
 
-test('should not touch null and undefined', t => {
-  t.is(boolean(operands)(null), null)
-  t.is(boolean(operands)(undefined), undefined)
+test('should not touch null and undefined', (t) => {
+  t.is(boolean(operands, options)(null, context), null)
+  t.is(boolean(operands, options)(undefined, context), undefined)
 })
 
-test('should iteratre array', t => {
-  const value = [
-    true,
-    false,
-    'true',
-    'false',
-    1,
-    0,
-    undefined,
-    null
-  ]
-  const expected = [
-    true,
-    false,
-    true,
-    false,
-    true,
-    false,
-    undefined,
-    null
-  ]
+test('should iteratre array', (t) => {
+  const value = [true, false, 'true', 'false', 1, 0, undefined, null]
+  const expected = [true, false, true, false, true, false, undefined, null]
 
-  const ret = boolean(operands)(value)
+  const ret = boolean(operands, options)(value, context)
 
   t.deepEqual(ret, expected)
 })

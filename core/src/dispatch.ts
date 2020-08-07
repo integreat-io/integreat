@@ -6,6 +6,7 @@ import {
   Exchange,
   Middleware,
   Action,
+  Data,
 } from './types'
 import { IdentConfig } from './service/types'
 import {
@@ -57,6 +58,8 @@ const wrapDispatch = (internalDispatch: InternalDispatch): Dispatch =>
     return responseFromExchange(exchange)
   }
 
+// const internalDispatch = (getService: GetService, handlers: Record<string, ExchangeHandler>, identConfig?: IdentConfig) =>
+
 export interface Resources {
   handlers: Record<string, ExchangeHandler>
   schemas: Record<string, Schema>
@@ -81,7 +84,9 @@ export default function createDispatch({
   const getService = setupGetService(schemas, services)
   let internalDispatch: InternalDispatch
 
-  internalDispatch = async (exchange: Exchange) => {
+  internalDispatch = async function <T extends Data = Data>(
+    exchange: Exchange<Data, T>
+  ) {
     debug('Dispatch: %o', exchange)
 
     const handler = getExchangeHandlerFromType(exchange.type, handlers)

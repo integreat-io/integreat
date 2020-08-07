@@ -1,5 +1,5 @@
 import test from 'ava'
-import { mapTransform } from 'map-transform'
+import { mapTransform, MapDefinition } from 'map-transform'
 import transformFunctions from '../transformers/builtIns'
 import { TypedData } from '../types'
 
@@ -237,9 +237,12 @@ test('should be iteratable', (t) => {
     },
   ]
 
-  const ret = mapTransform([createCastMapping(schema, 'entry')], {
-    functions: transformFunctions,
-  })(data)
+  const ret = mapTransform(
+    [createCastMapping(schema, 'entry')] as MapDefinition,
+    {
+      functions: transformFunctions,
+    }
+  )(data)
 
   t.deepEqual(ret, expected)
 })

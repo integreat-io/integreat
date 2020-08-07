@@ -8,17 +8,17 @@ import entriesService from '../helpers/defs/services/entries'
 import entry1 from '../helpers/data/entry1'
 import entry2 from '../helpers/data/entry2'
 import { isDataObject } from '../../utils/is'
-import { TypedData } from '../../types'
+import { Data, TypedData } from '../../types'
 
 import Integreat from '../..'
 
 // Setup
 
 const transformers = {
-  upperCase: () => (value: unknown) =>
+  upperCase: () => (value: Data) =>
     typeof value === 'string' ? value.toUpperCase() : value,
   addSectionsToText: () =>
-    mapAny((item: unknown) => {
+    mapAny((item: Data) => {
       if (!isDataObject(item)) {
         return item
       }

@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon = require('sinon')
 import { transform } from 'map-transform'
 import createSchema from '../../schema'
 import builtInFunctions from '../../transformers/builtIns'
-import { Data, Exchange } from '../../types'
+import { Data, TypedData, DataObject, Exchange } from '../../types'
 import { MapOptions } from '../types'
 import { completeExchange } from '../../utils/exchangeMapping'
 import json from '../../transformers/json'
@@ -280,12 +281,15 @@ test('should map exchange props from response', (t) => {
   const expectedPaging = { next: { offset: 'page2', type: 'entry' } }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithProps)
+  const ret = endpoint.mutateResponse(exchangeWithProps) as Exchange<
+    Data,
+    TypedData[]
+  >
 
   t.is(ret.status, 'badrequest')
   t.is(ret.request.id, '7839')
   t.is(ret.response.error, 'Not valid')
-  t.is(ret.response.data.length, 1)
+  t.is(ret.response.data?.length, 1)
   t.deepEqual(ret.response.paging, expectedPaging)
 })
 
@@ -322,10 +326,13 @@ test('should map response from service with service and endpoint mutations', (t)
     mapOptions,
     serviceMutation
   )(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithProps)
+  const ret = endpoint.mutateResponse(exchangeWithProps) as Exchange<
+    Data,
+    TypedData[]
+  >
 
-  t.is(ret.response.data.length, 1)
-  t.is(ret.response.data[0].id, 'ent1')
+  t.is(ret.response.data?.length, 1)
+  t.is(ret.response.data![0].id, 'ent1')
   t.is(ret.status, 'badrequest')
   t.is(ret.response.error, 'Too much')
 })
@@ -351,11 +358,14 @@ test('should map response from service with service mutation only', (t) => {
     mapOptions,
     serviceMutation
   )(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithProps)
+  const ret = endpoint.mutateResponse(exchangeWithProps) as Exchange<
+    Data,
+    TypedData[]
+  >
 
   t.is(ret.status, 'ok', ret.response.error)
-  t.is(ret.response.data.length, 1)
-  t.is(ret.response.data[0].id, 'ent1')
+  t.is(ret.response.data?.length, 1)
+  t.is(ret.response.data![0].id, 'ent1')
 })
 
 test('should keep exchange props not mapped from response', (t) => {
@@ -379,11 +389,14 @@ test('should keep exchange props not mapped from response', (t) => {
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithProps)
+  const ret = endpoint.mutateResponse(exchangeWithProps) as Exchange<
+    Data,
+    TypedData[]
+  >
 
   t.is(ret.status, 'error')
   t.is(ret.response.error, 'Not valid')
-  t.is(ret.response.data.length, 1)
+  t.is(ret.response.data?.length, 1)
 })
 
 test('should not include error from response when not an error', (t) => {
@@ -464,9 +477,12 @@ test('should map from service without defaults', (t) => {
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithoutDefaults)
+  const ret = endpoint.mutateResponse(exchangeWithoutDefaults) as Exchange<
+    Data,
+    TypedData[]
+  >
 
-  t.is(ret.response.data[0].published, undefined)
+  t.is(ret.response.data![0].published, undefined)
 })
 
 test('should not map from service when no mutation pipeline', (t) => {
@@ -614,10 +630,15 @@ test('should map to service with no defaults', (t) => {
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateRequest(exchangeWithoutDefaults)
+  const ret = endpoint.mutateRequest(exchangeWithoutDefaults) as Exchange<
+    TypedData,
+    Data
+  >
 
-  t.is(ret.request.data.content.data.items[0].activated, undefined)
-  t.is(ret.request.data.content.data.items[1].activated, true)
+  const items = ((ret.request.data?.content as DataObject).data as DataObject)
+    .items as DataObject[]
+  t.is(items[0].activated, undefined)
+  t.is(items[1].activated, true)
 })
 
 test('should not map to service when no mutation pipeline', (t) => {
@@ -674,13 +695,13 @@ test('should map request from service (incoming)', (t) => {
   }
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
-  const ret = endpoint.mutateRequest(incomingExchange)
+  const ret = endpoint.mutateRequest(incomingExchange) as Exchange<TypedData[]>
 
   const data = ret.request.data
-  t.is(data.length, 1)
-  t.is(data[0].id, 'ent1')
-  t.is(data[0].$type, 'entry')
-  t.is(data[0].title, 'Entry 1')
+  t.is(data?.length, 1)
+  t.is(data![0].id, 'ent1')
+  t.is(data![0].$type, 'entry')
+  t.is(data![0].title, 'Entry 1')
 })
 
 test.skip('should map request from service with types', (t) => {
@@ -708,11 +729,11 @@ test.skip('should map request from service with types', (t) => {
   }
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
-  const ret = endpoint.mutateRequest(incomingExchange)
+  const ret = endpoint.mutateRequest(incomingExchange) as Exchange<TypedData[]>
 
   const data = ret.request.data
-  t.is(data.length, 1)
-  t.is(data[0].id, 'account1')
-  t.is(data[0].$type, 'account')
-  t.is(data[0].name, 'John F.')
+  t.is(data?.length, 1)
+  t.is(data![0].id, 'account1')
+  t.is(data![0].$type, 'account')
+  t.is(data![0].name, 'John F.')
 })
