@@ -2,7 +2,7 @@ import test from 'ava'
 import nock = require('nock')
 import defs from '../helpers/defs'
 import resources from '../helpers/resources'
-import { DataObject, Response, Data } from '../../types'
+import { DataObject, Response } from '../../types'
 
 import Integreat from '../..'
 
@@ -29,7 +29,7 @@ const entryWithoutAuthor = {
 }
 
 // Lots of typing hoops. Sorry
-const shouldHaveAuthor = () => (mappingObj: Data): Data =>
+const shouldHaveAuthor = () => (mappingObj: unknown): unknown =>
   (((mappingObj as unknown) as Response).data as DataObject).author
     ? mappingObj
     : {

@@ -56,7 +56,7 @@ const entryMapping3 = [
   { $apply: 'cast_entry' },
 ]
 
-const shouldHaveToken = () => (exchange: Data) =>
+const shouldHaveToken = () => (exchange: unknown) =>
   typeof exchange === 'object' && exchange !== null
     ? {
         ...exchange,
@@ -66,7 +66,7 @@ const shouldHaveToken = () => (exchange: Data) =>
       }
     : exchange
 
-const alwaysOk = () => (exchange: Data) =>
+const alwaysOk = () => (exchange: unknown) =>
   typeof exchange === 'object' && exchange !== null
     ? { ...exchange, status: null, meta: { ok: true } }
     : exchange

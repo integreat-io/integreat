@@ -4,7 +4,7 @@ import {
   MapDefinition,
   MapTransform,
 } from 'map-transform'
-import { Exchange, Data } from '../../types'
+import { Exchange } from '../../types'
 import { MapOptions } from '../types'
 import { EndpointDef, Endpoint, EndpointOptions } from './types'
 import isMatch from './match'
@@ -20,9 +20,9 @@ export interface PrepareOptions {
 
 function mutate(
   mutator: MapTransform,
-  data: Data,
+  data: unknown,
   fromService: boolean,
-  noDefaults: boolean
+  noDefaults = false
 ) {
   if (fromService) {
     return noDefaults ? mutator.onlyMappedValues(data) : mutator(data)
@@ -39,6 +39,7 @@ function mutateExchange(
   if (!mutator) {
     return (exchange: Exchange) => exchange
   }
+
   return (exchange: Exchange) =>
     exchangeFromMappingObject(
       exchange,
@@ -59,7 +60,8 @@ const flattenOne = <T>(arr: T[]): T | T[] => (arr.length <= 1 ? arr[0] : arr)
 
 const combineMutations = (
   ...mutations: (MapDefinition | undefined)[]
-): MapDefinition => flattenOne(mutations.filter(Boolean).map(modify))
+): MapDefinition =>
+  flattenOne((mutations.filter(Boolean) as MapDefinition[]).map(modify))
 
 /**
  * Create endpoint from definition.

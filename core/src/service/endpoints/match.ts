@@ -56,9 +56,9 @@ export default function isMatch(
 ): (exchange: Exchange) => boolean {
   const match = endpoint.match || {}
   const filters = match.filters
-    ? Object.entries(match.filters).map(([path, filter]) =>
-        validate(path, filter)
-      )
+    ? (Object.entries(match.filters).map(([path, filter]) =>
+        filter ? validate(path, filter) : undefined
+      ) as FilterFn[])
     : []
 
   return (exchange) =>

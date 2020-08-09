@@ -1,8 +1,7 @@
 import { CustomFunction } from 'map-transform'
 import { isTypedData } from '../utils/is'
-import { Data } from '../types'
 
-const removeTypePrefixOnIdFwd = (item: Data) => {
+const removeTypePrefixOnIdFwd = (item: unknown) => {
   if (isTypedData(item)) {
     const { id, $type: type } = item
 
@@ -15,7 +14,7 @@ const removeTypePrefixOnIdFwd = (item: Data) => {
   return item
 }
 
-const removeTypePrefixOnIdRev = (item: Data) => {
+const removeTypePrefixOnIdRev = (item: unknown) => {
   if (isTypedData(item)) {
     const { id, $type: type } = item
 

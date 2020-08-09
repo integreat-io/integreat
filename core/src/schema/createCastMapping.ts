@@ -7,7 +7,6 @@ import {
   rev,
   filter,
 } from 'map-transform'
-import { Data } from '../types'
 import { Shape, PropertyShape } from './types'
 import {
   isSchema,
@@ -74,17 +73,17 @@ const mappingFromSchema = (schema: Shape): MapObject =>
     }
   }, {})
 
-const noSchemaOrEqualType = (data: Data, type: string) =>
+const noSchemaOrEqualType = (data: unknown, type: string) =>
   !isTypedData(data) || data.$type === type
 
 const includeInCasting = (type: string) =>
   type
-    ? (data: Data) =>
+    ? (data: unknown) =>
         !isNullOrUndefined(data) && noSchemaOrEqualType(data, type)
-    : (data: Data) => !isNullOrUndefined(data)
+    : (data: unknown) => !isNullOrUndefined(data)
 
 const cleanUpCast = (type: string, isFwd: boolean) =>
-  mapAny((item: Data) => {
+  mapAny((item: unknown) => {
     if (isDataObject(item)) {
       const { $type, isNew, isDeleted, ...shape } = item
       return {

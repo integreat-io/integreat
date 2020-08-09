@@ -3,7 +3,7 @@ import sinon = require('sinon')
 import { jsonServiceDef } from './tests/helpers/json'
 import builtInMutations from './mutations'
 import resources from './tests/helpers/resources'
-import { InternalDispatch, Data, DataObject, Exchange } from './types'
+import { InternalDispatch, DataObject, Exchange } from './types'
 
 import create, { Definitions } from './create'
 import { completeExchange } from './utils/exchangeMapping'
@@ -70,7 +70,7 @@ const resourcesWithTrans = {
   ...resources,
   transformers: {
     ...resources.transformers,
-    exclamate: () => (value: Data) =>
+    exclamate: () => (value: unknown) =>
       typeof value === 'string' ? `${value}!` : value,
   },
 }
@@ -208,7 +208,7 @@ test('should map data', async (t) => {
 test('should use auth', async (t) => {
   const authenticators = {
     mock: {
-      authenticate: async (options: Record<string, Data> | null) => ({
+      authenticate: async (options: Record<string, unknown> | null) => ({
         status: options?.status as string,
       }),
       isAuthenticated: () => false,
