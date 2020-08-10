@@ -1,9 +1,20 @@
-import httpTransporter from './transporter'
+import send from './send'
+import { Transporter } from 'integreat'
+import { EndpointOptions } from './types'
 
-export const transporter = httpTransporter
+/**
+ * HTTP Transporter for Integreat
+ */
+const httpTransporter: Transporter = {
+  authentication: 'asHttpHeaders',
 
-export default {
-  transporters: {
-    http: httpTransporter,
-  },
+  prepareOptions: (options: EndpointOptions) => options,
+
+  connect: async (_options, _authentication, connection) => connection,
+
+  send,
+
+  disconnect: async (_connection) => undefined,
 }
+
+export default httpTransporter
