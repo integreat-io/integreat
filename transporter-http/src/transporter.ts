@@ -1,5 +1,5 @@
 import send from './send'
-import { Transporter } from '../../core/src'
+import { Transporter } from 'integreat'
 import { EndpointOptions } from './types'
 
 /**

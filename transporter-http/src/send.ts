@@ -1,6 +1,6 @@
 import got, { HTTPError, Response } from 'got'
 import queryString = require('query-string')
-import { Exchange, Data, Connection } from '../../core/src'
+import { Exchange, Data, Connection } from 'integreat'
 import { EndpointOptions } from './types'
 
 const extractFromError = (error: HTTPError | Error) =>

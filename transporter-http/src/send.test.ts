@@ -1,7 +1,7 @@
 import test from 'ava'
 import nock = require('nock')
 import transporter from './transporter'
-import { Exchange } from '../../core/src'
+import { Exchange } from 'integreat'
 
 import send from './send'
 
