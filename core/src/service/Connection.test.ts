@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon = require('sinon')
-import httpTransporter from '../../../transporter-http/src/transporter'
+import httpTransporter from 'integreat-transporter-http'
 import { Transporter } from '../types'
 
 import Connection from './Connection'

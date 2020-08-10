@@ -4,7 +4,7 @@ import setupService from '../service'
 import schema from '../schema'
 import { completeExchange } from '../utils/exchangeMapping'
 import { DataObject } from '../types'
-import httpTransporter from '../../../transporter-http/src/transporter'
+import httpTransporter from 'integreat-transporter-http'
 
 import request from './request'
 

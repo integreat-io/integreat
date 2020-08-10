@@ -1,4 +1,4 @@
-import httpTransporter from '../../../../transporter-http/src/transporter'
+import httpTransporter from 'integreat-transporter-http'
 import mutations from '../../mutations'
 import json from '../../transformers/json'
 
