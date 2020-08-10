@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.8.0-alpha.0",
+  "version": "0.8.0-alpha.1",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <kjellmorten@integreat.io> (https://integreat.io/)",
   "license": "ISC",
@@ -27,27 +27,27 @@
   "dependencies": {
     "@types/debug": "^4.1.5",
     "@types/later": "^1.2.6",
-    "@types/nanoid": "^2.0.0",
-    "debug": "^4.1.1",
-    "got": "^11.0.2",
+    "@types/nanoid": "^2.1.0",
+    "debug": "^4.2.0",
+    "got": "^11.5.2",
     "later": "^1.2.0",
     "map-any": "^0.2.1",
-    "map-transform": "^0.3.6",
-    "nanoid": "^3.1.11",
+    "map-transform": "0.4.0-alpha.1",
+    "nanoid": "^3.1.12",
     "p-limit": "^2.3.0",
-    "p-pipe": "^3.0.0",
-    "ramda": "^0.27.0"
+    "p-pipe": "^3.1.0",
+    "ramda": "^0.27.1"
   },
   "devDependencies": {
-    "@types/sinon": "^9.0.0",
-    "ava": "^3.11.0",
+    "@types/sinon": "^9.0.4",
+    "ava": "^3.11.1",
     "coveralls": "^3.1.0",
     "integreat-transporter-http": "0.1.0-alpha.2",
     "nock": "^13.0.3",
     "nyc": "^15.1.0",
     "prettier": "^2.0.5",
     "sinon": "^9.0.2",
-    "ts-node": "^8.9.0",
+    "ts-node": "^8.10.2",
     "typescript": "^3.9.7"
   }
 }
