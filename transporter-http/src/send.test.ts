@@ -402,7 +402,7 @@ test('should reject on 401 with auth', async (t) => {
   const ret = await send(exchange, null)
 
   t.is(ret.status, 'noaccess', ret.response.error)
-  t.is(typeof ret.response.error, 'string')
+  t.is(ret.response.error, 'Not authorized')
 })
 
 test('should reject on 401 without auth', async (t) => {
@@ -420,7 +420,7 @@ test('should reject on 401 without auth', async (t) => {
   const ret = await send(exchange, null)
 
   t.is(ret.status, 'noaccess', ret.response.error)
-  t.is(typeof ret.response.error, 'string')
+  t.is(ret.response.error, 'Service requires authentication')
 })
 
 test('should reject on 403 ', async (t) => {
@@ -531,6 +531,35 @@ test('should retrieve with headers from exchange', async (t) => {
   t.is(ret.status, 'ok', ret.response.error)
 })
 
+test('should remove content-type header in GET requests', async (t) => {
+  nock('http://json24.test', {
+    reqheaders: {
+      'x-correlation-id': '1234567890',
+    },
+  })
+    .get('/entries/ent1')
+    .reply(200)
+  const exchange = {
+    type: 'GET',
+    status: null,
+    request: {
+      type: 'entry',
+      headers: {
+        'x-correlation-id': '1234567890',
+        'Content-Type': 'text/xml;charset=utf-8',
+      },
+    },
+    response: {},
+    meta: {},
+    endpoint: createEndpoint({ uri: 'http://json24.test/entries/ent1' }),
+    auth: null,
+  }
+
+  const ret = await send(exchange, null)
+
+  t.is(ret.status, 'ok', ret.response.error)
+})
+
 test('should retrieve with auth params in querystring', async (t) => {
   nock('http://json16.test')
     .put('/entries/ent1', '{}')
@@ -552,25 +581,6 @@ test('should retrieve with auth params in querystring', async (t) => {
       queryParams: { order: 'desc' },
     }),
     auth: { Authorization: 'Th@&t0k3n', timestamp: '1554407539' },
-  }
-
-  const ret = await send(exchange, null)
-
-  t.is(ret.status, 'ok', ret.response.error)
-})
-
-test('should not throw when auth=true', async (t) => {
-  nock('http://json11.test').put('/entries/ent3', {}).reply(200)
-  const exchange = {
-    type: 'SET',
-    status: null,
-    request: { type: 'entry', data: '{}' },
-    response: {},
-    meta: {},
-    endpoint: createEndpoint({
-      uri: 'http://json11.test/entries/ent3',
-    }),
-    auth: true,
   }
 
   const ret = await send(exchange, null)

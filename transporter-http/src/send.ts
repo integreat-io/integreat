@@ -32,8 +32,7 @@ const updateExchange = (
 function updateExchangeWithError(
   exchange: Exchange,
   error: HTTPError | Error,
-  url: string,
-  auth?: unknown
+  url: string
 ) {
   const { statusCode, statusMessage } = extractFromError(error)
   const response = {
@@ -51,7 +50,7 @@ function updateExchangeWithError(
       case 401:
       case 403:
         response.status = 'noaccess'
-        response.error = auth
+        response.error = exchange.auth
           ? 'Not authorized'
           : 'Service requires authentication'
         break
