@@ -19,7 +19,7 @@
     "ecmaVersion": 2018,
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint", "promise", "security", "node"],
+  "plugins": ["@typescript-eslint", "promise", "security", "node", "ava"],
   "rules": {
     "@typescript-eslint/explicit-function-return-type": 0,
     "no-unused-vars": "off",
