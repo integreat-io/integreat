@@ -1,6 +1,6 @@
 import debugLib = require('debug')
 import pPipe = require('p-pipe')
-import pLimit from 'p-limit'
+import pLimit = require('p-limit')
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { Exchange, InternalDispatch } from '../types'
