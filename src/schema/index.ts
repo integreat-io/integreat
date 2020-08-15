@@ -9,7 +9,7 @@ const expandField = (val: Shape | PropertyShape | string | undefined) =>
   typeof val === 'string'
     ? { $cast: val }
     : isSchema(val)
-    ? expandFields(val) // eslint-disable-line @typescript-eslint/no-use-before-define
+    ? expandFields(val)
     : val
 
 const expandFields = (vals: Shape): Shape =>

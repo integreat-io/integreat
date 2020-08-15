@@ -1,8 +1,6 @@
 import test from 'ava'
 import { Endpoint } from './types'
-import { Data, Exchange } from '../../types'
 import createSchema from '../../schema'
-import { isExchange } from '../../utils/is'
 
 import createEndpointMappers from '.'
 

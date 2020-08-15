@@ -38,7 +38,6 @@ const matchParams = (
   typeof params !== 'object' ||
   params === null ||
   Object.entries(params).every(
-    // eslint-disable-next-line security/detect-object-injection
     ([key, isRequired]) => !isRequired || hasParam(request.params, key)
   )
 

@@ -1,7 +1,0 @@
-src/
-coverage/
-dist/tests/
-*.test*
-.*
-tsconfig.json
-*.config.js

@@ -1,1 +1,0 @@
-../ava-dist.config.js
