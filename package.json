@@ -22,6 +22,14 @@
     "nyc:report": "nyc report --reporter=text --reporter=html",
     "lint": "eslint --ext .ts src"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/integreat-io/integreat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/integreat-io/integreat/issues"
+  },
+  "homepage": "https://github.com/integreat-io/integreat#readme",
   "engines": {
     "node": ">= 10"
   },
@@ -40,8 +48,8 @@
     "ramda": "^0.27.1"
   },
   "devDependencies": {
-    "@integreat/ts-dev-setup": "^1.0.1",
-    "@types/sinon": "^9.0.4",
+    "@integreat/ts-dev-setup": "^1.2.0",
+    "@types/sinon": "^9.0.5",
     "integreat-transporter-http": "0.1.0-alpha.2",
     "nock": "^13.0.3",
     "sinon": "^9.0.2"
