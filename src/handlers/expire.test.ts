@@ -31,14 +31,14 @@ test('should dispatch GET to expired endpoint', async (t) => {
   const dispatch = sinon.stub().resolves(response)
   const exchange = completeExchange({
     type: 'EXPIRE',
-    request: { service: 'store', type: 'entry' },
+    request: { type: 'entry' },
+    target: 'store',
     endpointId: 'getExpired',
     ident,
   })
   const expected = completeExchange({
     type: 'GET',
     request: {
-      service: 'store',
       type: 'entry',
       params: {
         timestamp: theTime,
@@ -48,6 +48,7 @@ test('should dispatch GET to expired endpoint', async (t) => {
     response: {
       returnNoDefaults: true,
     },
+    target: 'store',
     endpointId: 'getExpired',
     ident,
   })
@@ -62,10 +63,10 @@ test('should add msFromNow to current timestamp', async (t) => {
   const exchange = completeExchange({
     type: 'EXPIRE',
     request: {
-      service: 'store',
       type: 'entry',
       params: { msFromNow: 3600000 },
     },
+    target: 'store',
     endpointId: 'getExpired',
   })
   const expected = {
@@ -95,13 +96,15 @@ test('should queue DELETE for expired entries', async (t) => {
     .resolves({ status: 'queued' })
   const exchange = completeExchange({
     type: 'EXPIRE',
-    request: { service: 'store', type: 'entry' },
+    request: { type: 'entry' },
+    target: 'store',
     endpointId: 'getExpired',
     ident,
   })
   const expected = {
     type: 'DELETE',
-    request: { service: 'store', data },
+    request: { data },
+    target: 'store',
     ident,
   }
 
@@ -129,7 +132,8 @@ test('should queue DELETE with id and type only', async (t) => {
     .resolves({ status: 'queued' })
   const exchange = completeExchange({
     type: 'EXPIRE',
-    request: { service: 'store', type: 'entry' },
+    request: { type: 'entry' },
+    target: 'store',
     endpointId: 'getExpired',
   })
   const expected = { request: { data: [{ id: 'ent1', $type: 'entry' }] } }
@@ -147,7 +151,8 @@ test('should not queue when no expired entries', async (t) => {
     .resolves({ status: 'queued' })
   const exchange = completeExchange({
     type: 'EXPIRE',
-    request: { service: 'store', type: 'entry' },
+    request: { type: 'entry' },
+    target: 'store',
     endpointId: 'getExpired',
   })
 
@@ -167,7 +172,8 @@ test('should not queue when GET returns error', async (t) => {
     .resolves({ status: 'queued' })
   const exchange = completeExchange({
     type: 'EXPIRE',
-    request: { service: 'store', type: 'entry' },
+    request: { type: 'entry' },
+    target: 'store',
     endpointId: 'getExpired',
   })
 
@@ -195,7 +201,8 @@ test('should return error when no endpoint', async (t) => {
   const dispatch = sinon.stub().resolves(response)
   const exchange = completeExchange({
     type: 'EXPIRE',
-    request: { service: 'store', type: 'entry' },
+    request: { type: 'entry' },
+    target: 'store',
   })
 
   const ret = await expire(exchange, dispatch)
@@ -207,7 +214,8 @@ test('should return error when no type', async (t) => {
   const dispatch = sinon.stub().resolves(response)
   const exchange = completeExchange({
     type: 'EXPIRE',
-    request: { service: 'store' },
+    request: {},
+    target: 'store',
     endpointId: 'getExpired',
   })
 

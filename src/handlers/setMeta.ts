@@ -16,7 +16,8 @@ export default async function setMeta(
   getService: GetService
 ): Promise<Exchange> {
   const {
-    request: { service: serviceId, params: { meta = {} } = {} },
+    request: { params: { meta = {} } = {} },
+    target: serviceId,
     endpointId,
     ident,
   } = exchange

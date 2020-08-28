@@ -13,12 +13,12 @@ const endpointPut = { match: { action: 'PUT' } }
 const endpointPostAndPut = { match: { action: ['POST', 'PUT'] } }
 const endpointPostAndDelete = { match: { action: ['POST', 'DELETE'] } }
 const endpointPostPutAndDelete = {
-  match: { action: ['POST', 'PUT', 'DELETE'] }
+  match: { action: ['POST', 'PUT', 'DELETE'] },
 }
 const endpointMember = { match: { scope: 'member' } }
 const endpointCollection = { match: { scope: 'collection' } }
 const endpointMemberAndCollection = {
-  match: { scope: ['member', 'collection'] }
+  match: { scope: ['member', 'collection'] },
 }
 const endpointEntry = { match: { type: 'entry' } }
 const endpointUser = { match: { type: 'user' } }
@@ -26,50 +26,50 @@ const endpointUserAndEntry = { match: { type: ['user', 'entry'] } }
 const endpointEntryAndItem = { match: { type: ['entry', 'item'] } }
 const endpointGetMember = { match: { scope: 'member', action: 'GET' } }
 const endpointGetEntryMember = {
-  match: { type: 'entry', scope: 'member', action: 'GET' }
+  match: { type: 'entry', scope: 'member', action: 'GET' },
 }
 const endpointAuthorParam = { match: { params: { author: true } } }
-const endpointServiceParam = { match: { params: { service: true } } }
-const endpointServiceParamOptional = { match: { params: { service: false } } }
+const endpointServiceParam = { match: { params: { source: true } } }
+const endpointServiceParamOptional = { match: { params: { source: false } } }
 const endpointServiceAuthorParams = {
-  match: { params: { service: true, author: false } }
+  match: { params: { source: true, author: false } },
 }
 const endpointGetWithParam = {
-  match: { action: 'GET', params: { author: true } }
+  match: { action: 'GET', params: { author: true } },
 }
 const endpointMemberWithParam = {
-  match: { scope: 'member', params: { author: true } }
+  match: { scope: 'member', params: { author: true } },
 }
 const endpointEntryWithParam = {
-  match: { type: 'entry', params: { author: true } }
+  match: { type: 'entry', params: { author: true } },
 }
 const endpointOneFilter = { match: { filters: draftFilter } }
 const endpointMemberWithFilter = {
-  match: { scope: 'member', filters: draftFilter }
+  match: { scope: 'member', filters: draftFilter },
 }
 const endpointGetWithFilter = {
-  match: { action: 'GET', filters: draftFilter }
+  match: { action: 'GET', filters: draftFilter },
 }
 const endpointServiceParamWithFilter = {
-  match: { params: { service: true }, filters: draftFilter }
+  match: { params: { source: true }, filters: draftFilter },
 }
 const endpointUserWithFilter = {
-  match: { type: 'user', filters: draftFilter }
+  match: { type: 'user', filters: draftFilter },
 }
 const endpointEntryWithFilter = {
-  match: { type: 'entry', filters: draftFilter }
+  match: { type: 'entry', filters: draftFilter },
 }
 const endpointEntryWithTwoFilters = {
-  match: { type: 'entry', filters: { ...draftFilter, ...titleFilter } }
+  match: { type: 'entry', filters: { ...draftFilter, ...titleFilter } },
 }
 const endpointId = {
   id: 'endpoint1',
-  match: { params: { includeDocs: false } }
+  match: { params: { includeDocs: false } },
 }
 
 // Tests
 
-test('should compare based on action', t => {
+test('should compare based on action', (t) => {
   const higher = compareEndpoints(endpointGet, endpointCatchAll)
   const equal = compareEndpoints(endpointGet, endpointPut)
   const lower = compareEndpoints(endpointCatchAll, endpointPut)
@@ -79,7 +79,7 @@ test('should compare based on action', t => {
   t.true(lower > 0)
 })
 
-test('should compare based on scope', t => {
+test('should compare based on scope', (t) => {
   const higher = compareEndpoints(endpointMember, endpointCatchAll)
   const equal = compareEndpoints(endpointMember, endpointCollection)
   const lower = compareEndpoints(endpointCatchAll, endpointCollection)
@@ -89,7 +89,7 @@ test('should compare based on scope', t => {
   t.true(lower > 0)
 })
 
-test('should compare based on type', t => {
+test('should compare based on type', (t) => {
   const higher = compareEndpoints(endpointEntry, endpointCatchAll)
   const equal = compareEndpoints(endpointEntry, endpointUser)
   const lower = compareEndpoints(endpointCatchAll, endpointUser)
@@ -99,7 +99,7 @@ test('should compare based on type', t => {
   t.true(lower > 0)
 })
 
-test('should sort in the order type, scope, action, and id', t => {
+test('should sort in the order type, scope, action, and id', (t) => {
   const scopeVsType = compareEndpoints(endpointMember, endpointEntry)
   const actionVsType = compareEndpoints(endpointGet, endpointEntry)
   const actionVsScope = compareEndpoints(endpointGet, endpointMember)
@@ -111,7 +111,7 @@ test('should sort in the order type, scope, action, and id', t => {
   t.true(idVsAction < 0)
 })
 
-test('should sort specificity higher than id', t => {
+test('should sort specificity higher than id', (t) => {
   const idVsSpecificity = compareEndpoints(endpointId, endpointGetWithParam)
   const idVsCatchAll = compareEndpoints(endpointId, endpointCatchAll)
 
@@ -119,7 +119,7 @@ test('should sort specificity higher than id', t => {
   t.true(idVsCatchAll < 0)
 })
 
-test('should compare based on specificity', t => {
+test('should compare based on specificity', (t) => {
   const scopeVsAll = compareEndpoints(endpointMember, endpointUser)
   const scopeActionVsAll = compareEndpoints(
     endpointGetMember,
@@ -132,7 +132,7 @@ test('should compare based on specificity', t => {
   t.true(scopeActionVsType > 0)
 })
 
-test('should sort type before type array', t => {
+test('should sort type before type array', (t) => {
   const higher = compareEndpoints(endpointUser, endpointUserAndEntry)
   const equal = compareEndpoints(endpointUserAndEntry, endpointEntryAndItem)
   const lower = compareEndpoints(endpointEntryAndItem, endpointUser)
@@ -142,7 +142,7 @@ test('should sort type before type array', t => {
   t.true(lower > 0)
 })
 
-test('should sort scope before scope array', t => {
+test('should sort scope before scope array', (t) => {
   const higher = compareEndpoints(endpointMember, endpointMemberAndCollection)
   const equal = compareEndpoints(
     endpointMemberAndCollection,
@@ -158,7 +158,7 @@ test('should sort scope before scope array', t => {
   t.true(lower > 0)
 })
 
-test('should sort action before action array', t => {
+test('should sort action before action array', (t) => {
   const higher = compareEndpoints(endpointGet, endpointPostAndDelete)
   const equal = compareEndpoints(endpointPostAndDelete, endpointPostAndPut)
   const lower = compareEndpoints(endpointPostAndPut, endpointPut)
@@ -168,7 +168,7 @@ test('should sort action before action array', t => {
   t.true(lower > 0)
 })
 
-test('should sort array with fewer actions before more', t => {
+test('should sort array with fewer actions before more', (t) => {
   const twoVsThree = compareEndpoints(
     endpointPostAndDelete,
     endpointPostPutAndDelete
@@ -177,7 +177,7 @@ test('should sort array with fewer actions before more', t => {
   t.true(twoVsThree < 0)
 })
 
-test('should sort more params before fewer', t => {
+test('should sort more params before fewer', (t) => {
   const higher = compareEndpoints(
     endpointServiceAuthorParams,
     endpointAuthorParam
@@ -193,7 +193,7 @@ test('should sort more params before fewer', t => {
   t.true(lower > 0)
 })
 
-test('should sort params after type', t => {
+test('should sort params after type', (t) => {
   const paramVsType = compareEndpoints(endpointServiceParam, endpointEntry)
   const paramVsScope = compareEndpoints(endpointServiceParam, endpointMember)
   const paramVsAction = compareEndpoints(endpointServiceParam, endpointPut)
@@ -203,7 +203,7 @@ test('should sort params after type', t => {
   t.true(paramVsAction < 0)
 })
 
-test('should sort with params before without', t => {
+test('should sort with params before without', (t) => {
   const typeWithVsWithout = compareEndpoints(
     endpointEntryWithParam,
     endpointEntry
@@ -222,7 +222,7 @@ test('should sort with params before without', t => {
   t.true(actionWithVsWithout < 0)
 })
 
-test('should sort required params before optional', t => {
+test('should sort required params before optional', (t) => {
   const requiredVsOptional = compareEndpoints(
     endpointServiceParamOptional,
     endpointAuthorParam
@@ -231,7 +231,7 @@ test('should sort required params before optional', t => {
   t.true(requiredVsOptional > 0)
 })
 
-test('should sort more filters before fewer', t => {
+test('should sort more filters before fewer', (t) => {
   const higher = compareEndpoints(
     endpointEntryWithTwoFilters,
     endpointEntryWithFilter
@@ -250,7 +250,7 @@ test('should sort more filters before fewer', t => {
   t.true(lower > 0)
 })
 
-test('should sort filters after params', t => {
+test('should sort filters after params', (t) => {
   const filterVsType = compareEndpoints(endpointOneFilter, endpointEntry)
   const filterVsParam = compareEndpoints(
     endpointOneFilter,
@@ -265,7 +265,7 @@ test('should sort filters after params', t => {
   t.true(filterVsAction < 0)
 })
 
-test('should sort with filters before without', t => {
+test('should sort with filters before without', (t) => {
   const typeWithVsWithout = compareEndpoints(
     endpointEntryWithFilter,
     endpointEntry

@@ -28,7 +28,8 @@ export default async function deleteFn(
   getService: GetService
 ): Promise<Exchange> {
   const {
-    request: { type, id, service: serviceId },
+    request: { type, id },
+    target: serviceId,
     endpointId,
   } = exchange
 

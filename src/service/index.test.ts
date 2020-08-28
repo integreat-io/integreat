@@ -23,7 +23,7 @@ const schemas = {
       title: 'string',
       one: { $cast: 'integer', $default: 1 },
       two: 'integer',
-      service: 'service',
+      source: 'source',
     },
     access: 'auth',
   }),
@@ -50,7 +50,7 @@ const entryMapping = [
     title: 'header',
     one: 'one',
     two: 'two',
-    service: '^params.service',
+    source: '^params.source',
     author: '^access.ident.id',
     createdAt: 'created',
     updatedAt: 'updated',
@@ -221,7 +221,7 @@ test('endpointFromExchange should pick the most specified endpoint', async (t) =
   })
   const exchange = completeExchange({
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     ident: { id: 'johnf' },
   })
 
@@ -334,7 +334,7 @@ test('sendExchange should retrieve data from service', async (t) => {
   })
   const exchange = completeExchange({
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     ident: { id: 'johnf' },
     authorized: true,
   })
@@ -380,7 +380,7 @@ test('sendExchange should authenticate and return with error', async (t) => {
   })
   const exchange = completeExchange({
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     ident: { id: 'johnf' },
     authorized: true,
   })
@@ -410,7 +410,7 @@ test('sendExchange should fail when not authorized', async (t) => {
   })
   const exchange = completeExchange({
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     ident: { id: 'johnf' },
     authorized: false,
   })
@@ -428,7 +428,7 @@ test('sendExchange should fail when not authorized', async (t) => {
 test('sendExchange should connect before sending request', async (t) => {
   const exchange = completeExchange({
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     ident: { id: 'johnf' },
     authorized: true,
   })
@@ -497,7 +497,7 @@ test('sendExchange should store connection', async (t) => {
   })
   const exchange = completeExchange({
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     ident: { id: 'johnf' },
     auth: { status: 'granted', token: 't0k3n' },
     authorized: true,
@@ -535,7 +535,7 @@ test('sendExchange should return error when connection fails', async (t) => {
   })
   const exchange = completeExchange({
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     ident: { id: 'johnf' },
     auth: { status: 'granted', token: 't0k3n' },
     authorized: true,
@@ -574,7 +574,7 @@ test('sendExchange should retrieve error response from service', async (t) => {
   })
   const exchange = completeExchange({
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     ident: { id: 'johnf' },
     authorized: true,
   })
@@ -611,7 +611,7 @@ test('sendExchange should return with error when transport throws', async (t) =>
   })
   const exchange = completeExchange({
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     ident: { id: 'johnf' },
     authorized: true,
   })
@@ -653,7 +653,7 @@ test('sendExchange should do nothing when exchange has a status', async (t) => {
   const exchange = completeExchange({
     status: 'badrequest',
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     response: { error: 'Bad request catched early' },
     ident: { id: 'johnf' },
     authorized: true,
@@ -682,7 +682,7 @@ test.serial('mapResponse should map data array from service', async (t) => {
   const exchange = completeExchange({
     type: 'GET',
     status: 'ok',
-    request: { id: 'ent1', type: 'entry', service: 'thenews' },
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     response: {
       data: {
         content: {
@@ -713,7 +713,7 @@ test.serial('mapResponse should map data array from service', async (t) => {
           title: 'Entry 1',
           one: 1,
           two: 2,
-          service: { id: 'thenews', $ref: 'service' },
+          source: { id: 'thenews', $ref: 'source' },
           createdAt: theDate,
           updatedAt: theDate,
         },

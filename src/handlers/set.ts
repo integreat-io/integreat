@@ -31,7 +31,8 @@ export default async function set(
   getService: GetService
 ): Promise<Exchange> {
   const {
-    request: { service: serviceId, data },
+    request: { data },
+    target: serviceId,
     endpointId,
   } = exchange
 

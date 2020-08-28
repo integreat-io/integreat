@@ -14,7 +14,6 @@ import { EndpointOptions } from '../service/endpoints/types'
 export interface MappingParams extends Params {
   id?: string | string[]
   type?: string | string[]
-  service?: string
   sendNoDefaults?: boolean
 }
 
@@ -70,7 +69,6 @@ export function exchangeFromAction(action: Action): Exchange {
     payload: {
       type,
       id,
-      service,
       page,
       pageSize,
       endpoint,
@@ -90,7 +88,6 @@ export function exchangeFromAction(action: Action): Exchange {
     request: {
       ...(type ? { type } : {}),
       ...(id ? { id } : {}),
-      ...(service ? { service } : {}),
       ...(page ? { page } : {}),
       ...(pageSize ? { pageSize } : {}),
       ...(data ? { data } : {}),
@@ -168,7 +165,7 @@ export function exchangeFromMappingObject(
     data,
     paging,
     error,
-    params: { id, type, service, sendNoDefaults, ...params } = {},
+    params: { id, type, sendNoDefaults, ...params } = {},
     options,
   } = mappingObject
   return completeExchange({
@@ -179,7 +176,6 @@ export function exchangeFromMappingObject(
       ...(isRequest && { data }),
       ...(id && { id }),
       ...(type && { type }),
-      ...(service && { service }),
       ...(sendNoDefaults && { sendNoDefaults }),
       ...(!isEmptyObject(params) && { params }),
     },

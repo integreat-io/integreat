@@ -226,7 +226,6 @@ test('should create mapping object from exchange for request', (t) => {
       id: 'johnf',
       type: 'user',
       params: { searchDeleted: true },
-      service: 'store',
       data,
     },
     response: { error: 'No user by that name' },
@@ -239,7 +238,6 @@ test('should create mapping object from exchange for request', (t) => {
     params: {
       id: 'johnf',
       type: 'user',
-      service: 'store',
       searchDeleted: true,
     },
     data,
@@ -374,7 +372,6 @@ test('should populate exchange from mapping object from request to service', (t)
     params: {
       id: 'johnf',
       type: 'user',
-      service: 'store',
       searchDeleted: true,
     },
     data,
@@ -391,7 +388,6 @@ test('should populate exchange from mapping object from request to service', (t)
       id: 'johnf',
       type: 'user',
       params: { searchDeleted: true },
-      service: 'store',
       data,
     },
     response: { error: 'No user by that name' },
@@ -424,7 +420,6 @@ test('should populate exchange from mapping object from response to service', (t
     params: {
       id: 'johnf',
       type: 'user',
-      service: 'store',
       searchDeleted: true,
     },
     data,
@@ -441,7 +436,6 @@ test('should populate exchange from mapping object from response to service', (t
       id: 'johnf',
       type: 'user',
       params: { searchDeleted: true },
-      service: 'store',
     },
     response: {
       data,

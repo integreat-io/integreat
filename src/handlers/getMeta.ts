@@ -38,7 +38,8 @@ export default async function getMeta(
   debug('Action: GET_META')
 
   const {
-    request: { service: serviceId, params: { keys = undefined } = {} },
+    request: { params: { keys = undefined } = {} },
+    target: serviceId,
     endpointId,
     ident,
   } = exchange

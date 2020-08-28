@@ -92,8 +92,8 @@ test('should delete items from service', async (t) => {
         { id: 'ent1', $type: 'entry' },
         { id: 'ent2', $type: 'entry' },
       ],
-      service: 'entries',
     },
+    target: 'entries',
   })
 
   const ret = await deleteFn(exchange, dispatch, getService)
@@ -126,7 +126,8 @@ test('should delete one item from service', async (t) => {
   const getService = () => src
   const exchange = completeExchange({
     type: 'DELETE',
-    request: { id: 'ent1', type: 'entry', service: 'entries' },
+    request: { id: 'ent1', type: 'entry' },
+    target: 'entries',
   })
 
   const ret = await deleteFn(exchange, dispatch, getService)
@@ -278,7 +279,8 @@ test('should return noaction when nothing to delete', async (t) => {
   const getService = () => src
   const exchange = completeExchange({
     type: 'DELETE',
-    request: { data: [], service: 'entries' },
+    request: { data: [] },
+    target: 'entries',
   })
 
   const ret = await deleteFn(exchange, dispatch, getService)
@@ -301,7 +303,8 @@ test('should skip null values in data array', async (t) => {
   const getService = () => src
   const exchange = completeExchange({
     type: 'DELETE',
-    request: { data: [null], service: 'entries' },
+    request: { data: [null] },
+    target: 'entries',
   })
 
   const ret = await deleteFn(exchange, dispatch, getService)
@@ -342,8 +345,8 @@ test('should only delete items the ident is authorized to', async (t) => {
         { id: 'johnf', $type: 'account' },
         { id: 'betty', $type: 'account' },
       ],
-      service: 'accounts',
     },
+    target: 'accounts',
     ident: { id: 'johnf' },
   })
 
@@ -371,7 +374,8 @@ test('should return error when specified service does not exist', async (t) => {
   const getService = () => undefined
   const exchange = completeExchange({
     type: 'DELETE',
-    request: { id: 'ent1', type: 'entry', service: 'entries' },
+    request: { id: 'ent1', type: 'entry' },
+    target: 'entries',
   })
 
   const ret = await deleteFn(exchange, dispatch, getService)

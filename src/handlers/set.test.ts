@@ -113,12 +113,12 @@ test('should map and set items to service', async (t) => {
     type: 'SET',
     request: {
       type: 'entry',
-      service: 'entries',
       data: [
         { $type: 'entry', id: 'ent1', title: 'Entry 1' },
         { $type: 'entry', id: 'ent2', title: 'Entry 2' },
       ],
     },
+    target: 'entries',
   })
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = (_type?: string | string[], service?: string) =>
@@ -139,10 +139,10 @@ test('should map and set one item to service', async (t) => {
   const exchange = completeExchange({
     type: 'SET',
     request: {
-      service: 'entries',
       type: 'entry',
       data: [{ $type: 'entry', id: 'ent1' }],
     },
+    target: 'entries',
     ident: { id: 'johnf' },
   })
   const src = setupService('http://api4.test/database/_bulk_docs')
@@ -211,9 +211,9 @@ test('should set to specified endpoint', async (t) => {
   const exchange = completeExchange({
     type: 'SET',
     request: {
-      service: 'entries',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
+    target: 'entries',
     endpointId: 'other',
   })
   const src = setupService('http://api1.test/database/_bulk_docs')
@@ -232,10 +232,10 @@ test('should set to uri with params', async (t) => {
   const exchange = completeExchange({
     type: 'SET',
     request: {
-      service: 'entries',
       data: [{ id: 'ent1', $type: 'entry' }],
       params: { typefolder: 'entries' },
     },
+    target: 'entries',
   })
   const src = setupService('http://api3.test/{{params.typefolder}}/_bulk_docs')
   const getService = () => src
@@ -251,9 +251,9 @@ test('should return error when service fails', async (t) => {
   const exchange = completeExchange({
     type: 'SET',
     request: {
-      service: 'entries',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
+    target: 'entries',
   })
   const src = setupService('http://api7.test/database/_bulk_docs')
   const getService = () => src
@@ -302,9 +302,9 @@ test('should return error when specified service does not exist', async (t) => {
   const exchange = completeExchange({
     type: 'SET',
     request: {
-      service: 'entries',
       data: { id: 'ent1', $type: 'entry' },
     },
+    target: 'entries',
   })
 
   const ret = await set(exchange, dispatch, getService)
@@ -323,12 +323,12 @@ test('should authenticate items', async (t) => {
     type: 'SET',
     request: {
       type: 'account',
-      service: 'accounts',
       data: [
         { id: 'johnf', $type: 'account', name: 'John F.' },
         { id: 'betty', $type: 'account', name: 'Betty' },
       ],
     },
+    target: 'accounts',
     ident: { id: 'johnf' },
   })
   const src = setupService('http://api6.test/database/_bulk_docs', 'accounts')
@@ -349,12 +349,12 @@ test('should return empty response from service', async (t) => {
   const exchange = completeExchange({
     type: 'SET',
     request: {
-      service: 'accounts',
       data: [
         { id: 'johnf', $type: 'account', name: 'John F.' },
         { id: 'betty', $type: 'account', name: 'Betty' },
       ],
     },
+    target: 'accounts',
     ident: { id: 'johnf' },
   })
 
@@ -373,7 +373,6 @@ test('should map response data', async (t) => {
   const exchange = completeExchange({
     type: 'SET',
     request: {
-      service: 'accounts',
       data: [
         {
           $type: 'account',
@@ -382,6 +381,7 @@ test('should map response data', async (t) => {
         },
       ],
     },
+    target: 'accounts',
     ident: { root: true },
   })
   const src = setupService('http://api9.test/database/_bulk_docs', 'accounts')
@@ -408,9 +408,9 @@ test('should map non-array response data', async (t) => {
   const exchange = completeExchange({
     type: 'SET',
     request: {
-      service: 'accounts',
       data: { $type: 'account', name: 'John F.' },
     },
+    target: 'accounts',
     ident: { root: true },
   })
   const src = setupService('http://api10.test/database/_bulk_docs', 'accounts')
@@ -433,9 +433,9 @@ test('should allow null as request data', async (t) => {
   const exchange = completeExchange({
     type: 'SET',
     request: {
-      service: 'entries',
       data: null,
     },
+    target: 'entries',
   })
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = () => src

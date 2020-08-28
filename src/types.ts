@@ -50,7 +50,6 @@ export interface Payload extends Record<string, Data> {
   type?: string | string[]
   id?: string | string[]
   data?: Data
-  service?: string
   source?: string
   target?: string
   endpoint?: string
@@ -90,7 +89,6 @@ export interface Response<T = Data> {
 export interface ExchangeRequest<T = Data> {
   type?: string | string[]
   id?: string | string[]
-  service?: string
   params?: Params
   data?: T
   uri?: string

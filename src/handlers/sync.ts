@@ -19,7 +19,7 @@ const debug = debugLib('great')
 export interface FromParams extends DataObject {
   id?: string | string[]
   type?: string | string[]
-  service?: string
+  target?: string
 }
 
 export interface Params {
@@ -31,6 +31,10 @@ export interface Params {
   syncNoData?: boolean
 }
 
+interface Request extends ExchangeRequest {
+  target?: string
+}
+
 const makeErrorString = (results: Response[]) =>
   results
     .map((result, index) =>
@@ -40,15 +44,15 @@ const makeErrorString = (results: Response[]) =>
     .join('\n')
 
 const setUpdatedParams = (dispatch: InternalDispatch, ident?: Ident) => async (
-  request: ExchangeRequest
+  request: Request
 ) => {
   const { status, response: { data, error } = {} } = await dispatch(
     completeExchange({
       type: 'GET_META',
       request: {
-        service: request.service as string,
         params: { keys: 'lastSyncedAt' },
       },
+      target: request.target,
       ident,
     })
   )
@@ -69,7 +73,7 @@ const setUpdatedParams = (dispatch: InternalDispatch, ident?: Ident) => async (
   } else {
     debug(
       'SYNC: Could not get meta for service %s. Error: %s %s',
-      request.service,
+      request.target,
       status,
       error
     )
@@ -78,12 +82,12 @@ const setUpdatedParams = (dispatch: InternalDispatch, ident?: Ident) => async (
 }
 
 const generateRequestWithUpdatedDates = async (
-  requests: ExchangeRequest[],
+  requests: Request[],
   dispatch: InternalDispatch,
   ident?: Ident,
   updatedAfter?: Date,
   updatedUntil?: Date
-) => {
+): Promise<Request[]> => {
   if (updatedAfter || updatedUntil) {
     return requests.map((request) => ({
       ...request,
@@ -101,27 +105,25 @@ const generateRequestWithUpdatedDates = async (
 const generateRequestFromParams = ({
   id,
   type,
-  service,
+  target,
   ...params
-}: FromParams = {}): ExchangeRequest => ({
+}: FromParams = {}): Request => ({
   ...(id && { id }),
   ...(type && { type }),
-  ...(service && { service }),
+  ...(target && { target }),
   params,
 })
 
-const requestFromStringOrObject = (
-  params?: string | FromParams
-): ExchangeRequest =>
+const requestFromStringOrObject = (params?: string | FromParams): Request =>
   typeof params === 'string'
-    ? { service: params }
+    ? { target: params }
     : generateRequestFromParams(params)
 
 const generateFromRequest = async (
   dispatch: InternalDispatch,
   { retrieve, from, updatedAfter, updatedUntil }: Params,
   ident?: Ident
-): Promise<ExchangeRequest[]> => {
+): Promise<Request[]> => {
   const requests = ([] as (string | FromParams | undefined)[])
     .concat(from)
     .filter(Boolean)
@@ -145,10 +147,10 @@ const generateFromRequest = async (
 const generateToRequest = (
   type: string | string[] | undefined,
   { to }: Params,
-  fromRequest: ExchangeRequest[]
-): ExchangeRequest => {
+  fromRequest: Request[]
+): Request => {
   const requestFromParams =
-    typeof to === 'string' ? { service: to } : generateRequestFromParams(to)
+    typeof to === 'string' ? { target: to } : generateRequestFromParams(to)
   const { params: { updatedAfter, updatedUntil } = {} } = fromRequest[0]
   return {
     ...requestFromParams,
@@ -186,11 +188,12 @@ const getFromService = (
   type?: string | string[],
   meta?: Meta,
   ident?: Ident
-) => async (request: ExchangeRequest): Promise<Exchange> => {
+) => async ({ target, ...request }: Request): Promise<Exchange> => {
   const response = await dispatch(
     completeExchange({
       type: 'GET',
       request: { type, ...request },
+      target,
       ident,
       meta: { project: meta?.project },
     })
@@ -198,7 +201,7 @@ const getFromService = (
   if (response.status !== 'ok') {
     return createError(
       exchange,
-      `Could not get items from service '${request.service}'. Reason: ${response.status} ${response.response.error}`
+      `Could not get items from service '${target}'. Reason: ${response.status} ${response.response.error}`
     )
   }
 
@@ -218,23 +221,24 @@ const getFromService = (
 
 const createSetMetas = (
   dispatch: InternalDispatch,
-  fromRequests: ExchangeRequest[],
+  fromRequests: Request[],
   lastSyncedAt: Date,
   ident?: Ident
 ) =>
   fromRequests
     .reduce(
-      (services, params) =>
-        params.service && !services.includes(params.service as string)
-          ? [...services, params.service as string]
+      (services, { target }) =>
+        target && !services.includes(target as string)
+          ? [...services, target as string]
           : services,
       [] as string[]
     )
-    .map((service) =>
+    .map((target) =>
       dispatch(
         completeExchange({
           type: 'SET_META',
-          request: { service, params: { meta: { lastSyncedAt } } },
+          request: { params: { meta: { lastSyncedAt } } },
+          target,
           ident,
         })
       )
@@ -264,7 +268,11 @@ export default async function sync(
     ident,
   } = exchange
   const fromRequests = await generateFromRequest(dispatch, params, ident)
-  const toRequest = generateToRequest(type, params, fromRequests)
+  const { target: toTarget, ...toRequest } = generateToRequest(
+    type,
+    params,
+    fromRequests
+  )
 
   const lastSyncedAt = new Date()
 
@@ -286,7 +294,7 @@ export default async function sync(
   if (data.length === 0 && params.syncNoData !== true) {
     return createError(
       exchange,
-      `No items to update from service '${fromRequests[0].service}'`,
+      `No items to update from service '${fromRequests[0].target}'`,
       'noaction'
     )
   }
@@ -297,6 +305,7 @@ export default async function sync(
       completeExchange({
         type: 'SET',
         request: { data, ...toRequest },
+        target: toTarget,
         ident,
         meta: { ...meta, queue: true },
       })

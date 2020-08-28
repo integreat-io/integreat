@@ -68,9 +68,9 @@ test('should get metadata for service', async (t) => {
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
-      service: 'store',
       params: { keys: 'lastSyncedAt' },
     },
+    target: 'store',
     ident,
   })
   const expectedResponse = {
@@ -100,9 +100,9 @@ test('should get several metadata for service', async (t) => {
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
-      service: 'store',
       params: { keys: ['lastSyncedAt', 'count'] },
     },
+    target: 'store',
     endpointId: 'getMeta',
     ident,
   })
@@ -130,9 +130,8 @@ test('should get all metadata for service', async (t) => {
     service === 'store' || type === 'meta' ? great.services.store : undefined
   const exchange = completeExchange({
     type: 'GET_META',
-    request: {
-      service: 'store',
-    },
+    request: {},
+    target: 'store',
     ident,
   })
   const expected = {
@@ -164,9 +163,9 @@ test('should return null for metadata when not set on service', async (t) => {
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
-      service: 'store',
       params: { keys: 'lastSyncedAt' },
     },
+    target: 'store',
     ident,
   })
   const expected = { service: 'store', meta: { lastSyncedAt: null } }
@@ -193,9 +192,9 @@ test('should return reply from service when not ok', async (t) => {
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
-      service: 'store',
       params: { keys: 'lastSyncedAt' },
     },
+    target: 'store',
     ident,
   })
 
@@ -221,9 +220,9 @@ test('should return error when when no meta type is set', async (t) => {
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
-      service: 'store',
       params: { keys: 'lastSyncedAt' },
     },
+    target: 'store',
     meta: { ident },
   })
 
@@ -254,9 +253,9 @@ test('should get metadata from other service', async (t) => {
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
-      service: 'entries',
       params: { keys: 'lastSyncedAt' },
     },
+    target: 'entries',
     ident,
   })
   const expected = { service: 'entries', meta: { lastSyncedAt } }
@@ -276,9 +275,9 @@ test.skip('should return error when meta is set to an unknown type', async (t) =
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
-      service: 'entries',
       params: { keys: 'lastSyncedAt' },
     },
+    target: 'entries',
     ident,
   })
 
@@ -292,9 +291,9 @@ test('should return error for unknown service', async (t) => {
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
-      service: 'unknown',
       params: { keys: 'lastSyncedAt' },
     },
+    target: 'unknown',
     ident,
   })
 
@@ -316,9 +315,9 @@ test('should respond with noaccess when not authorized', async (t) => {
   const exchange = completeExchange({
     type: 'GET_META',
     request: {
-      service: 'store',
       params: { keys: 'lastSyncedAt' },
     },
+    target: 'store',
   })
 
   const ret = await getMeta(exchange, dispatch, getService)

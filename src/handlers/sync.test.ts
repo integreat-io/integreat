@@ -27,8 +27,8 @@ test('should dispatch GET to service', async (t) => {
     request: {
       type: 'user',
       params: {
-        from: { service: 'users', active: true },
-        to: { service: 'store' },
+        from: { target: 'users', active: true },
+        to: { target: 'store' },
         retrieve: 'all',
       },
     },
@@ -41,10 +41,10 @@ test('should dispatch GET to service', async (t) => {
   const expected = completeExchange({
     type: 'GET',
     request: {
-      service: 'users',
       type: 'user',
       params: { active: true },
     },
+    target: 'users',
     ident,
     meta: { project: 'project1' },
   })
@@ -80,7 +80,7 @@ test('should queue SET to target', async (t) => {
       type: 'user',
       params: {
         from: 'users',
-        to: { service: 'store', language: 'no' },
+        to: { target: 'store', language: 'no' },
         retrieve: 'all',
       },
     },
@@ -100,11 +100,11 @@ test('should queue SET to target', async (t) => {
   const expected = ({
     type: 'SET',
     request: {
-      service: 'store',
       type: 'user',
       data: [johnData, jennyData],
       params: { language: 'no' },
     },
+    target: 'store',
     ident,
     meta: { project: 'project1' },
   } as unknown) as Exchange
@@ -143,7 +143,8 @@ test.serial('should set lastSyncedAt on service', async (t) => {
   )
   const expected = ({
     type: 'SET_META',
-    request: { service: 'users', params: { meta: { lastSyncedAt } } },
+    request: { params: { meta: { lastSyncedAt } } },
+    target: 'users',
     ident,
   } as unknown) as Exchange
 
@@ -310,10 +311,10 @@ test('should pass updatedAfter as param when retrieving updated', async (t) => {
   const expected = ({
     type: 'GET',
     request: {
-      service: 'users',
       type: 'user',
       params: { updatedAfter: lastSyncedAt },
     },
+    target: 'users',
   } as unknown) as Exchange
 
   await sync(exchange, dispatch)
@@ -418,13 +419,13 @@ test('should pass on updatedAfter and updatedUntil when set on payload', async (
   const expected = ({
     type: 'GET',
     request: {
-      service: 'users',
       type: 'user',
       params: {
         updatedAfter,
         updatedUntil,
       },
     },
+    target: 'users',
   } as unknown) as Exchange
   const notExpected = ({
     type: 'GET_META',
@@ -466,13 +467,13 @@ test('should pass on updatedAfter and updatedUntil as dates when set as iso stri
   const expected = ({
     type: 'GET',
     request: {
-      service: 'users',
       type: 'user',
       params: {
         updatedAfter: new Date(updatedAfter),
         updatedUntil: new Date(updatedUntil),
       },
     },
+    target: 'users',
   } as unknown) as Exchange
   const notExpected = ({
     type: 'GET_META',
@@ -679,9 +680,9 @@ test('should pass ident to GET_META', async (t) => {
   const expected = completeExchange({
     type: 'GET_META',
     request: {
-      service: 'users',
       params: { keys: 'lastSyncedAt' },
     },
+    target: 'users',
     ident,
   })
 
@@ -700,8 +701,8 @@ test('should combine and set items from several from-actions', async (t) => {
       type: 'user',
       params: {
         from: [
-          { service: 'users', department: 'west' },
-          { service: 'users', department: 'east' },
+          { target: 'users', department: 'west' },
+          { target: 'users', department: 'east' },
         ],
         to: 'store',
         retrieve: 'updated',
@@ -766,8 +767,8 @@ test.serial('should set meta on several services', async (t) => {
       type: 'user',
       params: {
         from: [
-          { service: 'users', department: 'west' },
-          { service: 'accounts', department: 'east' },
+          { target: 'users', department: 'west' },
+          { target: 'accounts', department: 'east' },
         ],
         to: 'store',
         retrieve: 'updated',
@@ -799,12 +800,14 @@ test.serial('should set meta on several services', async (t) => {
   )
   const expected1 = ({
     type: 'SET_META',
-    request: { service: 'users', params: { meta: { lastSyncedAt } } },
+    request: { params: { meta: { lastSyncedAt } } },
+    target: 'users',
     ident,
   } as unknown) as Exchange
   const expected2 = ({
     type: 'SET_META',
-    request: { service: 'accounts', params: { meta: { lastSyncedAt } } },
+    request: { params: { meta: { lastSyncedAt } } },
+    target: 'accounts',
     ident,
   } as unknown) as Exchange
 
@@ -823,8 +826,8 @@ test('should return error when one of several gets returns with error', async (t
       type: 'user',
       params: {
         from: [
-          { service: 'users', department: 'west' },
-          { service: 'users', department: 'east' },
+          { target: 'users', department: 'west' },
+          { target: 'users', department: 'east' },
         ],
         to: 'store',
         retrieve: 'updated',
@@ -864,8 +867,8 @@ test('should return error when all gets return with error', async (t) => {
       type: 'user',
       params: {
         from: [
-          { service: 'users', department: 'west' },
-          { service: 'users', department: 'east' },
+          { target: 'users', department: 'west' },
+          { target: 'users', department: 'east' },
         ],
         to: 'store',
         retrieve: 'updated',

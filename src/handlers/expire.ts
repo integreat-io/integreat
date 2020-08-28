@@ -7,7 +7,7 @@ const isTypedDataArray = (value: unknown): value is TypedData[] =>
   Array.isArray(value) && isTypedData(value[0])
 
 const getExpired = async (
-  service: string,
+  target: string,
   type: string | string[],
   endpointId: string,
   msFromNow: number,
@@ -21,9 +21,9 @@ const getExpired = async (
       type: 'GET',
       request: {
         type,
-        service,
         params: { timestamp, isodate },
       },
+      target,
       response: { returnNoDefaults: true },
       endpointId,
       ident,
@@ -33,7 +33,7 @@ const getExpired = async (
 
 const deleteExpired = async (
   data: TypedData[],
-  service: string,
+  target: string,
   dispatch: InternalDispatch,
   ident?: Ident
 ): Promise<Exchange> => {
@@ -41,7 +41,8 @@ const deleteExpired = async (
 
   const deleteExchange = completeExchange({
     type: 'DELETE',
-    request: { service, data: deleteData },
+    request: { data: deleteData },
+    target,
     ident,
     meta: { queue: true },
   })
@@ -52,10 +53,11 @@ const deleteExpired = async (
 /**
  * Action to delete expired items.
  *
- * The given `endpoint` is used to retrieve expired items from the `service`, and
- * may use the paramters `timestamp` or `isodate`, which represents the current
- * time plus the microseconds in `msFromNow`, the former as microseconds since
- * January 1, 1970, the latter as an ISO formatted date and time string.
+ * The given `endpoint` is used to retrieve expired items from the `target`
+ * service, and may use the paramters `timestamp` or `isodate`, which represents
+ * the current time plus the microseconds in `msFromNow`, the former as
+ * microseconds since January 1, 1970, the latter as an ISO formatted date and
+ * time string.
  *
  * The items are mapped and typed, so the `type` param should be set to one
  * or more types expected from the `endpoint`, and may be a string or an array
@@ -68,11 +70,12 @@ export default async function expire(
   const {
     ident,
     endpointId,
-    request: { service, type, params },
+    request: { type, params },
+    target: serviceId,
   } = exchange
   const msFromNow = (params?.msFromNow as number) || 0
 
-  if (!service) {
+  if (!serviceId) {
     return createError(
       exchange,
       `Can't delete expired without a specified service`
@@ -81,18 +84,18 @@ export default async function expire(
   if (!endpointId) {
     return createError(
       exchange,
-      `Can't delete expired from service '${service}' without an endpoint`
+      `Can't delete expired from service '${serviceId}' without an endpoint`
     )
   }
   if (!type) {
     return createError(
       exchange,
-      `Can't delete expired from service '${service}' without one or more specified types`
+      `Can't delete expired from service '${serviceId}' without one or more specified types`
     )
   }
 
   const expiredExchange = await getExpired(
-    service,
+    serviceId,
     type,
     endpointId,
     msFromNow,
@@ -103,7 +106,7 @@ export default async function expire(
   if (expiredExchange.status !== 'ok') {
     return createError(
       exchange,
-      `Could not get items from service '${service}'. Reason: ${expiredExchange.status} ${expiredExchange.response.error}`,
+      `Could not get items from service '${serviceId}'. Reason: ${expiredExchange.status} ${expiredExchange.response.error}`,
       'noaction'
     )
   }
@@ -111,12 +114,12 @@ export default async function expire(
   if (!isTypedDataArray(data)) {
     return createError(
       exchange,
-      `No items to expire from service '${service}'`,
+      `No items to expire from service '${serviceId}'`,
       'noaction'
     )
   }
 
-  const responseExchange = await deleteExpired(data, service, dispatch, ident)
+  const responseExchange = await deleteExpired(data, serviceId, dispatch, ident)
 
   return {
     ...exchange,

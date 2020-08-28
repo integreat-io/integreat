@@ -16,7 +16,7 @@ test('should route to GET action', async (t) => {
   const action = {
     type: 'GET',
     payload: {
-      service: 'entries',
+      target: 'entries',
       id: 'ent1',
       type: 'entry',
     },

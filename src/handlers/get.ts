@@ -104,7 +104,8 @@ export default async function get(
   _identConfig?: IdentConfig
 ): Promise<Exchange> {
   const {
-    request: { type, service: serviceId },
+    request: { type },
+    target: serviceId,
     endpointId,
   } = exchange
 

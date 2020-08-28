@@ -22,7 +22,7 @@ const schemas = {
     shape: {
       title: 'string',
       byline: { $cast: 'string', $default: 'Somebody' },
-      service: 'service',
+      source: 'source',
     },
   }),
   account: schema({
@@ -43,7 +43,7 @@ const pipelines = {
       title: 'headline',
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
-      service: '^params.source',
+      source: '^params.source',
     },
     { $apply: 'cast_entry' },
   ],
@@ -109,9 +109,9 @@ test('should get all items from service', async (t) => {
     type: 'GET',
     request: {
       type: 'entry',
-      service: 'entries',
       params: { source: 'thenews' },
     },
+    target: 'entries',
     ident,
   })
   const svc = setupService('http://api1.test/database')
@@ -126,7 +126,7 @@ test('should get all items from service', async (t) => {
         byline: 'Somebody',
         createdAt: date,
         updatedAt: date,
-        service: { id: 'thenews', $ref: 'service' },
+        source: { id: 'thenews', $ref: 'source' },
       },
     ],
   }
@@ -147,8 +147,8 @@ test('should get item by id from service', async (t) => {
     request: {
       id: 'ent1',
       type: 'entry',
-      service: 'entries',
     },
+    target: 'entries',
   })
   const svc = setupService(
     'http://api1.test/database/{{params.type}}:{{params.id}}'
@@ -175,8 +175,8 @@ test('should get items by id array from service from member_s_ endpoint', async 
     request: {
       id: ['ent1', 'ent2'],
       type: 'entry',
-      service: 'entries',
     },
+    target: 'entries',
   })
   const svc = setupService('http://api12.test/entries?id={{params.id}}', {
     scope: 'members',
@@ -207,8 +207,8 @@ test('should get items by id array from member endpoints', async (t) => {
     request: {
       id: ['ent1', 'ent2', 'ent3'],
       type: 'entry',
-      service: 'entries',
     },
+    target: 'entries',
   })
   const svc = setupService('http://api6.test/entries/{{params.id}}', {
     scope: 'member',
@@ -235,8 +235,8 @@ test('should pass on ident when getting from id array', async (t) => {
     request: {
       id: ['ent1', 'ent2'],
       type: 'entry',
-      service: 'entries',
     },
+    target: 'entries',
     ident,
   })
   const svc = setupService('http://api11.test/entries/{id}', {
@@ -269,8 +269,8 @@ test('should return error when one or more requests for individual ids fails', a
     request: {
       id: ['ent1', 'ent2'],
       type: 'entry',
-      service: 'entries',
     },
+    target: 'entries',
   })
   const svc = setupService('http://api8.test/entries/{id}', { scope: 'member' })
   const getService = () => svc
@@ -289,8 +289,8 @@ test('should get item by id from service when id is array of one', async (t) => 
     request: {
       id: ['ent1'],
       type: 'entry',
-      service: 'entries',
     },
+    target: 'entries',
   })
   const svc = setupService('http://api7.test/entries/{{params.id}}', {
     scope: 'member',
@@ -311,8 +311,8 @@ test('should get default values from type', async (t) => {
     type: 'GET',
     request: {
       type: 'entry',
-      service: 'entries',
     },
+    target: 'entries',
   })
   const svc = setupService('http://api1.test/database')
   const getService = () => svc
@@ -330,8 +330,8 @@ test('should not get default values from type', async (t) => {
     type: 'GET',
     request: {
       type: 'entry',
-      service: 'entries',
     },
+    target: 'entries',
     response: { returnNoDefaults: true },
   })
   const svc = setupService('http://api1.test/database')
@@ -383,8 +383,8 @@ test('should return error on not found', async (t) => {
     type: 'GET',
     request: {
       type: 'entry',
-      service: 'entries',
     },
+    target: 'entries',
   })
   const svc = setupService('http://api3.test/unknown')
   const getService = () => svc
@@ -409,7 +409,8 @@ test('should return error when no service exists for type', async (t) => {
 test('should return error when specified service does not exist', async (t) => {
   const exchange = completeExchange({
     type: 'GET',
-    request: { service: 'entries', type: 'entry' },
+    request: { type: 'entry' },
+    target: 'entries',
   })
   const getService = () => undefined
 
@@ -424,8 +425,8 @@ test('should return error when no getService', async (t) => {
     type: 'GET',
     request: {
       type: 'entry',
-      service: 'entries',
     },
+    target: 'entries',
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -460,8 +461,8 @@ test('should get only authorized items', async (t) => {
     type: 'GET',
     request: {
       type: 'account',
-      service: 'accounts',
     },
+    target: 'accounts',
     ident,
   })
   const svc = setupService('http://api9.test/database', {}, { id: 'accounts' })

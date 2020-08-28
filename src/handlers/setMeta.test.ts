@@ -68,9 +68,9 @@ test('should set metadata on service', async (t) => {
   const exchange = completeExchange({
     type: 'SET_META',
     request: {
-      service: 'store',
       params: { meta: { lastSyncedAt, status: 'busy' } },
     },
+    target: 'store',
     ident,
   })
 
@@ -93,9 +93,9 @@ test('should not set metadata on service when no meta type', async (t) => {
   const exchange = completeExchange({
     type: 'SET_META',
     request: {
-      service: 'store',
       params: { meta: { lastSyncedAt } },
     },
+    target: 'store',
     ident,
   })
 
@@ -129,9 +129,9 @@ test('should set metadata on other service', async (t) => {
   const exchange = completeExchange({
     type: 'SET_META',
     request: {
-      service: 'entries',
       params: { meta: { lastSyncedAt } },
     },
+    target: 'entries',
     endpointId: 'setMeta',
     ident,
   })
@@ -151,9 +151,9 @@ test.skip('should return status noaction when meta is set to an unknown schema',
   const exchange = completeExchange({
     type: 'SET_META',
     request: {
-      service: 'store',
       params: { meta: { lastSyncedAt } },
     },
+    target: 'store',
     ident,
   })
 
@@ -175,9 +175,9 @@ test('should refuse setting metadata on service when not authorized', async (t) 
   const exchange = completeExchange({
     type: 'SET_META',
     request: {
-      service: 'store',
       params: { meta: { lastSyncedAt, status: 'busy' } },
     },
+    target: 'store',
   })
 
   const ret = await setMeta(exchange, dispatch, getService)
@@ -191,9 +191,9 @@ test('should return error for unknown service', async (t) => {
   const exchange = completeExchange({
     type: 'SET_META',
     request: {
-      service: 'unknown',
       params: { meta: { lastSyncedAt } },
     },
+    target: 'unknown',
     ident,
   })
 
