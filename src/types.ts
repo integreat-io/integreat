@@ -127,7 +127,7 @@ export interface Exchange<
   auth?: Record<string, unknown> | null
   meta: MetaData
   endpointId?: string
-  endpoint?: { options: EndpointOptions }
+  options?: EndpointOptions
   authorized?: boolean
   source?: string
   target?: string

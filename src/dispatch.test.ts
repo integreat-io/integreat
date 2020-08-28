@@ -150,3 +150,6 @@ test('should dispatch to middleware from action handlers', async (t) => {
 
   t.is(ret.status, '<<fromAction>>')
 })
+
+test.todo('should return error when source service is not found')
+test.todo('should return error when no endpoint is found for incoming mapping')

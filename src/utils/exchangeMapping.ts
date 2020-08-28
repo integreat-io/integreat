@@ -41,7 +41,7 @@ export const completeExchange = <ReqData = Data, RespData = Data>({
   request = {},
   response = {},
   endpointId,
-  endpoint,
+  options,
   ident,
   meta = {},
   auth,
@@ -55,7 +55,7 @@ export const completeExchange = <ReqData = Data, RespData = Data>({
   request,
   response: isOkStatus(status) ? removeError(response) : response,
   endpointId,
-  endpoint,
+  options,
   ident,
   meta,
   auth,
@@ -140,7 +140,7 @@ export function mappingObjectFromExchange(
     status,
     request: { data: requestData, params, ...reqParams },
     response: { data: responseData, error, paging },
-    endpoint: { options = undefined } = {},
+    options,
     ident,
   } = exchange
   return {
@@ -150,7 +150,7 @@ export function mappingObjectFromExchange(
     data: isRequest ? requestData : responseData,
     error,
     paging,
-    options: { ...options }, // Clone options for each mapping
+    ...(options && { options: { ...options } }),
     ident,
   }
 }
@@ -189,13 +189,6 @@ export function exchangeFromMappingObject(
       ...(paging ? { paging } : {}),
       ...(error ? { error } : {}),
     },
-    endpoint: exchange.endpoint
-      ? {
-          ...exchange.endpoint,
-          ...(options && {
-            options: { ...exchange.endpoint?.options, ...options },
-          }),
-        }
-      : undefined,
+    ...(options && { options: { ...exchange?.options, ...options } }),
   })
 }

@@ -180,7 +180,9 @@ test('should infer service id from type', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should delete with other endpoint and uri params', async (t) => {
+// The test does not really test anything. Set up two conflicting endpoints
+// and make sure it picks the second from id
+test.skip('should delete with other endpoint and uri params', async (t) => {
   const scope = nock('http://api3.test')
     .post('/entries/bulk_delete')
     .reply(200, [

@@ -7,11 +7,7 @@ import createSchema from '../schema'
 import { ServiceDef } from './types'
 import { TypedData, Connection, Exchange, DataObject, Data } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
-import {
-  completeExchange,
-  responseToExchange,
-  exchangeFromAction,
-} from '../utils/exchangeMapping'
+import { completeExchange, responseToExchange } from '../utils/exchangeMapping'
 import Auth from './Auth'
 import tokenAuth from '../authenticators/token'
 
@@ -828,7 +824,7 @@ test('should authorize typed data in array from service', async (t) => {
   })
   const endpoint = service.endpointFromExchange(exchange)
 
-  const ret = service.mapResponse(exchange, endpoint) as Exchange<
+  const ret = service.mapResponse(exchange, endpoint!) as Exchange<
     Data,
     TypedData[]
   >
@@ -1037,7 +1033,7 @@ test('mapRequest should set endpoint options and cast and map request data', asy
         },
       },
     },
-    endpoint: { options: { uri: 'http://some.api/1.0' } },
+    options: { uri: 'http://some.api/1.0' },
   }
 
   const ret = service.mapRequest(exchange, endpoint!)

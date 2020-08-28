@@ -88,12 +88,12 @@ export default ({
      * request.
      */
     mapRequest(exchange, endpoint, isIncoming = false): Exchange {
-      // Authorize and map in right order
       const { mutateRequest, allowRawRequest } = endpoint
-      const nextExchange = {
-        ...exchange,
-        endpoint: { options: { ...endpoint.options } }, // TODO: Remove one level
-      }
+
+      // Set endpoint options on exchange
+      const nextExchange = { ...exchange, options: { ...endpoint.options } }
+
+      // Authorize and map in right order
       return isIncoming
         ? authorizeDataToService(
             mutateRequest(nextExchange, isIncoming),

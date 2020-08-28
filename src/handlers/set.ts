@@ -32,7 +32,7 @@ export default async function set(
 ): Promise<Exchange> {
   const {
     request: { service: serviceId, data },
-    endpoint: endpointId,
+    endpointId,
   } = exchange
 
   const type = extractType(exchange, data)

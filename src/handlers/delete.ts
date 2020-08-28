@@ -29,7 +29,7 @@ export default async function deleteFn(
 ): Promise<Exchange> {
   const {
     request: { type, id, service: serviceId },
-    endpoint: endpointId,
+    endpointId,
   } = exchange
 
   const service =

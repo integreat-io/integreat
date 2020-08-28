@@ -50,6 +50,30 @@ function getExchangeHandlerFromType(
   return undefined
 }
 
+function mapIncomingRequest(exchange: Exchange, getService: GetService) {
+  if (exchange.source) {
+    const service = getService(undefined, exchange.source)
+    if (service) {
+      const endpoint = service.endpointFromExchange(exchange)
+      if (endpoint) {
+        return {
+          exchange: service.mapRequest(exchange, endpoint, true),
+          service,
+          endpoint,
+        }
+      }
+    }
+  }
+  return { exchange }
+}
+
+const mapIncomingResponse = (
+  exchange: Exchange,
+  service?: Service,
+  endpoint?: Endpoint
+) =>
+  service && endpoint ? service.mapResponse(exchange, endpoint, true) : exchange
+
 const wrapDispatch = (
   internalDispatch: InternalDispatch,
   getService: GetService
@@ -59,26 +83,19 @@ const wrapDispatch = (
       return { status: 'noaction', error: 'Dispatched no action' }
     }
 
-    let exchange = exchangeFromAction(action)
-    let service: Service | undefined = undefined
-    let endpoint: Endpoint | undefined = undefined
+    // Map incoming request data when needed
+    const { exchange, service, endpoint } = mapIncomingRequest(
+      exchangeFromAction(action),
+      getService
+    )
 
-    if (exchange.source) {
-      service = getService(undefined, exchange.source)
-      if (service) {
-        // TODO: Make endpoint a param instead of setting it on the exchange?
-        endpoint = service.endpointFromExchange(exchange)
-        exchange = service.mapRequest({ ...exchange, endpoint }, endpoint, true)
-      }
-    }
+    // Dispatch
+    const responseExchange = await internalDispatch(exchange)
 
-    exchange = await internalDispatch(exchange)
-
-    if (service && endpoint) {
-      exchange = service.mapResponse({ ...exchange, endpoint }, endpoint, true)
-    }
-
-    return responseFromExchange(exchange)
+    return responseFromExchange(
+      // Map respons data when needed
+      mapIncomingResponse(responseExchange, service, endpoint)
+    )
   }
 
 // const internalDispatch = (getService: GetService, handlers: Record<string, ExchangeHandler>, identConfig?: IdentConfig) =>

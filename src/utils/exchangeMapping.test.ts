@@ -1,5 +1,4 @@
 import test from 'ava'
-import { Endpoint } from '../service/endpoints/types'
 
 import {
   exchangeFromAction,
@@ -19,7 +18,7 @@ const exchangeDefaults = {
   response: {},
   meta: {},
   auth: undefined,
-  endpoint: undefined,
+  options: undefined,
   endpointId: undefined,
   source: undefined,
   target: undefined,
@@ -38,7 +37,7 @@ test('should complete exchange', (t) => {
     status: null,
     request: {},
     response: {},
-    endpoint: undefined,
+    options: undefined,
     endpointId: undefined,
     ident: undefined,
     meta: {},
@@ -114,9 +113,7 @@ test('should add ok response to exchange', (t) => {
       type: 'user',
       data: { name: 'John F.' },
     },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
   const response = {
@@ -144,9 +141,7 @@ test('should add error response to exchange', (t) => {
       data: { name: 'John F.' },
     },
     response: { data: [] },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
   const response = {
@@ -177,9 +172,7 @@ test('should return ok response from exchange', (t) => {
     response: {
       data: [{ id: 'ent1', type: 'entry' }],
     },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
   const expected = {
@@ -206,9 +199,7 @@ test('should return error response from exchange', (t) => {
     response: {
       error: 'No access',
     },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
   const expected = {
@@ -239,9 +230,7 @@ test('should create mapping object from exchange for request', (t) => {
       data,
     },
     response: { error: 'No user by that name' },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
   const expected = {
@@ -282,9 +271,7 @@ test('should create mapping object from exchange for response', (t) => {
       data,
       paging: { next: { offset: 'page2', type: 'entry' } },
     },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
   const expected = {
@@ -308,7 +295,6 @@ test('should create mapping object from exchange for response', (t) => {
 test('should populate exchange from mapping object from response from service', (t) => {
   const isRequest = false
   const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
-  const isMatch = () => true
   const exchange = {
     ...exchangeDefaults,
     type: 'GET',
@@ -320,10 +306,7 @@ test('should populate exchange from mapping object from response from service', 
     response: {
       data: { id: 'johnf' },
     },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0/users/{{params.id}}' },
-      isMatch,
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0/users/{{params.id}}' },
     ident: { id: 'johnf' },
   }
   const mappingObject = {
@@ -359,13 +342,10 @@ test('should populate exchange from mapping object from response from service', 
       data,
       paging: { next: { offset: 'page2', type: 'entry' } },
     },
-    endpoint: ({
-      options: {
-        uri: 'http://some.api.com/1.0/users/johnf',
-        queryParams: { order: 'desc' },
-      },
-      isMatch,
-    } as unknown) as Endpoint,
+    options: {
+      uri: 'http://some.api.com/1.0/users/johnf',
+      queryParams: { order: 'desc' },
+    },
     ident: { id: 'johnf' },
   }
 
@@ -385,9 +365,7 @@ test('should populate exchange from mapping object from request to service', (t)
       data: [{ id: 'johnf' }],
     },
     response: {},
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
   const mappingObject = {
@@ -417,9 +395,7 @@ test('should populate exchange from mapping object from request to service', (t)
       data,
     },
     response: { error: 'No user by that name' },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
 
@@ -439,9 +415,7 @@ test('should populate exchange from mapping object from response to service', (t
     response: {
       data: [{ id: 'johnf' }],
     },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
   const mappingObject = {
@@ -473,9 +447,7 @@ test('should populate exchange from mapping object from response to service', (t
       data,
       error: 'No user by that name',
     },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
 
@@ -497,9 +469,7 @@ test('should populate exchange from mapping object from request from service', (
     response: {
       data: null,
     },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
   const mappingObject = {
@@ -526,9 +496,7 @@ test('should populate exchange from mapping object from request from service', (
       data: null,
       paging: { next: { offset: 'page2', type: 'entry' } },
     },
-    endpoint: ({
-      options: { uri: 'http://some.api.com/1.0' },
-    } as unknown) as Endpoint,
+    options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
   }
 

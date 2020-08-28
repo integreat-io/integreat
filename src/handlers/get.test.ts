@@ -162,7 +162,7 @@ test('should get item by id from service', async (t) => {
   t.is((ret.response.data as DataObject).id, 'ent1')
 })
 
-test.only('should get items by id array from service from member_s_ endpoint', async (t) => {
+test('should get items by id array from service from member_s_ endpoint', async (t) => {
   nock('http://api12.test')
     .get('/entries')
     .query({ id: 'ent1,ent2' })
