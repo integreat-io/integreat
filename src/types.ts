@@ -1,4 +1,4 @@
-import { Endpoint } from './service/endpoints/types'
+import { EndpointOptions } from './service/endpoints/types'
 import { ScheduleObject } from './queue/types'
 
 export type DataValue = string | number | boolean | Date | null | undefined
@@ -51,6 +51,8 @@ export interface Payload extends Record<string, Data> {
   id?: string | string[]
   data?: Data
   service?: string
+  source?: string
+  target?: string
   endpoint?: string
   params?: Params
   page?: number
@@ -125,9 +127,10 @@ export interface Exchange<
   auth?: Record<string, unknown> | null
   meta: MetaData
   endpointId?: string
-  endpoint?: Endpoint
+  endpoint?: { options: EndpointOptions }
   authorized?: boolean
-  incoming?: boolean
+  source?: string
+  target?: string
 }
 
 export interface Dispatch<T extends Data = Data> {

@@ -1,5 +1,6 @@
 import debugLib = require('debug')
 import pPipe = require('p-pipe')
+import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { isTypedData } from '../utils/is'
 import { Exchange, InternalDispatch, Data } from '../types'
@@ -31,7 +32,7 @@ export default async function set(
 ): Promise<Exchange> {
   const {
     request: { service: serviceId, data },
-    endpoint,
+    endpoint: endpointId,
   } = exchange
 
   const type = extractType(exchange, data)
@@ -42,14 +43,23 @@ export default async function set(
     return createUnknownServiceError(exchange, type, serviceId, 'SET')
   }
 
-  const endpointDebug = endpoint ? `at endpoint '${endpoint}'` : ''
+  const endpointDebug = endpointId ? `at endpoint '${endpointId}'` : ''
   debug('SET: Send to service %s %s', service.id, endpointDebug)
+
+  const nextExchange = setIdAndTypeOnExchange(exchange, id, type)
+  const endpoint = service.endpointFromExchange(nextExchange)
+  if (!endpoint) {
+    return createError(
+      exchange,
+      `No endpoint matching ${exchange.type} request to service '${serviceId}'.`,
+      'noaction'
+    )
+  }
 
   return pPipe(
     service.authorizeExchange,
-    service.assignEndpointMapper,
-    service.mapRequest,
+    (exchange: Exchange) => service.mapRequest(exchange, endpoint),
     service.sendExchange,
-    service.mapResponse
-  )(setIdAndTypeOnExchange(exchange, id, type))
+    (exchange: Exchange) => service.mapResponse(exchange, endpoint)
+  )(nextExchange)
 }

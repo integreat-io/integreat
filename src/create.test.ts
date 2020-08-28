@@ -4,9 +4,9 @@ import { jsonServiceDef } from './tests/helpers/json'
 import builtInMutations from './mutations'
 import resources from './tests/helpers/resources'
 import { InternalDispatch, DataObject, Exchange } from './types'
+import { completeExchange } from './utils/exchangeMapping'
 
 import create, { Definitions } from './create'
-import { completeExchange } from './utils/exchangeMapping'
 
 // Setup
 
@@ -103,7 +103,7 @@ test('should throw when no schemas', (t) => {
 
 test('should dispatch with resources', async (t) => {
   const action = { type: 'TEST', payload: {} }
-  const handler = sinon.stub().resolves({ status: 'ok' })
+  const handler = sinon.stub().resolves(completeExchange({ status: 'ok' }))
   const handlers = { TEST: handler }
   const identConfig = { type: 'account' }
 
@@ -118,7 +118,9 @@ test('should dispatch with resources', async (t) => {
 })
 
 test('should dispatch with builtin exchange handler', async (t) => {
-  const send = sinon.stub().resolves({ status: 'ok', data: '[]' })
+  const send = sinon
+    .stub()
+    .resolves(completeExchange({ status: 'ok', response: { data: '[]' } }))
   const resourcesWithTransAndSend = {
     ...resourcesWithTrans,
     transporters: {
@@ -142,7 +144,7 @@ test('should dispatch with builtin exchange handler', async (t) => {
 
 test('should call middleware', async (t) => {
   const action = { type: 'TEST', payload: {} }
-  const otherAction = sinon.stub().resolves({ status: 'ok' })
+  const otherAction = sinon.stub().resolves(completeExchange({ status: 'ok' }))
   const handlers = { OTHER: otherAction }
   const middlewares = [
     (next: InternalDispatch) => async (_exchange: Exchange) =>

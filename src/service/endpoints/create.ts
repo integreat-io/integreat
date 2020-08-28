@@ -40,13 +40,13 @@ function mutateExchange(
     return (exchange: Exchange) => exchange
   }
 
-  return (exchange: Exchange) =>
+  return (exchange: Exchange, isIncoming = false) =>
     exchangeFromMappingObject(
       exchange,
       mutate(
         mutator,
         mappingObjectFromExchange(exchange, isRequest),
-        isRequest ? !!exchange.incoming : !exchange.incoming,
+        isRequest ? !!isIncoming : !isIncoming,
         mapNoDefaults ||
           (isRequest
             ? exchange.request.sendNoDefaults

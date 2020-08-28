@@ -4,7 +4,7 @@ import pLimit = require('p-limit')
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { Exchange, InternalDispatch } from '../types'
-import { Service, IdentConfig } from '../service/types'
+import { IdentConfig, Service } from '../service/types'
 import { Endpoint } from '../service/endpoints/types'
 import { GetService } from '../dispatch'
 
@@ -46,31 +46,53 @@ const setIdOnExchange = (exchange: Exchange, id?: string | string[]) => ({
   request: { ...exchange.request, id },
 })
 
+const createNoEndpointError = (exchange: Exchange, serviceId: string) =>
+  createError(
+    exchange,
+    `No endpoint matching ${exchange.type} request to service '${serviceId}'.`,
+    'noaction'
+  )
+
 async function runAsIndividualExchanges(
   exchange: Exchange,
-  id: string[],
-  mapPerId: (exchange: Exchange) => Promise<Exchange>,
-  service: Service
+  service: Service,
+  mapPerId: (endpoint: Endpoint) => (exchange: Exchange) => Promise<Exchange>
 ) {
-  const exchanges = id.map((oneId) => setIdOnExchange(exchange, oneId))
+  const exchanges = (exchange.request.id as string[]).map((oneId) =>
+    setIdOnExchange(exchange, oneId)
+  )
+  const endpoint = service.endpointFromExchange(exchanges[0])
+  if (!endpoint) {
+    return createNoEndpointError(exchange, service.id)
+  }
   return combineExchanges(
     exchange,
     await Promise.all(
-      exchanges.map((exchange) =>
-        limit(() => mapPerId(service.assignEndpointMapper(exchange)))
-      )
+      exchanges.map((exchange) => limit(() => mapPerId(endpoint)(exchange)))
     )
   )
 }
 
-const mapOneOrMany = (
-  id: string | string[] | undefined,
-  mapPerId: (exchange: Exchange) => Promise<Exchange>,
-  service: Service
-) => async (exchange: Exchange): Promise<Exchange> =>
-  Array.isArray(id) && exchange.authorized && !isMembersScope(exchange.endpoint)
-    ? runAsIndividualExchanges(exchange, id, mapPerId, service)
-    : mapPerId(exchange)
+const doRunIndividualIds = (exchange: Exchange, endpoint?: Endpoint) =>
+  Array.isArray(exchange.request.id) &&
+  exchange.authorized &&
+  !isMembersScope(endpoint)
+
+async function mapOneOrMany(
+  exchange: Exchange,
+  service: Service,
+  mapPerId: (endpoint: Endpoint) => (exchange: Exchange) => Promise<Exchange>
+): Promise<Exchange> {
+  const endpoint = service.endpointFromExchange(exchange)
+  if (doRunIndividualIds(exchange, endpoint)) {
+    return runAsIndividualExchanges(exchange, service, mapPerId)
+  }
+  if (!endpoint) {
+    return createNoEndpointError(exchange, service.id)
+  }
+
+  return mapPerId(endpoint)(exchange)
+}
 
 /**
  * Get several items from a service, based on the given action object.
@@ -99,15 +121,18 @@ export default async function get(
     : `endpoint matching type '${type}' and id '${id}'`
   debug('GET: Fetch from service %s at %s', service.id, endpointDebug)
 
-  const mapPerId = pPipe(
-    service.mapRequest,
-    service.sendExchange,
-    service.mapResponse
-  )
+  const nextExchange = setIdOnExchange(exchange, id)
 
-  return pPipe(
-    service.authorizeExchange,
-    service.assignEndpointMapper,
-    mapOneOrMany(id, mapPerId, service)
-  )(setIdOnExchange(exchange, id))
+  const mapPerId = (endpoint: Endpoint) =>
+    pPipe(
+      (exchange: Exchange) => service.mapRequest(exchange, endpoint),
+      service.sendExchange,
+      (exchange: Exchange) => service.mapResponse(exchange, endpoint)
+    )
+
+  return mapOneOrMany(
+    service.authorizeExchange(nextExchange),
+    service,
+    mapPerId
+  )
 }

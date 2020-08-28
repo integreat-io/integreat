@@ -16,6 +16,7 @@ import {
 import { Service } from './service/types'
 import { Schema } from './schema'
 import createError from './utils/createError'
+import { Endpoint } from './service/endpoints/types'
 
 const debug = debugLib('great')
 
@@ -49,12 +50,34 @@ function getExchangeHandlerFromType(
   return undefined
 }
 
-const wrapDispatch = (internalDispatch: InternalDispatch): Dispatch =>
+const wrapDispatch = (
+  internalDispatch: InternalDispatch,
+  getService: GetService
+): Dispatch =>
   async function dispatch(action: Action | null) {
     if (!action) {
       return { status: 'noaction', error: 'Dispatched no action' }
     }
-    const exchange = await internalDispatch(exchangeFromAction(action))
+
+    let exchange = exchangeFromAction(action)
+    let service: Service | undefined = undefined
+    let endpoint: Endpoint | undefined = undefined
+
+    if (exchange.source) {
+      service = getService(undefined, exchange.source)
+      if (service) {
+        // TODO: Make endpoint a param instead of setting it on the exchange?
+        endpoint = service.endpointFromExchange(exchange)
+        exchange = service.mapRequest({ ...exchange, endpoint }, endpoint, true)
+      }
+    }
+
+    exchange = await internalDispatch(exchange)
+
+    if (service && endpoint) {
+      exchange = service.mapResponse({ ...exchange, endpoint }, endpoint, true)
+    }
+
     return responseFromExchange(exchange)
   }
 
@@ -101,5 +124,5 @@ export default function createDispatch({
     internalDispatch = compose(...middlewares)(internalDispatch)
   }
 
-  return wrapDispatch(internalDispatch)
+  return wrapDispatch(internalDispatch, getService)
 }

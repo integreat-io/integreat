@@ -72,7 +72,6 @@ test('should call action handler with exchange, dispatch, getService, and identC
     endpointId: undefined,
     ident,
     meta: {},
-    incoming: false,
   })
 
   await dispatch({ handlers, services, schemas, identConfig })(action)

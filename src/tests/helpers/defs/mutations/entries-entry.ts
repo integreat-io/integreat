@@ -7,7 +7,7 @@ export default [
     text: 'body',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
-    author: 'authorId',
+    'author.id': 'authorId',
     sections: 'sections[]',
   },
   { $apply: 'cast_entry' },

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon = require('sinon')
-import { transform } from 'map-transform'
 import createSchema from '../../schema'
 import builtInFunctions from '../../transformers/builtIns'
 import { Data, TypedData, DataObject, Exchange } from '../../types'
@@ -497,51 +496,6 @@ test('should not map from service when no mutation pipeline', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should map response to service (incoming)', (t) => {
-  const statusFromId = (id: unknown) => (id === '404' ? 'notfound' : 'ok')
-  const endpointDef = {
-    mutation: {
-      $flip: true,
-      'data.content': ['data', { $apply: 'entry' }],
-      status: ['data[0].id', transform(statusFromId)],
-      error: 'data[0].title',
-      'params.id': 'data[0].id',
-    },
-    options: { uri: 'http://some.api/1.0' },
-  }
-  const incomingExchange = {
-    ...exchange,
-    type: 'REQUEST',
-    request: {
-      type: 'entry',
-    },
-    response: {
-      data: [
-        {
-          $type: 'entry',
-          id: '404',
-          title: 'Not found',
-          published: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ],
-    },
-    incoming: true,
-  }
-  const expectedData = {
-    content: { items: [{ key: '404', header: 'Not found', activated: true }] },
-  }
-  const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-
-  const ret = endpoint.mutateResponse(incomingExchange)
-
-  t.is(ret.status, 'notfound')
-  t.is(ret.response.error, 'Not found')
-  t.is(ret.request.id, '404') // TODO: Is this correct behavior?
-  t.deepEqual(ret.response.data, expectedData)
-})
-
 test('should not map response from service when direction is rev', (t) => {
   const endpointDef = {
     mutation: {
@@ -684,18 +638,20 @@ test('should map request from service (incoming)', (t) => {
   }
   const incomingExchange = {
     ...exchange,
-    type: 'EXCHANGE',
+    type: 'SET',
     request: {
       type: 'entry',
       data: {
         content: { data: { items: [{ key: 'ent1', header: 'Entry 1' }] } },
       },
     },
-    incoming: true,
   }
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
+  const isIncoming = true
 
-  const ret = endpoint.mutateRequest(incomingExchange) as Exchange<TypedData[]>
+  const ret = endpoint.mutateRequest(incomingExchange, isIncoming) as Exchange<
+    TypedData[]
+  >
 
   const data = ret.request.data
   t.is(data?.length, 1)
@@ -713,7 +669,7 @@ test.skip('should map request from service with types', (t) => {
   }
   const incomingExchange = {
     ...exchange,
-    type: 'EXCHANGE',
+    type: 'SET',
     request: {
       type: 'account',
       data: {
@@ -725,11 +681,13 @@ test.skip('should map request from service with types', (t) => {
         },
       },
     },
-    incoming: true,
   }
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
+  const isIncoming = true
 
-  const ret = endpoint.mutateRequest(incomingExchange) as Exchange<TypedData[]>
+  const ret = endpoint.mutateRequest(incomingExchange, isIncoming) as Exchange<
+    TypedData[]
+  >
 
   const data = ret.request.data
   t.is(data?.length, 1)

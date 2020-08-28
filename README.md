@@ -1130,35 +1130,6 @@ The method used for the request defaults to `POST` when `data` is set, and
 
 `DEL` is a shorthand for `DELETE`.
 
-#### `REQUEST`
-
-While `GET`, `SET`, and `DELETE` are about sending requests to a service, the
-`REQUEST` action supports receiving from a service. The action will map its data
-_from_ the service, dispatch an action with this data, and map its response _to_
-the service.
-
-A typical use case is a http server that accepts incoming requests. Each request
-is turned into a `REQUEST` action, which will be normalized and mapped,
-according to a matching endpoint on a service, and dispatched. The response from
-the `REQUEST` action will come back mapped and serialized, and may be returned
-in the http response.
-
-Example `REQUEST` action:
-
-```javascript
-{
-  type: 'REQUEST',
-  payload: {
-    service: 'incoming',
-    type: 'entry',
-    data: '{"key":"ent1","title":"Entry 1"}'
-  }
-}
-```
-
-The service may be set up for outgoing requests as well. It might be a good idea
-to explicitly match the endpoints for incoming requests to `action: 'REQUEST'`.
-
 #### `SYNC`
 
 The `SYNC` action will retrieve items from one service and set them on another.

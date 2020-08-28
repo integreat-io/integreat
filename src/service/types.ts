@@ -1,6 +1,6 @@
 import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
 import { Exchange, Data, Transporter } from '../types'
-import { EndpointDef } from './endpoints/types'
+import { EndpointDef, Endpoint } from './endpoints/types'
 
 export interface MapOptions {
   pipelines?: Record<string, MapDefinition>
@@ -18,6 +18,10 @@ export interface IdentConfig {
     roles?: string
     tokens?: string
   }
+}
+
+export interface ExchangeMapperWithEndpoint {
+  (exchange: Exchange, endpoint: Endpoint, isIncoming?: boolean): Exchange
 }
 
 export interface ExchangeMapper {
@@ -65,9 +69,9 @@ export interface ServiceDef {
 export interface Service {
   id: string
   meta?: string
-  assignEndpointMapper: ExchangeMapper
+  endpointFromExchange: (exchange: Exchange) => Endpoint | undefined
   authorizeExchange: ExchangeMapper
-  mapRequest: ExchangeMapper
-  mapResponse: ExchangeMapper
+  mapRequest: ExchangeMapperWithEndpoint
+  mapResponse: ExchangeMapperWithEndpoint
   sendExchange: AsyncExchangeMapper
 }

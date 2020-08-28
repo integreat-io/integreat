@@ -29,7 +29,7 @@ export default async function deleteFn(
 ): Promise<Exchange> {
   const {
     request: { type, id, service: serviceId },
-    endpoint,
+    endpoint: endpointId,
   } = exchange
 
   const service =
@@ -47,16 +47,25 @@ export default async function deleteFn(
     )
   }
 
-  const endpointDebug = endpoint
-    ? `endpoint '${endpoint}'`
+  const endpointDebug = endpointId
+    ? `endpoint '${endpointId}'`
     : `endpoint matching ${type} and ${id}`
   debug("DELETE: Delete from service '%s' at %s.", service.id, endpointDebug)
 
+  const nextExchange = setDataOnExchange(exchange, data)
+  const endpoint = service.endpointFromExchange(nextExchange)
+  if (!endpoint) {
+    return createError(
+      nextExchange,
+      `No endpoint matching ${nextExchange.type} request to service '${serviceId}'.`,
+      'noaction'
+    )
+  }
+
   return pPipe(
     service.authorizeExchange,
-    service.assignEndpointMapper,
-    service.mapRequest,
+    (exchange: Exchange) => service.mapRequest(exchange, endpoint),
     service.sendExchange,
-    service.mapResponse
-  )(setDataOnExchange(exchange, data))
+    (exchange: Exchange) => service.mapResponse(exchange, endpoint)
+  )(nextExchange)
 }

@@ -28,8 +28,8 @@ export interface Endpoint {
   id?: string
   match?: MatchObject
   options: EndpointOptions
-  mutateRequest: (exchange: Exchange) => Exchange
-  mutateResponse: (exchange: Exchange) => Exchange
+  mutateRequest: (exchange: Exchange, isIncoming?: boolean) => Exchange
+  mutateResponse: (exchange: Exchange, isIncoming?: boolean) => Exchange
   isMatch: (exchange: Exchange) => boolean
   allowRawRequest?: boolean
   allowRawResponse?: boolean

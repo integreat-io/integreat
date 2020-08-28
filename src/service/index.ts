@@ -8,6 +8,7 @@ import Auth from './Auth'
 import { lookupById } from '../utils/indexUtils'
 import * as authorizeData from './authorize/data'
 import authorizeExchange from './authorize/exchange'
+import { Endpoint } from './endpoints/types'
 
 interface Resources {
   transporters?: Record<string, Transporter>
@@ -69,21 +70,10 @@ export default ({
     meta,
 
     /**
-     * Find the endpoint mapper that best matches the given exchange, and assign
-     * it to the exchange.
+     * Return the endpoint mapper that best matches the given exchange.
      */
-    assignEndpointMapper(exchange: Exchange): Exchange {
-      const endpoint = getEndpointMapper(exchange)
-
-      if (endpoint) {
-        return { ...exchange, endpoint }
-      } else {
-        return createError(
-          exchange,
-          `No endpoint matching ${exchange.type} request to service '${serviceId}'.`,
-          'noaction'
-        )
-      }
+    endpointFromExchange(exchange: Exchange): Endpoint | undefined {
+      return getEndpointMapper(exchange)
     },
 
     /**
@@ -97,20 +87,22 @@ export default ({
      * this is an outgoing requst, and will do it in reverse for an incoming
      * request.
      */
-    mapRequest(exchange: Exchange): Exchange {
-      // Require endpoint
-      const { endpoint } = exchange
-      if (!endpoint) {
-        return exchange.status && exchange.status !== 'ok'
-          ? exchange
-          : createError(exchange, 'No endpoint provided')
-      }
-
+    mapRequest(exchange, endpoint, isIncoming = false): Exchange {
       // Authorize and map in right order
       const { mutateRequest, allowRawRequest } = endpoint
-      return exchange.incoming
-        ? authorizeDataToService(mutateRequest(exchange), allowRawRequest)
-        : mutateRequest(authorizeDataToService(exchange, allowRawRequest))
+      const nextExchange = {
+        ...exchange,
+        endpoint: { options: { ...endpoint.options } }, // TODO: Remove one level
+      }
+      return isIncoming
+        ? authorizeDataToService(
+            mutateRequest(nextExchange, isIncoming),
+            allowRawRequest
+          )
+        : mutateRequest(
+            authorizeDataToService(nextExchange, allowRawRequest),
+            isIncoming
+          )
     },
 
     /**
@@ -118,20 +110,18 @@ export default ({
      * this is the response from an outgoing request. Will do it in the reverse
      * order for a response to an incoming request.
      */
-    mapResponse(exchange: Exchange): Exchange {
-      // Require endpoint
-      const { endpoint } = exchange
-      if (!endpoint) {
-        return exchange.status
-          ? exchange
-          : createError(exchange, 'No endpoint provided')
-      }
-
+    mapResponse(exchange, endpoint, isIncoming = false): Exchange {
       // Authorize and map in right order
       const { mutateResponse, allowRawResponse } = endpoint
-      return exchange.incoming
-        ? mutateResponse(authorizeDataFromService(exchange, allowRawResponse))
-        : authorizeDataFromService(mutateResponse(exchange), allowRawResponse)
+      return isIncoming
+        ? mutateResponse(
+            authorizeDataFromService(exchange, allowRawResponse),
+            isIncoming
+          )
+        : authorizeDataFromService(
+            mutateResponse(exchange, isIncoming),
+            allowRawResponse
+          )
     },
 
     /**
@@ -182,7 +172,7 @@ export default ({
   }
 }
 
-// const knownActions = ['GET', 'SET', 'DELETE', 'REQUEST']
+// const knownActions = ['GET', 'SET', 'DELETE']
 //
 // export const respondToUnknownAction = _options => args =>
 //   args.request && knownActions.includes(args.request.action)

@@ -45,7 +45,8 @@ export const completeExchange = <ReqData = Data, RespData = Data>({
   ident,
   meta = {},
   auth,
-  incoming = false,
+  source,
+  target,
   authorized = false,
 }: Partial<Exchange<ReqData, RespData>>): Exchange<ReqData, RespData> => ({
   type: type as string,
@@ -58,7 +59,8 @@ export const completeExchange = <ReqData = Data, RespData = Data>({
   ident,
   meta,
   auth,
-  incoming,
+  source,
+  target,
   authorized,
 })
 
@@ -75,12 +77,13 @@ export function exchangeFromAction(action: Action): Exchange {
       params,
       data,
       returnNoDefaults,
+      source,
+      target,
       ...rest
     } = {},
     meta: actionMeta,
   } = action
   const { ident, ...meta } = actionMeta || {}
-  const incoming = actionType === 'REQUEST'
 
   return completeExchange({
     type: actionType,
@@ -99,7 +102,8 @@ export function exchangeFromAction(action: Action): Exchange {
     ident,
     endpointId: endpoint,
     meta: meta as Record<string, Data>,
-    incoming,
+    source,
+    target,
   })
 }
 

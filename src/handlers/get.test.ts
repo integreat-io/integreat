@@ -110,9 +110,7 @@ test('should get all items from service', async (t) => {
     request: {
       type: 'entry',
       service: 'entries',
-      params: {
-        source: 'thenews',
-      },
+      params: { source: 'thenews' },
     },
     ident,
   })
@@ -135,7 +133,7 @@ test('should get all items from service', async (t) => {
 
   const ret = await get(exchange, dispatch, getService)
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.response.error)
   t.deepEqual(ret.response, expectedResponse)
   t.true(scope.isDone())
 })
@@ -164,7 +162,7 @@ test('should get item by id from service', async (t) => {
   t.is((ret.response.data as DataObject).id, 'ent1')
 })
 
-test('should get items by id array from service from member_s_ endpoint', async (t) => {
+test.only('should get items by id array from service from member_s_ endpoint', async (t) => {
   nock('http://api12.test')
     .get('/entries')
     .query({ id: 'ent1,ent2' })
@@ -182,6 +180,7 @@ test('should get items by id array from service from member_s_ endpoint', async 
   })
   const svc = setupService('http://api12.test/entries?id={{params.id}}', {
     scope: 'members',
+    id: 'membersEndpoint',
   })
   const getService = () => svc
 
@@ -484,3 +483,5 @@ test('should get only authorized items', async (t) => {
   const data = ret.response.data
   t.deepEqual(data, expectedData)
 })
+
+test.todo('should return noaction when no endpoint matches')

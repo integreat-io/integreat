@@ -133,37 +133,5 @@ export default {
       },
       options: { uri: '/entries?author={{params.author}}' },
     },
-    {
-      match: {
-        action: 'REQUEST',
-        filters: {
-          // 'request.data': { type: 'object', required: ['key'] },
-          'request.params.requestMethod': { const: 'GET' },
-        },
-      },
-      mutation: [
-        {
-          $direction: 'fwd',
-          params: { id: 'data.key' },
-          data: { $transform: 'value', value: undefined }, // TODO: Find a way to avoid this?
-        },
-        {
-          $direction: 'rev',
-          data: ['data', { $apply: 'entries-entry' }],
-        },
-      ],
-      options: { actionType: 'GET', actionPayload: { type: 'entry' } },
-    },
-    {
-      match: {
-        action: 'REQUEST',
-        filters: {
-          'request.type': { const: 'entry' },
-          'request.params.requestMethod': { const: 'POST' },
-        },
-      },
-      mutation: { data: ['data', { $apply: 'entries-entry' }] },
-      options: { actionType: 'SET', actionPayload: { type: 'entry' } },
-    },
   ],
 }

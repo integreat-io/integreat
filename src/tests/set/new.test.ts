@@ -55,7 +55,7 @@ test('should set new entry (getting role from identity)', async (t) => {
     body: 'The text of entry 1',
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
-    authorId: { id: 'johnf', $ref: 'user' },
+    authorId: 'johnf',
     sections: [
       { id: 'news', $ref: 'section' },
       { id: 'sports', $ref: 'section' },

@@ -4,7 +4,6 @@ import GET_IDENT from './getIdent'
 import SET from './set'
 import SET_META from './setMeta'
 import DELETE from './delete'
-import REQUEST from './request'
 import SYNC from './sync'
 import EXPIRE from './expire'
 import { ExchangeHandler } from '../dispatch'
@@ -17,7 +16,6 @@ const handlers: Record<string, ExchangeHandler> = {
   SET_META,
   DELETE,
   DEL: DELETE,
-  REQUEST,
   SYNC,
   EXPIRE,
 }
