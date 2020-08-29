@@ -203,7 +203,7 @@ test('should return reply from service when not ok', async (t) => {
   t.is(ret.status, 'notfound', ret.response.error)
 })
 
-test('should return error when when no meta type is set', async (t) => {
+test('should return noaction when when no meta type is set', async (t) => {
   const scope = nock('http://api6.test')
     .get('/database/meta:store')
     .reply(200, {})
@@ -228,7 +228,8 @@ test('should return error when when no meta type is set', async (t) => {
 
   const ret = await getMeta(exchange, dispatch, getService)
 
-  t.is(ret.status, 'error')
+  t.is(ret.status, 'noaction')
+  t.is(typeof ret.response.error, 'string')
   t.false(scope.isDone())
 })
 
@@ -266,8 +267,7 @@ test('should get metadata from other service', async (t) => {
   t.deepEqual(ret.response.data, expected)
 })
 
-// Obsolete?
-test.skip('should return error when meta is set to an unknown type', async (t) => {
+test('should return noaction when meta is set to an unknown type', async (t) => {
   const endpoints = [] as EndpointDef[]
   const great = Integreat.create(defs(endpoints, 'unknown'), resources)
   const getService = (_type?: string | string[], service?: string) =>
@@ -283,7 +283,8 @@ test.skip('should return error when meta is set to an unknown type', async (t) =
 
   const ret = await getMeta(exchange, dispatch, getService)
 
-  t.is(ret.status, 'error')
+  t.is(ret.status, 'noaction')
+  t.is(typeof ret.response.error, 'string')
 })
 
 test('should return error for unknown service', async (t) => {

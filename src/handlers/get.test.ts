@@ -485,4 +485,23 @@ test('should get only authorized items', async (t) => {
   t.deepEqual(data, expectedData)
 })
 
-test.todo('should return noaction when no endpoint matches')
+test('should return noaction when no endpoint matches', async (t) => {
+  const exchange = completeExchange({
+    type: 'GET',
+    request: {
+      type: 'entry',
+      params: { source: 'thenews' },
+    },
+    endpointId: 'unknown',
+    target: 'entries',
+    ident: { id: 'johnf' },
+  })
+  const svc = setupService('http://api1.test/database')
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? svc : undefined
+
+  const ret = await get(exchange, dispatch, getService)
+
+  t.is(ret.status, 'noaction', ret.response.error)
+  t.is(typeof ret.response.error, 'string')
+})

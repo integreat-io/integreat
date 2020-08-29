@@ -181,50 +181,6 @@ test('should infer service id from type', async (t) => {
   t.true(scope.isDone())
 })
 
-// The test does not really test anything. Set up two conflicting endpoints
-// and make sure it picks the second from id
-test.skip('should delete with other endpoint and uri params', async (t) => {
-  const scope = nock('http://api3.test')
-    .post('/entries/bulk_delete')
-    .reply(200, [
-      { ok: true, id: 'ent1', rev: '2-000001' },
-      { ok: true, id: 'ent2', rev: '2-000001' },
-    ])
-  const src = setupService({
-    id: 'entries',
-    ...jsonServiceDef,
-    endpoints: [
-      {
-        id: 'other',
-        mutation: { data: ['data', { $apply: 'entry' }] },
-        options: {
-          uri: 'http://api3.test/{{params.typefolder}}/bulk_delete',
-          method: 'POST',
-        },
-      },
-    ],
-  })
-  const getService = () => src
-  const exchange = completeExchange({
-    type: 'DELETE',
-    request: {
-      data: [
-        { id: 'ent1', $type: 'entry' },
-        { id: 'ent2', $type: 'entry' },
-      ],
-      type: 'entry',
-      params: { typefolder: 'entries' },
-    },
-    endpointId: 'other',
-  })
-
-  const ret = await deleteFn(exchange, dispatch, getService)
-
-  t.truthy(ret)
-  t.is(ret.status, 'ok', ret.response.error)
-  t.true(scope.isDone())
-})
-
 test('should return error from response', async (t) => {
   const scope = nock('http://api5.test')
     .post('/database/bulk_delete')

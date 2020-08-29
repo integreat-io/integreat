@@ -142,8 +142,7 @@ test('should set metadata on other service', async (t) => {
   t.true(scope.isDone())
 })
 
-// Obsolete?
-test.skip('should return status noaction when meta is set to an unknown schema', async (t) => {
+test('should return status noaction when meta is set to an unknown schema', async (t) => {
   const endpoints = [] as EndpointDef[]
   const great = Integreat.create(defs(endpoints, 'unknown'), resources)
   const getService = (_type?: string | string[], service?: string) =>
@@ -160,6 +159,7 @@ test.skip('should return status noaction when meta is set to an unknown schema',
   const ret = await setMeta(exchange, dispatch, getService)
 
   t.is(ret.status, 'noaction')
+  t.is(typeof ret.response.error, 'string')
 })
 
 test('should refuse setting metadata on service when not authorized', async (t) => {

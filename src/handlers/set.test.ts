@@ -446,4 +446,25 @@ test('should allow null as request data', async (t) => {
   t.true(scope.isDone())
 })
 
-test.todo('should return noaction when no endpoint matches')
+test('should return noaction when no endpoint matches', async (t) => {
+  const exchange = completeExchange({
+    type: 'SET',
+    request: {
+      type: 'entry',
+      data: [
+        { $type: 'entry', id: 'ent1', title: 'Entry 1' },
+        { $type: 'entry', id: 'ent2', title: 'Entry 2' },
+      ],
+    },
+    endpointId: 'unknown',
+    target: 'entries',
+  })
+  const src = setupService('http://api1.test/database/_bulk_docs')
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+
+  const ret = await set(exchange, dispatch, getService)
+
+  t.is(ret.status, 'noaction', ret.response.error)
+  t.is(typeof ret.response.error, 'string')
+})

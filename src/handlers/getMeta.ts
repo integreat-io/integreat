@@ -1,4 +1,3 @@
-import util = require('util')
 import debugLib = require('debug')
 import createError from '../utils/createError'
 import { Exchange, DataObject, InternalDispatch, Data } from '../types'
@@ -58,9 +57,8 @@ export default async function getMeta(
   if (!metaService) {
     return createError(
       exchange,
-      `Service '${
-        service.id
-      }' doesn't support metadata (setting was '${util.inspect(service.meta)}')`
+      `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
+      'noaction'
     )
   }
 

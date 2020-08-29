@@ -660,7 +660,7 @@ test('should map request from service (incoming)', (t) => {
   t.is(data![0].title, 'Entry 1')
 })
 
-test.skip('should map request from service with types', (t) => {
+test.failing('should map request from service with types', (t) => {
   const endpointDef = {
     mutation: {
       data: ['data.content.data', { $apply: 'entry' }],

@@ -39,7 +39,7 @@ export default async function setMeta(
     )
     return createError(
       exchange,
-      `Service '${serviceId}' doesn't support metdata`,
+      `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'noaction'
     )
   }
