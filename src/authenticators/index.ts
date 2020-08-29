@@ -1,6 +1,7 @@
-import gatherResources from '../utils/gatherResources'
-import { Authenticator } from '../service/types'
+import options from './options'
+import token from './token'
 
-const authenticators = ['options', 'token', 'oauth2']
-
-export default gatherResources<Authenticator>(authenticators, __dirname)
+export default {
+  options,
+  token,
+}
