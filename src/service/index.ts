@@ -6,6 +6,7 @@ import Connection from './Connection'
 import { Schema } from '../schema'
 import Auth from './Auth'
 import { lookupById } from '../utils/indexUtils'
+import { isObject } from '../utils/is'
 import * as authorizeData from './authorize/data'
 import authorizeExchange from './authorize/exchange'
 
@@ -15,6 +16,9 @@ interface Resources {
   schemas: Record<string, Schema>
   mapOptions?: MapOptions
 }
+
+const isTransporter = (transporter: unknown): transporter is Transporter =>
+  isObject(transporter)
 
 /**
  * Create a service with the given id and transporter.
@@ -38,11 +42,6 @@ export default ({
   }
 
   const transporter = lookupById(transporterId, transporters) || transporterId
-  if (typeof transporter !== 'object' || transporter === null) {
-    throw new TypeError(
-      `Can't create service '${serviceId}' without a transporter.`
-    )
-  }
 
   mapOptions = { mutateNull: false, ...mapOptions }
 
@@ -58,10 +57,12 @@ export default ({
     options,
     mapOptions,
     mutation,
-    transporter.prepareOptions
+    isTransporter(transporter) ? transporter.prepareOptions : undefined
   )
 
-  const connection = new Connection(transporter, options)
+  const connection = isTransporter(transporter)
+    ? new Connection(transporter, options)
+    : null
 
   // Create the service instance
   return {
@@ -130,12 +131,15 @@ export default ({
         return exchange
       }
 
+      if (!isTransporter(transporter) || !connection) {
+        return createError(
+          exchange,
+          `Service '${serviceId}' has no transporter`
+        )
+      }
+
       if (!exchange.authorized) {
-        return {
-          ...exchange,
-          status: 'error',
-          response: { error: 'Not authorized' },
-        }
+        return createError(exchange, 'Not authorized')
       }
 
       // When an authenticator is set: Authenticate and apply result to exchange

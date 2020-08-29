@@ -150,16 +150,6 @@ test('should throw when no id', (t) => {
   })
 })
 
-test('should throw when no transporter', (t) => {
-  t.throws(() => {
-    setupService({ mapOptions, schemas })({
-      id: 'entries',
-      transporter: 'unknown',
-      endpoints: [],
-    })
-  })
-})
-
 // Tests -- endpointFromExchange
 
 test('endpointFromExchange should return an endpoint for the exchange', (t) => {
@@ -345,6 +335,49 @@ test('sendExchange should retrieve data from service', async (t) => {
     auth: {
       Authorization: 'Bearer t0k3n',
     },
+  }
+
+  const ret = await service.sendExchange(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
+test('sendExchange should return error when no transport', async (t) => {
+  const data = {
+    content: {
+      data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+    },
+  }
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        send: async (exchange: Exchange) =>
+          responseToExchange(exchange, { status: 'ok', data }),
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    auth: 'granting',
+  })
+  const exchange = completeExchange({
+    type: 'GET',
+    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    ident: { id: 'johnf' },
+    authorized: true,
+  })
+  const expected = {
+    ...exchange,
+    status: 'error',
+    response: { error: "Service 'entries' has no transporter" },
+    auth: undefined,
   }
 
   const ret = await service.sendExchange(exchange)

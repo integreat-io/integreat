@@ -1,6 +1,5 @@
 import test from 'ava'
 import sinon = require('sinon')
-import httpTransporter from 'integreat-transporter-http'
 import { completeExchange } from './utils/exchangeMapping'
 import { Middleware, Exchange, InternalDispatch } from './types'
 import createService from './service'
@@ -183,7 +182,6 @@ test('should return error when no endoint on source service matches', async (t) 
   const services = {
     api: createService({ schemas: {} })({
       id: 'api',
-      transporter: httpTransporter,
       endpoints: [],
     }),
   }

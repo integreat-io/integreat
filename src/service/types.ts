@@ -57,7 +57,7 @@ export interface AuthDef {
 
 export interface ServiceDef {
   id: string
-  transporter: string | Transporter
+  transporter?: string | Transporter
   auth?: boolean | AuthDef | string | null
   meta?: string
   options?: { [key: string]: unknown }
