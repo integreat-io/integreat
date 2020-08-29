@@ -44,6 +44,11 @@ const matchParams = (
 const matchFilters = (filters: FilterFn[], exchange: Exchange) =>
   filters.every((filter) => filter(exchange))
 
+const matchIncoming = (
+  { match: { incoming: incomingEndpoint } = {} }: EndpointDef,
+  isIncoming: boolean
+) => incomingEndpoint === undefined || incomingEndpoint === isIncoming
+
 /**
  * Return the first matching endpoint from an array of endpoints that has
  * already been sortert with higher specificity first. Type should match before
@@ -52,7 +57,7 @@ const matchFilters = (filters: FilterFn[], exchange: Exchange) =>
  */
 export default function isMatch(
   endpoint: EndpointDef
-): (exchange: Exchange) => boolean {
+): (exchange: Exchange, isIncoming?: boolean) => boolean {
   const match = endpoint.match || {}
   const filters = match.filters
     ? (Object.entries(match.filters).map(([path, filter]) =>
@@ -60,11 +65,12 @@ export default function isMatch(
       ) as FilterFn[])
     : []
 
-  return (exchange) =>
+  return (exchange, isIncoming = false) =>
     matchId(endpoint, exchange) &&
     matchType(endpoint, exchange) &&
     matchScope(endpoint, exchange) &&
     matchAction(endpoint, exchange) &&
     matchParams(endpoint, exchange) &&
+    matchIncoming(endpoint, isIncoming) &&
     matchFilters(filters, exchange)
 }

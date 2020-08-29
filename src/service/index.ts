@@ -1,6 +1,6 @@
 import createEndpointMappers from './endpoints'
 import createError from '../utils/createError'
-import { Exchange, Transporter } from '../types'
+import { Transporter } from '../types'
 import { Service, ServiceDef, MapOptions } from './types'
 import Connection from './Connection'
 import { Schema } from '../schema'
@@ -8,7 +8,6 @@ import Auth from './Auth'
 import { lookupById } from '../utils/indexUtils'
 import * as authorizeData from './authorize/data'
 import authorizeExchange from './authorize/exchange'
-import { Endpoint } from './endpoints/types'
 
 interface Resources {
   transporters?: Record<string, Transporter>
@@ -72,9 +71,7 @@ export default ({
     /**
      * Return the endpoint mapper that best matches the given exchange.
      */
-    endpointFromExchange(exchange: Exchange): Endpoint | undefined {
-      return getEndpointMapper(exchange)
-    },
+    endpointFromExchange: getEndpointMapper,
 
     /**
      * Authorize the exchange. Sets the authorized flag if okay, otherwise sets
@@ -87,7 +84,7 @@ export default ({
      * this is an outgoing requst, and will do it in reverse for an incoming
      * request.
      */
-    mapRequest(exchange, endpoint, isIncoming = false): Exchange {
+    mapRequest(exchange, endpoint, isIncoming = false) {
       const { mutateRequest, allowRawRequest } = endpoint
 
       // Set endpoint options on exchange
@@ -110,7 +107,7 @@ export default ({
      * this is the response from an outgoing request. Will do it in the reverse
      * order for a response to an incoming request.
      */
-    mapResponse(exchange, endpoint, isIncoming = false): Exchange {
+    mapResponse(exchange, endpoint, isIncoming = false) {
       // Authorize and map in right order
       const { mutateResponse, allowRawResponse } = endpoint
       return isIncoming
@@ -128,7 +125,7 @@ export default ({
      * The given exchange is sent to the service via the relevant transporter,
      * and the exchange is updated with the response from the service.
      */
-    async sendExchange(exchange: Exchange): Promise<Exchange> {
+    async sendExchange(exchange) {
       if (exchange.status) {
         return exchange
       }

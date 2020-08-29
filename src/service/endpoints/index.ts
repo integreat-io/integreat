@@ -11,7 +11,7 @@ export default function createEndpointMappers(
   mapOptions: MapOptions,
   serviceMutation?: MapDefinition,
   prepareOptions?: PrepareOptions
-): (exchange: Exchange) => Endpoint | undefined {
+): (exchange: Exchange, isIncoming?: boolean) => Endpoint | undefined {
   const endpoints = endpointDefs
     .sort(compareEndpoints)
     .map(
@@ -23,5 +23,6 @@ export default function createEndpointMappers(
       )
     )
 
-  return (exchange) => endpoints.find((endpoint) => endpoint.isMatch(exchange))
+  return (exchange, isIncoming) =>
+    endpoints.find((endpoint) => endpoint.isMatch(exchange, isIncoming))
 }

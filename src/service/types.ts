@@ -65,11 +65,13 @@ export interface ServiceDef {
   endpoints: EndpointDef[]
 }
 
-// TODO: Rethink
 export interface Service {
   id: string
   meta?: string
-  endpointFromExchange: (exchange: Exchange) => Endpoint | undefined
+  endpointFromExchange: (
+    exchange: Exchange,
+    isIncoming?: boolean
+  ) => Endpoint | undefined
   authorizeExchange: ExchangeMapper
   mapRequest: ExchangeMapperWithEndpoint
   mapResponse: ExchangeMapperWithEndpoint

@@ -11,6 +11,7 @@ export interface MatchObject {
   scope?: string | string[]
   params?: Record<string, boolean | undefined>
   filters?: Record<string, JsonSchema | undefined>
+  incoming?: boolean
 }
 
 export interface EndpointDef {
@@ -30,7 +31,7 @@ export interface Endpoint {
   options: EndpointOptions
   mutateRequest: (exchange: Exchange, isIncoming?: boolean) => Exchange
   mutateResponse: (exchange: Exchange, isIncoming?: boolean) => Exchange
-  isMatch: (exchange: Exchange) => boolean
+  isMatch: (exchange: Exchange, isIncoming?: boolean) => boolean
   allowRawRequest?: boolean
   allowRawResponse?: boolean
 }

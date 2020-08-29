@@ -5,10 +5,21 @@ export default {
   mutation: [{ $apply: 'exchange:json' }],
   endpoints: [
     {
-      // Endpoint for incoming requests
       match: { action: 'SET' },
       mutation: {
         data: ['data.article', { $apply: 'api-entry' }],
+      },
+    },
+    {
+      match: { action: 'GET' },
+      mutation: {
+        data: ['data.article', { $apply: 'api-entry' }],
+      },
+    },
+    {
+      match: { action: 'GET', incoming: true },
+      mutation: {
+        data: ['data', { $apply: 'api-entry' }],
       },
     },
   ],

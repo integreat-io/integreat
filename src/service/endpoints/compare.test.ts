@@ -62,6 +62,9 @@ const endpointEntryWithFilter = {
 const endpointEntryWithTwoFilters = {
   match: { type: 'entry', filters: { ...draftFilter, ...titleFilter } },
 }
+const endpointGetWithIncoming = {
+  match: { action: 'GET', incoming: true },
+}
 const endpointId = {
   id: 'endpoint1',
   match: { params: { includeDocs: false } },
@@ -287,4 +290,30 @@ test('should sort with filters before without', (t) => {
   t.true(paramWithVsWithout < 0)
   t.true(scopeWithVsWithout < 0)
   t.true(actionWithVsWithout < 0)
+})
+
+test('should sort incoming first', (t) => {
+  const incomingVsAction = compareEndpoints(
+    endpointGetWithIncoming,
+    endpointGet
+  )
+  const incomingVsActions = compareEndpoints(
+    endpointGetWithIncoming,
+    endpointPostAndDelete
+  )
+  const incomingVsScope = compareEndpoints(
+    endpointGetWithIncoming,
+    endpointMember
+  )
+  const incomingVsType = compareEndpoints(
+    endpointGetWithIncoming,
+    endpointEntry
+  )
+  const incomingVsId = compareEndpoints(endpointGetWithIncoming, endpointId)
+
+  t.true(incomingVsAction < 0)
+  t.true(incomingVsActions < 0)
+  t.true(incomingVsScope < 0)
+  t.true(incomingVsType < 0)
+  t.true(incomingVsId < 0)
 })

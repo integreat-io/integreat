@@ -1,5 +1,5 @@
 import { EndpointDef, MatchObject } from './types'
-const has = (prop: unknown) => Number(!!prop)
+const has = (prop: unknown) => Number(prop !== undefined)
 const hasArray = (prop: unknown) => Number(Array.isArray(prop) && prop.length)
 const hasParams = ({ params }: MatchObject, required: boolean) =>
   Number(
@@ -15,6 +15,7 @@ export default (a: EndpointDef, b: EndpointDef): number => {
   const matchB = b.match || {}
 
   return (
+    has(matchB.incoming) - has(matchA.incoming) ||
     has(matchB.type) - has(matchA.type) ||
     hasArray(matchA.type) - hasArray(matchB.type) ||
     hasParams(matchB, true) - hasParams(matchA, true) ||

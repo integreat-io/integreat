@@ -56,6 +56,14 @@ const endpointSetWithMetaFilter = {
   match: { action: 'SET', filters: filterMetaRootIdent },
 }
 
+const endpointSetWithIncoming = {
+  match: { action: 'SET', incoming: true },
+}
+
+const endpointSetWithNonIncoming = {
+  match: { action: 'SET', incoming: false },
+}
+
 const exchangeDefaults = {
   status: null,
   request: {},
@@ -448,4 +456,64 @@ test('should mismatch with meta filter', (t) => {
   }
 
   t.false(isMatch(endpoints)(exchange))
+})
+
+test('incoming should match incoming endpoint', (t) => {
+  const endpoints = endpointSetWithIncoming
+  const exchange = {
+    ...exchangeDefaults,
+    type: 'SET',
+    request: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
+    ident: { id: 'johnf' },
+  }
+
+  t.true(isMatch(endpoints)(exchange, true))
+})
+
+test('non-incoming should not match incoming endpoint', (t) => {
+  const endpoints = endpointSetWithIncoming
+  const exchange = {
+    ...exchangeDefaults,
+    type: 'SET',
+    request: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
+    ident: { id: 'johnf' },
+  }
+
+  t.false(isMatch(endpoints)(exchange, false))
+})
+
+test('non-incoming should match non-incoming endpoint', (t) => {
+  const endpoints = endpointSetWithNonIncoming
+  const exchange = {
+    ...exchangeDefaults,
+    type: 'SET',
+    request: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
+    ident: { id: 'johnf' },
+  }
+
+  t.true(isMatch(endpoints)(exchange, false))
+})
+
+test('incoming should not match non-incoming endpoint', (t) => {
+  const endpoints = endpointSetWithNonIncoming
+  const exchange = {
+    ...exchangeDefaults,
+    type: 'SET',
+    request: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
+    ident: { id: 'johnf' },
+  }
+
+  t.false(isMatch(endpoints)(exchange, true))
+})
+
+test('incoming should match non-incoming endpoint', (t) => {
+  const endpoints = endpointGet
+  const exchange = {
+    ...exchangeDefaults,
+    type: 'GET',
+    request: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
+    ident: { id: 'johnf' },
+  }
+
+  t.true(isMatch(endpoints)(exchange, true))
 })

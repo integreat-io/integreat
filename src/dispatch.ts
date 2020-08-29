@@ -50,18 +50,33 @@ function getExchangeHandlerFromType(
   return undefined
 }
 
-function mapIncomingRequest(exchange: Exchange, getService: GetService) {
+const setErrorOnExchange = (exchange: Exchange, error: string) => ({
+  exchange: createError(exchange, error, 'badrequest'),
+})
+
+function mapIncomingRequest(
+  exchange: Exchange,
+  getService: GetService
+): { exchange: Exchange; service?: Service; endpoint?: Endpoint } {
   if (exchange.source) {
     const service = getService(undefined, exchange.source)
-    if (service) {
-      const endpoint = service.endpointFromExchange(exchange)
-      if (endpoint) {
-        return {
-          exchange: service.mapRequest(exchange, endpoint, true),
-          service,
-          endpoint,
-        }
-      }
+    if (!service) {
+      return setErrorOnExchange(
+        exchange,
+        `Source service '${exchange.source}' not found`
+      )
+    }
+    const endpoint = service.endpointFromExchange(exchange, true)
+    if (!endpoint) {
+      return setErrorOnExchange(
+        exchange,
+        `No matching endpoint for incoming mapping on service '${exchange.source}'`
+      )
+    }
+    return {
+      exchange: service.mapRequest(exchange, endpoint, true),
+      service,
+      endpoint,
     }
   }
   return { exchange }
@@ -88,6 +103,10 @@ const wrapDispatch = (
       exchangeFromAction(action),
       getService
     )
+    // Return any error from mapIncomingRequest()
+    if (exchange.status) {
+      return responseFromExchange(exchange)
+    }
 
     // Dispatch
     const responseExchange = await internalDispatch(exchange)
@@ -98,8 +117,6 @@ const wrapDispatch = (
     )
   }
 
-// const internalDispatch = (getService: GetService, handlers: Record<string, ExchangeHandler>, identConfig?: IdentConfig) =>
-
 export interface Resources {
   handlers: Record<string, ExchangeHandler>
   schemas: Record<string, Schema>
@@ -109,10 +126,11 @@ export interface Resources {
 }
 
 /**
- * Setup and return dispatch function. The dispatch function will call the
- * relevant action handler.
- * @param resources - Object with actions, schemas, services, and middlewares
- * @returns Dispatch function, accepting an action as only argument
+ * Setup and return dispatch function. The dispatch function map the action to
+ *  an exchange and will pass it on the any middleware before sending it to the
+ * relevant action handler. When an action has a specified `source` service, any
+ * action data will be mapped as incoming from that service before the
+ * middleware, and will be mapped back to that service in the response.
  */
 export default function createDispatch({
   handlers = {},

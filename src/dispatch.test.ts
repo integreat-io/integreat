@@ -1,7 +1,9 @@
 import test from 'ava'
 import sinon = require('sinon')
+import httpTransporter from 'integreat-transporter-http'
 import { completeExchange } from './utils/exchangeMapping'
 import { Middleware, Exchange, InternalDispatch } from './types'
+import createService from './service'
 
 import dispatch from './dispatch'
 
@@ -151,5 +153,59 @@ test('should dispatch to middleware from action handlers', async (t) => {
   t.is(ret.status, '<<fromAction>>')
 })
 
-test.todo('should return error when source service is not found')
-test.todo('should return error when no endpoint is found for incoming mapping')
+// Note: Happy case for incoming mapping is tested in /tests/incoming
+
+test('should return error when source service is not found', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      source: 'unknown',
+      target: 'entries',
+    },
+  }
+  const handlers = {
+    GET: async () =>
+      completeExchange({
+        status: 'ok',
+        response: { data: [{ id: 'ent1', type: 'entry' }] },
+      }),
+  }
+
+  const ret = await dispatch({ handlers, services, schemas })(action)
+
+  t.is(ret.status, 'badrequest', ret.error)
+  t.is(ret.error, "Source service 'unknown' not found")
+})
+
+test('should return error when no endoint on source service matches', async (t) => {
+  const services = {
+    api: createService({ schemas: {} })({
+      id: 'api',
+      transporter: httpTransporter,
+      endpoints: [],
+    }),
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      source: 'api',
+      target: 'entries',
+    },
+  }
+  const handlers = {
+    GET: async () =>
+      completeExchange({
+        status: 'ok',
+        response: { data: [{ id: 'ent1', type: 'entry' }] },
+      }),
+  }
+
+  const ret = await dispatch({ handlers, services, schemas })(action)
+
+  t.is(ret.status, 'badrequest', ret.error)
+  t.is(ret.error, "No matching endpoint for incoming mapping on service 'api'")
+})
