@@ -5,6 +5,7 @@ import not from './not'
 import removeTypePrefixOnId from './removeTypePrefixOnId'
 import trim from './trim'
 import uppercase from './uppercase'
+import uriPart from './uriPart'
 
 export default {
   hash,
@@ -14,4 +15,5 @@ export default {
   removeTypePrefixOnId,
   trim,
   uppercase,
+  uriPart,
 }
