@@ -65,9 +65,9 @@ export interface ActionMeta extends Record<string, unknown> {
   schedule?: ScheduleObject | string | null
 }
 
-export interface Action {
+export interface Action<P extends Payload = Payload> {
   type: string
-  payload: Payload
+  payload: P
   meta?: ActionMeta
 }
 
@@ -95,6 +95,8 @@ export interface ExchangeRequest<T = Data> {
   method?: string
   headers?: Record<string, string>
   page?: number
+  pageAfter?: string
+  pageBefore?: string
   pageSize?: number
   sendNoDefaults?: boolean
 }
@@ -148,7 +150,7 @@ export interface Connection extends Record<string, unknown> {
 }
 
 export interface Transporter {
-  authentication: string // ?
+  authentication: string | null
   prepareOptions: (options: Record<string, unknown>) => Record<string, unknown>
   connect: (
     options: Record<string, unknown>,

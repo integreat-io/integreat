@@ -58,6 +58,7 @@ export default class Auth {
       const authenticator = this.#authenticator
       const fn =
         isObject(authenticator?.authentication) &&
+        typeof transporter.authentication === 'string' &&
         authenticator.authentication[transporter.authentication]
       return { ...exchange, auth: typeof fn === 'function' ? fn(auth) : null }
     }
