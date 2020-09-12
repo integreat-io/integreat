@@ -20,6 +20,6 @@ export { default as mutations } from './mutations'
 export { default as transformers } from './transformers'
 
 export default {
-  version: '0.8.0-alpha.3',
+  version: '0.8.0-alpha.4',
   create,
 }
