@@ -1,10 +1,19 @@
 import test from 'ava'
 
-import Integreat from '.'
+import Integreat, { authenticators, mutations, transformers } from '.'
 
 // Tests
 
-test('should have version and create', t => {
+test('should have version and create', (t) => {
   t.is(typeof Integreat.version, 'string')
   t.is(typeof Integreat.create, 'function')
+})
+
+test('should export resources', (t) => {
+  t.truthy(authenticators)
+  t.truthy(authenticators.token)
+  t.truthy(mutations)
+  t.truthy(mutations['exchange:json'])
+  t.truthy(transformers)
+  t.truthy(transformers.hash)
 })
