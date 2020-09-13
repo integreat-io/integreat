@@ -50,8 +50,9 @@ export interface Payload extends Record<string, Data> {
   type?: string | string[]
   id?: string | string[]
   data?: Data
-  source?: string
-  target?: string
+  sourceService?: string
+  targetService?: string
+  service?: string // For backward compability, may be removed
   endpoint?: string
   params?: Params
   page?: number

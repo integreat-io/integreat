@@ -17,7 +17,7 @@ test('should route to GET action', async (t) => {
   const action = {
     type: 'GET',
     payload: {
-      target: 'entries',
+      targetService: 'entries',
       id: 'ent1',
       type: 'entry',
     },
@@ -160,8 +160,8 @@ test('should return error when source service is not found', async (t) => {
     payload: {
       id: 'ent1',
       type: 'entry',
-      source: 'unknown',
-      target: 'entries',
+      sourceService: 'unknown',
+      targetService: 'entries',
     },
   }
   const handlers = {
@@ -190,8 +190,8 @@ test('should return error when no endoint on source service matches', async (t) 
     payload: {
       id: 'ent1',
       type: 'entry',
-      source: 'api',
-      target: 'entries',
+      sourceService: 'api',
+      targetService: 'entries',
     },
   }
   const handlers = {

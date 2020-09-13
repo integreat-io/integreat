@@ -76,8 +76,8 @@ test('should create exchange from action', (t) => {
       data: { name: 'John F.' },
       endpoint: 'superuser',
       returnNoDefaults: true,
-      source: 'api',
-      target: 'crm',
+      sourceService: 'api',
+      targetService: 'crm',
     },
     meta: { ident: { id: 'johnf' } },
   }
@@ -96,6 +96,34 @@ test('should create exchange from action', (t) => {
     endpointId: 'superuser',
     ident: { id: 'johnf' },
     source: 'api',
+    target: 'crm',
+  }
+
+  const ret = exchangeFromAction(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should allow service as alias for targetService (for now)', (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'user',
+      service: 'crm',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    ...exchangeDefaults,
+    type: 'GET',
+    request: {
+      type: 'user',
+      params: {},
+    },
+    response: {},
+    endpointId: undefined,
+    ident: { id: 'johnf' },
+    source: undefined,
     target: 'crm',
   }
 

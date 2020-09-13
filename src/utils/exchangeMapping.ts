@@ -75,8 +75,9 @@ export function exchangeFromAction(action: Action): Exchange {
       params,
       data,
       returnNoDefaults,
-      source,
-      target,
+      sourceService,
+      targetService,
+      service,
       ...rest
     } = {},
     meta: actionMeta,
@@ -99,8 +100,8 @@ export function exchangeFromAction(action: Action): Exchange {
     ident,
     endpointId: endpoint,
     meta: meta as Record<string, Data>,
-    source,
-    target,
+    source: sourceService,
+    target: targetService || service,
   })
 }
 

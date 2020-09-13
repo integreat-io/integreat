@@ -42,7 +42,7 @@ test('should map incoming action data and response data', async (t) => {
           },
         },
       }),
-      source: 'api', // Makes this a candidate for incoming mapping
+      sourceService: 'api', // Makes this a candidate for incoming mapping
     },
     meta: { ident: { root: true } },
   }

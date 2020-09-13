@@ -29,7 +29,7 @@ test('should use incoming endpoint over non-incoming', async (t) => {
     payload: {
       type: 'entry',
       id: 'ent1',
-      source: 'api', // Makes this a candidate for incoming mapping
+      sourceService: 'api', // Makes this a candidate for incoming mapping
     },
     meta: { ident: { root: true } },
   }
