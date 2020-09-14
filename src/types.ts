@@ -46,47 +46,6 @@ export interface Ident {
 
 export type Params = Record<string, Data>
 
-export interface Payload extends Record<string, Data> {
-  type?: string | string[]
-  id?: string | string[]
-  data?: Data
-  sourceService?: string
-  targetService?: string
-  service?: string // For backward compability, may be removed
-  endpoint?: string
-  params?: Params
-  page?: number
-  pageSize?: number
-}
-
-export interface ActionMeta extends Record<string, unknown> {
-  id?: string
-  ident?: Ident
-  queue?: boolean | number
-  schedule?: ScheduleObject | string | null
-}
-
-export interface Action<P extends Payload = Payload> {
-  type: string
-  payload: P
-  meta?: ActionMeta
-}
-
-export interface Paging {
-  next?: Payload
-  prev?: Payload
-}
-
-export interface Response<T = Data> {
-  status: string | null
-  data?: T
-  error?: string
-  responses?: Response[]
-  access?: Record<string, unknown>
-  params?: Params
-  paging?: Paging
-}
-
 export interface ExchangeRequest<T = Data> {
   type?: string | string[]
   id?: string | string[]
@@ -132,6 +91,43 @@ export interface Exchange<
   authorized?: boolean
   source?: string
   target?: string
+}
+
+export interface Payload extends Record<string, Data> {
+  type?: string | string[]
+  id?: string | string[]
+  data?: Data
+  sourceService?: string
+  targetService?: string
+  service?: string // For backward compability, may be removed
+  endpoint?: string
+  params?: Params
+  page?: number
+  pageSize?: number
+}
+
+export interface ActionMeta extends Record<string, unknown> {
+  id?: string
+  ident?: Ident
+  queue?: boolean | number
+  schedule?: ScheduleObject | string | null
+}
+
+export interface Action<P extends Payload = Payload> {
+  type: string
+  payload: P
+  meta?: ActionMeta
+}
+
+export interface Paging {
+  next?: Payload
+  prev?: Payload
+}
+
+export interface Response<T = Data> extends ExchangeResponse<T> {
+  status: string | null
+  responses?: Response[] // TODO: Is this the right way?
+  access?: Record<string, unknown>
 }
 
 export interface Dispatch<T extends Data = Data> {
