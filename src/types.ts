@@ -93,10 +93,10 @@ export interface Exchange<
   target?: string
 }
 
-export interface Payload extends Record<string, Data> {
+export interface Payload<T extends Data = Data> extends Record<string, Data> {
   type?: string | string[]
   id?: string | string[]
-  data?: Data
+  data?: T
   sourceService?: string
   targetService?: string
   service?: string // For backward compability, may be removed
