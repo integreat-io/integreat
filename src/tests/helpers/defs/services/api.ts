@@ -18,9 +18,16 @@ export default {
     },
     {
       match: { action: 'GET', incoming: true },
-      mutation: {
-        data: ['data', { $apply: 'api-entry' }],
-      },
+      mutation: [
+        {
+          $direction: 'fwd',
+          'params.source': 'params.source', // Just to have a fwd mutation
+        },
+        {
+          $direction: 'rev',
+          data: ['data', { $apply: 'api-entry' }],
+        },
+      ],
     },
   ],
 }
