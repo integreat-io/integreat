@@ -58,6 +58,7 @@ export interface ExchangeRequest<T = Data> {
   pageAfter?: string
   pageBefore?: string
   pageSize?: number
+  pageId?: string
   sendNoDefaults?: boolean
 }
 
@@ -104,6 +105,9 @@ export interface Payload<T extends Data = Data> extends Record<string, Data> {
   params?: Params
   page?: number
   pageSize?: number
+  pageAfter?: string
+  pageBefore?: string
+  pageId?: string
 }
 
 export interface ActionMeta extends Record<string, unknown> {

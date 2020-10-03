@@ -78,6 +78,11 @@ test('should create exchange from action', (t) => {
       returnNoDefaults: true,
       sourceService: 'api',
       targetService: 'crm',
+      page: 2,
+      pageSize: 500,
+      pageAfter: 'ent1',
+      pageBefore: 'ent100',
+      pageId: 'pageSomething',
     },
     meta: { ident: { id: 'johnf' } },
   }
@@ -89,6 +94,11 @@ test('should create exchange from action', (t) => {
       type: 'user',
       data: { name: 'John F.' },
       params: {},
+      page: 2,
+      pageSize: 500,
+      pageAfter: 'ent1',
+      pageBefore: 'ent100',
+      pageId: 'pageSomething',
     },
     response: {
       returnNoDefaults: true,
@@ -199,6 +209,10 @@ test('should return ok response from exchange', (t) => {
     },
     response: {
       data: [{ id: 'ent1', type: 'entry' }],
+      paging: {
+        next: { id: 'johnf', type: 'user', page: 3, pageSize: 100 },
+        prev: { id: 'johnf', type: 'user', page: 1, pageSize: 100 },
+      },
     },
     options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
@@ -206,6 +220,10 @@ test('should return ok response from exchange', (t) => {
   const expected = {
     status: 'ok',
     data: [{ id: 'ent1', type: 'entry' }],
+    paging: {
+      next: { id: 'johnf', type: 'user', page: 3, pageSize: 100 },
+      prev: { id: 'johnf', type: 'user', page: 1, pageSize: 100 },
+    },
     access: { ident: { id: 'johnf' } },
   }
 
