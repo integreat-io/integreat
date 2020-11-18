@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@sindresorhus/is": "^1.2.0",
-    "debug": "^4.2.0",
+    "debug": "^4.3.0",
     "got": "^9.6.0",
     "later": "^1.2.0",
     "map-any": "^0.2.1",
@@ -64,7 +64,7 @@
     "integreat-adapter-json": "^0.2.1",
     "nock": "^12.0.3",
     "nyc": "^15.1.0",
-    "sinon": "^9.0.3",
+    "sinon": "^9.2.1",
     "standard": "^14.3.4"
   }
 }
