@@ -37,21 +37,21 @@
     "@types/debug": "^4.1.5",
     "@types/later": "^1.2.6",
     "@types/nanoid": "^2.1.0",
-    "debug": "^4.1.1",
-    "got": "^11.5.2",
+    "debug": "^4.3.2",
+    "got": "^11.8.1",
     "later": "^1.2.0",
     "map-any": "^0.2.1",
     "map-transform": "0.4.0-alpha.1",
-    "nanoid": "^3.1.12",
-    "p-limit": "^3.0.2",
+    "nanoid": "^3.1.20",
+    "p-limit": "^3.1.0",
     "p-pipe": "^3.1.0",
     "ramda": "^0.27.1"
   },
   "devDependencies": {
-    "@integreat/ts-dev-setup": "^1.2.0",
-    "@types/sinon": "^9.0.5",
+    "@integreat/ts-dev-setup": "^1.2.1",
+    "@types/sinon": "^9.0.9",
     "integreat-transporter-http": "0.1.0-alpha.4",
-    "nock": "^13.0.3",
-    "sinon": "^9.0.2"
+    "nock": "^13.0.5",
+    "sinon": "^9.2.2"
   }
 }
