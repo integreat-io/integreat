@@ -7,7 +7,7 @@ import { Dispatch } from '../types'
 /**
  * Set up Integreat queue interface.
  */
-export default function setupQueue(queue: Queue) {
+export default function createQueue(queue: Queue) {
   let dispatch: Dispatch | null = null
   let subscribed = false
 

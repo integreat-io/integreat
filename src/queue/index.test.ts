@@ -3,7 +3,7 @@ import sinon = require('sinon')
 import later = require('later')
 import mockQueue from '../tests/helpers/mockQueue'
 
-import setupQueue from '.'
+import createQueue from '.'
 
 // Helpers
 
@@ -21,14 +21,10 @@ test.after.always(() => {
 
 // Tests
 
-test('should exist', (t) => {
-  t.is(typeof setupQueue, 'function')
-})
-
 test('should make underlying queue accessible', (t) => {
   const redisQueue = mockQueue()
 
-  const queue = setupQueue(redisQueue)
+  const queue = createQueue(redisQueue)
 
   t.is(queue.queue, redisQueue)
 })
@@ -36,7 +32,7 @@ test('should make underlying queue accessible', (t) => {
 // Tests -- middleware
 
 test('middleware should return response with status queued and queued id', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const action = {
     type: 'GET',
@@ -51,7 +47,7 @@ test('middleware should return response with status queued and queued id', async
 })
 
 test('middleware should queue queuable action', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const action = {
@@ -75,7 +71,7 @@ test('middleware should queue queuable action', async (t) => {
 })
 
 test('middleware should dispatch unqueuable actions and return response', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const action = { type: 'GET', payload: { type: 'entry' } }
@@ -90,7 +86,7 @@ test('middleware should dispatch unqueuable actions and return response', async 
 })
 
 test('middleware should queue with timestamp', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const action = {
     type: 'GET',
@@ -105,7 +101,7 @@ test('middleware should queue with timestamp', async (t) => {
 })
 
 test('middleware should queue with id', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const action = {
     type: 'GET',
@@ -120,7 +116,7 @@ test('middleware should queue with id', async (t) => {
 })
 
 test('middleware should return error response when underlying queue throws', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   sinon.stub(queue.queue, 'push').rejects(new Error('The horror'))
   const action = {
     type: 'GET',
@@ -138,7 +134,7 @@ test('middleware should return error response when underlying queue throws', asy
 })
 
 test('middleware should reschedule repeating action', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const schedule = { schedules: [{ h: [2] }] }
   const action = {
@@ -160,7 +156,7 @@ test('middleware should reschedule repeating action', async (t) => {
 })
 
 test('middleware should not reschedule when schedule is ended', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const schedule = { schedules: [{ ['Y_b']: [2015] }] }
   const action = {
@@ -178,7 +174,7 @@ test('middleware should not reschedule when schedule is ended', async (t) => {
 })
 
 test('middleware should not reschedule with invalid schedule definition', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const action = {
     type: 'GET',
@@ -200,7 +196,7 @@ test('should subscribe underlying queue and dispatch', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const action = { type: 'GET', payload: { type: 'entry' } }
 
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   queue.setDispatch(dispatch)
   await queue.queue.push(action) // Pushes directly to subscribed handler
 
@@ -213,7 +209,7 @@ test('should not subscribe unless setDispatch is called', async (t) => {
   const mock = mockQueue()
   const mockSubscribe = sinon.spy(mock, 'subscribe')
 
-  const queue = setupQueue(mock)
+  const queue = createQueue(mock)
   await queue.queue.push(action) // Pushes directly to subscribed handler
 
   t.is(mockSubscribe.callCount, 0)
@@ -224,7 +220,7 @@ test('should not subscribe twice', async (t) => {
   const mock = mockQueue()
   const mockSubscribe = sinon.spy(mock, 'subscribe')
 
-  const queue = setupQueue(mock)
+  const queue = createQueue(mock)
   queue.setDispatch(dispatch)
   queue.setDispatch(dispatch)
 
@@ -235,7 +231,7 @@ test('should not subscribe when called with no-function', async (t) => {
   const mock = mockQueue()
   const mockSubscribe = sinon.spy(mock, 'subscribe')
 
-  const queue = setupQueue(mock)
+  const queue = createQueue(mock)
   queue.setDispatch(null)
 
   t.is(mockSubscribe.callCount, 0)
@@ -244,20 +240,20 @@ test('should not subscribe when called with no-function', async (t) => {
 test('should not throw when no dispatch function', async (t) => {
   const action = { type: 'GET', payload: { type: 'entry' } }
 
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   await t.notThrowsAsync(queue.queue.push(action))
 })
 
 // Tests -- schedule
 
 test('schedule should exist', (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
 
   t.is(typeof queue.schedule, 'function')
 })
 
 test('schedule should enqueue scheduled action', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const defs = [
     { schedule: 'at 2:00 am', action: { type: 'SYNC', payload: {} } },
@@ -284,7 +280,7 @@ test('schedule should enqueue scheduled action', async (t) => {
 })
 
 test('should return response objects with status queued', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const defs = [
     {
       id: 'sched1',
@@ -308,7 +304,7 @@ test('should return response objects with status queued', async (t) => {
 })
 
 test('should return response objects with status error when invalid schedule', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const defs = [
     {
       id: 'sched1',
@@ -324,7 +320,7 @@ test('should return response objects with status error when invalid schedule', a
 })
 
 test('should accept single schedule definition object', async (t) => {
-  const queue = setupQueue(mockQueue())
+  const queue = createQueue(mockQueue())
   const defs = {
     id: 'sched1',
     schedule: 'at 2:00 am',
