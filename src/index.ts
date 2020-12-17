@@ -21,7 +21,7 @@ export { default as mutations } from './mutations'
 export { default as transformers } from './transformers'
 
 export default {
-  version: '0.8.0-alpha.7',
+  version: '0.8.0-alpha.8',
   create,
   createQueue,
 }
