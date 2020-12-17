@@ -4,7 +4,6 @@ import { completeExchange } from '../utils/exchangeMapping'
 import createError from '../utils/createError'
 import { isDataObject } from '../utils/is'
 import {
-  Data,
   DataObject,
   Exchange,
   ExchangeRequest,
@@ -174,7 +173,7 @@ const isDataArray = (data: unknown): data is DataObject[] =>
   Array.isArray(data) && data.length > 0
 
 const filterDataOnUpdatedDates = (
-  data: Data,
+  data: unknown,
   updatedAfter: Date,
   updatedUntil: Date
 ) =>
@@ -260,7 +259,7 @@ const createSetMetas = (
 export default async function sync(
   exchange: Exchange,
   dispatch: InternalDispatch
-): Promise<Exchange<Data, Data>> {
+): Promise<Exchange> {
   debug('Action: SYNC')
   const {
     request: { type, params = {} },

@@ -6,7 +6,6 @@ import {
   Exchange,
   Middleware,
   Action,
-  Data,
 } from './types'
 import { IdentConfig } from './service/types'
 import {
@@ -142,8 +141,8 @@ export default function createDispatch({
   const getService = setupGetService(schemas, services)
   let internalDispatch: InternalDispatch
 
-  internalDispatch = async function <T extends Data = Data>(
-    exchange: Exchange<Data, T>
+  internalDispatch = async function <T = unknown>(
+    exchange: Exchange<unknown, T>
   ) {
     debug('Dispatch: %o', exchange)
 

@@ -44,9 +44,30 @@ export interface Ident {
   tokens?: string[]
 }
 
-export type Params = Record<string, Data>
+export type Params = Record<string, unknown>
 
-export interface ExchangeRequest<T = Data> {
+export interface Paging {
+  next?: Payload
+  prev?: Payload
+}
+
+export interface Payload<T = unknown> extends Record<string, unknown> {
+  type?: string | string[]
+  id?: string | string[]
+  data?: T
+  sourceService?: string
+  targetService?: string
+  service?: string // For backward compability, may be removed
+  endpoint?: string
+  params?: Params
+  page?: number
+  pageSize?: number
+  pageAfter?: string
+  pageBefore?: string
+  pageId?: string
+}
+
+export interface ExchangeRequest<T = unknown> {
   type?: string | string[]
   id?: string | string[]
   params?: Params
@@ -62,7 +83,7 @@ export interface ExchangeRequest<T = Data> {
   sendNoDefaults?: boolean
 }
 
-export interface ExchangeResponse<T = Data> {
+export interface ExchangeResponse<T = unknown> {
   data?: T
   reason?: string
   error?: string
@@ -72,11 +93,11 @@ export interface ExchangeResponse<T = Data> {
   returnNoDefaults?: boolean
 }
 
-export type Meta = Record<string, Data>
+export type Meta = Record<string, unknown>
 
 export interface Exchange<
-  RequestData = Data,
-  ResponseData = Data,
+  RequestData = unknown,
+  ResponseData = unknown,
   MetaData extends Meta = Meta
 > {
   type: string
@@ -94,22 +115,6 @@ export interface Exchange<
   target?: string
 }
 
-export interface Payload<T extends Data = Data> extends Record<string, Data> {
-  type?: string | string[]
-  id?: string | string[]
-  data?: T
-  sourceService?: string
-  targetService?: string
-  service?: string // For backward compability, may be removed
-  endpoint?: string
-  params?: Params
-  page?: number
-  pageSize?: number
-  pageAfter?: string
-  pageBefore?: string
-  pageId?: string
-}
-
 export interface ActionMeta extends Record<string, unknown> {
   id?: string
   ident?: Ident
@@ -123,18 +128,13 @@ export interface Action<P extends Payload = Payload> {
   meta?: ActionMeta
 }
 
-export interface Paging {
-  next?: Payload
-  prev?: Payload
-}
-
-export interface Response<T = Data> extends ExchangeResponse<T> {
+export interface Response<T = unknown> extends ExchangeResponse<T> {
   status: string | null
   responses?: Response[] // TODO: Is this the right way?
   access?: Record<string, unknown>
 }
 
-export interface Dispatch<T extends Data = Data> {
+export interface Dispatch<T = unknown> {
   (action: Action | null): Promise<Response<T>>
 }
 

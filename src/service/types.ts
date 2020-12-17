@@ -1,5 +1,5 @@
 import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
-import { Exchange, Data, Transporter } from '../types'
+import { Exchange, Transporter } from '../types'
 import { EndpointDef, Endpoint } from './endpoints/types'
 
 export interface MapOptions {
@@ -32,7 +32,7 @@ export interface AsyncExchangeMapper {
   (exchange: Exchange): Promise<Exchange>
 }
 
-export type AuthOptions = Record<string, Data>
+export type AuthOptions = Record<string, unknown>
 
 export interface Authentication extends AuthOptions {
   status: string

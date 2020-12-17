@@ -2,7 +2,6 @@ import { isEmptyObject } from './is'
 import {
   Action,
   Exchange,
-  Data,
   Response,
   Paging,
   Params,
@@ -21,7 +20,7 @@ export interface MappingObject {
   action: string
   status: null | string
   params: MappingParams
-  data: Data
+  data: unknown
   error?: string
   paging?: Paging
   options?: EndpointOptions
@@ -33,7 +32,7 @@ const isOkStatus = (status: string | null) =>
 
 const removeError = <T>({ error, ...response }: ExchangeResponse<T>) => response
 
-export const completeExchange = <ReqData = Data, RespData = Data>({
+export const completeExchange = <ReqData = unknown, RespData = unknown>({
   type,
   id,
   status = null,
@@ -105,7 +104,7 @@ export function exchangeFromAction(action: Action): Exchange {
     },
     ident,
     endpointId: endpoint,
-    meta: meta as Record<string, Data>,
+    meta: meta as Record<string, unknown>,
     source: sourceService,
     target: targetService || service,
   })

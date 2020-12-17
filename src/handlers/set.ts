@@ -3,15 +3,16 @@ import pPipe = require('p-pipe')
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { isTypedData } from '../utils/is'
-import { Exchange, InternalDispatch, Data } from '../types'
+import { Exchange, InternalDispatch } from '../types'
 import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
 
-const extractType = (exchange: Exchange, data?: Data) =>
+const extractType = (exchange: Exchange, data?: unknown) =>
   exchange.request.type || (isTypedData(data) && data.$type) || undefined
 
-const extractId = (data?: Data) => (isTypedData(data) && data.id) || undefined
+const extractId = (data?: unknown) =>
+  (isTypedData(data) && data.id) || undefined
 
 const setIdAndTypeOnExchange = (
   exchange: Exchange,

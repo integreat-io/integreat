@@ -1,5 +1,5 @@
 import { Dictionaries, CustomFunction, MapDefinition } from 'map-transform'
-import { Middleware, Transporter, Dispatch, Data } from './types'
+import { Middleware, Transporter, Dispatch } from './types'
 import {
   ServiceDef,
   IdentConfig,
@@ -34,7 +34,7 @@ export interface Resources {
   transformers?: Record<string, CustomFunction>
 }
 
-export interface Instance<ResponseData extends Data = Data> {
+export interface Instance<ResponseData = unknown> {
   services: Record<string, Service>
   schemas: Record<string, Schema>
   identType?: string

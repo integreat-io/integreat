@@ -1,7 +1,7 @@
 import getField from '../../utils/getField'
 import { arrayIncludes } from '../../utils/array'
 import { isTypedData, isNullOrUndefined } from '../../utils/is'
-import { Exchange, Data, TypedData, Ident } from '../../types'
+import { Exchange, TypedData, Ident } from '../../types'
 import { Schema } from '../../schema'
 
 export interface AuthorizeDataFn {
@@ -25,7 +25,7 @@ const authorizeItem = (
   actionType: string,
   allowRaw: boolean,
   ident?: Ident
-) => (item: Data): string | undefined => {
+) => (item: unknown): string | undefined => {
   if (!isTypedData(item)) {
     return allowRaw ? undefined : 'RAW_DATA'
   }
@@ -73,7 +73,7 @@ const generateWarning = (removedCount: number, isToService: boolean) =>
 
 const generateErrorAndReason = (
   reason: string,
-  data: Data,
+  data: unknown,
   isToService: boolean
 ) =>
   reason === 'RAW_DATA'
@@ -83,14 +83,14 @@ const generateErrorAndReason = (
     : `Authentication was refused for type '${(data as TypedData).$type}'`
 
 function getAuthedWithResponse(
-  data: Data,
-  authFn: (item: Data) => string | undefined,
+  data: unknown,
+  authFn: (item: unknown) => string | undefined,
   isToService: boolean
 ) {
   if (isNullOrUndefined(data)) {
     return { data }
   } else if (Array.isArray(data)) {
-    const authed = data.filter((data: Data) => authFn(data) === undefined)
+    const authed = data.filter((data: unknown) => authFn(data) === undefined)
     const warning = generateWarning(data.length - authed.length, isToService)
     return { data: authed, ...(warning && { warning }) }
   }

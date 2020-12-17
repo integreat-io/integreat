@@ -1,6 +1,6 @@
 import debugLib = require('debug')
 import createError from '../utils/createError'
-import { Exchange, DataObject, InternalDispatch, Data } from '../types'
+import { Exchange, DataObject, InternalDispatch } from '../types'
 import { GetService } from '../dispatch'
 import getHandler from './get'
 import { isDataObject } from '../utils/is'
@@ -12,7 +12,7 @@ const isMetaField = (key: string) => key !== 'id' && !key.startsWith('$')
 const extractAllMetaFields = (meta: DataObject) =>
   Object.keys(meta).filter(isMetaField)
 
-const extractMeta = (meta: Data, keys: unknown): DataObject =>
+const extractMeta = (meta: unknown, keys: unknown): DataObject =>
   isDataObject(meta)
     ? typeof keys === 'string' || Array.isArray(keys)
       ? ([] as string[])

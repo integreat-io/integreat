@@ -2,7 +2,7 @@ import util = require('util')
 import getField from '../utils/getField'
 import createError from '../utils/createError'
 import { exchangeFromAction } from '../utils/exchangeMapping'
-import { Exchange, InternalDispatch, Data, Ident } from '../types'
+import { Exchange, InternalDispatch, Ident } from '../types'
 import { IdentConfig } from '../service/types'
 import { GetService } from '../dispatch'
 import getHandler from './get'
@@ -36,14 +36,15 @@ const prepareParams = (
     ? { params: { [keys.tokens]: ident.withToken } }
     : null
 
-const wrapOk = (exchange: Exchange, data: Data | Data[], ident: Ident) => ({
+const wrapOk = (exchange: Exchange, data: unknown, ident: Ident) => ({
   ...exchange,
   status: 'ok',
   response: { ...exchange.response, data },
   ident,
 })
 
-const getFirstIfArray = (data: Data) => (Array.isArray(data) ? data[0] : data)
+const getFirstIfArray = (data: unknown) =>
+  Array.isArray(data) ? data[0] : data
 
 const prepareResponse = (
   exchange: Exchange,

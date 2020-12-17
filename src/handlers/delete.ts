@@ -2,7 +2,7 @@ import debugLib = require('debug')
 import pPipe = require('p-pipe')
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
-import { Exchange, ExchangeRequest, InternalDispatch, Data } from '../types'
+import { Exchange, ExchangeRequest, InternalDispatch } from '../types'
 import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
@@ -12,9 +12,9 @@ const prepareData = ({ type, id, data }: ExchangeRequest) =>
     ? // Delete one action -- return as data
       [{ id, $type: type }]
     : // Filter away null values
-      ([] as Data[]).concat(data).filter(Boolean)
+      ([] as unknown[]).concat(data).filter(Boolean)
 
-const setDataOnExchange = (exchange: Exchange, data?: Data | Data[]) => ({
+const setDataOnExchange = (exchange: Exchange, data?: unknown) => ({
   ...exchange,
   request: { ...exchange.request, data, sendNoDefaults: true },
 })
