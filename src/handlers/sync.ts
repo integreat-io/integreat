@@ -10,7 +10,6 @@ import {
   Ident,
   Meta,
   InternalDispatch,
-  Response,
 } from '../types'
 
 const debug = debugLib('great')
@@ -34,10 +33,10 @@ interface Request extends ExchangeRequest {
   target?: string
 }
 
-const makeErrorString = (results: Response[]) =>
+const makeErrorString = (results: Exchange[]) =>
   results
     .map((result, index) =>
-      result.status === 'ok' ? null : `[${index}]: ${result.error}`
+      result.status === 'ok' ? null : `[${index}]: ${result.response.error}`
     )
     .filter(Boolean)
     .join('\n')
