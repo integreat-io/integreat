@@ -1,6 +1,10 @@
 import debugLib = require('debug')
-import { Action, ActionMeta, Response } from '../types'
+import { Exchange, Action, ActionMeta, Response } from '../types'
 import { Queue } from './types'
+import {
+  actionFromExchange,
+  responseToExchange,
+} from '../utils/exchangeMapping'
 
 const debug = debugLib('great')
 
@@ -9,12 +13,12 @@ const prepareMetaForQueue = ({ queue, ...rest }: ActionMeta = {}) => ({
   queuedAt: Date.now(),
 })
 
-const prepareForQueue = (action: Action) => ({
+const prepareForQueue = (action: Action): Action => ({
   ...action,
   meta: prepareMetaForQueue(action?.meta),
 })
 
-export default async function enqueue(
+export async function enqueueAction(
   queue: Queue,
   action: Action
 ): Promise<Response> {
@@ -23,9 +27,9 @@ export default async function enqueue(
   const timestamp = typeof meta?.queue === 'boolean' ? undefined : meta?.queue
   const actionId = meta?.id || undefined
 
-  let id: string | null
+  let id: string | undefined
   try {
-    id = await queue.push(queuedAction, timestamp, actionId)
+    id = (await queue.push(queuedAction, timestamp, actionId)) || undefined
   } catch (error) {
     debug(
       'Error from queue when pushing %o with timestamp %s. Error: %s',
@@ -42,5 +46,14 @@ export default async function enqueue(
     id,
     queuedAction
   )
-  return { status: 'queued', data: { id } }
+  return { status: 'queued', meta: { id } }
+}
+
+export default async function enqueue(
+  queue: Queue,
+  exchange: Exchange
+): Promise<Exchange> {
+  const action = actionFromExchange(exchange)
+  const response = await enqueueAction(queue, action)
+  return responseToExchange(exchange, response)
 }

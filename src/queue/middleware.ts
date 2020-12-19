@@ -2,41 +2,40 @@ import debugLib = require('debug')
 import nextSchedule from './nextSchedule'
 import enqueue from './enqueue'
 import { Queue } from './types'
-import { Action, Dispatch, Response } from '../types'
+import { Exchange, InternalDispatch } from '../types'
 
 const debug = debugLib('great')
 
-const getNextTime = (action: Action) => {
-  if (action.meta && action.meta.schedule) {
+const getNextTime = (exchange: Exchange) => {
+  if (exchange.meta.schedule) {
     try {
-      return nextSchedule(action.meta.schedule, true)
+      return nextSchedule(exchange.meta.schedule, true)
     } catch (error) {
-      debug('Error when rescheduling action %o', action)
+      debug('Error when rescheduling exchange %o', exchange)
     }
   }
   return null
 }
 
-const enqueueNext = (queue: Queue, action: Action) => {
-  const nextTime = getNextTime(action)
+function enqueueNext(queue: Queue, exchange: Exchange) {
+  const nextTime = getNextTime(exchange)
 
   if (nextTime) {
-    const nextAction = {
-      ...action,
-      meta: { ...action.meta, queue: nextTime.getTime() },
+    const nextExchange = {
+      ...exchange,
+      meta: { ...exchange.meta, queue: nextTime.getTime() },
     }
-    return enqueue(queue, nextAction)
+    enqueue(queue, nextExchange)
   }
-  return
 }
 
-export default function middleware(next: Dispatch, queue: Queue) {
-  return async (action: Action): Promise<Response> => {
-    if (action.meta && action.meta.queue) {
-      return enqueue(queue, action)
+export default function middleware(next: InternalDispatch, queue: Queue) {
+  return async (exchange: Exchange): Promise<Exchange> => {
+    if (exchange.meta && exchange.meta.queue) {
+      return enqueue(queue, exchange)
     } else {
-      const response = next(action)
-      enqueueNext(queue, action)
+      const response = await next(exchange)
+      enqueueNext(queue, exchange)
       return response
     }
   }

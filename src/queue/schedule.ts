@@ -1,6 +1,6 @@
 import debugLib = require('debug')
 import scheduleToAction from './scheduleToAction'
-import enqueue from './enqueue'
+import { enqueueAction } from './enqueue'
 import { Queue, ScheduleDef } from './types'
 import { Response } from '../types'
 
@@ -23,7 +23,7 @@ export default async function schedule(
             error: 'Schedule did not result in a queuable action',
           }
         }
-        return enqueue(queue, action)
+        return enqueueAction(queue, action)
       } catch (error) {
         return { status: 'error', error }
       }

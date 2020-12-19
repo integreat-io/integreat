@@ -93,7 +93,11 @@ export interface ExchangeResponse<T = unknown> {
   returnNoDefaults?: boolean
 }
 
-export type Meta = Record<string, unknown>
+export interface Meta extends Record<string, unknown> {
+  queue?: boolean | number
+  queuedAt?: number
+  schedule?: ScheduleObject | string | null
+}
 
 export interface Exchange<
   RequestData = unknown,
@@ -132,6 +136,7 @@ export interface Response<T = unknown> extends ExchangeResponse<T> {
   status: string | null
   responses?: Response[] // TODO: Is this the right way?
   access?: Record<string, unknown>
+  meta?: { id?: string }
 }
 
 export interface Dispatch<T = unknown> {

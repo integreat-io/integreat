@@ -2,7 +2,7 @@
 import middleware from './middleware'
 import schedule from './schedule'
 import { Queue, ScheduleDef } from './types'
-import { Dispatch } from '../types'
+import { Dispatch, InternalDispatch } from '../types'
 
 /**
  * Set up Integreat queue interface.
@@ -31,7 +31,7 @@ export default function createQueue(queue: Queue) {
      * and pass the rest on to the next() function.
      *
      */
-    middleware(next: Dispatch) {
+    middleware(next: InternalDispatch) {
       return middleware(next, queue)
     },
 

@@ -5,6 +5,7 @@ import {
   responseToExchange,
   mappingObjectFromExchange,
   exchangeFromMappingObject,
+  actionFromExchange,
   responseFromExchange,
   completeExchange,
 } from './exchangeMapping'
@@ -84,11 +85,12 @@ test('should create exchange from action', (t) => {
       pageBefore: 'ent100',
       pageId: 'pageSomething',
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, id: 'action1' },
   }
   const expected = {
     ...exchangeDefaults,
     type: 'SET',
+    id: 'action1',
     request: {
       id: 'johnf',
       type: 'user',
@@ -142,6 +144,54 @@ test('should allow service as alias for targetService (for now)', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should create action from exchange', (t) => {
+  const exchange = {
+    ...exchangeDefaults,
+    type: 'SET',
+    id: 'action1',
+    request: {
+      id: 'johnf',
+      type: 'user',
+      data: { name: 'John F.' },
+      params: {},
+      page: 2,
+      pageSize: 500,
+      pageAfter: 'ent1',
+      pageBefore: 'ent100',
+      pageId: 'pageSomething',
+    },
+    response: {
+      returnNoDefaults: true,
+    },
+    endpointId: 'superuser',
+    ident: { id: 'johnf' },
+    source: 'api',
+    target: 'crm',
+  }
+  const expected = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      type: 'user',
+      data: { name: 'John F.' },
+      endpoint: 'superuser',
+      returnNoDefaults: true,
+      sourceService: 'api',
+      targetService: 'crm',
+      page: 2,
+      pageSize: 500,
+      pageAfter: 'ent1',
+      pageBefore: 'ent100',
+      pageId: 'pageSomething',
+    },
+    meta: { ident: { id: 'johnf' }, id: 'action1' },
+  }
+
+  const ret = actionFromExchange(exchange)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should add ok response to exchange', (t) => {
   const exchange = {
     ...exchangeDefaults,
@@ -157,9 +207,11 @@ test('should add ok response to exchange', (t) => {
   const response = {
     status: 'ok',
     data: [{ id: 'ent1', type: 'entry' }],
+    meta: { id: 'action1' },
   }
   const expected = {
     ...exchange,
+    id: 'action1',
     status: 'ok',
     response: { data: [{ id: 'ent1', type: 'entry' }] },
   }

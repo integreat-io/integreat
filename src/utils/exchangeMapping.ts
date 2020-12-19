@@ -84,18 +84,19 @@ export function exchangeFromAction(action: Action): Exchange {
     } = {},
     meta: actionMeta,
   } = action
-  const { ident, ...meta } = actionMeta || {}
+  const { ident, id: actionId, ...meta } = actionMeta || {}
 
   return completeExchange({
     type: actionType,
+    ...(actionId && { id: actionId }),
     request: {
-      ...(type ? { type } : {}),
-      ...(id ? { id } : {}),
-      ...(page ? { page } : {}),
-      ...(pageSize ? { pageSize } : {}),
-      ...(pageAfter ? { pageAfter } : {}),
-      ...(pageBefore ? { pageBefore } : {}),
-      ...(pageId ? { pageId } : {}),
+      ...(type && { type }),
+      ...(id && { id }),
+      ...(page && { page }),
+      ...(pageSize && { pageSize }),
+      ...(pageAfter && { pageAfter }),
+      ...(pageBefore && { pageBefore }),
+      ...(pageId && { pageId }),
       ...(data ? { data } : {}),
       params: { ...rest, ...params },
     },
@@ -114,12 +115,61 @@ export function responseToExchange(
   exchange: Exchange,
   response: Response
 ): Exchange {
-  const { status, ...responseObject } = response
+  const { status, meta: { id = undefined } = {}, ...responseObject } = response
   return completeExchange({
     ...exchange,
+    ...(id && { id }),
     status,
     response: { ...exchange.response, ...responseObject },
   })
+}
+
+export function actionFromExchange(exchange: Exchange): Action {
+  const {
+    type: actionType,
+    id: actionId,
+    request: {
+      type,
+      id,
+      page,
+      pageSize,
+      pageAfter,
+      pageBefore,
+      pageId,
+      params,
+      data,
+    } = {},
+    response: { returnNoDefaults },
+    endpointId: endpoint,
+    source: sourceService,
+    target: targetService,
+    meta,
+    ident,
+  } = exchange
+
+  return {
+    type: actionType,
+    payload: {
+      ...(type ? { type } : {}),
+      ...(id ? { id } : {}),
+      ...(page ? { page } : {}),
+      ...(pageSize ? { pageSize } : {}),
+      ...(pageAfter ? { pageAfter } : {}),
+      ...(pageBefore ? { pageBefore } : {}),
+      ...(pageId ? { pageId } : {}),
+      ...(data ? { data } : {}),
+      ...(endpoint ? { endpoint } : {}),
+      ...(sourceService ? { sourceService } : {}),
+      ...(targetService ? { targetService } : {}),
+      ...(returnNoDefaults ? { returnNoDefaults } : {}),
+      ...params,
+    },
+    meta: {
+      ...meta,
+      ...(ident && { ident }),
+      ...(actionId && { id: actionId }),
+    },
+  }
 }
 
 export function responseFromExchange({
