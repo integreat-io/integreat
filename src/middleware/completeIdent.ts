@@ -24,8 +24,8 @@ const isIdentGetable = (ident?: Ident): ident is Ident =>
  * results in an error, the original action will simply be passed on.
  *
  * As the 'GET_IDENT' action is not passed to the entire middleware chain, but
- * only to the middlewares after this one, you should take care when you decide
- * on the order of middlewares. E.g., by placing completeIdent before any
+ * only to the middleware after this one, you should take care when you decide
+ * on the order of middleware. E.g., by placing completeIdent before any
  * caching middleware, you'll get caching of ident items for free. It is also
  * good practice to place it after any queueing middleware, so that the ident
  * completion happens when the action is pulled from the queue. This way, you

@@ -84,12 +84,12 @@ test('should call action handler with exchange, dispatch, getService, and identC
   t.is(getHandler.args[0][3], identConfig)
 })
 
-test('should call middlewares with exchange', async (t) => {
+test('should call  with exchange', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const handlers = {
     TEST: async () => completeExchange({ status: 'fromAction' }),
   }
-  const middlewares: Middleware[] = [
+  const middleware: Middleware[] = [
     (next) => async (exchange) => ({
       ...exchange,
       status: `<${(await next(exchange)).status}>`,
@@ -103,17 +103,17 @@ test('should call middlewares with exchange', async (t) => {
     handlers,
     services,
     schemas,
-    middlewares,
+    middleware,
   })(action)
 
   t.is(ret.status, '<(fromAction)>')
 })
 
-test('should allow middlewares to abort middleware chain', async (t) => {
+test('should allow middleware to abort middleware chain', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const handler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { TEST: handler }
-  const middlewares: Middleware[] = [
+  const middleware: Middleware[] = [
     (_next) => async (exchange) => ({ ...exchange, status: 'error' }),
   ]
 
@@ -121,7 +121,7 @@ test('should allow middlewares to abort middleware chain', async (t) => {
     handlers,
     services,
     schemas,
-    middlewares,
+    middleware,
   })(action)
 
   t.is(ret.status, 'error')
@@ -135,7 +135,7 @@ test('should dispatch to middleware from action handlers', async (t) => {
     DISPATCHER: async (_exchange: Exchange, dispatch: InternalDispatch) =>
       dispatch(completeExchange({ type: 'TEST' })),
   }
-  const middlewares: Middleware[] = [
+  const middleware: Middleware[] = [
     (next) => async (exchange) => ({
       ...exchange,
       status: `<${(await next(exchange)).status}>`,
@@ -146,7 +146,7 @@ test('should dispatch to middleware from action handlers', async (t) => {
     handlers,
     services,
     schemas,
-    middlewares,
+    middleware,
   })(action)
 
   t.is(ret.status, '<<fromAction>>')

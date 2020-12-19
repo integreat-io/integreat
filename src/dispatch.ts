@@ -120,7 +120,7 @@ export interface Resources {
   handlers: Record<string, ExchangeHandler>
   schemas: Record<string, Schema>
   services: Record<string, Service>
-  middlewares?: Middleware[]
+  middleware?: Middleware[]
   identConfig?: IdentConfig
 }
 
@@ -135,7 +135,7 @@ export default function createDispatch({
   handlers = {},
   schemas = {},
   services = {},
-  middlewares = [],
+  middleware = [],
   identConfig,
 }: Resources): Dispatch {
   const getService = setupGetService(schemas, services)
@@ -154,8 +154,8 @@ export default function createDispatch({
     return handler(exchange, internalDispatch, getService, identConfig)
   }
 
-  if (middlewares.length > 0) {
-    internalDispatch = compose(...middlewares)(internalDispatch)
+  if (middleware.length > 0) {
+    internalDispatch = compose(...middleware)(internalDispatch)
   }
 
   return wrapDispatch(internalDispatch, getService)

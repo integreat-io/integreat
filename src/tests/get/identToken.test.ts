@@ -11,7 +11,7 @@ import Integreat from '../..'
 // Tests
 
 test('should get with ident token', async (t) => {
-  const middlewares = [completeIdent]
+  const middleware = [completeIdent]
   nock('http://some.api')
     .get('/users')
     .query({ tokens: 'twitter|23456' })
@@ -24,7 +24,7 @@ test('should get with ident token', async (t) => {
     meta: { ident: { withToken: 'twitter|23456' } },
   }
 
-  const great = Integreat.create(defs, resources, middlewares)
+  const great = Integreat.create(defs, resources, middleware)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

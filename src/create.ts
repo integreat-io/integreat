@@ -54,7 +54,7 @@ export default function create(
     dictionaries,
   }: Definitions,
   { transporters, transformers, handlers, authenticators }: Resources,
-  middlewares: Middleware[] = []
+  middleware: Middleware[] = []
 ): Instance {
   if (!Array.isArray(serviceDefs) || !Array.isArray(schemaDefs)) {
     throw new TypeError(
@@ -107,7 +107,7 @@ export default function create(
     schemas,
     services,
     handlers: { ...builtinHandlers, ...handlers },
-    middlewares,
+    middleware,
   })
 
   // Return instance

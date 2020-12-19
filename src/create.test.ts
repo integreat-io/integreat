@@ -146,7 +146,7 @@ test('should call middleware', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const otherAction = sinon.stub().resolves(completeExchange({ status: 'ok' }))
   const handlers = { OTHER: otherAction }
-  const middlewares = [
+  const middleware = [
     (next: InternalDispatch) => async (_exchange: Exchange) =>
       next(completeExchange({ type: 'OTHER' })),
   ]
@@ -154,7 +154,7 @@ test('should call middleware', async (t) => {
   const great = create(
     { services, schemas, mutations },
     { ...resourcesWithTrans, handlers },
-    middlewares
+    middleware
   )
   await great.dispatch(action)
 
