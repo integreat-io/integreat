@@ -6,7 +6,7 @@ import mergeResources from './mergeResources'
 // Setup
 
 const mockTransporter = {} as Transporter
-const mockTransformer = (_operators: DataObject) => (_value: Data): Data =>
+const mockTransformer = (_operators: DataObject) => (_value: unknown): Data =>
   undefined
 const unrealTransporter = {} as Transporter
 
