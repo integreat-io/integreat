@@ -207,13 +207,13 @@ test('middleware should not reschedule with invalid schedule definition', async 
 
 // Tests -- setDispatch and dequeueing
 
-test('should subscribe underlying queue and dispatch', async (t) => {
+test('should subscribe to queue', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const action = { type: 'GET', payload: { type: 'entry' } }
 
   const queue = createQueue(mockQueue())
-  queue.setDispatch(dispatch)
-  await queue.queue.push(action) // Pushes directly to subscribed handler
+  await queue.setDispatch(dispatch)
+  await queue.queue.push(action) // Pushes directly to underlying queue
 
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], action)
@@ -225,21 +225,41 @@ test('should not subscribe unless setDispatch is called', async (t) => {
   const mockSubscribe = sinon.spy(mock, 'subscribe')
 
   const queue = createQueue(mock)
-  await queue.queue.push(action) // Pushes directly to subscribed handler
+  await queue.queue.push(action) // Pushes directly to underlying queue
 
   t.is(mockSubscribe.callCount, 0)
 })
 
-test('should not subscribe twice', async (t) => {
-  const dispatch = async () => ({ status: 'ok' })
+test('should override previous subscription', async (t) => {
+  const dispatch1 = async () => ({ status: 'ok' })
+  const dispatch2 = async () => ({ status: 'ok' })
   const mock = mockQueue()
   const mockSubscribe = sinon.spy(mock, 'subscribe')
 
   const queue = createQueue(mock)
-  queue.setDispatch(dispatch)
-  queue.setDispatch(dispatch)
+  await queue.setDispatch(dispatch1)
+  await queue.setDispatch(dispatch2)
+
+  t.is(mockSubscribe.callCount, 2)
+  t.is(mockSubscribe.args[0][0], dispatch1)
+  t.is(mockSubscribe.args[1][0], dispatch2)
+})
+
+test('should unsubscribe when setDispatch is called with null', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const action = { type: 'GET', payload: { type: 'entry' } }
+  const mock = mockQueue()
+  const mockSubscribe = sinon.spy(mock, 'subscribe')
+  const mockUnubscribe = sinon.spy(mock, 'unsubscribe')
+
+  const queue = createQueue(mock)
+  await queue.setDispatch(dispatch)
+  await queue.setDispatch(null)
+  await queue.queue.push(action) // Pushes directly to underlying queue
 
   t.is(mockSubscribe.callCount, 1)
+  t.is(mockUnubscribe.callCount, 1)
+  t.is(dispatch.callCount, 0)
 })
 
 test('should not subscribe when called with no-function', async (t) => {
@@ -247,7 +267,7 @@ test('should not subscribe when called with no-function', async (t) => {
   const mockSubscribe = sinon.spy(mock, 'subscribe')
 
   const queue = createQueue(mock)
-  queue.setDispatch(null)
+  await queue.setDispatch(null)
 
   t.is(mockSubscribe.callCount, 0)
 })

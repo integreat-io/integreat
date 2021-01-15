@@ -8,21 +8,19 @@ import { Dispatch, InternalDispatch } from '../types'
  * Set up Integreat queue interface.
  */
 export default function createQueue(queue: Queue) {
-  let dispatch: Dispatch | null = null
-  let subscribed = false
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let handle: any = null
   return {
     queue,
 
     /**
      * Set dispatch function to use for dequeuing
      */
-    setDispatch(dispatchFn: Dispatch | null) {
-      dispatch = dispatchFn
-
-      if (!subscribed && typeof dispatch === 'function') {
-        queue.subscribe(dispatch)
-        subscribed = true
+    async setDispatch(dispatch: Dispatch | null) {
+      if (typeof dispatch === 'function') {
+        handle = await queue.subscribe(dispatch) // Should we also unsubscribe from any existing handle?
+      } else if (dispatch === null) {
+        await queue.unsubscribe(handle)
       }
     },
 

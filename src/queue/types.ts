@@ -6,7 +6,7 @@ export interface JobHandler {
   (data: Action): Promise<Response>
 }
 
-export interface Queue<Q = Record<string, unknown>> {
+export interface Queue<Q = unknown> {
   queue: Q
   namespace: string
 
@@ -25,6 +25,8 @@ export interface Queue<Q = Record<string, unknown>> {
   flush: () => Promise<unknown[]>
 
   flushScheduled: () => Promise<unknown>
+
+  close: () => Promise<undefined>
 }
 
 export interface ScheduleObject {

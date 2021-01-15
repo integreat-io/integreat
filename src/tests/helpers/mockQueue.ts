@@ -34,5 +34,7 @@ export default (): Queue => {
     flush: async () => [],
 
     flushScheduled: async () => undefined,
+
+    close: async () => undefined,
   }
 }
