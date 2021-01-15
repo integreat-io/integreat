@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.8.0-alpha.10",
+  "version": "0.8.0-alpha.11",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <kjellmorten@integreat.io> (https://integreat.io/)",
   "license": "ISC",
@@ -37,7 +37,7 @@
     "@types/debug": "^4.1.5",
     "@types/later": "^1.2.6",
     "@types/nanoid": "^2.1.0",
-    "debug": "^4.3.1",
+    "debug": "^4.3.2",
     "got": "^11.8.1",
     "later": "^1.2.0",
     "map-any": "^0.2.1",
@@ -49,9 +49,9 @@
   },
   "devDependencies": {
     "@integreat/ts-dev-setup": "^1.2.1",
-    "@types/sinon": "^9.0.9",
+    "@types/sinon": "^9.0.10",
     "integreat-transporter-http": "0.1.0-alpha.5",
     "nock": "^13.0.5",
-    "sinon": "^9.2.2"
+    "sinon": "^9.2.3"
   }
 }
