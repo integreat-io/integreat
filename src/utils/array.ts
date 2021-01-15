@@ -17,3 +17,6 @@ export function arrayIncludes<T = unknown>(a: T | T[], b: T | T[]): boolean {
     return a === b
   }
 }
+
+export const getFirstIfArray = <T>(data: T | T[]): T =>
+  Array.isArray(data) ? data[0] : data

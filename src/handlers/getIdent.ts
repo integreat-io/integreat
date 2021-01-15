@@ -1,6 +1,7 @@
 import util = require('util')
 import getField from '../utils/getField'
 import createError from '../utils/createError'
+import { getFirstIfArray } from '../utils/array'
 import { exchangeFromAction } from '../utils/exchangeMapping'
 import { Exchange, InternalDispatch, Ident } from '../types'
 import { IdentConfig } from '../service/types'
@@ -42,9 +43,6 @@ const wrapOk = (exchange: Exchange, data: unknown, ident: Ident) => ({
   response: { ...exchange.response, data },
   ident,
 })
-
-const getFirstIfArray = (data: unknown) =>
-  Array.isArray(data) ? data[0] : data
 
 const prepareResponse = (
   exchange: Exchange,
