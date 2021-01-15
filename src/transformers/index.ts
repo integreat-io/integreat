@@ -1,3 +1,4 @@
+import form from './form'
 import hash from './hash'
 import json from './json'
 import lowercase from './lowercase'
@@ -8,6 +9,7 @@ import uppercase from './uppercase'
 import uriPart from './uriPart'
 
 export default {
+  form,
   hash,
   json,
   lowercase,
