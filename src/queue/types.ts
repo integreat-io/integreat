@@ -19,7 +19,7 @@ export interface Queue<Q = unknown> {
   clean: (ms: number) => Promise<unknown>
   flush: () => Promise<unknown[]>
   flushScheduled: () => Promise<unknown>
-  close: () => Promise<undefined>
+  close: () => Promise<void>
 }
 
 export interface ScheduleObject {
