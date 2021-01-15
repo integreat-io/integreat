@@ -27,7 +27,7 @@ export async function enqueueAction(
   const timestamp = typeof meta?.queue === 'boolean' ? undefined : meta?.queue
   const actionId = meta?.id || undefined
 
-  let id: string | undefined
+  let id: string | number | undefined
   try {
     id = (await queue.push(queuedAction, timestamp, actionId)) || undefined
   } catch (error) {
@@ -46,7 +46,10 @@ export async function enqueueAction(
     id,
     queuedAction
   )
-  return { status: 'queued', meta: { id } }
+  return {
+    status: 'queued',
+    meta: { id: typeof id === 'number' ? String(id) : id },
+  }
 }
 
 export default async function enqueue(

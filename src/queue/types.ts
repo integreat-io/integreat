@@ -9,23 +9,16 @@ export interface JobHandler {
 export interface Queue<Q = unknown> {
   queue: Q
   namespace: string
-
   push: (
     payload: Action,
     timestamp?: number,
     id?: string
-  ) => Promise<string | null>
-
+  ) => Promise<string | number | null>
   subscribe: (handler: JobHandler) => Promise<unknown>
-
   unsubscribe: (handle: unknown) => Promise<void>
-
   clean: (ms: number) => Promise<unknown>
-
   flush: () => Promise<unknown[]>
-
   flushScheduled: () => Promise<unknown>
-
   close: () => Promise<undefined>
 }
 
