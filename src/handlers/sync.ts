@@ -7,6 +7,8 @@ import { ensureArray } from '../utils/array'
 interface ExchangeParams extends Record<string, unknown> {
   type: string | string[]
   service?: string
+  action?: string
+  dontQueueSet?: boolean
 }
 
 interface SyncParams extends Record<string, unknown> {
@@ -15,10 +17,9 @@ interface SyncParams extends Record<string, unknown> {
 }
 
 const createGetExchange = (
-  { type, service: target, ...params }: ExchangeParams,
+  { type, service: target, action = 'GET', ...params }: ExchangeParams,
   ident: Ident | undefined,
-  meta: Meta,
-  action = 'GET'
+  meta: Meta
 ) =>
   completeExchange({
     type: action,
@@ -30,10 +31,15 @@ const createGetExchange = (
 
 const createSetExchange = (
   data: unknown,
-  { type, service: target, dontQueueSet, ...params }: ExchangeParams,
+  {
+    type,
+    service: target,
+    action = 'SET',
+    dontQueueSet = false,
+    ...params
+  }: ExchangeParams,
   ident: Ident | undefined,
-  meta: Meta,
-  action = 'SET'
+  meta: Meta
 ) =>
   completeExchange({
     type: action,

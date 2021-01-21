@@ -97,41 +97,6 @@ test('should get from source service and set on target service', async (t) => {
   t.deepEqual(dispatch.args[1][0], expected2)
 })
 
-test('should not queue SET when dontQueueSet is true', async (t) => {
-  const exchange = completeExchange({
-    type: 'SYNC',
-    request: {
-      type: 'entry',
-      params: { from: 'entries', to: 'store', dontQueueSet: true },
-    },
-    ident,
-    meta: { project: 'project1' },
-  })
-  const dispatch = sinon.spy(
-    setupDispatch({
-      GET: (exchange: Exchange) => ({
-        ...exchange,
-        status: 'ok',
-        response: { ...exchange.response, data },
-      }),
-      SET: (exchange: Exchange) => ({ ...exchange, status: 'ok' }),
-    })
-  )
-  const expected2 = completeExchange({
-    type: 'SET',
-    request: { type: 'entry', data, params: {} },
-    target: 'store',
-    ident,
-    meta: { project: 'project1', queue: false },
-  })
-
-  const ret = await sync(exchange, dispatch)
-
-  t.is(ret.status, 'ok')
-  t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[1][0], expected2)
-})
-
 test('should use params from from and to', async (t) => {
   const exchange = completeExchange({
     type: 'SYNC',
@@ -175,6 +140,87 @@ test('should use params from from and to', async (t) => {
   t.is(ret.status, 'ok')
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expected1)
+  t.deepEqual(dispatch.args[1][0], expected2)
+})
+
+test('should override action types', async (t) => {
+  const exchange = completeExchange({
+    type: 'SYNC',
+    request: {
+      type: 'entry',
+      params: {
+        from: { service: 'entries', action: 'GET_ALL' },
+        to: { service: 'store', action: 'SET_SOME' },
+      },
+    },
+    ident,
+    meta: { project: 'project1' },
+  })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_ALL: (exchange: Exchange) => ({
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data },
+      }),
+      SET_SOME: (exchange: Exchange) => ({ ...exchange, status: 'ok' }),
+    })
+  )
+  const expected1 = completeExchange({
+    type: 'GET_ALL',
+    request: { type: 'entry', params: {} },
+    target: 'entries',
+    ident,
+    meta: { project: 'project1' },
+  })
+  const expected2 = completeExchange({
+    type: 'SET_SOME',
+    request: { type: 'entry', data, params: {} },
+    target: 'store',
+    ident,
+    meta: { project: 'project1', queue: true },
+  })
+
+  const ret = await sync(exchange, dispatch)
+
+  t.is(ret.status, 'ok', ret.response.error)
+  t.is(dispatch.callCount, 2)
+  t.deepEqual(dispatch.args[0][0], expected1)
+  t.deepEqual(dispatch.args[1][0], expected2)
+})
+
+test('should not queue SET when dontQueueSet is true', async (t) => {
+  const exchange = completeExchange({
+    type: 'SYNC',
+    request: {
+      type: 'entry',
+      params: { from: 'entries', to: 'store', dontQueueSet: true },
+    },
+    ident,
+    meta: { project: 'project1' },
+  })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: (exchange: Exchange) => ({
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data },
+      }),
+      SET: (exchange: Exchange) => ({ ...exchange, status: 'ok' }),
+    })
+  )
+  const expected2 = completeExchange({
+    type: 'SET',
+    request: { type: 'entry', data, params: {} },
+    target: 'store',
+    ident,
+    meta: { project: 'project1', queue: false },
+  })
+
+  const ret = await sync(exchange, dispatch)
+
+  t.is(ret.status, 'ok')
+  t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[1][0], expected2)
 })
 
