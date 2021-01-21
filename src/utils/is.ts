@@ -26,6 +26,9 @@ export const isPropertySchema = (value: unknown): value is PropertyShape =>
 export const isNullOrUndefined = (value: unknown): value is null | undefined =>
   value === null || value === undefined
 
+export const isNotNullOrUndefined = <T>(value: T): value is NonNullable<T> =>
+  !isNullOrUndefined(value)
+
 export const isAction = (action: unknown): action is Action =>
   isDataObject(action) &&
   typeof action.type === 'string' &&

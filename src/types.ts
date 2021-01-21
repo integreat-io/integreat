@@ -12,8 +12,8 @@ export type Data = DataValue | DataObject | Data[]
 export interface TypedData extends DataObject {
   $type: string
   id?: string
-  createdAt?: TypedData | string
-  updatedAt?: TypedData | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
   isNew?: boolean
   isDeleted?: boolean
 }
