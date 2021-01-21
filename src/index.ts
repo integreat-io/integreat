@@ -23,7 +23,7 @@ export { default as transformers } from './transformers'
 export { default as middleware } from './middleware'
 
 export default {
-  version: '0.8.0-alpha.13',
+  version: '0.8.0-alpha.14',
   create,
   createQueue,
   mergeResources,
