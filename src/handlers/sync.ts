@@ -121,6 +121,7 @@ export default async function syncHandler(
 ): Promise<Exchange> {
   const { request, ident, meta } = exchange
   const [fromParams, toParams] = extractExchangeParams(request)
+  const { params: { alwaysSet = false } = {} } = request
 
   if (!fromParams || !toParams) {
     return createError(
@@ -137,6 +138,10 @@ export default async function syncHandler(
       .sort(sortByUpdatedAt)
   } catch (error) {
     return createError(exchange, `SYNC: Could not get data. ${error.message}`)
+  }
+
+  if (!alwaysSet && data.length === 0) {
+    return createError(exchange, 'SYNC: No data to set', 'noaction')
   }
 
   const response = await dispatch(

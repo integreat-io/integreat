@@ -97,6 +97,67 @@ test('should get from source service and set on target service', async (t) => {
   t.deepEqual(dispatch.args[1][0], expected2)
 })
 
+test('should not SET with no data', async (t) => {
+  const exchange = completeExchange({
+    type: 'SYNC',
+    request: { type: 'entry', params: { from: 'entries', to: 'store' } },
+    ident,
+    meta: { project: 'project1' },
+  })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: (exchange: Exchange) => ({
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: [] },
+      }),
+      SET: (exchange: Exchange) => ({ ...exchange, status: 'ok' }),
+    })
+  )
+
+  const ret = await sync(exchange, dispatch)
+
+  t.is(ret.status, 'noaction')
+  t.is(dispatch.callCount, 1)
+  t.is(dispatch.args[0][0].type, 'GET')
+})
+
+test('should SET with no data when alwaysSet is true', async (t) => {
+  const exchange = completeExchange({
+    type: 'SYNC',
+    request: {
+      type: 'entry',
+      params: { from: 'entries', to: 'store', alwaysSet: true },
+    },
+    ident,
+    meta: { project: 'project1' },
+  })
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: (exchange: Exchange) => ({
+        ...exchange,
+        status: 'ok',
+        response: { ...exchange.response, data: [] },
+      }),
+      SET: (exchange: Exchange) => ({ ...exchange, status: 'ok' }),
+    })
+  )
+  const expected2 = completeExchange({
+    type: 'SET',
+    request: { type: 'entry', data: [], params: {} },
+    target: 'store',
+    ident,
+    meta: { project: 'project1', queue: true },
+  })
+
+  const ret = await sync(exchange, dispatch)
+
+  t.is(ret.status, 'ok')
+  t.is(dispatch.callCount, 2)
+  t.is(dispatch.args[0][0].type, 'GET')
+  t.deepEqual(dispatch.args[1][0], expected2)
+})
+
 test('should use params from from and to', async (t) => {
   const exchange = completeExchange({
     type: 'SYNC',
