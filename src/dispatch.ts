@@ -19,7 +19,7 @@ import { Endpoint } from './service/endpoints/types'
 
 const debug = debugLib('great')
 
-const compose = (...fns: Middleware[]) =>
+export const compose = (...fns: Middleware[]): Middleware =>
   fns.reduce((f, g) => (...args) => f(g(...args)))
 
 export interface GetService {

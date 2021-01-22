@@ -342,6 +342,37 @@ test('sendExchange should retrieve data from service', async (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('sendExchange should use outgoing middleware', async (t) => {
+  const failMiddleware = () => async (exchange: Exchange) => ({
+    ...exchange,
+    status: 'badresponse',
+  })
+  const resources = {
+    ...jsonResources,
+    mapOptions,
+    schemas,
+    auths,
+    middleware: [failMiddleware],
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    auth: true,
+    transporter: 'http',
+  })
+  const exchange = completeExchange({
+    type: 'GET',
+    request: { type: 'entry' },
+    ident: { id: 'johnf' },
+    options: { uri: 'http://some.api/1.0' },
+    authorized: true,
+  })
+
+  const ret = await service.sendExchange(exchange)
+
+  t.is(ret.status, 'badresponse', ret.response.error)
+})
+
 test('sendExchange should return error when no transport', async (t) => {
   const data = {
     content: {

@@ -1,6 +1,6 @@
 import createEndpointMappers from './endpoints'
 import createError from '../utils/createError'
-import { Transporter } from '../types'
+import { Middleware, Transporter } from '../types'
 import { Service, ServiceDef, MapOptions } from './types'
 import Connection from './Connection'
 import { Schema } from '../schema'
@@ -9,16 +9,45 @@ import { lookupById } from '../utils/indexUtils'
 import { isObject } from '../utils/is'
 import * as authorizeData from './authorize/data'
 import authorizeExchange from './authorize/exchange'
+import { Exchange } from 'integreat-transporter-http/dist/types'
+import { compose } from '../dispatch'
 
 interface Resources {
   transporters?: Record<string, Transporter>
   auths?: Record<string, Auth>
   schemas: Record<string, Schema>
   mapOptions?: MapOptions
+  middleware?: Middleware[]
 }
 
 const isTransporter = (transporter: unknown): transporter is Transporter =>
   isObject(transporter)
+
+const sendToTransporter = (
+  transporter: Transporter,
+  connection: Connection,
+  serviceId: string
+) =>
+  async function send(exchange: Exchange) {
+    try {
+      if (await connection.connect(exchange.auth)) {
+        const ret = await transporter.send(exchange, connection.object)
+        return ret
+      } else {
+        return createError(
+          exchange,
+          `Could not connect to service '${serviceId}'. [${
+            connection.status
+          }] ${connection.error || ''}`.trim()
+        )
+      }
+    } catch (error) {
+      return createError(
+        exchange,
+        `Error retrieving from service '${serviceId}': ${error.message}`
+      )
+    }
+  }
 
 /**
  * Create a service with the given id and transporter.
@@ -28,6 +57,7 @@ export default ({
   auths,
   schemas,
   mapOptions = {},
+  middleware = [],
 }: Resources) => ({
   id: serviceId,
   transporter: transporterId,
@@ -59,6 +89,9 @@ export default ({
     mutation,
     isTransporter(transporter) ? transporter.prepareOptions : undefined
   )
+
+  const runThroughMiddleware: Middleware =
+    middleware.length > 0 ? compose(...middleware) : (fn) => fn
 
   const connection = isTransporter(transporter)
     ? new Connection(transporter, options)
@@ -151,24 +184,9 @@ export default ({
         }
       }
 
-      try {
-        if (await connection.connect(exchange.auth)) {
-          const ret = await transporter.send(exchange, connection.object)
-          return ret
-        } else {
-          return createError(
-            exchange,
-            `Could not connect to service '${serviceId}'. [${
-              connection.status
-            }] ${connection.error || ''}`.trim()
-          )
-        }
-      } catch (error) {
-        return createError(
-          exchange,
-          `Error retrieving from service '${serviceId}': ${error.message}`
-        )
-      }
+      return runThroughMiddleware(
+        sendToTransporter(transporter, connection, serviceId)
+      )(exchange)
     },
   }
 }

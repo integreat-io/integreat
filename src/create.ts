@@ -54,7 +54,8 @@ export default function create(
     dictionaries,
   }: Definitions,
   { transporters, transformers, handlers, authenticators }: Resources,
-  middleware: Middleware[] = []
+  middlewareForDispatch: Middleware[] = [],
+  middlewareForService: Middleware[] = []
 ): Instance {
   if (!Array.isArray(serviceDefs) || !Array.isArray(schemaDefs)) {
     throw new TypeError(
@@ -97,6 +98,7 @@ export default function create(
         auths,
         schemas,
         mapOptions,
+        middleware: middlewareForService,
       })
     )
     .reduce(indexById, {} as Record<string, Service>)
@@ -107,7 +109,7 @@ export default function create(
     schemas,
     services,
     handlers: { ...builtinHandlers, ...handlers },
-    middleware,
+    middleware: middlewareForDispatch,
   })
 
   // Return instance

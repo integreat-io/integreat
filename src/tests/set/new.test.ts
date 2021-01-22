@@ -4,7 +4,7 @@ import completeIdent from '../../middleware/completeIdent'
 import defs from '../helpers/defs'
 import resources from '../helpers/resources'
 import johnfData from '../helpers/data/userJohnf'
-import { TypedData } from '../../types'
+import { TypedData, Exchange } from '../../types'
 
 import Integreat from '../..'
 
@@ -105,4 +105,22 @@ test('should set new entries', async (t) => {
   t.is(data.length, 2)
   t.is(data[0].id, 'real1')
   t.is(data[1].id, 'real2')
+})
+
+test('should use outgoing middleware', async (t) => {
+  const failMiddleware = () => async (exchange: Exchange) => ({
+    ...exchange,
+    status: 'badresponse',
+  })
+  const outgoingMiddleware = [failMiddleware]
+  const action = {
+    type: 'SET',
+    payload: { type: 'entry', data: entriesArr },
+    meta: { ident: { id: 'johnf', roles: ['editor'] } },
+  }
+
+  const great = Integreat.create(defs, resources, [], outgoingMiddleware)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'badresponse', ret.error)
 })
