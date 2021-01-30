@@ -1105,6 +1105,31 @@ test('mapRequest should set endpoint options and cast and map request data', asy
   t.deepEqual(ret, expectedExchange)
 })
 
+test('mapRequest should deep-clone endpoint options', async (t) => {
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+    id: 'entries',
+    transporter: 'http',
+    endpoints: [
+      {
+        options: { untouchable: { touched: false } },
+      },
+    ],
+  })
+  const exchange = completeExchange({
+    type: 'GET',
+    request: {
+      type: 'entry',
+    },
+    ident: { id: 'johnf' },
+  })
+  const endpoint = service.endpointFromExchange(exchange)
+
+  const ret = service.mapRequest(exchange, endpoint!)
+  ;(ret.options?.untouchable as { touched: boolean }).touched = true
+
+  t.false((endpoint?.options.untouchable as { touched: boolean }).touched)
+})
+
 test.todo('should strip undefined from data array')
 
 test('mapRequest should authorize data array going to service', async (t) => {

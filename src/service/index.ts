@@ -7,6 +7,7 @@ import { Schema } from '../schema'
 import Auth from './Auth'
 import { lookupById } from '../utils/indexUtils'
 import { isObject } from '../utils/is'
+import deepClone from '../utils/deepClone'
 import * as authorizeData from './authorize/data'
 import authorizeExchange from './authorize/exchange'
 import { Exchange } from 'integreat-transporter-http/dist/types'
@@ -122,7 +123,7 @@ export default ({
       const { mutateRequest, allowRawRequest } = endpoint
 
       // Set endpoint options on exchange
-      const nextExchange = { ...exchange, options: { ...endpoint.options } }
+      const nextExchange = { ...exchange, options: deepClone(endpoint.options) }
 
       // Authorize and map in right order
       return isIncoming
