@@ -1,7 +1,6 @@
 import debugLib = require('debug')
 import createError from '../utils/createError'
-import { completeExchange } from '../utils/exchangeMapping'
-import { DataObject, Exchange, InternalDispatch } from '../types'
+import { DataObject, Action, InternalDispatch } from '../types'
 import { GetService } from '../dispatch'
 import setHandler from './set'
 
@@ -11,22 +10,24 @@ const debug = debugLib('great')
  * Set metadata on a service, based on the given action object.
  */
 export default async function setMeta(
-  exchange: Exchange,
+  action: Action,
   dispatch: InternalDispatch,
   getService: GetService
-): Promise<Exchange> {
+): Promise<Action> {
   const {
-    request: { params: { meta = {} } = {} },
-    target: serviceId,
-    endpointId,
-    ident,
-  } = exchange
+    payload: {
+      params: { meta = {} } = {},
+      targetService: serviceId,
+      endpoint: endpointId,
+    },
+    meta: { ident } = {},
+  } = action
   const id = `meta:${serviceId}`
 
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`SET_META: Service '${serviceId}' doesn't exist`)
-    return createError(exchange, `Service '${serviceId}' doesn't exist`)
+    return createError(action, `Service '${serviceId}' doesn't exist`)
   }
 
   const type = service.meta
@@ -38,7 +39,7 @@ export default async function setMeta(
       `SET_META: Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`
     )
     return createError(
-      exchange,
+      action,
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'noaction'
     )
@@ -55,9 +56,9 @@ export default async function setMeta(
     endpointDebug
   )
 
-  const setExchange = completeExchange({
+  const setAction = {
     type: 'SET',
-    request: {
+    payload: {
       id,
       type,
       data: { id, $type: type, ...(meta as DataObject) },
@@ -65,9 +66,9 @@ export default async function setMeta(
       params: {
         keys: Object.keys(meta as DataObject),
       },
+      endpoint: endpointId,
     },
-    endpointId,
-    ident,
-  })
-  return setHandler(setExchange, dispatch, getService)
+    meta: { ident },
+  }
+  return setHandler(setAction, dispatch, getService)
 }

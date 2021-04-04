@@ -4,7 +4,7 @@ import completeIdent from '../../middleware/completeIdent'
 import defs from '../helpers/defs'
 import resources from '../helpers/resources'
 import johnfData from '../helpers/data/userJohnf'
-import { TypedData, Exchange } from '../../types'
+import { TypedData, Action } from '../../types'
 
 import Integreat from '../..'
 
@@ -108,9 +108,12 @@ test('should set new entries', async (t) => {
 })
 
 test('should use outgoing middleware', async (t) => {
-  const failMiddleware = () => async (exchange: Exchange) => ({
-    ...exchange,
-    status: 'badresponse',
+  const failMiddleware = () => async (action: Action) => ({
+    ...action,
+    response: {
+      ...action.response,
+      status: 'badresponse',
+    },
   })
   const outgoingMiddleware = [failMiddleware]
   const action = {

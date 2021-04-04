@@ -1,5 +1,5 @@
 import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
-import { Exchange, Transporter } from '../types'
+import { Action, Transporter } from '../types'
 import { EndpointDef, Endpoint } from './endpoints/types'
 
 export interface MapOptions {
@@ -20,16 +20,16 @@ export interface IdentConfig {
   }
 }
 
-export interface ExchangeMapperWithEndpoint {
-  (exchange: Exchange, endpoint: Endpoint, isIncoming?: boolean): Exchange
+export interface ActionMapperWithEndpoint {
+  (action: Action, endpoint: Endpoint, isIncoming?: boolean): Action
 }
 
-export interface ExchangeMapper {
-  (exchange: Exchange): Exchange
+export interface ActionMapper {
+  (action: Action): Action
 }
 
-export interface AsyncExchangeMapper {
-  (exchange: Exchange): Promise<Exchange>
+export interface AsyncActionMapper {
+  (action: Action): Promise<Action>
 }
 
 export type AuthOptions = Record<string, unknown>
@@ -68,12 +68,12 @@ export interface ServiceDef {
 export interface Service {
   id: string
   meta?: string
-  endpointFromExchange: (
-    exchange: Exchange,
+  endpointFromAction: (
+    action: Action,
     isIncoming?: boolean
   ) => Endpoint | undefined
-  authorizeExchange: ExchangeMapper
-  mapRequest: ExchangeMapperWithEndpoint
-  mapResponse: ExchangeMapperWithEndpoint
-  sendExchange: AsyncExchangeMapper
+  authorizeAction: ActionMapper
+  mapRequest: ActionMapperWithEndpoint
+  mapResponse: ActionMapperWithEndpoint
+  send: AsyncActionMapper
 }

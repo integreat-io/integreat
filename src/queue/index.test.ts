@@ -2,17 +2,15 @@ import test from 'ava'
 import sinon = require('sinon')
 import later = require('later')
 import mockQueue from '../tests/helpers/mockQueue'
-import { completeExchange } from '../utils/exchangeMapping'
-import { Exchange } from '../types'
+import { Action } from '../types'
 
 import createQueue from '.'
 
 // Helpers
 
-const next = async (exchange: Exchange) => ({
-  ...exchange,
-  status: 'ok',
-  response: { ...exchange.response, data: [] },
+const next = async (action: Action) => ({
+  ...action,
+  response: { ...action.response, status: 'ok', data: [] },
 })
 
 let clock: sinon.SinonFakeTimers
@@ -39,19 +37,19 @@ test('should make underlying queue accessible', (t) => {
 
 test('middleware should return response with status queued and queued id', async (t) => {
   const queue = createQueue(mockQueue())
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
     meta: { queue: true },
-  })
-  const dispatch = sinon.stub().resolves({ ...exchange, status: 'ok' })
+  }
+  const dispatch = sinon.stub().resolves({ ...action, status: 'ok' })
   const expected = {
-    ...exchange,
-    status: 'queued',
-    id: 'queued1',
+    ...action,
+    response: { status: 'queued' },
+    meta: { ...action.meta, id: 'queued1' },
   }
 
-  const response = await queue.middleware(dispatch)(exchange)
+  const response = await queue.middleware(dispatch)(action)
 
   t.deepEqual(response, expected)
 })
@@ -60,18 +58,18 @@ test('middleware should queue queuable action', async (t) => {
   const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const dispatch = sinon.stub().resolves({ status: 'ok' })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
     meta: { queue: true },
-  })
+  }
   const expected = {
     type: 'GET',
     payload: { type: 'entry' },
     meta: { queuedAt: Date.now() },
   }
 
-  await queue.middleware(dispatch)(exchange)
+  await queue.middleware(dispatch)(action)
 
   t.is(dispatch.callCount, 0)
   t.is(push.callCount, 1)
@@ -83,28 +81,30 @@ test('middleware should queue queuable action', async (t) => {
 test('middleware should dispatch unqueuable actions and return response', async (t) => {
   const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
-  const exchange = completeExchange({ type: 'GET', request: { type: 'entry' } })
-  const expected = { ...exchange, status: 'ok' }
-  const dispatch = sinon.stub().resolves({ ...exchange, status: 'ok' })
+  const action = { type: 'GET', payload: { type: 'entry' } }
+  const expected = { ...action, response: { status: 'ok' } }
+  const dispatch = sinon
+    .stub()
+    .resolves({ ...action, response: { status: 'ok' } })
 
-  const response = await queue.middleware(dispatch)(exchange)
+  const response = await queue.middleware(dispatch)(action)
 
   t.is(push.callCount, 0)
   t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], exchange)
+  t.deepEqual(dispatch.args[0][0], action)
   t.deepEqual(response, expected)
 })
 
 test('middleware should queue with timestamp', async (t) => {
   const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
     meta: { queue: 1516113629153 },
-  })
+  }
 
-  await queue.middleware(next)(exchange)
+  await queue.middleware(next)(action)
 
   t.is(push.callCount, 1)
   t.is(push.args[0][1], 1516113629153)
@@ -113,14 +113,13 @@ test('middleware should queue with timestamp', async (t) => {
 test('middleware should queue with id', async (t) => {
   const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    id: 'action1',
-    request: { type: 'entry' },
-    meta: { queue: true },
-  })
+    payload: { type: 'entry' },
+    meta: { id: 'action1', queue: true },
+  }
 
-  await queue.middleware(next)(exchange)
+  await queue.middleware(next)(action)
 
   t.is(push.callCount, 1)
   t.is(push.args[0][2], 'action1')
@@ -129,21 +128,20 @@ test('middleware should queue with id', async (t) => {
 test('middleware should return error response when underlying queue throws', async (t) => {
   const queue = createQueue(mockQueue())
   sinon.stub(queue.queue, 'push').rejects(new Error('The horror'))
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
     meta: { queue: true },
-  })
+  }
   const expected = {
-    ...exchange,
-    status: 'error',
+    ...action,
     response: {
-      ...exchange.response,
+      status: 'error',
       error: 'Could not push to queue. Error: The horror',
     },
   }
 
-  const response = await queue.middleware(next)(exchange)
+  const response = await queue.middleware(next)(action)
 
   t.deepEqual(response, expected)
 })
@@ -152,17 +150,17 @@ test('middleware should reschedule repeating action', async (t) => {
   const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const schedule = { schedules: [{ h: [2] }] }
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
     meta: {
       queue: false,
       schedule,
     },
-  })
+  }
   const nextTime = (later.schedule(schedule).next(1) as Date).getTime()
 
-  await queue.middleware(next)(exchange)
+  await queue.middleware(next)(action)
 
   t.is(push.callCount, 1)
   const nextAction = push.args[0][0]
@@ -174,16 +172,16 @@ test('middleware should not reschedule when schedule is ended', async (t) => {
   const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
   const schedule = { schedules: [{ ['Y_b']: [2015] }] }
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
     meta: {
       queue: false,
       schedule,
     },
-  })
+  }
 
-  await queue.middleware(next)(exchange)
+  await queue.middleware(next)(action)
 
   t.is(push.callCount, 0)
 })
@@ -191,16 +189,16 @@ test('middleware should not reschedule when schedule is ended', async (t) => {
 test('middleware should not reschedule with invalid schedule definition', async (t) => {
   const queue = createQueue(mockQueue())
   const push = sinon.spy(queue.queue, 'push')
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
     meta: {
       queue: false,
       schedule: 'at 42 am',
     },
-  })
+  }
 
-  await queue.middleware(next)(exchange)
+  await queue.middleware(next)(action)
 
   t.is(push.callCount, 0)
 })

@@ -3,7 +3,7 @@ import sinon = require('sinon')
 import defs from '../helpers/defs'
 import resources from '../helpers/resources'
 import ent1Data from '../helpers/data/entry1'
-import { Exchange, TypedData } from '../../types'
+import { Action, TypedData } from '../../types'
 
 import Integreat from '../..'
 
@@ -17,10 +17,10 @@ const updatedAt = '2017-11-24T07:11:43.000Z'
 test('should use incoming endpoint over non-incoming', async (t) => {
   const send = sinon
     .stub(resources.transporters.http, 'send')
-    .callsFake(async (exchange: Exchange) => ({
-      ...exchange,
-      status: 'ok',
+    .callsFake(async (action: Action) => ({
+      ...action,
       response: {
+        status: 'ok',
         data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),
       },
     }))
@@ -56,10 +56,10 @@ test('should use incoming endpoint over non-incoming', async (t) => {
 
   t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)
-  const sentExchange = send.args[0][0]
-  t.is(sentExchange.type, 'GET')
-  t.is(sentExchange.request.id, 'ent1')
-  t.is(sentExchange.request.type, 'entry')
+  const sentAction = send.args[0][0]
+  t.is(sentAction.type, 'GET')
+  t.is(sentAction.payload.id, 'ent1')
+  t.is(sentAction.payload.type, 'entry')
   t.deepEqual(ret, expectedResponse)
 })
 
@@ -70,10 +70,10 @@ test('should use non-incoming endpoint over incoming', async (t) => {
       ...resources.transporters,
       http: {
         ...resources.transporters.http,
-        send: async (exchange: Exchange) => ({
-          ...exchange,
-          status: 'ok',
+        send: async (action: Action) => ({
+          ...action,
           response: {
+            status: 'ok',
             data: JSON.stringify({
               data: { ...ent1Data, createdAt, updatedAt },
             }),

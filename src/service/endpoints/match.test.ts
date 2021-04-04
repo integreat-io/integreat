@@ -5,16 +5,16 @@ import isMatch from './match'
 // Setup
 
 const filterNotDraft = {
-  'request.data.draft': { const: false },
+  'payload.data.draft': { const: false },
 }
 const filterEntry1 = {
-  'request.data.title': { const: 'Entry 1' },
+  'payload.data.title': { const: 'Entry 1' },
 }
 const filterParamAuthor = {
-  'request.params.author': { const: 'johnf' },
+  'payload.params.author': { const: 'johnf' },
 }
 const filterMetaRootIdent = {
-  'ident.root': { const: true },
+  'meta.ident.root': { const: true },
 }
 
 const endpointCatchAll = {}
@@ -64,456 +64,407 @@ const endpointSetWithNonIncoming = {
   match: { action: 'SET', incoming: false },
 }
 
-const exchangeDefaults = {
-  status: null,
-  request: {},
-  response: {},
-  options: {},
-  meta: {},
-}
-
 // Tests
 
 test('should match catch-all endpoint', (t) => {
   const endpoint = endpointCatchAll
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should match with action', (t) => {
   const endpoint = endpointGet
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with action', (t) => {
   const endpoint = endpointDelete
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with action array', (t) => {
   const endpoint = endpointSetAndDelete
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with action array', (t) => {
   const endpoint = endpointSetAndDelete
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with member scope', (t) => {
   const endpoints = endpointMember
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry' },
+    payload: { id: 'ent1', type: 'entry' },
   }
 
-  t.true(isMatch(endpoints)(exchange))
+  t.true(isMatch(endpoints)(action))
 })
 
 test('should mismatch with member scope', (t) => {
   const endpoints = endpointCollection
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry' },
+    payload: { id: 'ent1', type: 'entry' },
   }
 
-  t.false(isMatch(endpoints)(exchange))
+  t.false(isMatch(endpoints)(action))
 })
 
 test('should match with members scope', (t) => {
   const endpoint = endpointMembers
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { id: ['ent1', 'ent2'], type: 'entry' },
+    payload: { id: ['ent1', 'ent2'], type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with members scope', (t) => {
   const endpoint = endpointMember
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { id: ['ent1', 'ent2'], type: 'entry' },
+    payload: { id: ['ent1', 'ent2'], type: 'entry' },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with collection scope', (t) => {
   const endpoint = endpointCollection
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with collection scope', (t) => {
   const endpoint = endpointMember
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with scope array', (t) => {
   const endpoint = endpointMemberAndCollection
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with scope array', (t) => {
   const endpoint = endpointMemberAndCollection
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'entry', id: ['ent1', 'ent2'] },
+    payload: { type: 'entry', id: ['ent1', 'ent2'] },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with type', (t) => {
   const endpoint = endpointEntry
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with type', (t) => {
   const endpoint = endpointEntry
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'user' },
+    payload: { type: 'user' },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with type array', (t) => {
   const endpoint = endpointEntryAndItem
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
+    payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with type array', (t) => {
   const endpoint = endpointEntryAndItem
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: 'user' },
+    payload: { type: 'user' },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with action type array', (t) => {
   const endpoint = endpointEntry
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: ['user', 'entry'] },
+    payload: { type: ['user', 'entry'] },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with action type array', (t) => {
   const endpoint = endpointEntry
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { type: ['user', 'unknown'] },
+    payload: { type: ['user', 'unknown'] },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with endpoint id', (t) => {
   const endpoint = endpointWithId
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry' },
-    endpointId: 'endpoint1',
+    payload: { id: 'ent1', type: 'entry', endpoint: 'endpoint1' },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with endpoint id', (t) => {
   const endpoint = endpointEntry
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry' },
-    endpointId: 'endpoint1',
+    payload: { id: 'ent1', type: 'entry', endpoint: 'endpoint1' },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with required param', (t) => {
   const endpoint = endpointGetWithAuthor
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { params: { author: 'johnf' }, type: 'entry' },
+    payload: { params: { author: 'johnf' }, type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with required param', (t) => {
   const endpoint = endpointGetWithAuthor
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { params: {}, type: 'entry' },
+    payload: { params: {}, type: 'entry' },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with optional param', (t) => {
   const endpoints = endpointGetWithOptionalAuthor
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { params: { author: 'johnf' }, type: 'entry' },
+    payload: { params: { author: 'johnf' }, type: 'entry' },
   }
 
-  t.true(isMatch(endpoints)(exchange))
+  t.true(isMatch(endpoints)(action))
 })
 
 test('should match without optional param', (t) => {
   const endpoints = endpointGetWithOptionalAuthor
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { params: {}, type: 'entry' },
+    payload: { params: {}, type: 'entry' },
   }
 
-  t.true(isMatch(endpoints)(exchange))
+  t.true(isMatch(endpoints)(action))
 })
 
 test('should match with filter', (t) => {
   const endpoint = endpointSetWithFilter
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
   }
 
-  t.true(isMatch(endpoint)(exchange))
+  t.true(isMatch(endpoint)(action))
 })
 
 test('should mismatch with filter', (t) => {
   const endpoint = endpointSetWithFilter
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
   }
 
-  t.false(isMatch(endpoint)(exchange))
+  t.false(isMatch(endpoint)(action))
 })
 
 test('should match with several filters', (t) => {
   const endpoints = endpointSetWithFilters
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
   }
 
-  t.true(isMatch(endpoints)(exchange))
+  t.true(isMatch(endpoints)(action))
 })
 
 test('should mismatch with several filters', (t) => {
   const endpoints = endpointSetWithFilters
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
+    payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
   }
 
-  t.false(isMatch(endpoints)(exchange))
+  t.false(isMatch(endpoints)(action))
 })
 
 test('should match with no filters', (t) => {
   const endpoints = endpointSetWithNoFilters
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
   }
 
-  t.true(isMatch(endpoints)(exchange))
+  t.true(isMatch(endpoints)(action))
 })
 
 test('should match with params filter', (t) => {
   const endpoints = endpointSetWithParamFilter
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: {
+    payload: {
       params: { author: 'johnf' },
       data: { $type: 'entry', title: 'Entry 1', draft: true },
     },
   }
 
-  t.true(isMatch(endpoints)(exchange))
+  t.true(isMatch(endpoints)(action))
 })
 
 test('should mismatch with params filter', (t) => {
   const endpoints = endpointSetWithParamFilter
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: {
+    payload: {
       params: { author: 'lucyk' },
       data: { $type: 'entry', title: 'Entry 1', draft: true },
     },
   }
 
-  t.false(isMatch(endpoints)(exchange))
+  t.false(isMatch(endpoints)(action))
 })
 
 test('should match with meta filter', (t) => {
   const endpoints = endpointSetWithMetaFilter
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
-    ident: { root: true, id: 'root' },
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
+    meta: { ident: { root: true, id: 'root' } },
   }
 
-  t.true(isMatch(endpoints)(exchange))
+  t.true(isMatch(endpoints)(action))
 })
 
 test('should mismatch with meta filter', (t) => {
   const endpoints = endpointSetWithMetaFilter
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
-    ident: { id: 'johnf' },
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
+    meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(isMatch(endpoints)(exchange))
+  t.false(isMatch(endpoints)(action))
 })
 
 test('incoming should match incoming endpoint', (t) => {
   const endpoints = endpointSetWithIncoming
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
-    ident: { id: 'johnf' },
+    payload: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
+    meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(isMatch(endpoints)(exchange, true))
+  t.true(isMatch(endpoints)(action, true))
 })
 
 test('non-incoming should not match incoming endpoint', (t) => {
   const endpoints = endpointSetWithIncoming
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
-    ident: { id: 'johnf' },
+    payload: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
+    meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(isMatch(endpoints)(exchange, false))
+  t.false(isMatch(endpoints)(action, false))
 })
 
 test('non-incoming should match non-incoming endpoint', (t) => {
   const endpoints = endpointSetWithNonIncoming
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
-    ident: { id: 'johnf' },
+    payload: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
+    meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(isMatch(endpoints)(exchange, false))
+  t.true(isMatch(endpoints)(action, false))
 })
 
 test('incoming should not match non-incoming endpoint', (t) => {
   const endpoints = endpointSetWithNonIncoming
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'SET',
-    request: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
-    ident: { id: 'johnf' },
+    payload: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
+    meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(isMatch(endpoints)(exchange, true))
+  t.false(isMatch(endpoints)(action, true))
 })
 
 test('incoming should match non-incoming endpoint', (t) => {
   const endpoints = endpointGet
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
-    ident: { id: 'johnf' },
+    payload: { data: JSON.stringify({ $type: 'entry', title: 'Entry 1' }) },
+    meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(isMatch(endpoints)(exchange, true))
+  t.true(isMatch(endpoints)(action, true))
 })

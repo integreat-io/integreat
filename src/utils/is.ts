@@ -1,4 +1,4 @@
-import { DataObject, TypedData, Reference, Action, Exchange } from '../types'
+import { DataObject, TypedData, Reference, Action } from '../types'
 import { Shape, PropertyShape } from '../schema/types'
 
 export const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -33,12 +33,6 @@ export const isAction = (action: unknown): action is Action =>
   isDataObject(action) &&
   typeof action.type === 'string' &&
   isDataObject(action.payload)
-
-export const isExchange = (exchange: unknown): exchange is Exchange =>
-  isDataObject(exchange) &&
-  typeof exchange.type === 'string' &&
-  isDataObject(exchange.request) &&
-  (typeof exchange.status === 'string' || exchange.status === null)
 
 export const isTruthy = (value: unknown): boolean => !!value
 export const isFalsy = (value: unknown): boolean => !value

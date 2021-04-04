@@ -1,11 +1,10 @@
 import pLimit = require('p-limit')
-import { Exchange, Ident, InternalDispatch, Meta, TypedData } from '../types'
-import { completeExchange } from '../utils/exchangeMapping'
+import { Action, InternalDispatch, ActionMeta, TypedData } from '../types'
 import createError from '../utils/createError'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is'
 import { ensureArray } from '../utils/array'
 
-interface ExchangeParams extends Record<string, unknown> {
+interface ActionParams extends Record<string, unknown> {
   type: string | string[]
   service?: string
   action?: string
@@ -14,8 +13,8 @@ interface ExchangeParams extends Record<string, unknown> {
 }
 
 interface SyncParams extends Record<string, unknown> {
-  from?: string | Partial<ExchangeParams> | (string | Partial<ExchangeParams>)[]
-  to?: string | Partial<ExchangeParams>
+  from?: string | Partial<ActionParams> | (string | Partial<ActionParams>)[]
+  to?: string | Partial<ActionParams>
   updatedAfter?: Date
   updatedUntil?: Date
   dontQueueSet?: boolean
@@ -29,82 +28,62 @@ interface MetaData {
   }
 }
 
-const createGetMetaExchange = (
-  target: string,
-  ident: Ident | undefined,
-  meta: Meta
-) =>
-  completeExchange({
-    type: 'GET_META',
-    request: { params: { keys: 'lastSyncedAt' } },
-    target,
-    ident,
-    meta,
-  })
+const createGetMetaAction = (targetService: string, meta?: ActionMeta) => ({
+  type: 'GET_META',
+  payload: { params: { keys: 'lastSyncedAt' }, targetService },
+  meta,
+})
 
-const createSetMetaExchange = (
+const createSetMetaAction = (
   lastSyncedAt: Date,
-  target: string,
-  ident: Ident | undefined,
-  meta: Meta
-) =>
-  completeExchange({
-    type: 'SET_META',
-    request: { params: { meta: { lastSyncedAt } } },
-    target,
-    ident,
-    meta,
-  })
+  targetService: string,
+  meta?: ActionMeta
+) => ({
+  type: 'SET_META',
+  payload: { params: { meta: { lastSyncedAt } }, targetService },
+  meta,
+})
 
-const createGetExchange = (
-  { type, service: target, action = 'GET', ...params }: ExchangeParams,
-  ident: Ident | undefined,
-  meta: Meta
-) =>
-  completeExchange({
-    type: action,
-    request: { type, params },
-    target,
-    ident,
-    meta,
-  })
+const createGetAction = (
+  { type, service: targetService, action = 'GET', ...params }: ActionParams,
+  meta?: ActionMeta
+) => ({
+  type: action,
+  payload: { type, params, targetService },
+  meta,
+})
 
-const createSetExchange = (
+const createSetAction = (
   data: unknown,
   {
     type,
-    service: target,
+    service: targetService,
     action = 'SET',
     dontQueueSet = false,
     ...params
-  }: ExchangeParams,
-  ident: Ident | undefined,
-  meta: Meta
-) =>
-  completeExchange({
-    type: action,
-    request: { type, data, params },
-    target,
-    ident,
-    meta: { ...meta, queue: !dontQueueSet },
-  })
+  }: ActionParams,
+  meta?: ActionMeta
+) => ({
+  type: action,
+  payload: { type, data, params, targetService },
+  meta: { ...meta, queue: !dontQueueSet },
+})
 
 const setUpdatedDatesAndType = (
   dispatch: InternalDispatch,
-  ident: Ident | undefined,
-  meta: Meta,
   type: string | string[],
-  syncParams: SyncParams
+  syncParams: SyncParams,
+  meta?: ActionMeta
 ) =>
-  async function setUpdatedDatesAndType(params: Partial<ExchangeParams>) {
+  async function setUpdatedDatesAndType(params: Partial<ActionParams>) {
     const { retrieve, updatedAfter, updatedUntil } = syncParams
 
     // Fetch lastSyncedAt from meta when needed, and use as updatedAfter
     if (retrieve === 'updated' && params.service && !updatedAfter) {
       const metaResponse = await dispatch(
-        createGetMetaExchange(params.service, ident, meta)
+        createGetMetaAction(params.service, meta)
       )
-      params.updatedAfter = (metaResponse.response.data as
+      params.updatedAfter = (metaResponse.response?.data as
         | MetaData
         | undefined)?.meta.lastSyncedAt
     }
@@ -120,20 +99,19 @@ const setUpdatedDatesAndType = (
 
 const setMetaFromParams = (
   dispatch: InternalDispatch,
-  { ident, meta }: Exchange,
+  { meta }: Action,
   datesFromData: (Date | undefined)[]
 ) =>
   async function setMetaFromParams(
-    { service, updatedUntil }: ExchangeParams,
+    { service, updatedUntil }: ActionParams,
     index: number
   ) {
     if (service) {
       return dispatch(
-        createSetMetaExchange(
+        createSetMetaAction(
           // eslint-disable-next-line security/detect-object-injection
           datesFromData[index] || updatedUntil || new Date(),
           service,
-          ident,
           meta
         )
       )
@@ -141,27 +119,27 @@ const setMetaFromParams = (
     return { status: 'noaction' }
   }
 
-const paramsAsObject = (params?: string | Partial<ExchangeParams>) =>
+const paramsAsObject = (params?: string | Partial<ActionParams>) =>
   typeof params === 'string' ? { service: params } : params
 
 const generateFromParams = async (
   dispatch: InternalDispatch,
   type: string | string[],
-  { request: { params = {} }, ident, meta }: Exchange
+  { payload: { params = {} }, meta }: Action
 ) =>
   Promise.all(
     ensureArray((params as SyncParams).from)
       .map(paramsAsObject)
       .filter(isNotNullOrUndefined)
-      .map(setUpdatedDatesAndType(dispatch, ident, meta, type, params))
+      .map(setUpdatedDatesAndType(dispatch, type, params, meta))
       .map((p) => pLimit(1)(() => p)) // Run one promise at a time
   )
 
 function generateToParams(
-  fromParams: ExchangeParams[],
+  fromParams: ActionParams[],
   type: string | string[],
-  { request: { params = {} } }: Exchange
-): ExchangeParams {
+  { payload: { params = {} } }: Action
+): ActionParams {
   const { to, updatedUntil, dontQueueSet }: SyncParams = params
   const oldestUpdatedAfter = fromParams
     .map((params) => params.updatedAfter)
@@ -175,13 +153,11 @@ function generateToParams(
   }
 }
 
-async function extractExchangeParams(
-  exchange: Exchange,
+async function extractActionParams(
+  action: Action,
   dispatch: InternalDispatch
-): Promise<[ExchangeParams[], ExchangeParams | undefined]> {
-  const {
-    request: { type },
-  } = exchange
+): Promise<[ActionParams[], ActionParams | undefined]> {
+  const { type } = action.payload
   // Require a type
   if (!type) {
     return [[], undefined]
@@ -189,9 +165,9 @@ async function extractExchangeParams(
 
   // Make from an array of params objects and fetch updatedAfter from meta
   // when needed
-  const fromParams = await generateFromParams(dispatch, type, exchange)
+  const fromParams = await generateFromParams(dispatch, type, action)
 
-  return [fromParams, generateToParams(fromParams, type, exchange)]
+  return [fromParams, generateToParams(fromParams, type, action)]
 }
 
 function sortByUpdatedAt(
@@ -211,39 +187,38 @@ const withinDateRange = (updatedAfter?: Date, updatedUntil?: Date) => (
 
 async function retrieveDataFromOneService(
   dispatch: InternalDispatch,
-  params: ExchangeParams,
-  ident: Ident | undefined,
-  meta: Meta
+  params: ActionParams,
+  meta?: ActionMeta
 ) {
   const { updatedAfter, updatedUntil } = params
 
   // Fetch data from service
-  const response = await dispatch(createGetExchange(params, ident, meta))
+  const responseAction = await dispatch(createGetAction(params, meta))
 
   // Throw is not successfull
-  if (response.status !== 'ok') {
-    throw new Error(response.response.error)
+  if (responseAction.response?.status !== 'ok') {
+    throw new Error(responseAction.response?.error)
   }
 
   // Return array of data filtered with updatedAt within date range
-  const data = ensureArray(response.response.data).filter(isTypedData)
+  const data = ensureArray(responseAction.response.data).filter(isTypedData)
 
   return updatedAfter || updatedUntil
     ? data.filter(withinDateRange(updatedAfter, updatedUntil))
     : data
 }
 
-const prepareInputParams = (exchange: Exchange) => ({
-  ...exchange,
-  request: {
-    ...exchange.request,
+const prepareInputParams = (action: Action) => ({
+  ...action,
+  payload: {
+    ...action.payload,
     params: {
-      ...exchange.request.params,
+      ...action.payload.params,
       updatedUntil:
-        exchange.request.params?.updatedUntil === 'now'
+        action.payload.params?.updatedUntil === 'now'
           ? new Date()
-          : exchange.request.params?.updatedUntil,
-      retrieve: exchange.request.params?.retrieve ?? 'all',
+          : action.payload.params?.updatedUntil,
+      retrieve: action.payload.params?.retrieve ?? 'all',
     } as SyncParams,
   },
 })
@@ -252,13 +227,13 @@ const extractUpdatedAt = (item?: TypedData) =>
   (item?.updatedAt && new Date(item?.updatedAt)) || undefined
 
 const fetchDataFromService = (
-  fromParams: ExchangeParams[],
+  fromParams: ActionParams[],
   dispatch: InternalDispatch,
-  { ident, meta }: Exchange
+  { meta }: Action
 ) =>
   Promise.all(
     fromParams.map((params) =>
-      retrieveDataFromOneService(dispatch, params, ident, meta)
+      retrieveDataFromOneService(dispatch, params, meta)
     )
   )
 
@@ -290,26 +265,25 @@ const extractLastSyncedAtDates = (dataFromServices: TypedData[][]) =>
  * the latest updatedAt from the data will be used for each service.
  */
 export default async function syncHandler(
-  exchangeInput: Exchange,
+  inputAction: Action,
   dispatch: InternalDispatch
-): Promise<Exchange> {
-  const exchange = prepareInputParams(exchangeInput)
+): Promise<Action> {
+  const action = prepareInputParams(inputAction)
   const {
-    ident,
-    meta,
-    request: {
+    payload: {
       params: { retrieve, setLastSyncedAtFromData = false },
     },
-  } = exchange
-  const [fromParams, toParams] = await extractExchangeParams(
-    prepareInputParams(exchange),
+    meta,
+  } = action
+  const [fromParams, toParams] = await extractActionParams(
+    prepareInputParams(action),
     dispatch
   )
-  const { alwaysSet = false } = exchange.request.params ?? {}
+  const { alwaysSet = false } = action.payload.params ?? {}
 
   if (fromParams.length === 0 || !toParams) {
     return createError(
-      exchange,
+      action,
       'SYNC: `type`, `to`, and `from` parameters are required',
       'badrequest'
     )
@@ -321,35 +295,36 @@ export default async function syncHandler(
     const dataFromServices = await fetchDataFromService(
       fromParams,
       dispatch,
-      exchange
+      action
     )
     data = dataFromServices.flat().sort(sortByUpdatedAt)
     if (setLastSyncedAtFromData) {
       datesFromData = extractLastSyncedAtDates(dataFromServices)
     }
   } catch (error) {
-    return createError(exchange, `SYNC: Could not get data. ${error.message}`)
+    return createError(action, `SYNC: Could not get data. ${error.message}`)
   }
 
   if (!alwaysSet && data.length === 0) {
-    return createError(exchange, 'SYNC: No data to set', 'noaction')
+    return createError(action, 'SYNC: No data to set', 'noaction')
   }
 
-  const response = await dispatch(
-    createSetExchange(data, toParams, ident, meta)
-  )
-  if (response.status !== 'ok' && response.status !== 'queued') {
+  const responseAction = await dispatch(createSetAction(data, toParams, meta))
+  if (
+    responseAction.response?.status !== 'ok' &&
+    responseAction.response?.status !== 'queued'
+  ) {
     return createError(
-      exchange,
-      `SYNC: Could not set data. ${response.response.error}`
+      action,
+      `SYNC: Could not set data. ${responseAction.response?.error}`
     )
   }
 
   if (retrieve === 'updated') {
     await Promise.all(
-      fromParams.map(setMetaFromParams(dispatch, exchange, datesFromData))
+      fromParams.map(setMetaFromParams(dispatch, action, datesFromData))
     )
   }
 
-  return { ...exchange, status: 'ok' }
+  return { ...action, response: { ...action.response, status: 'ok' } }
 }

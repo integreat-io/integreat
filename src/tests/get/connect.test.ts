@@ -4,7 +4,7 @@ import tokenAuth from '../../authenticators/token'
 import defs from '../helpers/defs'
 import resources from '../helpers/resources'
 import entriesData from '../helpers/data/entries'
-import { Connection, Exchange } from '../../types'
+import { Connection, Action } from '../../types'
 
 import Integreat from '../..'
 
@@ -17,11 +17,11 @@ test('should connect to service and reuse connection', async (t) => {
     _args: Record<string, unknown> | null,
     conn: Connection | null
   ) => conn || { status: 'ok', value: `Call ${count++}` }
-  const send = async (exchange: Exchange, _connection: Connection | null) => ({
-    ...exchange,
-    status: 'ok',
+  const send = async (action: Action, _connection: Connection | null) => ({
+    ...action,
     response: {
-      ...exchange.response,
+      ...action.response,
+      status: 'ok',
       data: JSON.stringify(entriesData),
     },
   })

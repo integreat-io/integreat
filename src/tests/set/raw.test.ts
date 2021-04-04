@@ -37,7 +37,7 @@ test('should set new entry with raw data as user', async (t) => {
     .reply(201, { data: { key: 'ent1', ok: true } })
   const action = {
     type: 'SET',
-    payload: { type: 'entry', data: putData, rawForAll: true },
+    payload: { type: 'entry', data: putData, params: { rawForAll: true } },
     meta: { ident: { id: 'johnf', roles: ['editor'] } },
   }
 
@@ -57,7 +57,7 @@ test('should set new entry with raw data as root', async (t) => {
     .reply(201, { data: { key: 'ent2', ok: true } })
   const action = {
     type: 'SET',
-    payload: { type: 'entry', data: putData2, rawForRoot: true },
+    payload: { type: 'entry', data: putData2, params: { rawForRoot: true } },
     meta: { ident: { id: 'admin', root: true } },
   }
 
@@ -77,7 +77,7 @@ test('should return error when user is setting new entry with raw data', async (
     .reply(201, { data: { key: 'ent3', ok: true } })
   const action = {
     type: 'SET',
-    payload: { type: 'entry', data: putData3, rawForRoot: true },
+    payload: { type: 'entry', data: putData3, params: { rawForRoot: true } },
     meta: { ident: { id: 'johnf', roles: ['editor'] } },
   }
 

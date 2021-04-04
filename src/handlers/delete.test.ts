@@ -8,7 +8,7 @@ import {
 import createService from '../service'
 import createSchema from '../schema'
 import functions from '../transformers/builtIns'
-import { completeExchange } from '../utils/exchangeMapping'
+import { Action } from '../types'
 
 import deleteFn from './delete'
 
@@ -49,7 +49,10 @@ const mapOptions = {
 
 const setupService = createService({ schemas, mapOptions })
 
-const dispatch = async () => completeExchange({ status: 'ok' })
+const dispatch = async (action: Action) => ({
+  ...action,
+  response: { ...action.response, status: 'ok' },
+})
 
 test.after.always(() => {
   nock.restore()
@@ -85,20 +88,20 @@ test('should delete items from service', async (t) => {
   })
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: {
+    payload: {
       data: [
         { id: 'ent1', $type: 'entry' },
         { id: 'ent2', $type: 'entry' },
       ],
+      targetService: 'entries',
     },
-    target: 'entries',
-  })
+  }
 
-  const ret = await deleteFn(exchange, dispatch, getService)
+  const ret = await deleteFn(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
 })
 
@@ -124,16 +127,15 @@ test('should delete one item from service', async (t) => {
     ],
   })
   const getService = () => src
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: { id: 'ent1', type: 'entry' },
-    target: 'entries',
-  })
+    payload: { id: 'ent1', type: 'entry', targetService: 'entries' },
+  }
 
-  const ret = await deleteFn(exchange, dispatch, getService)
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
-  t.is(ret.status, 'ok', ret.response.error)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
 })
 
@@ -163,21 +165,21 @@ test('should infer service id from type', async (t) => {
   })
   const getService = (type?: string | string[], _service?: string) =>
     type === 'entry' ? src : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: {
+    payload: {
+      type: 'entry',
       data: [
         { id: 'ent1', $type: 'entry' },
         { id: 'ent2', $type: 'entry' },
       ],
-      type: 'entry',
     },
-  })
+  }
 
-  const ret = await deleteFn(exchange, dispatch, getService)
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
-  t.is(ret.status, 'ok', ret.response.error)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
 })
 
@@ -203,20 +205,20 @@ test('should return error from response', async (t) => {
     ],
   })
   const getService = () => src
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: {
-      data: [{ id: 'ent1', $type: 'entry' }],
+    payload: {
       type: 'entry',
+      data: [{ id: 'ent1', $type: 'entry' }],
     },
-  })
+  }
 
-  const ret = await deleteFn(exchange, dispatch, getService)
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
-  t.is(ret.status, 'notfound', ret.response.error)
-  t.is(typeof ret.response.error, 'string')
-  t.falsy(ret.response.data)
+  t.is(ret.response?.status, 'notfound', ret.response?.error)
+  t.is(typeof ret.response?.error, 'string')
+  t.falsy(ret.response?.data)
   t.true(scope.isDone())
 })
 
@@ -233,15 +235,14 @@ test('should return noaction when nothing to delete', async (t) => {
     ],
   })
   const getService = () => src
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: { data: [] },
-    target: 'entries',
-  })
+    payload: { data: [], targetService: 'entries' },
+  }
 
-  const ret = await deleteFn(exchange, dispatch, getService)
+  const ret = await deleteFn(action, dispatch, getService)
 
-  t.is(ret.status, 'noaction')
+  t.is(ret.response?.status, 'noaction')
 })
 
 test('should skip null values in data array', async (t) => {
@@ -257,15 +258,14 @@ test('should skip null values in data array', async (t) => {
     ],
   })
   const getService = () => src
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: { data: [null] },
-    target: 'entries',
-  })
+    payload: { data: [null], targetService: 'entries' },
+  }
 
-  const ret = await deleteFn(exchange, dispatch, getService)
+  const ret = await deleteFn(action, dispatch, getService)
 
-  t.is(ret.status, 'noaction')
+  t.is(ret.response?.status, 'noaction')
 })
 
 test('should only delete items the ident is authorized to', async (t) => {
@@ -294,61 +294,60 @@ test('should only delete items the ident is authorized to', async (t) => {
   })
   const getService = (_type?: string | string[], service?: string) =>
     service === 'accounts' ? src : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: {
+    payload: {
       data: [
         { id: 'johnf', $type: 'account' },
         { id: 'betty', $type: 'account' },
       ],
+      targetService: 'accounts',
     },
-    target: 'accounts',
-    ident: { id: 'johnf' },
-  })
+    meta: { ident: { id: 'johnf' } },
+  }
 
-  const ret = await deleteFn(exchange, dispatch, getService)
+  const ret = await deleteFn(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
 })
 
 test('should return error when no service exists for a type', async (t) => {
   const getService = () => undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: { id: 'ent1', type: 'entry' },
-  })
+    payload: { id: 'ent1', type: 'entry' },
+  }
 
-  const ret = await deleteFn(exchange, dispatch, getService)
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
-  t.is(ret.status, 'error')
-  t.is(ret.response.error, "No service exists for type 'entry'")
+  t.is(ret.response?.status, 'error')
+  t.is(ret.response?.error, "No service exists for type 'entry'")
 })
 
 test('should return error when specified service does not exist', async (t) => {
   const getService = () => undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: { id: 'ent1', type: 'entry' },
-    target: 'entries',
-  })
+    payload: { id: 'ent1', type: 'entry', targetService: 'entries' },
+  }
 
-  const ret = await deleteFn(exchange, dispatch, getService)
+  const ret = await deleteFn(action, dispatch, getService)
 
   t.truthy(ret)
-  t.is(ret.status, 'error')
-  t.is(ret.response.error, "Service with id 'entries' does not exist")
+  t.is(ret.response?.status, 'error')
+  t.is(ret.response?.error, "Service with id 'entries' does not exist")
 })
 
 test('should return error if no getService', async (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: { id: 'ent1', type: 'entry' },
-  })
+    payload: { id: 'ent1', type: 'entry' },
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ret = await deleteFn(exchange, dispatch, undefined as any)
+  const ret = await deleteFn(action, dispatch, undefined as any)
 
-  t.is(ret.status, 'error')
+  t.is(ret.response?.status, 'error')
 })

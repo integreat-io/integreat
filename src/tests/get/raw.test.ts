@@ -24,7 +24,7 @@ test('should get raw response from service for root', async (t) => {
     .reply(200, { data: { ...ent1Data, createdAt, updatedAt } })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', rawForRoot: true }, // Flag to trigger raw endpoint
+    payload: { id: 'ent1', type: 'entry', params: { rawForRoot: true } }, // Flag to trigger raw endpoint
     meta: { ident: { id: 'admin', root: true } },
   }
   const expected = { ...ent1Data, createdAt, updatedAt }
@@ -42,7 +42,7 @@ test('should get raw response from service for user', async (t) => {
     .reply(200, { data: { ...ent2Data, createdAt, updatedAt } })
   const action = {
     type: 'GET',
-    payload: { id: 'ent2', type: 'entry', rawForAll: true }, // Flag to trigger raw endpoint
+    payload: { id: 'ent2', type: 'entry', params: { rawForAll: true } }, // Flag to trigger raw endpoint
     meta: { ident: { id: 'johnf' } },
   }
   const expected = { ...ent2Data, createdAt, updatedAt }
@@ -60,7 +60,7 @@ test('should return error when user tries to get raw response', async (t) => {
     .reply(200, { data: { ...ent2Data, createdAt, updatedAt } })
   const action = {
     type: 'GET',
-    payload: { id: 'ent3', type: 'entry', rawForRoot: true }, // Flag to trigger raw endpoint
+    payload: { id: 'ent3', type: 'entry', params: { rawForRoot: true } }, // Flag to trigger raw endpoint
     meta: { ident: { id: 'johnf' } },
   }
 

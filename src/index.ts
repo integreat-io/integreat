@@ -9,7 +9,6 @@ export {
   Dispatch,
   Data,
   TypedData,
-  Exchange,
   Ident,
   Transporter,
   Connection,

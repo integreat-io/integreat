@@ -9,8 +9,7 @@ import {
 } from '../tests/helpers/json'
 import schema from '../schema'
 import functions from '../transformers/builtIns'
-import { completeExchange } from '../utils/exchangeMapping'
-import { Exchange, DataObject } from '../types'
+import { Action, DataObject } from '../types'
 
 import get from './get'
 
@@ -83,7 +82,10 @@ const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
     ],
   })
 
-const dispatch = async () => completeExchange({ status: 'ok' })
+const dispatch = async (action: Action): Promise<Action> => ({
+  ...action,
+  response: { ...action.response, status: 'ok' },
+})
 
 test.after.always(() => {
   nock.restore()
@@ -104,20 +106,20 @@ test('should get all items from service', async (t) => {
         updatedAt: date.toISOString(),
       },
     ])
-  const ident = { id: 'johnf' }
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
       params: { source: 'thenews' },
+      targetService: 'entries',
     },
-    target: 'entries',
-    ident,
-  })
+    meta: { ident: { id: 'johnf' } },
+  }
   const svc = setupService('http://api1.test/database')
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
   const expectedResponse = {
+    status: 'ok',
     data: [
       {
         $type: 'entry',
@@ -131,9 +133,8 @@ test('should get all items from service', async (t) => {
     ],
   }
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
   t.deepEqual(ret.response, expectedResponse)
   t.true(scope.isDone())
 })
@@ -142,24 +143,24 @@ test('should get item by id from service', async (t) => {
   nock('http://api1.test')
     .get('/database/entry:ent1')
     .reply(200, { id: 'ent1', type: 'entry' })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       id: 'ent1',
       type: 'entry',
+      targetService: 'entries',
     },
-    target: 'entries',
-  })
+  }
   const svc = setupService(
     'http://api1.test/database/{{params.type}}:{{params.id}}'
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
-  t.is((ret.response.data as DataObject).id, 'ent1')
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is((ret.response?.data as DataObject).id, 'ent1')
 })
 
 test('should get items by id array from service from member_s_ endpoint', async (t) => {
@@ -170,25 +171,25 @@ test('should get items by id array from service from member_s_ endpoint', async 
       { id: 'ent1', type: 'entry' },
       { id: 'ent2', type: 'entry' },
     ])
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       id: ['ent1', 'ent2'],
       type: 'entry',
+      targetService: 'entries',
     },
-    target: 'entries',
-  })
+  }
   const svc = setupService('http://api12.test/entries?id={{params.id}}', {
     scope: 'members',
     id: 'membersEndpoint',
   })
   const getService = () => svc
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
-  t.true(Array.isArray(ret.response.data))
-  const data = ret.response.data as DataObject[]
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.true(Array.isArray(ret.response?.data))
+  const data = ret.response?.data as DataObject[]
   t.is(data.length, 2)
   t.is(data[0].id, 'ent1')
   t.is(data[1].id, 'ent2')
@@ -202,25 +203,25 @@ test('should get items by id array from member endpoints', async (t) => {
     .reply(200, { id: 'ent2', type: 'entry' })
     .get('/entries/ent3')
     .reply(404, undefined)
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       id: ['ent1', 'ent2', 'ent3'],
       type: 'entry',
+      targetService: 'entries',
     },
-    target: 'entries',
-  })
+  }
   const svc = setupService('http://api6.test/entries/{{params.id}}', {
     scope: 'member',
   })
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
-  t.true(Array.isArray(ret.response.data))
-  const data = ret.response.data as DataObject[]
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.true(Array.isArray(ret.response?.data))
+  const data = ret.response?.data as DataObject[]
   t.is(data.length, 3)
   t.is(data[0].id, 'ent1')
   t.is(data[1].id, 'ent2')
@@ -229,33 +230,32 @@ test('should get items by id array from member endpoints', async (t) => {
 })
 
 test('should pass on ident when getting from id array', async (t) => {
-  const ident = { id: 'johnf' }
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       id: ['ent1', 'ent2'],
       type: 'entry',
+      targetService: 'entries',
     },
-    target: 'entries',
-    ident,
-  })
+    meta: { ident: { id: 'johnf' } },
+  }
   const svc = setupService('http://api11.test/entries/{id}', {
     scope: 'member',
   })
-  const sendExchangeStub = sinon
-    .stub(svc, 'sendExchange')
-    .callsFake(async (exchange: Exchange) => ({
-      ...exchange,
+  const sendStub = sinon
+    .stub(svc, 'send')
+    .callsFake(async (action: Action) => ({
+      ...action,
       response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
     }))
   const getService = () => svc
 
-  await get(exchange, dispatch, getService)
+  await get(action, dispatch, getService)
 
-  t.is(sendExchangeStub.callCount, 2)
-  const exchange1 = sendExchangeStub.args[0][0]
-  t.truthy(exchange1)
-  t.is(exchange1.ident, ident)
+  t.is(sendStub.callCount, 2)
+  const action1 = sendStub.args[0][0]
+  t.truthy(action1)
+  t.deepEqual(action1.meta?.ident, { id: 'johnf' })
 })
 
 test('should return error when one or more requests for individual ids fails', async (t) => {
@@ -264,176 +264,175 @@ test('should return error when one or more requests for individual ids fails', a
     .reply(200, { id: 'ent1', type: 'entry' })
     .get('/entries/ent2')
     .reply(500)
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       id: ['ent1', 'ent2'],
       type: 'entry',
+      targetService: 'entries',
     },
-    target: 'entries',
-  })
+  }
   const svc = setupService('http://api8.test/entries/{id}', { scope: 'member' })
   const getService = () => svc
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'error')
+  t.is(ret.response?.status, 'error')
 })
 
 test('should get item by id from service when id is array of one', async (t) => {
   nock('http://api7.test')
     .get('/entries/ent1')
     .reply(200, { id: 'ent1', type: 'entry' })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       id: ['ent1'],
       type: 'entry',
+      targetService: 'entries',
     },
-    target: 'entries',
-  })
+  }
   const svc = setupService('http://api7.test/entries/{{params.id}}', {
     scope: 'member',
   })
   const getService = () => svc
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
-  t.is((ret.response.data as DataObject).id, 'ent1')
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is((ret.response?.data as DataObject).id, 'ent1')
 })
 
 test('should get default values from type', async (t) => {
   nock('http://api1.test')
     .get('/database')
     .reply(200, [{ id: 'ent1', type: 'entry' }])
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
+      targetService: 'entries',
     },
-    target: 'entries',
-  })
+  }
   const svc = setupService('http://api1.test/database')
   const getService = () => svc
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is((ret.response.data as DataObject[])[0].byline, 'Somebody')
+  t.is((ret.response?.data as DataObject[])[0].byline, 'Somebody')
 })
 
 test('should not get default values from type', async (t) => {
   nock('http://api1.test')
     .get('/database')
     .reply(200, [{ id: 'ent1', type: 'entry' }])
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
+      targetService: 'entries',
     },
-    target: 'entries',
-    response: { returnNoDefaults: true },
-  })
+    response: { status: null, returnNoDefaults: true },
+  }
   const svc = setupService('http://api1.test/database')
   const getService = () => svc
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is((ret.response.data as DataObject[])[0].byline, undefined)
+  t.is((ret.response?.data as DataObject[])[0].byline, undefined)
 })
 
 test('should infer service id from type', async (t) => {
   nock('http://api1.test')
     .get('/database')
     .reply(200, [{ id: 'ent1', type: 'entry' }])
-  const exchange = completeExchange({ type: 'GET', request: { type: 'entry' } })
+  const action = { type: 'GET', payload: { type: 'entry' } }
   const svc = setupService('http://api1.test/database')
   const getService = (type?: string | string[], _service?: string) =>
     type === 'entry' ? svc : undefined
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'ok')
-  t.is((ret.response.data as DataObject[])[0].id, 'ent1')
+  t.is(ret.response?.status, 'ok')
+  t.is((ret.response?.data as DataObject[])[0].id, 'ent1')
 })
 
 test('should get from other endpoint', async (t) => {
   nock('http://api5.test')
     .get('/other')
     .reply(200, [{ id: 'ent1', type: 'entry' }])
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
+      endpoint: 'other',
     },
-    endpointId: 'other',
-  })
+  }
   const svc = setupService('http://api5.test/database')
   const getService = () => svc
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
-  t.is((ret.response.data as DataObject[])[0].id, 'ent1')
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is((ret.response?.data as DataObject[])[0].id, 'ent1')
 })
 
 test('should return error on not found', async (t) => {
   nock('http://api3.test').get('/unknown').reply(404)
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
+      targetService: 'entries',
     },
-    target: 'entries',
-  })
+  }
   const svc = setupService('http://api3.test/unknown')
   const getService = () => svc
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'notfound')
-  t.is(ret.response.data, undefined)
-  t.is(typeof ret.response.error, 'string')
+  t.is(ret.response?.status, 'notfound')
+  t.is(ret.response?.data, undefined)
+  t.is(typeof ret.response?.error, 'string')
 })
 
 test('should return error when no service exists for type', async (t) => {
-  const exchange = completeExchange({ type: 'GET', request: { type: 'entry' } })
+  const action = { type: 'GET', payload: { type: 'entry' } }
   const getService = () => undefined
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'error')
-  t.is(ret.response.error, "No service exists for type 'entry'")
+  t.is(ret.response?.status, 'error')
+  t.is(ret.response?.error, "No service exists for type 'entry'")
 })
 
 test('should return error when specified service does not exist', async (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
-    target: 'entries',
-  })
+    payload: { type: 'entry', targetService: 'entries' },
+  }
   const getService = () => undefined
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'error')
-  t.is(ret.response.error, "Service with id 'entries' does not exist")
+  t.is(ret.response?.status, 'error')
+  t.is(ret.response?.error, "Service with id 'entries' does not exist")
 })
 
 test('should return error when no getService', async (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
+      targetService: 'entries',
     },
-    target: 'entries',
-  })
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ret = await get(exchange, undefined as any, undefined as any)
+  const ret = await get(action, undefined as any, undefined as any)
 
   t.truthy(ret)
-  t.is(ret.status, 'error')
+  t.is(ret.response?.status, 'error')
 })
 
 test('should get only authorized items', async (t) => {
@@ -456,15 +455,14 @@ test('should get only authorized items', async (t) => {
         updatedAt: date.toISOString(),
       },
     ])
-  const ident = { id: 'johnf' }
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'account',
+      targetService: 'accounts',
     },
-    target: 'accounts',
-    ident,
-  })
+    meta: { ident: { id: 'johnf' } },
+  }
   const svc = setupService('http://api9.test/database', {}, { id: 'accounts' })
   const getService = (_type?: string | string[], service?: string) =>
     service === 'accounts' ? svc : undefined
@@ -478,30 +476,30 @@ test('should get only authorized items', async (t) => {
     },
   ]
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
-  const data = ret.response.data
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  const data = ret.response?.data
   t.deepEqual(data, expectedData)
 })
 
 test('should return noaction when no endpoint matches', async (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
       params: { source: 'thenews' },
+      endpoint: 'unknown',
+      targetService: 'entries',
     },
-    endpointId: 'unknown',
-    target: 'entries',
-    ident: { id: 'johnf' },
-  })
+    meta: { ident: { id: 'johnf' } },
+  }
   const svc = setupService('http://api1.test/database')
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
 
-  const ret = await get(exchange, dispatch, getService)
+  const ret = await get(action, dispatch, getService)
 
-  t.is(ret.status, 'noaction', ret.response.error)
-  t.is(typeof ret.response.error, 'string')
+  t.is(ret.response?.status, 'noaction', ret.response?.error)
+  t.is(typeof ret.response?.error, 'string')
 })

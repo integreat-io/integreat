@@ -15,7 +15,7 @@ import createSchema, { Schema } from './schema'
 import createService from './service'
 import createMapOptions from './utils/createMapOptions'
 import { lookupById } from './utils/indexUtils'
-import createDispatch, { ExchangeHandler } from './dispatch'
+import createDispatch, { ActionHandler } from './dispatch'
 import { indexById } from './utils/indexUtils'
 
 export interface Definitions {
@@ -29,7 +29,7 @@ export interface Definitions {
 
 export interface Resources {
   transporters?: Record<string, Transporter>
-  handlers?: Record<string, ExchangeHandler>
+  handlers?: Record<string, ActionHandler>
   authenticators?: Record<string, Authenticator>
   transformers?: Record<string, CustomFunction>
 }

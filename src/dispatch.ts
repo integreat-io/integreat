@@ -1,17 +1,7 @@
 import debugLib = require('debug')
 import setupGetService from './utils/getService'
-import {
-  Dispatch,
-  InternalDispatch,
-  Exchange,
-  Middleware,
-  Action,
-} from './types'
+import { Dispatch, InternalDispatch, Middleware, Action } from './types'
 import { IdentConfig } from './service/types'
-import {
-  exchangeFromAction,
-  responseFromExchange,
-} from './utils/exchangeMapping'
 import { Service } from './service/types'
 import { Schema } from './schema'
 import createError from './utils/createError'
@@ -26,18 +16,18 @@ export interface GetService {
   (type?: string | string[], serviceId?: string): Service | undefined
 }
 
-export interface ExchangeHandler {
+export interface ActionHandler {
   (
-    exchange: Exchange,
+    action: Action,
     dispatch: InternalDispatch,
     getService: GetService,
     identConfig?: IdentConfig
-  ): Promise<Exchange>
+  ): Promise<Action>
 }
 
-function getExchangeHandlerFromType(
+function getActionHandlerFromType(
   type: string | undefined,
-  handlers: Record<string, ExchangeHandler>
+  handlers: Record<string, ActionHandler>
 ) {
   if (type) {
     // eslint-disable-next-line security/detect-object-injection
@@ -49,44 +39,50 @@ function getExchangeHandlerFromType(
   return undefined
 }
 
-const setErrorOnExchange = (exchange: Exchange, error: string) => ({
-  exchange: createError(exchange, error, 'badrequest'),
+const setErrorOnAction = (action: Action, error: string) => ({
+  action: createError(action, error, 'badrequest'),
 })
 
-function mapIncomingRequest(
-  exchange: Exchange,
+function mapIncomingAction(
+  action: Action,
   getService: GetService
-): { exchange: Exchange; service?: Service; endpoint?: Endpoint } {
-  if (exchange.source) {
-    const service = getService(undefined, exchange.source)
+): { action: Action; service?: Service; endpoint?: Endpoint } {
+  const { sourceService } = action.payload
+  if (sourceService) {
+    const service = getService(undefined, sourceService)
     if (!service) {
-      return setErrorOnExchange(
-        exchange,
-        `Source service '${exchange.source}' not found`
+      return setErrorOnAction(
+        action,
+        `Source service '${sourceService}' not found`
       )
     }
-    const endpoint = service.endpointFromExchange(exchange, true)
+    const endpoint = service.endpointFromAction(action, true)
     if (!endpoint) {
-      return setErrorOnExchange(
-        exchange,
-        `No matching endpoint for incoming mapping on service '${exchange.source}'`
+      return setErrorOnAction(
+        action,
+        `No matching endpoint for incoming mapping on service '${sourceService}'`
       )
     }
     return {
-      exchange: service.mapRequest(exchange, endpoint, true),
+      action: service.mapRequest(action, endpoint, true),
       service,
       endpoint,
     }
   }
-  return { exchange }
+  return { action }
 }
 
 const mapIncomingResponse = (
-  exchange: Exchange,
+  action: Action,
   service?: Service,
   endpoint?: Endpoint
 ) =>
-  service && endpoint ? service.mapResponse(exchange, endpoint, true) : exchange
+  service && endpoint ? service.mapResponse(action, endpoint, true) : action
+
+const responseFromAction = ({
+  response: { status, ...response } = { status: null },
+  meta: { ident } = {},
+}: Action) => ({ ...response, status: status || null, access: { ident } })
 
 const wrapDispatch = (
   internalDispatch: InternalDispatch,
@@ -98,26 +94,26 @@ const wrapDispatch = (
     }
 
     // Map incoming request data when needed
-    const { exchange, service, endpoint } = mapIncomingRequest(
-      exchangeFromAction(action),
+    const { action: mappedAction, service, endpoint } = mapIncomingAction(
+      action,
       getService
     )
     // Return any error from mapIncomingRequest()
-    if (exchange.status) {
-      return responseFromExchange(exchange)
+    if (mappedAction.response?.status) {
+      return responseFromAction(mappedAction)
     }
 
     // Dispatch
-    const responseExchange = await internalDispatch(exchange)
+    const responseAction = await internalDispatch(mappedAction)
 
-    return responseFromExchange(
-      // Map respons data when needed
-      mapIncomingResponse(responseExchange, service, endpoint)
+    // Map respons data when needed
+    return responseFromAction(
+      mapIncomingResponse(responseAction, service, endpoint)
     )
   }
 
 export interface Resources {
-  handlers: Record<string, ExchangeHandler>
+  handlers: Record<string, ActionHandler>
   schemas: Record<string, Schema>
   services: Record<string, Service>
   middleware?: Middleware[]
@@ -125,11 +121,11 @@ export interface Resources {
 }
 
 /**
- * Setup and return dispatch function. The dispatch function map the action to
- *  an exchange and will pass it on the any middleware before sending it to the
- * relevant action handler. When an action has a specified `source` service, any
- * action data will be mapped as incoming from that service before the
- * middleware, and will be mapped back to that service in the response.
+ * Setup and return dispatch function. The dispatch function will pass an action
+ * through the middleware middleware before sending it to the relevant action
+ * handler. When an action has a specified `sourceService`, any action data will
+ * be mapped as incoming from that service before the middleware, and will be
+ * mapped back to that service in the response.
  */
 export default function createDispatch({
   handlers = {},
@@ -141,17 +137,15 @@ export default function createDispatch({
   const getService = setupGetService(schemas, services)
   let internalDispatch: InternalDispatch
 
-  internalDispatch = async function <T = unknown>(
-    exchange: Exchange<unknown, T>
-  ) {
-    debug('Dispatch: %o', exchange)
+  internalDispatch = async function (action: Action) {
+    debug('Dispatch: %o', action)
 
-    const handler = getExchangeHandlerFromType(exchange.type, handlers)
+    const handler = getActionHandlerFromType(action.type, handlers)
     if (!handler) {
-      return createError(exchange, 'Dispatched unknown action', 'noaction')
+      return createError(action, 'Dispatched unknown action', 'noaction')
     }
 
-    return handler(exchange, internalDispatch, getService, identConfig)
+    return handler(action, internalDispatch, getService, identConfig)
   }
 
   if (middleware.length > 0) {

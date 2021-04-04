@@ -6,11 +6,10 @@ import createError from './createError'
 
 const data = [{ id: 'ent1', $type: 'entry' }]
 
-const exchange = {
+const action = {
   type: 'GET',
-  status: null,
-  request: { type: 'entry' },
-  response: { data },
+  payload: { type: 'entry' },
+  response: { status: 'ok', data },
   meta: {},
 }
 
@@ -19,12 +18,12 @@ const exchange = {
 test('should create an error', (t) => {
   const message = 'An ugly error'
   const expected = {
-    ...exchange,
-    status: 'error',
-    response: { error: 'An ugly error', data },
+    ...action,
+
+    response: { status: 'error', error: 'An ugly error', data },
   }
 
-  const ret = createError(exchange, message)
+  const ret = createError(action, message)
 
   t.deepEqual(ret, expected)
 })
@@ -33,12 +32,11 @@ test('should create error with other status', (t) => {
   const message = 'Not found'
   const status = 'notfound'
   const expected = {
-    ...exchange,
-    status: 'notfound',
-    response: { error: 'Not found', data },
+    ...action,
+    response: { status: 'notfound', error: 'Not found', data },
   }
 
-  const ret = createError(exchange, message, status)
+  const ret = createError(action, message, status)
 
   t.deepEqual(ret, expected)
 })

@@ -5,9 +5,8 @@ import jsonResources from '../tests/helpers/resources'
 import functions from '../transformers/builtIns'
 import createSchema from '../schema'
 import { ServiceDef } from './types'
-import { TypedData, Connection, Exchange, DataObject, Data } from '../types'
+import { TypedData, Connection, Action, DataObject } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
-import { completeExchange, responseToExchange } from '../utils/exchangeMapping'
 import Auth from './Auth'
 import tokenAuth from '../authenticators/token'
 
@@ -150,49 +149,49 @@ test('should throw when no id', (t) => {
   })
 })
 
-// Tests -- endpointFromExchange
+// Tests -- endpointFromAction
 
-test('endpointFromExchange should return an endpoint for the exchange', (t) => {
+test('endpointFromAction should return an endpoint for the action', (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
     transporter: 'http',
     endpoints,
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
       id: 'ent1',
     },
-    ident: { id: 'johnf' },
-  })
+    meta: { ident: { id: 'johnf' } },
+  }
 
-  const ret = service.endpointFromExchange(exchange)
+  const ret = service.endpointFromAction(action)
 
   t.truthy(ret)
   t.is(ret?.id, 'endpoint2')
 })
 
-test('endpointFromExchange should return undefined when no match', (t) => {
+test('endpointFromAction should return undefined when no match', (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
     transporter: 'http',
     endpoints,
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'unknown',
     },
-    ident: { id: 'johnf' },
-  })
+    meta: { ident: { id: 'johnf' } },
+  }
 
-  const ret = service.endpointFromExchange(exchange)
+  const ret = service.endpointFromAction(action)
 
   t.is(ret, undefined)
 })
 
-test('endpointFromExchange should pick the most specified endpoint', async (t) => {
+test('endpointFromAction should pick the most specified endpoint', async (t) => {
   const endpoints = [
     {
       match: { type: 'entry' },
@@ -209,94 +208,102 @@ test('endpointFromExchange should pick the most specified endpoint', async (t) =
     endpoints,
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    ident: { id: 'johnf' },
-  })
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    meta: { ident: { id: 'johnf' } },
+  }
 
-  const ret = service.endpointFromExchange(exchange)
+  const ret = service.endpointFromAction(action)
 
   t.true(ret?.options.correct)
 })
 
-// Tests -- authorizeExchange
+// Tests -- authorizeAction
 
-test('authorizeExchange should set authorized flag', (t) => {
+test('authorizeAction should set authorized flag', (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
     auth: authDef,
     endpoints,
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account' },
-    ident: { root: true, id: 'root' },
-  })
-  const expectedExchange = {
-    ...exchange,
-    authorized: true,
+    payload: { type: 'account' },
+    meta: { ident: { root: true, id: 'root' } },
   }
-
-  const ret = service.authorizeExchange(exchange)
-
-  t.deepEqual(ret, expectedExchange)
-})
-
-test('authorizeExchange should authorize exchange request without type', (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
-    id: 'accounts',
-    transporter: 'http',
-    auth: authDef,
-    endpoints,
-  })
-  const exchange = completeExchange({
-    type: 'SET',
-    request: { params: { what: 'somethingelse' } },
-    ident: { id: 'johnf' },
-  })
-  const expectedExchange = {
-    ...exchange,
-    authorized: true,
-  }
-
-  const ret = service.authorizeExchange(exchange)
-
-  t.deepEqual(ret, expectedExchange)
-})
-
-test('authorizeExchange should refuse based on schema', (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
-    id: 'accounts',
-    transporter: 'http',
-    auth: authDef,
-    endpoints,
-  })
-  const exchange = completeExchange({
-    type: 'GET',
-    request: { type: 'account' },
-    ident: { id: 'johnf', roles: ['user'] },
-    auth: { status: 'granted' },
-  })
-  const expectedExchange = {
-    ...exchange,
-    authorized: false,
-    status: 'noaccess',
-    response: {
-      error: "Authentication was refused, role required: 'admin'",
-      reason: 'MISSING_ROLE',
+  const expectedAction = {
+    ...action,
+    meta: {
+      ...action.meta,
+      authorized: true,
     },
   }
 
-  const ret = service.authorizeExchange(exchange)
+  const ret = service.authorizeAction(action)
 
-  t.deepEqual(ret, expectedExchange)
+  t.deepEqual(ret, expectedAction)
 })
 
-// Tests -- sendExchange
+test('authorizeAction should authorize action without type', (t) => {
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+    id: 'accounts',
+    transporter: 'http',
+    auth: authDef,
+    endpoints,
+  })
+  const action = {
+    type: 'SET',
+    payload: { params: { what: 'somethingelse' } },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction = {
+    ...action,
+    meta: {
+      ...action.meta,
+      authorized: true,
+    },
+  }
 
-test('sendExchange should retrieve data from service', async (t) => {
+  const ret = service.authorizeAction(action)
+
+  t.deepEqual(ret, expectedAction)
+})
+
+test('authorizeAction should refuse based on schema', (t) => {
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+    id: 'accounts',
+    transporter: 'http',
+    auth: authDef,
+    endpoints,
+  })
+  const action = {
+    type: 'GET',
+    payload: { type: 'account' },
+    meta: {
+      ident: { id: 'johnf', roles: ['user'] },
+      auth: { status: 'granted' },
+    },
+  }
+  const expectedAction = {
+    ...action,
+    response: {
+      status: 'noaccess',
+      error: "Authentication was refused, role required: 'admin'",
+      reason: 'MISSING_ROLE',
+    },
+    meta: { ...action.meta, authorized: false },
+  }
+
+  const ret = service.authorizeAction(action)
+
+  t.deepEqual(ret, expectedAction)
+})
+
+// Tests --
+
+test('sendAction should retrieve data from service', async (t) => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -308,8 +315,10 @@ test('sendExchange should retrieve data from service', async (t) => {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (exchange: Exchange) =>
-          responseToExchange(exchange, { status: 'ok', data }),
+        send: async (action: Action) => ({
+          ...action,
+          response: { status: 'ok', data },
+        }),
       },
     },
     mapOptions,
@@ -322,30 +331,37 @@ test('sendExchange should retrieve data from service', async (t) => {
     auth: 'granting',
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    ident: { id: 'johnf' },
-    authorized: true,
-  })
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
   const expected = {
-    ...exchange,
-    status: 'ok',
-    response: { data },
-    auth: {
-      Authorization: 'Bearer t0k3n',
+    ...action,
+    response: {
+      status: 'ok',
+      data,
+    },
+    meta: {
+      ...action.meta,
+      auth: {
+        Authorization: 'Bearer t0k3n',
+      },
     },
   }
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.send(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('sendExchange should use outgoing middleware', async (t) => {
-  const failMiddleware = () => async (exchange: Exchange) => ({
-    ...exchange,
-    status: 'badresponse',
+test('sendAction should use outgoing middleware', async (t) => {
+  const failMiddleware = () => async (action: Action) => ({
+    ...action,
+    response: { status: 'badresponse' },
   })
   const resources = {
     ...jsonResources,
@@ -360,20 +376,22 @@ test('sendExchange should use outgoing middleware', async (t) => {
     auth: true,
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'entry' },
-    ident: { id: 'johnf' },
-    options: { uri: 'http://some.api/1.0' },
-    authorized: true,
-  })
+    payload: { type: 'entry' },
+    meta: {
+      ident: { id: 'johnf' },
+      options: { uri: 'http://some.api/1.0' },
+      authorized: true,
+    },
+  }
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.send(action)
 
-  t.is(ret.status, 'badresponse', ret.response.error)
+  t.is(ret.response?.status, 'badresponse', ret.response?.error)
 })
 
-test('sendExchange should return error when no transport', async (t) => {
+test('sendAction should return error when no transport', async (t) => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -385,8 +403,10 @@ test('sendExchange should return error when no transport', async (t) => {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (exchange: Exchange) =>
-          responseToExchange(exchange, { status: 'ok', data }),
+        send: async (action: Action) => ({
+          ...action,
+          response: { status: 'ok', data },
+        }),
       },
     },
     mapOptions,
@@ -398,25 +418,28 @@ test('sendExchange should return error when no transport', async (t) => {
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'granting',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    ident: { id: 'johnf' },
-    authorized: true,
-  })
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
   const expected = {
-    ...exchange,
-    status: 'error',
-    response: { error: "Service 'entries' has no transporter" },
-    auth: undefined,
+    ...action,
+    response: {
+      status: 'error',
+      error: "Service 'entries' has no transporter",
+    },
   }
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.send(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('sendExchange should authenticate and return with error', async (t) => {
+test('sendAction should authenticate and return with error', async (t) => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -428,8 +451,10 @@ test('sendExchange should authenticate and return with error', async (t) => {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (exchange: Exchange) =>
-          responseToExchange(exchange, { status: 'ok', data }),
+        send: async (action: Action) => ({
+          ...action,
+          response: { status: 'ok', data },
+        }),
       },
     },
     mapOptions,
@@ -442,25 +467,32 @@ test('sendExchange should authenticate and return with error', async (t) => {
     auth: 'refusing',
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    ident: { id: 'johnf' },
-    authorized: true,
-  })
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
   const expected = {
-    ...exchange,
-    status: 'noaccess',
-    response: { error: "Authentication attempt for 'refusing' was refused." },
-    auth: null,
+    ...action,
+    response: {
+      status: 'noaccess',
+      error: "Authentication attempt for 'refusing' was refused.",
+    },
+    meta: {
+      ...action.meta,
+      auth: null,
+    },
   }
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.send(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('sendExchange should fail when not authorized', async (t) => {
+test('sendAction should fail when not authorized', async (t) => {
   const service = setupService({
     mapOptions,
     schemas,
@@ -472,30 +504,33 @@ test('sendExchange should fail when not authorized', async (t) => {
     auth: 'granting',
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    ident: { id: 'johnf' },
-    authorized: false,
-  })
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: false,
+    },
+  }
   const expected = {
-    ...exchange,
-    status: 'error',
-    response: { error: 'Not authorized' },
+    ...action,
+    response: { status: 'error', error: 'Not authorized' },
   }
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.send(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('sendExchange should connect before sending request', async (t) => {
-  const exchange = completeExchange({
+test('sendAction should connect before sending request', async (t) => {
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    ident: { id: 'johnf' },
-    authorized: true,
-  })
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
   const connect = async (
     { value }: EndpointOptions,
     authentication: Record<string, unknown> | null | undefined,
@@ -503,7 +538,7 @@ test('sendExchange should connect before sending request', async (t) => {
   ) => ({ status: 'ok', value, token: authentication?.Authorization })
   const send = sinon
     .stub()
-    .resolves(responseToExchange(exchange, { status: 'ok', data: {} }))
+    .resolves({ ...action, response: { status: 'ok', data: {} } })
   const resources = {
     ...jsonResources,
     transporters: {
@@ -529,14 +564,14 @@ test('sendExchange should connect before sending request', async (t) => {
     token: 'Bearer t0k3n',
   }
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.send(action)
 
-  t.is(ret.status, 'ok', ret.response.error)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is(send.callCount, 1)
   t.deepEqual(send.args[0][1], expected)
 })
 
-test('sendExchange should store connection', async (t) => {
+test('sendAction should store connection', async (t) => {
   const connect = sinon.stub().returns({ status: 'ok' })
   const resources = {
     ...jsonResources,
@@ -545,8 +580,10 @@ test('sendExchange should store connection', async (t) => {
       http: {
         ...jsonResources.transporters.http,
         connect,
-        send: async (exchange: Exchange) =>
-          responseToExchange(exchange, { status: 'ok', data: {} }),
+        send: async (action: Action) => ({
+          ...action,
+          response: { status: 'ok', data: {} },
+        }),
       },
     },
     mapOptions,
@@ -559,23 +596,25 @@ test('sendExchange should store connection', async (t) => {
     ],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    ident: { id: 'johnf' },
-    auth: { status: 'granted', token: 't0k3n' },
-    authorized: true,
-  })
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    meta: {
+      ident: { id: 'johnf' },
+      auth: { status: 'granted', token: 't0k3n' },
+      authorized: true,
+    },
+  }
 
-  await service.sendExchange(exchange)
-  await service.sendExchange(exchange)
+  await service.send(action)
+  await service.send(action)
 
   t.is(connect.callCount, 2)
   t.deepEqual(connect.args[0][2], null)
   t.deepEqual(connect.args[1][2], { status: 'ok' })
 })
 
-test('sendExchange should return error when connection fails', async (t) => {
+test('sendAction should return error when connection fails', async (t) => {
   const resources = {
     ...jsonResources,
     transporters: {
@@ -583,8 +622,10 @@ test('sendExchange should return error when connection fails', async (t) => {
       http: {
         ...jsonResources.transporters.http,
         connect: async () => ({ status: 'notfound', error: 'Not found' }),
-        send: async (exchange: Exchange) =>
-          responseToExchange(exchange, { status: 'ok', data: {} }),
+        send: async (action: Action) => ({
+          ...action,
+          response: { status: 'ok', data: {} },
+        }),
       },
     },
     mapOptions,
@@ -597,35 +638,39 @@ test('sendExchange should return error when connection fails', async (t) => {
     ],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    ident: { id: 'johnf' },
-    auth: { status: 'granted', token: 't0k3n' },
-    authorized: true,
-  })
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    meta: {
+      ident: { id: 'johnf' },
+      auth: { status: 'granted', token: 't0k3n' },
+      authorized: true,
+    },
+  }
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.send(action)
 
-  t.is(ret.status, 'error')
+  t.is(ret.response?.status, 'error')
   t.is(
-    ret.response.error,
+    ret.response?.error,
     "Could not connect to service 'entries'. [notfound] Not found"
   )
 })
 
-test('sendExchange should retrieve error response from service', async (t) => {
+test('sendAction should retrieve error response from service', async (t) => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (exchange: Exchange) =>
-          responseToExchange(exchange, {
+        send: async (action: Action) => ({
+          ...action,
+          response: {
             status: 'badrequest',
             error: 'Real bad request',
-          }),
+          },
+        }),
       },
     },
     mapOptions,
@@ -636,31 +681,32 @@ test('sendExchange should retrieve error response from service', async (t) => {
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    ident: { id: 'johnf' },
-    authorized: true,
-  })
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
   const expected = {
-    ...exchange,
-    status: 'badrequest',
-    response: { error: 'Real bad request' },
+    ...action,
+    response: { status: 'badrequest', error: 'Real bad request' },
   }
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.send(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('sendExchange should return with error when transport throws', async (t) => {
+test('sendAction should return with error when transport throws', async (t) => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (_exchange: Exchange) => {
+        send: async (_action: Action) => {
           throw new Error('We did not expect this')
         },
       },
@@ -673,37 +719,41 @@ test('sendExchange should return with error when transport throws', async (t) =>
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    ident: { id: 'johnf' },
-    authorized: true,
-  })
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
   const expected = {
-    ...exchange,
-    status: 'error',
+    ...action,
     response: {
+      status: 'error',
       error: "Error retrieving from service 'entries': We did not expect this",
     },
   }
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.send(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('sendExchange should do nothing when exchange has a status', async (t) => {
+test('sendAction should do nothing when action has a response', async (t) => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (exchange: Exchange) =>
-          responseToExchange(exchange, {
+        send: async (action: Action) => ({
+          ...action,
+          response: {
             status: 'error',
             error: 'Should not be called',
-          }),
+          },
+        }),
       },
     },
     mapOptions,
@@ -714,17 +764,18 @@ test('sendExchange should do nothing when exchange has a status', async (t) => {
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     transporter: 'http',
   })
-  const exchange = completeExchange({
-    status: 'badrequest',
+  const action = {
     type: 'GET',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
-    response: { error: 'Bad request catched early' },
-    ident: { id: 'johnf' },
-    authorized: true,
-  })
-  const expected = exchange
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    response: { status: 'badrequest', error: 'Bad request catched early' },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
+  const expected = action
 
-  const ret = await service.sendExchange(exchange)
+  const ret = await service.send(action)
 
   t.deepEqual(ret, expected)
 })
@@ -743,11 +794,11 @@ test.serial('mapResponse should map data array from service', async (t) => {
     ],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    status: 'ok',
-    request: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
     response: {
+      status: 'ok',
       data: {
         content: {
           data: {
@@ -764,12 +815,13 @@ test.serial('mapResponse should map data array from service', async (t) => {
         },
       },
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
   const expected = {
-    ...exchange,
+    ...action,
     response: {
+      status: 'ok',
       data: [
         {
           $type: 'entry',
@@ -783,10 +835,9 @@ test.serial('mapResponse should map data array from service', async (t) => {
         },
       ],
     },
-    ident: { id: 'johnf' },
   }
 
-  const ret = service.mapResponse(exchange, endpoint!)
+  const ret = service.mapResponse(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -802,29 +853,27 @@ test('mapResponse should map data object from service', async (t) => {
     ],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    status: 'ok',
-    request: { id: 'johnf', type: 'account' },
+    payload: { id: 'johnf', type: 'account' },
     response: {
+      status: 'ok',
       data: {
         content: {
           data: { accounts: { id: 'johnf', name: 'John F.' } },
         },
       },
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapResponse(exchange, endpoint!) as Exchange<
-    Data,
-    TypedData
-  >
+  const ret = service.mapResponse(action, endpoint!)
 
-  t.false(Array.isArray(ret.response.data))
-  t.is(ret.response.data?.id, 'johnf')
-  t.is(ret.response.data?.$type, 'account')
+  const data = ret.response?.data as DataObject
+  t.false(Array.isArray(data))
+  t.is(data.id, 'johnf')
+  t.is(data.$type, 'account')
 })
 
 test('mapResponse should map null to undefined', async (t) => {
@@ -838,25 +887,25 @@ test('mapResponse should map null to undefined', async (t) => {
     ],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    status: 'ok',
-    request: { id: 'johnf', type: 'account' },
+    payload: { id: 'johnf', type: 'account' },
     response: {
+      status: 'ok',
       data: { accounts: null },
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
   const expected = {
-    ...exchange,
+    ...action,
     response: {
+      status: 'ok',
       data: undefined,
     },
-    ident: { id: 'johnf' },
   }
 
-  const ret = service.mapResponse(exchange, endpoint!)
+  const ret = service.mapResponse(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -872,11 +921,11 @@ test('should authorize typed data in array from service', async (t) => {
     ],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    status: 'ok',
-    request: { type: 'account' },
+    payload: { type: 'account' },
     response: {
+      status: 'ok',
       data: {
         accounts: [
           { id: 'johnf', name: 'John F.' },
@@ -884,20 +933,18 @@ test('should authorize typed data in array from service', async (t) => {
         ],
       },
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapResponse(exchange, endpoint!) as Exchange<
-    Data,
-    TypedData[]
-  >
+  const ret = service.mapResponse(action, endpoint!)
 
-  t.is(ret.status, 'ok')
-  t.is(ret.response.data?.length, 1)
-  t.is(ret.response.data![0].id, 'johnf')
+  t.is(ret.response?.status, 'ok')
+  const data = ret.response?.data as DataObject[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'johnf')
   t.is(
-    ret.response.warning,
+    ret.response?.warning,
     '1 item was removed from response data due to lack of access'
   )
 })
@@ -913,24 +960,24 @@ test('should authorize typed data object from service', async (t) => {
     ],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    status: 'ok',
-    request: { type: 'account' },
+    payload: { type: 'account' },
     response: {
+      status: 'ok',
       data: {
         accounts: { id: 'maryk', name: 'Mary K.' },
       },
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapResponse(exchange, endpoint!)
+  const ret = service.mapResponse(action, endpoint!)
 
-  t.is(ret.status, 'noaccess')
-  t.is(ret.response.data, undefined)
-  t.is(ret.response.error, "Authentication was refused for type 'account'")
+  t.is(ret.response?.status, 'noaccess')
+  t.is(ret.response?.data, undefined)
+  t.is(ret.response?.error, "Authentication was refused for type 'account'")
 })
 
 test('should authorize typed data in array to service', async (t) => {
@@ -944,32 +991,29 @@ test('should authorize typed data in array to service', async (t) => {
     ],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    status: 'ok',
-    request: { type: 'account' },
+    payload: { type: 'account' },
     response: {
+      status: 'ok',
       data: [
         { id: 'johnf', $type: 'account', name: 'John F.' },
         { id: 'maryk', $type: 'account', name: 'Mary K.' },
       ],
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
   const isIncoming = true
 
-  const ret = service.mapResponse(exchange, endpoint!, isIncoming) as Exchange<
-    Data,
-    TypedData
-  >
+  const ret = service.mapResponse(action, endpoint!, isIncoming)
 
-  t.is(ret.status, 'ok', ret.response.error)
-  const accounts = ret.response.data?.accounts as DataObject[]
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  const accounts = (ret.response?.data as DataObject).accounts as DataObject[]
   t.is(accounts.length, 1)
   t.is(accounts[0].id, 'johnf')
   t.is(
-    ret.response.warning,
+    ret.response?.warning,
     '1 item was removed from response data due to lack of access'
   )
 })
@@ -985,22 +1029,24 @@ test('mapResponse should map without default values', async (t) => {
     ],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    status: 'ok',
-    request: { id: 'ent1', type: 'entry' },
+    payload: { id: 'ent1', type: 'entry' },
     response: {
+      status: 'ok',
       returnNoDefaults: true,
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
-    ident: { id: 'johnf' },
-    authorized: true,
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
+  const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapResponse(exchange, endpoint!)
+  const ret = service.mapResponse(action, endpoint!)
 
-  const data = ret.response.data as TypedData[]
+  const data = ret.response?.data as TypedData[]
   t.is(data[0].one, undefined)
   t.is(data[0].createdAt, undefined)
   t.is(data[0].updatedAt, undefined)
@@ -1018,21 +1064,23 @@ test('mapResponse should map without default values - defined on endpoint', asyn
     ],
     transporter: 'http',
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    status: 'ok',
-    request: { id: 'ent1', type: 'entry' },
+    payload: { id: 'ent1', type: 'entry' },
     response: {
+      status: 'ok',
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
-    ident: { id: 'johnf' },
-    authorized: true,
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
+  const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapResponse(exchange, endpoint!)
+  const ret = service.mapResponse(action, endpoint!)
 
-  const data = ret.response.data as TypedData[]
+  const data = ret.response?.data as TypedData[]
   t.is(data[0].one, undefined)
   t.is(data[0].createdAt, undefined)
   t.is(data[0].updatedAt, undefined)
@@ -1054,9 +1102,9 @@ test('mapRequest should set endpoint options and cast and map request data', asy
       },
     ],
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    request: {
+    payload: {
       type: 'entry',
       data: [
         {
@@ -1069,13 +1117,13 @@ test('mapRequest should set endpoint options and cast and map request data', asy
         },
       ],
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
-  const expectedExchange = {
-    ...exchange,
-    request: {
-      ...exchange.request,
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
+  const expectedAction = {
+    ...action,
+    payload: {
+      ...action.payload,
       data: {
         content: {
           data: [
@@ -1097,12 +1145,15 @@ test('mapRequest should set endpoint options and cast and map request data', asy
         },
       },
     },
-    options: { uri: 'http://some.api/1.0' },
+    meta: {
+      ...action.meta,
+      options: { uri: 'http://some.api/1.0' },
+    },
   }
 
-  const ret = service.mapRequest(exchange, endpoint!)
+  const ret = service.mapRequest(action, endpoint!)
 
-  t.deepEqual(ret, expectedExchange)
+  t.deepEqual(ret, expectedAction)
 })
 
 test('mapRequest should deep-clone endpoint options', async (t) => {
@@ -1115,17 +1166,17 @@ test('mapRequest should deep-clone endpoint options', async (t) => {
       },
     ],
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapRequest(exchange, endpoint!)
-  ;(ret.options?.untouchable as { touched: boolean }).touched = true
+  const ret = service.mapRequest(action, endpoint!)
+  ;(ret.meta?.options?.untouchable as { touched: boolean }).touched = true
 
   t.false((endpoint?.options.untouchable as { touched: boolean }).touched)
 })
@@ -1139,9 +1190,9 @@ test('mapRequest should authorize data array going to service', async (t) => {
     auth: authDef,
     endpoints,
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    request: {
+    payload: {
       type: 'account',
       data: [
         {
@@ -1156,19 +1207,17 @@ test('mapRequest should authorize data array going to service', async (t) => {
         },
       ],
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
   const expectedResponse = {
+    status: null,
     warning: '1 item was removed from request data due to lack of access',
   }
 
-  const ret = service.mapRequest(exchange, endpoint!) as Exchange<
-    DataObject,
-    Data
-  >
+  const ret = service.mapRequest(action, endpoint!)
 
-  const accounts = ret.request.data?.accounts as DataObject[]
+  const accounts = (ret.payload.data as DataObject).accounts as DataObject[]
   t.is(accounts.length, 1)
   t.is(accounts[0].id, 'johnf')
   t.deepEqual(ret.response, expectedResponse)
@@ -1181,9 +1230,9 @@ test('mapRequest should authorize data object going to service', async (t) => {
     auth: authDef,
     endpoints,
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    request: {
+    payload: {
       type: 'account',
       data: {
         $type: 'account',
@@ -1191,20 +1240,18 @@ test('mapRequest should authorize data object going to service', async (t) => {
         name: 'Lucy K.',
       },
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
   const expectedResponse = {
+    status: 'noaccess',
     error: "Authentication was refused for type 'account'",
     reason: 'WRONG_IDENT',
   }
 
-  const ret = service.mapRequest(exchange, endpoint!) as Exchange<
-    DataObject,
-    Data
-  >
+  const ret = service.mapRequest(action, endpoint!)
 
-  t.is(ret.request.data?.accounts, undefined)
+  t.is((ret.payload.data as DataObject).accounts, undefined)
   t.deepEqual(ret.response, expectedResponse)
 })
 
@@ -1215,9 +1262,9 @@ test('mapRequest should authorize data array coming from service', async (t) => 
     auth: authDef,
     endpoints,
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    request: {
+    payload: {
       type: 'account',
       data: {
         accounts: [
@@ -1226,24 +1273,25 @@ test('mapRequest should authorize data array coming from service', async (t) => 
         ],
       },
     },
-    ident: { id: 'johnf', roles: ['admin'] },
-    authorized: true,
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: {
+      ident: { id: 'johnf', roles: ['admin'] },
+      authorized: true,
+    },
+  }
+  const endpoint = service.endpointFromAction(action)
   const expectedResponse = {
+    status: null,
     warning: '1 item was removed from request data due to lack of access',
   }
   const isIncoming = true
 
-  const ret = service.mapRequest(exchange, endpoint!, isIncoming) as Exchange<
-    TypedData[],
-    Data
-  >
+  const ret = service.mapRequest(action, endpoint!, isIncoming)
 
-  t.is(ret.status, null, ret.response.error)
-  t.is(ret.request.data?.length, 1)
-  t.is(ret.request.data![0].id, 'johnf')
-  t.is(ret.request.data![0].$type, 'account')
+  t.is(ret.response?.status, null, ret.response?.error)
+  const data = ret.payload.data as DataObject[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'johnf')
+  t.is(data[0].$type, 'account')
   t.deepEqual(ret.response, expectedResponse)
 })
 
@@ -1267,19 +1315,19 @@ test('mapRequest should use mutation pipeline', async (t) => {
       },
     ],
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    request: {},
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    payload: {},
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
   const expectedData = {
     StupidSoapOperator: { StupidSoapEmptyArgs: {} },
   }
 
-  const ret = service.mapRequest(exchange, endpoint!)
+  const ret = service.mapRequest(action, endpoint!)
 
-  t.deepEqual(ret.request.data, expectedData)
+  t.deepEqual(ret.payload.data, expectedData)
 })
 
 test('mapRequest should map without default values', async (t) => {
@@ -1295,9 +1343,9 @@ test('mapRequest should map without default values', async (t) => {
       },
     ],
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    request: {
+    payload: {
       type: 'entry',
       data: [
         {
@@ -1308,13 +1356,13 @@ test('mapRequest should map without default values', async (t) => {
       ],
       sendNoDefaults: true,
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapRequest(exchange, endpoint!)
+  const ret = service.mapRequest(action, endpoint!)
 
-  const data = ((ret.request.data as DataObject).content as DataObject)
+  const data = ((ret.payload.data as DataObject).content as DataObject)
     .data as DataObject[]
   const items = (data[0].createOrMutate as DataObject).items as DataObject[]
   t.is(items[0].one, undefined)
@@ -1334,9 +1382,9 @@ test('mapRequest should map without default values - defined on enpoint', async 
       },
     ],
   })
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    request: {
+    payload: {
       type: 'entry',
       data: [
         {
@@ -1346,13 +1394,13 @@ test('mapRequest should map without default values - defined on enpoint', async 
         },
       ],
     },
-    ident: { id: 'johnf' },
-  })
-  const endpoint = service.endpointFromExchange(exchange)
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapRequest(exchange, endpoint!)
+  const ret = service.mapRequest(action, endpoint!)
 
-  const data = ((ret.request.data as DataObject).content as DataObject)
+  const data = ((ret.payload.data as DataObject).content as DataObject)
     .data as DataObject[]
   const items = (data[0].createOrMutate as DataObject).items as DataObject[]
   t.is(items[0].one, undefined)

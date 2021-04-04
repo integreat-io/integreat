@@ -1,5 +1,5 @@
 import { ensureArray } from '../../utils/array'
-import { Exchange, Ident } from '../../types'
+import { Action, Ident } from '../../types'
 import { AccessDef } from '../../schema/types'
 import { Schema } from '../../schema'
 
@@ -120,16 +120,16 @@ function authorizeBySchema(
 }
 
 export default (schemas: Record<string, Schema>, requireAuth: boolean) =>
-  function authorizeExchange(exchange: Exchange): Exchange {
+  function authorizeAction(action: Action): Action {
     const {
-      ident,
-      status,
-      request: { type },
-    } = exchange
+      payload: { type },
+      response: { status } = {},
+      meta: { ident } = {},
+    } = action
 
     // Don't authenticate a request with an existing error
     if (typeof status === 'string' && status !== 'ok') {
-      return { ...exchange, authorized: false }
+      return { ...action, meta: { ...action.meta, authorized: false } }
     }
 
     // Authenticate if not root
@@ -142,21 +142,20 @@ export default (schemas: Record<string, Schema>, requireAuth: boolean) =>
           ident,
           schemas,
           types,
-          exchange.type,
+          action.type,
           requireAuth
         )
         // If we have got reason or error, the authentication failed
         if (reason || error) {
           return {
-            ...exchange,
-            authorized: false,
-            status: 'noaccess',
-            response: { ...exchange.response, error, reason },
+            ...action,
+            response: { ...action.response, status: 'noaccess', error, reason },
+            meta: { ...action.meta, authorized: false },
           }
         }
       }
     }
 
     // Authenticated
-    return { ...exchange, authorized: true }
+    return { ...action, meta: { ...action.meta, authorized: true } }
   }

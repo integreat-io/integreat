@@ -1,5 +1,5 @@
 import { MapDefinition } from 'map-transform'
-import { Exchange } from '../../types'
+import { Action } from '../../types'
 
 export type EndpointOptions = Record<string, unknown>
 
@@ -29,9 +29,9 @@ export interface Endpoint {
   id?: string
   match?: MatchObject
   options: EndpointOptions
-  mutateRequest: (exchange: Exchange, isIncoming?: boolean) => Exchange
-  mutateResponse: (exchange: Exchange, isIncoming?: boolean) => Exchange
-  isMatch: (exchange: Exchange, isIncoming?: boolean) => boolean
+  mutateRequest: (action: Action, isIncoming?: boolean) => Action
+  mutateResponse: (action: Action, isIncoming?: boolean) => Action
+  isMatch: (action: Action, isIncoming?: boolean) => boolean
   allowRawRequest?: boolean
   allowRawResponse?: boolean
 }

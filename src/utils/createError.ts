@@ -1,15 +1,15 @@
-import { Exchange } from '../types'
+import { Action } from '../types'
 
 export default function createError(
-  exchange: Exchange,
+  action: Action,
   error?: string,
   status = 'error'
-): Exchange {
+): Action {
   return {
-    ...exchange,
-    status,
+    ...action,
     response: {
-      ...exchange.response,
+      ...action.response,
+      status,
       error,
     },
   }

@@ -1,10 +1,9 @@
 import debugLib = require('debug')
 import createError from '../utils/createError'
-import { Exchange, DataObject, InternalDispatch } from '../types'
+import { Action, DataObject, InternalDispatch } from '../types'
 import { GetService } from '../dispatch'
 import getHandler from './get'
 import { isDataObject } from '../utils/is'
-import { exchangeFromAction } from '../utils/exchangeMapping'
 
 const debug = debugLib('great')
 
@@ -30,24 +29,26 @@ const extractMeta = (meta: unknown, keys: unknown): DataObject =>
  * Get metadata for a service, based on the given action object.
  */
 export default async function getMeta(
-  exchange: Exchange,
+  action: Action,
   dispatch: InternalDispatch,
   getService: GetService
-): Promise<Exchange> {
+): Promise<Action> {
   debug('Action: GET_META')
 
   const {
-    request: { params: { keys = undefined } = {} },
-    target: serviceId,
-    endpointId,
-    ident,
-  } = exchange
+    payload: {
+      params: { keys = undefined } = {},
+      targetService: serviceId,
+      endpoint: endpointId,
+    },
+    meta: { ident } = {},
+  } = action
   const id = `meta:${serviceId}`
 
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`GET_META: Service '${serviceId}' doesn't exist`)
-    return createError(exchange, `Service '${serviceId}' doesn't exist`)
+    return createError(action, `Service '${serviceId}' doesn't exist`)
   }
 
   const type = service.meta
@@ -56,7 +57,7 @@ export default async function getMeta(
   const metaService = getService(type)
   if (!metaService) {
     return createError(
-      exchange,
+      action,
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'noaction'
     )
@@ -73,28 +74,24 @@ export default async function getMeta(
     endpointDebug
   )
 
-  const action = {
+  const nextAction = {
     type: 'GET',
     payload: { keys, type, id, endpoint: endpointId },
     meta: { ident: ident },
   }
-  const responseExchange = await getHandler(
-    exchangeFromAction(action),
-    dispatch,
-    getService
-  )
+  const responseAction = await getHandler(nextAction, dispatch, getService)
 
-  if (responseExchange.status === 'ok') {
-    const { data } = responseExchange.response
+  if (responseAction.response?.status === 'ok') {
+    const { data } = responseAction.response || {}
     const meta = extractMeta(data, keys)
     return {
-      ...responseExchange,
+      ...responseAction,
       response: {
-        ...responseExchange.response,
+        ...responseAction.response,
         data: { service: serviceId, meta },
       },
     }
   } else {
-    return responseExchange
+    return responseAction
   }
 }

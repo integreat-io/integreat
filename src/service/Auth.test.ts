@@ -1,6 +1,5 @@
 import test from 'ava'
 import sinon = require('sinon')
-import { completeExchange } from '../utils/exchangeMapping'
 import { Authenticator, Authentication, AuthOptions } from './types'
 import { Transporter } from '../types'
 
@@ -28,11 +27,11 @@ const transporter = ({
   authentication: 'asHttpHeaders',
 } as unknown) as Transporter
 
-const exchange = completeExchange({
+const action = {
   type: 'GET',
-  request: { type: 'entry' },
-  ident: { id: 'johnf' },
-})
+  payload: { type: 'entry' },
+  meta: { ident: { id: 'johnf' } },
+}
 
 const id = 'auth1'
 const options = { token: 't0k3n' }
@@ -140,15 +139,15 @@ test('should return autherror status on second timeout', async (t) => {
   t.is(authSpy.callCount, 2)
 })
 
-test('should set auth object to exchange', async (t) => {
+test('should set auth object to action', async (t) => {
   const auth = new Auth(id, authenticator, options)
   const expected = {
-    ...exchange,
-    auth: { Authorization: 't0k3n' },
+    ...action,
+    meta: { ...action.meta, auth: { Authorization: 't0k3n' } },
   }
 
   await auth.authenticate()
-  const ret = auth.applyToExchange(exchange, transporter)
+  const ret = auth.applyToAction(action, transporter)
 
   t.deepEqual(ret, expected)
 })
@@ -157,12 +156,12 @@ test('should set auth object to null for unkown auth method', async (t) => {
   const strangeAdapter = { ...transporter, authentication: 'asUnknown' }
   const auth = new Auth(id, authenticator, options)
   const expected = {
-    ...exchange,
-    auth: null,
+    ...action,
+    meta: { ...action.meta, auth: null },
   }
 
   await auth.authenticate()
-  const ret = auth.applyToExchange(exchange, strangeAdapter)
+  const ret = auth.applyToAction(action, strangeAdapter)
 
   t.deepEqual(ret, expected)
 })
@@ -170,12 +169,12 @@ test('should set auth object to null for unkown auth method', async (t) => {
 test('should set status noaccess and auth object to null when not authenticated', async (t) => {
   const auth = new Auth(id, authenticator, options)
   const expected = {
-    ...exchange,
-    status: 'noaccess',
-    auth: null,
+    ...action,
+    response: { status: 'noaccess' },
+    meta: { ...action.meta, auth: null },
   }
 
-  const ret = auth.applyToExchange(exchange, transporter)
+  const ret = auth.applyToAction(action, transporter)
 
   t.deepEqual(ret, expected)
 })
@@ -190,16 +189,16 @@ test('should set status noaccess and auth object to null when authentication was
   }
   const auth = new Auth(id, refusingAuthenticator, options)
   const expected = {
-    ...exchange,
-    status: 'noaccess',
+    ...action,
     response: {
+      status: 'noaccess',
       error: "Authentication attempt for 'auth1' was refused. Not for you",
     },
-    auth: null,
+    meta: { ...action.meta, auth: null },
   }
 
   await auth.authenticate()
-  const ret = auth.applyToExchange(exchange, transporter)
+  const ret = auth.applyToAction(action, transporter)
 
   t.deepEqual(ret, expected)
 })
@@ -214,16 +213,16 @@ test('should set status autherror and auth object to null on auth error', async 
   }
   const auth = new Auth(id, failingAuthenticator, options)
   const expected = {
-    ...exchange,
-    status: 'autherror',
+    ...action,
     response: {
+      status: 'autherror',
       error: "Could not authenticate 'auth1'. [timeout] This was too slow",
     },
-    auth: null,
+    meta: { ...action.meta, auth: null },
   }
 
   await auth.authenticate()
-  const ret = auth.applyToExchange(exchange, transporter)
+  const ret = auth.applyToAction(action, transporter)
 
   t.deepEqual(ret, expected)
 })

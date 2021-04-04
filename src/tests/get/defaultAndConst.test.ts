@@ -77,7 +77,8 @@ test('should transform entry without defaults', async (t) => {
     .reply(200, { data: [entryNoHeadline] })
   const action = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent2', returnNoDefaults: true },
+    payload: { type: 'entry', id: 'ent2' },
+    response: { status: null, returnNoDefaults: true },
     meta: { ident: { id: 'johnf' } },
   }
 

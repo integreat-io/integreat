@@ -1,6 +1,5 @@
 import test from 'ava'
 import createSchema from '../../schema'
-import { completeExchange } from '../../utils/exchangeMapping'
 
 import { fromService, toService } from './data'
 
@@ -40,348 +39,351 @@ const account1 = {
 // Tests
 
 test('should remove unauthorized items in response data based on identFromField', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account' },
-    response: { data: [account1, account0, account1] },
-    ident: { id: 'johnf' },
-  })
+    payload: { type: 'account' },
+    response: { status: 'ok', data: [account1, account0, account1] },
+    meta: { ident: { id: 'johnf' } },
+  }
   const expected = {
-    ...exchange,
+    ...action,
     response: {
+      ...action.response,
       data: [account0],
       warning: '2 items were removed from response data due to lack of access',
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should remove unauthorized items in response data based on roleFromField', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    request: { type: 'account' },
-    response: { data: [account1, account0, account1] },
-    ident: { id: 'johnf', roles: ['superuser'] },
-  })
+    payload: { type: 'account' },
+    response: { status: 'ok', data: [account1, account0, account1] },
+    meta: { ident: { id: 'johnf', roles: ['superuser'] } },
+  }
   const expected = {
-    ...exchange,
+    ...action,
     response: {
+      ...action.response,
       data: [account0],
       warning: '2 items were removed from response data due to lack of access',
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should authorized items by both identFromField and roleFromField', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    request: { type: 'account' },
-    response: { data: [account0, account1] },
-    ident: { id: 'lucyk', roles: ['hr'] },
-  })
+    payload: { type: 'account' },
+    response: { status: 'ok', data: [account0, account1] },
+    meta: { ident: { id: 'lucyk', roles: ['hr'] } },
+  }
   const expected = {
-    ...exchange,
+    ...action,
     response: {
+      ...action.response,
       data: [account0, account1],
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should remove items of unknown type', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'SET',
-    request: { type: 'account' },
-    response: { data: [account0, { $type: 'unknown', id: 'unknown0' }] },
-    ident: { id: 'johnf', roles: ['superuser'] },
-  })
-  const expected = {
-    ...exchange,
+    payload: { type: 'account' },
     response: {
+      status: 'ok',
+      data: [account0, { $type: 'unknown', id: 'unknown0' }],
+    },
+    meta: { ident: { id: 'johnf', roles: ['superuser'] } },
+  }
+  const expected = {
+    ...action,
+    response: {
+      ...action.response,
       data: [account0],
       warning: '1 item was removed from response data due to lack of access',
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should authorize items with no data dependent auth methods', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'TEST',
-    request: { type: 'account' },
-    response: { data: [account0, account1] },
-    ident: { id: 'johnf' },
-  })
-  const expected = exchange
+    payload: { type: 'account' },
+    response: { status: 'ok', data: [account0, account1] },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = action
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should authorized one item', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account' },
-    response: { data: account0 },
-    ident: { id: 'johnf' },
-  })
+    payload: { type: 'account' },
+    response: { status: 'ok', data: account0 },
+    meta: { ident: { id: 'johnf' } },
+  }
   const expected = {
-    ...exchange,
+    ...action,
     response: {
+      ...action.response,
       data: account0,
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should return undefined when one item is unauthorized by ident', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account' },
-    response: { data: account1 },
-    ident: { id: 'johnf' },
-  })
+    payload: { type: 'account' },
+    response: { status: 'ok', data: account1 },
+    meta: { ident: { id: 'johnf' } },
+  }
   const expected = {
-    ...exchange,
-    status: 'noaccess',
+    ...action,
     response: {
+      status: 'noaccess',
       data: undefined,
       error: "Authentication was refused for type 'account'",
       reason: 'WRONG_IDENT',
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should return undefined when one item is unauthorized by role', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'DELETE',
-    request: { type: 'account' },
-    response: { data: account1 },
-    ident: { id: 'johnf' },
-  })
+    payload: { type: 'account' },
+    response: { status: 'ok', data: account1 },
+    meta: { ident: { id: 'johnf' } },
+  }
   const expected = {
-    ...exchange,
-    status: 'noaccess',
+    ...action,
     response: {
+      status: 'noaccess',
       data: undefined,
       error: "Authentication was refused for type 'account'",
       reason: 'MISSING_ROLE',
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should not override existing error', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    status: 'error',
-    request: { type: 'account' },
+    payload: { type: 'account' },
     response: {
+      status: 'error',
       data: account1,
       error: 'Wrongdoing in service',
     },
-    ident: { id: 'johnf' },
-  })
+    meta: { ident: { id: 'johnf' } },
+  }
   const expected = {
-    ...exchange,
+    ...action,
     response: {
+      ...action.response,
       data: undefined,
       error: 'Wrongdoing in service',
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should override ok status', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    status: 'ok',
-    request: { type: 'account' },
-    response: { data: account1 },
-    ident: { id: 'johnf' },
-  })
+    payload: { type: 'account' },
+    response: { status: 'ok', data: account1 },
+    meta: { ident: { id: 'johnf' } },
+  }
   const expected = {
-    ...exchange,
-    status: 'noaccess',
+    ...action,
     response: {
+      status: 'noaccess',
       data: undefined,
       error: "Authentication was refused for type 'account'",
       reason: 'WRONG_IDENT',
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should not authorize non-typed data for regular user', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account' },
-    response: { data: { something: 'here' } },
-    ident: { id: 'johnf' },
-  })
+    payload: { type: 'account' },
+    response: { status: 'ok', data: { something: 'here' } },
+    meta: { ident: { id: 'johnf' } },
+  }
   const expected = {
-    ...exchange,
-    status: 'noaccess',
+    ...action,
     response: {
+      status: 'noaccess',
       data: undefined,
       error: 'Authentication was refused for raw response data',
       reason: 'RAW_DATA',
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should authorize non-typed data for regular user when allowed', (t) => {
   const allowRawResponse = true
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account' },
-    response: { data: { something: 'here' } },
-    ident: { id: 'johnf' },
-  })
-  const expected = exchange
+    payload: { type: 'account' },
+    response: { status: 'ok', data: { something: 'here' } },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = action
 
-  const ret = fromService(schemas)(exchange, allowRawResponse)
+  const ret = fromService(schemas)(action, allowRawResponse)
 
   t.deepEqual(ret, expected)
 })
 
 test('should do nothing with no data', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account' },
-    response: {},
-    ident: { id: 'johnf' },
-  })
-  const expected = {
-    ...exchange,
-    response: { data: undefined },
+    payload: { type: 'account' },
+    meta: { ident: { id: 'johnf' } },
   }
+  const expected = action
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should do nothing with null data', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account' },
-    response: { data: null },
-    ident: { id: 'johnf' },
-  })
-  const expected = exchange
+    payload: { type: 'account' },
+    response: { status: 'ok', data: null },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = action
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should authorized all items for root', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account' },
-    response: { data: [account0, account1] },
-    ident: { id: 'root', root: true },
-  })
+    payload: { type: 'account' },
+    response: { status: 'ok', data: [account0, account1] },
+    meta: { ident: { id: 'root', root: true } },
+  }
   const expected = {
-    ...exchange,
+    ...action,
     response: {
+      ...action.response,
       data: [account0, account1],
     },
   }
 
-  const ret = fromService(schemas)(exchange)
+  const ret = fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should remove unauthorized items in request data', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account', data: [account1, account0, account1] },
-    response: {},
-    ident: { id: 'johnf' },
-  })
+    payload: { type: 'account', data: [account1, account0, account1] },
+    meta: { ident: { id: 'johnf' } },
+  }
   const expected = {
-    ...exchange,
-    request: { type: 'account', data: [account0] },
+    ...action,
+    payload: { type: 'account', data: [account0] },
     response: {
+      status: null,
       warning: '2 items were removed from request data due to lack of access',
     },
   }
 
-  const ret = toService(schemas)(exchange)
+  const ret = toService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should not authorize non-typed request data for regular user', (t) => {
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account', data: { something: 'here' } },
-    response: {},
-    ident: { id: 'johnf' },
-  })
+    payload: { type: 'account', data: { something: 'here' } },
+    meta: { ident: { id: 'johnf' } },
+  }
   const expected = {
-    ...exchange,
-    status: 'noaccess',
-    request: { type: 'account', data: undefined },
+    ...action,
+    payload: { type: 'account', data: undefined },
     response: {
+      status: 'noaccess',
       error: 'Authentication was refused for raw request data',
       reason: 'RAW_DATA',
     },
   }
 
-  const ret = toService(schemas)(exchange)
+  const ret = toService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
 test('should authorize non-typed request data for regular user when allowed', (t) => {
   const allowRawRequest = true
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: { type: 'account', data: { something: 'here' } },
-    response: {},
-    ident: { id: 'johnf' },
-  })
-  const expected = exchange
+    payload: { type: 'account', data: { something: 'here' } },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = action
 
-  const ret = toService(schemas)(exchange, allowRawRequest)
+  const ret = toService(schemas)(action, allowRawRequest)
 
   t.deepEqual(ret, expected)
 })

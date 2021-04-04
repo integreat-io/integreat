@@ -3,7 +3,7 @@ import pPipe = require('p-pipe')
 import pLimit = require('p-limit')
 import createError from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
-import { Exchange, InternalDispatch } from '../types'
+import { Action, InternalDispatch } from '../types'
 import { IdentConfig, Service } from '../service/types'
 import { Endpoint } from '../service/endpoints/types'
 import { GetService } from '../dispatch'
@@ -11,29 +11,27 @@ import { GetService } from '../dispatch'
 const debug = debugLib('great')
 const limit = pLimit(1)
 
-const isErrorExchange = (exchange: Exchange) =>
-  exchange.status !== 'ok' && exchange.status !== 'notfound'
+const isErrorAction = (action: Action) =>
+  action.response?.status !== 'ok' && action.response?.status !== 'notfound'
 
-const getIdFromExchange = ({ request: { id } }: Exchange) =>
+const getIdFromAction = ({ payload: { id } }: Action) =>
   Array.isArray(id) && id.length === 1 ? id[0] : id
 
-const combineExchanges = (exchange: Exchange, exchanges: Exchange[]) =>
-  exchanges.some(isErrorExchange)
+const combineActions = (action: Action, actions: Action[]) =>
+  actions.some(isErrorAction)
     ? createError(
-        exchange,
-        `One or more of the requests for ids ${getIdFromExchange(
-          exchange
-        )} failed.`
+        action,
+        `One or more of the requests for ids ${getIdFromAction(action)} failed.`
       )
     : {
-        ...exchange,
-        status: 'ok',
+        ...action,
         response: {
-          ...exchange.response,
-          data: exchanges.map((exchange) =>
-            Array.isArray(exchange.response.data)
-              ? exchange.response.data[0]
-              : exchange.response.data
+          ...action.response,
+          status: 'ok',
+          data: actions.map((action) =>
+            Array.isArray(action.response?.data)
+              ? action.response?.data[0]
+              : action.response?.data
           ),
         },
       }
@@ -41,99 +39,95 @@ const combineExchanges = (exchange: Exchange, exchanges: Exchange[]) =>
 const isMembersScope = (endpoint?: Endpoint) =>
   endpoint?.match?.scope === 'members'
 
-const setIdOnExchange = (exchange: Exchange, id?: string | string[]) => ({
-  ...exchange,
-  request: { ...exchange.request, id },
+const setIdOnAction = (action: Action, id?: string | string[]): Action => ({
+  ...action,
+  payload: { ...action.payload, id },
 })
 
-const createNoEndpointError = (exchange: Exchange, serviceId: string) =>
+const createNoEndpointError = (action: Action, serviceId: string) =>
   createError(
-    exchange,
-    `No endpoint matching ${exchange.type} request to service '${serviceId}'.`,
+    action,
+    `No endpoint matching ${action.type} request to service '${serviceId}'.`,
     'noaction'
   )
 
-async function runAsIndividualExchanges(
-  exchange: Exchange,
+async function runAsIndividualActions(
+  action: Action,
   service: Service,
-  mapPerId: (endpoint: Endpoint) => (exchange: Exchange) => Promise<Exchange>
+  mapPerId: (endpoint: Endpoint) => (action: Action) => Promise<Action>
 ) {
-  const exchanges = (exchange.request.id as string[]).map((oneId) =>
-    setIdOnExchange(exchange, oneId)
+  const actions = (action.payload.id as string[]).map((oneId) =>
+    setIdOnAction(action, oneId)
   )
-  const endpoint = service.endpointFromExchange(exchanges[0])
+  const endpoint = service.endpointFromAction(actions[0])
   if (!endpoint) {
-    return createNoEndpointError(exchange, service.id)
+    return createNoEndpointError(action, service.id)
   }
-  return combineExchanges(
-    exchange,
+  return combineActions(
+    action,
     await Promise.all(
-      exchanges.map((exchange) => limit(() => mapPerId(endpoint)(exchange)))
+      actions.map((action) => limit(() => mapPerId(endpoint)(action)))
     )
   )
 }
 
-const doRunIndividualIds = (exchange: Exchange, endpoint?: Endpoint) =>
-  Array.isArray(exchange.request.id) &&
-  exchange.authorized &&
+const doRunIndividualIds = (action: Action, endpoint?: Endpoint) =>
+  Array.isArray(action.payload.id) &&
+  action.meta?.authorized &&
   !isMembersScope(endpoint)
 
 async function mapOneOrMany(
-  exchange: Exchange,
+  action: Action,
   service: Service,
-  mapPerId: (endpoint: Endpoint) => (exchange: Exchange) => Promise<Exchange>
-): Promise<Exchange> {
-  const endpoint = service.endpointFromExchange(exchange)
-  if (doRunIndividualIds(exchange, endpoint)) {
-    return runAsIndividualExchanges(exchange, service, mapPerId)
+  mapPerId: (endpoint: Endpoint) => (action: Action) => Promise<Action>
+): Promise<Action> {
+  const endpoint = service.endpointFromAction(action)
+  if (doRunIndividualIds(action, endpoint)) {
+    return runAsIndividualActions(action, service, mapPerId)
   }
   if (!endpoint) {
-    return createNoEndpointError(exchange, service.id)
+    return createNoEndpointError(action, service.id)
   }
 
-  return mapPerId(endpoint)(exchange)
+  return mapPerId(endpoint)(action)
 }
 
 /**
  * Get several items from a service, based on the given action object.
  */
 export default async function get(
-  exchange: Exchange,
+  action: Action,
   _dispatch: InternalDispatch,
   getService: GetService,
   _identConfig?: IdentConfig
-): Promise<Exchange> {
+): Promise<Action> {
   const {
-    request: { type },
-    target: serviceId,
-    endpointId,
-  } = exchange
+    type,
+    targetService: serviceId,
+    endpoint: endpointId,
+  } = action.payload
 
   const service =
     typeof getService === 'function' ? getService(type, serviceId) : null
   if (!service) {
-    return createUnknownServiceError(exchange, type, serviceId, 'GET')
+    return createUnknownServiceError(action, type, serviceId, 'GET')
   }
 
-  const id = getIdFromExchange(exchange)
+  const id = getIdFromAction(action)
 
   const endpointDebug = endpointId
     ? `endpoint '${endpointId}'`
     : `endpoint matching type '${type}' and id '${id}'`
   debug('GET: Fetch from service %s at %s', service.id, endpointDebug)
 
-  const nextExchange = setIdOnExchange(exchange, id)
+  const nextAction = setIdOnAction(action, id)
 
   const mapPerId = (endpoint: Endpoint) =>
     pPipe(
-      (exchange: Exchange) => service.mapRequest(exchange, endpoint),
-      service.sendExchange,
-      (exchange: Exchange) => service.mapResponse(exchange, endpoint)
+      (action: Action) => service.mapRequest(action, endpoint),
+      service.send,
+      (action: Action) => service.mapResponse(action, endpoint)
     )
 
-  return mapOneOrMany(
-    service.authorizeExchange(nextExchange),
-    service,
-    mapPerId
-  )
+  return mapOneOrMany(service.authorizeAction(nextAction), service, mapPerId)
 }

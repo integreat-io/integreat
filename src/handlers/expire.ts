@@ -1,53 +1,48 @@
 import createError from '../utils/createError'
-import { completeExchange } from '../utils/exchangeMapping'
 import { isTypedData } from '../utils/is'
-import { Exchange, InternalDispatch, Ident, TypedData } from '../types'
+import { Action, InternalDispatch, Ident, TypedData } from '../types'
 
 const isTypedDataArray = (value: unknown): value is TypedData[] =>
   Array.isArray(value) && isTypedData(value[0])
 
 const getExpired = async (
-  target: string,
+  targetService: string,
   type: string | string[],
   endpointId: string,
   msFromNow: number,
   dispatch: InternalDispatch,
   ident?: Ident
-): Promise<Exchange> => {
+): Promise<Action> => {
   const timestamp = Date.now() + msFromNow
   const isodate = new Date(timestamp).toISOString()
-  return dispatch(
-    completeExchange({
-      type: 'GET',
-      request: {
-        type,
-        params: { timestamp, isodate },
-      },
-      target,
-      response: { returnNoDefaults: true },
-      endpointId,
-      ident,
-    })
-  )
+  return dispatch({
+    type: 'GET',
+    payload: {
+      type,
+      params: { timestamp, isodate },
+      targetService,
+      endpoint: endpointId,
+    },
+    response: { status: null, returnNoDefaults: true },
+    meta: { ident },
+  })
 }
 
 const deleteExpired = async (
   data: TypedData[],
-  target: string,
+  targetService: string,
   dispatch: InternalDispatch,
   ident?: Ident
-): Promise<Exchange> => {
+): Promise<Action> => {
   const deleteData = data.map((item) => ({ id: item.id, $type: item.$type }))
 
-  const deleteExchange = completeExchange({
+  const deleteAction = {
     type: 'DELETE',
-    request: { data: deleteData },
-    target,
-    ident,
-    meta: { queue: true },
-  })
+    payload: { data: deleteData, targetService },
+    meta: { ident, queue: true },
+  }
 
-  return dispatch(deleteExchange)
+  return dispatch(deleteAction)
 }
 
 /**
@@ -64,37 +59,35 @@ const deleteExpired = async (
  * of strings.
  */
 export default async function expire(
-  exchange: Exchange,
+  action: Action,
   dispatch: InternalDispatch
-): Promise<Exchange> {
+): Promise<Action> {
   const {
-    ident,
-    endpointId,
-    request: { type, params },
-    target: serviceId,
-  } = exchange
+    payload: { type, params, endpoint: endpointId, targetService: serviceId },
+    meta: { ident } = {},
+  } = action
   const msFromNow = (params?.msFromNow as number) || 0
 
   if (!serviceId) {
     return createError(
-      exchange,
+      action,
       `Can't delete expired without a specified service`
     )
   }
   if (!endpointId) {
     return createError(
-      exchange,
+      action,
       `Can't delete expired from service '${serviceId}' without an endpoint`
     )
   }
   if (!type) {
     return createError(
-      exchange,
+      action,
       `Can't delete expired from service '${serviceId}' without one or more specified types`
     )
   }
 
-  const expiredExchange = await getExpired(
+  const expiredAction = await getExpired(
     serviceId,
     type,
     endpointId,
@@ -103,30 +96,30 @@ export default async function expire(
     ident
   )
 
-  if (expiredExchange.status !== 'ok') {
+  if (expiredAction.response?.status !== 'ok') {
     return createError(
-      exchange,
-      `Could not get items from service '${serviceId}'. Reason: ${expiredExchange.status} ${expiredExchange.response.error}`,
+      action,
+      `Could not get items from service '${serviceId}'. Reason: ${expiredAction.response?.status} ${expiredAction.response?.error}`,
       'noaction'
     )
   }
-  const data = expiredExchange.response.data
+  const data = expiredAction.response?.data
   if (!isTypedDataArray(data)) {
     return createError(
-      exchange,
+      action,
       `No items to expire from service '${serviceId}'`,
       'noaction'
     )
   }
 
-  const responseExchange = await deleteExpired(data, serviceId, dispatch, ident)
+  const responseAction = await deleteExpired(data, serviceId, dispatch, ident)
 
   return {
-    ...exchange,
-    status: responseExchange.status,
+    ...action,
     response: {
-      ...exchange.response,
-      ...responseExchange.response,
+      ...action.response,
+      ...responseAction.response,
+      status: responseAction.response?.status || null,
     },
   }
 }

@@ -3,7 +3,7 @@ import sinon = require('sinon')
 import defs from '../helpers/defs'
 import resources from '../helpers/resources'
 import ent1Data from '../helpers/data/entry1'
-import { Exchange } from '../../types'
+import { Action } from '../../types'
 
 import Integreat from '../..'
 
@@ -17,10 +17,10 @@ const updatedAt = '2017-11-24T07:11:43.000Z'
 test('should map incoming action data and response data', async (t) => {
   const send = sinon
     .stub(resources.transporters.http, 'send')
-    .callsFake(async (exchange: Exchange) => ({
-      ...exchange,
-      status: 'ok',
+    .callsFake(async (action: Action) => ({
+      ...action,
       response: {
+        status: 'ok',
         data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),
       },
     }))
@@ -81,10 +81,10 @@ test('should map incoming action data and response data', async (t) => {
 
   t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)
-  const sentExchange = send.args[0][0]
-  t.is(sentExchange.type, 'SET')
-  t.is(sentExchange.request.data, expectedRequestData)
-  t.is(sentExchange.request.id, 'ent1')
-  t.is(sentExchange.request.type, 'entry')
+  const sentAction = send.args[0][0]
+  t.is(sentAction.type, 'SET')
+  t.is(sentAction.payload.data, expectedRequestData)
+  t.is(sentAction.payload.id, 'ent1')
+  t.is(sentAction.payload.type, 'entry')
   t.deepEqual(ret, expectedResponse)
 })

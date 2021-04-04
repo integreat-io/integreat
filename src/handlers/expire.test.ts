@@ -1,6 +1,5 @@
 import test from 'ava'
 import sinon = require('sinon')
-import { completeExchange } from '../utils/exchangeMapping'
 
 import expire from './expire'
 
@@ -17,60 +16,59 @@ test.after.always(() => {
   clock?.restore()
 })
 
-const response = completeExchange({
+const responseAction = {
   type: 'GET',
-  status: 'ok',
-  response: { data: [] },
-})
+  payload: { type: 'entry' },
+  response: { status: 'ok', data: [] },
+}
 
 const ident = { id: 'johnf' }
 
 // Tests
 
 test('should dispatch GET to expired endpoint', async (t) => {
-  const dispatch = sinon.stub().resolves(response)
-  const exchange = completeExchange({
+  const dispatch = sinon.stub().resolves(responseAction)
+  const action = {
     type: 'EXPIRE',
-    request: { type: 'entry' },
-    target: 'store',
-    endpointId: 'getExpired',
-    ident,
-  })
-  const expected = completeExchange({
+    payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
+    meta: { ident },
+  }
+  const expected = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
       params: {
         timestamp: theTime,
         isodate: new Date(theTime).toISOString(),
       },
+      targetService: 'store',
+      endpoint: 'getExpired',
     },
     response: {
+      status: null,
       returnNoDefaults: true,
     },
-    target: 'store',
-    endpointId: 'getExpired',
-    ident,
-  })
+    meta: { ident },
+  }
 
-  await expire(exchange, dispatch)
+  await expire(action, dispatch)
 
-  t.true(dispatch.calledWithMatch(expected))
+  t.deepEqual(dispatch.args[0][0], expected)
 })
 
 test('should add msFromNow to current timestamp', async (t) => {
-  const dispatch = sinon.stub().resolves(response)
-  const exchange = completeExchange({
+  const dispatch = sinon.stub().resolves(responseAction)
+  const action = {
     type: 'EXPIRE',
-    request: {
+    payload: {
       type: 'entry',
       params: { msFromNow: 3600000 },
+      targetService: 'store',
+      endpoint: 'getExpired',
     },
-    target: 'store',
-    endpointId: 'getExpired',
-  })
+  }
   const expected = {
-    request: {
+    payload: {
       params: {
         timestamp: theTime + 3600000,
         isodate: new Date(theTime + 3600000).toISOString(),
@@ -78,7 +76,7 @@ test('should add msFromNow to current timestamp', async (t) => {
     },
   }
 
-  await expire(exchange, dispatch)
+  await expire(action, dispatch)
 
   t.true(dispatch.calledWithMatch(expected))
 })
@@ -88,30 +86,29 @@ test('should queue DELETE for expired entries', async (t) => {
     { id: 'ent1', $type: 'entry' },
     { id: 'ent2', $type: 'entry' },
   ]
-  const dispatch = sinon
-    .stub()
-    .resolves(completeExchange({ status: 'ok', response: { data } }))
+  const dispatch = sinon.stub().resolves({
+    type: 'GET',
+    payload: { type: 'entry' },
+    response: { status: 'ok', data },
+  })
   dispatch
     .withArgs(sinon.match({ type: 'DELETE' }))
-    .resolves({ status: 'queued' })
-  const exchange = completeExchange({
+    .resolves({ type: 'DELETE', payload: {}, response: { status: 'queued' } })
+  const action = {
     type: 'EXPIRE',
-    request: { type: 'entry' },
-    target: 'store',
-    endpointId: 'getExpired',
-    ident,
-  })
+    payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
+    meta: { ident },
+  }
   const expected = {
     type: 'DELETE',
-    request: { data },
-    target: 'store',
-    ident,
+    payload: { data, targetService: 'store' },
+    meta: { ident },
   }
 
-  const ret = await expire(exchange, dispatch)
+  const ret = await expire(action, dispatch)
 
   t.truthy(ret)
-  t.is(ret.status, 'queued', ret.response.error)
+  t.is(ret.response?.status, 'queued', ret.response?.error)
   t.true(dispatch.calledWithMatch(expected))
 })
 
@@ -124,102 +121,96 @@ test('should queue DELETE with id and type only', async (t) => {
       author: { id: 'johnf', $type: 'user' },
     },
   ]
-  const dispatch = sinon
-    .stub()
-    .resolves(completeExchange({ status: 'ok', response: { data } }))
+  const dispatch = sinon.stub().resolves({
+    type: 'GET',
+    payload: { type: 'entry' },
+    response: { status: 'ok', data },
+  })
   dispatch
     .withArgs(sinon.match({ type: 'DELETE' }))
-    .resolves({ status: 'queued' })
-  const exchange = completeExchange({
+    .resolves({ type: 'DELETE', payload: {}, response: { status: 'queued' } })
+  const action = {
     type: 'EXPIRE',
-    request: { type: 'entry' },
-    target: 'store',
-    endpointId: 'getExpired',
-  })
-  const expected = { request: { data: [{ id: 'ent1', $type: 'entry' }] } }
+    payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
+  }
+  const expected = { payload: { data: [{ id: 'ent1', $type: 'entry' }] } }
 
-  const ret = await expire(exchange, dispatch)
+  const ret = await expire(action, dispatch)
 
-  t.is(ret.status, 'queued', ret.response.error)
+  t.is(ret.response?.status, 'queued', ret.response?.error)
   t.true(dispatch.calledWithMatch(expected))
 })
 
 test('should not queue when no expired entries', async (t) => {
-  const dispatch = sinon.stub().resolves(response)
+  const dispatch = sinon.stub().resolves(responseAction)
   dispatch
     .withArgs(sinon.match({ type: 'DELETE' }))
     .resolves({ status: 'queued' })
-  const exchange = completeExchange({
+  const action = {
     type: 'EXPIRE',
-    request: { type: 'entry' },
-    target: 'store',
-    endpointId: 'getExpired',
-  })
+    payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
+  }
 
-  const ret = await expire(exchange, dispatch)
+  const ret = await expire(action, dispatch)
 
   t.false(dispatch.calledWithMatch({ type: 'DELETE' }))
   t.truthy(ret)
-  t.is(ret.status, 'noaction')
+  t.is(ret.response?.status, 'noaction')
 })
 
 test('should not queue when GET returns error', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves(completeExchange({ status: 'notfound' }))
+  const dispatch = sinon.stub().resolves({
+    type: 'GET',
+    payload: { type: 'entry' },
+    response: { status: 'notfound' },
+  })
   dispatch
     .withArgs(sinon.match({ type: 'DELETE' }))
     .resolves({ status: 'queued' })
-  const exchange = completeExchange({
+  const action = {
     type: 'EXPIRE',
-    request: { type: 'entry' },
-    target: 'store',
-    endpointId: 'getExpired',
-  })
+    payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
+  }
 
-  const ret = await expire(exchange, dispatch)
+  const ret = await expire(action, dispatch)
 
   t.false(dispatch.calledWithMatch({ type: 'DELETE' }))
   t.truthy(ret)
-  t.is(ret.status, 'noaction')
+  t.is(ret.response?.status, 'noaction')
 })
 
 test('should return error when no service', async (t) => {
-  const dispatch = sinon.stub().resolves(response)
-  const exchange = completeExchange({
+  const dispatch = sinon.stub().resolves(responseAction)
+  const action = {
     type: 'EXPIRE',
-    request: { type: 'entry' },
-    endpointId: 'getExpired',
-  })
+    payload: { type: 'entry', endpoint: 'getExpired' },
+  }
 
-  const ret = await expire(exchange, dispatch)
+  const ret = await expire(action, dispatch)
 
-  t.is(ret.status, 'error')
+  t.is(ret.response?.status, 'error')
 })
 
 test('should return error when no endpoint', async (t) => {
-  const dispatch = sinon.stub().resolves(response)
-  const exchange = completeExchange({
+  const dispatch = sinon.stub().resolves(responseAction)
+  const action = {
     type: 'EXPIRE',
-    request: { type: 'entry' },
-    target: 'store',
-  })
+    payload: { type: 'entry', targetService: 'store' },
+  }
 
-  const ret = await expire(exchange, dispatch)
+  const ret = await expire(action, dispatch)
 
-  t.is(ret.status, 'error')
+  t.is(ret.response?.status, 'error')
 })
 
 test('should return error when no type', async (t) => {
-  const dispatch = sinon.stub().resolves(response)
-  const exchange = completeExchange({
+  const dispatch = sinon.stub().resolves(responseAction)
+  const action = {
     type: 'EXPIRE',
-    request: {},
-    target: 'store',
-    endpointId: 'getExpired',
-  })
+    payload: { targetService: 'store', endpoint: 'getExpired' },
+  }
 
-  const ret = await expire(exchange, dispatch)
+  const ret = await expire(action, dispatch)
 
-  t.is(ret.status, 'error')
+  t.is(ret.response?.status, 'error')
 })

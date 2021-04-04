@@ -6,9 +6,9 @@ import SET_META from './setMeta'
 import DELETE from './delete'
 import SYNC from './sync'
 import EXPIRE from './expire'
-import { ExchangeHandler } from '../dispatch'
+import { ActionHandler } from '../dispatch'
 
-const handlers: Record<string, ExchangeHandler> = {
+const handlers: Record<string, ActionHandler> = {
   GET,
   GET_META,
   GET_IDENT,

@@ -60,37 +60,15 @@ export interface Payload<T = unknown> extends Record<string, unknown> {
   service?: string // For backward compability, may be removed
   endpoint?: string
   params?: Params
-  page?: number
-  pageSize?: number
-  pageAfter?: string
-  pageBefore?: string
-  pageId?: string
-}
-
-export interface ExchangeRequest<T = unknown> {
-  type?: string | string[]
-  id?: string | string[]
-  params?: Params
-  data?: T
   uri?: string
   method?: string
   headers?: Record<string, string>
   page?: number
+  pageSize?: number
   pageAfter?: string
   pageBefore?: string
-  pageSize?: number
   pageId?: string
   sendNoDefaults?: boolean
-}
-
-export interface ExchangeResponse<T = unknown> {
-  data?: T
-  reason?: string
-  error?: string
-  warning?: string
-  paging?: Paging
-  params?: Params
-  returnNoDefaults?: boolean
 }
 
 export interface Meta extends Record<string, unknown> {
@@ -99,44 +77,35 @@ export interface Meta extends Record<string, unknown> {
   schedule?: ScheduleObject | string | null
 }
 
-export interface Exchange<
-  RequestData = unknown,
-  ResponseData = unknown,
-  MetaData extends Meta = Meta
-> {
-  type: string
-  id?: string
-  status: string | null
-  request: ExchangeRequest<RequestData>
-  response: ExchangeResponse<ResponseData>
-  ident?: Ident
-  auth?: Record<string, unknown> | null
-  meta: MetaData
-  endpointId?: string
-  options?: EndpointOptions
-  authorized?: boolean
-  source?: string
-  target?: string
-}
-
 export interface ActionMeta extends Record<string, unknown> {
   id?: string
   ident?: Ident
   queue?: boolean | number
   schedule?: ScheduleObject | string | null
+  auth?: Record<string, unknown> | null
+  options?: EndpointOptions
+  authorized?: boolean
 }
 
-export interface Action<P extends Payload = Payload> {
-  type: string
-  payload: P
-  meta?: ActionMeta
-}
-
-export interface Response<T = unknown> extends ExchangeResponse<T> {
+export interface Response<T = unknown> {
   status: string | null
+  data?: T
+  reason?: string
+  error?: string
+  warning?: string
+  paging?: Paging
+  params?: Params
+  returnNoDefaults?: boolean
   responses?: Response[] // TODO: Is this the right way?
   access?: Record<string, unknown>
   meta?: { id?: string }
+}
+
+export interface Action<P extends Payload = Payload, ResponseData = unknown> {
+  type: string
+  payload: P
+  response?: Response<ResponseData>
+  meta?: ActionMeta
 }
 
 export interface Dispatch<T = unknown> {
@@ -144,7 +113,7 @@ export interface Dispatch<T = unknown> {
 }
 
 export interface InternalDispatch {
-  (exchange: Exchange): Promise<Exchange>
+  (action: Action): Promise<Action>
 }
 
 export interface Middleware {
@@ -163,6 +132,6 @@ export interface Transporter {
     authentication: Record<string, unknown> | null,
     connection: Connection | null
   ) => Promise<Connection | null>
-  send: (exchange: Exchange, connection: Connection | null) => Promise<Exchange>
+  send: (action: Action, connection: Connection | null) => Promise<Action>
   disconnect: (connection: Connection | null) => Promise<void>
 }

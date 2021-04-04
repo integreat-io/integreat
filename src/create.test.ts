@@ -3,8 +3,7 @@ import sinon = require('sinon')
 import { jsonServiceDef } from './tests/helpers/json'
 import builtInMutations from './mutations'
 import resources from './tests/helpers/resources'
-import { InternalDispatch, DataObject, Exchange } from './types'
-import { completeExchange } from './utils/exchangeMapping'
+import { Action, InternalDispatch, DataObject } from './types'
 
 import create, { Definitions } from './create'
 
@@ -103,7 +102,9 @@ test('should throw when no schemas', (t) => {
 
 test('should dispatch with resources', async (t) => {
   const action = { type: 'TEST', payload: {} }
-  const handler = sinon.stub().resolves(completeExchange({ status: 'ok' }))
+  const handler = sinon
+    .stub()
+    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
   const handlers = { TEST: handler }
   const identConfig = { type: 'account' }
 
@@ -117,10 +118,12 @@ test('should dispatch with resources', async (t) => {
   t.deepEqual(handler.args[0][3], identConfig)
 })
 
-test('should dispatch with builtin exchange handler', async (t) => {
-  const send = sinon
-    .stub()
-    .resolves(completeExchange({ status: 'ok', response: { data: '[]' } }))
+test('should dispatch with builtin action handler', async (t) => {
+  const send = sinon.stub().resolves({
+    type: 'GET',
+    payload: {},
+    response: { status: 'ok', data: '[]' },
+  })
   const resourcesWithTransAndSend = {
     ...resourcesWithTrans,
     transporters: {
@@ -144,11 +147,13 @@ test('should dispatch with builtin exchange handler', async (t) => {
 
 test('should call middleware', async (t) => {
   const action = { type: 'TEST', payload: {} }
-  const otherAction = sinon.stub().resolves(completeExchange({ status: 'ok' }))
+  const otherAction = sinon
+    .stub()
+    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
   const handlers = { OTHER: otherAction }
   const middleware = [
-    (next: InternalDispatch) => async (_exchange: Exchange) =>
-      next(completeExchange({ type: 'OTHER' })),
+    (next: InternalDispatch) => async (_action: Action) =>
+      next({ type: 'OTHER', payload: {} }),
   ]
 
   const great = create(
@@ -175,10 +180,13 @@ test('should map data', async (t) => {
       ...resourcesWithTrans.transporters,
       http: {
         ...resourcesWithTrans.transporters.http,
-        send: async (exchange: Exchange) => ({
-          ...exchange,
-          status: 'ok',
-          response: { ...exchange.response, data: JSON.stringify([data0]) },
+        send: async (action: Action) => ({
+          ...action,
+          response: {
+            ...action.response,
+            status: 'ok',
+            data: JSON.stringify([data0]),
+          },
         }),
       },
     },
@@ -224,8 +232,11 @@ test('should use auth', async (t) => {
       ...resourcesWithTrans.transporters,
       http: {
         ...resourcesWithTrans.transporters.http,
-        send: async () =>
-          completeExchange({ status: 'ok', response: { data: '[]' } }),
+        send: async () => ({
+          type: 'GET',
+          payload: {},
+          response: { status: 'ok', data: '[]' },
+        }),
       },
     },
   }

@@ -42,14 +42,6 @@ const mapOptions = {
   functions: {},
 }
 
-const exchangeDefaults = {
-  status: null,
-  request: {},
-  response: {},
-  options: {},
-  meta: {},
-}
-
 const serviceOptions = {}
 
 // Tests
@@ -67,10 +59,9 @@ test('should return match function', (t) => {
       options: { uri: 'http://test.api/2' },
     },
   ]
-  const exchange = {
-    ...exchangeDefaults,
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
       id: 'ent1',
     },
@@ -81,7 +72,7 @@ test('should return match function', (t) => {
     serviceOptions,
     mapOptions
   )
-  const mapping = matchFn(exchange)
+  const mapping = matchFn(action)
 
   t.truthy(mapping)
   t.is((mapping as Endpoint).id, 'endpoint2')

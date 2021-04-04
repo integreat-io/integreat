@@ -4,14 +4,14 @@ import {
   MapDefinition,
   MapTransform,
 } from 'map-transform'
-import { Exchange } from '../../types'
+import { Action } from '../../types'
 import { MapOptions } from '../types'
 import { EndpointDef, Endpoint, EndpointOptions } from './types'
 import isMatch from './match'
 import {
-  mappingObjectFromExchange,
-  exchangeFromMappingObject,
-} from '../../utils/exchangeMapping'
+  mappingObjectFromAction,
+  actionFromMappingObject,
+} from '../../utils/mappingObject'
 import { ensureArray } from '../../utils/array'
 
 export interface PrepareOptions {
@@ -31,26 +31,26 @@ function mutate(
   }
 }
 
-function mutateExchange(
+function mutateAction(
   mutator: MapTransform | null,
   isRequest: boolean,
   mapNoDefaults: boolean
 ) {
   if (!mutator) {
-    return (exchange: Exchange) => exchange
+    return (action: Action) => action
   }
 
-  return (exchange: Exchange, isIncoming = false) =>
-    exchangeFromMappingObject(
-      exchange,
+  return (action: Action, isIncoming = false) =>
+    actionFromMappingObject(
+      action,
       mutate(
         mutator,
-        mappingObjectFromExchange(exchange, isRequest),
+        mappingObjectFromAction(action, isRequest),
         isRequest ? !!isIncoming : !isIncoming,
         mapNoDefaults ||
           (isRequest
-            ? exchange.request.sendNoDefaults
-            : exchange.response.returnNoDefaults)
+            ? action.payload.sendNoDefaults
+            : action.response?.returnNoDefaults)
       ),
       isRequest
     )
@@ -99,8 +99,8 @@ export default function createEndpoint(
       allowRawResponse,
       match,
       options,
-      mutateRequest: mutateExchange(mutator, true, sendNoDefaults),
-      mutateResponse: mutateExchange(mutator, false, returnNoDefaults),
+      mutateRequest: mutateAction(mutator, true, sendNoDefaults),
+      mutateResponse: mutateAction(mutator, false, returnNoDefaults),
       isMatch: isMatch(endpointDef),
     }
   }

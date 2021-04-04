@@ -5,13 +5,16 @@ import { jsonServiceDef } from '../tests/helpers/json'
 import mutations from '../mutations'
 import resources from '../tests/helpers/resources'
 import { EndpointDef } from '../service/endpoints/types'
-import { completeExchange } from '../utils/exchangeMapping'
+import { Action } from '../types'
 
 import getMeta from './getMeta'
 
 // Setup
 
-const dispatch = async () => completeExchange({ status: 'ok' })
+const dispatch = async (action: Action) => ({
+  ...action,
+  response: { ...action.response, status: 'ok' },
+})
 
 const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
   schemas: [
@@ -65,21 +68,21 @@ test('should get metadata for service', async (t) => {
   ]
   const great = Integreat.create(defs(endpoints), resources)
   const getService = () => great.services.store
-  const exchange = completeExchange({
+  const action = {
     type: 'GET_META',
-    request: {
+    payload: {
       params: { keys: 'lastSyncedAt' },
+      targetService: 'store',
     },
-    target: 'store',
-    ident,
-  })
+    meta: { ident },
+  }
   const expectedResponse = {
+    status: 'ok',
     data: { service: 'store', meta: { lastSyncedAt } },
   }
 
-  const ret = await getMeta(exchange, dispatch, getService)
+  const ret = await getMeta(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
   t.deepEqual(ret.response, expectedResponse)
 })
 
@@ -97,21 +100,21 @@ test('should get several metadata for service', async (t) => {
   const great = Integreat.create(defs(endpoints), resources)
   const getService = (type?: string | string[], service?: string) =>
     service === 'store' || type === 'meta' ? great.services.store : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'GET_META',
-    request: {
+    payload: {
       params: { keys: ['lastSyncedAt', 'count'] },
+      targetService: 'store',
+      endpoint: 'getMeta',
     },
-    target: 'store',
-    endpointId: 'getMeta',
-    ident,
-  })
+    meta: { ident },
+  }
   const expected = { service: 'store', meta: { lastSyncedAt, count: 5 } }
 
-  const ret = await getMeta(exchange, dispatch, getService)
+  const ret = await getMeta(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
-  t.deepEqual(ret.response.data, expected)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret.response?.data, expected)
 })
 
 test('should get all metadata for service', async (t) => {
@@ -128,22 +131,21 @@ test('should get all metadata for service', async (t) => {
   const great = Integreat.create(defs(endpoints), resources)
   const getService = (type?: string | string[], service?: string) =>
     service === 'store' || type === 'meta' ? great.services.store : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'GET_META',
-    request: {},
-    target: 'store',
-    ident,
-  })
+    payload: { targetService: 'store' },
+    meta: { ident },
+  }
   const expected = {
     service: 'store',
     meta: { lastSyncedAt, count: 5, status: 'ready' },
   }
 
-  const ret = await getMeta(exchange, dispatch, getService)
+  const ret = await getMeta(action, dispatch, getService)
 
   t.truthy(ret)
-  t.is(ret.status, 'ok', ret.response.error)
-  t.deepEqual(ret.response.data, expected)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret.response?.data, expected)
 })
 
 test('should return null for metadata when not set on service', async (t) => {
@@ -160,21 +162,21 @@ test('should return null for metadata when not set on service', async (t) => {
   const great = Integreat.create(defs(endpoints), resources)
   const getService = (type?: string | string[], service?: string) =>
     service === 'store' || type === 'meta' ? great.services.store : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'GET_META',
-    request: {
+    payload: {
       params: { keys: 'lastSyncedAt' },
+      targetService: 'store',
     },
-    target: 'store',
-    ident,
-  })
+    meta: { ident },
+  }
   const expected = { service: 'store', meta: { lastSyncedAt: null } }
 
-  const ret = await getMeta(exchange, dispatch, getService)
+  const ret = await getMeta(action, dispatch, getService)
 
   t.truthy(ret)
-  t.is(ret.status, 'ok', ret.response.error)
-  t.deepEqual(ret.response.data, expected)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret.response?.data, expected)
 })
 
 test('should return reply from service when not ok', async (t) => {
@@ -189,18 +191,18 @@ test('should return reply from service when not ok', async (t) => {
   const great = Integreat.create(defs(endpoints), resources)
   const getService = (type?: string | string[], service?: string) =>
     service === 'store' || type === 'meta' ? great.services.store : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'GET_META',
-    request: {
+    payload: {
       params: { keys: 'lastSyncedAt' },
+      targetService: 'store',
     },
-    target: 'store',
-    ident,
-  })
+    meta: { ident },
+  }
 
-  const ret = await getMeta(exchange, dispatch, getService)
+  const ret = await getMeta(action, dispatch, getService)
 
-  t.is(ret.status, 'notfound', ret.response.error)
+  t.is(ret.response?.status, 'notfound', ret.response?.error)
 })
 
 test('should return noaction when when no meta type is set', async (t) => {
@@ -217,19 +219,19 @@ test('should return noaction when when no meta type is set', async (t) => {
   const great = Integreat.create(defs(endpoints, null), resources)
   const getService = (_type?: string | string[], service?: string) =>
     service === 'store' ? great.services.store : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'GET_META',
-    request: {
+    payload: {
       params: { keys: 'lastSyncedAt' },
+      targetService: 'store',
     },
-    target: 'store',
     meta: { ident },
-  })
+  }
 
-  const ret = await getMeta(exchange, dispatch, getService)
+  const ret = await getMeta(action, dispatch, getService)
 
-  t.is(ret.status, 'noaction')
-  t.is(typeof ret.response.error, 'string')
+  t.is(ret.response?.status, 'noaction')
+  t.is(typeof ret.response?.error, 'string')
   t.false(scope.isDone())
 })
 
@@ -251,20 +253,20 @@ test('should get metadata from other service', async (t) => {
       : service === 'store' || type === 'meta'
       ? great.services.store
       : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'GET_META',
-    request: {
+    payload: {
       params: { keys: 'lastSyncedAt' },
+      targetService: 'entries',
     },
-    target: 'entries',
-    ident,
-  })
+    meta: { ident },
+  }
   const expected = { service: 'entries', meta: { lastSyncedAt } }
 
-  const ret = await getMeta(exchange, dispatch, getService)
+  const ret = await getMeta(action, dispatch, getService)
 
-  t.is(ret.status, 'ok', ret.response.error)
-  t.deepEqual(ret.response.data, expected)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret.response?.data, expected)
 })
 
 test('should return noaction when meta is set to an unknown type', async (t) => {
@@ -272,35 +274,35 @@ test('should return noaction when meta is set to an unknown type', async (t) => 
   const great = Integreat.create(defs(endpoints, 'unknown'), resources)
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? great.services.store : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'GET_META',
-    request: {
+    payload: {
       params: { keys: 'lastSyncedAt' },
+      targetService: 'entries',
     },
-    target: 'entries',
-    ident,
-  })
+    meta: { ident },
+  }
 
-  const ret = await getMeta(exchange, dispatch, getService)
+  const ret = await getMeta(action, dispatch, getService)
 
-  t.is(ret.status, 'noaction')
-  t.is(typeof ret.response.error, 'string')
+  t.is(ret.response?.status, 'noaction')
+  t.is(typeof ret.response?.error, 'string')
 })
 
 test('should return error for unknown service', async (t) => {
   const getService = () => undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'GET_META',
-    request: {
+    payload: {
       params: { keys: 'lastSyncedAt' },
+      targetService: 'unknown',
     },
-    target: 'unknown',
-    ident,
-  })
+    meta: { ident },
+  }
 
-  const ret = await getMeta(exchange, dispatch, getService)
+  const ret = await getMeta(action, dispatch, getService)
 
-  t.is(ret.status, 'error')
+  t.is(ret.response?.status, 'error')
 })
 
 test('should respond with noaccess when not authorized', async (t) => {
@@ -313,18 +315,18 @@ test('should respond with noaccess when not authorized', async (t) => {
   const great = Integreat.create(defs(endpoints), resources)
   const getService = (type?: string | string[], service?: string) =>
     service === 'store' || type === 'meta' ? great.services.store : undefined
-  const exchange = completeExchange({
+  const action = {
     type: 'GET_META',
-    request: {
+    payload: {
       params: { keys: 'lastSyncedAt' },
+      targetService: 'store',
     },
-    target: 'store',
-  })
+  }
 
-  const ret = await getMeta(exchange, dispatch, getService)
+  const ret = await getMeta(action, dispatch, getService)
 
-  t.is(ret.status, 'noaccess', ret.response.error)
-  t.is(typeof ret.response.error, 'string')
-  t.is(ret.response.reason, 'NO_IDENT')
-  t.falsy(ret.response.data)
+  t.is(ret.response?.status, 'noaccess', ret.response?.error)
+  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.response?.reason, 'NO_IDENT')
+  t.falsy(ret.response?.data)
 })

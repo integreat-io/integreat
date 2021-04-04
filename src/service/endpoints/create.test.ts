@@ -3,10 +3,10 @@ import test from 'ava'
 import sinon = require('sinon')
 import createSchema from '../../schema'
 import builtInFunctions from '../../transformers/builtIns'
-import { Data, TypedData, DataObject, Exchange } from '../../types'
+import { DataObject } from '../../types'
 import { MapOptions } from '../types'
-import { completeExchange } from '../../utils/exchangeMapping'
 import json from '../../transformers/json'
+import { isAction } from '../../utils/is'
 
 import createEndpoint from './create'
 
@@ -55,20 +55,25 @@ const entryMapping3 = [
   { $apply: 'cast_entry' },
 ]
 
-const shouldHaveToken = () => (exchange: unknown) =>
-  typeof exchange === 'object' && exchange !== null
+const shouldHaveToken = () => (action: unknown) =>
+  isAction(action)
     ? {
-        ...exchange,
-        status: ((exchange as unknown) as Exchange).request.params?.token
-          ? null
-          : 'badrequest',
+        ...action,
+        response: {
+          ...action.response,
+          status: action.payload.params?.token ? null : 'badrequest',
+        },
       }
-    : exchange
+    : action
 
-const alwaysOk = () => (exchange: unknown) =>
-  typeof exchange === 'object' && exchange !== null
-    ? { ...exchange, status: null, meta: { ok: true } }
-    : exchange
+const alwaysOk = () => (action: unknown) =>
+  isAction(action)
+    ? {
+        ...action,
+        response: { ...action.response, status: null },
+        meta: { ok: true },
+      }
+    : action
 
 const mapOptions = {
   pipelines: {
@@ -85,10 +90,9 @@ const mapOptions = {
   },
 }
 
-const exchange = completeExchange({
+const action = {
   type: 'GET',
-  status: 'ok',
-  request: {
+  payload: {
     type: 'entry',
     data: [
       { id: 'ent1', $type: 'entry', title: 'Entry 1' },
@@ -96,6 +100,7 @@ const exchange = completeExchange({
     ],
   },
   response: {
+    status: 'ok',
     data: {
       content: {
         data: {
@@ -104,8 +109,8 @@ const exchange = completeExchange({
       },
     },
   },
-  ident: { id: 'johnf' },
-})
+  meta: { ident: { id: 'johnf' } },
+}
 
 const serviceOptions = {}
 
@@ -184,37 +189,37 @@ test('should set run options through prepareOptions', (t) => {
 
 // Tests -- isMatch
 
-test('should return true when endpoint is a match to an exchange', (t) => {
+test('should return true when endpoint is a match to an action', (t) => {
   const endpointDef = {
-    match: { filters: { 'request.data.draft': { const: false } } },
+    match: { filters: { 'payload.data.draft': { const: false } } },
     options: {},
   }
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
       data: { draft: false },
     },
-  })
+  }
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
-  t.true(endpoint.isMatch(exchange))
+  t.true(endpoint.isMatch(action))
 })
 
-test('should return false when no match to exchange', (t) => {
+test('should return false when no match to action', (t) => {
   const endpointDef = {
     match: { scope: 'member' },
     options: {},
   }
-  const exchange = completeExchange({
+  const action = {
     type: 'GET',
-    request: {
+    payload: {
       type: 'entry',
     },
-  })
+  }
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
-  t.false(endpoint.isMatch(exchange))
+  t.false(endpoint.isMatch(action))
 })
 
 // Tests -- mutateResponse
@@ -228,8 +233,9 @@ test('should map response from service with endpoint mutation', (t) => {
   }
   const theTime = new Date()
   const expected = {
-    ...exchange,
+    ...action,
     response: {
+      ...action.response,
       data: [
         {
           $type: 'entry',
@@ -245,13 +251,13 @@ test('should map response from service with endpoint mutation', (t) => {
   const clock = sinon.useFakeTimers(theTime)
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
-  const ret = endpoint.mutateResponse(exchange)
+  const ret = endpoint.mutateResponse(action)
 
   clock.restore()
   t.deepEqual(ret, expected)
 })
 
-test('should map exchange props from response', (t) => {
+test('should map action props from response', (t) => {
   const endpointDef = {
     mutation: {
       data: ['data.content', { $apply: 'entry' }],
@@ -265,9 +271,10 @@ test('should map exchange props from response', (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const exchangeWithProps = {
-    ...exchange,
+  const actionWithProps = {
+    ...action,
     response: {
+      ...action.response,
       data: {
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
         key: '7839',
@@ -280,16 +287,13 @@ test('should map exchange props from response', (t) => {
   const expectedPaging = { next: { offset: 'page2', type: 'entry' } }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithProps) as Exchange<
-    Data,
-    TypedData[]
-  >
+  const ret = endpoint.mutateResponse(actionWithProps)
 
-  t.is(ret.status, 'badrequest')
-  t.is(ret.request.id, '7839')
-  t.is(ret.response.error, 'Not valid')
-  t.is(ret.response.data?.length, 1)
-  t.deepEqual(ret.response.paging, expectedPaging)
+  t.is(ret.response?.status, 'badrequest')
+  t.is(ret.payload.id, '7839')
+  t.is(ret.response?.error, 'Not valid')
+  t.is((ret.response?.data as DataObject[]).length, 1)
+  t.deepEqual(ret.response?.paging, expectedPaging)
 })
 
 test('should map response from service with service and endpoint mutations', (t) => {
@@ -307,12 +311,13 @@ test('should map response from service with service and endpoint mutations', (t)
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const exchangeWithProps = {
-    ...exchange,
-    request: {
+  const actionWithProps = {
+    ...action,
+    payload: {
       params: { message: 'Too much' },
     },
     response: {
+      ...action.response,
       data: JSON.stringify({
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
         result: 'badrequest',
@@ -325,24 +330,23 @@ test('should map response from service with service and endpoint mutations', (t)
     mapOptions,
     serviceMutation
   )(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithProps) as Exchange<
-    Data,
-    TypedData[]
-  >
+  const ret = endpoint.mutateResponse(actionWithProps)
 
-  t.is(ret.response.data?.length, 1)
-  t.is(ret.response.data![0].id, 'ent1')
-  t.is(ret.status, 'badrequest')
-  t.is(ret.response.error, 'Too much')
+  const data = ret.response?.data as DataObject[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'ent1')
+  t.is(ret.response?.status, 'badrequest')
+  t.is(ret.response?.error, 'Too much')
 })
 
 test('should map response from service with service mutation only', (t) => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
-  const exchangeWithProps = {
-    ...exchange,
+  const actionWithProps = {
+    ...action,
     response: {
+      ...action.response,
       data: {
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
       },
@@ -357,17 +361,15 @@ test('should map response from service with service mutation only', (t) => {
     mapOptions,
     serviceMutation
   )(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithProps) as Exchange<
-    Data,
-    TypedData[]
-  >
+  const ret = endpoint.mutateResponse(actionWithProps)
 
-  t.is(ret.status, 'ok', ret.response.error)
-  t.is(ret.response.data?.length, 1)
-  t.is(ret.response.data![0].id, 'ent1')
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  const data = ret.response?.data as DataObject[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'ent1')
 })
 
-test('should keep exchange props not mapped from response', (t) => {
+test('should keep action props not mapped from response', (t) => {
   const endpointDef = {
     mutation: {
       data: ['data.content', { $apply: 'entry' }],
@@ -376,10 +378,11 @@ test('should keep exchange props not mapped from response', (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const exchangeWithProps = {
-    ...exchange,
-    status: 'error',
+  const actionWithProps = {
+    ...action,
     response: {
+      ...action.response,
+      status: 'error',
       data: {
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
         message: 'Not valid',
@@ -388,14 +391,11 @@ test('should keep exchange props not mapped from response', (t) => {
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithProps) as Exchange<
-    Data,
-    TypedData[]
-  >
+  const ret = endpoint.mutateResponse(actionWithProps)
 
-  t.is(ret.status, 'error')
-  t.is(ret.response.error, 'Not valid')
-  t.is(ret.response.data?.length, 1)
+  t.is(ret.response?.status, 'error')
+  t.is(ret.response?.error, 'Not valid')
+  t.is((ret.response?.data as DataObject[]).length, 1)
 })
 
 test('should not include error from response when not an error', (t) => {
@@ -406,10 +406,11 @@ test('should not include error from response when not an error', (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const exchangeWithProps = {
-    ...exchange,
-    status: 'queued',
+  const actionWithProps = {
+    ...action,
     response: {
+      ...action.response,
+      status: 'queued',
       data: {
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
         message: 'Not valid',
@@ -418,10 +419,10 @@ test('should not include error from response when not an error', (t) => {
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithProps)
+  const ret = endpoint.mutateResponse(actionWithProps)
 
-  t.is(ret.status, 'queued')
-  t.is(ret.response.error, undefined)
+  t.is(ret.response?.status, 'queued')
+  t.is(ret.response?.error, undefined)
 })
 
 test('should map to undefined from response when unknown path', (t) => {
@@ -432,12 +433,15 @@ test('should map to undefined from response when unknown path', (t) => {
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = {
-    ...exchange,
-    response: { data: undefined },
+    ...action,
+    response: {
+      ...action.response,
+      data: undefined,
+    },
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateResponse(exchange)
+  const ret = endpoint.mutateResponse(action)
 
   t.deepEqual(ret, expected)
 })
@@ -450,12 +454,15 @@ test('should map to empty array from service when unknown path and expecting arr
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = {
-    ...exchange,
-    response: { data: [] },
+    ...action,
+    response: {
+      ...action.response,
+      data: [],
+    },
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateResponse(exchange)
+  const ret = endpoint.mutateResponse(action)
 
   t.deepEqual(ret, expected)
 })
@@ -467,31 +474,28 @@ test('should map from service without defaults', (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const exchangeWithoutDefaults = {
-    ...exchange,
+  const actionWithoutDefaults = {
+    ...action,
     response: {
-      ...exchange.response,
+      ...action.response,
       returnNoDefaults: true,
     },
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateResponse(exchangeWithoutDefaults) as Exchange<
-    Data,
-    TypedData[]
-  >
+  const ret = endpoint.mutateResponse(actionWithoutDefaults)
 
-  t.is(ret.response.data![0].published, undefined)
+  t.is((ret.response?.data as DataObject[])[0].published, undefined)
 })
 
 test('should not map from service when no mutation pipeline', (t) => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
-  const expected = exchange
+  const expected = action
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateResponse(exchange)
+  const ret = endpoint.mutateResponse(action)
 
   t.deepEqual(ret, expected)
 })
@@ -504,10 +508,10 @@ test('should not map response from service when direction is rev', (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const expected = exchange
+  const expected = action
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
-  const ret = endpoint.mutateResponse(exchange)
+  const ret = endpoint.mutateResponse(action)
 
   t.deepEqual(ret, expected)
 })
@@ -522,8 +526,8 @@ test('should map request with endpoint mutation', (t) => {
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = {
-    ...exchange,
-    request: {
+    ...action,
+    payload: {
       type: 'entry',
       data: {
         content: {
@@ -539,7 +543,7 @@ test('should map request with endpoint mutation', (t) => {
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateRequest(exchange)
+  const ret = endpoint.mutateRequest(action)
 
   t.deepEqual(ret, expected)
 })
@@ -552,8 +556,8 @@ test('should map request with root array path', (t) => {
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = {
-    ...exchange,
-    request: {
+    ...action,
+    payload: {
       type: 'entry',
       data: [
         { key: 'ent1', header: 'Entry 1' },
@@ -563,7 +567,7 @@ test('should map request with root array path', (t) => {
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateRequest(exchange)
+  const ret = endpoint.mutateRequest(action)
 
   t.deepEqual(ret, expected)
 })
@@ -575,22 +579,19 @@ test('should map to service with no defaults', (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const exchangeWithoutDefaults = {
-    ...exchange,
-    request: {
-      ...exchange.request,
+  const actionWithoutDefaults = {
+    ...action,
+    payload: {
+      ...action.payload,
       sendNoDefaults: true,
     },
   }
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateRequest(exchangeWithoutDefaults) as Exchange<
-    TypedData,
-    Data
-  >
+  const ret = endpoint.mutateRequest(actionWithoutDefaults)
 
-  const items = ((ret.request.data?.content as DataObject).data as DataObject)
-    .items as DataObject[]
+  const items = (((ret.payload.data as DataObject).content as DataObject)
+    .data as DataObject).items as DataObject[]
   t.is(items[0].activated, undefined)
   t.is(items[1].activated, true)
 })
@@ -599,10 +600,10 @@ test('should not map to service when no mutation pipeline', (t) => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
-  const expected = exchange
+  const expected = action
 
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
-  const ret = endpoint.mutateRequest(exchange)
+  const ret = endpoint.mutateRequest(action)
 
   t.deepEqual(ret, expected)
 })
@@ -615,18 +616,18 @@ test('should not map request with mutation when direction is set to fwd', (t) =>
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const exchangeWithoutRequestData = {
-    ...exchange,
-    request: {
+  const actionWithoutRequestData = {
+    ...action,
+    payload: {
       type: 'entry',
       data: undefined,
     },
   }
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
 
-  const ret = endpoint.mutateRequest(exchangeWithoutRequestData)
+  const ret = endpoint.mutateRequest(actionWithoutRequestData)
 
-  t.is(ret.request.data, undefined)
+  t.is(ret.payload.data, undefined)
 })
 
 test('should map request from service (incoming)', (t) => {
@@ -636,10 +637,10 @@ test('should map request from service (incoming)', (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const incomingExchange = {
-    ...exchange,
+  const incomingAction = {
+    ...action,
     type: 'SET',
-    request: {
+    payload: {
       type: 'entry',
       data: {
         content: { data: { items: [{ key: 'ent1', header: 'Entry 1' }] } },
@@ -649,15 +650,13 @@ test('should map request from service (incoming)', (t) => {
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const isIncoming = true
 
-  const ret = endpoint.mutateRequest(incomingExchange, isIncoming) as Exchange<
-    TypedData[]
-  >
+  const ret = endpoint.mutateRequest(incomingAction, isIncoming)
 
-  const data = ret.request.data
-  t.is(data?.length, 1)
-  t.is(data![0].id, 'ent1')
-  t.is(data![0].$type, 'entry')
-  t.is(data![0].title, 'Entry 1')
+  const data = ret.payload.data as DataObject[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'ent1')
+  t.is(data[0].$type, 'entry')
+  t.is(data[0].title, 'Entry 1')
 })
 
 test.failing('should map request from service with types', (t) => {
@@ -667,10 +666,10 @@ test.failing('should map request from service with types', (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const incomingExchange = {
-    ...exchange,
+  const incomingAction = {
+    ...action,
     type: 'SET',
-    request: {
+    payload: {
       type: 'account',
       data: {
         content: {
@@ -685,13 +684,11 @@ test.failing('should map request from service with types', (t) => {
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const isIncoming = true
 
-  const ret = endpoint.mutateRequest(incomingExchange, isIncoming) as Exchange<
-    TypedData[]
-  >
+  const ret = endpoint.mutateRequest(incomingAction, isIncoming)
 
-  const data = ret.request.data
-  t.is(data?.length, 1)
-  t.is(data![0].id, 'account1')
-  t.is(data![0].$type, 'account')
-  t.is(data![0].name, 'John F.')
+  const data = ret.payload.data as DataObject[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'account1')
+  t.is(data[0].$type, 'account')
+  t.is(data[0].name, 'John F.')
 })

@@ -2,8 +2,7 @@ import util = require('util')
 import getField from '../utils/getField'
 import createError from '../utils/createError'
 import { getFirstIfArray } from '../utils/array'
-import { exchangeFromAction } from '../utils/exchangeMapping'
-import { Exchange, InternalDispatch, Ident } from '../types'
+import { Action, InternalDispatch, Ident } from '../types'
 import { IdentConfig } from '../service/types'
 import { GetService } from '../dispatch'
 import getHandler from './get'
@@ -37,19 +36,18 @@ const prepareParams = (
     ? { params: { [keys.tokens]: ident.withToken } }
     : null
 
-const wrapOk = (exchange: Exchange, data: unknown, ident: Ident) => ({
-  ...exchange,
-  status: 'ok',
-  response: { ...exchange.response, data },
-  ident,
+const wrapOk = (action: Action, data: unknown, ident: Ident) => ({
+  ...action,
+  response: { ...action.response, status: 'ok', data },
+  meta: { ...action.meta, ident },
 })
 
 const prepareResponse = (
-  exchange: Exchange,
+  action: Action,
   params: IdentParams,
   propKeys: Record<string, string>
-): Exchange => {
-  const data = getFirstIfArray(exchange.response.data)
+): Action => {
+  const data = getFirstIfArray(action.response?.data)
 
   if (data) {
     const completeIdent = {
@@ -57,12 +55,12 @@ const prepareResponse = (
       roles: getField(data, propKeys.roles),
       tokens: getField(data, propKeys.tokens),
     } as Ident
-    return wrapOk(exchange, data, completeIdent)
+    return wrapOk(action, data, completeIdent)
   } else {
     return createError(
-      exchange,
+      action,
       `Could not find ident with params ${util.inspect(params)}, error: ${
-        exchange.response.error
+        action.response?.error
       }`,
       'notfound'
     )
@@ -73,15 +71,15 @@ const prepareResponse = (
  * Get an ident item from service, based on the meta.ident object on the action.
  */
 export default async function getIdent(
-  exchange: Exchange,
+  action: Action,
   dispatch: InternalDispatch,
   getService: GetService,
   identConfig?: IdentConfig
-): Promise<Exchange> {
-  const { ident } = exchange
+): Promise<Action> {
+  const { ident } = action.meta || {}
   if (!ident) {
     return createError(
-      exchange,
+      action,
       'GET_IDENT: The request has no ident',
       'noaction'
     )
@@ -90,7 +88,7 @@ export default async function getIdent(
   const { type } = identConfig || {}
   if (!type) {
     return createError(
-      exchange,
+      action,
       'GET_IDENT: Integreat is not set up with authentication',
       'noaction'
     )
@@ -100,18 +98,18 @@ export default async function getIdent(
   const params = prepareParams(ident, propKeys)
   if (!params) {
     return createError(
-      exchange,
+      action,
       'GET_IDENT: The request has no ident with id or withToken',
       'noaction'
     )
   }
 
-  const nextExchange = exchangeFromAction({
+  const nextAction = {
     type: 'GET',
     payload: { type, ...params },
     meta: { ident: { id: 'root', root: true } },
-  })
-  const responseExchange = await getHandler(nextExchange, dispatch, getService)
+  }
+  const responseAction = await getHandler(nextAction, dispatch, getService)
 
-  return prepareResponse(responseExchange, params, propKeys)
+  return prepareResponse(responseAction, params, propKeys)
 }

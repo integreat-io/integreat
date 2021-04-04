@@ -29,8 +29,8 @@ const entryWithoutAuthor = {
 }
 
 // Lots of typing hoops. Sorry
-const shouldHaveAuthor = () => (mappingObj: unknown): unknown =>
-  (((mappingObj as unknown) as Response).data as DataObject).author
+const shouldHaveAuthor = () => (mappingObj: unknown): unknown => {
+  return (((mappingObj as unknown) as Response).data as DataObject).author
     ? mappingObj
     : {
         ...(mappingObj as DataObject),
@@ -38,7 +38,7 @@ const shouldHaveAuthor = () => (mappingObj: unknown): unknown =>
         error: 'Error from validator',
         data: undefined,
       }
-
+}
 const resourcesWithTransformer = {
   ...resources,
   transformers: { ...resources.transformers, shouldHaveAuthor },
@@ -56,7 +56,11 @@ test('should respond with response from validation when not validated', async (t
     .reply(201, { data: { key: 'ent2', ok: true } })
   const action = {
     type: 'SET',
-    payload: { type: 'entry', data: entryWithoutAuthor, doValidate: true },
+    payload: {
+      type: 'entry',
+      data: entryWithoutAuthor,
+      params: { doValidate: true }, // TODO: Figure out what to do with params -- require them to be set on the params object?
+    },
     meta: { ident: { id: 'johnf', roles: ['editor'] } },
   }
 
@@ -74,7 +78,11 @@ test('should respond with ok when validated', async (t) => {
     .reply(201, { data: { key: 'ent1', ok: true } })
   const action = {
     type: 'SET',
-    payload: { type: 'entry', data: entryWithAuthor, doValidate: true },
+    payload: {
+      type: 'entry',
+      data: entryWithAuthor,
+      params: { doValidate: true },
+    },
     meta: { ident: { id: 'johnf', roles: ['editor'] } },
   }
 

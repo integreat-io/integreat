@@ -1,5 +1,5 @@
 import { MapDefinition } from 'map-transform'
-import { Exchange } from '../../types'
+import { Action } from '../../types'
 import { MapOptions } from '../types'
 import { EndpointDef, EndpointOptions, Endpoint } from './types'
 import createEndpoint, { PrepareOptions } from './create'
@@ -11,7 +11,7 @@ export default function createEndpointMappers(
   mapOptions: MapOptions,
   serviceMutation?: MapDefinition,
   prepareOptions?: PrepareOptions
-): (exchange: Exchange, isIncoming?: boolean) => Endpoint | undefined {
+): (action: Action, isIncoming?: boolean) => Endpoint | undefined {
   const endpoints = endpointDefs
     .sort(compareEndpoints)
     .map(
@@ -23,6 +23,6 @@ export default function createEndpointMappers(
       )
     )
 
-  return (exchange, isIncoming) =>
-    endpoints.find((endpoint) => endpoint.isMatch(exchange, isIncoming))
+  return (action, isIncoming) =>
+    endpoints.find((endpoint) => endpoint.isMatch(action, isIncoming))
 }

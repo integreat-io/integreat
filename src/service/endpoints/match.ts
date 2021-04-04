@@ -1,9 +1,9 @@
 import { validate } from 'map-transform'
-import { Exchange, Params } from '../../types'
+import { Action, Params } from '../../types'
 import { EndpointDef } from './types'
 import { arrayIncludes } from '../../utils/array'
 
-type FilterFn = (exchange: Exchange) => boolean
+type FilterFn = (action: Action) => boolean
 
 const matchValue = (match?: string | string[], value?: string | string[]) =>
   arrayIncludes(match, value)
@@ -11,38 +11,40 @@ const matchValue = (match?: string | string[], value?: string | string[]) =>
 const hasParam = (params: Params | undefined, key: string) =>
   params && params[key] !== undefined // eslint-disable-line security/detect-object-injection
 
-const matchId = (endpoint: EndpointDef, { endpointId }: Exchange) =>
-  !endpointId || endpoint.id === endpointId
+const matchId = (
+  endpoint: EndpointDef,
+  { payload: { endpoint: endpointId } = {} }: Action
+) => !endpointId || endpoint.id === endpointId
 
-const matchType = ({ match = {} }: EndpointDef, { request }: Exchange) =>
-  !match.type || matchValue(match.type, request.type)
+const matchType = ({ match = {} }: EndpointDef, { payload }: Action) =>
+  !match.type || matchValue(match.type, payload.type)
 
-const matchScope = ({ match = {} }: EndpointDef, { request }: Exchange) =>
+const matchScope = ({ match = {} }: EndpointDef, { payload }: Action) =>
   !match.scope ||
   matchValue(
     match.scope,
-    request.id
-      ? Array.isArray(request.id)
+    payload.id
+      ? Array.isArray(payload.id)
         ? 'members'
         : 'member'
       : 'collection'
   )
 
-const matchAction = ({ match = {} }: EndpointDef, { type }: Exchange) =>
+const matchAction = ({ match = {} }: EndpointDef, { type }: Action) =>
   !match.action || matchValue(match.action, type)
 
 const matchParams = (
   { match: { params } = {} }: EndpointDef,
-  { request }: Exchange
+  { payload }: Action
 ) =>
   typeof params !== 'object' ||
   params === null ||
   Object.entries(params).every(
-    ([key, isRequired]) => !isRequired || hasParam(request.params, key)
+    ([key, isRequired]) => !isRequired || hasParam(payload.params, key)
   )
 
-const matchFilters = (filters: FilterFn[], exchange: Exchange) =>
-  filters.every((filter) => filter(exchange))
+const matchFilters = (filters: FilterFn[], action: Action) =>
+  filters.every((filter) => filter(action))
 
 const matchIncoming = (
   { match: { incoming: incomingEndpoint } = {} }: EndpointDef,
@@ -57,7 +59,7 @@ const matchIncoming = (
  */
 export default function isMatch(
   endpoint: EndpointDef
-): (exchange: Exchange, isIncoming?: boolean) => boolean {
+): (action: Action, isIncoming?: boolean) => boolean {
   const match = endpoint.match || {}
   const filters = match.filters
     ? (Object.entries(match.filters).map(([path, filter]) =>
@@ -65,12 +67,12 @@ export default function isMatch(
       ) as FilterFn[])
     : []
 
-  return (exchange, isIncoming = false) =>
-    matchId(endpoint, exchange) &&
-    matchType(endpoint, exchange) &&
-    matchScope(endpoint, exchange) &&
-    matchAction(endpoint, exchange) &&
-    matchParams(endpoint, exchange) &&
+  return (action, isIncoming = false) =>
+    matchId(endpoint, action) &&
+    matchType(endpoint, action) &&
+    matchScope(endpoint, action) &&
+    matchAction(endpoint, action) &&
+    matchParams(endpoint, action) &&
     matchIncoming(endpoint, isIncoming) &&
-    matchFilters(filters, exchange)
+    matchFilters(filters, action)
 }

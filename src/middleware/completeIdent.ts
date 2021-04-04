@@ -1,15 +1,15 @@
-import { completeExchange } from '../utils/exchangeMapping'
 import { InternalDispatch, Middleware, Ident } from '../types'
 
 const getIdent = async (ident: Ident, dispatch: InternalDispatch) => {
-  const response = await dispatch(
-    completeExchange({
-      type: 'GET_IDENT',
-      ident,
-    })
-  )
+  const responseAction = await dispatch({
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident },
+  })
 
-  return response.status === 'ok' ? response?.ident : undefined
+  return responseAction.response?.status === 'ok'
+    ? responseAction?.meta?.ident
+    : undefined
 }
 
 const isIdentGetable = (ident?: Ident): ident is Ident =>
@@ -32,16 +32,17 @@ const isIdentGetable = (ident?: Ident): ident is Ident =>
  * make sure that the ident has not lost it's permissions between queueing and
  * final dispatch.
  */
-const completeIdent: Middleware = (next) => async (exchange) => {
-  if (isIdentGetable(exchange.ident)) {
-    const ident = await getIdent(exchange.ident, next)
+const completeIdent: Middleware = (next) => async (action) => {
+  const identId = action.meta?.ident
+  if (isIdentGetable(identId)) {
+    const ident = await getIdent(identId, next)
 
     if (ident) {
-      exchange = { ...exchange, ident }
+      action = { ...action, meta: { ...action.meta, ident } }
     }
   }
 
-  return next(exchange)
+  return next(action)
 }
 
 export default completeIdent

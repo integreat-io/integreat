@@ -1,11 +1,11 @@
 import getField from '../../utils/getField'
 import { arrayIncludes } from '../../utils/array'
 import { isTypedData, isNullOrUndefined } from '../../utils/is'
-import { Exchange, TypedData, Ident } from '../../types'
+import { Action, TypedData, Ident } from '../../types'
 import { Schema } from '../../schema'
 
 export interface AuthorizeDataFn {
-  (exchange: Exchange, allowRaw?: boolean): Exchange
+  (action: Action, allowRaw?: boolean): Action
 }
 
 const isStringOrArray = (value: unknown): value is string | string[] =>
@@ -92,7 +92,7 @@ function getAuthedWithResponse(
   } else if (Array.isArray(data)) {
     const authed = data.filter((data: unknown) => authFn(data) === undefined)
     const warning = generateWarning(data.length - authed.length, isToService)
-    return { data: authed, ...(warning && { warning }) }
+    return { data: authed, warning }
   }
 
   const reason = authFn(data)
@@ -116,32 +116,47 @@ const authorizeDataBase = (
   schemas: Record<string, Schema>,
   isToService: boolean
 ) =>
-  function authorizeData(exchange: Exchange, allowRaw = false): Exchange {
-    if (exchange.ident?.root) {
-      return exchange
+  function authorizeData(action: Action, allowRaw = false): Action {
+    if (action.meta?.ident?.root) {
+      return action
     }
 
-    const { type: actionType, ident } = exchange
-    const { data, status, error, reason, ...response } = getAuthedWithResponse(
-      isToService ? exchange.request.data : exchange.response.data,
+    const { type: actionType, meta: { ident } = {} } = action
+    const {
+      data,
+      status: authedStatus,
+      error,
+      reason,
+      warning,
+    } = getAuthedWithResponse(
+      isToService ? action.payload.data : action.response?.data,
       authorizeItem(schemas, actionType, allowRaw, ident),
       isToService
     )
+    const status =
+      isError(action.response?.status) || !authedStatus
+        ? action.response?.status
+        : authedStatus
+
+    const response =
+      status !== undefined || warning
+        ? {
+            ...action.response,
+            ...(!isToService && { data }),
+            ...(!action.response?.error && error && { error }),
+            ...(!action.response?.error && reason && { reason }),
+            ...(warning && { warning }),
+            status: status || null,
+          }
+        : undefined
 
     return {
-      ...exchange,
-      ...(!isError(exchange.status) && status && { status }),
-      request: {
-        ...exchange.request,
+      ...action,
+      payload: {
+        ...action.payload,
         ...(isToService && { data }),
       },
-      response: {
-        ...exchange.response,
-        ...(!isToService && { data }),
-        ...(!exchange.response.error && error && { error }),
-        ...(!exchange.response.error && reason && { reason }),
-        ...response,
-      },
+      ...(response && { response }),
     }
   }
 

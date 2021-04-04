@@ -1,5 +1,5 @@
 import { Authenticator, AuthOptions, Authentication } from './types'
-import { Exchange, Transporter } from '../types'
+import { Action, Transporter } from '../types'
 import { isObject } from '../utils/is'
 
 const MAX_RETRIES = 1
@@ -48,10 +48,14 @@ export default class Auth {
     return this.#authentication?.status === 'granted'
   }
 
-  applyToExchange(exchange: Exchange, transporter: Transporter): Exchange {
+  applyToAction(action: Action, transporter: Transporter): Action {
     const auth = this.#authentication
     if (!auth) {
-      return { ...exchange, status: 'noaccess', auth: null }
+      return {
+        ...action,
+        response: { ...action.response, status: 'noaccess' },
+        meta: { ...action.meta, auth: null },
+      }
     }
 
     if (auth.status === 'granted') {
@@ -60,7 +64,13 @@ export default class Auth {
         isObject(authenticator?.authentication) &&
         typeof transporter.authentication === 'string' &&
         authenticator.authentication[transporter.authentication]
-      return { ...exchange, auth: typeof fn === 'function' ? fn(auth) : null }
+      return {
+        ...action,
+        meta: {
+          ...action.meta,
+          auth: typeof fn === 'function' ? fn(auth) : null,
+        },
+      }
     }
 
     const status = auth.status === 'refused' ? 'noaccess' : 'autherror'
@@ -69,13 +79,13 @@ export default class Auth {
         ? `Authentication attempt for '${this.id}' was refused.`
         : `Could not authenticate '${this.id}'. [${auth.status}]`
     return {
-      ...exchange,
-      status,
+      ...action,
       response: {
-        ...exchange.response,
+        ...action.response,
+        status,
         error: [error, auth.error].filter(Boolean).join(' '),
       },
-      auth: null,
+      meta: { ...action.meta, auth: null },
     }
   }
 }
