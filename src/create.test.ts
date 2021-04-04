@@ -181,12 +181,9 @@ test('should map data', async (t) => {
       http: {
         ...resourcesWithTrans.transporters.http,
         send: async (action: Action) => ({
-          ...action,
-          response: {
-            ...action.response,
-            status: 'ok',
-            data: JSON.stringify([data0]),
-          },
+          ...action.response,
+          status: 'ok',
+          data: JSON.stringify([data0]),
         }),
       },
     },
@@ -232,11 +229,7 @@ test('should use auth', async (t) => {
       ...resourcesWithTrans.transporters,
       http: {
         ...resourcesWithTrans.transporters.http,
-        send: async () => ({
-          type: 'GET',
-          payload: {},
-          response: { status: 'ok', data: '[]' },
-        }),
+        send: async () => ({ status: 'ok', data: '[]' }),
       },
     },
   }

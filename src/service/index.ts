@@ -31,8 +31,14 @@ const sendToTransporter = (
   async function send(action: Action) {
     try {
       if (await connection.connect(action.meta?.auth)) {
-        const ret = await transporter.send(action, connection.object)
-        return ret
+        const response = await transporter.send(action, connection.object)
+        return {
+          ...action,
+          response: {
+            ...action.response,
+            ...response,
+          },
+        }
       } else {
         return createError(
           action,

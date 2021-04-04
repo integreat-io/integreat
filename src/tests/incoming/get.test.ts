@@ -17,12 +17,9 @@ const updatedAt = '2017-11-24T07:11:43.000Z'
 test('should use incoming endpoint over non-incoming', async (t) => {
   const send = sinon
     .stub(resources.transporters.http, 'send')
-    .callsFake(async (action: Action) => ({
-      ...action,
-      response: {
-        status: 'ok',
-        data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),
-      },
+    .callsFake(async (_action: Action) => ({
+      status: 'ok',
+      data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),
     }))
   const action = {
     type: 'GET',
@@ -70,14 +67,11 @@ test('should use non-incoming endpoint over incoming', async (t) => {
       ...resources.transporters,
       http: {
         ...resources.transporters.http,
-        send: async (action: Action) => ({
-          ...action,
-          response: {
-            status: 'ok',
-            data: JSON.stringify({
-              data: { ...ent1Data, createdAt, updatedAt },
-            }),
-          },
+        send: async (_action: Action) => ({
+          status: 'ok',
+          data: JSON.stringify({
+            data: { ...ent1Data, createdAt, updatedAt },
+          }),
         }),
       },
     },

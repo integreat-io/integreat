@@ -315,10 +315,7 @@ test('sendAction should retrieve data from service', async (t) => {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (action: Action) => ({
-          ...action,
-          response: { status: 'ok', data },
-        }),
+        send: async (_action: Action) => ({ status: 'ok', data }),
       },
     },
     mapOptions,
@@ -403,10 +400,7 @@ test('sendAction should return error when no transport', async (t) => {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (action: Action) => ({
-          ...action,
-          response: { status: 'ok', data },
-        }),
+        send: async (_action: Action) => ({ status: 'ok', data }),
       },
     },
     mapOptions,
@@ -451,10 +445,7 @@ test('sendAction should authenticate and return with error', async (t) => {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (action: Action) => ({
-          ...action,
-          response: { status: 'ok', data },
-        }),
+        send: async (_action: Action) => ({ status: 'ok', data }),
       },
     },
     mapOptions,
@@ -536,9 +527,7 @@ test('sendAction should connect before sending request', async (t) => {
     authentication: Record<string, unknown> | null | undefined,
     _connection: Connection | null
   ) => ({ status: 'ok', value, token: authentication?.Authorization })
-  const send = sinon
-    .stub()
-    .resolves({ ...action, response: { status: 'ok', data: {} } })
+  const send = sinon.stub().resolves({ status: 'ok', data: {} })
   const resources = {
     ...jsonResources,
     transporters: {
@@ -580,10 +569,7 @@ test('sendAction should store connection', async (t) => {
       http: {
         ...jsonResources.transporters.http,
         connect,
-        send: async (action: Action) => ({
-          ...action,
-          response: { status: 'ok', data: {} },
-        }),
+        send: async (_action: Action) => ({ status: 'ok', data: {} }),
       },
     },
     mapOptions,
@@ -622,10 +608,7 @@ test('sendAction should return error when connection fails', async (t) => {
       http: {
         ...jsonResources.transporters.http,
         connect: async () => ({ status: 'notfound', error: 'Not found' }),
-        send: async (action: Action) => ({
-          ...action,
-          response: { status: 'ok', data: {} },
-        }),
+        send: async (_action: Action) => ({ status: 'ok', data: {} }),
       },
     },
     mapOptions,
@@ -664,12 +647,9 @@ test('sendAction should retrieve error response from service', async (t) => {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (action: Action) => ({
-          ...action,
-          response: {
-            status: 'badrequest',
-            error: 'Real bad request',
-          },
+        send: async (_action: Action) => ({
+          status: 'badrequest',
+          error: 'Real bad request',
         }),
       },
     },
@@ -747,12 +727,9 @@ test('sendAction should do nothing when action has a response', async (t) => {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
-        send: async (action: Action) => ({
-          ...action,
-          response: {
-            status: 'error',
-            error: 'Should not be called',
-          },
+        send: async (_action: Action) => ({
+          status: 'error',
+          error: 'Should not be called',
         }),
       },
     },

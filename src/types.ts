@@ -127,6 +127,6 @@ export interface Transporter {
     authentication: Record<string, unknown> | null,
     connection: Connection | null
   ) => Promise<Connection | null>
-  send: (action: Action, connection: Connection | null) => Promise<Action>
+  send: (action: Action, connection: Connection | null) => Promise<Response>
   disconnect: (connection: Connection | null) => Promise<void>
 }

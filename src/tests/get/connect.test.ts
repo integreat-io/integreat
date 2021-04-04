@@ -18,12 +18,9 @@ test('should connect to service and reuse connection', async (t) => {
     conn: Connection | null
   ) => conn || { status: 'ok', value: `Call ${count++}` }
   const send = async (action: Action, _connection: Connection | null) => ({
-    ...action,
-    response: {
-      ...action.response,
-      status: 'ok',
-      data: JSON.stringify(entriesData),
-    },
+    ...action.response,
+    status: 'ok',
+    data: JSON.stringify(entriesData),
   })
   const resourcesWithConnect = {
     ...resources,

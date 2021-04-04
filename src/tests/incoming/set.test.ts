@@ -17,12 +17,9 @@ const updatedAt = '2017-11-24T07:11:43.000Z'
 test('should map incoming action data and response data', async (t) => {
   const send = sinon
     .stub(resources.transporters.http, 'send')
-    .callsFake(async (action: Action) => ({
-      ...action,
-      response: {
-        status: 'ok',
-        data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),
-      },
+    .callsFake(async (_action: Action) => ({
+      status: 'ok',
+      data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),
     }))
   const action = {
     type: 'SET',

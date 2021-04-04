@@ -51,7 +51,7 @@
   "devDependencies": {
     "@integreat/ts-dev-setup": "^1.2.1",
     "@types/sinon": "^9.0.11",
-    "integreat-transporter-http": "0.1.0-alpha.6",
+    "integreat-transporter-http": "0.1.0-alpha.7",
     "nock": "^13.0.11",
     "sinon": "^10.0.0"
   }
