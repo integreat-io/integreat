@@ -1,4 +1,4 @@
-import { Action, Payload, ActionMeta } from '../types'
+import { Action, Payload, Meta } from '../types'
 
 /**
  * Create an action object.
@@ -6,7 +6,7 @@ import { Action, Payload, ActionMeta } from '../types'
 export default function createAction(
   type?: string,
   payload: Payload = {},
-  meta: ActionMeta = {}
+  meta: Meta = {}
 ): Action | null {
   if (!type) {
     return null

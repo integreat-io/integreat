@@ -1,5 +1,5 @@
 import pLimit = require('p-limit')
-import { Action, InternalDispatch, ActionMeta, TypedData } from '../types'
+import { Action, InternalDispatch, Meta, TypedData } from '../types'
 import createError from '../utils/createError'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is'
 import { ensureArray } from '../utils/array'
@@ -28,7 +28,7 @@ interface MetaData {
   }
 }
 
-const createGetMetaAction = (targetService: string, meta?: ActionMeta) => ({
+const createGetMetaAction = (targetService: string, meta?: Meta) => ({
   type: 'GET_META',
   payload: { params: { keys: 'lastSyncedAt' }, targetService },
   meta,
@@ -37,7 +37,7 @@ const createGetMetaAction = (targetService: string, meta?: ActionMeta) => ({
 const createSetMetaAction = (
   lastSyncedAt: Date,
   targetService: string,
-  meta?: ActionMeta
+  meta?: Meta
 ) => ({
   type: 'SET_META',
   payload: { params: { meta: { lastSyncedAt } }, targetService },
@@ -46,7 +46,7 @@ const createSetMetaAction = (
 
 const createGetAction = (
   { type, service: targetService, action = 'GET', ...params }: ActionParams,
-  meta?: ActionMeta
+  meta?: Meta
 ) => ({
   type: action,
   payload: { type, params, targetService },
@@ -62,7 +62,7 @@ const createSetAction = (
     dontQueueSet = false,
     ...params
   }: ActionParams,
-  meta?: ActionMeta
+  meta?: Meta
 ) => ({
   type: action,
   payload: { type, data, params, targetService },
@@ -73,7 +73,7 @@ const setUpdatedDatesAndType = (
   dispatch: InternalDispatch,
   type: string | string[],
   syncParams: SyncParams,
-  meta?: ActionMeta
+  meta?: Meta
 ) =>
   async function setUpdatedDatesAndType(params: Partial<ActionParams>) {
     const { retrieve, updatedAfter, updatedUntil } = syncParams
@@ -188,7 +188,7 @@ const withinDateRange = (updatedAfter?: Date, updatedUntil?: Date) => (
 async function retrieveDataFromOneService(
   dispatch: InternalDispatch,
   params: ActionParams,
-  meta?: ActionMeta
+  meta?: Meta
 ) {
   const { updatedAfter, updatedUntil } = params
 

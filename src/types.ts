@@ -72,15 +72,10 @@ export interface Payload<T = unknown> extends Record<string, unknown> {
 }
 
 export interface Meta extends Record<string, unknown> {
-  queue?: boolean | number
-  queuedAt?: number
-  schedule?: ScheduleObject | string | null
-}
-
-export interface ActionMeta extends Record<string, unknown> {
   id?: string
   ident?: Ident
   queue?: boolean | number
+  queuedAt?: number
   schedule?: ScheduleObject | string | null
   auth?: Record<string, unknown> | null
   options?: EndpointOptions
@@ -98,14 +93,14 @@ export interface Response<T = unknown> {
   returnNoDefaults?: boolean
   responses?: Response[] // TODO: Is this the right way?
   access?: Record<string, unknown>
-  meta?: { id?: string }
+  meta?: Meta
 }
 
 export interface Action<P extends Payload = Payload, ResponseData = unknown> {
   type: string
   payload: P
   response?: Response<ResponseData>
-  meta?: ActionMeta
+  meta?: Meta
 }
 
 export interface Dispatch<T = unknown> {

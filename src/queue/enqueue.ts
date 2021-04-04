@@ -1,10 +1,10 @@
 import debugLib = require('debug')
-import { Action, ActionMeta } from '../types'
+import { Action, Meta } from '../types'
 import { Queue } from './types'
 
 const debug = debugLib('great')
 
-const prepareMetaForQueue = ({ queue, ...rest }: ActionMeta = {}) => ({
+const prepareMetaForQueue = ({ queue, ...rest }: Meta = {}) => ({
   ...rest,
   queuedAt: Date.now(),
 })
