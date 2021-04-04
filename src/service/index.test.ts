@@ -1176,7 +1176,8 @@ test('mapRequest should deep-clone endpoint options', async (t) => {
   const endpoint = service.endpointFromAction(action)
 
   const ret = service.mapRequest(action, endpoint!)
-  ;(ret.meta?.options?.untouchable as { touched: boolean }).touched = true
+  const options = ret.meta?.options as { untouchable: { touched: boolean } }
+  options.untouchable.touched = true
 
   t.false((endpoint?.options.untouchable as { touched: boolean }).touched)
 })
