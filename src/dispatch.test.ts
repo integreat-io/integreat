@@ -16,9 +16,9 @@ test('should route to GET action', async (t) => {
   const action = {
     type: 'GET',
     payload: {
-      targetService: 'entries',
       id: 'ent1',
       type: 'entry',
+      targetService: 'entries',
     },
   }
   const handlers = {
@@ -32,6 +32,31 @@ test('should route to GET action', async (t) => {
   const ret = await dispatch({ handlers, services, schemas })(action)
 
   t.is(ret.status, 'ok')
+  t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
+})
+
+test('should map payload property service to targetService', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      service: 'entries',
+    },
+  }
+  const handlers = {
+    GET: async (action: Action) => ({
+      ...action,
+      response:
+        action.payload.targetService === 'entries'
+          ? { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }
+          : { status: 'error', error: 'Service not set' },
+    }),
+  }
+
+  const ret = await dispatch({ handlers, services, schemas })(action)
+
+  t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
 })
 

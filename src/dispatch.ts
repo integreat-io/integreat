@@ -120,6 +120,14 @@ export interface Resources {
   identConfig?: IdentConfig
 }
 
+const prepareAction = ({
+  payload: { service, ...payload },
+  ...action
+}: Action) => ({
+  ...action,
+  payload: { ...(service && { targetService: service }), ...payload },
+})
+
 /**
  * Setup and return dispatch function. The dispatch function will pass an action
  * through the middleware middleware before sending it to the relevant action
@@ -137,8 +145,10 @@ export default function createDispatch({
   const getService = setupGetService(schemas, services)
   let internalDispatch: InternalDispatch
 
-  internalDispatch = async function (action: Action) {
-    debug('Dispatch: %o', action)
+  internalDispatch = async function (rawAction: Action) {
+    debug('Dispatch: %o', rawAction)
+
+    const action = prepareAction(rawAction)
 
     const handler = getActionHandlerFromType(action.type, handlers)
     if (!handler) {
