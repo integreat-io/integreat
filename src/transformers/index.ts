@@ -7,6 +7,7 @@ import removeTypePrefixOnId from './removeTypePrefixOnId'
 import trim from './trim'
 import uppercase from './uppercase'
 import uriPart from './uriPart'
+import xml from './xml'
 
 export default {
   form,
@@ -18,4 +19,5 @@ export default {
   trim,
   uppercase,
   uriPart,
+  xml,
 }
