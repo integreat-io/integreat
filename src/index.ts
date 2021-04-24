@@ -2,6 +2,7 @@ import create from './create'
 import createQueue from './queue'
 import mergeResources from './utils/mergeResources'
 
+export { CustomFunction as Transformer } from 'map-transform'
 export {
   Action,
   Payload,
@@ -14,6 +15,7 @@ export {
   Connection,
   Middleware,
 } from './types'
+export { Authenticator, AuthDef, ServiceDef } from './service/types'
 export { Instance, Definitions, Resources } from './create'
 
 export { default as authenticators } from './authenticators'
