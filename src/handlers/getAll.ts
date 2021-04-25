@@ -41,6 +41,15 @@ function getCurrentPage(payload: Payload) {
 const getFirstId = (data: unknown): string | null | undefined =>
   Array.isArray(data) && isTypedData(data[0]) ? data[0].id : null
 
+function hasProps(obj?: Record<string, unknown>) {
+  if (!obj) return false
+  const values = Object.values(obj)
+  return values.length > 0 && values.some((val) => val !== undefined)
+}
+
+const createNextPaging = (payload: Payload, paging?: Payload) =>
+  hasProps(paging) ? { ...payload, ...paging } : undefined
+
 /**
  * Get all available pages of data, by calling `GET` with the given payload
  * untill the paging is exhausted.
@@ -73,7 +82,7 @@ export default async function get(
 
     // Extract paging for next action
     const prevPaging = paging
-    paging = response.response?.paging?.next
+    paging = createNextPaging(action.payload, response.response?.paging?.next)
 
     // Extract data
     const responseData = response.response?.data

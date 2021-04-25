@@ -347,6 +347,89 @@ test('should get all pages using paging when last page is full', async (t) => {
   t.is((ret.response?.data as TypedData[]).length, 4)
 })
 
+test('should get all pages using partial paging', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [] })
+    .onFirstCall()
+    .resolves({
+      type: 'GET',
+      response: {
+        status: 'ok',
+        data: [event('ev0'), event('ev1')],
+        paging: { next: { pageId: 't0k3n1' } },
+      },
+    })
+    .onSecondCall()
+    .resolves({
+      type: 'GET',
+      response: {
+        status: 'ok',
+        data: [event('ev2')],
+        paging: { next: null },
+      },
+    })
+  const action = {
+    type: 'GET_ALL',
+    payload: {
+      type: 'event',
+      pageSize: 2,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await getAll(action, dispatch, getService)
+
+  t.is(dispatch.callCount, 2)
+  t.deepEqual(dispatch.args[1][0].payload, {
+    type: 'event',
+    pageSize: 2,
+    pageId: 't0k3n1',
+  })
+  t.is(ret.response?.status, 'ok')
+})
+
+test('should require at least one non-undefined prop for next paging', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [] })
+    .onFirstCall()
+    .resolves({
+      type: 'GET',
+      response: {
+        status: 'ok',
+        data: [event('ev0'), event('ev1')],
+        paging: { next: { pageId: 't0k3n1' } },
+      },
+    })
+    .onSecondCall()
+    .resolves({
+      type: 'GET',
+      response: {
+        status: 'ok',
+        data: [event('ev2'), event('ev3')],
+        paging: { next: { pageId: undefined } },
+      },
+    })
+  const action = {
+    type: 'GET_ALL',
+    payload: {
+      type: 'event',
+      pageSize: 2,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await getAll(action, dispatch, getService)
+
+  t.is(dispatch.callCount, 2)
+  t.is(ret.response?.status, 'ok')
+})
+
+test.todo(
+  'should handle one page with max number of items in a paging approach'
+)
+
 test('should recognize loop and return error', async (t) => {
   const dispatch = sinon.stub().resolves({
     type: 'GET',
