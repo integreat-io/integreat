@@ -1,4 +1,5 @@
 import GET from './get'
+import GET_ALL from './getAll'
 import GET_META from './getMeta'
 import GET_IDENT from './getIdent'
 import SET from './set'
@@ -10,6 +11,7 @@ import { ActionHandler } from '../dispatch'
 
 const handlers: Record<string, ActionHandler> = {
   GET,
+  GET_ALL,
   GET_META,
   GET_IDENT,
   SET,

@@ -64,6 +64,7 @@ export interface Payload<T = unknown> extends Record<string, unknown> {
   method?: string
   headers?: Record<string, string>
   page?: number
+  pageOffset?: number
   pageSize?: number
   pageAfter?: string
   pageBefore?: string
