@@ -1,8 +1,28 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import middleware from './middleware'
-import schedule from './schedule'
-import { Queue, ScheduleDef } from './types'
 import { Dispatch, InternalDispatch } from '../types'
+import { Action, Response } from '../types'
+
+// TODO: This is the most correct typing, but how to open for cases where we
+// listen for non-actions and returns other types of objects?
+export interface JobHandler {
+  (data: Action): Promise<Response>
+}
+
+export interface Queue<Q = unknown> {
+  queue: Q
+  namespace: string
+  push: (
+    payload: Action,
+    timestamp?: number,
+    id?: string
+  ) => Promise<string | number | null>
+  subscribe: (handler: JobHandler) => Promise<unknown>
+  unsubscribe: (handle: unknown) => Promise<void>
+  clean: (ms: number) => Promise<unknown>
+  flush: () => Promise<unknown[]>
+  close: () => Promise<void>
+}
 
 /**
  * Set up Integreat queue interface.
@@ -31,15 +51,6 @@ export default function createQueue(queue: Queue) {
      */
     middleware(next: InternalDispatch) {
       return middleware(next, queue)
-    },
-
-    /**
-     * Schedule actions from the given defs.
-     * Actions are enqueued with a timestamp, and are ran at the
-     * set time.
-     */
-    async schedule(defs: ScheduleDef | ScheduleDef[]) {
-      return schedule(defs, queue)
     },
   }
 }

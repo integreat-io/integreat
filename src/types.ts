@@ -1,5 +1,4 @@
 import { EndpointOptions } from './service/endpoints/types'
-import { ScheduleObject } from './queue/types'
 
 export type DataValue = string | number | boolean | Date | null | undefined
 
@@ -23,6 +22,29 @@ export interface Reference {
   $ref: string
   isNew?: boolean
   isDeleted?: boolean
+}
+
+export type ScheduleObject = {
+  s?: number[]
+  m?: number[]
+  h?: number[]
+  t?: number[]
+  D?: number[]
+  M?: number[]
+  Y?: number[]
+  dw?: number[]
+  dc?: number[]
+  dy?: number[]
+  wm?: number[]
+  wy?: number[]
+}
+
+export interface ScheduleDef {
+  schedules?: ScheduleObject[]
+  exceptions?: ScheduleObject[]
+  cron?: string
+  human?: string
+  action: Action
 }
 
 export interface DataFunction {
@@ -77,7 +99,6 @@ export interface Meta extends Record<string, unknown> {
   ident?: Ident
   queue?: boolean | number
   queuedAt?: number
-  schedule?: ScheduleObject | string | null
   auth?: Record<string, unknown> | null
   options?: EndpointOptions
   authorized?: boolean

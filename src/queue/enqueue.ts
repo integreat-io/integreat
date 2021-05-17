@@ -1,6 +1,6 @@
 import debugLib = require('debug')
 import { Action, Meta } from '../types'
-import { Queue } from './types'
+import { Queue } from '.'
 
 const debug = debugLib('great')
 

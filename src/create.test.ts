@@ -212,6 +212,25 @@ test('should map data', async (t) => {
   t.deepEqual(item.createdAt, new Date('2019-10-11T18:43:00Z'))
 })
 
+test('should dispatch scheduled', async (t) => {
+  const action = { type: 'TEST', payload: {} }
+  const handler = sinon
+    .stub()
+    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const handlers = { TEST: handler }
+  const schedules = [{ schedules: [{ m: [45] }], action }]
+  const fromDate = new Date('2021-05-11T14:32Z')
+  const toDate = new Date('2021-05-11T14:59Z')
+
+  const great = create(
+    { services, schemas, mutations, schedules },
+    { ...resourcesWithTrans, handlers }
+  )
+  const ret = await great.dispatchScheduled(fromDate, toDate)
+
+  t.is(handler.callCount, 1) // If the action handler was called, the action was dispatched
+})
+
 test('should use auth', async (t) => {
   const authenticators = {
     mock: {

@@ -1,4 +1,4 @@
-import { Queue, JobHandler } from '../../queue/types'
+import { Queue, JobHandler } from '../../queue'
 
 // Quick mock implementation of the Integreat queue interface supported by
 // integreat.queue. Will push payload directly to the subscribed handler.
@@ -32,8 +32,6 @@ export default (): Queue => {
     clean: async () => undefined,
 
     flush: async () => [],
-
-    flushScheduled: async () => undefined,
 
     close: async () => undefined,
   }

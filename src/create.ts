@@ -1,5 +1,5 @@
 import { Dictionaries, CustomFunction, MapDefinition } from 'map-transform'
-import { Middleware, Transporter, Dispatch } from './types'
+import { Middleware, Transporter, Dispatch, ScheduleDef, Action } from './types'
 import {
   ServiceDef,
   IdentConfig,
@@ -13,10 +13,13 @@ import builtinHandlers from './handlers'
 import builtinTransformers from './transformers/builtIns'
 import createSchema, { Schema } from './schema'
 import createService from './service'
+import { isObject } from './utils/is'
 import createMapOptions from './utils/createMapOptions'
 import { lookupById } from './utils/indexUtils'
 import createDispatch, { ActionHandler } from './dispatch'
 import { indexById } from './utils/indexUtils'
+import createSchedule from './utils/createSchedule'
+import createDispatchScheduled from './dispatchScheduled'
 
 export interface Definitions {
   schemas: SchemaDef[]
@@ -25,6 +28,7 @@ export interface Definitions {
   auths?: AuthDef[]
   identConfig?: IdentConfig
   dictionaries?: Dictionaries
+  schedules?: ScheduleDef[]
 }
 
 export interface Resources {
@@ -39,6 +43,7 @@ export interface Instance<ResponseData = unknown> {
   schemas: Record<string, Schema>
   identType?: string
   dispatch: Dispatch<ResponseData>
+  dispatchScheduled: (from: Date, to: Date) => Promise<Action[]>
 }
 
 /*
@@ -52,6 +57,7 @@ export default function create(
     auths: authDefs,
     identConfig,
     dictionaries,
+    schedules: scheduleDefs = [],
   }: Definitions,
   { transporters, transformers, handlers, authenticators }: Resources,
   middlewareForDispatch: Middleware[] = [],
@@ -112,11 +118,16 @@ export default function create(
     middleware: middlewareForDispatch,
   })
 
+  // Prepare scheduled actions
+  const scheduled = scheduleDefs.filter(isObject).map(createSchedule)
+  const dispatchScheduled = createDispatchScheduled(dispatch, scheduled)
+
   // Return instance
   return {
     services,
     schemas,
     identType: identConfig && identConfig.type,
     dispatch,
+    dispatchScheduled,
   }
 }
