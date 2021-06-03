@@ -95,6 +95,22 @@ test('should stringify array with one object to xml', (t) => {
   t.is(ret, expected)
 })
 
+test('should stringify array of strings', (t) => {
+  const data = {
+    GetPaymentMethodsResponse: {
+      GetPaymentMethodsResult: {
+        PaymentMethod: ['Cash', 'Invoice'],
+      },
+    },
+  }
+  const expected =
+    '<?xml version="1.0" encoding="utf-8"?><GetPaymentMethodsResponse xmlns="http://example.com/webservices"><GetPaymentMethodsResult><PaymentMethod>Cash</PaymentMethod><PaymentMethod>Invoice</PaymentMethod></GetPaymentMethodsResult></GetPaymentMethodsResponse>'
+
+  const ret = stringify(data, namespaces)
+
+  t.is(ret, expected)
+})
+
 test('should encode chars', async (t) => {
   const data = {
     Text: { $value: '<p>Text æøå; 💩λ @\n\'•\' & ÆØÅ "123"</p>' },

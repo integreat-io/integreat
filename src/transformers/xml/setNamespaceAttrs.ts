@@ -1,4 +1,4 @@
-import { ObjectElement, ElementValue, Namespaces } from '.'
+import { ObjectElement, ElementValue, Namespaces, Element } from '.'
 import { isObject } from '../../utils/is'
 
 interface PrefixParents {
@@ -111,11 +111,13 @@ function fixLeavesInValue(
   if (value === null) {
     return { [`@${xsiNs}:nil`]: 'true' }
   } else if (Array.isArray(value)) {
-    return value.map(fixLeavesInElement(xsiNs))
+    return value.flatMap((val) => fixLeavesInValue(key, val, xsiNs)) as
+      | string
+      | ElementValue
   } else if (key[0] === '@') {
     return formatValue(isObject(value) ? value.$value : value)
   } else if (isObject(value)) {
-    return fixLeavesInElement(xsiNs)(value)
+    return fixLeavesInElement(value, xsiNs)
   } else {
     return key === '$value'
       ? formatValue(value)
@@ -123,17 +125,16 @@ function fixLeavesInValue(
   }
 }
 
-const fixLeavesInElement = (xsiNs: string) =>
-  function fixLeavesInElement(data: ObjectElement<unknown>) {
-    const element: ObjectElement = {}
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) {
-        // eslint-disable-next-line security/detect-object-injection
-        element[key] = fixLeavesInValue(key, value, xsiNs)
-      }
+function fixLeavesInElement(data: ObjectElement<unknown>, xsiNs: string) {
+  const element: ObjectElement = {}
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      // eslint-disable-next-line security/detect-object-injection
+      element[key] = fixLeavesInValue(key, value, xsiNs)
     }
-    return element
   }
+  return element
+}
 
 export default function setNamespaceAttrs(
   data: ObjectElement<unknown>,
@@ -145,7 +146,7 @@ export default function setNamespaceAttrs(
     ...namespaces,
   })
   const prefixes = Object.keys(ns)
-  const value = fixLeavesInElement(xsiNs)(data)
+  const value = fixLeavesInElement(data, xsiNs)
   const prefixParents = getPrefixParents(value, prefixes)
   setAttrs(prefixParents, ns)
   return value
