@@ -1,4 +1,5 @@
 import form from './form'
+import formatDate from './formatDate'
 import hash from './hash'
 import json from './json'
 import lowercase from './lowercase'
@@ -12,6 +13,7 @@ import xml from './xml'
 
 export default {
   form,
+  formatDate,
   hash,
   json,
   lowercase,
