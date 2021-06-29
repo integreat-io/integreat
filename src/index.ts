@@ -10,6 +10,7 @@ export {
   Dispatch,
   Data,
   TypedData,
+  Reference,
   Ident,
   Transporter,
   Connection,

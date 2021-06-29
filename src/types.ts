@@ -1,25 +1,25 @@
 import { EndpointOptions } from './service/endpoints/types'
 
+export interface Reference {
+  id: string | null
+  $ref: string
+  isNew?: boolean
+  isDeleted?: boolean
+}
+
 export type DataValue = string | number | boolean | Date | null | undefined
 
 export interface DataObject {
   [key: string]: Data
 }
 
-export type Data = DataValue | DataObject | Data[]
+export type Data = DataValue | Reference | DataObject | Data[]
 
 export interface TypedData extends DataObject {
   $type: string
   id?: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  isNew?: boolean
-  isDeleted?: boolean
-}
-
-export interface Reference {
-  id: string | null
-  $ref: string
   isNew?: boolean
   isDeleted?: boolean
 }
