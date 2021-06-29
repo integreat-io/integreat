@@ -257,7 +257,9 @@ test('should populate action from mapping object from response to service', (t) 
   const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
   const action = {
     type: 'SET',
-    payload: {},
+    payload: {
+      params: { isArchived: false },
+    },
     response: {
       status: null,
       data: [{ id: 'johnf' }],
@@ -286,7 +288,7 @@ test('should populate action from mapping object from response to service', (t) 
     payload: {
       id: 'johnf',
       type: 'user',
-      params: { searchDeleted: true },
+      params: { searchDeleted: true, isArchived: false },
     },
     response: {
       status: 'badrequest',

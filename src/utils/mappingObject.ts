@@ -82,7 +82,9 @@ export function actionFromMappingObject(
       ...(id && { id }),
       ...(type && { type }),
       ...(sendNoDefaults && { sendNoDefaults }),
-      ...(!isEmptyObject(params) && { params }),
+      ...(!isEmptyObject(params) && {
+        params: { ...action.payload.params, ...(params as Params) },
+      }),
     },
     ...(response && { response }),
     meta: {
