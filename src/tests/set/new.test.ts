@@ -83,7 +83,11 @@ test('should set new entry (getting role from identity)', async (t) => {
 })
 
 test('should set new entries', async (t) => {
-  nock('http://some.api')
+  nock('http://some.api', {
+    reqheaders: {
+      'content-type': 'application/json',
+    },
+  })
     .post('/entries')
     .reply(201, {
       data: [
