@@ -22,6 +22,8 @@ test('should create mapping object from action for request', (t) => {
     meta: {
       options: { uri: 'http://some.api.com/1.0' },
       ident: { id: 'johnf' },
+      id: '12345',
+      cid: '880432',
     },
   }
   const expected = {
@@ -37,6 +39,10 @@ test('should create mapping object from action for request', (t) => {
     error: 'No user by that name',
     options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
+    meta: {
+      id: '12345',
+      cid: '880432',
+    },
   }
 
   const ret = mappingObjectFromAction(action, isRequest)
@@ -63,6 +69,8 @@ test('should create mapping object from action for response', (t) => {
     meta: {
       options: { uri: 'http://some.api.com/1.0' },
       ident: { id: 'johnf' },
+      id: '12345',
+      cid: '880432',
     },
   }
   const expected = {
@@ -74,6 +82,10 @@ test('should create mapping object from action for response', (t) => {
     error: undefined,
     options: { uri: 'http://some.api.com/1.0' },
     ident: { id: 'johnf' },
+    meta: {
+      id: '12345',
+      cid: '880432',
+    },
   }
 
   const ret = mappingObjectFromAction(action, isRequest)

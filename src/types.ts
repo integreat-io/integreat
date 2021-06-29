@@ -96,6 +96,7 @@ export interface Payload<T = unknown> extends Record<string, unknown> {
 
 export interface Meta extends Record<string, unknown> {
   id?: string
+  cid?: string
   ident?: Ident
   queue?: boolean | number
   queuedAt?: number
