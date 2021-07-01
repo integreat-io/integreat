@@ -86,6 +86,7 @@ test('should set new entries', async (t) => {
   nock('http://some.api', {
     reqheaders: {
       'content-type': 'application/json',
+      'x-correlation-id': '12345',
     },
   })
     .post('/entries')
@@ -98,7 +99,7 @@ test('should set new entries', async (t) => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entriesArr },
-    meta: { ident: { id: 'johnf', roles: ['editor'] } },
+    meta: { ident: { id: 'johnf', roles: ['editor'] }, cid: '12345' },
   }
 
   const great = Integreat.create(defs, resources)

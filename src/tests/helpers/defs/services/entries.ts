@@ -53,10 +53,20 @@ export default {
     },
     {
       match: { action: 'SET', scope: 'collection' },
-      mutation: {
-        $direction: 'fwd',
-        data: ['data.data[]', { $apply: 'entries-entry' }],
-      },
+      mutation: [
+        {
+          $direction: 'rev',
+          $flip: true,
+          options: {
+            '.': '^options',
+            'headers.x-correlation-id': 'meta.cid',
+          },
+        },
+        {
+          $direction: 'fwd',
+          data: ['data.data[]', { $apply: 'entries-entry' }],
+        },
+      ],
       options: { uri: '/entries', method: 'POST' },
     },
     {
