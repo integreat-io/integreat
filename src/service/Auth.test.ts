@@ -1,20 +1,20 @@
 import test from 'ava'
 import sinon = require('sinon')
 import { Authenticator, Authentication, AuthOptions } from './types'
-import { Transporter } from '../types'
+import { Transporter, Action } from '../types'
 
 import Auth from './Auth'
 
 // Setup
 
 const authenticator: Authenticator = {
-  authenticate: async (options: AuthOptions | null) => ({
+  authenticate: async (options: AuthOptions | null, _action: Action) => ({
     status: options?.token === 't0k3n' ? 'granted' : 'refused',
     expired: options?.expired,
     token: options?.token,
   }),
 
-  isAuthenticated: (authentication: Authentication | null) =>
+  isAuthenticated: (authentication: Authentication | null, _action: Action) =>
     !!authentication && !authentication.expired,
 
   authentication: {
@@ -23,9 +23,9 @@ const authenticator: Authenticator = {
   },
 }
 
-const transporter = ({
+const transporter = {
   authentication: 'asHttpHeaders',
-} as unknown) as Transporter
+} as unknown as Transporter
 
 const action = {
   type: 'GET',
@@ -57,7 +57,7 @@ test('should throw when no authenticator', (t) => {
 test('should authenticate and return true on success', async (t) => {
   const auth = new Auth(id, authenticator, options)
 
-  const ret = await auth.authenticate()
+  const ret = await auth.authenticate(action)
 
   t.true(ret)
 })
@@ -66,7 +66,7 @@ test('should return false when not authenticated', async (t) => {
   const options = { token: 'wr0ng' }
   const auth = new Auth(id, authenticator, options)
 
-  const ret = await auth.authenticate()
+  const ret = await auth.authenticate(action)
 
   t.false(ret)
 })
@@ -75,7 +75,7 @@ test('should handle missing options', async (t) => {
   const options = undefined
   const auth = new Auth(id, authenticator, options)
 
-  const ret = await auth.authenticate()
+  const ret = await auth.authenticate(action)
 
   t.false(ret)
 })
@@ -85,8 +85,8 @@ test('should not reauthenticated when already authenticated', async (t) => {
   const authSpy = sinon.spy(reauthenticator, 'authenticate')
   const auth = new Auth(id, reauthenticator, options)
 
-  await auth.authenticate()
-  const ret = await auth.authenticate()
+  await auth.authenticate(action)
+  const ret = await auth.authenticate(action)
 
   t.is(authSpy.callCount, 1)
   t.true(ret)
@@ -100,12 +100,39 @@ test('should ask the authenticator if the authentication is still valid and reau
   const options = { token: 't0k3n', expired: true }
   const auth = new Auth(id, reauthenticator, options)
 
-  const ret1 = await auth.authenticate()
-  const ret2 = await auth.authenticate()
+  const ret1 = await auth.authenticate(action)
+  const ret2 = await auth.authenticate(action)
 
   t.is(authSpy.callCount, 2)
   t.true(ret1)
   t.true(ret2)
+})
+
+test("should pass on action to authenticator's isAuthenticated", async (t) => {
+  const stubbedAuthenticator = {
+    ...authenticator,
+    isAuthenticated: sinon.stub().callsFake(authenticator.isAuthenticated),
+  }
+  const auth = new Auth(id, stubbedAuthenticator, options)
+
+  await auth.authenticate(action) // The first call is to set the status to 'granted', to invoke an isAuthenticated call on next attempt
+  await auth.authenticate(action)
+
+  t.is(stubbedAuthenticator.isAuthenticated.callCount, 1)
+  t.deepEqual(stubbedAuthenticator.isAuthenticated.args[0][1], action)
+})
+
+test("should pass on action to authenticator's authenticate", async (t) => {
+  const stubbedAuthenticator = {
+    ...authenticator,
+    authenticate: sinon.stub().callsFake(authenticator.authenticate),
+  }
+  const auth = new Auth(id, stubbedAuthenticator, options)
+
+  await auth.authenticate(action)
+
+  t.is(stubbedAuthenticator.authenticate.callCount, 1)
+  t.deepEqual(stubbedAuthenticator.authenticate.args[0][1], action)
 })
 
 test('should retry once on timeout', async (t) => {
@@ -118,7 +145,7 @@ test('should retry once on timeout', async (t) => {
   }
   const auth = new Auth(id, slowAuthenticator, options)
 
-  const ret = await auth.authenticate()
+  const ret = await auth.authenticate(action)
 
   t.true(ret)
 })
@@ -133,7 +160,7 @@ test('should return autherror status on second timeout', async (t) => {
   const authSpy = sinon.spy(slowerAuthenticator, 'authenticate')
   const auth = new Auth(id, slowerAuthenticator, options)
 
-  const ret = await auth.authenticate()
+  const ret = await auth.authenticate(action)
 
   t.false(ret)
   t.is(authSpy.callCount, 2)
@@ -146,7 +173,7 @@ test('should set auth object to action', async (t) => {
     meta: { ...action.meta, auth: { Authorization: 't0k3n' } },
   }
 
-  await auth.authenticate()
+  await auth.authenticate(action)
   const ret = auth.applyToAction(action, transporter)
 
   t.deepEqual(ret, expected)
@@ -160,7 +187,7 @@ test('should set auth object to null for unkown auth method', async (t) => {
     meta: { ...action.meta, auth: null },
   }
 
-  await auth.authenticate()
+  await auth.authenticate(action)
   const ret = auth.applyToAction(action, strangeAdapter)
 
   t.deepEqual(ret, expected)
@@ -197,7 +224,7 @@ test('should set status noaccess and auth object to null when authentication was
     meta: { ...action.meta, auth: null },
   }
 
-  await auth.authenticate()
+  await auth.authenticate(action)
   const ret = auth.applyToAction(action, transporter)
 
   t.deepEqual(ret, expected)
@@ -221,7 +248,7 @@ test('should set status autherror and auth object to null on auth error', async 
     meta: { ...action.meta, auth: null },
   }
 
-  await auth.authenticate()
+  await auth.authenticate(action)
   const ret = auth.applyToAction(action, transporter)
 
   t.deepEqual(ret, expected)

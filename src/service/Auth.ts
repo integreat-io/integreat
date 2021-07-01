@@ -30,10 +30,10 @@ export default class Auth {
     this.#authentication = null
   }
 
-  async authenticate(): Promise<boolean> {
+  async authenticate(action: Action): Promise<boolean> {
     if (
       this.#authentication?.status === 'granted' &&
-      this.#authenticator.isAuthenticated(this.#authentication)
+      this.#authenticator.isAuthenticated(this.#authentication, action)
     ) {
       return true
     }
@@ -41,7 +41,8 @@ export default class Auth {
     let attempt = 0
     do {
       this.#authentication = await this.#authenticator.authenticate(
-        this.#options
+        this.#options,
+        action
       )
     } while (shouldRetry(this.#authentication, attempt++))
 

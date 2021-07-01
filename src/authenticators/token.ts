@@ -36,7 +36,7 @@ const tokenAuth: Authenticator = {
    * Would normaly perform an authentication request and set the token received,
    * but in tokenAuth the token is set as from the options object.
    */
-  async authenticate(options) {
+  async authenticate(options, _action) {
     const { token = null, type = 'Bearer', encode = false } = options || {}
     return token
       ? { status: 'granted', token, type, encode }
@@ -48,7 +48,7 @@ const tokenAuth: Authenticator = {
    * In the tokenAuth, this will be true if we get an authentication object
    * with granted status and a token.
    */
-  isAuthenticated(authentication) {
+  isAuthenticated(authentication, _action) {
     return !!(
       authentication &&
       authentication.status === 'granted' &&

@@ -2,48 +2,56 @@ import test from 'ava'
 
 import authenticator from './token'
 
+// Setup
+
+const action = {
+  type: 'GET',
+  payload: { type: 'entry' },
+  meta: { ident: { id: 'johnf' } },
+}
+
 // Tests
 
-test('authenticate should return granted when token is set', async t => {
+test('authenticate should return granted when token is set', async (t) => {
   const options = { token: 'someToken' }
   const expected = {
     status: 'granted',
     token: 'someToken',
     encode: false,
-    type: 'Bearer'
+    type: 'Bearer',
   }
 
-  const ret = await authenticator.authenticate(options)
+  const ret = await authenticator.authenticate(options, action)
 
   t.deepEqual(ret, expected)
 })
 
-test('authenticate should return refused when token is not set', async t => {
+test('authenticate should return refused when token is not set', async (t) => {
   const options = {}
   const expected = { status: 'refused' }
 
-  const ret = await authenticator.authenticate(options)
+  const ret = await authenticator.authenticate(options, action)
 
   t.deepEqual(ret, expected)
 })
 
-test('isAuthenticated should return false when no authentication', t => {
+test('isAuthenticated should return false when no authentication', (t) => {
   const authentication = null
 
-  t.false(authenticator.isAuthenticated(authentication))
+  t.false(authenticator.isAuthenticated(authentication, action))
 })
 
-test('isAuthenticated should return true when authentication is granted and token is set', t => {
+test('isAuthenticated should return true when authentication is granted and token is set', (t) => {
   const authentication = { status: 'granted', token: 'someToken' }
 
-  t.true(authenticator.isAuthenticated(authentication))
+  t.true(authenticator.isAuthenticated(authentication, action))
 })
 
-test('asHttpHeaders should return auth header with token', t => {
+test('asHttpHeaders should return auth header with token', (t) => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
-    type: 'Bearer'
+    type: 'Bearer',
   }
   const expected = { Authorization: 'Bearer someToken' }
 
@@ -52,11 +60,11 @@ test('asHttpHeaders should return auth header with token', t => {
   t.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should return auth header with given type', t => {
+test('asHttpHeaders should return auth header with given type', (t) => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
-    type: 'Basic'
+    type: 'Basic',
   }
   const expected = { Authorization: 'Basic someToken' }
 
@@ -65,12 +73,12 @@ test('asHttpHeaders should return auth header with given type', t => {
   t.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should base64 encode token when options say so', t => {
+test('asHttpHeaders should base64 encode token when options say so', (t) => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
     type: 'Bearer',
-    encode: true
+    encode: true,
   }
   const expected = { Authorization: 'Bearer c29tZVRva2Vu' }
 
@@ -79,7 +87,7 @@ test('asHttpHeaders should base64 encode token when options say so', t => {
   t.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should return empty object when no token', t => {
+test('asHttpHeaders should return empty object when no token', (t) => {
   const authentication = { status: 'granted' }
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
@@ -87,11 +95,11 @@ test('asHttpHeaders should return empty object when no token', t => {
   t.deepEqual(ret, {})
 })
 
-test('asHttpHeaders should return empty object when not granted', t => {
+test('asHttpHeaders should return empty object when not granted', (t) => {
   const authentication = {
     status: 'refused',
     token: 'someToken',
-    type: 'Bearer'
+    type: 'Bearer',
   }
   const expected = {}
 
@@ -100,11 +108,11 @@ test('asHttpHeaders should return empty object when not granted', t => {
   t.deepEqual(ret, expected)
 })
 
-test('asObject should return token and type', t => {
+test('asObject should return token and type', (t) => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
-    type: 'Basic'
+    type: 'Basic',
   }
   const expected = { token: 'someToken', type: 'Basic' }
 
@@ -113,12 +121,12 @@ test('asObject should return token and type', t => {
   t.deepEqual(ret, expected)
 })
 
-test('asObject should encode token', t => {
+test('asObject should encode token', (t) => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
     encode: true,
-    type: 'Bearer'
+    type: 'Bearer',
   }
   const expected = { token: 'c29tZVRva2Vu', type: 'Bearer' }
 
@@ -127,11 +135,11 @@ test('asObject should encode token', t => {
   t.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when not granted', t => {
+test('asObject should return empty object when not granted', (t) => {
   const authentication = {
     status: 'refused',
     token: 'someToken',
-    type: 'Basic'
+    type: 'Basic',
   }
   const expected = {}
 
@@ -140,12 +148,12 @@ test('asObject should return empty object when not granted', t => {
   t.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when no token', t => {
+test('asObject should return empty object when no token', (t) => {
   const authentication = {
     status: 'granted',
     token: null,
     encode: true,
-    type: 'Bearer'
+    type: 'Bearer',
   }
   const expected = {}
 
@@ -154,7 +162,7 @@ test('asObject should return empty object when no token', t => {
   t.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when no authentication', t => {
+test('asObject should return empty object when no authentication', (t) => {
   const authentication = null
   const expected = {}
 

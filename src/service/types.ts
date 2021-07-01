@@ -40,8 +40,14 @@ export interface Authentication extends AuthOptions {
 }
 
 export interface Authenticator {
-  authenticate: (options: AuthOptions | null) => Promise<Authentication>
-  isAuthenticated: (authentication: Authentication | null) => boolean
+  authenticate: (
+    options: AuthOptions | null,
+    action: Action
+  ) => Promise<Authentication>
+  isAuthenticated: (
+    authentication: Authentication | null,
+    action: Action
+  ) => boolean
   authentication: {
     [asFunction: string]: (
       authentication: Authentication | null

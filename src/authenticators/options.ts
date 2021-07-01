@@ -13,7 +13,7 @@ const optionsAuth: Authenticator = {
    * received, but in optionsAuth the given options object is returned as the
    * authentication object.
    */
-  async authenticate(options) {
+  async authenticate(options, _action) {
     return { status: 'granted', ...options }
   },
 
@@ -22,7 +22,7 @@ const optionsAuth: Authenticator = {
    * In the optionsAuth, this will always be true, as no authentication is
    * really necessary.
    */
-  isAuthenticated(authentication) {
+  isAuthenticated(authentication, _action) {
     return !!(authentication && authentication.status === 'granted')
   },
 
