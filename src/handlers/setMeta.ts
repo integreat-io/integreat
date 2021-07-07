@@ -3,6 +3,7 @@ import createError from '../utils/createError'
 import { DataObject, Action, InternalDispatch } from '../types'
 import { GetService } from '../dispatch'
 import setHandler from './set'
+import { generateMetaId } from './getMeta'
 
 const debug = debugLib('great')
 
@@ -16,13 +17,14 @@ export default async function setMeta(
 ): Promise<Action> {
   const {
     payload: {
-      params: { meta = {} } = {},
+      type,
+      params: { meta = {}, metaKey } = {},
       targetService: serviceId,
       endpoint: endpointId,
     },
     meta: { ident } = {},
   } = action
-  const id = `meta:${serviceId}`
+  const metaId = generateMetaId(serviceId, type, metaKey as string | undefined)
 
   const service = getService(undefined, serviceId)
   if (!service) {
@@ -30,10 +32,10 @@ export default async function setMeta(
     return createError(action, `Service '${serviceId}' doesn't exist`)
   }
 
-  const type = service.meta
+  const metaType = service.meta
 
   // TODO: Check if the meta service exists - find a better way?
-  const metaService = getService(type)
+  const metaService = getService(metaType)
   if (!metaService) {
     debug(
       `SET_META: Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`
@@ -47,7 +49,7 @@ export default async function setMeta(
 
   const endpointDebug = endpointId
     ? `endpoint '${endpointId}'`
-    : `endpoint matching ${type} and ${id}`
+    : `endpoint matching ${metaType} and ${metaId}`
   debug(
     "SET_META: Send metadata %o for service '%s' on service '%s' %s",
     meta,
@@ -59,9 +61,9 @@ export default async function setMeta(
   const setAction = {
     type: 'SET',
     payload: {
-      id,
-      type,
-      data: { id, $type: type, ...(meta as DataObject) },
+      id: metaId,
+      type: metaType,
+      data: { id: metaId, $type: metaType, ...(meta as DataObject) },
       sendNoDefaults: true,
       params: {
         keys: Object.keys(meta as DataObject),

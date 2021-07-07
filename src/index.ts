@@ -6,6 +6,7 @@ export { CustomFunction as Transformer } from 'map-transform'
 export {
   Action,
   Payload,
+  Meta,
   Response,
   Dispatch,
   Data,
@@ -18,6 +19,7 @@ export {
 } from './types'
 export { Authenticator, AuthDef, ServiceDef } from './service/types'
 export { Instance, Definitions, Resources } from './create'
+export { default as createAction } from './utils/createAction'
 
 export { default as authenticators } from './authenticators'
 export { default as mutations } from './mutations'

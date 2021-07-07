@@ -25,6 +25,15 @@ const extractMeta = (meta: unknown, keys: unknown): DataObject =>
       : extractMeta(meta, extractAllMetaFields(meta))
     : {}
 
+const joinTypes = (types?: string | string[]) =>
+  Array.isArray(types) ? types.join('|') : types
+
+export const generateMetaId = (
+  serviceId?: string,
+  type?: string | string[],
+  metaKey?: string
+) => ['meta', serviceId, joinTypes(type), metaKey].filter(Boolean).join(':')
+
 /**
  * Get metadata for a service, based on the given action object.
  */
@@ -37,13 +46,14 @@ export default async function getMeta(
 
   const {
     payload: {
-      params: { keys = undefined } = {},
+      type,
+      params: { keys = undefined, metaKey } = {},
       targetService: serviceId,
       endpoint: endpointId,
     },
     meta: { ident } = {},
   } = action
-  const id = `meta:${serviceId}`
+  const metaId = generateMetaId(serviceId, type, metaKey as string | undefined)
 
   const service = getService(undefined, serviceId)
   if (!service) {
@@ -51,10 +61,10 @@ export default async function getMeta(
     return createError(action, `Service '${serviceId}' doesn't exist`)
   }
 
-  const type = service.meta
+  const metaType = service.meta
 
   // TODO: Check if the meta service exists - find a better way?
-  const metaService = getService(type)
+  const metaService = getService(metaType)
   if (!metaService) {
     return createError(
       action,
@@ -65,7 +75,7 @@ export default async function getMeta(
 
   const endpointDebug = endpointId
     ? `endpoint '${endpointId}'`
-    : `endpoint matching ${type} and ${id}`
+    : `endpoint matching ${metaType} and ${metaId}`
   debug(
     "GET_META: Get meta %s for service '%s' on service '%s' at %s",
     keys,
@@ -76,7 +86,7 @@ export default async function getMeta(
 
   const nextAction = {
     type: 'GET',
-    payload: { keys, type, id, endpoint: endpointId },
+    payload: { keys, type: metaType, id: metaId, endpoint: endpointId },
     meta: { ident: ident },
   }
   const responseAction = await getHandler(nextAction, dispatch, getService)

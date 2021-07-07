@@ -15,37 +15,36 @@ interface Meta {
   lastSyncedAt?: Date
 }
 
-const updateAction = (
-  status: string,
-  response: Record<string, unknown> = {}
-) => (action: Action): Action => ({
-  ...action,
-  response: {
-    ...action.response,
-    ...response,
-    status,
-  },
-})
+const updateAction =
+  (status: string, response: Record<string, unknown> = {}) =>
+  (action: Action): Action => ({
+    ...action,
+    response: {
+      ...action.response,
+      ...response,
+      status,
+    },
+  })
 
 function responseFromArray(handlers: Handler[] | Handler, action: Action) {
   const handler = Array.isArray(handlers) ? handlers.shift() : handlers
   return handler ? handler(action) : action
 }
 
-const setupDispatch = (
-  handlers: Record<string, Handler[] | Handler> = {}
-): InternalDispatch => async (action) => {
-  const response = action
-    ? responseFromArray(handlers[action.type], action)
-    : null
-  return (
-    response || {
-      type: 'GET',
-      payload: {},
-      response: { status: 'ok', data: [] },
-    }
-  )
-}
+const setupDispatch =
+  (handlers: Record<string, Handler[] | Handler> = {}): InternalDispatch =>
+  async (action) => {
+    const response = action
+      ? responseFromArray(handlers[action.type], action)
+      : null
+    return (
+      response || {
+        type: 'GET',
+        payload: {},
+        response: { status: 'ok', data: [] },
+      }
+    )
+  }
 
 const data = [
   {
@@ -410,7 +409,11 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
   )
   const expected1 = {
     type: 'GET_META',
-    payload: { params: { keys: 'lastSyncedAt' }, targetService: 'entries' },
+    payload: {
+      type: 'entry',
+      params: { keys: 'lastSyncedAt', metaKey: undefined },
+      targetService: 'entries',
+    },
     meta: { ident, project: 'project1' },
   }
   const expectedParams = { updatedAfter: lastSyncedAt }
@@ -422,6 +425,45 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0].payload.params, expectedParams)
   t.deepEqual(dispatch.args[2][0].payload.params, expectedParams)
+})
+
+test('should use metaKey when fetching lastSyncedAt', async (t) => {
+  const lastSyncedAt = new Date('2021-01-03T04:48:18Z')
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: {
+        from: 'entries',
+        to: 'store',
+        retrieve: 'updated',
+        metaKey: 'sports',
+      },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: updateAction('ok', { data: { meta: { lastSyncedAt } } }),
+      GET: updateAction('ok', { data }),
+      SET: updateAction('ok'),
+    })
+  )
+  const expected1 = {
+    type: 'GET_META',
+    payload: {
+      type: 'entry',
+      params: { keys: 'lastSyncedAt', metaKey: 'sports' },
+      targetService: 'entries',
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const expectedParams = { updatedAfter: lastSyncedAt }
+
+  const ret = await sync(action, dispatch)
+
+  t.is(ret.response?.status, 'ok')
+  t.deepEqual(dispatch.args[0][0], expected1)
 })
 
 test('should not use lastSyncedAt meta when updatedAfter is provided', async (t) => {
@@ -463,7 +505,12 @@ test('should use lastSyncedAt meta from several services', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: ['entries', 'other'], to: 'store', retrieve: 'updated' },
+      params: {
+        from: ['entries', 'other'],
+        to: 'store',
+        retrieve: 'updated',
+        metaKey: 'sports',
+      },
     },
     meta: { ident, project: 'project1' },
   }
@@ -489,9 +536,13 @@ test('should use lastSyncedAt meta from several services', async (t) => {
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
   t.deepEqual(dispatch.args[0][0].type, 'GET_META')
+  t.deepEqual(dispatch.args[0][0].payload.type, 'entry')
   t.deepEqual(dispatch.args[0][0].payload.targetService, 'entries')
+  t.deepEqual(dispatch.args[0][0].payload.params?.metaKey, 'sports')
   t.deepEqual(dispatch.args[1][0].type, 'GET_META')
+  t.deepEqual(dispatch.args[1][0].payload.type, 'entry')
   t.deepEqual(dispatch.args[1][0].payload.targetService, 'other')
+  t.deepEqual(dispatch.args[1][0].payload.params?.metaKey, 'sports')
   t.deepEqual(dispatch.args[2][0].payload.params, expectedParams3)
   t.deepEqual(dispatch.args[3][0].payload.params, expectedParams4and5)
   t.deepEqual(dispatch.args[4][0].payload.params, expectedParams4and5)
@@ -670,7 +721,11 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
   const expected6 = {
     type: 'SET_META',
     payload: {
-      params: { meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') } },
+      type: 'entry',
+      params: {
+        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+        metaKey: undefined,
+      },
       targetService: 'entries',
     },
     meta: { ident, project: 'project1' },
@@ -678,7 +733,11 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
   const expected7 = {
     type: 'SET_META',
     payload: {
-      params: { meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') } },
+      type: 'entry',
+      params: {
+        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+        metaKey: undefined,
+      },
       targetService: 'other',
     },
     meta: { ident, project: 'project1' },
@@ -772,6 +831,62 @@ test('should set lastSyncedAt meta to last updatedAt from data of each service',
     (dispatch.args[6][0].payload.params?.meta as Meta).lastSyncedAt,
     new Date('2021-01-03T23:50:23Z')
   )
+})
+
+test('should use metaKey when setting lastSyncedAt', async (t) => {
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: {
+        from: ['entries', 'other'],
+        to: 'store',
+        retrieve: 'updated',
+        metaKey: 'sports',
+        updatedUntil: new Date('2021-01-05T00:00:00Z'),
+      },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: [],
+      GET: [updateAction('ok', { data }), updateAction('ok', { data: data2 })],
+      SET: updateAction('ok'),
+      SET_META: updateAction('ok'),
+    })
+  )
+  const expected6 = {
+    type: 'SET_META',
+    payload: {
+      type: 'entry',
+      params: {
+        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+        metaKey: 'sports',
+      },
+      targetService: 'entries',
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const expected7 = {
+    type: 'SET_META',
+    payload: {
+      type: 'entry',
+      params: {
+        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+        metaKey: 'sports',
+      },
+      targetService: 'other',
+    },
+    meta: { ident, project: 'project1' },
+  }
+
+  const ret = await sync(action, dispatch)
+
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 7)
+  t.deepEqual(dispatch.args[5][0], expected6)
+  t.deepEqual(dispatch.args[6][0], expected7)
 })
 
 test('should not get or set lastSyncedAt meta when service id is missing', async (t) => {

@@ -148,6 +148,94 @@ test('should get all metadata for service', async (t) => {
   t.deepEqual(ret.response?.data, expected)
 })
 
+test('should get metadata for service with type', async (t) => {
+  nock('http://api1.test')
+    .get('/database/meta:store:entry')
+    .reply(200, { id: 'meta:store:entry', _rev: '000001', ...metadata })
+  const endpoints = [
+    { options: { uri: 'http://api1.test/database/{{params.id}}' }, mutation },
+  ]
+  const great = Integreat.create(defs(endpoints), resources)
+  const getService = () => great.services.store
+  const action = {
+    type: 'GET_META',
+    payload: {
+      type: 'entry',
+      params: { keys: 'lastSyncedAt' },
+      targetService: 'store',
+    },
+    meta: { ident },
+  }
+  const expectedResponse = {
+    status: 'ok',
+    data: { service: 'store', meta: { lastSyncedAt } },
+  }
+
+  const ret = await getMeta(action, dispatch, getService)
+
+  t.deepEqual(ret.response, expectedResponse)
+})
+
+test('should get metadata for service with several types', async (t) => {
+  nock('http://api1.test')
+    .get('/database/meta:store:entry|article')
+    .reply(200, { id: 'meta:store:entry|article', _rev: '000001', ...metadata })
+  const endpoints = [
+    { options: { uri: 'http://api1.test/database/{{params.id}}' }, mutation },
+  ]
+  const great = Integreat.create(defs(endpoints), resources)
+  const getService = () => great.services.store
+  const action = {
+    type: 'GET_META',
+    payload: {
+      type: ['entry', 'article'],
+      params: { keys: 'lastSyncedAt' },
+      targetService: 'store',
+    },
+    meta: { ident },
+  }
+  const expectedResponse = {
+    status: 'ok',
+    data: { service: 'store', meta: { lastSyncedAt } },
+  }
+
+  const ret = await getMeta(action, dispatch, getService)
+
+  t.deepEqual(ret.response, expectedResponse)
+})
+
+test('should get metadata for service with metaKey', async (t) => {
+  nock('http://api1.test')
+    .get('/database/meta:store:product:hardware')
+    .reply(200, {
+      id: 'meta:store:product:hardware',
+      _rev: '000001',
+      ...metadata,
+    })
+  const endpoints = [
+    { options: { uri: 'http://api1.test/database/{{params.id}}' }, mutation },
+  ]
+  const great = Integreat.create(defs(endpoints), resources)
+  const getService = () => great.services.store
+  const action = {
+    type: 'GET_META',
+    payload: {
+      type: 'product',
+      params: { keys: 'lastSyncedAt', metaKey: 'hardware' },
+      targetService: 'store',
+    },
+    meta: { ident },
+  }
+  const expectedResponse = {
+    status: 'ok',
+    data: { service: 'store', meta: { lastSyncedAt } },
+  }
+
+  const ret = await getMeta(action, dispatch, getService)
+
+  t.deepEqual(ret.response, expectedResponse)
+})
+
 test('should return null for metadata when not set on service', async (t) => {
   nock('http://api4.test')
     .get('/database/meta:store')

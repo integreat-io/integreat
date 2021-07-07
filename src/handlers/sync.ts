@@ -19,6 +19,7 @@ interface SyncParams extends Record<string, unknown> {
   updatedUntil?: Date
   dontQueueSet?: boolean
   retrieve?: 'all' | 'updated'
+  metaKey?: string
   setLastSyncedAtFromData?: boolean
 }
 
@@ -28,19 +29,26 @@ interface MetaData {
   }
 }
 
-const createGetMetaAction = (targetService: string, meta?: Meta) => ({
+const createGetMetaAction = (
+  targetService: string,
+  type?: string | string[],
+  metaKey?: string,
+  meta?: Meta
+) => ({
   type: 'GET_META',
-  payload: { params: { keys: 'lastSyncedAt' }, targetService },
+  payload: { type, params: { keys: 'lastSyncedAt', metaKey }, targetService },
   meta,
 })
 
 const createSetMetaAction = (
   lastSyncedAt: Date,
   targetService: string,
+  type?: string | string[],
+  metaKey?: string,
   meta?: Meta
 ) => ({
   type: 'SET_META',
-  payload: { params: { meta: { lastSyncedAt } }, targetService },
+  payload: { type, params: { meta: { lastSyncedAt }, metaKey }, targetService },
   meta,
 })
 
@@ -76,16 +84,16 @@ const setUpdatedDatesAndType = (
   meta?: Meta
 ) =>
   async function setUpdatedDatesAndType(params: Partial<ActionParams>) {
-    const { retrieve, updatedAfter, updatedUntil } = syncParams
+    const { retrieve, updatedAfter, updatedUntil, metaKey } = syncParams
 
     // Fetch lastSyncedAt from meta when needed, and use as updatedAfter
     if (retrieve === 'updated' && params.service && !updatedAfter) {
       const metaResponse = await dispatch(
-        createGetMetaAction(params.service, meta)
+        createGetMetaAction(params.service, type, metaKey, meta)
       )
-      params.updatedAfter = (metaResponse.response?.data as
-        | MetaData
-        | undefined)?.meta.lastSyncedAt
+      params.updatedAfter = (
+        metaResponse.response?.data as MetaData | undefined
+      )?.meta.lastSyncedAt
     }
 
     // Create from params from dates, type, and params
@@ -99,7 +107,7 @@ const setUpdatedDatesAndType = (
 
 const setMetaFromParams = (
   dispatch: InternalDispatch,
-  { meta }: Action,
+  { payload: { type, params: { metaKey } = {} }, meta }: Action,
   datesFromData: (Date | undefined)[]
 ) =>
   async function setMetaFromParams(
@@ -112,6 +120,8 @@ const setMetaFromParams = (
           // eslint-disable-next-line security/detect-object-injection
           datesFromData[index] || updatedUntil || new Date(),
           service,
+          type,
+          metaKey as string | undefined,
           meta
         )
       )
@@ -179,11 +189,10 @@ function sortByUpdatedAt(
   return dateA && dateB ? dateA - dateB : dateA ? -1 : 1
 }
 
-const withinDateRange = (updatedAfter?: Date, updatedUntil?: Date) => (
-  data: TypedData
-) =>
-  (!updatedAfter || (!!data.updatedAt && data.updatedAt > updatedAfter)) &&
-  (!updatedUntil || (!!data.updatedAt && data.updatedAt <= updatedUntil))
+const withinDateRange =
+  (updatedAfter?: Date, updatedUntil?: Date) => (data: TypedData) =>
+    (!updatedAfter || (!!data.updatedAt && data.updatedAt > updatedAfter)) &&
+    (!updatedUntil || (!!data.updatedAt && data.updatedAt <= updatedUntil))
 
 async function retrieveDataFromOneService(
   dispatch: InternalDispatch,
@@ -275,10 +284,7 @@ export default async function syncHandler(
     },
     meta,
   } = action
-  const [fromParams, toParams] = await extractActionParams(
-    prepareInputParams(action),
-    dispatch
-  )
+  const [fromParams, toParams] = await extractActionParams(action, dispatch)
   const { alwaysSet = false } = action.payload.params ?? {}
 
   if (fromParams.length === 0 || !toParams) {
