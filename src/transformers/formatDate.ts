@@ -1,15 +1,13 @@
-import debugFn from 'debug'
+import { isDate } from '../utils/is'
 import Luxon = require('luxon')
 const { DateTime } = Luxon
-
-const debug = debugFn('crazy')
 
 export interface Operands {
   format?: string
 }
 
 function createDate(value: unknown, format: string) {
-  if (value instanceof Date) {
+  if (isDate(value)) {
     return DateTime.fromJSDate(value)
   } else if (typeof value === 'string') {
     let date = DateTime.fromFormat(value, format)
@@ -41,15 +39,7 @@ function formatDateRev(value: unknown, format: string) {
   if (value === null || value === undefined) {
     return value
   }
-  debug(
-    '*** formatDate before:',
-    value,
-    JSON.stringify(value),
-    typeof value,
-    value instanceof Date
-  )
   const date = createDate(value, format)
-  debug('*** formatDate after:', value, JSON.stringify(value), typeof value)
   if (!date || !date.isValid) {
     return undefined
   }
