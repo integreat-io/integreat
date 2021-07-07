@@ -52,6 +52,37 @@ export default {
       options: { uri: '/entries' },
     },
     {
+      match: {
+        action: 'GET',
+        scope: 'collection',
+        params: { updatedSince: true },
+      },
+      mutation: [
+        {
+          $direction: 'rev',
+          $flip: true,
+          params: {
+            updatedSince: [
+              'params.updatedSince',
+              { $transform: 'formatDate', format: 'ISO' },
+            ],
+            updatedUntil: [
+              'params.updatedUntil',
+              { $transform: 'formatDate', format: 'ISO' },
+            ],
+          },
+        },
+        {
+          $direction: 'fwd',
+          data: ['data.data[]', { $apply: 'entries-entry' }],
+        },
+      ],
+      options: {
+        method: 'GET',
+        uri: '/entries?since={{{params.updatedSince}}}&until={{{params.updatedUntil}}}',
+      },
+    },
+    {
       match: { action: 'SET', scope: 'collection' },
       mutation: [
         {
