@@ -345,9 +345,11 @@ test('should remove untyped data', async (t) => {
   t.deepEqual(dispatch.args[1][0], expected2)
 })
 
-test('should pass on updatedAfter and updatedUntil', async (t) => {
+test('should pass on updatedAfter and updatedUntil, and set updatedSince and updatedBefore', async (t) => {
   const updatedAfter = new Date('2021-01-03T02:11:07Z')
+  const updatedSince = new Date('2021-01-03T02:11:07.001Z')
   const updatedUntil = new Date('2021-01-18T02:14:34Z')
+  const updatedBefore = new Date('2021-01-18T02:14:34.001Z')
   const action = {
     type: 'SYNC',
     payload: {
@@ -366,7 +368,12 @@ test('should pass on updatedAfter and updatedUntil', async (t) => {
     type: 'GET',
     payload: {
       type: 'entry',
-      params: { updatedAfter, updatedUntil },
+      params: {
+        updatedAfter,
+        updatedSince,
+        updatedUntil,
+        updatedBefore,
+      },
       targetService: 'entries',
     },
     meta: { ident, project: 'project1' },
@@ -376,7 +383,59 @@ test('should pass on updatedAfter and updatedUntil', async (t) => {
     payload: {
       type: 'entry',
       data,
-      params: { updatedAfter, updatedUntil },
+      params: { updatedAfter, updatedSince, updatedUntil, updatedBefore },
+      targetService: 'store',
+    },
+    meta: { ident, project: 'project1', queue: true },
+  }
+
+  const ret = await sync(action, dispatch)
+
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 2)
+  t.deepEqual(dispatch.args[0][0], expected1)
+  t.deepEqual(dispatch.args[1][0], expected2)
+})
+
+test('should pass on updatedSince and updatedBefore, and set updatedAfter and updatedUntil', async (t) => {
+  const updatedAfter = new Date('2021-01-03T02:11:06.999Z')
+  const updatedSince = new Date('2021-01-03T02:11:07Z')
+  const updatedUntil = new Date('2021-01-18T02:14:33.999Z')
+  const updatedBefore = new Date('2021-01-18T02:14:34Z')
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: { from: 'entries', to: 'store', updatedSince, updatedBefore },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: updateAction('ok', { data }),
+      SET: updateAction('ok'),
+    })
+  )
+  const expected1 = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      params: {
+        updatedAfter,
+        updatedSince,
+        updatedUntil,
+        updatedBefore,
+      },
+      targetService: 'entries',
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const expected2 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data,
+      params: { updatedAfter, updatedSince, updatedUntil, updatedBefore },
       targetService: 'store',
     },
     meta: { ident, project: 'project1', queue: true },
@@ -416,7 +475,10 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
     },
     meta: { ident, project: 'project1' },
   }
-  const expectedParams = { updatedAfter: lastSyncedAt }
+  const expectedParams = {
+    updatedAfter: lastSyncedAt,
+    updatedSince: new Date('2021-01-03T04:48:18.001Z'),
+  }
 
   const ret = await sync(action, dispatch)
 
@@ -487,7 +549,10 @@ test('should not use lastSyncedAt meta when updatedAfter is provided', async (t)
       SET: updateAction('ok'),
     })
   )
-  const expectedParams = { updatedAfter: new Date('2021-01-02T01:00:11Z') }
+  const expectedParams = {
+    updatedAfter: new Date('2021-01-02T01:00:11Z'),
+    updatedSince: new Date('2021-01-02T01:00:11.001Z'),
+  }
 
   const ret = await sync(action, dispatch)
 
@@ -527,8 +592,14 @@ test('should use lastSyncedAt meta from several services', async (t) => {
       SET: updateAction('ok'),
     })
   )
-  const expectedParams3 = { updatedAfter: lastSyncedAt1 }
-  const expectedParams4and5 = { updatedAfter: lastSyncedAt2 }
+  const expectedParams3 = {
+    updatedAfter: lastSyncedAt1,
+    updatedSince: new Date('2021-01-03T04:48:18.001Z'),
+  }
+  const expectedParams4and5 = {
+    updatedAfter: lastSyncedAt2,
+    updatedSince: new Date('2021-01-03T02:30:11.001Z'),
+  }
 
   const ret = await sync(action, dispatch)
 

@@ -10,6 +10,8 @@ interface ActionParams extends Record<string, unknown> {
   action?: string
   updatedAfter?: Date
   updatedUntil?: Date
+  updatedSince?: Date
+  updatedBefore?: Date
 }
 
 interface SyncParams extends Record<string, unknown> {
@@ -17,6 +19,8 @@ interface SyncParams extends Record<string, unknown> {
   to?: string | Partial<ActionParams>
   updatedAfter?: Date
   updatedUntil?: Date
+  updatedSince?: Date
+  updatedBefore?: Date
   dontQueueSet?: boolean
   retrieve?: 'all' | 'updated'
   metaKey?: string
@@ -84,25 +88,52 @@ const setUpdatedDatesAndType = (
   meta?: Meta
 ) =>
   async function setUpdatedDatesAndType(params: Partial<ActionParams>) {
-    const { retrieve, updatedAfter, updatedUntil, metaKey } = syncParams
+    const {
+      retrieve,
+      updatedAfter,
+      updatedSince,
+      updatedUntil,
+      updatedBefore,
+      metaKey,
+    } = syncParams
+    const nextParams: ActionParams = {
+      ...(updatedAfter && { updatedAfter }),
+      ...(updatedSince && { updatedSince }),
+      ...(updatedUntil && { updatedUntil }),
+      ...(updatedBefore && { updatedBefore }),
+      type,
+      ...params,
+    }
 
     // Fetch lastSyncedAt from meta when needed, and use as updatedAfter
-    if (retrieve === 'updated' && params.service && !updatedAfter) {
+    if (
+      retrieve === 'updated' &&
+      params.service &&
+      !updatedAfter &&
+      !updatedSince
+    ) {
       const metaResponse = await dispatch(
         createGetMetaAction(params.service, type, metaKey, meta)
       )
-      params.updatedAfter = (
+      nextParams.updatedAfter = (
         metaResponse.response?.data as MetaData | undefined
       )?.meta.lastSyncedAt
     }
 
-    // Create from params from dates, type, and params
-    return {
-      ...(updatedAfter && { updatedAfter }),
-      ...(updatedUntil && { updatedUntil }),
-      type,
-      ...params,
+    // Make sure the "counterpart" dates are set
+    if (nextParams.updatedAfter) {
+      nextParams.updatedSince = new Date(nextParams.updatedAfter.getTime() + 1)
+    } else if (nextParams.updatedSince) {
+      nextParams.updatedAfter = new Date(nextParams.updatedSince.getTime() - 1)
     }
+    if (nextParams.updatedUntil) {
+      nextParams.updatedBefore = new Date(nextParams.updatedUntil.getTime() + 1)
+    } else if (nextParams.updatedBefore) {
+      nextParams.updatedUntil = new Date(nextParams.updatedBefore.getTime() - 1)
+    }
+
+    // Create from params from dates, type, and params
+    return nextParams
   }
 
 const setMetaFromParams = (
@@ -150,15 +181,25 @@ function generateToParams(
   type: string | string[],
   { payload: { params = {} } }: Action
 ): ActionParams {
-  const { to, updatedUntil, dontQueueSet }: SyncParams = params
+  const { to, updatedUntil, updatedBefore, dontQueueSet }: SyncParams = params
   const oldestUpdatedAfter = fromParams
     .map((params) => params.updatedAfter)
     .sort()[0]
   return {
     type,
     dontQueueSet,
-    ...(oldestUpdatedAfter ? { updatedAfter: oldestUpdatedAfter } : {}),
-    ...(updatedUntil ? { updatedUntil } : {}),
+    ...(oldestUpdatedAfter
+      ? {
+          updatedAfter: oldestUpdatedAfter,
+          updatedSince: new Date(oldestUpdatedAfter.getTime() + 1),
+        }
+      : {}),
+    ...(updatedUntil
+      ? { updatedUntil, updatedBefore: new Date(updatedUntil.getTime() + 1) }
+      : {}),
+    ...(updatedBefore
+      ? { updatedBefore, updatedUntil: new Date(updatedBefore.getTime() - 1) }
+      : {}),
     ...paramsAsObject(to),
   }
 }
