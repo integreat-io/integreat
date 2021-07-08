@@ -13,7 +13,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "npm run build && nyc --reporter=text-summary ava --config ./ava-dist.config.js",
+    "test": "npm run lint && npm run build && nyc --reporter=text-summary ava --config ./ava-dist.config.js",
     "test:inspect": "node --inspect node_modules/ava/profile.js",
     "test:watch": "npm run dev",
     "dev": "ava --watch",
@@ -35,11 +35,11 @@
     "node": ">= 14"
   },
   "dependencies": {
-    "@types/debug": "^4.1.5",
+    "@types/debug": "^4.1.6",
     "@types/later": "^1.2.6",
-    "@types/luxon": "^1.27.0",
+    "@types/luxon": "^1.27.1",
     "@types/nanoid": "^3.0.0",
-    "@types/sax": "^1.2.1",
+    "@types/sax": "^1.2.2",
     "debug": "^4.3.2",
     "got": "^11.8.2",
     "html-entities": "^2.3.2",
@@ -55,10 +55,10 @@
     "sax": "^1.2.4"
   },
   "devDependencies": {
-    "@integreat/ts-dev-setup": "^2.0.1",
+    "@integreat/ts-dev-setup": "^2.0.2",
     "@types/sinon": "^10.0.2",
-    "integreat-transporter-http": "0.1.0-alpha.7",
-    "nock": "^13.1.0",
+    "integreat-transporter-http": "0.1.0-alpha.8",
+    "nock": "^13.1.1",
     "sinon": "^11.1.1"
   }
 }
