@@ -1,5 +1,5 @@
-import { ObjectElement, ElementValue, Namespaces, Element } from '.'
-import { isObject } from '../../utils/is'
+import { ObjectElement, ElementValue, Namespaces } from '.'
+import { isObject, isDate } from '../../utils/is'
 
 interface PrefixParents {
   [key: string]: ObjectElement
@@ -37,43 +37,42 @@ const setChildrenOrParent = (
     parents
   )
 
-const getPrefixesFromElement = (prefixes: string[], parent: ObjectElement) => ([
-  key,
-  data,
-]: [string, ObjectElement | ObjectElement[]]): PrefixParents => {
-  if (Array.isArray(data)) {
-    return data
-      .map((element) => getPrefixParents(element, prefixes))
-      .reduce((prefixParents, prefixChildren) =>
-        setChildrenOrParent(prefixParents, prefixChildren, parent)
-      )
-  }
+const getPrefixesFromElement =
+  (prefixes: string[], parent: ObjectElement) =>
+  ([key, data]: [string, ObjectElement | ObjectElement[]]): PrefixParents => {
+    if (Array.isArray(data)) {
+      return data
+        .map((element) => getPrefixParents(element, prefixes))
+        .reduce((prefixParents, prefixChildren) =>
+          setChildrenOrParent(prefixParents, prefixChildren, parent)
+        )
+    }
 
-  const childNodes = Object.entries(data)
-  const localPrefixes = [
-    extractPrefix(key),
-    ...childNodes
-      .filter(isAttribute)
-      .map(([key]) => extractPrefix(key.slice(1)))
-      .filter(Boolean),
-  ]
-  const localPrefixParents = localPrefixes.reduce(
-    (parents, prefix) => ({ ...parents, [prefix]: data }),
-    {} as PrefixParents
-  )
-  const nextPrefixes = prefixes.filter((pre) => !localPrefixes.includes(pre))
-  if (nextPrefixes.length === 0) {
-    return localPrefixParents // Stop when there are no more prefixes to find
+    const childNodes = Object.entries(data)
+    const localPrefixes = [
+      extractPrefix(key),
+      ...childNodes
+        .filter(isAttribute)
+        .map(([key]) => extractPrefix(key.slice(1)))
+        .filter(Boolean),
+    ]
+    const localPrefixParents = localPrefixes.reduce(
+      (parents, prefix) => ({ ...parents, [prefix]: data }),
+      {} as PrefixParents
+    )
+    const nextPrefixes = prefixes.filter((pre) => !localPrefixes.includes(pre))
+    if (nextPrefixes.length === 0) {
+      return localPrefixParents // Stop when there are no more prefixes to find
+    }
+    const parents = childNodes
+      .filter(isNode)
+      .map(getPrefixesFromElement(nextPrefixes, data))
+    return parents.reduce(
+      (prefixParents, prefixChildren) =>
+        setChildrenOrParent(prefixParents, prefixChildren, data),
+      localPrefixParents as PrefixParents
+    )
   }
-  const parents = childNodes
-    .filter(isNode)
-    .map(getPrefixesFromElement(nextPrefixes, data))
-  return parents.reduce(
-    (prefixParents, prefixChildren) =>
-      setChildrenOrParent(prefixParents, prefixChildren, data),
-    localPrefixParents as PrefixParents
-  )
-}
 
 function getPrefixParents(data: ObjectElement, prefixes: string[]) {
   const children = Object.entries(data).filter(isNode)
@@ -101,7 +100,7 @@ function setAttrs(prefixParents: PrefixParents, namespaces: Namespaces) {
 }
 
 const formatValue = (value: unknown) =>
-  value instanceof Date ? value.toISOString() : String(value)
+  isDate(value) ? value.toISOString() : String(value)
 
 function fixLeavesInValue(
   key: string,

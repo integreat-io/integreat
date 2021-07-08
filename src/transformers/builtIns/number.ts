@@ -1,5 +1,6 @@
 import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
+import { isDate } from '../../utils/is'
 import { Data } from '../../types'
 
 const numberOrUndefined = (value: number) => (isNaN(value) ? undefined : value)
@@ -13,7 +14,7 @@ function castNumber(value: Data): number | null | undefined {
     return numberOrUndefined(Number.parseFloat(value))
   } else if (typeof value === 'boolean') {
     return Number(value)
-  } else if (value instanceof Date) {
+  } else if (isDate(value)) {
     return numberOrUndefined(value.getTime())
   } else {
     return undefined

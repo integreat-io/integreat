@@ -1,5 +1,6 @@
 import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
+import { isDate } from '../utils/is'
 
 const uriPart: CustomFunction = (_operands, _options) => (value, context) =>
   mapAny(function (value) {
@@ -8,7 +9,7 @@ const uriPart: CustomFunction = (_operands, _options) => (value, context) =>
     }
 
     let part = value
-    if (part instanceof Date) {
+    if (isDate(part)) {
       part = part.toISOString()
     } else if (typeof part === 'object') {
       return undefined

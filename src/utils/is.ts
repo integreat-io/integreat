@@ -12,7 +12,7 @@ export const isEmptyObject = (value: unknown): value is {} =>
   isObject(value) && Object.keys(value).length === 0
 
 export const isDataObject = (value: unknown): value is DataObject =>
-  isObject(value) && !(value instanceof Date)
+  isObject(value)
 
 export const isTypedData = (value: unknown): value is TypedData =>
   isDataObject(value) && value.hasOwnProperty('$type')

@@ -1,6 +1,6 @@
 import { encode } from 'html-entities'
 import { ObjectElement, ElementValue, Namespaces } from '.'
-import { isObject } from '../../utils/is'
+import { isObject, isDate } from '../../utils/is'
 import setNamespaceAttrs from './setNamespaceAttrs'
 
 type KeyElement = [string, ElementValue | string]
@@ -13,7 +13,7 @@ const encodingOptions = {
 }
 
 const stringifyValue = (value: unknown) =>
-  value instanceof Date
+  isDate(value)
     ? value.toISOString()
     : value === null
     ? null

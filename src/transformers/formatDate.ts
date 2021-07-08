@@ -24,7 +24,7 @@ function createDate(value: unknown, format: string) {
 function formatDateFwd(value: unknown, format: string) {
   if (value === null) {
     return null
-  } else if (value instanceof Date) {
+  } else if (isDate(value)) {
     return value
   } else {
     let date = createDate(value, format)

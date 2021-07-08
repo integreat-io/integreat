@@ -1,7 +1,7 @@
 import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
+import { isDataObject, isTypedData, isReference, isDate } from '../../utils/is'
 import { Data } from '../../types'
-import { isDataObject, isTypedData, isReference } from '../../utils/is'
 
 interface Operands extends Record<string, unknown> {
   type?: string
@@ -11,7 +11,7 @@ function extractId(value: Data) {
   if (isDataObject(value)) {
     return value.id
   } else {
-    return value instanceof Date ? value.getTime() : value
+    return isDate(value) ? value.getTime() : value
   }
 }
 
@@ -50,7 +50,9 @@ const castItem = (type: string | undefined) => (value: Data) => {
   }
 }
 
-const reference: CustomFunction = ({ type }: Operands) => (value, _context) =>
-  mapAny(castItem(type), value)
+const reference: CustomFunction =
+  ({ type }: Operands) =>
+  (value, _context) =>
+    mapAny(castItem(type), value)
 
 export default reference
