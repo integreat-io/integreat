@@ -458,7 +458,6 @@ test('should use metaKey when fetching lastSyncedAt', async (t) => {
     },
     meta: { ident, project: 'project1' },
   }
-  const expectedParams = { updatedAfter: lastSyncedAt }
 
   const ret = await sync(action, dispatch)
 

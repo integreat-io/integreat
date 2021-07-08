@@ -27,7 +27,7 @@ function formatDateFwd(value: unknown, format: string) {
   } else if (isDate(value)) {
     return value
   } else {
-    let date = createDate(value, format)
+    const date = createDate(value, format)
     if (date && date.isValid) {
       return date.toJSDate()
     }

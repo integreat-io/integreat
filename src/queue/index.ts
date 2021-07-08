@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import middleware from './middleware'
 import { Dispatch, InternalDispatch } from '../types'
 import { Action, Response } from '../types'

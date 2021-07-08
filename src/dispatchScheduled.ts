@@ -1,5 +1,5 @@
 import Later = require('later')
-import { Dispatch, Action, Response } from './types'
+import { Dispatch, Action } from './types'
 
 export interface Scheduled {
   later: Later.Schedule
@@ -7,7 +7,7 @@ export interface Scheduled {
 }
 
 export default (dispatch: Dispatch, scheduled: (Scheduled | undefined)[]) =>
-  async function dispatchScheduled(from: Date, to: Date) {
+  async function dispatchScheduled(from: Date, to: Date): Promise<Action[]> {
     const dispatched: Action[] = []
     const meta = { ident: { id: 'scheduler' }, queue: true }
 

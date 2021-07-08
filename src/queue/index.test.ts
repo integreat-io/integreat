@@ -1,6 +1,5 @@
 import test from 'ava'
 import sinon = require('sinon')
-import later = require('later')
 import mockQueue from '../tests/helpers/mockQueue'
 import { Action } from '../types'
 

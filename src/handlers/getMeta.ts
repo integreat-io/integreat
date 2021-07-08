@@ -32,7 +32,8 @@ export const generateMetaId = (
   serviceId?: string,
   type?: string | string[],
   metaKey?: string
-) => ['meta', serviceId, joinTypes(type), metaKey].filter(Boolean).join(':')
+): string =>
+  ['meta', serviceId, joinTypes(type), metaKey].filter(Boolean).join(':')
 
 /**
  * Get metadata for a service, based on the given action object.

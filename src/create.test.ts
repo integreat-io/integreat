@@ -90,13 +90,13 @@ test('should return object with dispatch, schemas, services, and identType', (t)
 
 test('should throw when no services', (t) => {
   t.throws(() => {
-    create(({ schemas } as unknown) as Definitions, resourcesWithTrans)
+    create({ schemas } as unknown as Definitions, resourcesWithTrans)
   })
 })
 
 test('should throw when no schemas', (t) => {
   t.throws(() => {
-    create(({ services } as unknown) as Definitions, resourcesWithTrans)
+    create({ services } as unknown as Definitions, resourcesWithTrans)
   })
 })
 
@@ -226,7 +226,7 @@ test('should dispatch scheduled', async (t) => {
     { services, schemas, mutations, schedules },
     { ...resourcesWithTrans, handlers }
   )
-  const ret = await great.dispatchScheduled(fromDate, toDate)
+  await great.dispatchScheduled(fromDate, toDate)
 
   t.is(handler.callCount, 1) // If the action handler was called, the action was dispatched
 })

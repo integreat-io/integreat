@@ -1,7 +1,12 @@
 import later = require('later')
-import { ScheduleObject, ScheduleDef } from '../types'
+import { ScheduleObject, ScheduleDef, Action } from '../types'
 
 later.date.UTC()
+
+export interface Schedule {
+  later: later.Schedule
+  action: Action
+}
 
 function parseSched(
   schedules?: ScheduleObject[],
@@ -25,7 +30,7 @@ export default function createSchedule({
   cron,
   human,
   action,
-}: ScheduleDef) {
+}: ScheduleDef): Schedule | undefined {
   const schedule = parseSched(schedules, exceptions, cron, human)
   return schedule ? { later: later.schedule(schedule), action } : undefined
 }

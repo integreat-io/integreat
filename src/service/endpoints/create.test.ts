@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon = require('sinon')
 import createSchema from '../../schema'
@@ -590,8 +589,9 @@ test('should map to service with no defaults', (t) => {
   const endpoint = createEndpoint(serviceOptions, mapOptions)(endpointDef)
   const ret = endpoint.mutateRequest(actionWithoutDefaults)
 
-  const items = (((ret.payload.data as DataObject).content as DataObject)
-    .data as DataObject).items as DataObject[]
+  const items = (
+    ((ret.payload.data as DataObject).content as DataObject).data as DataObject
+  ).items as DataObject[]
   t.is(items[0].activated, undefined)
   t.is(items[1].activated, true)
 })
