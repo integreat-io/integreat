@@ -42,6 +42,7 @@ const mapOptions = {
   functions: {},
 }
 
+const serviceId = 'accountStore'
 const serviceOptions = {}
 
 // Tests
@@ -68,6 +69,7 @@ test('should return match function', (t) => {
   }
 
   const matchFn = createEndpointMappers(
+    serviceId,
     endpointDefs,
     serviceOptions,
     mapOptions

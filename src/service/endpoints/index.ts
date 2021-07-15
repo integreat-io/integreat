@@ -6,6 +6,7 @@ import createEndpoint, { PrepareOptions } from './create'
 import compareEndpoints from './compare'
 
 export default function createEndpointMappers(
+  serviceId: string,
   endpointDefs: EndpointDef[],
   serviceOptions: EndpointOptions,
   mapOptions: MapOptions,
@@ -16,6 +17,7 @@ export default function createEndpointMappers(
     .sort(compareEndpoints)
     .map(
       createEndpoint(
+        serviceId,
         serviceOptions,
         mapOptions,
         serviceMutation,

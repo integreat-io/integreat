@@ -15,7 +15,7 @@ import {
 import { ensureArray } from '../../utils/array'
 
 export interface PrepareOptions {
-  (options: EndpointOptions): EndpointOptions
+  (options: EndpointOptions, serviceId: string): EndpointOptions
 }
 
 function mutate(
@@ -67,6 +67,7 @@ const combineMutations = (
  * Create endpoint from definition.
  */
 export default function createEndpoint(
+  serviceId: string,
   serviceOptions: EndpointOptions,
   mapOptions: MapOptions,
   serviceMutation?: MapDefinition,
@@ -79,10 +80,13 @@ export default function createEndpoint(
     )
     const mutator = mutation ? mapTransform(mutation, mapOptions) : null
 
-    const options = prepareOptions({
-      ...serviceOptions,
-      ...endpointDef.options,
-    })
+    const options = prepareOptions(
+      {
+        ...serviceOptions,
+        ...endpointDef.options,
+      },
+      serviceId
+    )
 
     const {
       id,

@@ -144,12 +144,19 @@ export interface Connection extends Record<string, unknown> {
 
 export interface Transporter {
   authentication: string | null
-  prepareOptions: (options: Record<string, unknown>) => Record<string, unknown>
+  prepareOptions: (
+    options: Record<string, unknown>,
+    serviceId: string
+  ) => Record<string, unknown>
   connect: (
     options: Record<string, unknown>,
     authentication: Record<string, unknown> | null,
     connection: Connection | null
   ) => Promise<Connection | null>
   send: (action: Action, connection: Connection | null) => Promise<Response>
+  listen?: (
+    dispatch: Dispatch,
+    connection: Connection | null
+  ) => Promise<Response>
   disconnect: (connection: Connection | null) => Promise<void>
 }

@@ -90,6 +90,7 @@ export default ({
     const authorizeDataToService = authorizeData.toService(schemas)
 
     const getEndpointMapper = createEndpointMappers(
+      serviceId,
       endpointDefs,
       options,
       mapOptions,
