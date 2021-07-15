@@ -1,5 +1,5 @@
 import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
-import { Action, Transporter } from '../types'
+import { Action, Response, Dispatch, Transporter } from '../types'
 import { EndpointDef, Endpoint } from './endpoints/types'
 
 export interface MapOptions {
@@ -42,11 +42,11 @@ export interface Authentication extends AuthOptions {
 export interface Authenticator {
   authenticate: (
     options: AuthOptions | null,
-    action: Action
+    action: Action | null
   ) => Promise<Authentication>
   isAuthenticated: (
     authentication: Authentication | null,
-    action: Action
+    action: Action | null
   ) => boolean
   authentication: {
     [asFunction: string]: (
@@ -82,4 +82,5 @@ export interface Service {
   mapRequest: ActionMapperWithEndpoint
   mapResponse: ActionMapperWithEndpoint
   send: AsyncActionMapper
+  listen: (dispatch: Dispatch) => Promise<Response>
 }

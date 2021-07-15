@@ -12,11 +12,10 @@ export function indexById<T extends ObjectWithId>(
   }
 }
 
-// TODO: Should return id if it's an object?
 export function lookupById<T extends unknown>(
   id: string | T,
   resource?: Record<string, T>
 ): T | undefined {
   // eslint-disable-next-line security/detect-object-injection
-  return typeof id === 'string' && resource ? resource[id] : undefined
+  return typeof id === 'string' ? resource && resource[id] : id
 }

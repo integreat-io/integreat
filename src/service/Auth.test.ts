@@ -8,14 +8,19 @@ import Auth from './Auth'
 // Setup
 
 const authenticator: Authenticator = {
-  authenticate: async (options: AuthOptions | null, _action: Action) => ({
+  authenticate: async (
+    options: AuthOptions | null,
+    _action: Action | null
+  ) => ({
     status: options?.token === 't0k3n' ? 'granted' : 'refused',
     expired: options?.expired,
     token: options?.token,
   }),
 
-  isAuthenticated: (authentication: Authentication | null, _action: Action) =>
-    !!authentication && !authentication.expired,
+  isAuthenticated: (
+    authentication: Authentication | null,
+    _action: Action | null
+  ) => !!authentication && !authentication.expired,
 
   authentication: {
     asHttpHeaders: (auth: Authentication | null) =>
@@ -164,6 +169,112 @@ test('should return autherror status on second timeout', async (t) => {
 
   t.false(ret)
   t.is(authSpy.callCount, 2)
+})
+
+test('should return auth object when granted', async (t) => {
+  const auth = new Auth(id, authenticator, options)
+  const expected = { Authorization: 't0k3n' }
+
+  await auth.authenticate(action)
+  const ret = auth.getAuthObject(transporter)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return null for unkown auth method', async (t) => {
+  const strangeAdapter = { ...transporter, authentication: 'asUnknown' }
+  const auth = new Auth(id, authenticator, options)
+  const expected = null
+
+  await auth.authenticate(action)
+  const ret = auth.getAuthObject(strangeAdapter)
+
+  t.is(ret, expected)
+})
+
+test('should return null when not authenticated', async (t) => {
+  const auth = new Auth(id, authenticator, options)
+  const expected = null
+
+  const ret = auth.getAuthObject(transporter)
+
+  t.is(ret, expected)
+})
+
+test('should return null when authentication was refused', async (t) => {
+  const refusingAuthenticator = {
+    ...authenticator,
+    authenticate: async (_options: AuthOptions | null) => ({
+      status: 'refused',
+      error: 'Not for you',
+    }),
+  }
+  const auth = new Auth(id, refusingAuthenticator, options)
+  const expected = null
+
+  await auth.authenticate(action)
+  const ret = auth.getAuthObject(transporter)
+
+  t.is(ret, expected)
+})
+
+test('should return status ok when granted', async (t) => {
+  const auth = new Auth(id, authenticator, options)
+  const expected = { status: 'ok' }
+
+  await auth.authenticate(action)
+  const ret = auth.getStatusObject()
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return status noaccess when not authenticated', async (t) => {
+  const auth = new Auth(id, authenticator, options)
+  const expected = { status: 'noaccess' }
+
+  const ret = auth.getStatusObject()
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return status noaccess when authentication was refused', async (t) => {
+  const refusingAuthenticator = {
+    ...authenticator,
+    authenticate: async (_options: AuthOptions | null) => ({
+      status: 'refused',
+      error: 'Not for you',
+    }),
+  }
+  const auth = new Auth(id, refusingAuthenticator, options)
+  const expected = {
+    status: 'noaccess',
+    error: "Authentication attempt for 'auth1' was refused. Not for you",
+  }
+
+  await auth.authenticate(action)
+  const ret = auth.getStatusObject()
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return status autherror on auth error', async (t) => {
+  const failingAuthenticator = {
+    ...authenticator,
+    authenticate: async (_options: AuthOptions | null) => ({
+      status: 'timeout',
+      error: 'This was too slow',
+    }),
+  }
+  const auth = new Auth(id, failingAuthenticator, options)
+  const expected = {
+    status: 'autherror',
+    error: "Could not authenticate 'auth1'. [timeout] This was too slow",
+  }
+
+  await auth.authenticate(action)
+  const ret = auth.getStatusObject()
+
+  t.deepEqual(ret, expected)
 })
 
 test('should set auth object to action', async (t) => {

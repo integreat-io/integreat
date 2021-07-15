@@ -1,5 +1,12 @@
 import { Dictionaries, CustomFunction, MapDefinition } from 'map-transform'
-import { Middleware, Transporter, Dispatch, ScheduleDef, Action } from './types'
+import {
+  Middleware,
+  Transporter,
+  Dispatch,
+  ScheduleDef,
+  Action,
+  Response,
+} from './types'
 import {
   ServiceDef,
   IdentConfig,
@@ -17,6 +24,7 @@ import { isObject } from './utils/is'
 import createMapOptions from './utils/createMapOptions'
 import { lookupById } from './utils/indexUtils'
 import createDispatch, { ActionHandler } from './dispatch'
+import start from './start'
 import { indexById } from './utils/indexUtils'
 import createSchedule from './utils/createSchedule'
 import createDispatchScheduled from './dispatchScheduled'
@@ -44,6 +52,7 @@ export interface Instance<ResponseData = unknown> {
   identType?: string
   dispatch: Dispatch<ResponseData>
   dispatchScheduled: (from: Date, to: Date) => Promise<Action[]>
+  start: () => Promise<Response>
 }
 
 /*
@@ -129,5 +138,6 @@ export default function create(
     identType: identConfig && identConfig.type,
     dispatch,
     dispatchScheduled,
+    start: async () => start(Object.values(services), dispatch),
   }
 }

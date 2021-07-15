@@ -145,7 +145,7 @@ test('should throw when no id', (t) => {
       ...jsonResources,
       mapOptions,
       schemas,
-    })(({ transporter: 'http' } as unknown) as ServiceDef)
+    })({ transporter: 'http' } as unknown as ServiceDef)
   })
 })
 
@@ -301,9 +301,9 @@ test('authorizeAction should refuse based on schema', (t) => {
   t.deepEqual(ret, expectedAction)
 })
 
-// Tests --
+// Tests -- send
 
-test('sendAction should retrieve data from service', async (t) => {
+test('send should retrieve data from service', async (t) => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -355,7 +355,7 @@ test('sendAction should retrieve data from service', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('sendAction should use outgoing middleware', async (t) => {
+test('send should use outgoing middleware', async (t) => {
   const failMiddleware = () => async (action: Action) => ({
     ...action,
     response: { status: 'badresponse' },
@@ -388,7 +388,7 @@ test('sendAction should use outgoing middleware', async (t) => {
   t.is(ret.response?.status, 'badresponse', ret.response?.error)
 })
 
-test('sendAction should return error when no transport', async (t) => {
+test('send should return error when no transport', async (t) => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -433,7 +433,7 @@ test('sendAction should return error when no transport', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('sendAction should authenticate and return with error', async (t) => {
+test('send should authenticate and return with error', async (t) => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -483,7 +483,7 @@ test('sendAction should authenticate and return with error', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('sendAction should fail when not authorized', async (t) => {
+test('send should fail when not authorized', async (t) => {
   const service = setupService({
     mapOptions,
     schemas,
@@ -513,7 +513,7 @@ test('sendAction should fail when not authorized', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('sendAction should connect before sending request', async (t) => {
+test('send should connect before sending request', async (t) => {
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
@@ -560,7 +560,7 @@ test('sendAction should connect before sending request', async (t) => {
   t.deepEqual(send.args[0][1], expected)
 })
 
-test('sendAction should store connection', async (t) => {
+test('send should store connection', async (t) => {
   const connect = sinon.stub().returns({ status: 'ok' })
   const resources = {
     ...jsonResources,
@@ -600,7 +600,7 @@ test('sendAction should store connection', async (t) => {
   t.deepEqual(connect.args[1][2], { status: 'ok' })
 })
 
-test('sendAction should return error when connection fails', async (t) => {
+test('send should return error when connection fails', async (t) => {
   const resources = {
     ...jsonResources,
     transporters: {
@@ -640,7 +640,7 @@ test('sendAction should return error when connection fails', async (t) => {
   )
 })
 
-test('sendAction should retrieve error response from service', async (t) => {
+test('send should retrieve error response from service', async (t) => {
   const resources = {
     ...jsonResources,
     transporters: {
@@ -679,7 +679,7 @@ test('sendAction should retrieve error response from service', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('sendAction should return with error when transport throws', async (t) => {
+test('send should return with error when transport throws', async (t) => {
   const resources = {
     ...jsonResources,
     transporters: {
@@ -720,7 +720,7 @@ test('sendAction should return with error when transport throws', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('sendAction should do nothing when action has a response', async (t) => {
+test('send should do nothing when action has a response', async (t) => {
   const resources = {
     ...jsonResources,
     transporters: {
@@ -1382,4 +1382,161 @@ test('mapRequest should map without default values - defined on enpoint', async 
     .data as DataObject[]
   const items = (data[0].createOrMutate as DataObject).items as DataObject[]
   t.is(items[0].one, undefined)
+})
+
+// Tests -- listen
+
+test('listen should call transporter.listen', async (t) => {
+  const listenStub = sinon.stub().resolves({ status: 'ok' })
+  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: listenStub,
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'http',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedResponse = { status: 'ok' }
+  const expectedConnection = { status: 'ok' }
+
+  const ret = await service.listen(dispatch)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(listenStub.callCount, 1)
+  t.is(listenStub.args[0][0], dispatch)
+  t.deepEqual(listenStub.args[0][1], expectedConnection)
+})
+
+test('listen should return error when connection fails', async (t) => {
+  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: async () => ({ status: 'ok' }),
+        connect: async () => ({
+          status: 'timeout',
+          error: 'Connection attempt timed out',
+        }),
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'http',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedResponse = {
+    status: 'error',
+    error: "Could not listen to 'entries' service. Failed to connect",
+  }
+
+  const ret = await service.listen(dispatch)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should return error when authentication fails', async (t) => {
+  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: async () => ({ status: 'ok' }),
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'refusing',
+    transporter: 'http',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication attempt for 'refusing' was refused.",
+  }
+
+  const ret = await service.listen(dispatch)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should do nothing when transporter has no listen method', async (t) => {
+  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
+  const resources = {
+    ...jsonResources,
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    auth: 'granting',
+    transporter: 'http',
+  })
+  const expectedResponse = {
+    status: 'noaction',
+    error: 'Transporter has no listen method',
+  }
+
+  const ret = await service.listen(dispatch)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should return error when no transporter', async (t) => {
+  const listenStub = sinon.stub().resolves({ status: 'ok' })
+  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: listenStub,
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'unknown',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedResponse = {
+    status: 'error',
+    error: "Service 'entries' has no transporter",
+  }
+
+  const ret = await service.listen(dispatch)
+
+  t.deepEqual(ret, expectedResponse)
 })

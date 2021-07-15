@@ -78,7 +78,7 @@ export default ({
       throw new TypeError(`Can't create service without an id.`)
     }
 
-    const transporter = lookupById(transporterId, transporters) || transporterId
+    const transporter = lookupById(transporterId, transporters)
 
     mapOptions = { mutateNull: false, ...mapOptions }
 
@@ -198,6 +198,42 @@ export default ({
         return runThroughMiddleware(
           sendToTransporter(transporter, connection, serviceId)
         )(action)
+      },
+
+      /**
+       * Will start to listen on the transporter when relevant, i.e. when the
+       * transporter has `listen()` method. Incoming requests will be dispatched
+       * as actions to the provided `dispatch()` function.
+       */
+      async listen(dispatch) {
+        if (!isTransporter(transporter) || !connection) {
+          return {
+            status: 'error',
+            error: `Service '${serviceId}' has no transporter`,
+          }
+        }
+
+        if (typeof transporter.listen !== 'function') {
+          return {
+            status: 'noaction',
+            error: 'Transporter has no listen method',
+          }
+        }
+
+        if (authorization && !(await authorization.authenticate(null))) {
+          return authorization.getStatusObject()
+        }
+
+        if (
+          !(await connection.connect(authorization?.getAuthObject(transporter)))
+        ) {
+          return {
+            status: 'error',
+            error: `Could not listen to '${serviceId}' service. Failed to connect`,
+          }
+        }
+
+        return transporter.listen(dispatch, connection.object)
       },
     }
   }
