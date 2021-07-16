@@ -22,18 +22,23 @@ interface Resources {
 
 const setServiceIdAsSourceServiceOnAction = (
   action: Action | null,
-  serviceId: string
+  serviceId: string,
+  incomingIdent: string
 ) =>
   action
     ? {
         ...action,
         payload: { ...action.payload, sourceService: serviceId },
+        meta: { ident: { id: incomingIdent }, ...action.meta },
       }
     : null
 
 const setServiceIdOnDispatchedAction =
-  (dispatch: Dispatch, serviceId: string) => async (action: Action | null) =>
-    dispatch(setServiceIdAsSourceServiceOnAction(action, serviceId))
+  (dispatch: Dispatch, serviceId: string, incomingIdent: string) =>
+  async (action: Action | null) =>
+    dispatch(
+      setServiceIdAsSourceServiceOnAction(action, serviceId, incomingIdent)
+    )
 
 const isTransporter = (transporter: unknown): transporter is Transporter =>
   isObject(transporter)
@@ -84,6 +89,7 @@ export default ({
     id: serviceId,
     transporter: transporterId,
     auth,
+    incomingIdent = 'incoming',
     meta,
     options = {},
     mutation,
@@ -256,7 +262,7 @@ export default ({
         }
 
         return transporter.listen(
-          setServiceIdOnDispatchedAction(dispatch, serviceId),
+          setServiceIdOnDispatchedAction(dispatch, serviceId, incomingIdent),
           connection.object
         )
       },

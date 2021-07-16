@@ -1420,7 +1420,7 @@ test('listen should call transporter.listen', async (t) => {
   t.deepEqual(listenStub.args[0][1], expectedConnection)
 })
 
-test('listen should set sourceService on dispatched actions', async (t) => {
+test('listen should set sourceService and ident on dispatched actions', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const action = {
     type: 'SET',
@@ -1451,6 +1451,50 @@ test('listen should set sourceService on dispatched actions', async (t) => {
   const expectedAction = {
     type: 'SET',
     payload: { data: [], sourceService: 'entries' },
+    meta: { ident: { id: 'incoming' } },
+  }
+  const expectedResponse = { status: 'ok' }
+
+  const ret = await service.listen(dispatch)
+
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should set ident on dispatched actions from incomingIdent', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const action = {
+    type: 'SET',
+    payload: { data: [] },
+  }
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: async (dispatch: Dispatch) => {
+          dispatch(action)
+          return { status: 'ok' }
+        },
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    incomingIdent: 'reidar',
+    transporter: 'http',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedAction = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+    meta: { ident: { id: 'reidar' } },
   }
   const expectedResponse = { status: 'ok' }
 

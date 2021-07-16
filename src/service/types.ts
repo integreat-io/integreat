@@ -65,6 +65,7 @@ export interface ServiceDef {
   id: string
   transporter?: string | Transporter
   auth?: boolean | AuthDef | string | null
+  incomingIdent?: string
   meta?: string
   options?: { [key: string]: unknown }
   mutation?: MapDefinition
