@@ -280,8 +280,8 @@ test('should use auth', async (t) => {
   t.is(ret.status, 'noaccess', ret.error)
 })
 
-test('should have start method', async (t) => {
+test('should have listen method', async (t) => {
   const great = create({ services, schemas, mutations }, resourcesWithTrans)
 
-  t.is(typeof great.start, 'function')
+  t.is(typeof great.listen, 'function')
 })

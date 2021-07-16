@@ -77,8 +77,8 @@ npm install integreat
 The hello world example of Integreat, would look something like this:
 
 ```javascript
-const Integreat = require('integreat')
-const json = require('integreat-adapter-json')
+import Integreat from 'integreat'
+import httpTransporter from 'integreat-transporter-http'
 
 const schemas = [
   {
@@ -91,7 +91,7 @@ const schemas = [
 const services = [
   {
     id: 'helloworld',
-    adapter: 'json',
+    transporter: 'http',
     endpoints: [{ options: { uri: 'https://api.helloworld.io/json' } }],
     mappings: {
       message: { text: 'message' },
@@ -99,13 +99,16 @@ const services = [
   },
 ]
 
-const adapters = { json: json(console) }
+const transporters = { http: httpTransporter }
 
-const great = Integreat.create({ schemas, services }, { adapters })
+const great = Integreat.create({ schemas, services }, { transporters })
+await great.listen() // Only needed for transporter listening to incoming requests
 const action = { type: 'GET', payload: { type: 'message' } }
 
 great.dispatch(action).then((data) => console.log(data.text))
 //--> Hello world
+
+await great.close()
 ```
 
 As most hello world examples, this is a bit too trivial a use case to

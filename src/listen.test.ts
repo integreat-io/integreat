@@ -2,7 +2,7 @@ import test from 'ava'
 import sinon = require('sinon')
 import { Action } from './types'
 
-import start from './start'
+import listen from './listen'
 
 // Setup
 
@@ -34,7 +34,7 @@ test('should run listen method on all services', async (t) => {
   ]
   const expected = { status: 'ok' }
 
-  const ret = await start(services, dispatch)
+  const ret = await listen(services, dispatch)
 
   t.deepEqual(ret, expected)
   t.is(listenStub1.callCount, 1)
@@ -65,7 +65,7 @@ test('should stop and return error when listen fails', async (t) => {
     error: "Could not listen to service 'service1'. [error] Could not go on",
   }
 
-  const ret = await start(services, dispatch)
+  const ret = await listen(services, dispatch)
 
   t.deepEqual(ret, expected)
   t.is(listenStub1.callCount, 1)
@@ -92,7 +92,7 @@ test('should not treat noaction as error', async (t) => {
   ]
   const expected = { status: 'ok' }
 
-  const ret = await start(services, dispatch)
+  const ret = await listen(services, dispatch)
 
   t.deepEqual(ret, expected)
   t.is(listenStub1.callCount, 1)

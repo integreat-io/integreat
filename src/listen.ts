@@ -1,7 +1,7 @@
 import { Dispatch, Response } from './types'
 import { Service } from './service/types'
 
-export default async function start(
+export default async function listen(
   services: Service[],
   dispatch: Dispatch
 ): Promise<Response> {
