@@ -1614,6 +1614,39 @@ test('close should disconnect transporter', async (t) => {
   t.deepEqual(disconnectStub.args[0][0], expectedConnection)
 })
 
+test('close should probihit closed connection from behind used again', async (t) => {
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
+        disconnect: async () => undefined,
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'http',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedResponse = {
+    status: 'error',
+    error: "Service 'entries' has no connection",
+  }
+
+  await service.listen(dispatch)
+  await service.close()
+  const ret = await service.listen(dispatch)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
 test('close should do nothing when no transporter', async (t) => {
   const resources = {
     ...jsonResources,
@@ -1636,5 +1669,3 @@ test('close should do nothing when no transporter', async (t) => {
 
   t.deepEqual(ret, expectedResponse)
 })
-
-test.todo('should remove local connection (and return error from e.g. listen)')

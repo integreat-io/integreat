@@ -116,7 +116,7 @@ export default ({
     const runThroughMiddleware: Middleware =
       middleware.length > 0 ? compose(...middleware) : (fn) => fn
 
-    const connection = isTransporter(transporter)
+    let connection = isTransporter(transporter)
       ? new Connection(transporter, options)
       : null
 
@@ -190,11 +190,14 @@ export default ({
           return action
         }
 
-        if (!isTransporter(transporter) || !connection) {
+        if (!isTransporter(transporter)) {
           return createError(
             action,
             `Service '${serviceId}' has no transporter`
           )
+        }
+        if (!connection) {
+          return createError(action, `Service '${serviceId}' has no connection`)
         }
 
         if (!action.meta?.authorized) {
@@ -221,10 +224,16 @@ export default ({
        * as actions to the provided `dispatch()` function.
        */
       async listen(dispatch) {
-        if (!isTransporter(transporter) || !connection) {
+        if (!isTransporter(transporter)) {
           return {
             status: 'error',
             error: `Service '${serviceId}' has no transporter`,
+          }
+        }
+        if (!connection) {
+          return {
+            status: 'error',
+            error: `Service '${serviceId}' has no connection`,
           }
         }
 
@@ -266,6 +275,7 @@ export default ({
         }
 
         await transporter.disconnect(connection.object)
+        connection = null
         return { status: 'ok' }
       },
     }
