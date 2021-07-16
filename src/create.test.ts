@@ -285,3 +285,9 @@ test('should have listen method', async (t) => {
 
   t.is(typeof great.listen, 'function')
 })
+
+test('should have close method', async (t) => {
+  const great = create({ services, schemas, mutations }, resourcesWithTrans)
+
+  t.is(typeof great.close, 'function')
+})

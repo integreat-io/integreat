@@ -25,6 +25,7 @@ import createMapOptions from './utils/createMapOptions'
 import { lookupById } from './utils/indexUtils'
 import createDispatch, { ActionHandler } from './dispatch'
 import listen from './listen'
+import close from './close'
 import { indexById } from './utils/indexUtils'
 import createSchedule from './utils/createSchedule'
 import createDispatchScheduled from './dispatchScheduled'
@@ -53,6 +54,7 @@ export interface Instance<ResponseData = unknown> {
   dispatch: Dispatch<ResponseData>
   dispatchScheduled: (from: Date, to: Date) => Promise<Action[]>
   listen: () => Promise<Response>
+  close: () => Promise<Response>
 }
 
 /*
@@ -139,5 +141,6 @@ export default function create(
     dispatch,
     dispatchScheduled,
     listen: async () => listen(Object.values(services), dispatch),
+    close: async () => close(Object.values(services)),
   }
 }

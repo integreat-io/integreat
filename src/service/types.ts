@@ -83,4 +83,5 @@ export interface Service {
   mapResponse: ActionMapperWithEndpoint
   send: AsyncActionMapper
   listen: (dispatch: Dispatch) => Promise<Response>
+  close: () => Promise<Response>
 }

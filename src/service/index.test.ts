@@ -121,6 +121,8 @@ const auths = {
 
 const authDef = { id: 'auth1', authenticator: 'auth', options: {} }
 
+const dispatch = async (_action: Action | null) => ({ status: 'ok' })
+
 // Tests
 
 test('should return service object with id and meta', (t) => {
@@ -1388,7 +1390,6 @@ test('mapRequest should map without default values - defined on enpoint', async 
 
 test('listen should call transporter.listen', async (t) => {
   const listenStub = sinon.stub().resolves({ status: 'ok' })
-  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
   const resources = {
     ...jsonResources,
     transporters: {
@@ -1420,7 +1421,6 @@ test('listen should call transporter.listen', async (t) => {
 })
 
 test('listen should return error when connection fails', async (t) => {
-  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
   const resources = {
     ...jsonResources,
     transporters: {
@@ -1455,7 +1455,6 @@ test('listen should return error when connection fails', async (t) => {
 })
 
 test('listen should return error when authentication fails', async (t) => {
-  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
   const resources = {
     ...jsonResources,
     transporters: {
@@ -1486,7 +1485,6 @@ test('listen should return error when authentication fails', async (t) => {
 })
 
 test('listen should do nothing when transporter has no listen method', async (t) => {
-  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
   const resources = {
     ...jsonResources,
     mapOptions,
@@ -1511,7 +1509,6 @@ test('listen should do nothing when transporter has no listen method', async (t)
 
 test('listen should return error when no transporter', async (t) => {
   const listenStub = sinon.stub().resolves({ status: 'ok' })
-  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
   const resources = {
     ...jsonResources,
     transporters: {
@@ -1537,6 +1534,64 @@ test('listen should return error when no transporter', async (t) => {
   }
 
   const ret = await service.listen(dispatch)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
+// Tests -- close
+
+test('close should disconnect transporter', async (t) => {
+  const disconnectStub = sinon.stub().resolves({ status: 'ok' })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
+        disconnect: disconnectStub,
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'http',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedResponse = { status: 'ok' }
+  const expectedConnection = { status: 'ok' }
+
+  await service.listen(dispatch)
+  const ret = await service.close()
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(disconnectStub.callCount, 1)
+  t.deepEqual(disconnectStub.args[0][0], expectedConnection)
+})
+
+test('close should do nothing when no transporter', async (t) => {
+  const resources = {
+    ...jsonResources,
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'unknown',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedResponse = {
+    status: 'noaction',
+    error: 'No transporter to disconnect',
+  }
+
+  const ret = await service.close()
 
   t.deepEqual(ret, expectedResponse)
 })

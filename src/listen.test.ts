@@ -12,6 +12,7 @@ const serviceMethods = {
   mapRequest: (action: Action, _endpoint: unknown) => action,
   mapResponse: (action: Action, _endpoint: unknown) => action,
   send: async (action: Action) => action,
+  close: async () => ({ status: 'ok' }),
 }
 
 // Tests

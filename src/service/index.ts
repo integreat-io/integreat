@@ -235,6 +235,21 @@ export default ({
 
         return transporter.listen(dispatch, connection.object)
       },
+
+      /**
+       * Will disconnect the transporter
+       */
+      async close() {
+        if (!isTransporter(transporter) || !connection) {
+          return {
+            status: 'noaction',
+            error: 'No transporter to disconnect',
+          }
+        }
+
+        await transporter.disconnect(connection.object)
+        return { status: 'ok' }
+      },
     }
   }
 
