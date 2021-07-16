@@ -5,7 +5,7 @@ import jsonResources from '../tests/helpers/resources'
 import functions from '../transformers/builtIns'
 import createSchema from '../schema'
 import { ServiceDef } from './types'
-import { TypedData, Connection, Action, DataObject } from '../types'
+import { TypedData, Connection, Action, DataObject, Dispatch } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
 import Auth from './Auth'
 import tokenAuth from '../authenticators/token'
@@ -1416,8 +1416,49 @@ test('listen should call transporter.listen', async (t) => {
 
   t.deepEqual(ret, expectedResponse)
   t.is(listenStub.callCount, 1)
-  t.is(listenStub.args[0][0], dispatch)
+  t.is(typeof listenStub.args[0][0], 'function') // We check that the dispatch function is called in the next test
   t.deepEqual(listenStub.args[0][1], expectedConnection)
+})
+
+test('listen should set sourceService on dispatched actions', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const action = {
+    type: 'SET',
+    payload: { data: [] },
+  }
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: async (dispatch: Dispatch) => {
+          dispatch(action)
+          return { status: 'ok' }
+        },
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'http',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedAction = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+  }
+  const expectedResponse = { status: 'ok' }
+
+  const ret = await service.listen(dispatch)
+
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
 })
 
 test('listen should return error when connection fails', async (t) => {
@@ -1595,3 +1636,5 @@ test('close should do nothing when no transporter', async (t) => {
 
   t.deepEqual(ret, expectedResponse)
 })
+
+test.todo('should remove local connection (and return error from e.g. listen)')

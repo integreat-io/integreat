@@ -1,6 +1,6 @@
 import createEndpointMappers from './endpoints'
 import createError from '../utils/createError'
-import { Action, Middleware, Transporter } from '../types'
+import { Action, Dispatch, Middleware, Transporter } from '../types'
 import { Service, ServiceDef, MapOptions } from './types'
 import Connection from './Connection'
 import { Schema } from '../schema'
@@ -19,6 +19,21 @@ interface Resources {
   mapOptions?: MapOptions
   middleware?: Middleware[]
 }
+
+const setServiceIdAsSourceServiceOnAction = (
+  action: Action | null,
+  serviceId: string
+) =>
+  action
+    ? {
+        ...action,
+        payload: { ...action.payload, sourceService: serviceId },
+      }
+    : null
+
+const setServiceIdOnDispatchedAction =
+  (dispatch: Dispatch, serviceId: string) => async (action: Action | null) =>
+    dispatch(setServiceIdAsSourceServiceOnAction(action, serviceId))
 
 const isTransporter = (transporter: unknown): transporter is Transporter =>
   isObject(transporter)
@@ -233,7 +248,10 @@ export default ({
           }
         }
 
-        return transporter.listen(dispatch, connection.object)
+        return transporter.listen(
+          setServiceIdOnDispatchedAction(dispatch, serviceId),
+          connection.object
+        )
       },
 
       /**
