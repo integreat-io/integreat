@@ -1,5 +1,5 @@
 import debugLib = require('debug')
-import createError from '../utils/createError'
+import { createErrorOnAction } from '../utils/createError'
 import { DataObject, Action, InternalDispatch } from '../types'
 import { GetService } from '../dispatch'
 import setHandler from './set'
@@ -29,7 +29,7 @@ export default async function setMeta(
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`SET_META: Service '${serviceId}' doesn't exist`)
-    return createError(action, `Service '${serviceId}' doesn't exist`)
+    return createErrorOnAction(action, `Service '${serviceId}' doesn't exist`)
   }
 
   const metaType = service.meta
@@ -40,7 +40,7 @@ export default async function setMeta(
     debug(
       `SET_META: Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`
     )
-    return createError(
+    return createErrorOnAction(
       action,
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'noaction'

@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon = require('sinon')
 import { Action, InternalDispatch, TypedData } from '../types'
-import createError from '../utils/createError'
+import { createErrorOnAction } from '../utils/createError'
 
 import sync from './sync'
 
@@ -996,7 +996,7 @@ test('should return error when get action fails', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: (action: Action) => createError(action, 'Fetching failed'),
+      GET: (action: Action) => createErrorOnAction(action, 'Fetching failed'),
       SET: updateAction('ok'),
     })
   )
@@ -1017,7 +1017,8 @@ test('should return error when set action fails', async (t) => {
   const dispatch = sinon.spy(
     setupDispatch({
       GET: updateAction('ok', { data }),
-      SET: (action: Action) => createError(action, 'Service is sleeping'),
+      SET: (action: Action) =>
+        createErrorOnAction(action, 'Service is sleeping'),
     })
   )
 

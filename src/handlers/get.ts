@@ -1,7 +1,7 @@
 import debugLib = require('debug')
 import pPipe = require('p-pipe')
 import pLimit = require('p-limit')
-import createError from '../utils/createError'
+import { createErrorOnAction } from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { Action, InternalDispatch } from '../types'
 import { IdentConfig, Service } from '../service/types'
@@ -19,7 +19,7 @@ const getIdFromAction = ({ payload: { id } }: Action) =>
 
 const combineActions = (action: Action, actions: Action[]) =>
   actions.some(isErrorAction)
-    ? createError(
+    ? createErrorOnAction(
         action,
         `One or more of the requests for ids ${getIdFromAction(action)} failed.`
       )
@@ -45,7 +45,7 @@ const setIdOnAction = (action: Action, id?: string | string[]): Action => ({
 })
 
 const createNoEndpointError = (action: Action, serviceId: string) =>
-  createError(
+  createErrorOnAction(
     action,
     `No endpoint matching ${action.type} request to service '${serviceId}'.`,
     'noaction'

@@ -1,4 +1,4 @@
-import createError from '../utils/createError'
+import { createErrorOnAction } from '../utils/createError'
 import { isTypedData } from '../utils/is'
 import { Action, InternalDispatch, Ident, TypedData } from '../types'
 
@@ -69,19 +69,19 @@ export default async function expire(
   const msFromNow = (params?.msFromNow as number) || 0
 
   if (!serviceId) {
-    return createError(
+    return createErrorOnAction(
       action,
       `Can't delete expired without a specified service`
     )
   }
   if (!endpointId) {
-    return createError(
+    return createErrorOnAction(
       action,
       `Can't delete expired from service '${serviceId}' without an endpoint`
     )
   }
   if (!type) {
-    return createError(
+    return createErrorOnAction(
       action,
       `Can't delete expired from service '${serviceId}' without one or more specified types`
     )
@@ -97,7 +97,7 @@ export default async function expire(
   )
 
   if (expiredAction.response?.status !== 'ok') {
-    return createError(
+    return createErrorOnAction(
       action,
       `Could not get items from service '${serviceId}'. Reason: ${expiredAction.response?.status} ${expiredAction.response?.error}`,
       'noaction'
@@ -105,7 +105,7 @@ export default async function expire(
   }
   const data = expiredAction.response?.data
   if (!isTypedDataArray(data)) {
-    return createError(
+    return createErrorOnAction(
       action,
       `No items to expire from service '${serviceId}'`,
       'noaction'

@@ -1,6 +1,6 @@
 import util = require('util')
 import getField from '../utils/getField'
-import createError from '../utils/createError'
+import { createErrorOnAction } from '../utils/createError'
 import { getFirstIfArray } from '../utils/array'
 import { Action, InternalDispatch, Ident } from '../types'
 import { IdentConfig } from '../service/types'
@@ -57,7 +57,7 @@ const prepareResponse = (
     } as Ident
     return wrapOk(action, data, completeIdent)
   } else {
-    return createError(
+    return createErrorOnAction(
       action,
       `Could not find ident with params ${util.inspect(params)}, error: ${
         action.response?.error
@@ -78,7 +78,7 @@ export default async function getIdent(
 ): Promise<Action> {
   const { ident } = action.meta || {}
   if (!ident) {
-    return createError(
+    return createErrorOnAction(
       action,
       'GET_IDENT: The request has no ident',
       'noaction'
@@ -87,7 +87,7 @@ export default async function getIdent(
 
   const { type } = identConfig || {}
   if (!type) {
-    return createError(
+    return createErrorOnAction(
       action,
       'GET_IDENT: Integreat is not set up with authentication',
       'noaction'
@@ -97,7 +97,7 @@ export default async function getIdent(
   const propKeys = preparePropKeys(identConfig?.props)
   const params = prepareParams(ident, propKeys)
   if (!params) {
-    return createError(
+    return createErrorOnAction(
       action,
       'GET_IDENT: The request has no ident with id or withToken',
       'noaction'

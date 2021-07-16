@@ -1,5 +1,5 @@
 import debugLib = require('debug')
-import createError from '../utils/createError'
+import { createErrorOnAction } from '../utils/createError'
 import { Action, DataObject, InternalDispatch } from '../types'
 import { GetService } from '../dispatch'
 import getHandler from './get'
@@ -59,7 +59,7 @@ export default async function getMeta(
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`GET_META: Service '${serviceId}' doesn't exist`)
-    return createError(action, `Service '${serviceId}' doesn't exist`)
+    return createErrorOnAction(action, `Service '${serviceId}' doesn't exist`)
   }
 
   const metaType = service.meta
@@ -67,7 +67,7 @@ export default async function getMeta(
   // TODO: Check if the meta service exists - find a better way?
   const metaService = getService(metaType)
   if (!metaService) {
-    return createError(
+    return createErrorOnAction(
       action,
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'noaction'

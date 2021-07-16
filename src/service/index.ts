@@ -1,5 +1,5 @@
 import createEndpointMappers from './endpoints'
-import createError from '../utils/createError'
+import { createErrorOnAction, createErrorResponse } from '../utils/createError'
 import { Action, Dispatch, Middleware, Transporter } from '../types'
 import { Service, ServiceDef, MapOptions } from './types'
 import Connection from './Connection'
@@ -55,7 +55,7 @@ const sendToTransporter = (
           },
         }
       } else {
-        return createError(
+        return createErrorOnAction(
           action,
           `Could not connect to service '${serviceId}'. [${
             connection.status
@@ -63,7 +63,7 @@ const sendToTransporter = (
         )
       }
     } catch (error) {
-      return createError(
+      return createErrorOnAction(
         action,
         `Error retrieving from service '${serviceId}': ${error.message}`
       )
@@ -191,17 +191,20 @@ export default ({
         }
 
         if (!isTransporter(transporter)) {
-          return createError(
+          return createErrorOnAction(
             action,
             `Service '${serviceId}' has no transporter`
           )
         }
         if (!connection) {
-          return createError(action, `Service '${serviceId}' has no connection`)
+          return createErrorOnAction(
+            action,
+            `Service '${serviceId}' has no connection`
+          )
         }
 
         if (!action.meta?.authorized) {
-          return createError(action, 'Not authorized')
+          return createErrorOnAction(action, 'Not authorized')
         }
 
         // When an authenticator is set: Authenticate and apply result to action
@@ -225,23 +228,19 @@ export default ({
        */
       async listen(dispatch) {
         if (!isTransporter(transporter)) {
-          return {
-            status: 'error',
-            error: `Service '${serviceId}' has no transporter`,
-          }
+          return createErrorResponse(
+            `Service '${serviceId}' has no transporter`
+          )
         }
         if (!connection) {
-          return {
-            status: 'error',
-            error: `Service '${serviceId}' has no connection`,
-          }
+          return createErrorResponse(`Service '${serviceId}' has no connection`)
         }
 
         if (typeof transporter.listen !== 'function') {
-          return {
-            status: 'noaction',
-            error: 'Transporter has no listen method',
-          }
+          return createErrorResponse(
+            'Transporter has no listen method',
+            'noaction'
+          )
         }
 
         if (authorization && !(await authorization.authenticate(null))) {
@@ -251,10 +250,9 @@ export default ({
         if (
           !(await connection.connect(authorization?.getAuthObject(transporter)))
         ) {
-          return {
-            status: 'error',
-            error: `Could not listen to '${serviceId}' service. Failed to connect`,
-          }
+          return createErrorResponse(
+            `Could not listen to '${serviceId}' service. Failed to connect`
+          )
         }
 
         return transporter.listen(
@@ -268,10 +266,7 @@ export default ({
        */
       async close() {
         if (!isTransporter(transporter) || !connection) {
-          return {
-            status: 'noaction',
-            error: 'No transporter to disconnect',
-          }
+          return createErrorResponse('No transporter to disconnect', 'noaction')
         }
 
         await transporter.disconnect(connection.object)

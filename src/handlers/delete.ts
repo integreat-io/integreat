@@ -1,6 +1,6 @@
 import debugLib = require('debug')
 import pPipe = require('p-pipe')
-import createError from '../utils/createError'
+import { createErrorOnAction } from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { Action, Payload, InternalDispatch } from '../types'
 import { GetService } from '../dispatch'
@@ -42,7 +42,7 @@ export default async function deleteFn(
 
   const data = prepareData(action.payload)
   if (data.length === 0) {
-    return createError(
+    return createErrorOnAction(
       action,
       `No items to delete from service '${service.id}'`,
       'noaction'
@@ -57,7 +57,7 @@ export default async function deleteFn(
   const nextAction = setDataOnAction(action, data)
   const endpoint = service.endpointFromAction(nextAction)
   if (!endpoint) {
-    return createError(
+    return createErrorOnAction(
       nextAction,
       `No endpoint matching ${nextAction.type} request to service '${serviceId}'.`,
       'noaction'

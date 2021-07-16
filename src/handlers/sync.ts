@@ -1,6 +1,6 @@
 import pLimit = require('p-limit')
 import { Action, InternalDispatch, Meta, TypedData } from '../types'
-import createError from '../utils/createError'
+import { createErrorOnAction } from '../utils/createError'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is'
 import { ensureArray } from '../utils/array'
 
@@ -329,7 +329,7 @@ export default async function syncHandler(
   const { alwaysSet = false } = action.payload.params ?? {}
 
   if (fromParams.length === 0 || !toParams) {
-    return createError(
+    return createErrorOnAction(
       action,
       'SYNC: `type`, `to`, and `from` parameters are required',
       'badrequest'
@@ -349,11 +349,14 @@ export default async function syncHandler(
       datesFromData = extractLastSyncedAtDates(dataFromServices)
     }
   } catch (error) {
-    return createError(action, `SYNC: Could not get data. ${error.message}`)
+    return createErrorOnAction(
+      action,
+      `SYNC: Could not get data. ${error.message}`
+    )
   }
 
   if (!alwaysSet && data.length === 0) {
-    return createError(action, 'SYNC: No data to set', 'noaction')
+    return createErrorOnAction(action, 'SYNC: No data to set', 'noaction')
   }
 
   const responseAction = await dispatch(createSetAction(data, toParams, meta))
@@ -361,7 +364,7 @@ export default async function syncHandler(
     responseAction.response?.status !== 'ok' &&
     responseAction.response?.status !== 'queued'
   ) {
-    return createError(
+    return createErrorOnAction(
       action,
       `SYNC: Could not set data. ${responseAction.response?.error}`
     )

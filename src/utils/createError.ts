@@ -1,6 +1,16 @@
-import { Action } from '../types'
+import { Action, Response } from '../types'
 
-export default function createError(
+export function createErrorResponse(
+  error?: string,
+  status = 'error'
+): Response {
+  return {
+    status,
+    error,
+  }
+}
+
+export function createErrorOnAction(
   action: Action,
   error?: string,
   status = 'error'
@@ -9,8 +19,7 @@ export default function createError(
     ...action,
     response: {
       ...action.response,
-      status,
-      error,
+      ...createErrorResponse(error, status),
     },
   }
 }

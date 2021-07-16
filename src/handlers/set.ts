@@ -1,6 +1,6 @@
 import debugLib = require('debug')
 import pPipe = require('p-pipe')
-import createError from '../utils/createError'
+import { createErrorOnAction } from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { isTypedData } from '../utils/is'
 import { Action, InternalDispatch } from '../types'
@@ -51,7 +51,7 @@ export default async function set(
   const nextAction = setIdAndTypeOnAction(action, id, type)
   const endpoint = service.endpointFromAction(nextAction)
   if (!endpoint) {
-    return createError(
+    return createErrorOnAction(
       action,
       `No endpoint matching ${action.type} request to service '${serviceId}'.`,
       'noaction'

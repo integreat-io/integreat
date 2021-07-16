@@ -4,13 +4,17 @@ import { Dispatch, InternalDispatch, Middleware, Action } from './types'
 import { IdentConfig } from './service/types'
 import { Service } from './service/types'
 import { Schema } from './schema'
-import createError from './utils/createError'
+import { createErrorOnAction } from './utils/createError'
 import { Endpoint } from './service/endpoints/types'
 
 const debug = debugLib('great')
 
 export const compose = (...fns: Middleware[]): Middleware =>
-  fns.reduce((f, g) => (...args) => f(g(...args)))
+  fns.reduce(
+    (f, g) =>
+      (...args) =>
+        f(g(...args))
+  )
 
 export interface GetService {
   (type?: string | string[], serviceId?: string): Service | undefined
@@ -40,7 +44,7 @@ function getActionHandlerFromType(
 }
 
 const setErrorOnAction = (action: Action, error: string) => ({
-  action: createError(action, error, 'badrequest'),
+  action: createErrorOnAction(action, error, 'badrequest'),
 })
 
 function mapIncomingAction(
@@ -94,10 +98,11 @@ const wrapDispatch = (
     }
 
     // Map incoming request data when needed
-    const { action: mappedAction, service, endpoint } = mapIncomingAction(
-      action,
-      getService
-    )
+    const {
+      action: mappedAction,
+      service,
+      endpoint,
+    } = mapIncomingAction(action, getService)
     // Return any error from mapIncomingRequest()
     if (mappedAction.response?.status) {
       return responseFromAction(mappedAction)
@@ -152,7 +157,11 @@ export default function createDispatch({
 
     const handler = getActionHandlerFromType(action.type, handlers)
     if (!handler) {
-      return createError(action, 'Dispatched unknown action', 'noaction')
+      return createErrorOnAction(
+        action,
+        'Dispatched unknown action',
+        'noaction'
+      )
     }
 
     return handler(action, internalDispatch, getService, identConfig)

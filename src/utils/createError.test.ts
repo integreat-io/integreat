@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import createError from './createError'
+import { createErrorOnAction, createErrorResponse } from './createError'
 
 // Setup
 
@@ -15,15 +15,14 @@ const action = {
 
 // Tests
 
-test('should create an error', (t) => {
+test('should create an error response on action object', (t) => {
   const message = 'An ugly error'
   const expected = {
     ...action,
-
     response: { status: 'error', error: 'An ugly error', data },
   }
 
-  const ret = createError(action, message)
+  const ret = createErrorOnAction(action, message)
 
   t.deepEqual(ret, expected)
 })
@@ -36,7 +35,26 @@ test('should create error with other status', (t) => {
     response: { status: 'notfound', error: 'Not found', data },
   }
 
-  const ret = createError(action, message, status)
+  const ret = createErrorOnAction(action, message, status)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should create an error response', (t) => {
+  const message = 'An ugly error'
+  const expected = { status: 'error', error: 'An ugly error' }
+
+  const ret = createErrorResponse(message)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should create an error response with other status', (t) => {
+  const message = 'An ugly error'
+  const status = 'notfound'
+  const expected = { status: 'notfound', error: 'An ugly error' }
+
+  const ret = createErrorResponse(message, status)
 
   t.deepEqual(ret, expected)
 })

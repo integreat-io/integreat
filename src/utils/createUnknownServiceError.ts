@@ -1,5 +1,5 @@
 import debugLib = require('debug')
-import createError from './createError'
+import { createErrorOnAction } from './createError'
 import { Action } from '../types'
 
 const debug = debugLib('great')
@@ -14,5 +14,5 @@ export default function createUnknownServiceError(
     ? `Service with id '${serviceId || '<not set>'}' does not exist`
     : `No service exists for type '${type || '<not set>'}'`
   debug(`${actionType}: ${error}`)
-  return createError(action, error)
+  return createErrorOnAction(action, error)
 }
