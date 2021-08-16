@@ -8,6 +8,7 @@ import DELETE from './delete'
 import SYNC from './sync'
 import EXPIRE from './expire'
 import QUEUE from './queue'
+import SERVICE from './service'
 import { ActionHandler } from '../dispatch'
 
 const handlers: Record<string, ActionHandler> = {
@@ -22,6 +23,7 @@ const handlers: Record<string, ActionHandler> = {
   SYNC,
   EXPIRE,
   QUEUE,
+  SERVICE,
 }
 
 export default handlers

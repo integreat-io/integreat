@@ -33,7 +33,7 @@ export default async function queue(
     response: {
       ...action.response,
       ...response,
-      status: status || 'error',
+      status: status || 'badresponse',
       ...(status ? {} : { error: 'Queue did not respond correctly' }),
     },
   }

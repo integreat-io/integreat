@@ -98,7 +98,10 @@ test('should return error when queue does not respond status', async (t) => {
     service === 'queue' ? queueService : undefined
   const expected = {
     ...action,
-    response: { status: 'error', error: 'Queue did not respond correctly' },
+    response: {
+      status: 'badresponse',
+      error: 'Queue did not respond correctly',
+    },
   }
 
   const ret = await queue(action, dispatch, getService, options)
