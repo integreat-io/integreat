@@ -36,6 +36,7 @@ export interface Definitions {
   mutations?: Record<string, MapDefinition>
   auths?: AuthDef[]
   identConfig?: IdentConfig
+  queueService?: string
   dictionaries?: Dictionaries
   schedules?: ScheduleDef[]
 }
@@ -51,6 +52,7 @@ export interface Instance<ResponseData = unknown> {
   services: Record<string, Service>
   schemas: Record<string, Schema>
   identType?: string
+  queueService?: string
   dispatch: Dispatch<ResponseData>
   dispatchScheduled: (from: Date, to: Date) => Promise<Action[]>
   listen: () => Promise<Response>
@@ -67,6 +69,7 @@ export default function create(
     mutations,
     auths: authDefs,
     identConfig,
+    queueService,
     dictionaries,
     schedules: scheduleDefs = [],
   }: Definitions,
@@ -122,11 +125,11 @@ export default function create(
 
   // Create dispatch
   const dispatch = createDispatch({
-    identConfig,
     schemas,
     services,
     handlers: { ...builtinHandlers, ...handlers },
     middleware: middlewareForDispatch,
+    options: { identConfig, queueService },
   })
 
   // Prepare scheduled actions
@@ -137,7 +140,8 @@ export default function create(
   return {
     services,
     schemas,
-    identType: identConfig && identConfig.type,
+    identType: identConfig?.type,
+    queueService,
     dispatch,
     dispatchScheduled,
     listen: async () => listen(Object.values(services), dispatch),

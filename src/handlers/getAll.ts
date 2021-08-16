@@ -1,5 +1,4 @@
 import { Action, Payload, Meta, InternalDispatch } from '../types'
-import { IdentConfig } from '../service/types'
 import { GetService } from '../dispatch'
 import { isObject, isTypedData } from '../utils/is'
 
@@ -57,8 +56,7 @@ const createNextPaging = (payload: Payload, paging?: Payload) =>
 export default async function get(
   action: Action,
   dispatch: InternalDispatch,
-  _getService: GetService,
-  _identConfig?: IdentConfig
+  _getService: GetService
 ): Promise<Action> {
   const { pageSize, params: { noLoopCheck = false } = {} } = action.payload
 

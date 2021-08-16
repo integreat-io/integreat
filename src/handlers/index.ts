@@ -7,6 +7,7 @@ import SET_META from './setMeta'
 import DELETE from './delete'
 import SYNC from './sync'
 import EXPIRE from './expire'
+import QUEUE from './queue'
 import { ActionHandler } from '../dispatch'
 
 const handlers: Record<string, ActionHandler> = {
@@ -20,6 +21,7 @@ const handlers: Record<string, ActionHandler> = {
   DEL: DELETE,
   SYNC,
   EXPIRE,
+  QUEUE,
 }
 
 export default handlers

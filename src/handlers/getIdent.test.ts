@@ -42,7 +42,7 @@ test('should complete ident with token', async (t) => {
     meta: { ident: { withToken: 'twitter|23456' } },
   }
 
-  const ret = await getIdent(action, dispatch, getService, identConfig)
+  const ret = await getIdent(action, dispatch, getService, { identConfig })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.meta?.ident, johnfIdent)
@@ -60,7 +60,7 @@ test('should complete ident with id', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getIdent(action, dispatch, getService, identConfig)
+  const ret = await getIdent(action, dispatch, getService, { identConfig })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.meta?.ident, johnfIdent)
@@ -77,7 +77,7 @@ test('should complete ident with id when more props are present', async (t) => {
     meta: { ident: { id: 'johnf', withToken: 'other|34567' } },
   }
 
-  const ret = await getIdent(action, dispatch, getService, identConfig)
+  const ret = await getIdent(action, dispatch, getService, { identConfig })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.meta?.ident, johnfIdent)
@@ -91,7 +91,7 @@ test('should return noaction when no props', async (t) => {
     meta: { ident: {} },
   }
 
-  const ret = await getIdent(action, dispatch, getService, identConfig)
+  const ret = await getIdent(action, dispatch, getService, { identConfig })
 
   t.is(ret.response?.status, 'noaction')
   t.is(typeof ret.response?.error, 'string')
@@ -104,7 +104,7 @@ test('should return noaction when null', async (t) => {
     meta: { ident: undefined },
   }
 
-  const ret = await getIdent(action, dispatch, getService, identConfig)
+  const ret = await getIdent(action, dispatch, getService, { identConfig })
 
   t.is(ret.response?.status, 'noaction')
   t.is(typeof ret.response?.error, 'string')
@@ -117,7 +117,7 @@ test('should return noaction when no ident options', async (t) => {
     meta: { ident: { withToken: 'twitter|23456' } },
   }
 
-  const ret = await getIdent(action, dispatch, getService, undefined)
+  const ret = await getIdent(action, dispatch, getService, {})
 
   t.is(ret.response?.status, 'noaction')
   t.is(typeof ret.response?.error, 'string')
@@ -130,7 +130,7 @@ test('should return notfound when ident not found', async (t) => {
     meta: { ident: { id: 'unknown' } },
   }
 
-  const ret = await getIdent(action, dispatch, getService, identConfig)
+  const ret = await getIdent(action, dispatch, getService, { identConfig })
 
   t.truthy(ret)
   t.is(ret.response?.status, 'notfound')
@@ -162,7 +162,7 @@ test('should complete ident with other prop keys', async (t) => {
     tokens: undefined,
   }
 
-  const ret = await getIdent(action, dispatch, getService, identConfig)
+  const ret = await getIdent(action, dispatch, getService, { identConfig })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.meta?.ident, expectedIdent)
@@ -181,7 +181,7 @@ test('should return notfound when unknown service', async (t) => {
     meta: { ident: { withToken: 'twitter|23456' } },
   }
 
-  const ret = await getIdent(action, dispatch, getService, identConfig)
+  const ret = await getIdent(action, dispatch, getService, { identConfig })
 
   t.is(ret.response?.status, 'notfound')
   t.is(typeof ret.response?.error, 'string')

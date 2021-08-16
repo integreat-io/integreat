@@ -1,5 +1,4 @@
 import create from './create'
-import createQueue from './queue'
 import mergeResources from './utils/mergeResources'
 
 export { CustomFunction as Transformer } from 'map-transform'
@@ -29,6 +28,5 @@ export { default as middleware } from './middleware'
 export default {
   version: '0.8.0-alpha.33',
   create,
-  createQueue,
   mergeResources,
 }

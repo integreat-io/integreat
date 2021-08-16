@@ -4,7 +4,7 @@ import pLimit = require('p-limit')
 import { createErrorOnAction } from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { Action, InternalDispatch } from '../types'
-import { IdentConfig, Service } from '../service/types'
+import { Service } from '../service/types'
 import { Endpoint } from '../service/endpoints/types'
 import { GetService } from '../dispatch'
 
@@ -98,8 +98,7 @@ async function mapOneOrMany(
 export default async function get(
   action: Action,
   _dispatch: InternalDispatch,
-  getService: GetService,
-  _identConfig?: IdentConfig
+  getService: GetService
 ): Promise<Action> {
   const {
     type,

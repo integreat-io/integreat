@@ -3,8 +3,7 @@ import getField from '../utils/getField'
 import { createErrorOnAction } from '../utils/createError'
 import { getFirstIfArray } from '../utils/array'
 import { Action, InternalDispatch, Ident } from '../types'
-import { IdentConfig } from '../service/types'
-import { GetService } from '../dispatch'
+import { GetService, HandlerOptions } from '../dispatch'
 import getHandler from './get'
 
 interface IdentParams {
@@ -74,7 +73,7 @@ export default async function getIdent(
   action: Action,
   dispatch: InternalDispatch,
   getService: GetService,
-  identConfig?: IdentConfig
+  { identConfig }: HandlerOptions
 ): Promise<Action> {
   const { ident } = action.meta || {}
   if (!ident) {

@@ -20,14 +20,22 @@ export interface GetService {
   (type?: string | string[], serviceId?: string): Service | undefined
 }
 
+export interface HandlerOptions {
+  identConfig?: IdentConfig
+  queueService?: string
+}
+
 export interface ActionHandler {
   (
     action: Action,
     dispatch: InternalDispatch,
     getService: GetService,
-    identConfig?: IdentConfig
+    options: HandlerOptions
   ): Promise<Action>
 }
+
+const shouldQueue = (action: Action, options: HandlerOptions) =>
+  action.meta?.queue === true && !!options.queueService
 
 function getActionHandlerFromType(
   type: string | undefined,
@@ -43,10 +51,6 @@ function getActionHandlerFromType(
   return undefined
 }
 
-const setErrorOnAction = (action: Action, error: string) => ({
-  action: createErrorOnAction(action, error, 'badrequest'),
-})
-
 function mapIncomingAction(
   action: Action,
   getService: GetService
@@ -55,17 +59,23 @@ function mapIncomingAction(
   if (sourceService) {
     const service = getService(undefined, sourceService)
     if (!service) {
-      return setErrorOnAction(
-        action,
-        `Source service '${sourceService}' not found`
-      )
+      return {
+        action: createErrorOnAction(
+          action,
+          `Source service '${sourceService}' not found`,
+          'badrequest'
+        ),
+      }
     }
     const endpoint = service.endpointFromAction(action, true)
     if (!endpoint) {
-      return setErrorOnAction(
-        action,
-        `No matching endpoint for incoming mapping on service '${sourceService}'`
-      )
+      return {
+        action: createErrorOnAction(
+          action,
+          `No matching endpoint for incoming mapping on service '${sourceService}'`,
+          'badrequest'
+        ),
+      }
     }
     return {
       action: service.mapRequest(action, endpoint, true),
@@ -122,15 +132,17 @@ export interface Resources {
   schemas: Record<string, Schema>
   services: Record<string, Service>
   middleware?: Middleware[]
-  identConfig?: IdentConfig
+  options: HandlerOptions
 }
 
 const prepareAction = ({
   payload: { service, ...payload },
+  meta: { queue, ...meta } = {},
   ...action
 }: Action) => ({
   ...action,
   payload: { ...(service && { targetService: service }), ...payload },
+  meta,
 })
 
 /**
@@ -145,26 +157,39 @@ export default function createDispatch({
   schemas = {},
   services = {},
   middleware = [],
-  identConfig,
+  options,
 }: Resources): Dispatch {
   const getService = setupGetService(schemas, services)
   let internalDispatch: InternalDispatch
 
-  internalDispatch = async function (rawAction: Action) {
-    debug('Dispatch: %o', rawAction)
+  internalDispatch = async function (action: Action) {
+    debug('Dispatch: %o', action)
 
-    const action = prepareAction(rawAction)
-
-    const handler = getActionHandlerFromType(action.type, handlers)
-    if (!handler) {
+    // Refuse attempt to dispatch a QUEUE action, as it would never stop being
+    // sent to queue.
+    if (action.type === 'QUEUE') {
       return createErrorOnAction(
         action,
-        'Dispatched unknown action',
+        'No handler for QUEUE action',
         'noaction'
       )
     }
 
-    return handler(action, internalDispatch, getService, identConfig)
+    // Use queue handler if queue flag is set and there is a queue service
+    const handlerType = shouldQueue(action, options) ? 'QUEUE' : action.type
+
+    // Find handler ...
+    const handler = getActionHandlerFromType(handlerType, handlers)
+    if (!handler) {
+      return createErrorOnAction(
+        action,
+        `No handler for ${handlerType} action`,
+        'noaction'
+      )
+    }
+
+    // ... and pass it the action
+    return handler(prepareAction(action), internalDispatch, getService, options)
   }
 
   if (middleware.length > 0) {

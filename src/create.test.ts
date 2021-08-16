@@ -76,9 +76,12 @@ const resourcesWithTrans = {
 
 // Tests
 
-test('should return object with dispatch, schemas, services, and identType', (t) => {
+test('should return object with dispatch, schemas, services, identType, and queueService', (t) => {
   const identConfig = { type: 'account' }
-  const great = create({ services, schemas, identConfig }, resourcesWithTrans)
+  const great = create(
+    { services, schemas, identConfig, queueService: 'queue' },
+    resourcesWithTrans
+  )
 
   t.is(typeof great.dispatch, 'function')
   t.truthy(great.schemas)
@@ -86,6 +89,7 @@ test('should return object with dispatch, schemas, services, and identType', (t)
   t.truthy(great.services)
   t.truthy(great.services.entries)
   t.is(great.identType, 'account')
+  t.is(great.queueService, 'queue')
 })
 
 test('should throw when no services', (t) => {
@@ -107,15 +111,16 @@ test('should dispatch with resources', async (t) => {
     .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
   const handlers = { TEST: handler }
   const identConfig = { type: 'account' }
+  const expectedOptions = { identConfig, queueService: 'queue' }
 
   const great = create(
-    { services, schemas, mutations, identConfig },
+    { services, schemas, mutations, identConfig, queueService: 'queue' },
     { ...resourcesWithTrans, handlers }
   )
   await great.dispatch(action)
 
   t.is(handler.callCount, 1) // If the action handler was called, the action was dispatched
-  t.deepEqual(handler.args[0][3], identConfig)
+  t.deepEqual(handler.args[0][3], expectedOptions)
 })
 
 test('should dispatch with builtin action handler', async (t) => {

@@ -9,10 +9,6 @@ test('should have version and create', (t) => {
   t.is(typeof Integreat.create, 'function')
 })
 
-test('should have queue creator', (t) => {
-  t.is(typeof Integreat.createQueue, 'function')
-})
-
 test('should have resource merger', (t) => {
   t.is(typeof Integreat.mergeResources, 'function')
 })
