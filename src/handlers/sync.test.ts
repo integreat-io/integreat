@@ -564,7 +564,7 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
 })
 
 test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', async (t) => {
-  const lastSyncedAt = new Date('2021-01-03T04:48:18Z')
+  const lastSyncedAt = '2021-01-03T04:48:18Z'
   const action = {
     type: 'SYNC',
     payload: {
@@ -590,7 +590,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
     meta: { ident, project: 'project1' },
   }
   const expectedParams = {
-    updatedAfter: lastSyncedAt,
+    updatedAfter: new Date(lastSyncedAt),
     updatedSince: new Date('2021-01-03T04:48:18.001Z'),
   }
 

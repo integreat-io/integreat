@@ -119,9 +119,11 @@ const setUpdatedDatesAndType = (
       const metaResponse = await dispatch(
         createGetMetaAction(params.service, type, metaKey, meta)
       )
-      nextParams.updatedAfter = (
-        metaResponse.response?.data as MetaData | undefined
-      )?.meta.lastSyncedAt
+      nextParams.updatedAfter =
+        castDate(
+          (metaResponse.response?.data as MetaData | undefined)?.meta
+            .lastSyncedAt
+        ) || undefined
     }
 
     // Make sure the "counterpart" dates are set
