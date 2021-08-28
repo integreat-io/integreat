@@ -157,6 +157,50 @@ test('should SET with no data when alwaysSet is true', async (t) => {
   t.deepEqual(dispatch.args[1][0], expected2)
 })
 
+test('should split in several SET actions when item count is higher than maxPerSet', async (t) => {
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: { from: 'entries', to: 'store', maxPerSet: 2 },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: updateAction('ok', { data: [...data, ...data2] }),
+      SET: updateAction('ok'),
+    })
+  )
+  const expected1 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: [data[0], data2[0]],
+      params: {},
+      targetService: 'store',
+    },
+    meta: { ident, project: 'project1', queue: true },
+  }
+  const expected2 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: [data[1]],
+      params: {},
+      targetService: 'store',
+    },
+    meta: { ident, project: 'project1', queue: true },
+  }
+
+  const ret = await sync(action, dispatch)
+
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 3)
+  t.deepEqual(dispatch.args[1][0], expected1)
+  t.deepEqual(dispatch.args[2][0], expected2)
+})
+
 test('should use params from from and to', async (t) => {
   const action = {
     type: 'SYNC',
@@ -1139,8 +1183,57 @@ test('should return error when set action fails', async (t) => {
   const ret = await sync(action, dispatch)
 
   t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, 'SYNC: Could not set data. Service is sleeping')
+  t.is(
+    ret.response?.error,
+    'SYNC: Could not set data. Set 0 of 2 items. Service is sleeping'
+  )
   t.is(dispatch.callCount, 2)
+})
+
+test('should return error from first SET action with maxPerSet', async (t) => {
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: { from: 'entries', to: 'store', maxPerSet: 2 },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: updateAction('ok', { data: [...data, ...data2] }),
+      SET: [updateAction('timeout'), updateAction('ok')],
+    })
+  )
+
+  const ret = await sync(action, dispatch)
+
+  t.is(ret.response?.status, 'timeout')
+  t.is(ret.response?.error, 'SYNC: Could not set data. Set 0 of 3 items.')
+  t.is(dispatch.callCount, 2)
+})
+
+test('should return error from second SET action with maxPerSet', async (t) => {
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: { from: 'entries', to: 'store', maxPerSet: 2 },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: updateAction('ok', { data: [...data, ...data2] }),
+      SET: [updateAction('ok'), updateAction('timeout')],
+    })
+  )
+
+  const ret = await sync(action, dispatch)
+
+  t.is(ret.response?.status, 'timeout')
+  t.is(ret.response?.error, 'SYNC: Could not set data. Set 2 of 3 items.')
+  t.is(dispatch.callCount, 3)
 })
 
 test('should return badrequest when missing from and to', async (t) => {

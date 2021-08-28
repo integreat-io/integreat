@@ -1,11 +1,10 @@
 import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
 import { isDate } from '../../utils/is'
-import { Data } from '../../types'
 
 const numberOrUndefined = (value: number) => (isNaN(value) ? undefined : value)
 
-function castNumber(value: Data): number | null | undefined {
+export function castNumber(value: unknown): number | null | undefined {
   if (typeof value === 'number') {
     return numberOrUndefined(value)
   } else if (value === null || value === undefined) {

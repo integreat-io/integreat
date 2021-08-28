@@ -1,9 +1,10 @@
 import pLimit = require('p-limit')
-import { Action, InternalDispatch, Meta, TypedData } from '../types'
+import { Action, Response, InternalDispatch, Meta, TypedData } from '../types'
 import { createErrorOnAction } from '../utils/createError'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is'
 import { ensureArray } from '../utils/array'
 import { castDate } from '../transformers/builtIns/date'
+import { castNumber } from '../transformers/builtIns/number'
 
 interface ActionParams extends Record<string, unknown> {
   type: string | string[]
@@ -26,6 +27,7 @@ interface SyncParams extends Record<string, unknown> {
   retrieve?: 'all' | 'updated'
   metaKey?: string
   setLastSyncedAtFromData?: boolean
+  maxPerSet?: number
 }
 
 interface MetaData {
@@ -81,6 +83,35 @@ const createSetAction = (
   payload: { type, data, params, targetService },
   meta: { ...meta, queue: !dontQueueSet },
 })
+
+async function setData(
+  dispatch: InternalDispatch,
+  data: TypedData[],
+  { alwaysSet = false, maxPerSet, ...params }: ActionParams,
+  meta?: Meta
+): Promise<Response> {
+  let index = data.length === 0 && alwaysSet ? -1 : 0 // Trick to always dispatch SET for `alwaysSet`
+  const maxCount = castNumber(maxPerSet) || Number.MAX_SAFE_INTEGER
+
+  while (index < data.length) {
+    const { response } = await dispatch(
+      createSetAction(data.slice(index, index + maxCount), params, meta)
+    )
+    if (!response?.status || !['ok', 'queue'].includes(response.status)) {
+      return {
+        status: response?.status || 'error',
+        error: `SYNC: Could not set data. Set ${index} of ${
+          data.length
+        } items. ${response?.error || ''}`.trim(),
+      }
+    }
+    index += maxCount
+  }
+
+  return data.length > 0 || alwaysSet
+    ? { status: 'ok' }
+    : { status: 'noaction', error: 'SYNC: No data to set' }
+}
 
 const setDatePropIf = (date: string | Date | undefined, prop: string) =>
   date ? { [prop]: castDate(date) || undefined } : {}
@@ -187,7 +218,7 @@ function generateToParams(
   type: string | string[],
   { payload: { params = {} } }: Action
 ): ActionParams {
-  const { to, dontQueueSet }: SyncParams = params
+  const { to, dontQueueSet, maxPerSet, alwaysSet }: SyncParams = params
   const updatedUntil = castDate(params.updatedUntil)
   const updatedBefore = castDate(params.updatedBefore)
   const oldestUpdatedAfter = fromParams
@@ -196,6 +227,8 @@ function generateToParams(
   return {
     type,
     dontQueueSet,
+    alwaysSet,
+    maxPerSet,
     ...(oldestUpdatedAfter
       ? {
           updatedAfter: oldestUpdatedAfter,
@@ -334,7 +367,6 @@ export default async function syncHandler(
     meta,
   } = action
   const [fromParams, toParams] = await extractActionParams(action, dispatch)
-  const { alwaysSet = false } = action.payload.params ?? {}
 
   if (fromParams.length === 0 || !toParams) {
     return createErrorOnAction(
@@ -363,18 +395,12 @@ export default async function syncHandler(
     )
   }
 
-  if (!alwaysSet && data.length === 0) {
-    return createErrorOnAction(action, 'SYNC: No data to set', 'noaction')
-  }
-
-  const responseAction = await dispatch(createSetAction(data, toParams, meta))
-  if (
-    responseAction.response?.status !== 'ok' &&
-    responseAction.response?.status !== 'queued'
-  ) {
+  const response = await setData(dispatch, data, toParams, meta)
+  if (response.status !== 'ok') {
     return createErrorOnAction(
       action,
-      `SYNC: Could not set data. ${responseAction.response?.error}`
+      response?.error,
+      response?.status || 'error'
     )
   }
 
