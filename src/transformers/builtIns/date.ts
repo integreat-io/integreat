@@ -1,9 +1,8 @@
 import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
 import { isDate } from '../../utils/is'
-import { Data } from '../../types'
 
-function castDate(value: Data): Date | null | undefined {
+export function castDate(value: unknown): Date | null | undefined {
   if (value === null || value === undefined) {
     return value
   } else if (

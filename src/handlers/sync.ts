@@ -3,6 +3,7 @@ import { Action, InternalDispatch, Meta, TypedData } from '../types'
 import { createErrorOnAction } from '../utils/createError'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is'
 import { ensureArray } from '../utils/array'
+import { castDate } from '../transformers/builtIns/date'
 
 interface ActionParams extends Record<string, unknown> {
   type: string | string[]
@@ -81,6 +82,9 @@ const createSetAction = (
   meta: { ...meta, queue: !dontQueueSet },
 })
 
+const setDatePropIf = (date: string | Date | undefined, prop: string) =>
+  date ? { [prop]: castDate(date) || undefined } : {}
+
 const setUpdatedDatesAndType = (
   dispatch: InternalDispatch,
   type: string | string[],
@@ -97,10 +101,10 @@ const setUpdatedDatesAndType = (
       metaKey,
     } = syncParams
     const nextParams: ActionParams = {
-      ...(updatedAfter && { updatedAfter }),
-      ...(updatedSince && { updatedSince }),
-      ...(updatedUntil && { updatedUntil }),
-      ...(updatedBefore && { updatedBefore }),
+      ...setDatePropIf(updatedAfter, 'updatedAfter'),
+      ...setDatePropIf(updatedSince, 'updatedSince'),
+      ...setDatePropIf(updatedUntil, 'updatedUntil'),
+      ...setDatePropIf(updatedBefore, 'updatedBefore'),
       type,
       ...params,
     }
@@ -181,7 +185,9 @@ function generateToParams(
   type: string | string[],
   { payload: { params = {} } }: Action
 ): ActionParams {
-  const { to, updatedUntil, updatedBefore, dontQueueSet }: SyncParams = params
+  const { to, dontQueueSet }: SyncParams = params
+  const updatedUntil = castDate(params.updatedUntil)
+  const updatedBefore = castDate(params.updatedBefore)
   const oldestUpdatedAfter = fromParams
     .map((params) => params.updatedAfter)
     .sort()[0]
