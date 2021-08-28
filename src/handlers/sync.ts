@@ -97,7 +97,7 @@ async function setData(
     const { response } = await dispatch(
       createSetAction(data.slice(index, index + maxCount), params, meta)
     )
-    if (!response?.status || !['ok', 'queue'].includes(response.status)) {
+    if (!response?.status || !['ok', 'queued'].includes(response.status)) {
       return {
         status: response?.status || 'error',
         error: `SYNC: Could not set data. Set ${index} of ${
