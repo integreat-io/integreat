@@ -81,7 +81,7 @@ test('should get from source service and set on target service', async (t) => {
   const action = {
     type: 'SYNC',
     payload: { type: 'entry', params: { from: 'entries', to: 'store' } },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1', cid: '12345' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -92,12 +92,12 @@ test('should get from source service and set on target service', async (t) => {
   const expected1 = {
     type: 'GET',
     payload: { type: 'entry', params: {}, targetService: 'entries' },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', cid: '12345' },
   }
   const expected2 = {
     type: 'SET',
     payload: { type: 'entry', data, params: {}, targetService: 'store' },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', cid: '12345', queue: true },
   }
 
   const ret = await sync(action, dispatch)
@@ -615,7 +615,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
       type: 'entry',
       params: { from: 'entries', to: 'store', retrieve: 'updated' },
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1', cid: '12345' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -631,7 +631,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
       params: { keys: 'lastSyncedAt', metaKey: undefined },
       targetService: 'entries',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, cid: '12345', project: 'project1' },
   }
   const expectedParams = {
     updatedAfter: new Date(lastSyncedAt),
@@ -936,7 +936,7 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
         updatedUntil: new Date('2021-01-05T00:00:00Z'),
       },
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, id: 'sync1', cid: '12345', project: 'project1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -956,7 +956,7 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
       },
       targetService: 'entries',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, cid: '12345', project: 'project1' },
   }
   const expected7 = {
     type: 'SET_META',
@@ -968,7 +968,7 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
       },
       targetService: 'other',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, cid: '12345', project: 'project1' },
   }
 
   const ret = await sync(action, dispatch)

@@ -175,7 +175,10 @@ const setUpdatedDatesAndType = (
 
 const setMetaFromParams = (
   dispatch: InternalDispatch,
-  { payload: { type, params: { metaKey } = {} }, meta }: Action,
+  {
+    payload: { type, params: { metaKey } = {} },
+    meta: { id, ...meta } = {},
+  }: Action,
   datesFromData: (Date | undefined)[]
 ) =>
   async function setMetaFromParams(
@@ -203,7 +206,7 @@ const paramsAsObject = (params?: string | Partial<ActionParams>) =>
 const generateFromParams = async (
   dispatch: InternalDispatch,
   type: string | string[],
-  { payload: { params = {} }, meta }: Action
+  { payload: { params = {} }, meta: { id, ...meta } = {} }: Action
 ) =>
   Promise.all(
     ensureArray((params as SyncParams).from)
@@ -320,7 +323,7 @@ const extractUpdatedAt = (item?: TypedData) =>
 const fetchDataFromService = (
   fromParams: ActionParams[],
   dispatch: InternalDispatch,
-  { meta }: Action
+  { meta: { id, ...meta } = {} }: Action
 ) =>
   Promise.all(
     fromParams.map((params) =>
@@ -364,7 +367,7 @@ export default async function syncHandler(
     payload: {
       params: { retrieve, setLastSyncedAtFromData = false },
     },
-    meta,
+    meta: { id, ...meta } = {},
   } = action
   const [fromParams, toParams] = await extractActionParams(action, dispatch)
 
