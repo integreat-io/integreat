@@ -23,9 +23,11 @@ interface SyncParams extends Record<string, unknown> {
   updatedUntil?: Date
   updatedSince?: Date
   updatedBefore?: Date
-  dontQueueSet?: boolean
   retrieve?: 'all' | 'updated'
+  doFilterData?: boolean
+  doQueueSet?: boolean
   metaKey?: string
+  alwaysSet?: boolean
   setLastSyncedAtFromData?: boolean
   maxPerSet?: number
 }
@@ -70,24 +72,20 @@ const createGetAction = (
 
 const createSetAction = (
   data: unknown,
-  {
-    type,
-    service: targetService,
-    action = 'SET',
-    dontQueueSet = false,
-    ...params
-  }: ActionParams,
+  { type, service: targetService, action = 'SET', ...params }: ActionParams,
+  doQueueSet: boolean,
   meta?: Meta
-) => ({
+): Action => ({
   type: action,
   payload: { type, data, params, targetService },
-  meta: { ...meta, queue: !dontQueueSet },
+  meta: { ...meta, queue: doQueueSet },
 })
 
 async function setData(
   dispatch: InternalDispatch,
   data: TypedData[],
   { alwaysSet = false, maxPerSet, ...params }: ActionParams,
+  doQueueSet: boolean,
   meta?: Meta
 ): Promise<Response> {
   let index = data.length === 0 && alwaysSet ? -1 : 0 // Trick to always dispatch SET for `alwaysSet`
@@ -95,7 +93,12 @@ async function setData(
 
   while (index < data.length) {
     const { response } = await dispatch(
-      createSetAction(data.slice(index, index + maxCount), params, meta)
+      createSetAction(
+        data.slice(index, index + maxCount),
+        params,
+        doQueueSet,
+        meta
+      )
     )
     if (!response?.status || !['ok', 'queued'].includes(response.status)) {
       return {
@@ -221,7 +224,7 @@ function generateToParams(
   type: string | string[],
   { payload: { params = {} } }: Action
 ): ActionParams {
-  const { to, dontQueueSet, maxPerSet, alwaysSet }: SyncParams = params
+  const { to, maxPerSet, alwaysSet }: SyncParams = params
   const updatedUntil = castDate(params.updatedUntil)
   const updatedBefore = castDate(params.updatedBefore)
   const oldestUpdatedAfter = fromParams
@@ -229,7 +232,6 @@ function generateToParams(
     .sort()[0]
   return {
     type,
-    dontQueueSet,
     alwaysSet,
     maxPerSet,
     ...(oldestUpdatedAfter
@@ -282,6 +284,7 @@ const withinDateRange =
 async function retrieveDataFromOneService(
   dispatch: InternalDispatch,
   params: ActionParams,
+  doFilterData: boolean,
   meta?: Meta
 ) {
   const { updatedAfter, updatedUntil } = params
@@ -296,8 +299,7 @@ async function retrieveDataFromOneService(
 
   // Return array of data filtered with updatedAt within date range
   const data = ensureArray(responseAction.response.data).filter(isTypedData)
-
-  return updatedAfter || updatedUntil
+  return doFilterData && (updatedAfter || updatedUntil)
     ? data.filter(withinDateRange(updatedAfter, updatedUntil))
     : data
 }
@@ -322,12 +324,13 @@ const extractUpdatedAt = (item?: TypedData) =>
 
 const fetchDataFromService = (
   fromParams: ActionParams[],
+  doFilterData: boolean,
   dispatch: InternalDispatch,
   { meta: { id, ...meta } = {} }: Action
 ) =>
   Promise.all(
     fromParams.map((params) =>
-      retrieveDataFromOneService(dispatch, params, meta)
+      retrieveDataFromOneService(dispatch, params, doFilterData, meta)
     )
   )
 
@@ -365,7 +368,12 @@ export default async function syncHandler(
   const action = prepareInputParams(inputAction)
   const {
     payload: {
-      params: { retrieve, setLastSyncedAtFromData = false },
+      params: {
+        retrieve,
+        setLastSyncedAtFromData = false,
+        doFilterData = true,
+        doQueueSet = true,
+      },
     },
     meta: { id, ...meta } = {},
   } = action
@@ -384,6 +392,7 @@ export default async function syncHandler(
   try {
     const dataFromServices = await fetchDataFromService(
       fromParams,
+      doFilterData,
       dispatch,
       action
     )
@@ -398,7 +407,7 @@ export default async function syncHandler(
     )
   }
 
-  const response = await setData(dispatch, data, toParams, meta)
+  const response = await setData(dispatch, data, toParams, doQueueSet, meta)
   if (response.status !== 'ok') {
     return createErrorOnAction(
       action,

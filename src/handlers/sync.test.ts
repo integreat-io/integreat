@@ -284,12 +284,12 @@ test('should override action types', async (t) => {
   t.deepEqual(dispatch.args[1][0], expected2)
 })
 
-test('should not queue SET when dontQueueSet is true', async (t) => {
+test('should not queue SET when doQueueSet is false', async (t) => {
   const action = {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', dontQueueSet: true },
+      params: { from: 'entries', to: 'store', doQueueSet: false },
     },
     meta: { ident, project: 'project1' },
   }
@@ -841,6 +841,46 @@ test('should filter away data with different lastSyncedAt for each service', asy
   t.is(setData.length, 2)
   t.is(setData[0].id, 'ent3')
   t.is(setData[1].id, 'ent2')
+})
+
+test('should not filter away data when filterData is false', async (t) => {
+  const lastSyncedAt1 = new Date('2021-01-04T10:11:44Z')
+  const lastSyncedAt2 = new Date('2021-01-02T00:00:00Z')
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: {
+        from: ['entries', 'other'],
+        to: 'store',
+        retrieve: 'updated',
+        doFilterData: false,
+      },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: [
+        updateAction('ok', {
+          data: { meta: { lastSyncedAt: lastSyncedAt1 } },
+        }),
+        updateAction('ok', {
+          data: { meta: { lastSyncedAt: lastSyncedAt2 } },
+        }),
+      ],
+      GET: [updateAction('ok', { data }), updateAction('ok', { data: data2 })],
+      SET: updateAction('ok'),
+    })
+  )
+
+  const ret = await sync(action, dispatch)
+
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 7)
+  t.true(Array.isArray(dispatch.args[4][0].payload.data))
+  const setData = dispatch.args[4][0].payload.data as TypedData[]
+  t.is(setData.length, 3)
 })
 
 test('should treat no updatedAfter as open-ended', async (t) => {
