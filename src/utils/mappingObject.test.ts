@@ -377,7 +377,7 @@ test('should populate action from mapping object with error message', (t) => {
   }
   const mappingObject = {
     action: 'GET',
-    status: null,
+    status: 'ok',
     params: {
       id: 'johnf',
       type: 'user',

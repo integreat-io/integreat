@@ -423,7 +423,7 @@ test('should keep action props not mapped from response', (t) => {
   t.is((ret.response?.data as DataObject[]).length, 1)
 })
 
-test('should not include error from response when not an error', (t) => {
+test('should set status to error for response with an error', (t) => {
   const endpointDef = {
     mutation: {
       data: ['data.content', { $apply: 'entry' }],
@@ -450,8 +450,8 @@ test('should not include error from response when not an error', (t) => {
   )(endpointDef)
   const ret = endpoint.mutateResponse(actionWithProps)
 
-  t.is(ret.response?.status, 'queued')
-  t.is(ret.response?.error, undefined)
+  t.is(ret.response?.status, 'error')
+  t.is(ret.response?.error, 'Not valid')
 })
 
 test('should map to undefined from response when unknown path', (t) => {

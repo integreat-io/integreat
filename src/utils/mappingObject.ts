@@ -62,16 +62,15 @@ export function actionFromMappingObject(
     params: { id, type, sendNoDefaults, ...params } = {},
     options,
   } = mappingObject
-  const status =
-    mappedStatus || action.response?.status || (error ? 'error' : null)
+  const status = mappedStatus || action.response?.status || null
   const response =
     !isRequest || status
       ? {
           ...action.response,
           ...(!isRequest && { data }),
-          ...(paging ? { paging } : {}),
-          ...(error && !isOkStatus(status) ? { error } : {}),
-          status,
+          ...(paging && { paging }),
+          ...(error && { error }),
+          status: isOkStatus(status) && error ? 'error' : status,
         }
       : undefined
 
