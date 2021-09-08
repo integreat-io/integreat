@@ -70,7 +70,9 @@ const sendToTransporter = (
     } catch (error) {
       return createErrorOnAction(
         action,
-        `Error retrieving from service '${serviceId}': ${error.message}`
+        `Error retrieving from service '${serviceId}': ${
+          (error as Error).message
+        }`
       )
     }
   }
