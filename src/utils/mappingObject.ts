@@ -62,7 +62,8 @@ export function actionFromMappingObject(
     params: { id, type, sendNoDefaults, ...params } = {},
     options,
   } = mappingObject
-  const status = mappedStatus || action.response?.status || null
+  const status =
+    mappedStatus || action.response?.status || (error ? 'error' : null)
   const response =
     !isRequest || status
       ? {

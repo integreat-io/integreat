@@ -356,3 +356,68 @@ test('should populate action from mapping object from request from service', (t)
 
   t.deepEqual(ret, expected)
 })
+
+test('should populate action from mapping object with error message', (t) => {
+  const isRequest = false
+  const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
+  const action = {
+    type: 'GET',
+    payload: {
+      data: {},
+      sendNoDefaults: true,
+    },
+    response: {
+      status: null,
+      data: { id: 'johnf' },
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0/users/{{params.id}}' },
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappingObject = {
+    action: 'GET',
+    status: null,
+    params: {
+      id: 'johnf',
+      type: 'user',
+      searchDeleted: true,
+      sendNoDefaults: true,
+    },
+    data,
+    paging: { next: { offset: 'page2', type: 'entry' } },
+    error: 'Something went wrong',
+    options: {
+      uri: 'http://some.api.com/1.0/users/johnf',
+      queryParams: { order: 'desc' },
+    },
+    ident: { id: 'johnf' },
+  }
+  const expected = {
+    type: 'GET',
+    payload: {
+      id: 'johnf',
+      type: 'user',
+      params: { searchDeleted: true },
+      data: {},
+      sendNoDefaults: true,
+    },
+    response: {
+      status: 'error',
+      error: 'Something went wrong',
+      data,
+      paging: { next: { offset: 'page2', type: 'entry' } },
+    },
+    meta: {
+      options: {
+        uri: 'http://some.api.com/1.0/users/johnf',
+        queryParams: { order: 'desc' },
+      },
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+
+  t.deepEqual(ret, expected)
+})
