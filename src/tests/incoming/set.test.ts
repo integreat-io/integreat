@@ -54,17 +54,15 @@ test('should map incoming action data and response data', async (t) => {
     sections: [],
   })
   const expectedResponseData = {
-    article: {
-      id: 'ent1',
-      content: {
-        title: 'Entry 1',
-        main: 'The text of entry 1',
-      },
-      meta: {
-        created: createdAt,
-        updated: updatedAt,
-        author: { id: 'johnf' },
-      },
+    id: 'ent1',
+    content: {
+      title: 'Entry 1',
+      main: 'The text of entry 1',
+    },
+    meta: {
+      created: createdAt,
+      updated: updatedAt,
+      author: { id: 'johnf' },
     },
   }
   const expectedResponse = {
