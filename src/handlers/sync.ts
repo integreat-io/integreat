@@ -1,4 +1,5 @@
 import pLimit = require('p-limit')
+import ms = require('ms')
 import { Action, Response, InternalDispatch, Meta, TypedData } from '../types'
 import { createErrorOnAction } from '../utils/createError'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is'
@@ -304,16 +305,32 @@ async function retrieveDataFromOneService(
     : data
 }
 
+const msFromDelta = (delta: string) =>
+  delta === 'now'
+    ? 0
+    : delta[0] === '+'
+    ? ms(delta.slice(1))
+    : delta[0] === '-'
+    ? ms(delta)
+    : undefined
+
+function generateUpdatedUntil(updatedUntil: unknown) {
+  if (typeof updatedUntil === 'string') {
+    const delta = msFromDelta(updatedUntil)
+    if (typeof delta === 'number') {
+      return new Date(Date.now() + delta)
+    }
+  }
+  return updatedUntil
+}
+
 const prepareInputParams = (action: Action) => ({
   ...action,
   payload: {
     ...action.payload,
     params: {
       ...action.payload.params,
-      updatedUntil:
-        action.payload.params?.updatedUntil === 'now'
-          ? new Date()
-          : action.payload.params?.updatedUntil,
+      updatedUntil: generateUpdatedUntil(action.payload.params?.updatedUntil),
       retrieve: action.payload.params?.retrieve ?? 'all',
     } as SyncParams,
   },
@@ -403,7 +420,7 @@ export default async function syncHandler(
   } catch (error) {
     return createErrorOnAction(
       action,
-      `SYNC: Could not get data. ${error.message}`
+      `SYNC: Could not get data. ${(error as Error).message}`
     )
   }
 

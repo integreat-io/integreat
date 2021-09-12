@@ -964,6 +964,74 @@ test('should set updatedUntil to now', async (t) => {
   t.is((dispatch.args[1][0].payload.data as unknown[]).length, 2)
 })
 
+test('should set updatedUntil with positive delta', async (t) => {
+  const updatedAfter = new Date('2021-01-03T10:00:00Z')
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: {
+        from: 'entries',
+        to: 'store',
+        updatedAfter,
+        updatedUntil: '+1h',
+      },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: updateAction('ok', { data }),
+      SET: updateAction('ok'),
+    })
+  )
+  const before = Date.now()
+
+  const ret = await sync(action, dispatch)
+
+  const after = Date.now()
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 2)
+  const setUpdatedUntil = dispatch.args[1][0].payload.params?.updatedUntil
+  t.true(setUpdatedUntil instanceof Date)
+  t.true((setUpdatedUntil as Date).getTime() >= before + 3600000)
+  t.true((setUpdatedUntil as Date).getTime() <= after + 3600000)
+})
+
+test('should set updatedUntil with negative delta', async (t) => {
+  const updatedAfter = new Date('2021-01-03T10:00:00Z')
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: {
+        from: 'entries',
+        to: 'store',
+        updatedAfter,
+        updatedUntil: '-30m',
+      },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: updateAction('ok', { data }),
+      SET: updateAction('ok'),
+    })
+  )
+  const before = Date.now()
+
+  const ret = await sync(action, dispatch)
+
+  const after = Date.now()
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 2)
+  const setUpdatedUntil = dispatch.args[1][0].payload.params?.updatedUntil
+  t.true(setUpdatedUntil instanceof Date)
+  t.true((setUpdatedUntil as Date).getTime() >= before - 1800000)
+  t.true((setUpdatedUntil as Date).getTime() <= after - 1800000)
+})
+
 test('should set lastSyncedAt meta to updatedUntil', async (t) => {
   const action = {
     type: 'SYNC',
