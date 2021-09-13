@@ -44,12 +44,19 @@ const optionsAuth: Authenticator = {
     },
 
     /**
-     * Return a headers object with the headers needed for authenticated requests
-     * with this strategy. For OptionsStrategy, there will be no headers.
+     * Return a headers object with the headers needed for authenticated
+     * requests with this strategy. For OptionsStrategy, this will simply be the
+     * options object given on creation.
      */
     asHttpHeaders(
-      _authentication: Authentication | null
+      authentication: Authentication | null
     ): Record<string, unknown> {
+      if (isObject(authentication)) {
+        const { status, ...options } = authentication
+        if (status === 'granted') {
+          return options
+        }
+      }
       return {}
     },
   },

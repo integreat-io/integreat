@@ -53,16 +53,28 @@ test('isAuthenticated should return false when no authentication', (t) => {
   t.false(ret)
 })
 
-test('asHttpHeaders should return an empty object', (t) => {
+test('asHttpHeaders should return the options object', (t) => {
   const authentication = {
     status: 'granted',
-    username: 'bill',
-    password: 'secret',
+    'X-API-Key': 't0k3n',
   }
+  const expected = { 'X-API-Key': 't0k3n' }
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, {})
+  t.deepEqual(ret, expected)
+})
+
+test('asHttpHeaders should return empty object when not granted', (t) => {
+  const authentication = {
+    status: 'refused',
+    'X-API-Key': 't0k3n',
+  }
+  const expected = {}
+
+  const ret = authenticator.authentication.asHttpHeaders(authentication)
+
+  t.deepEqual(ret, expected)
 })
 
 test('asObject should return the options object', (t) => {
