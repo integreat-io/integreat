@@ -48,6 +48,16 @@ const endpointSetWithFilters = {
     },
   },
 }
+const endpointSetWithOrFilters = {
+  match: {
+    action: 'SET',
+    filters: {
+      $or: true,
+      ...filterNotDraft,
+      ...filterEntry1,
+    },
+  },
+}
 const endpointSetWithNoFilters = { match: { action: 'SET', filters: {} } }
 const endpointSetWithParamFilter = {
   match: { action: 'SET', filters: filterParamAuthor },
@@ -354,6 +364,16 @@ test('should mismatch with several filters', (t) => {
   }
 
   t.false(isMatch(endpoints)(action))
+})
+
+test('should match with one of several filters', (t) => {
+  const endpoints = endpointSetWithOrFilters
+  const action = {
+    type: 'SET',
+    payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
+  }
+
+  t.true(isMatch(endpoints)(action))
 })
 
 test('should match with no filters', (t) => {

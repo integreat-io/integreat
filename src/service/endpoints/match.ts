@@ -43,8 +43,14 @@ const matchParams = (
     ([key, isRequired]) => !isRequired || hasParam(payload.params, key)
   )
 
-const matchFilters = (filters: FilterFn[], action: Action) =>
-  filters.every((filter) => filter(action))
+const matchFilters = (
+  filters: FilterFn[],
+  action: Action,
+  isOrFilters: boolean
+) =>
+  isOrFilters
+    ? filters.some((filter) => filter(action))
+    : filters.every((filter) => filter(action))
 
 const matchIncoming = (
   { match: { incoming: incomingEndpoint } = {} }: EndpointDef,
@@ -61,10 +67,13 @@ export default function isMatch(
   endpoint: EndpointDef
 ): (action: Action, isIncoming?: boolean) => boolean {
   const match = endpoint.match || {}
+  const isOrFilters = (match.filters && match.filters.$or === true) || false
   const filters = match.filters
-    ? (Object.entries(match.filters).map(([path, filter]) =>
-        filter ? validate(path, filter) : undefined
-      ) as FilterFn[])
+    ? (Object.entries(match.filters)
+        .filter(([path]) => path !== '$or')
+        .map(([path, filter]) =>
+          filter ? validate(path, filter) : undefined
+        ) as FilterFn[])
     : []
 
   return (action, isIncoming = false) =>
@@ -74,5 +83,5 @@ export default function isMatch(
     matchAction(endpoint, action) &&
     matchParams(endpoint, action) &&
     matchIncoming(endpoint, isIncoming) &&
-    matchFilters(filters, action)
+    matchFilters(filters, action, isOrFilters)
 }
