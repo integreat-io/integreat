@@ -35,20 +35,20 @@
     "node": ">= 14"
   },
   "dependencies": {
-    "@types/debug": "^4.1.6",
-    "@types/later": "^1.2.6",
+    "@types/debug": "^4.1.7",
+    "@types/later": "^1.2.7",
     "@types/luxon": "^1.27.1",
     "@types/nanoid": "^3.0.0",
-    "@types/sax": "^1.2.2",
+    "@types/sax": "^1.2.3",
     "debug": "^4.3.2",
     "got": "^11.8.2",
     "html-entities": "^2.3.2",
     "later": "^1.2.0",
-    "luxon": "^1.27.0",
+    "luxon": "^1.28.0",
     "map-any": "^0.2.1",
-    "map-transform": "0.4.0-alpha.2",
+    "map-transform": "0.4.0-alpha.3",
     "ms": "^2.1.3",
-    "nanoid": "^3.1.23",
+    "nanoid": "^3.1.28",
     "p-limit": "^3.1.0",
     "p-pipe": "^3.1.0",
     "ramda": "^0.27.1",
@@ -56,10 +56,10 @@
     "sax": "^1.2.4"
   },
   "devDependencies": {
-    "@integreat/ts-dev-setup": "^2.0.2",
-    "@types/sinon": "^10.0.2",
+    "@integreat/ts-dev-setup": "^2.1.0",
+    "@types/sinon": "^10.0.4",
     "integreat-transporter-http": "0.1.0-alpha.8",
-    "nock": "^13.1.1",
-    "sinon": "^11.1.1"
+    "nock": "^13.1.3",
+    "sinon": "^11.1.2"
   }
 }
