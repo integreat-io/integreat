@@ -32,8 +32,10 @@ const defaultFromProp = (prop?: string | PropertyShape) => {
   return undefined
 }
 
+const hasArrayNotation = (value: string) => value.endsWith('[]')
+
 const extractType = (type: string) =>
-  type.endsWith('[]')
+  hasArrayNotation(type)
     ? ([type.substr(0, type.length - 2), true] as const)
     : ([type, false] as const)
 
@@ -49,29 +51,35 @@ const transformFromType = (type: string) => {
   }
 }
 
-const mappingFromSchema = (schema: Shape): MapObject =>
-  Object.entries(schema).reduce((mapping, [field, prop]) => {
-    if (isSchema(prop)) {
-      return { ...mapping, [field]: [field, mappingFromSchema(prop)] }
-    }
+const mappingFromSchema = (schema: Shape, iterate = false): MapObject =>
+  Object.entries(schema).reduce(
+    (mapping, [field, prop]) => {
+      if (isSchema(prop)) {
+        return {
+          ...mapping,
+          [field]: [field, mappingFromSchema(prop, hasArrayNotation(field))],
+        }
+      }
 
-    const type = typeFromProp(prop)
-    if (typeof type !== 'string') {
-      return mapping
-    }
+      const type = typeFromProp(prop)
+      if (typeof type !== 'string') {
+        return mapping
+      }
 
-    const [realType, isArray] = extractType(type)
-    const realField = isArray ? appendBrackets(field) : field
+      const [realType, isArray] = extractType(type)
+      const realField = isArray ? appendBrackets(field) : field
 
-    return {
-      ...mapping,
-      [realField]: [
-        realField,
-        defaultFromProp(prop),
-        transformFromType(realType),
-      ].filter(Boolean),
-    }
-  }, {})
+      return {
+        ...mapping,
+        [realField]: [
+          realField,
+          defaultFromProp(prop),
+          transformFromType(realType),
+        ].filter(Boolean),
+      }
+    },
+    iterate ? { $iterate: true } : {}
+  )
 
 const noSchemaOrEqualType = (data: unknown, type: string) =>
   !isTypedData(data) || data.$type === type

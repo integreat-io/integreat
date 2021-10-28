@@ -27,6 +27,7 @@ const entry1Mapped = {
   createdAt: date,
   updatedAt: date,
   sections: [],
+  props: [],
 }
 
 test.after.always(() => {

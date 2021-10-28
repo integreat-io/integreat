@@ -60,6 +60,7 @@ test('should set new entry (getting role from identity)', async (t) => {
       { id: 'news', $ref: 'section' },
       { id: 'sports', $ref: 'section' },
     ],
+    props: [],
   }
   nock('http://some.api')
     .get('/users/johnf')

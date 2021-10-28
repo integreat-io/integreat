@@ -21,7 +21,17 @@ test.after.always(() => {
 test('should get one entry from service', async (t) => {
   nock('http://some.api')
     .get('/entries/ent1')
-    .reply(200, { data: { ...ent1Data, createdAt, updatedAt } })
+    .reply(200, {
+      data: {
+        ...ent1Data,
+        createdAt,
+        updatedAt,
+        props: [
+          { key: 'sourceCheckBy', value: 'Anita' },
+          { key: 'proofReadBy', value: 'Svein' },
+        ],
+      },
+    })
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
@@ -38,6 +48,10 @@ test('should get one entry from service', async (t) => {
     sections: [
       { id: 'news', $ref: 'section' },
       { id: 'sports', $ref: 'section' },
+    ],
+    props: [
+      { key: 'sourceCheckBy', value: 'Anita' },
+      { key: 'proofReadBy', value: 'Svein' },
     ],
   }
 

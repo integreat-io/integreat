@@ -9,6 +9,7 @@ export default [
     updatedAt: 'updatedAt',
     'author.id': 'authorId',
     sections: 'sections[]',
+    props: 'props[]',
   },
   { $apply: 'cast_entry' },
 ]

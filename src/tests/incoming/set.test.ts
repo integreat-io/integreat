@@ -52,6 +52,7 @@ test('should map incoming action data and response data', async (t) => {
     updatedAt: updatedAt,
     authorId: 'johnf',
     sections: [],
+    props: [],
   })
   const expectedResponseData = {
     id: 'ent1',

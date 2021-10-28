@@ -53,6 +53,7 @@ test('should get one entry from service', async (t) => {
     updatedAt: new Date(updatedAt),
     author: { id: 'johnf', $ref: 'user' },
     sections: [],
+    props: [],
   }
 
   const great = Integreat.create(defs, resources)

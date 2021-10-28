@@ -18,6 +18,10 @@ test('should create mapping definition from schema', (t) => {
     createdAt: 'date',
     author: 'user',
     comments: 'comment[]',
+    'props[]': {
+      key: 'string',
+      value: 'string',
+    },
   }
   const data = [
     {
@@ -32,6 +36,10 @@ test('should create mapping definition from schema', (t) => {
       createdAt: '2019-03-11T18:43:09Z',
       author: 'johnf',
       comments: [{ id: 'comment12', $ref: 'comment' }, { id: 'comment13' }],
+      props: [
+        { key: 'sourceCheckBy', value: 'Anita' },
+        { key: 'proofReadBy', value: 'Svein' },
+      ],
     },
     {
       id: 'ent2',
@@ -58,6 +66,10 @@ test('should create mapping definition from schema', (t) => {
         { id: 'comment12', $ref: 'comment' },
         { id: 'comment13', $ref: 'comment' },
       ],
+      props: [
+        { key: 'sourceCheckBy', value: 'Anita' },
+        { key: 'proofReadBy', value: 'Svein' },
+      ],
     },
     {
       $type: 'entry',
@@ -72,6 +84,7 @@ test('should create mapping definition from schema', (t) => {
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk', $ref: 'user' },
       comments: [{ id: 'comment23', $ref: 'comment' }],
+      props: [],
     },
   ]
 
@@ -80,56 +93,6 @@ test('should create mapping definition from schema', (t) => {
   })(data)
 
   t.deepEqual(ret, expected)
-})
-
-test('should map props in given order', (t) => {
-  const schema = {
-    id: 'string',
-    type: { $cast: 'string', $const: 'entry' },
-    title: { $cast: 'string', $default: 'Entry with no name' },
-    abstract: { $cast: 'string' },
-    age: 'integer',
-    long: 'float',
-    lat: 'number',
-    active: 'boolean',
-    createdAt: 'date',
-    author: 'user',
-    comments: 'comment[]',
-  }
-  const data = {
-    id: 12345,
-    type: 'unknown',
-    title: 'Entry 1',
-    abstract: 'The first entry',
-    age: '180734118',
-    long: '60.382732',
-    lat: '5.326373',
-    active: 'true',
-    createdAt: '2019-03-11T18:43:09Z',
-    author: 'johnf',
-    comments: [{ id: 'comment12', $ref: 'comment' }, { id: 'comment13' }],
-  }
-  const expectedProps = [
-    '$type',
-    'id',
-    'type',
-    'title',
-    'abstract',
-    'age',
-    'long',
-    'lat',
-    'active',
-    'createdAt',
-    'author',
-    'comments',
-  ]
-
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
-  })(data)
-
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  t.deepEqual(Object.keys(ret!), expectedProps)
 })
 
 test('should reverse transform with mapping definition from schema', (t) => {
