@@ -1,4 +1,5 @@
 import create from './create'
+import mergeDefinitions from './utils/mergeDefinitions'
 import mergeResources from './utils/mergeResources'
 
 export { CustomFunction as Transformer } from 'map-transform'
@@ -28,5 +29,6 @@ export { default as middleware } from './middleware'
 export default {
   version: '0.8.0-alpha.48',
   create,
+  mergeDefinitions,
   mergeResources,
 }
