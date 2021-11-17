@@ -183,17 +183,22 @@ const setMetaFromParams = (
     payload: { type, params: { metaKey } = {} },
     meta: { id, ...meta } = {},
   }: Action,
-  datesFromData: (Date | undefined)[]
+  datesFromData: (Date | undefined)[],
+  gottenDataDate: Date
 ) =>
   async function setMetaFromParams(
     { service, updatedUntil }: ActionParams,
     index: number
   ) {
     if (service) {
+      // eslint-disable-next-line security/detect-object-injection
+      let lastSyncedAt = datesFromData[index] || updatedUntil || gottenDataDate
+      if (lastSyncedAt > gottenDataDate) {
+        lastSyncedAt = gottenDataDate
+      }
       return dispatch(
         createSetMetaAction(
-          // eslint-disable-next-line security/detect-object-injection
-          datesFromData[index] || updatedUntil || new Date(),
+          lastSyncedAt,
           service,
           type,
           metaKey as string | undefined,
@@ -423,6 +428,7 @@ export default async function syncHandler(
       `SYNC: Could not get data. ${(error as Error).message}`
     )
   }
+  const gottenDataDate = new Date()
 
   const response = await setData(dispatch, data, toParams, doQueueSet, meta)
   if (response.status !== 'ok') {
@@ -435,7 +441,9 @@ export default async function syncHandler(
 
   if (retrieve === 'updated') {
     await Promise.all(
-      fromParams.map(setMetaFromParams(dispatch, action, datesFromData))
+      fromParams.map(
+        setMetaFromParams(dispatch, action, datesFromData, gottenDataDate)
+      )
     )
   }
 

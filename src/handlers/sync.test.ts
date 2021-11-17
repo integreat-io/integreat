@@ -1169,6 +1169,58 @@ test('should set lastSyncedAt meta to last updatedAt from data of each service',
   )
 })
 
+test('should set lastSyncedAt to now when date is in the future', async (t) => {
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: {
+        from: ['entries', 'other'],
+        to: 'store',
+        retrieve: 'updated',
+        setLastSyncedAtFromData: true,
+      },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dataWithFutureUpdate = [
+    data[0],
+    {
+      ...data[1],
+      updatedAt: new Date(Date.now() + 3600000),
+    },
+  ]
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: [
+        updateAction('ok', {
+          data: { meta: { lastSyncedAt: new Date('2021-01-03T04:48:18Z') } },
+        }),
+        updateAction('ok', {
+          data: { meta: { lastSyncedAt: new Date('2021-01-03T02:30:11Z') } },
+        }),
+      ],
+      GET: [
+        updateAction('ok', { data: dataWithFutureUpdate }),
+        updateAction('ok', { data: data2 }),
+      ],
+      SET: updateAction('ok'),
+      SET_META: updateAction('ok'),
+    })
+  )
+  const before = Date.now()
+
+  const ret = await sync(action, dispatch)
+
+  const after = Date.now()
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 7)
+  const updatedAt = (dispatch.args[5][0].payload.params?.meta as Meta)
+    .lastSyncedAt as Date
+  t.true(updatedAt.getTime() >= before)
+  t.true(updatedAt.getTime() <= after)
+})
+
 test('should use metaKey when setting lastSyncedAt', async (t) => {
   const action = {
     type: 'SYNC',
