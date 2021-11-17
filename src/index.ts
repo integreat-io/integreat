@@ -27,7 +27,7 @@ export { default as transformers } from './transformers'
 export { default as middleware } from './middleware'
 
 export default {
-  version: '0.8.0-alpha.49',
+  version: '0.8.0-alpha.50',
   create,
   mergeDefinitions,
   mergeResources,
