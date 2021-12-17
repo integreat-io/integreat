@@ -52,6 +52,7 @@
     "map-any": "^0.2.1",
     "map-transform": "^0.3.12",
     "p-limit": "^2.3.0",
+    "p-progress": "^0.5.1",
     "ramda": "^0.27.1",
     "uuid": "^3.4.0"
   },
