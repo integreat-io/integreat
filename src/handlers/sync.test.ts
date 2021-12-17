@@ -1306,6 +1306,194 @@ test('should not get or set lastSyncedAt meta when service id is missing', async
   t.is(dispatch.callCount, 2)
 })
 
+test('should use lastSyncedAt meta as updatedAfter when retrieve = created', async (t) => {
+  const lastSyncedAt = '2021-01-03T04:48:18Z'
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: { from: 'entries', to: 'store', retrieve: 'created' },
+    },
+    meta: { ident, project: 'project1', id: 'sync1', cid: '12345' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: updateAction('ok', { data: { meta: { lastSyncedAt } } }),
+      GET: updateAction('ok', { data }),
+      SET: updateAction('ok'),
+    })
+  )
+  const expected1 = {
+    type: 'GET_META',
+    payload: {
+      type: 'entry',
+      params: { keys: 'lastSyncedAt', metaKey: undefined },
+      targetService: 'entries',
+    },
+    meta: { ident, cid: '12345', project: 'project1' },
+  }
+  const expectedParams = {
+    createdAfter: new Date(lastSyncedAt),
+    createdSince: new Date('2021-01-03T04:48:18.001Z'),
+  }
+
+  const ret = await sync(action, dispatch)
+
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 4)
+  t.deepEqual(dispatch.args[0][0], expected1)
+  t.deepEqual(dispatch.args[1][0].payload.params, expectedParams)
+  t.deepEqual(dispatch.args[2][0].payload.params, expectedParams)
+})
+
+test('should set lastSyncedAt for created', async (t) => {
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: {
+        from: ['entries', 'other'],
+        to: 'store',
+        retrieve: 'created',
+        metaKey: 'sports',
+        createdUntil: new Date('2021-01-05T00:00:00Z'),
+      },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: [],
+      GET: [updateAction('ok', { data }), updateAction('ok', { data: data2 })],
+      SET: updateAction('ok'),
+      SET_META: updateAction('ok'),
+    })
+  )
+  const expected5 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: [data[0], data[1], data2[0]], // Sorted after createdAt
+      params: {
+        createdBefore: new Date('2021-01-05T00:00:00.001Z'),
+        createdUntil: new Date('2021-01-05 00:00:00Z'),
+      },
+      targetService: 'store',
+    },
+    meta: { ident, project: 'project1', queue: true },
+  }
+  const expected6 = {
+    type: 'SET_META',
+    payload: {
+      type: 'entry',
+      params: {
+        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+        metaKey: 'sports',
+      },
+      targetService: 'entries',
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const expected7 = {
+    type: 'SET_META',
+    payload: {
+      type: 'entry',
+      params: {
+        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+        metaKey: 'sports',
+      },
+      targetService: 'other',
+    },
+    meta: { ident, project: 'project1' },
+  }
+
+  const ret = await sync(action, dispatch)
+
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 7)
+  t.deepEqual(dispatch.args[4][0], expected5)
+  t.deepEqual(dispatch.args[5][0], expected6)
+  t.deepEqual(dispatch.args[6][0], expected7)
+})
+
+test('should set createdUntil with delta', async (t) => {
+  const createdAfter = new Date('2021-01-03T10:00:00Z')
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: {
+        from: 'entries',
+        to: 'store',
+        createdAfter,
+        createdUntil: '+1h',
+      },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: updateAction('ok', { data }),
+      SET: updateAction('ok'),
+    })
+  )
+  const before = Date.now()
+
+  const ret = await sync(action, dispatch)
+
+  const after = Date.now()
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 2)
+  const setCreatedUntil = dispatch.args[1][0].payload.params?.createdUntil
+  t.true(setCreatedUntil instanceof Date)
+  t.true((setCreatedUntil as Date).getTime() >= before + 3600000)
+  t.true((setCreatedUntil as Date).getTime() <= after + 3600000)
+})
+
+test('should set lastSyncedAt meta to last createdAt from data of each service', async (t) => {
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: {
+        from: ['entries', 'other'],
+        to: 'store',
+        retrieve: 'created',
+        setLastSyncedAtFromData: true,
+      },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET_META: [
+        updateAction('ok', {
+          data: { meta: { lastSyncedAt: new Date('2021-01-03T04:48:18Z') } },
+        }),
+        updateAction('ok', {
+          data: { meta: { lastSyncedAt: new Date('2021-01-03T02:30:11Z') } },
+        }),
+      ],
+      GET: [updateAction('ok', { data }), updateAction('ok', { data: data2 })],
+      SET: updateAction('ok'),
+      SET_META: updateAction('ok'),
+    })
+  )
+
+  const ret = await sync(action, dispatch)
+
+  t.is(ret.response?.status, 'ok')
+  t.is(dispatch.callCount, 7)
+  t.deepEqual(
+    (dispatch.args[5][0].payload.params?.meta as Meta).lastSyncedAt,
+    new Date('2021-01-03T18:45:07Z')
+  )
+  t.deepEqual(
+    (dispatch.args[6][0].payload.params?.meta as Meta).lastSyncedAt,
+    new Date('2021-01-04T23:49:58Z')
+  )
+})
+
 test('should return error when get action fails', async (t) => {
   const action = {
     type: 'SYNC',

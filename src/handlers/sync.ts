@@ -1,11 +1,20 @@
 import pLimit = require('p-limit')
 import ms = require('ms')
-import { Action, Response, InternalDispatch, Meta, TypedData } from '../types'
+import {
+  Action,
+  Response,
+  InternalDispatch,
+  Meta,
+  TypedData,
+  Params,
+} from '../types'
 import { createErrorOnAction } from '../utils/createError'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is'
 import { ensureArray } from '../utils/array'
 import { castDate } from '../transformers/builtIns/date'
 import { castNumber } from '../transformers/builtIns/number'
+
+type RetrieveOptions = 'all' | 'updated' | 'created'
 
 interface ActionParams extends Record<string, unknown> {
   type: string | string[]
@@ -15,6 +24,10 @@ interface ActionParams extends Record<string, unknown> {
   updatedUntil?: Date
   updatedSince?: Date
   updatedBefore?: Date
+  createdAfter?: Date
+  createdUntil?: Date
+  createdSince?: Date
+  createdBefore?: Date
 }
 
 interface SyncParams extends Record<string, unknown> {
@@ -24,7 +37,11 @@ interface SyncParams extends Record<string, unknown> {
   updatedUntil?: Date
   updatedSince?: Date
   updatedBefore?: Date
-  retrieve?: 'all' | 'updated'
+  createdAfter?: Date
+  createdUntil?: Date
+  createdSince?: Date
+  createdBefore?: Date
+  retrieve?: RetrieveOptions
   doFilterData?: boolean
   doQueueSet?: boolean
   metaKey?: string
@@ -120,7 +137,43 @@ async function setData(
 const setDatePropIf = (date: string | Date | undefined, prop: string) =>
   date ? { [prop]: castDate(date) || undefined } : {}
 
-const setUpdatedDatesAndType = (
+async function getLastSyncedAt(
+  dispatch: InternalDispatch,
+  service: string,
+  type: string | string[],
+  metaKey?: string,
+  meta?: Meta
+) {
+  const metaResponse = await dispatch(
+    createGetMetaAction(service, type, metaKey, meta)
+  )
+  return (
+    castDate(
+      (metaResponse.response?.data as MetaData | undefined)?.meta.lastSyncedAt
+    ) || undefined
+  )
+}
+
+function setCounterPart(params: ActionParams, dateSet: 'updated' | 'created') {
+  const after = params[`${dateSet}After`]
+  const since = params[`${dateSet}Since`]
+  const until = params[`${dateSet}Until`]
+  const before = params[`${dateSet}Before`]
+  const nextParams: Partial<ActionParams> = {}
+  if (after) {
+    nextParams[`${dateSet}Since`] = new Date(after.getTime() + 1)
+  } else if (since) {
+    nextParams[`${dateSet}After`] = new Date(since.getTime() - 1)
+  }
+  if (until) {
+    nextParams[`${dateSet}Before`] = new Date(until.getTime() + 1)
+  } else if (before) {
+    nextParams[`${dateSet}Until`] = new Date(before.getTime() - 1)
+  }
+  return nextParams
+}
+
+const setDatesAndType = (
   dispatch: InternalDispatch,
   type: string | string[],
   syncParams: SyncParams,
@@ -133,6 +186,10 @@ const setUpdatedDatesAndType = (
       updatedSince,
       updatedUntil,
       updatedBefore,
+      createdAfter,
+      createdSince,
+      createdUntil,
+      createdBefore,
       metaKey,
     } = syncParams
     const nextParams: ActionParams = {
@@ -140,6 +197,10 @@ const setUpdatedDatesAndType = (
       ...setDatePropIf(updatedSince, 'updatedSince'),
       ...setDatePropIf(updatedUntil, 'updatedUntil'),
       ...setDatePropIf(updatedBefore, 'updatedBefore'),
+      ...setDatePropIf(createdAfter, 'createdAfter'),
+      ...setDatePropIf(createdSince, 'createdSince'),
+      ...setDatePropIf(createdUntil, 'createdUntil'),
+      ...setDatePropIf(createdBefore, 'createdBefore'),
       type,
       ...params,
     }
@@ -151,30 +212,34 @@ const setUpdatedDatesAndType = (
       !updatedAfter &&
       !updatedSince
     ) {
-      const metaResponse = await dispatch(
-        createGetMetaAction(params.service, type, metaKey, meta)
+      nextParams.updatedAfter = await getLastSyncedAt(
+        dispatch,
+        params.service,
+        type,
+        metaKey,
+        meta
       )
-      nextParams.updatedAfter =
-        castDate(
-          (metaResponse.response?.data as MetaData | undefined)?.meta
-            .lastSyncedAt
-        ) || undefined
+    } else if (
+      retrieve === 'created' &&
+      params.service &&
+      !createdAfter &&
+      !createdSince
+    ) {
+      nextParams.createdAfter = await getLastSyncedAt(
+        dispatch,
+        params.service,
+        type,
+        metaKey,
+        meta
+      )
     }
 
     // Make sure the "counterpart" dates are set
-    if (nextParams.updatedAfter) {
-      nextParams.updatedSince = new Date(nextParams.updatedAfter.getTime() + 1)
-    } else if (nextParams.updatedSince) {
-      nextParams.updatedAfter = new Date(nextParams.updatedSince.getTime() - 1)
+    return {
+      ...nextParams,
+      ...setCounterPart(nextParams, 'created'),
+      ...setCounterPart(nextParams, 'updated'),
     }
-    if (nextParams.updatedUntil) {
-      nextParams.updatedBefore = new Date(nextParams.updatedUntil.getTime() + 1)
-    } else if (nextParams.updatedBefore) {
-      nextParams.updatedUntil = new Date(nextParams.updatedBefore.getTime() - 1)
-    }
-
-    // Create from params from dates, type, and params
-    return nextParams
   }
 
 const setMetaFromParams = (
@@ -187,12 +252,13 @@ const setMetaFromParams = (
   gottenDataDate: Date
 ) =>
   async function setMetaFromParams(
-    { service, updatedUntil }: ActionParams,
+    { service, updatedUntil, createdUntil }: ActionParams,
     index: number
   ) {
     if (service) {
-      // eslint-disable-next-line security/detect-object-injection
-      let lastSyncedAt = datesFromData[index] || updatedUntil || gottenDataDate
+      let lastSyncedAt =
+        // eslint-disable-next-line security/detect-object-injection
+        datesFromData[index] || updatedUntil || createdUntil || gottenDataDate
       if (lastSyncedAt > gottenDataDate) {
         lastSyncedAt = gottenDataDate
       }
@@ -221,9 +287,41 @@ const generateFromParams = async (
     ensureArray((params as SyncParams).from)
       .map(paramsAsObject)
       .filter(isNotNullOrUndefined)
-      .map(setUpdatedDatesAndType(dispatch, type, params, meta))
+      .map(setDatesAndType(dispatch, type, params, meta))
       .map((p) => pLimit(1)(() => p)) // Run one promise at a time
   )
+
+function generateSetDates(
+  fromParams: ActionParams[],
+  params: Params,
+  dateSet: 'updated' | 'created'
+) {
+  const until = castDate(params[`${dateSet}Until`])
+  const before = castDate(params[`${dateSet}Before`])
+  const oldestAfter = fromParams
+    .map((params) => params[`${dateSet}After`])
+    .sort()[0]
+  return {
+    ...(oldestAfter
+      ? {
+          [`${dateSet}After`]: oldestAfter,
+          [`${dateSet}Since`]: new Date(oldestAfter.getTime() + 1),
+        }
+      : {}),
+    ...(until
+      ? {
+          [`${dateSet}Until`]: until,
+          [`${dateSet}Before`]: new Date(until.getTime() + 1),
+        }
+      : {}),
+    ...(before
+      ? {
+          [`${dateSet}Before`]: before,
+          [`${dateSet}Until`]: new Date(before.getTime() - 1),
+        }
+      : {}),
+  }
+}
 
 function generateToParams(
   fromParams: ActionParams[],
@@ -231,27 +329,12 @@ function generateToParams(
   { payload: { params = {} } }: Action
 ): ActionParams {
   const { to, maxPerSet, alwaysSet }: SyncParams = params
-  const updatedUntil = castDate(params.updatedUntil)
-  const updatedBefore = castDate(params.updatedBefore)
-  const oldestUpdatedAfter = fromParams
-    .map((params) => params.updatedAfter)
-    .sort()[0]
   return {
     type,
     alwaysSet,
     maxPerSet,
-    ...(oldestUpdatedAfter
-      ? {
-          updatedAfter: oldestUpdatedAfter,
-          updatedSince: new Date(oldestUpdatedAfter.getTime() + 1),
-        }
-      : {}),
-    ...(updatedUntil
-      ? { updatedUntil, updatedBefore: new Date(updatedUntil.getTime() + 1) }
-      : {}),
-    ...(updatedBefore
-      ? { updatedBefore, updatedUntil: new Date(updatedBefore.getTime() - 1) }
-      : {}),
+    ...generateSetDates(fromParams, params, 'updated'),
+    ...generateSetDates(fromParams, params, 'created'),
     ...paramsAsObject(to),
   }
 }
@@ -266,20 +349,23 @@ async function extractActionParams(
     return [[], undefined]
   }
 
-  // Make from an array of params objects and fetch updatedAfter from meta
-  // when needed
+  // Make from an array of params objects and fetch updatedAfter or createdAfter
+  // from meta when needed
   const fromParams = await generateFromParams(dispatch, type, action)
 
   return [fromParams, generateToParams(fromParams, type, action)]
 }
 
-function sortByUpdatedAt(
-  { updatedAt: a }: TypedData,
-  { updatedAt: b }: TypedData
-) {
-  const dateA = a ? new Date(a).getTime() : undefined
-  const dateB = b ? new Date(b).getTime() : undefined
-  return dateA && dateB ? dateA - dateB : dateA ? -1 : 1
+const dateFieldFromRetrieve = (retrieve?: RetrieveOptions) =>
+  retrieve === 'created' ? 'createdAt' : 'updatedAt'
+
+function sortByItemDate(retrieve?: RetrieveOptions) {
+  const dateField = dateFieldFromRetrieve(retrieve)
+  return ({ [dateField]: a }: TypedData, { [dateField]: b }: TypedData) => {
+    const dateA = a ? new Date(a).getTime() : undefined
+    const dateB = b ? new Date(b).getTime() : undefined
+    return dateA && dateB ? dateA - dateB : dateA ? -1 : 1
+  }
 }
 
 const withinDateRange =
@@ -319,14 +405,14 @@ const msFromDelta = (delta: string) =>
     ? ms(delta)
     : undefined
 
-function generateUpdatedUntil(updatedUntil: unknown) {
-  if (typeof updatedUntil === 'string') {
-    const delta = msFromDelta(updatedUntil)
+function generateUntilDate(date: unknown) {
+  if (typeof date === 'string') {
+    const delta = msFromDelta(date)
     if (typeof delta === 'number') {
       return new Date(Date.now() + delta)
     }
   }
-  return updatedUntil
+  return date
 }
 
 const prepareInputParams = (action: Action) => ({
@@ -335,14 +421,17 @@ const prepareInputParams = (action: Action) => ({
     ...action.payload,
     params: {
       ...action.payload.params,
-      updatedUntil: generateUpdatedUntil(action.payload.params?.updatedUntil),
+      updatedUntil: generateUntilDate(action.payload.params?.updatedUntil),
+      createdUntil: generateUntilDate(action.payload.params?.createdUntil),
       retrieve: action.payload.params?.retrieve ?? 'all',
     } as SyncParams,
   },
 })
 
-const extractUpdatedAt = (item?: TypedData) =>
-  (item?.updatedAt && new Date(item?.updatedAt)) || undefined
+const extractItemDate = (retrieve?: RetrieveOptions) => (item?: TypedData) =>
+  (retrieve === 'created'
+    ? item?.createdAt && new Date(item.createdAt)
+    : item?.updatedAt && new Date(item.updatedAt)) || undefined
 
 const fetchDataFromService = (
   fromParams: ActionParams[],
@@ -356,10 +445,13 @@ const fetchDataFromService = (
     )
   )
 
-const extractLastSyncedAtDates = (dataFromServices: TypedData[][]) =>
+const extractLastSyncedAtDates = (
+  dataFromServices: TypedData[][],
+  retrieve?: RetrieveOptions
+) =>
   dataFromServices.map((data) =>
     data
-      .map(extractUpdatedAt)
+      .map(extractItemDate(retrieve))
       .reduce(
         (lastDate, date) =>
           !lastDate || (date && date > lastDate) ? date : lastDate,
@@ -376,12 +468,14 @@ const extractLastSyncedAtDates = (dataFromServices: TypedData[][]) =>
  * date for the `from` service(s). This is done by passing the `lastSyncedAt`
  * date as a parameter named `updatedAfter` to the `get` endpoint(s), and by
  * filtering away any items received with `updatedAt` earlier than
- * `lastSyncedAt`.
+ * `lastSyncedAt`. You may also set `retrieve` to `created` and have the same
+ * effect, but whith `createdAfter` and `createdAt`.
  *
  * The `lastSyncedAt` metadata will be set on the `from` service when items
- * are retrieved and updated. By default it will be set to the updatedUntil date
- * or now if no updatedUntil is given. When `setLastSyncedAtFromData` is true,
- * the latest updatedAt from the data will be used for each service.
+ * are retrieved and updated. By default it will be set to the `updatedUntil` or
+ * `createdUntil` date, or `Date.now()` if `updatedUntil` or `createdUntil` are
+ * not given. When `setLastSyncedAtFromData` is true, the latest `updatedAt` or
+ * `createdAt` from the data will be used for each service.
  */
 export default async function syncHandler(
   inputAction: Action,
@@ -418,9 +512,9 @@ export default async function syncHandler(
       dispatch,
       action
     )
-    data = dataFromServices.flat().sort(sortByUpdatedAt)
+    data = dataFromServices.flat().sort(sortByItemDate(retrieve))
     if (setLastSyncedAtFromData) {
-      datesFromData = extractLastSyncedAtDates(dataFromServices)
+      datesFromData = extractLastSyncedAtDates(dataFromServices, retrieve)
     }
   } catch (error) {
     return createErrorOnAction(
@@ -439,7 +533,7 @@ export default async function syncHandler(
     )
   }
 
-  if (retrieve === 'updated') {
+  if (retrieve === 'updated' || retrieve === 'created') {
     await Promise.all(
       fromParams.map(
         setMetaFromParams(dispatch, action, datesFromData, gottenDataDate)
