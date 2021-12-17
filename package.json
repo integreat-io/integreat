@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@sindresorhus/is": "^1.2.0",
-    "debug": "^4.3.2",
+    "debug": "^4.3.3",
     "got": "^9.6.0",
     "later": "^1.2.0",
     "map-any": "^0.2.1",
@@ -61,9 +61,9 @@
     "coveralls": "^3.1.1",
     "dotenv": "^10.0.0",
     "integreat-adapter-json": "^0.2.1",
-    "nock": "^13.1.2",
+    "nock": "^13.2.1",
     "nyc": "^15.1.0",
-    "prettier": "^2.3.2",
+    "prettier": "^2.5.1",
     "sinon": "^11.1.2"
   }
 }
