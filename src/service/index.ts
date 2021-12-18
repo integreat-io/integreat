@@ -39,12 +39,13 @@ const setServiceIdAsSourceServiceOnAction = (
 const setServiceIdOnDispatchedAction =
   (dispatch: Dispatch, serviceId: string, incomingIdent: string) =>
   (action: Action | null) =>
-    new PProgress<Response>((resolve, _reject, setProgress) => {
+    new PProgress<Response>(async (resolve, _reject, setProgress) => {
       const p = dispatch(
         setServiceIdAsSourceServiceOnAction(action, serviceId, incomingIdent)
       )
       p.onProgress(setProgress)
-      resolve(p)
+      const response = await p
+      resolve(response)
     })
 
 const isTransporter = (transporter: unknown): transporter is Transporter =>
