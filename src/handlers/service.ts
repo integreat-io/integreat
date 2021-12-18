@@ -1,6 +1,5 @@
 import createUnknownServiceError from '../utils/createUnknownServiceError'
-import { Action, InternalDispatch } from '../types'
-import { GetService } from '../dispatch'
+import { Action, ActionHandlerResources } from '../types'
 
 const authorizeAction = ({ meta, ...action }: Action) => ({
   ...action,
@@ -14,8 +13,7 @@ const authorizeAction = ({ meta, ...action }: Action) => ({
  */
 export default async function service(
   action: Action,
-  _dispatch: InternalDispatch,
-  getService: GetService
+  { getService }: ActionHandlerResources
 ): Promise<Action> {
   const serviceId = action.payload.targetService
   const service = getService(undefined, serviceId)

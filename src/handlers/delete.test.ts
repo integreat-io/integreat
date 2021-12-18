@@ -54,6 +54,8 @@ const dispatch = async (action: Action) => ({
   response: { ...action.response, status: 'ok' },
 })
 
+const options = {}
+
 test.after.always(() => {
   nock.restore()
 })
@@ -99,7 +101,7 @@ test('should delete items from service', async (t) => {
     },
   }
 
-  const ret = await deleteFn(action, dispatch, getService)
+  const ret = await deleteFn(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -132,7 +134,7 @@ test('should delete one item from service', async (t) => {
     payload: { id: 'ent1', type: 'entry', targetService: 'entries' },
   }
 
-  const ret = await deleteFn(action, dispatch, getService)
+  const ret = await deleteFn(action, { dispatch, getService, options })
 
   t.truthy(ret)
   t.is(ret.response?.status, 'ok', ret.response?.error)
@@ -176,7 +178,7 @@ test('should infer service id from type', async (t) => {
     },
   }
 
-  const ret = await deleteFn(action, dispatch, getService)
+  const ret = await deleteFn(action, { dispatch, getService, options })
 
   t.truthy(ret)
   t.is(ret.response?.status, 'ok', ret.response?.error)
@@ -213,7 +215,7 @@ test('should return error from response', async (t) => {
     },
   }
 
-  const ret = await deleteFn(action, dispatch, getService)
+  const ret = await deleteFn(action, { dispatch, getService, options })
 
   t.truthy(ret)
   t.is(ret.response?.status, 'notfound', ret.response?.error)
@@ -240,7 +242,7 @@ test('should return noaction when nothing to delete', async (t) => {
     payload: { data: [], targetService: 'entries' },
   }
 
-  const ret = await deleteFn(action, dispatch, getService)
+  const ret = await deleteFn(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'noaction')
 })
@@ -263,7 +265,7 @@ test('should skip null values in data array', async (t) => {
     payload: { data: [null], targetService: 'entries' },
   }
 
-  const ret = await deleteFn(action, dispatch, getService)
+  const ret = await deleteFn(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'noaction')
 })
@@ -306,7 +308,7 @@ test('should only delete items the ident is authorized to', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await deleteFn(action, dispatch, getService)
+  const ret = await deleteFn(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -319,7 +321,7 @@ test('should return error when no service exists for a type', async (t) => {
     payload: { id: 'ent1', type: 'entry' },
   }
 
-  const ret = await deleteFn(action, dispatch, getService)
+  const ret = await deleteFn(action, { dispatch, getService, options })
 
   t.truthy(ret)
   t.is(ret.response?.status, 'error')
@@ -333,7 +335,7 @@ test('should return error when specified service does not exist', async (t) => {
     payload: { id: 'ent1', type: 'entry', targetService: 'entries' },
   }
 
-  const ret = await deleteFn(action, dispatch, getService)
+  const ret = await deleteFn(action, { dispatch, getService, options })
 
   t.truthy(ret)
   t.is(ret.response?.status, 'error')
@@ -341,13 +343,14 @@ test('should return error when specified service does not exist', async (t) => {
 })
 
 test('should return error if no getService', async (t) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getService = undefined as any
   const action = {
     type: 'DELETE',
     payload: { id: 'ent1', type: 'entry' },
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ret = await deleteFn(action, dispatch, undefined as any)
+  const ret = await deleteFn(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'error')
 })

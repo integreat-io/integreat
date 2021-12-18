@@ -1,4 +1,6 @@
 import { EndpointOptions } from './service/endpoints/types'
+import { IdentConfig } from './service/types'
+import { Service } from './service/types'
 
 export interface Reference {
   id: string | null
@@ -159,4 +161,23 @@ export interface Transporter {
     connection: Connection | null
   ) => Promise<Response>
   disconnect: (connection: Connection | null) => Promise<void>
+}
+
+export interface GetService {
+  (type?: string | string[], serviceId?: string): Service | undefined
+}
+
+export interface HandlerOptions {
+  identConfig?: IdentConfig
+  queueService?: string
+}
+
+export interface ActionHandlerResources {
+  dispatch: InternalDispatch
+  getService: GetService
+  options: HandlerOptions
+}
+
+export interface ActionHandler {
+  (action: Action, resources: ActionHandlerResources): Promise<Action>
 }

@@ -7,6 +7,7 @@ import {
   Meta,
   TypedData,
   Params,
+  ActionHandlerResources,
 } from '../types'
 import { createErrorOnAction } from '../utils/createError'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is'
@@ -479,7 +480,7 @@ const extractLastSyncedAtDates = (
  */
 export default async function syncHandler(
   inputAction: Action,
-  dispatch: InternalDispatch
+  { dispatch }: ActionHandlerResources
 ): Promise<Action> {
   const action = prepareInputParams(inputAction)
   const {

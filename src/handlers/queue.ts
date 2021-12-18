@@ -1,5 +1,4 @@
-import { Action, InternalDispatch } from '../types'
-import { GetService, HandlerOptions } from '../dispatch'
+import { Action, ActionHandlerResources } from '../types'
 
 const authorizeAction = ({ meta, ...action }: Action) => ({
   ...action,
@@ -15,9 +14,7 @@ const authorizeAction = ({ meta, ...action }: Action) => ({
  */
 export default async function queue(
   action: Action,
-  dispatch: InternalDispatch,
-  getService: GetService,
-  { queueService }: HandlerOptions
+  { dispatch, getService, options: { queueService } }: ActionHandlerResources
 ): Promise<Action> {
   const service = getService(undefined, queueService)
   if (!service) {

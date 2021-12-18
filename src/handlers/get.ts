@@ -3,10 +3,9 @@ import pPipe = require('p-pipe')
 import pLimit = require('p-limit')
 import { createErrorOnAction } from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
-import { Action, InternalDispatch } from '../types'
+import { Action, ActionHandlerResources } from '../types'
 import { Service } from '../service/types'
 import { Endpoint } from '../service/endpoints/types'
-import { GetService } from '../dispatch'
 
 const debug = debugLib('great')
 const limit = pLimit(1)
@@ -97,8 +96,7 @@ async function mapOneOrMany(
  */
 export default async function get(
   action: Action,
-  _dispatch: InternalDispatch,
-  getService: GetService
+  { getService }: ActionHandlerResources
 ): Promise<Action> {
   const {
     type,

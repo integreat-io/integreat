@@ -75,6 +75,9 @@ const data2 = [
 
 const ident = { id: 'johnf' }
 
+const getService = (_type?: string | string[], _service?: string) => undefined
+const options = {}
+
 // Tests
 
 test('should get from source service and set on target service', async (t) => {
@@ -100,7 +103,7 @@ test('should get from source service and set on target service', async (t) => {
     meta: { ident, project: 'project1', cid: '12345', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -121,7 +124,7 @@ test('should not SET with no data', async (t) => {
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'noaction', ret.response?.error)
   t.is(dispatch.callCount, 1)
@@ -149,7 +152,7 @@ test('should SET with no data when alwaysSet is true', async (t) => {
     meta: { ident, project: 'project1', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is(dispatch.callCount, 2)
@@ -193,7 +196,7 @@ test('should split in several SET actions when item count is higher than maxPerS
     meta: { ident, project: 'project1', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 3)
@@ -239,7 +242,7 @@ test('should use params from from and to', async (t) => {
     meta: { ident, project: 'project1', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -276,7 +279,7 @@ test('should override action types', async (t) => {
     meta: { ident, project: 'project1', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is(dispatch.callCount, 2)
@@ -305,7 +308,7 @@ test('should not queue SET when doQueueSet is false', async (t) => {
     meta: { ident, project: 'project1', queue: false },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -349,7 +352,7 @@ test('should get from several source services', async (t) => {
     meta: { ident, project: 'project1', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 3)
@@ -381,7 +384,7 @@ test('should remove untyped data', async (t) => {
     meta: { ident, project: 'project1', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -433,7 +436,7 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
     meta: { ident, project: 'project1', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -485,7 +488,7 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
     meta: { ident, project: 'project1', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -542,7 +545,7 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
     meta: { ident, project: 'project1', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -599,7 +602,7 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
     meta: { ident, project: 'project1', queue: true },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -638,7 +641,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
     updatedSince: new Date('2021-01-03T04:48:18.001Z'),
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 4)
@@ -679,7 +682,7 @@ test('should use metaKey when fetching lastSyncedAt', async (t) => {
     meta: { ident, project: 'project1' },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.deepEqual(dispatch.args[0][0], expected1)
@@ -712,7 +715,7 @@ test('should not use lastSyncedAt meta when updatedAfter is provided', async (t)
     updatedSince: new Date('2021-01-02T01:00:11.001Z'),
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 3)
@@ -759,7 +762,7 @@ test('should use lastSyncedAt meta from several services', async (t) => {
     updatedSince: new Date('2021-01-03T02:30:11.001Z'),
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
@@ -796,7 +799,7 @@ test('should filter away data updated before updatedAfter or after updatedUntil'
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -832,7 +835,7 @@ test('should filter away data with different lastSyncedAt for each service', asy
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
@@ -874,7 +877,7 @@ test('should not filter away data when filterData is false', async (t) => {
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
@@ -913,7 +916,7 @@ test('should treat no updatedAfter as open-ended', async (t) => {
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -952,7 +955,7 @@ test('should set updatedUntil to now', async (t) => {
   )
   const before = Date.now()
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
@@ -987,7 +990,7 @@ test('should set updatedUntil with positive delta', async (t) => {
   )
   const before = Date.now()
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
@@ -1021,7 +1024,7 @@ test('should set updatedUntil with negative delta', async (t) => {
   )
   const before = Date.now()
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
@@ -1079,7 +1082,7 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
     meta: { ident, cid: '12345', project: 'project1' },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
@@ -1110,7 +1113,7 @@ test('should set lastSyncedAt meta to now when no updatedUntil', async (t) => {
   )
   const before = Date.now()
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
@@ -1155,7 +1158,7 @@ test('should set lastSyncedAt meta to last updatedAt from data of each service',
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
@@ -1210,7 +1213,7 @@ test('should set lastSyncedAt to now when date is in the future', async (t) => {
   )
   const before = Date.now()
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
@@ -1269,7 +1272,7 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
     meta: { ident, project: 'project1' },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
@@ -1300,7 +1303,7 @@ test('should not get or set lastSyncedAt meta when service id is missing', async
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
@@ -1337,7 +1340,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = created', asy
     createdSince: new Date('2021-01-03T04:48:18.001Z'),
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 4)
@@ -1407,7 +1410,7 @@ test('should set lastSyncedAt for created', async (t) => {
     meta: { ident, project: 'project1' },
   }
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
@@ -1439,7 +1442,7 @@ test('should set createdUntil with delta', async (t) => {
   )
   const before = Date.now()
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
@@ -1480,7 +1483,7 @@ test('should set lastSyncedAt meta to last createdAt from data of each service',
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
@@ -1507,7 +1510,7 @@ test('should return error when get action fails', async (t) => {
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, 'SYNC: Could not get data. Fetching failed')
@@ -1528,7 +1531,7 @@ test('should return error when set action fails', async (t) => {
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'error')
   t.is(
@@ -1554,7 +1557,7 @@ test('should return error from first SET action with maxPerSet', async (t) => {
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'timeout')
   t.is(ret.response?.error, 'SYNC: Could not set data. Set 0 of 3 items.')
@@ -1577,7 +1580,7 @@ test('should return error from second SET action with maxPerSet', async (t) => {
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'timeout')
   t.is(ret.response?.error, 'SYNC: Could not set data. Set 2 of 3 items.')
@@ -1597,7 +1600,7 @@ test('should return badrequest when missing from and to', async (t) => {
     })
   )
 
-  const ret = await sync(action, dispatch)
+  const ret = await sync(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'badrequest')
   t.is(

@@ -120,7 +120,8 @@ test('should dispatch with resources', async (t) => {
   await great.dispatch(action)
 
   t.is(handler.callCount, 1) // If the action handler was called, the action was dispatched
-  t.deepEqual(handler.args[0][3], expectedOptions)
+  const resource = handler.args[0][1]
+  t.deepEqual(resource.options, expectedOptions)
 })
 
 test('should dispatch with builtin action handler', async (t) => {
@@ -155,7 +156,13 @@ test('should call middleware', async (t) => {
   const otherAction = sinon
     .stub()
     .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
-  const handlers = { OTHER: otherAction }
+  const handlers = {
+    OTHER: otherAction,
+    TEST: async (action: Action) => ({
+      ...action,
+      response: { ...action.response, status: 'noaction' },
+    }),
+  }
   const middleware = [
     (next: InternalDispatch) => async (_action: Action) =>
       next({ type: 'OTHER', payload: {} }),
@@ -166,8 +173,9 @@ test('should call middleware', async (t) => {
     { ...resourcesWithTrans, handlers },
     middleware
   )
-  await great.dispatch(action)
+  const ret = await great.dispatch(action)
 
+  t.is(ret.status, 'ok', ret.error)
   t.is(otherAction.callCount, 1) // If other action handler was called, middleware changed action
 })
 

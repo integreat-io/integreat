@@ -3,8 +3,7 @@ import pPipe = require('p-pipe')
 import { createErrorOnAction } from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
 import { isTypedData } from '../utils/is'
-import { Action, InternalDispatch } from '../types'
-import { GetService } from '../dispatch'
+import { Action, ActionHandlerResources } from '../types'
 
 const debug = debugLib('great')
 
@@ -28,8 +27,7 @@ const setIdAndTypeOnAction = (
  */
 export default async function set(
   action: Action,
-  _dispatch: InternalDispatch,
-  getService: GetService
+  { getService }: ActionHandlerResources
 ): Promise<Action> {
   const {
     data,

@@ -2,8 +2,7 @@ import debugLib = require('debug')
 import pPipe = require('p-pipe')
 import { createErrorOnAction } from '../utils/createError'
 import createUnknownServiceError from '../utils/createUnknownServiceError'
-import { Action, Payload, InternalDispatch } from '../types'
-import { GetService } from '../dispatch'
+import { Action, Payload, ActionHandlerResources } from '../types'
 
 const debug = debugLib('great')
 
@@ -24,8 +23,7 @@ const setDataOnAction = (action: Action, data?: unknown) => ({
  */
 export default async function deleteFn(
   action: Action,
-  _dispatch: InternalDispatch,
-  getService: GetService
+  { getService }: ActionHandlerResources
 ): Promise<Action> {
   const {
     type,

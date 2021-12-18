@@ -24,6 +24,10 @@ const responseAction = {
 
 const ident = { id: 'johnf' }
 
+const getService = (_type?: string | string[], _service?: string) => undefined
+
+const options = {}
+
 // Tests
 
 test('should dispatch GET to expired endpoint', async (t) => {
@@ -51,7 +55,7 @@ test('should dispatch GET to expired endpoint', async (t) => {
     meta: { ident },
   }
 
-  await expire(action, dispatch)
+  await expire(action, { dispatch, getService, options })
 
   t.deepEqual(dispatch.args[0][0], expected)
 })
@@ -76,7 +80,7 @@ test('should add msFromNow to current timestamp', async (t) => {
     },
   }
 
-  await expire(action, dispatch)
+  await expire(action, { dispatch, getService, options })
 
   t.true(dispatch.calledWithMatch(expected))
 })
@@ -105,7 +109,7 @@ test('should queue DELETE for expired entries', async (t) => {
     meta: { ident },
   }
 
-  const ret = await expire(action, dispatch)
+  const ret = await expire(action, { dispatch, getService, options })
 
   t.truthy(ret)
   t.is(ret.response?.status, 'queued', ret.response?.error)
@@ -135,7 +139,7 @@ test('should queue DELETE with id and type only', async (t) => {
   }
   const expected = { payload: { data: [{ id: 'ent1', $type: 'entry' }] } }
 
-  const ret = await expire(action, dispatch)
+  const ret = await expire(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'queued', ret.response?.error)
   t.true(dispatch.calledWithMatch(expected))
@@ -151,7 +155,7 @@ test('should not queue when no expired entries', async (t) => {
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
   }
 
-  const ret = await expire(action, dispatch)
+  const ret = await expire(action, { dispatch, getService, options })
 
   t.false(dispatch.calledWithMatch({ type: 'DELETE' }))
   t.truthy(ret)
@@ -172,7 +176,7 @@ test('should not queue when GET returns error', async (t) => {
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
   }
 
-  const ret = await expire(action, dispatch)
+  const ret = await expire(action, { dispatch, getService, options })
 
   t.false(dispatch.calledWithMatch({ type: 'DELETE' }))
   t.truthy(ret)
@@ -186,7 +190,7 @@ test('should return error when no service', async (t) => {
     payload: { type: 'entry', endpoint: 'getExpired' },
   }
 
-  const ret = await expire(action, dispatch)
+  const ret = await expire(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'error')
 })
@@ -198,7 +202,7 @@ test('should return error when no endpoint', async (t) => {
     payload: { type: 'entry', targetService: 'store' },
   }
 
-  const ret = await expire(action, dispatch)
+  const ret = await expire(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'error')
 })
@@ -210,7 +214,7 @@ test('should return error when no type', async (t) => {
     payload: { targetService: 'store', endpoint: 'getExpired' },
   }
 
-  const ret = await expire(action, dispatch)
+  const ret = await expire(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'error')
 })

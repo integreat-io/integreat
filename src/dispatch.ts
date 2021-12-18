@@ -1,7 +1,15 @@
 import debugLib = require('debug')
 import setupGetService from './utils/getService'
-import { Dispatch, InternalDispatch, Middleware, Action } from './types'
-import { IdentConfig } from './service/types'
+import {
+  Dispatch,
+  InternalDispatch,
+  Middleware,
+  Action,
+  ActionHandler,
+  ActionHandlerResources,
+  GetService,
+  HandlerOptions,
+} from './types'
 import { Service } from './service/types'
 import { Schema } from './schema'
 import { createErrorOnAction } from './utils/createError'
@@ -15,24 +23,6 @@ export const compose = (...fns: Middleware[]): Middleware =>
       (...args) =>
         f(g(...args))
   )
-
-export interface GetService {
-  (type?: string | string[], serviceId?: string): Service | undefined
-}
-
-export interface HandlerOptions {
-  identConfig?: IdentConfig
-  queueService?: string
-}
-
-export interface ActionHandler {
-  (
-    action: Action,
-    dispatch: InternalDispatch,
-    getService: GetService,
-    options: HandlerOptions
-  ): Promise<Action>
-}
 
 const shouldQueue = (action: Action, options: HandlerOptions) =>
   action.meta?.queue === true && !!options.queueService
@@ -145,6 +135,26 @@ const prepareAction = ({
   meta,
 })
 
+function handleAction(
+  handlerType: string,
+  action: Action,
+  resources: ActionHandlerResources,
+  handlers: Record<string, ActionHandler>
+) {
+  // Find handler ...
+  const handler = getActionHandlerFromType(handlerType, handlers)
+  if (!handler) {
+    return createErrorOnAction(
+      action,
+      `No handler for ${handlerType} action`,
+      'noaction'
+    )
+  }
+
+  // ... and pass it the action
+  return handler(action, resources)
+}
+
 /**
  * Setup and return dispatch function. The dispatch function will pass an action
  * through the middleware middleware before sending it to the relevant action
@@ -160,9 +170,12 @@ export default function createDispatch({
   options,
 }: Resources): Dispatch {
   const getService = setupGetService(schemas, services)
-  let internalDispatch: InternalDispatch
+  const middlewareFn =
+    middleware.length > 0
+      ? compose(...middleware)
+      : (next: InternalDispatch) => async (action: Action) => next(action)
 
-  internalDispatch = async function (action: Action) {
+  const internalDispatch = async function (action: Action) {
     debug('Dispatch: %o', action)
 
     // Refuse attempt to dispatch a QUEUE action, as it would never stop being
@@ -175,25 +188,21 @@ export default function createDispatch({
       )
     }
 
-    // Use queue handler if queue flag is set and there is a queue service
-    const handlerType = shouldQueue(action, options) ? 'QUEUE' : action.type
-
-    // Find handler ...
-    const handler = getActionHandlerFromType(handlerType, handlers)
-    if (!handler) {
-      return createErrorOnAction(
-        action,
-        `No handler for ${handlerType} action`,
-        'noaction'
-      )
+    const nextAction = prepareAction(action)
+    const resources: ActionHandlerResources = {
+      dispatch: internalDispatch,
+      getService,
+      options,
     }
 
-    // ... and pass it the action
-    return handler(prepareAction(action), internalDispatch, getService, options)
-  }
+    // Use queue handler if queue flag is set and there is a queue service
+    if (shouldQueue(action, options)) {
+      return handleAction('QUEUE', nextAction, resources, handlers)
+    }
 
-  if (middleware.length > 0) {
-    internalDispatch = compose(...middleware)(internalDispatch)
+    return middlewareFn(async (action) =>
+      handleAction(action.type, action, resources, handlers)
+    )(nextAction)
   }
 
   return wrapDispatch(internalDispatch, getService)

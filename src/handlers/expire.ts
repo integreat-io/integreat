@@ -1,6 +1,12 @@
 import { createErrorOnAction } from '../utils/createError'
 import { isTypedData } from '../utils/is'
-import { Action, InternalDispatch, Ident, TypedData } from '../types'
+import {
+  Action,
+  InternalDispatch,
+  Ident,
+  TypedData,
+  ActionHandlerResources,
+} from '../types'
 
 const isTypedDataArray = (value: unknown): value is TypedData[] =>
   Array.isArray(value) && isTypedData(value[0])
@@ -60,7 +66,7 @@ const deleteExpired = async (
  */
 export default async function expire(
   action: Action,
-  dispatch: InternalDispatch
+  { dispatch }: ActionHandlerResources
 ): Promise<Action> {
   const {
     payload: { type, params, endpoint: endpointId, targetService: serviceId },

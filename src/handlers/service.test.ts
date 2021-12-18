@@ -30,6 +30,8 @@ const dispatch = async (action: Action) => ({
   response: { ...action.response, status: 'ok' },
 })
 
+const options = {}
+
 // Tests
 
 test('should send action straight to service', async (t) => {
@@ -52,7 +54,7 @@ test('should send action straight to service', async (t) => {
   const expected = { ...action, response: { status: 'ok' } }
   const sentAction = { ...action, meta: { ...action.meta, authorized: true } }
 
-  const ret = await service(action, dispatch, getService)
+  const ret = await service(action, { dispatch, getService, options })
 
   t.deepEqual(ret, expected)
   t.is(send.callCount, 1)
@@ -85,7 +87,7 @@ test('should return error when service does not return a status', async (t) => {
     },
   }
 
-  const ret = await service(action, dispatch, getService)
+  const ret = await service(action, { dispatch, getService, options })
 
   t.deepEqual(ret, expected)
 })
@@ -108,7 +110,7 @@ test('should return error when service is unknown', async (t) => {
     },
   }
 
-  const ret = await service(action, dispatch, getService)
+  const ret = await service(action, { dispatch, getService, options })
 
   t.deepEqual(ret, expected)
 })

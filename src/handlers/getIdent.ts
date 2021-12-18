@@ -2,8 +2,7 @@ import util = require('util')
 import getField from '../utils/getField'
 import { createErrorOnAction } from '../utils/createError'
 import { getFirstIfArray } from '../utils/array'
-import { Action, InternalDispatch, Ident } from '../types'
-import { GetService, HandlerOptions } from '../dispatch'
+import { Action, Ident, ActionHandlerResources } from '../types'
 import getHandler from './get'
 
 interface IdentParams {
@@ -71,9 +70,7 @@ const prepareResponse = (
  */
 export default async function getIdent(
   action: Action,
-  dispatch: InternalDispatch,
-  getService: GetService,
-  { identConfig }: HandlerOptions
+  resources: ActionHandlerResources
 ): Promise<Action> {
   const { ident } = action.meta || {}
   if (!ident) {
@@ -83,6 +80,8 @@ export default async function getIdent(
       'noaction'
     )
   }
+
+  const { identConfig } = resources.options
 
   const { type } = identConfig || {}
   if (!type) {
@@ -108,7 +107,7 @@ export default async function getIdent(
     payload: { type, ...params },
     meta: { ident: { id: 'root', root: true } },
   }
-  const responseAction = await getHandler(nextAction, dispatch, getService)
+  const responseAction = await getHandler(nextAction, resources)
 
   return prepareResponse(responseAction, params, propKeys)
 }

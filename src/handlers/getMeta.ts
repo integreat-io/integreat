@@ -1,7 +1,6 @@
 import debugLib = require('debug')
 import { createErrorOnAction } from '../utils/createError'
-import { Action, DataObject, InternalDispatch } from '../types'
-import { GetService } from '../dispatch'
+import { Action, DataObject, ActionHandlerResources } from '../types'
 import getHandler from './get'
 import { isDataObject } from '../utils/is'
 
@@ -40,8 +39,7 @@ export const generateMetaId = (
  */
 export default async function getMeta(
   action: Action,
-  dispatch: InternalDispatch,
-  getService: GetService
+  resources: ActionHandlerResources
 ): Promise<Action> {
   debug('Action: GET_META')
 
@@ -55,6 +53,7 @@ export default async function getMeta(
     meta: { ident } = {},
   } = action
   const metaId = generateMetaId(serviceId, type, metaKey as string | undefined)
+  const { getService } = resources
 
   const service = getService(undefined, serviceId)
   if (!service) {
@@ -90,7 +89,7 @@ export default async function getMeta(
     payload: { keys, type: metaType, id: metaId, endpoint: endpointId },
     meta: { ident: ident },
   }
-  const responseAction = await getHandler(nextAction, dispatch, getService)
+  const responseAction = await getHandler(nextAction, resources)
 
   if (responseAction.response?.status === 'ok') {
     const { data } = responseAction.response || {}

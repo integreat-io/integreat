@@ -59,7 +59,7 @@ test('should send action to queue', async (t) => {
     meta: { ident: { id: 'johnf' }, authorized: true },
   }
 
-  const ret = await queue(action, dispatch, getService, options)
+  const ret = await queue(action, { dispatch, getService, options })
 
   t.deepEqual(ret, expected)
   t.is(send.callCount, 1)
@@ -81,7 +81,7 @@ test('should return error from queue', async (t) => {
     response: { status: 'timeout', error: 'Queue busy' },
   }
 
-  const ret = await queue(action, dispatch, getService, options)
+  const ret = await queue(action, { dispatch, getService, options })
 
   t.deepEqual(ret, expected)
 })
@@ -104,7 +104,7 @@ test('should return error when queue does not respond status', async (t) => {
     },
   }
 
-  const ret = await queue(action, dispatch, getService, options)
+  const ret = await queue(action, { dispatch, getService, options })
 
   t.deepEqual(ret, expected)
 })
@@ -117,7 +117,7 @@ test('should dispatch action when queue service is unknown', async (t) => {
   const getService = (_type?: string | string[], _service?: string) => undefined
   const expected = { ...action, response: { status: 'ok' } }
 
-  const ret = await queue(action, dispatch, getService, options)
+  const ret = await queue(action, { dispatch, getService, options })
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)

@@ -6,6 +6,7 @@ import {
   ScheduleDef,
   Action,
   Response,
+  ActionHandler,
 } from './types'
 import {
   ServiceDef,
@@ -23,7 +24,7 @@ import createService from './service'
 import { isObject } from './utils/is'
 import createMapOptions from './utils/createMapOptions'
 import { lookupById } from './utils/indexUtils'
-import createDispatch, { ActionHandler } from './dispatch'
+import createDispatch from './dispatch'
 import listen from './listen'
 import close from './close'
 import { indexById } from './utils/indexUtils'

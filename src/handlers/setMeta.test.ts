@@ -47,6 +47,7 @@ const dispatch = async (action: Action) => ({
   ...action,
   response: { ...action.response, status: 'ok' },
 })
+const options = {}
 
 test.after(() => {
   nock.restore()
@@ -77,7 +78,7 @@ test('should set metadata on service', async (t) => {
     meta: { ident },
   }
 
-  const ret = await setMeta(action, dispatch, getService)
+  const ret = await setMeta(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -107,7 +108,7 @@ test('should set metadata on service with type', async (t) => {
     meta: { ident },
   }
 
-  const ret = await setMeta(action, dispatch, getService)
+  const ret = await setMeta(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -137,7 +138,7 @@ test('should set metadata on service with several types', async (t) => {
     meta: { ident },
   }
 
-  const ret = await setMeta(action, dispatch, getService)
+  const ret = await setMeta(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -167,7 +168,7 @@ test('should set metadata on service with metaKey', async (t) => {
     meta: { ident },
   }
 
-  const ret = await setMeta(action, dispatch, getService)
+  const ret = await setMeta(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -192,7 +193,7 @@ test('should not set metadata on service when no meta type', async (t) => {
     meta: { ident },
   }
 
-  const ret = await setMeta(action, dispatch, getService)
+  const ret = await setMeta(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'noaction')
   t.false(scope.isDone())
@@ -229,7 +230,7 @@ test('should set metadata on other service', async (t) => {
     meta: { ident },
   }
 
-  const ret = await setMeta(action, dispatch, getService)
+  const ret = await setMeta(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -249,7 +250,7 @@ test('should return status noaction when meta is set to an unknown schema', asyn
     meta: { ident },
   }
 
-  const ret = await setMeta(action, dispatch, getService)
+  const ret = await setMeta(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'noaction')
   t.is(typeof ret.response?.error, 'string')
@@ -273,7 +274,7 @@ test('should refuse setting metadata on service when not authorized', async (t) 
     },
   }
 
-  const ret = await setMeta(action, dispatch, getService)
+  const ret = await setMeta(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'noaccess', ret.response?.error)
   t.false(scope.isDone())
@@ -290,7 +291,7 @@ test('should return error for unknown service', async (t) => {
     meta: { ident },
   }
 
-  const ret = await setMeta(action, dispatch, getService)
+  const ret = await setMeta(action, { dispatch, getService, options })
 
   t.is(ret.response?.status, 'error')
 })

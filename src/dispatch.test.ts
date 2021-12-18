@@ -1,9 +1,14 @@
 import test from 'ava'
 import sinon = require('sinon')
-import { Action, InternalDispatch, Middleware } from './types'
+import {
+  Action,
+  Middleware,
+  ActionHandler,
+  ActionHandlerResources,
+} from './types'
 import createService from './service'
 
-import dispatch, { ActionHandler } from './dispatch'
+import dispatch from './dispatch'
 
 // Setup
 
@@ -183,9 +188,10 @@ test('should call action handler with action, dispatch, getService, and options'
 
   t.is(getHandler.callCount, 1)
   t.deepEqual(getHandler.args[0][0], expected)
-  t.is(typeof getHandler.args[0][1], 'function')
-  t.is(typeof getHandler.args[0][2], 'function')
-  t.is(getHandler.args[0][3], options)
+  const resources = getHandler.args[0][1]
+  t.is(typeof resources.dispatch, 'function')
+  t.is(typeof resources.getService, 'function')
+  t.is(resources.options, options)
 })
 
 test('should call with action', async (t) => {
@@ -254,7 +260,7 @@ test('should dispatch to middleware from action handlers', async (t) => {
       payload: {},
       response: { status: 'fromAction' },
     }),
-    DISPATCHER: async (_action: Action, dispatch: InternalDispatch) =>
+    DISPATCHER: async (_action: Action, { dispatch }: ActionHandlerResources) =>
       dispatch({ type: 'TEST', payload: {} }),
   }
   const middleware: Middleware[] = [

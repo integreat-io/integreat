@@ -9,7 +9,7 @@ import SYNC from './sync'
 import EXPIRE from './expire'
 import QUEUE from './queue'
 import SERVICE from './service'
-import { ActionHandler } from '../dispatch'
+import { ActionHandler } from '../types'
 
 const handlers: Record<string, ActionHandler> = {
   GET,

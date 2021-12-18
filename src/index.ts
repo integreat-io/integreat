@@ -16,6 +16,9 @@ export {
   Transporter,
   Connection,
   Middleware,
+  ActionHandler,
+  ActionHandlerResources,
+  InternalDispatch,
 } from './types'
 export { Authenticator, AuthDef, ServiceDef } from './service/types'
 export { Instance, Definitions, Resources } from './create'
