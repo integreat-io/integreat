@@ -161,14 +161,14 @@ test('should return status noaction when no action', async (t) => {
   t.is(ret.error, 'Dispatched no action')
 })
 
-test('should return noaction when unknown action', async (t) => {
+test('should return badrequest when unknown action', async (t) => {
   const action = { type: 'UNKNOWN', payload: {} }
   const services = {}
   const handlers = {}
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
 
-  t.is(ret.status, 'noaction')
+  t.is(ret.status, 'badrequest')
   t.is(ret.error, 'No handler for UNKNOWN action')
 })
 

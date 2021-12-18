@@ -154,7 +154,7 @@ function handleAction(
     return createErrorOnAction(
       action,
       `No handler for ${handlerType} action`,
-      'noaction'
+      'badrequest'
     )
   }
 
