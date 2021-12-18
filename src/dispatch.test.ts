@@ -194,7 +194,7 @@ test('should call action handler with action, dispatch, getService, and options'
   t.is(resources.options, options)
 })
 
-test('should call with action', async (t) => {
+test('should call middleware', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const handlers = {
     TEST: async () => ({
@@ -284,6 +284,33 @@ test('should dispatch to middleware from action handlers', async (t) => {
   t.is(ret.status, '<<fromAction>>')
 })
 
+test('should support progress reporting', async (t) => {
+  const progressStub = sinon.stub()
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+  }
+  const handlers = {
+    async GET(action: Action, { setProgress }: ActionHandlerResources) {
+      setProgress(0.5)
+      return { ...action, response: { status: 'ok', data: [] } }
+    },
+  }
+
+  const p = dispatch({ handlers, services, schemas, options })(action)
+  p.onProgress(progressStub)
+  const ret = await p
+
+  t.is(ret.status, 'ok')
+  t.is(progressStub.callCount, 2)
+  t.is(progressStub.args[0][0], 0.5)
+  t.is(progressStub.args[1][0], 1)
+})
+
 // Note: Happy case for incoming mapping is tested in /tests/incoming
 
 test('should return error when source service is not found', async (t) => {
@@ -336,4 +363,32 @@ test('should return error when no endoint on source service matches', async (t) 
 
   t.is(ret.status, 'badrequest', ret.error)
   t.is(ret.error, "No matching endpoint for incoming mapping on service 'api'")
+})
+
+test('should return error instead of throwing', async (t) => {
+  const action = { type: 'TEST', payload: {} }
+  const handlers = {
+    TEST: async () => ({
+      ...action,
+      response: { status: 'fromAction' },
+    }),
+  }
+  const middleware: Middleware[] = [
+    (_next) => async (_action) => {
+      throw new Error("Too little memory. It's tiny")
+    },
+  ]
+  const ret = await dispatch({
+    handlers,
+    services,
+    schemas,
+    middleware,
+    options,
+  })(action)
+
+  t.is(ret.status, 'error')
+  t.is(
+    ret.error,
+    "Error thrown in dispatch: Error: Too little memory. It's tiny"
+  )
 })

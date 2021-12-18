@@ -18,7 +18,8 @@ export {
   Middleware,
   ActionHandler,
   ActionHandlerResources,
-  InternalDispatch,
+  HandlerDispatch,
+  SetProgress,
 } from './types'
 export { Authenticator, AuthDef, ServiceDef } from './service/types'
 export { Instance, Definitions, Resources } from './create'

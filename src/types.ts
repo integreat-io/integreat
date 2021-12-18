@@ -1,3 +1,4 @@
+import PProgress = require('p-progress')
 import { EndpointOptions } from './service/endpoints/types'
 import { IdentConfig } from './service/types'
 import { Service } from './service/types'
@@ -129,15 +130,19 @@ export interface Action<P extends Payload = Payload, ResponseData = unknown> {
 }
 
 export interface Dispatch<T = unknown> {
-  (action: Action | null): Promise<Response<T>>
+  (action: Action | null): PProgress<Response<T>>
 }
 
 export interface InternalDispatch {
+  (action: Action): PProgress<Action>
+}
+
+export interface HandlerDispatch {
   (action: Action): Promise<Action>
 }
 
 export interface Middleware {
-  (next: InternalDispatch): InternalDispatch
+  (next: HandlerDispatch): HandlerDispatch
 }
 
 export interface Connection extends Record<string, unknown> {
@@ -167,6 +172,10 @@ export interface GetService {
   (type?: string | string[], serviceId?: string): Service | undefined
 }
 
+export interface SetProgress {
+  (progress: number): void
+}
+
 export interface HandlerOptions {
   identConfig?: IdentConfig
   queueService?: string
@@ -175,6 +184,7 @@ export interface HandlerOptions {
 export interface ActionHandlerResources {
   dispatch: InternalDispatch
   getService: GetService
+  setProgress: SetProgress
   options: HandlerOptions
 }
 

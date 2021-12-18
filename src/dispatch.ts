@@ -1,8 +1,10 @@
 import debugLib = require('debug')
+import PProgress = require('p-progress')
 import setupGetService from './utils/getService'
 import {
   Dispatch,
   InternalDispatch,
+  HandlerDispatch,
   Middleware,
   Action,
   ActionHandler,
@@ -88,34 +90,39 @@ const responseFromAction = ({
   meta: { ident } = {},
 }: Action) => ({ ...response, status: status || null, access: { ident } })
 
-const wrapDispatch = (
-  internalDispatch: InternalDispatch,
-  getService: GetService
-): Dispatch =>
-  async function dispatch(action: Action | null) {
-    if (!action) {
-      return { status: 'noaction', error: 'Dispatched no action' }
-    }
+const wrapDispatch =
+  (internalDispatch: InternalDispatch, getService: GetService): Dispatch =>
+  (action: Action | null) =>
+    new PProgress(async (resolve, _reject, setProgress) => {
+      if (!action) {
+        resolve({ status: 'noaction', error: 'Dispatched no action' })
+        return
+      }
 
-    // Map incoming request data when needed
-    const {
-      action: mappedAction,
-      service,
-      endpoint,
-    } = mapIncomingAction(action, getService)
-    // Return any error from mapIncomingRequest()
-    if (mappedAction.response?.status) {
-      return responseFromAction(mappedAction)
-    }
+      // Map incoming request data when needed
+      const {
+        action: mappedAction,
+        service,
+        endpoint,
+      } = mapIncomingAction(action, getService)
+      // Return any error from mapIncomingRequest()
+      if (mappedAction.response?.status) {
+        resolve(responseFromAction(mappedAction))
+        return
+      }
 
-    // Dispatch
-    const responseAction = await internalDispatch(mappedAction)
+      // Dispatch
+      const p = internalDispatch(mappedAction)
+      p.onProgress(setProgress)
+      const responseAction = await p
 
-    // Map respons data when needed
-    return responseFromAction(
-      mapIncomingResponse(responseAction, service, endpoint)
-    )
-  }
+      // Map respons data when needed
+      resolve(
+        responseFromAction(
+          mapIncomingResponse(responseAction, service, endpoint)
+        )
+      )
+    })
 
 export interface Resources {
   handlers: Record<string, ActionHandler>
@@ -173,37 +180,45 @@ export default function createDispatch({
   const middlewareFn =
     middleware.length > 0
       ? compose(...middleware)
-      : (next: InternalDispatch) => async (action: Action) => next(action)
+      : (next: HandlerDispatch) => async (action: Action) => next(action)
 
-  const internalDispatch = async function (action: Action) {
-    debug('Dispatch: %o', action)
+  const internalDispatch = (action: Action) =>
+    new PProgress<Action>(async (resolve, _reject, setProgress) => {
+      debug('Dispatch: %o', action)
 
-    // Refuse attempt to dispatch a QUEUE action, as it would never stop being
-    // sent to queue.
-    if (action.type === 'QUEUE') {
-      return createErrorOnAction(
-        action,
-        'No handler for QUEUE action',
-        'noaction'
-      )
-    }
+      // Refuse attempt to dispatch a QUEUE action, as it would never stop being
+      // sent to queue.
+      if (action.type === 'QUEUE') {
+        resolve(
+          createErrorOnAction(action, 'No handler for QUEUE action', 'noaction')
+        )
+        return
+      }
 
-    const nextAction = prepareAction(action)
-    const resources: ActionHandlerResources = {
-      dispatch: internalDispatch,
-      getService,
-      options,
-    }
+      const nextAction = prepareAction(action)
+      const resources: ActionHandlerResources = {
+        dispatch: internalDispatch,
+        getService,
+        options,
+        setProgress,
+      }
 
-    // Use queue handler if queue flag is set and there is a queue service
-    if (shouldQueue(action, options)) {
-      return handleAction('QUEUE', nextAction, resources, handlers)
-    }
-
-    return middlewareFn(async (action) =>
-      handleAction(action.type, action, resources, handlers)
-    )(nextAction)
-  }
+      try {
+        if (shouldQueue(action, options)) {
+          // Use queue handler if queue flag is set and there is a queue
+          // service. Bypass middleware
+          resolve(handleAction('QUEUE', nextAction, resources, handlers))
+        } else {
+          // Send action through middleware before sending to the relevant
+          // handler
+          const next = async (action: Action) =>
+            handleAction(action.type, action, resources, handlers)
+          resolve(await middlewareFn(next)(nextAction))
+        }
+      } catch (err) {
+        resolve(createErrorOnAction(action, `Error thrown in dispatch: ${err}`))
+      }
+    })
 
   return wrapDispatch(internalDispatch, getService)
 }
