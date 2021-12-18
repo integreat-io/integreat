@@ -9,6 +9,7 @@ import {
 } from '../tests/helpers/json'
 import schema from '../schema'
 import functions from '../transformers/builtIns'
+import handlerResources from '../tests/helpers/handlerResources'
 import { Action, DataObject } from '../types'
 
 import get from './get'
@@ -82,13 +83,6 @@ const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
     ],
   })
 
-const dispatch = async (action: Action): Promise<Action> => ({
-  ...action,
-  response: { ...action.response, status: 'ok' },
-})
-
-const options = {}
-
 test.after.always(() => {
   nock.restore()
 })
@@ -135,7 +129,7 @@ test('should get all items from service', async (t) => {
     ],
   }
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.deepEqual(ret.response, expectedResponse)
   t.true(scope.isDone())
@@ -159,7 +153,7 @@ test('should get item by id from service', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is((ret.response?.data as DataObject).id, 'ent1')
@@ -187,7 +181,7 @@ test('should get items by id array from service from member_s_ endpoint', async 
   })
   const getService = () => svc
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(Array.isArray(ret.response?.data))
@@ -219,7 +213,7 @@ test('should get items by id array from member endpoints', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(Array.isArray(ret.response?.data))
@@ -252,7 +246,7 @@ test('should pass on ident when getting from id array', async (t) => {
     }))
   const getService = () => svc
 
-  await get(action, { dispatch, getService, options })
+  await get(action, { ...handlerResources, getService })
 
   t.is(sendStub.callCount, 2)
   const action1 = sendStub.args[0][0]
@@ -277,7 +271,7 @@ test('should return error when one or more requests for individual ids fails', a
   const svc = setupService('http://api8.test/entries/{id}', { scope: 'member' })
   const getService = () => svc
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'error')
 })
@@ -299,7 +293,7 @@ test('should get item by id from service when id is array of one', async (t) => 
   })
   const getService = () => svc
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is((ret.response?.data as DataObject).id, 'ent1')
@@ -319,7 +313,7 @@ test('should get default values from type', async (t) => {
   const svc = setupService('http://api1.test/database')
   const getService = () => svc
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is((ret.response?.data as DataObject[])[0].byline, 'Somebody')
 })
@@ -339,7 +333,7 @@ test('should not get default values from type', async (t) => {
   const svc = setupService('http://api1.test/database')
   const getService = () => svc
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is((ret.response?.data as DataObject[])[0].byline, undefined)
 })
@@ -353,7 +347,7 @@ test('should infer service id from type', async (t) => {
   const getService = (type?: string | string[], _service?: string) =>
     type === 'entry' ? svc : undefined
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok')
   t.is((ret.response?.data as DataObject[])[0].id, 'ent1')
@@ -373,7 +367,7 @@ test('should get from other endpoint', async (t) => {
   const svc = setupService('http://api5.test/database')
   const getService = () => svc
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is((ret.response?.data as DataObject[])[0].id, 'ent1')
@@ -391,7 +385,7 @@ test('should return error on not found', async (t) => {
   const svc = setupService('http://api3.test/unknown')
   const getService = () => svc
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'notfound')
   t.is(ret.response?.data, undefined)
@@ -402,7 +396,7 @@ test('should return error when no service exists for type', async (t) => {
   const action = { type: 'GET', payload: { type: 'entry' } }
   const getService = () => undefined
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, "No service exists for type 'entry'")
@@ -415,7 +409,7 @@ test('should return error when specified service does not exist', async (t) => {
   }
   const getService = () => undefined
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, "Service with id 'entries' does not exist")
@@ -432,7 +426,7 @@ test('should return error when no getService', async (t) => {
     },
   }
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.truthy(ret)
   t.is(ret.response?.status, 'error')
@@ -479,7 +473,7 @@ test('should get only authorized items', async (t) => {
     },
   ]
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   const data = ret.response?.data
@@ -501,7 +495,7 @@ test('should return noaction when no endpoint matches', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
 
-  const ret = await get(action, { dispatch, getService, options })
+  const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'noaction', ret.response?.error)
   t.is(typeof ret.response?.error, 'string')

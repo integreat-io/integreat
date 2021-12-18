@@ -3,7 +3,7 @@ import ms = require('ms')
 import {
   Action,
   Response,
-  InternalDispatch,
+  HandlerDispatch,
   Meta,
   TypedData,
   Params,
@@ -101,7 +101,7 @@ const createSetAction = (
 })
 
 async function setData(
-  dispatch: InternalDispatch,
+  dispatch: HandlerDispatch,
   data: TypedData[],
   { alwaysSet = false, maxPerSet, ...params }: ActionParams,
   doQueueSet: boolean,
@@ -139,7 +139,7 @@ const setDatePropIf = (date: string | Date | undefined, prop: string) =>
   date ? { [prop]: castDate(date) || undefined } : {}
 
 async function getLastSyncedAt(
-  dispatch: InternalDispatch,
+  dispatch: HandlerDispatch,
   service: string,
   type: string | string[],
   metaKey?: string,
@@ -175,7 +175,7 @@ function setCounterPart(params: ActionParams, dateSet: 'updated' | 'created') {
 }
 
 const setDatesAndType = (
-  dispatch: InternalDispatch,
+  dispatch: HandlerDispatch,
   type: string | string[],
   syncParams: SyncParams,
   meta?: Meta
@@ -244,7 +244,7 @@ const setDatesAndType = (
   }
 
 const setMetaFromParams = (
-  dispatch: InternalDispatch,
+  dispatch: HandlerDispatch,
   {
     payload: { type, params: { metaKey } = {} },
     meta: { id, ...meta } = {},
@@ -280,7 +280,7 @@ const paramsAsObject = (params?: string | Partial<ActionParams>) =>
   typeof params === 'string' ? { service: params } : params
 
 const generateFromParams = async (
-  dispatch: InternalDispatch,
+  dispatch: HandlerDispatch,
   type: string | string[],
   { payload: { params = {} }, meta: { id, ...meta } = {} }: Action
 ) =>
@@ -342,7 +342,7 @@ function generateToParams(
 
 async function extractActionParams(
   action: Action,
-  dispatch: InternalDispatch
+  dispatch: HandlerDispatch
 ): Promise<[ActionParams[], ActionParams | undefined]> {
   const { type } = action.payload
   // Require a type
@@ -375,7 +375,7 @@ const withinDateRange =
     (!updatedUntil || (!!data.updatedAt && data.updatedAt <= updatedUntil))
 
 async function retrieveDataFromOneService(
-  dispatch: InternalDispatch,
+  dispatch: HandlerDispatch,
   params: ActionParams,
   doFilterData: boolean,
   meta?: Meta
@@ -437,7 +437,7 @@ const extractItemDate = (retrieve?: RetrieveOptions) => (item?: TypedData) =>
 const fetchDataFromService = (
   fromParams: ActionParams[],
   doFilterData: boolean,
-  dispatch: InternalDispatch,
+  dispatch: HandlerDispatch,
   { meta: { id, ...meta } = {} }: Action
 ) =>
   Promise.all(

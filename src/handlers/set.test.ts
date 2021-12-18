@@ -8,7 +8,8 @@ import {
 } from '../tests/helpers/json'
 import schema from '../schema'
 import functions from '../transformers/builtIns'
-import { Action, TypedData } from '../types'
+import handlerResources from '../tests/helpers/handlerResources'
+import { TypedData } from '../types'
 
 import set from './set'
 
@@ -91,13 +92,6 @@ const setupService = (uri: string, id = 'entries', method = 'POST') => {
   })
 }
 
-const dispatch = async (action: Action) => ({
-  ...action,
-  response: { ...action.response, status: 'ok' },
-})
-
-const options = {}
-
 test.after(() => {
   nock.restore()
 })
@@ -128,7 +122,7 @@ test('should map and set items to service', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -152,7 +146,7 @@ test('should map and set one item to service', async (t) => {
   const src = setupService('http://api4.test/database/_bulk_docs')
   const getService = () => src
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -178,7 +172,7 @@ test('should send without default values', async (t) => {
   const getService = (type?: string | string[], _service?: string) =>
     type === 'entry' ? src : undefined
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -202,7 +196,7 @@ test('should infer service id from type', async (t) => {
   const getService = (type?: string | string[], _service?: string) =>
     type === 'entry' ? src : undefined
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -223,7 +217,7 @@ test('should set to specified endpoint', async (t) => {
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = () => src
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -244,7 +238,7 @@ test('should set to uri with params', async (t) => {
   const src = setupService('http://api3.test/{{params.typefolder}}/_bulk_docs')
   const getService = () => src
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -262,7 +256,7 @@ test('should return error when service fails', async (t) => {
   const src = setupService('http://api7.test/database/_bulk_docs')
   const getService = () => src
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'notfound', ret.response?.error)
   t.is(typeof ret.response?.error, 'string')
@@ -279,7 +273,7 @@ test('should return error when no service exists for a type', async (t) => {
     },
   }
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, "No service exists for type 'entry'")
@@ -294,7 +288,7 @@ test('should get type from data $type', async (t) => {
     },
   }
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, "No service exists for type 'entry'")
@@ -310,7 +304,7 @@ test('should return error when specified service does not exist', async (t) => {
     },
   }
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, "Service with id 'entries' does not exist")
@@ -338,7 +332,7 @@ test('should authenticate items', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'accounts' ? src : undefined
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -361,7 +355,7 @@ test('should return empty response from service', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is(ret.response?.data, undefined)
@@ -390,7 +384,7 @@ test('should map response data', async (t) => {
   const src = setupService('http://api9.test/database/_bulk_docs', 'accounts')
   const getService = () => src
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   const data = ret.response?.data as TypedData[]
@@ -419,7 +413,7 @@ test('should map non-array response data', async (t) => {
   const src = setupService('http://api10.test/database/_bulk_docs', 'accounts')
   const getService = () => src
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   const data = ret.response?.data as TypedData
@@ -443,7 +437,7 @@ test('should allow null as request data', async (t) => {
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = () => src
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(scope.isDone())
@@ -466,7 +460,7 @@ test('should return noaction when no endpoint matches', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
 
-  const ret = await set(action, { dispatch, getService, options })
+  const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'noaction', ret.response?.error)
   t.is(typeof ret.response?.error, 'string')

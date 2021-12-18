@@ -182,7 +182,7 @@ export interface HandlerOptions {
 }
 
 export interface ActionHandlerResources {
-  dispatch: InternalDispatch
+  dispatch: HandlerDispatch
   getService: GetService
   setProgress: SetProgress
   options: HandlerOptions

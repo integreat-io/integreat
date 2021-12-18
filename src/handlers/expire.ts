@@ -2,7 +2,7 @@ import { createErrorOnAction } from '../utils/createError'
 import { isTypedData } from '../utils/is'
 import {
   Action,
-  InternalDispatch,
+  HandlerDispatch,
   Ident,
   TypedData,
   ActionHandlerResources,
@@ -16,7 +16,7 @@ const getExpired = async (
   type: string | string[],
   endpointId: string,
   msFromNow: number,
-  dispatch: InternalDispatch,
+  dispatch: HandlerDispatch,
   ident?: Ident
 ): Promise<Action> => {
   const timestamp = Date.now() + msFromNow
@@ -37,7 +37,7 @@ const getExpired = async (
 const deleteExpired = async (
   data: TypedData[],
   targetService: string,
-  dispatch: InternalDispatch,
+  dispatch: HandlerDispatch,
   ident?: Ident
 ): Promise<Action> => {
   const deleteData = data.map((item) => ({ id: item.id, $type: item.$type }))

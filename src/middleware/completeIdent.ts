@@ -1,6 +1,6 @@
-import { InternalDispatch, Middleware, Ident } from '../types'
+import { HandlerDispatch, Middleware, Ident } from '../types'
 
-const getIdent = async (ident: Ident, dispatch: InternalDispatch) => {
+const getIdent = async (ident: Ident, dispatch: HandlerDispatch) => {
   const responseAction = await dispatch({
     type: 'GET_IDENT',
     payload: {},

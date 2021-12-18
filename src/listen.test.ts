@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon = require('sinon')
+import dispatch from './tests/helpers/dispatch'
 import { Action } from './types'
 
 import listen from './listen'
@@ -18,7 +19,6 @@ const serviceMethods = {
 // Tests
 
 test('should run listen method on all services', async (t) => {
-  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
   const listenStub1 = sinon.stub().resolves({ status: 'ok' })
   const listenStub2 = sinon.stub().resolves({ status: 'ok' })
   const services = [
@@ -44,7 +44,6 @@ test('should run listen method on all services', async (t) => {
 })
 
 test('should stop and return error when listen fails', async (t) => {
-  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
   const listenStub1 = sinon
     .stub()
     .resolves({ status: 'error', error: 'Could not go on' })
@@ -74,7 +73,6 @@ test('should stop and return error when listen fails', async (t) => {
 })
 
 test('should not treat noaction as error', async (t) => {
-  const dispatch = async (_action: Action | null) => ({ status: 'ok' })
   const listenStub1 = sinon
     .stub()
     .resolves({ status: 'noaction', error: 'Transporter has no listen method' })

@@ -4,6 +4,7 @@ import sinon = require('sinon')
 import jsonResources from '../tests/helpers/resources'
 import functions from '../transformers/builtIns'
 import createSchema from '../schema'
+import dispatch from '../tests/helpers/dispatch'
 import { ServiceDef } from './types'
 import { TypedData, Connection, Action, DataObject, Dispatch } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
@@ -120,8 +121,6 @@ const auths = {
 }
 
 const authDef = { id: 'auth1', authenticator: 'auth', options: {} }
-
-const dispatch = async (_action: Action | null) => ({ status: 'ok' })
 
 // Tests
 
@@ -1421,7 +1420,7 @@ test('listen should call transporter.listen', async (t) => {
 })
 
 test('listen should set sourceService and ident on dispatched actions', async (t) => {
-  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
     payload: { data: [] },
@@ -1455,15 +1454,15 @@ test('listen should set sourceService and ident on dispatched actions', async (t
   }
   const expectedResponse = { status: 'ok' }
 
-  const ret = await service.listen(dispatch)
+  const ret = await service.listen(dispatchStub)
 
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.is(dispatchStub.callCount, 1)
+  t.deepEqual(dispatchStub.args[0][0], expectedAction)
   t.deepEqual(ret, expectedResponse)
 })
 
 test('listen should set ident on dispatched actions from incomingIdent', async (t) => {
-  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
     payload: { data: [] },
@@ -1498,10 +1497,10 @@ test('listen should set ident on dispatched actions from incomingIdent', async (
   }
   const expectedResponse = { status: 'ok' }
 
-  const ret = await service.listen(dispatch)
+  const ret = await service.listen(dispatchStub)
 
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.is(dispatchStub.callCount, 1)
+  t.deepEqual(dispatchStub.args[0][0], expectedAction)
   t.deepEqual(ret, expectedResponse)
 })
 

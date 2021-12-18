@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon = require('sinon')
+import handlerResources from '../tests/helpers/handlerResources'
 import { TypedData } from '../types'
 
 import getAll from './getAll'
@@ -11,9 +12,6 @@ const event = (id: string) => ({
   $type: 'event',
   createdAt: new Date(),
 })
-
-const getService = () => undefined
-const options = {}
 
 // Tests
 
@@ -43,7 +41,7 @@ test('should get all pages', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 3)
   t.is(dispatch.args[0][0].type, 'GET')
@@ -83,7 +81,7 @@ test('should get all pages when last is empty', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 3)
   t.is(ret.response?.status, 'ok')
@@ -116,7 +114,7 @@ test('should get all pages using offset', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 3)
   t.is(dispatch.args[0][0].type, 'GET')
@@ -153,7 +151,7 @@ test('should get all pages starting from an offset', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 2)
   t.is(dispatch.args[0][0].type, 'GET')
@@ -192,7 +190,7 @@ test('should get all pages starting from an uneven offset', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 3)
   t.is(dispatch.args[0][0].type, 'GET')
@@ -232,7 +230,7 @@ test('should get all pages using pageAfter', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 3)
   t.is(dispatch.args[0][0].payload.pageAfter, undefined)
@@ -282,7 +280,7 @@ test('should get all pages using paging in response', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 3)
   t.is(dispatch.args[0][0].type, 'GET')
@@ -333,7 +331,7 @@ test('should get all pages using paging when last page is full', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 2)
   t.is(dispatch.args[0][0].type, 'GET')
@@ -379,7 +377,7 @@ test('should get all pages using partial paging', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[1][0].payload, {
@@ -421,7 +419,7 @@ test('should require at least one non-undefined prop for next paging', async (t)
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 2)
   t.is(ret.response?.status, 'ok')
@@ -446,7 +444,7 @@ test('should recognize loop and return error', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 2)
   t.is(ret.response?.status, 'error')
@@ -479,7 +477,7 @@ test('should not look for loop when noLoopCheck is true', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 3)
   t.is(ret.response?.status, 'ok')
@@ -504,7 +502,7 @@ test('should return error', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 1)
   t.is(ret.response?.status, 'notfound')
@@ -525,7 +523,7 @@ test('should treat null data as no data', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 1)
   t.is(ret.response?.status, 'ok')
@@ -553,7 +551,7 @@ test('should dispatch action without pageSize', async (t) => {
     meta: { ident: { id: 'johnf' }, project: 'jetkids' },
   }
 
-  const ret = await getAll(action, { dispatch, getService, options })
+  const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expected)

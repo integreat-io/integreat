@@ -4,18 +4,12 @@ import Integreat from '..'
 import { jsonServiceDef } from '../tests/helpers/json'
 import mutations from '../mutations'
 import resources from '../tests/helpers/resources'
+import handlerResources from '../tests/helpers/handlerResources'
 import { EndpointDef } from '../service/endpoints/types'
-import { Action } from '../types'
 
 import getMeta from './getMeta'
 
 // Setup
-
-const dispatch = async (action: Action) => ({
-  ...action,
-  response: { ...action.response, status: 'ok' },
-})
-const options = {}
 
 const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
   schemas: [
@@ -82,7 +76,7 @@ test('should get metadata for service', async (t) => {
     data: { service: 'store', meta: { lastSyncedAt } },
   }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.deepEqual(ret.response, expectedResponse)
 })
@@ -112,7 +106,7 @@ test('should get several metadata for service', async (t) => {
   }
   const expected = { service: 'store', meta: { lastSyncedAt, count: 5 } }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.response?.data, expected)
@@ -142,7 +136,7 @@ test('should get all metadata for service', async (t) => {
     meta: { lastSyncedAt, count: 5, status: 'ready' },
   }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.truthy(ret)
   t.is(ret.response?.status, 'ok', ret.response?.error)
@@ -172,7 +166,7 @@ test('should get metadata for service with type', async (t) => {
     data: { service: 'store', meta: { lastSyncedAt } },
   }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.deepEqual(ret.response, expectedResponse)
 })
@@ -200,7 +194,7 @@ test('should get metadata for service with several types', async (t) => {
     data: { service: 'store', meta: { lastSyncedAt } },
   }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.deepEqual(ret.response, expectedResponse)
 })
@@ -232,7 +226,7 @@ test('should get metadata for service with metaKey', async (t) => {
     data: { service: 'store', meta: { lastSyncedAt } },
   }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.deepEqual(ret.response, expectedResponse)
 })
@@ -261,7 +255,7 @@ test('should return null for metadata when not set on service', async (t) => {
   }
   const expected = { service: 'store', meta: { lastSyncedAt: null } }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.truthy(ret)
   t.is(ret.response?.status, 'ok', ret.response?.error)
@@ -289,7 +283,7 @@ test('should return reply from service when not ok', async (t) => {
     meta: { ident },
   }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'notfound', ret.response?.error)
 })
@@ -317,7 +311,7 @@ test('should return noaction when when no meta type is set', async (t) => {
     meta: { ident },
   }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'noaction')
   t.is(typeof ret.response?.error, 'string')
@@ -352,7 +346,7 @@ test('should get metadata from other service', async (t) => {
   }
   const expected = { service: 'entries', meta: { lastSyncedAt } }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.response?.data, expected)
@@ -372,7 +366,7 @@ test('should return noaction when meta is set to an unknown type', async (t) => 
     meta: { ident },
   }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'noaction')
   t.is(typeof ret.response?.error, 'string')
@@ -389,7 +383,7 @@ test('should return error for unknown service', async (t) => {
     meta: { ident },
   }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'error')
 })
@@ -412,7 +406,7 @@ test('should respond with noaccess when not authorized', async (t) => {
     },
   }
 
-  const ret = await getMeta(action, { dispatch, getService, options })
+  const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'noaccess', ret.response?.error)
   t.is(typeof ret.response?.error, 'string')

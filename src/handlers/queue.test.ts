@@ -1,7 +1,8 @@
 import test from 'ava'
 import sinon = require('sinon')
 import createService from '../service'
-import { Action, Transporter } from '../types'
+import handlerResources from '../tests/helpers/handlerResources'
+import { Transporter } from '../types'
 
 import queue from './queue'
 
@@ -36,11 +37,6 @@ const action = {
   meta: { ident: { id: 'johnf' } },
 }
 
-const dispatch = async (action: Action) => ({
-  ...action,
-  response: { ...action.response, status: 'ok' },
-})
-
 // Tests
 
 test('should send action to queue', async (t) => {
@@ -59,7 +55,7 @@ test('should send action to queue', async (t) => {
     meta: { ident: { id: 'johnf' }, authorized: true },
   }
 
-  const ret = await queue(action, { dispatch, getService, options })
+  const ret = await queue(action, { ...handlerResources, getService, options })
 
   t.deepEqual(ret, expected)
   t.is(send.callCount, 1)
@@ -81,7 +77,7 @@ test('should return error from queue', async (t) => {
     response: { status: 'timeout', error: 'Queue busy' },
   }
 
-  const ret = await queue(action, { dispatch, getService, options })
+  const ret = await queue(action, { ...handlerResources, getService, options })
 
   t.deepEqual(ret, expected)
 })
@@ -104,7 +100,7 @@ test('should return error when queue does not respond status', async (t) => {
     },
   }
 
-  const ret = await queue(action, { dispatch, getService, options })
+  const ret = await queue(action, { ...handlerResources, getService, options })
 
   t.deepEqual(ret, expected)
 })
@@ -117,7 +113,12 @@ test('should dispatch action when queue service is unknown', async (t) => {
   const getService = (_type?: string | string[], _service?: string) => undefined
   const expected = { ...action, response: { status: 'ok' } }
 
-  const ret = await queue(action, { dispatch, getService, options })
+  const ret = await queue(action, {
+    ...handlerResources,
+    dispatch,
+    getService,
+    options,
+  })
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)

@@ -3,7 +3,7 @@ import sinon = require('sinon')
 import { jsonServiceDef } from './tests/helpers/json'
 import builtInMutations from './mutations'
 import resources from './tests/helpers/resources'
-import { Action, InternalDispatch, DataObject } from './types'
+import { Action, HandlerDispatch, DataObject } from './types'
 
 import create, { Definitions } from './create'
 
@@ -164,7 +164,7 @@ test('should call middleware', async (t) => {
     }),
   }
   const middleware = [
-    (next: InternalDispatch) => async (_action: Action) =>
+    (next: HandlerDispatch) => async (_action: Action) =>
       next({ type: 'OTHER', payload: {} }),
   ]
 

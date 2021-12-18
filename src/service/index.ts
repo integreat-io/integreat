@@ -1,6 +1,7 @@
+import PProgress = require('p-progress')
 import createEndpointMappers from './endpoints'
 import { createErrorOnAction, createErrorResponse } from '../utils/createError'
-import { Action, Dispatch, Middleware, Transporter } from '../types'
+import { Action, Response, Dispatch, Middleware, Transporter } from '../types'
 import { Service, ServiceDef, MapOptions } from './types'
 import Connection from './Connection'
 import { Schema } from '../schema'
@@ -33,12 +34,18 @@ const setServiceIdAsSourceServiceOnAction = (
       }
     : null
 
+// TODO: Consider if this is the correct approach - it's very convoluted and
+// require tests for the progress part
 const setServiceIdOnDispatchedAction =
   (dispatch: Dispatch, serviceId: string, incomingIdent: string) =>
-  async (action: Action | null) =>
-    dispatch(
-      setServiceIdAsSourceServiceOnAction(action, serviceId, incomingIdent)
-    )
+  (action: Action | null) =>
+    new PProgress<Response>((resolve, _reject, setProgress) => {
+      const p = dispatch(
+        setServiceIdAsSourceServiceOnAction(action, serviceId, incomingIdent)
+      )
+      p.onProgress(setProgress)
+      resolve(p)
+    })
 
 const isTransporter = (transporter: unknown): transporter is Transporter =>
   isObject(transporter)

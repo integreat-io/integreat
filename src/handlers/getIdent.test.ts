@@ -5,7 +5,8 @@ import defs from '../tests/helpers/defs'
 import resources from '../tests/helpers/resources'
 import johnfData from '../tests/helpers/data/userJohnf'
 import ent1Data from '../tests/helpers/data/entry1'
-import { Action, TypedData } from '../types'
+import defaultHandlerResources from '../tests/helpers/handlerResources'
+import { TypedData } from '../types'
 
 import getIdent from './getIdent'
 
@@ -13,11 +14,8 @@ import getIdent from './getIdent'
 
 const great = Integreat.create(defs, resources)
 const getService = () => great.services.users
-const dispatch = async (action: Action) => ({
-  ...action,
-  response: { ...action.response, status: 'ok' },
-})
 const options = { identConfig: { type: 'user' } }
+const handlerResources = { ...defaultHandlerResources, getService, options }
 
 const johnfIdent = {
   id: 'johnf',
@@ -42,7 +40,7 @@ test('should complete ident with token', async (t) => {
     meta: { ident: { withToken: 'twitter|23456' } },
   }
 
-  const ret = await getIdent(action, { dispatch, getService, options })
+  const ret = await getIdent(action, handlerResources)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.meta?.ident, johnfIdent)
@@ -60,7 +58,7 @@ test('should complete ident with id', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await getIdent(action, { dispatch, getService, options })
+  const ret = await getIdent(action, handlerResources)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.meta?.ident, johnfIdent)
@@ -77,7 +75,7 @@ test('should complete ident with id when more props are present', async (t) => {
     meta: { ident: { id: 'johnf', withToken: 'other|34567' } },
   }
 
-  const ret = await getIdent(action, { dispatch, getService, options })
+  const ret = await getIdent(action, handlerResources)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.meta?.ident, johnfIdent)
@@ -91,7 +89,7 @@ test('should return noaction when no props', async (t) => {
     meta: { ident: {} },
   }
 
-  const ret = await getIdent(action, { dispatch, getService, options })
+  const ret = await getIdent(action, handlerResources)
 
   t.is(ret.response?.status, 'noaction')
   t.is(typeof ret.response?.error, 'string')
@@ -104,7 +102,7 @@ test('should return noaction when null', async (t) => {
     meta: { ident: undefined },
   }
 
-  const ret = await getIdent(action, { dispatch, getService, options })
+  const ret = await getIdent(action, handlerResources)
 
   t.is(ret.response?.status, 'noaction')
   t.is(typeof ret.response?.error, 'string')
@@ -118,7 +116,7 @@ test('should return noaction when no ident options', async (t) => {
   }
   const options = {}
 
-  const ret = await getIdent(action, { dispatch, getService, options })
+  const ret = await getIdent(action, { ...handlerResources, options })
 
   t.is(ret.response?.status, 'noaction')
   t.is(typeof ret.response?.error, 'string')
@@ -131,7 +129,7 @@ test('should return notfound when ident not found', async (t) => {
     meta: { ident: { id: 'unknown' } },
   }
 
-  const ret = await getIdent(action, { dispatch, getService, options })
+  const ret = await getIdent(action, handlerResources)
 
   t.truthy(ret)
   t.is(ret.response?.status, 'notfound')
@@ -164,7 +162,11 @@ test('should complete ident with other prop keys', async (t) => {
     tokens: undefined,
   }
 
-  const ret = await getIdent(action, { dispatch, getService, options })
+  const ret = await getIdent(action, {
+    ...handlerResources,
+    getService,
+    options,
+  })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.meta?.ident, expectedIdent)
@@ -183,7 +185,7 @@ test('should return notfound when unknown service', async (t) => {
     meta: { ident: { withToken: 'twitter|23456' } },
   }
 
-  const ret = await getIdent(action, { dispatch, getService, options })
+  const ret = await getIdent(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'notfound')
   t.is(typeof ret.response?.error, 'string')
