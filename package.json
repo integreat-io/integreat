@@ -39,9 +39,9 @@
     "@types/later": "^1.2.7",
     "@types/luxon": "^1.27.1",
     "@types/nanoid": "^3.0.0",
-    "@types/sax": "^1.2.3",
-    "debug": "^4.3.2",
-    "got": "^11.8.2",
+    "@types/sax": "^1.2.4",
+    "debug": "^4.3.3",
+    "got": "^11.8.3",
     "html-entities": "^2.3.2",
     "later": "^1.2.0",
     "luxon": "^1.28.0",
@@ -56,10 +56,10 @@
     "sax": "^1.2.4"
   },
   "devDependencies": {
-    "@integreat/ts-dev-setup": "^2.1.0",
+    "@integreat/ts-dev-setup": "^2.2.0",
     "@types/sinon": "^10.0.6",
     "integreat-transporter-http": "0.1.0-alpha.8",
-    "nock": "^13.1.4",
+    "nock": "^13.2.1",
     "sinon": "^11.1.2"
   }
 }
