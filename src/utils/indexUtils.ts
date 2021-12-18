@@ -12,7 +12,7 @@ export function indexById<T extends ObjectWithId>(
   }
 }
 
-export function lookupById<T extends unknown>(
+export function lookupById<T>(
   id: string | T,
   resource?: Record<string, T>
 ): T | undefined {
