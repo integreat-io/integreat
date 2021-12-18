@@ -142,7 +142,7 @@ const prepareAction = ({
   meta,
 })
 
-function handleAction(
+async function handleAction(
   handlerType: string,
   action: Action,
   resources: ActionHandlerResources,
@@ -159,7 +159,7 @@ function handleAction(
   }
 
   // ... and pass it the action
-  return handler(action, resources)
+  return await handler(action, resources)
 }
 
 /**
@@ -207,13 +207,20 @@ export default function createDispatch({
         if (shouldQueue(action, options)) {
           // Use queue handler if queue flag is set and there is a queue
           // service. Bypass middleware
-          resolve(handleAction('QUEUE', nextAction, resources, handlers))
+          const response = await handleAction(
+            'QUEUE',
+            nextAction,
+            resources,
+            handlers
+          )
+          resolve(response)
         } else {
           // Send action through middleware before sending to the relevant
           // handler
           const next = async (action: Action) =>
             handleAction(action.type, action, resources, handlers)
-          resolve(await middlewareFn(next)(nextAction))
+          const response = await middlewareFn(next)(nextAction)
+          resolve(response)
         }
       } catch (err) {
         resolve(createErrorOnAction(action, `Error thrown in dispatch: ${err}`))
