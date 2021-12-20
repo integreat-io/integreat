@@ -390,6 +390,33 @@ test('should remove untyped data', async (t) => {
   t.deepEqual(dispatch.args[1][0], expected2)
 })
 
+test('should report progress', async (t) => {
+  const setProgress = sinon.stub()
+  const action = {
+    type: 'SYNC',
+    payload: { type: 'entry', params: { from: 'entries', to: 'store' } },
+    meta: { ident, project: 'project1', id: 'sync1', cid: '12345' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: updateAction('ok', { data }),
+      SET: updateAction('ok'),
+    })
+  )
+
+  const ret = await sync(action, { ...handlerResources, dispatch, setProgress })
+
+  t.is(ret.response?.status, 'ok')
+  t.is(setProgress.callCount, 5)
+  t.is(setProgress.args[0][0], 0)
+  t.is(setProgress.args[1][0], 0.1)
+  t.is(setProgress.args[2][0], 0.5)
+  t.is(setProgress.args[3][0], 0.9)
+  t.is(setProgress.args[4][0], 1)
+})
+
+test.todo('should report progress with several sources')
+
 test('should pass on updatedAfter and updatedUntil, and set updatedSince and updatedBefore', async (t) => {
   const updatedAfter = new Date('2021-01-03T02:11:07Z')
   const updatedSince = new Date('2021-01-03T02:11:07.001Z')

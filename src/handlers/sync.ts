@@ -480,8 +480,10 @@ const extractLastSyncedAtDates = (
  */
 export default async function syncHandler(
   inputAction: Action,
-  { dispatch }: ActionHandlerResources
+  { dispatch, setProgress }: ActionHandlerResources
 ): Promise<Action> {
+  setProgress(0)
+
   const action = prepareInputParams(inputAction)
   const {
     payload: {
@@ -506,6 +508,9 @@ export default async function syncHandler(
 
   let data: TypedData[]
   let datesFromData: (Date | undefined)[] = []
+
+  setProgress(0.1)
+
   try {
     const dataFromServices = await fetchDataFromService(
       fromParams,
@@ -525,6 +530,8 @@ export default async function syncHandler(
   }
   const gottenDataDate = new Date()
 
+  setProgress(0.5)
+
   const response = await setData(dispatch, data, toParams, doQueueSet, meta)
   if (response.status !== 'ok') {
     return createErrorOnAction(
@@ -534,6 +541,8 @@ export default async function syncHandler(
     )
   }
 
+  setProgress(0.9)
+
   if (retrieve === 'updated' || retrieve === 'created') {
     await Promise.all(
       fromParams.map(
@@ -541,6 +550,8 @@ export default async function syncHandler(
       )
     )
   }
+
+  setProgress(1)
 
   return { ...action, response: { ...action.response, status: 'ok' } }
 }
