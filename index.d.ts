@@ -1,7 +1,7 @@
 export as namespace integreat
 export = integreat
 
-declare function integreat (
+declare function integreat(
   defs: integreat.Definitions,
   resources: integreat.Resources,
   middlewares?: integreat.Middleware[]
@@ -20,58 +20,63 @@ declare namespace integreat {
   }
 
   export interface Ident {
-    id?: string,
+    id?: string
     root?: boolean
   }
 
   export interface Meta {
-    queue?: boolean,
-    ident?: Ident,
+    queue?: boolean
+    ident?: Ident
     [key: string]: unknown
   }
 
   export interface Action<P = Payload> {
-    type: string,
-    payload: P,
+    type: string
+    payload: P
     meta?: Meta
   }
 
   export type ActionHandlerResources = {
     dispatch: Dispatch
+    setProgress: (progress: number) => void
   }
 
   export interface Instance {
-    version: string,
-    schemas: object,
-    services: object,
-    identType: string,
+    version: string
+    schemas: object
+    services: object
+    identType: string
 
-    dispatch: Dispatch,
-    on: (eventName: string, serviceId: string, listener: (request: Request, response: Response) => void) => void
+    dispatch: Dispatch
+    on: (
+      eventName: string,
+      serviceId: string,
+      listener: (request: Request, response: Response) => void
+    ) => void
   }
 
   export interface IdentDefinitions {
     type: string
     props?: {
-      id?: string,
-      roles?: string,
+      id?: string
+      roles?: string
       tokens?: string
     }
   }
 
   export interface Definitions {
-    schemas: object[],
-    services: object[],
-    mappings: object[],
-    auths?: object[],
+    schemas: object[]
+    services: object[]
+    mappings: object[]
+    auths?: object[]
     ident?: IdentDefinitions
   }
 
   export interface Resources {
-    adapters: any,
-    authenticators?: any,
-    transformers?: any,
-    filters?: any,
+    adapters: any
+    authenticators?: any
+    transformers?: any
+    filters?: any
     actions?: any
   }
 
@@ -80,9 +85,9 @@ declare namespace integreat {
   }
 
   export interface Queue {
-    queue: object,
-    setDispatch: (dispatch: Dispatch) => Promise<void>,
-    middleware: Middleware,
+    queue: object
+    setDispatch: (dispatch: Dispatch) => Promise<void>
+    middleware: Middleware
     schedule: (schedule: object) => Promise<Response>
   }
 
@@ -97,10 +102,10 @@ declare namespace integreat {
   }
 
   type Relationship = {
-    id: string | null | undefined,
-    type: string,
-    attributes?: Attributes,
-    relationships?: Relationships,
+    id: string | null | undefined
+    type: string
+    attributes?: Attributes
+    relationships?: Relationships
     meta?: object
   }
 
@@ -109,30 +114,30 @@ declare namespace integreat {
   }
 
   export type Data = {
-    id: string | null | undefined,
-    type: string,
-    attributes: Attributes,
+    id: string | null | undefined
+    type: string
+    attributes: Attributes
     relationships: Relationships
   }
 
   interface Request<T = Data[] | Data | null> {
-    action: string,
+    action: string
     params?: {
       [param: string]: any
-    },
+    }
     endpoint?: {
       [option: string]: any
     }
-    data: T,
-    auth?: object | boolean,
+    data: T
+    auth?: object | boolean
     access?: { ident: Ident }
   }
 
   interface Response<T = Data[]> {
-    status: string,
-    data?: T,
-    error?: string,
-    responses?: Response[],
+    status: string
+    data?: T
+    error?: string
+    responses?: Response[]
     access?: object
   }
 }
