@@ -3,6 +3,7 @@ import formatDate from './formatDate'
 import hash from './hash'
 import json from './json'
 import lowercase from './lowercase'
+import ms from './ms'
 import not from './not'
 import removeTypePrefixOnId from './removeTypePrefixOnId'
 import round from './round'
@@ -17,6 +18,7 @@ export default {
   hash,
   json,
   lowercase,
+  ms,
   not,
   removeTypePrefixOnId,
   round,
