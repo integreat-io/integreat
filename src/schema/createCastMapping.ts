@@ -16,7 +16,14 @@ import {
   isNullOrUndefined,
 } from '../utils/is'
 
-const primitiveTypes = ['string', 'integer', 'number', 'boolean', 'date']
+const primitiveTypes = [
+  'string',
+  'integer',
+  'number',
+  'boolean',
+  'date',
+  'object',
+]
 
 const typeFromProp = (prop: unknown) =>
   isPropertySchema(prop) ? prop.$cast : prop
@@ -46,6 +53,8 @@ const transformFromType = (type: string) => {
     return { $transform: type }
   } else if (type === 'float') {
     return { $transform: 'number' }
+  } else if (type === 'unknown') {
+    return undefined
   } else {
     return { $transform: 'reference', type }
   }

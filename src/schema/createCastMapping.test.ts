@@ -17,6 +17,8 @@ test('should create mapping definition from schema', (t) => {
     active: 'boolean',
     createdAt: 'date',
     author: 'user',
+    payload: 'object',
+    data: 'unknown',
     comments: 'comment[]',
     'props[]': {
       key: 'string',
@@ -35,6 +37,8 @@ test('should create mapping definition from schema', (t) => {
       active: 'true',
       createdAt: '2019-03-11T18:43:09Z',
       author: 'johnf',
+      payload: { type: 'entry', data: [{ id: 'ent1', $type: 'entry' }] },
+      data: [{ title: 'Something' }],
       comments: [{ id: 'comment12', $ref: 'comment' }, { id: 'comment13' }],
       props: [
         { key: 'sourceCheckBy', value: 'Anita' },
@@ -62,6 +66,8 @@ test('should create mapping definition from schema', (t) => {
       active: true,
       createdAt: new Date('2019-03-11T18:43:09Z'),
       author: { id: 'johnf', $ref: 'user' },
+      payload: { type: 'entry', data: [{ id: 'ent1', $type: 'entry' }] },
+      data: [{ title: 'Something' }],
       comments: [
         { id: 'comment12', $ref: 'comment' },
         { id: 'comment13', $ref: 'comment' },
@@ -83,6 +89,8 @@ test('should create mapping definition from schema', (t) => {
       active: undefined,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk', $ref: 'user' },
+      payload: undefined,
+      data: undefined,
       comments: [{ id: 'comment23', $ref: 'comment' }],
       props: [],
     },
@@ -107,6 +115,7 @@ test('should reverse transform with mapping definition from schema', (t) => {
     active: 'boolean',
     createdAt: 'date',
     author: 'user',
+    payload: 'object',
     comments: 'comment[]',
   }
   const data = [
@@ -122,6 +131,7 @@ test('should reverse transform with mapping definition from schema', (t) => {
       active: 'true',
       createdAt: '2019-03-11T18:43:09Z',
       author: 'johnf',
+      payload: { type: 'entry', data: [{ id: 'ent1', $type: 'entry' }] },
       comments: ['comment12', { id: 'comment13', $ref: 'comment' }],
     },
     {
@@ -130,6 +140,7 @@ test('should reverse transform with mapping definition from schema', (t) => {
       age: 244511383,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk' },
+      payload: undefined,
       comments: [{ id: 'comment23', $ref: 'comment' }],
     },
   ]
@@ -145,6 +156,7 @@ test('should reverse transform with mapping definition from schema', (t) => {
       active: true,
       createdAt: new Date('2019-03-11T18:43:09Z'),
       author: { id: 'johnf', $ref: 'user' },
+      payload: { type: 'entry', data: [{ id: 'ent1', $type: 'entry' }] },
       comments: [
         { id: 'comment12', $ref: 'comment' },
         { id: 'comment13', $ref: 'comment' },
@@ -161,6 +173,7 @@ test('should reverse transform with mapping definition from schema', (t) => {
       active: undefined,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk', $ref: 'user' },
+      payload: undefined,
       comments: [{ id: 'comment23', $ref: 'comment' }],
     },
   ]
