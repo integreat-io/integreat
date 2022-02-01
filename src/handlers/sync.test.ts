@@ -285,6 +285,56 @@ test('should override action types', async (t) => {
   t.deepEqual(dispatch.args[1][0], expected2)
 })
 
+test('should set page params on payload', async (t) => {
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      params: {
+        from: {
+          service: 'entries',
+          other: true,
+          page: 1,
+          pageOffset: 3,
+          pageSize: 500,
+          pageAfter: 'ent3',
+          pageBefore: 'ent5',
+          pageId: 'page1',
+        },
+        to: 'store',
+      },
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: updateAction('ok', { data }),
+      SET: updateAction('ok'),
+    })
+  )
+  const expected = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      params: { other: true },
+      targetService: 'entries',
+      page: 1,
+      pageOffset: 3,
+      pageSize: 500,
+      pageAfter: 'ent3',
+      pageBefore: 'ent5',
+      pageId: 'page1',
+    },
+    meta: { ident, project: 'project1' },
+  }
+
+  const ret = await sync(action, { ...handlerResources, dispatch })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(dispatch.args[0][0], expected)
+  t.is(dispatch.callCount, 2)
+})
+
 test('should not queue SET when doQueueSet is false', async (t) => {
   const action = {
     type: 'SYNC',

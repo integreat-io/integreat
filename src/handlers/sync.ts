@@ -2,6 +2,7 @@ import pLimit = require('p-limit')
 import ms = require('ms')
 import {
   Action,
+  Payload,
   Response,
   HandlerDispatch,
   Meta,
@@ -57,6 +58,24 @@ interface MetaData {
   }
 }
 
+const extractKnownParams = ({
+  page,
+  pageOffset,
+  pageSize,
+  pageAfter,
+  pageBefore,
+  pageId,
+  ...params
+}: Payload) => ({
+  ...(page ? { page } : {}),
+  ...(pageOffset ? { pageOffset } : {}),
+  ...(pageSize ? { pageSize } : {}),
+  ...(pageAfter ? { pageAfter } : {}),
+  ...(pageBefore ? { pageBefore } : {}),
+  ...(pageId ? { pageId } : {}),
+  params,
+})
+
 const createGetMetaAction = (
   targetService: string,
   type?: string | string[],
@@ -85,7 +104,7 @@ const createGetAction = (
   meta?: Meta
 ) => ({
   type: action,
-  payload: { type, params, targetService },
+  payload: { type, targetService, ...extractKnownParams(params) },
   meta,
 })
 
