@@ -54,6 +54,7 @@ export function actionFromMappingObject(
   if (!mappingObject) {
     return action
   }
+  const actionStatus = action.response?.status
   const {
     status: mappedStatus,
     data,
@@ -62,7 +63,12 @@ export function actionFromMappingObject(
     params: { id, type, sendNoDefaults, ...params } = {},
     options,
   } = mappingObject
-  const status = mappedStatus || action.response?.status || null
+  const status =
+    actionStatus &&
+    !isOkStatus(actionStatus) &&
+    (isOkStatus(mappedStatus) || actionStatus !== 'error')
+      ? actionStatus // Don't override action error status with ok or a more generic error from mapping
+      : mappedStatus || actionStatus || null // Use status from mapping if it exists
   const response =
     !isRequest || status
       ? {

@@ -421,3 +421,81 @@ test('should populate action from mapping object with error message', (t) => {
 
   t.deepEqual(ret, expected)
 })
+
+test('should not override error status from service with ok status from data', (t) => {
+  const isRequest = false
+  const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
+  const action = {
+    type: 'GET',
+    payload: { type: 'user' },
+    response: {
+      status: 'error',
+      error: 'Something went wrong',
+      data: { id: 'johnf' },
+    },
+    meta: {
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappingObject = {
+    action: 'GET',
+    status: 'ok',
+    params: {},
+    data,
+  }
+  const expected = {
+    type: 'GET',
+    payload: { type: 'user' },
+    response: {
+      status: 'error',
+      error: 'Something went wrong',
+      data,
+    },
+    meta: {
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not override specific error status from service with error status from data', (t) => {
+  const isRequest = false
+  const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
+  const action = {
+    type: 'GET',
+    payload: { type: 'user' },
+    response: {
+      status: 'noaccess',
+      error: 'Not getting in',
+      data: { id: 'johnf' },
+    },
+    meta: {
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappingObject = {
+    action: 'GET',
+    status: 'error',
+    params: {},
+    data,
+  }
+  const expected = {
+    type: 'GET',
+    payload: { type: 'user' },
+    response: {
+      status: 'noaccess',
+      error: 'Not getting in',
+      data,
+    },
+    meta: {
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+
+  t.deepEqual(ret, expected)
+})
