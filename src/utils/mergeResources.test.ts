@@ -1,21 +1,31 @@
 import test from 'ava'
-import { Data, DataObject, Transporter } from '../types'
+import { ActionHandler, Data, DataObject, Transporter } from '../types'
+import { Authenticator } from '../service/types'
 
 import mergeResources from './mergeResources'
 
 // Setup
 
 const mockTransporter = {} as Transporter
-const mockTransformer = (_operators: DataObject) => (_value: unknown): Data =>
-  undefined
+const mockTransformer =
+  (_operators: DataObject) =>
+  (_value: unknown): Data =>
+    undefined
 const unrealTransporter = {} as Transporter
+const mockHandler = {} as ActionHandler
+const mockAuth1 = {} as Authenticator
+const mockAuth2 = {} as Authenticator
 
 const external1 = {
   transporters: { mockTransporter },
+  handlers: {},
+  authenticators: { mockAuth: mockAuth1 },
   transformers: { mockTransformer },
 }
 
 const external2 = {
+  handlers: { mockHandler },
+  authenticators: { mockAuth: mockAuth2 },
   transporters: { unrealTransporter },
 }
 
@@ -38,6 +48,8 @@ test('should merge several resource objects', (t) => {
   const ret = mergeResources(external1, external2)
 
   t.is(ret.transporters?.mockTransporter, mockTransporter)
+  t.is(ret.handlers?.mockHandler, mockHandler)
+  t.is(ret.authenticators?.mockAuth, mockAuth2)
   t.is(ret.transformers?.mockTransformer, mockTransformer)
   t.is(ret.transporters?.unrealTransporter, unrealTransporter)
 })
