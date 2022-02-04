@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.7.38",
+  "version": "0.7.39",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <post@kjellmorten.no> (http://kjellmorten.no/)",
   "license": "ISC",
@@ -53,7 +53,7 @@
     "map-transform": "^0.3.12",
     "p-limit": "^2.3.0",
     "p-progress": "^0.5.1",
-    "ramda": "^0.27.1",
+    "ramda": "^0.27.2",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
@@ -62,7 +62,7 @@
     "coveralls": "^3.1.1",
     "dotenv": "^10.0.0",
     "integreat-adapter-json": "^0.2.1",
-    "nock": "^13.2.1",
+    "nock": "^13.2.4",
     "nyc": "^15.1.0",
     "prettier": "^2.5.1",
     "sinon": "^11.1.2"
