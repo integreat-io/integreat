@@ -116,6 +116,7 @@ export interface Response<T = unknown> {
   warning?: string
   paging?: Paging
   params?: Params
+  headers?: Record<string, string>
   returnNoDefaults?: boolean
   responses?: Response[] // TODO: Is this the right way?
   access?: Record<string, unknown>

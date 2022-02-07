@@ -46,6 +46,9 @@ test('should use incoming endpoint over non-incoming', async (t) => {
     status: 'ok',
     data: JSON.stringify(expectedResponseData),
     access: { ident: { root: true } },
+    headers: {
+      'content-type': 'application/json',
+    },
   }
 
   const great = Integreat.create(defs, resources)

@@ -129,6 +129,9 @@ test('should populate action from mapping object from response from service', (t
       uri: 'http://some.api.com/1.0/users/johnf',
       queryParams: { order: 'desc' },
     },
+    headers: {
+      'content-type': 'application/json',
+    },
     ident: { id: 'johnf' },
   }
   const expected = {
@@ -144,6 +147,9 @@ test('should populate action from mapping object from response from service', (t
       status: 'ok',
       data,
       paging: { next: { offset: 'page2', type: 'entry' } },
+      headers: {
+        'content-type': 'application/json',
+      },
     },
     meta: {
       options: {

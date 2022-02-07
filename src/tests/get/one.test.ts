@@ -96,3 +96,33 @@ test('should get one user from service', async (t) => {
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, expected)
 })
+
+test('should respond with headers', async (t) => {
+  nock('http://some.api')
+    .get('/entries/ent1')
+    .reply(200, {
+      data: {
+        ...ent1Data,
+        createdAt,
+        updatedAt,
+        props: [
+          { key: 'sourceCheckBy', value: 'Anita' },
+          { key: 'proofReadBy', value: 'Svein' },
+        ],
+      },
+    })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    'content-type': 'application/json',
+  }
+
+  const great = Integreat.create(defs, resources)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.headers, expected)
+})

@@ -119,6 +119,9 @@ export default {
       mutation: {
         $direction: 'fwd',
         data: ['data.data', { $apply: 'entries-entry' }],
+        headers: {
+          'content-type': { $transform: 'value', value: 'application/json' },
+        },
       },
       options: { uri: '/entries/{{params.id}}' },
     },

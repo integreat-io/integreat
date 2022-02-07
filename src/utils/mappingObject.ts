@@ -16,6 +16,7 @@ export interface MappingObject {
   error?: string
   paging?: Paging
   options?: EndpointOptions
+  headers?: Record<string, string>
   ident?: Ident
   meta?: Meta
 }
@@ -62,6 +63,7 @@ export function actionFromMappingObject(
     error,
     params: { id, type, sendNoDefaults, ...params } = {},
     options,
+    headers,
   } = mappingObject
   const status =
     actionStatus &&
@@ -76,6 +78,7 @@ export function actionFromMappingObject(
           ...(!isRequest && { data }),
           ...(paging && { paging }),
           ...(error && { error }),
+          ...(headers && { headers }),
           status: isOkStatus(status) && error ? 'error' : status,
         }
       : undefined
