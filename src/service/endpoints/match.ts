@@ -40,7 +40,7 @@ const matchParams = (
   typeof params !== 'object' ||
   params === null ||
   Object.entries(params).every(
-    ([key, isRequired]) => !isRequired || hasParam(payload.params, key)
+    ([key, isRequired]) => !isRequired || hasParam(payload, key)
   )
 
 const matchFilters = (

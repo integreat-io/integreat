@@ -151,6 +151,32 @@ test('should map payload property service to targetService', async (t) => {
   t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
 })
 
+test('should set set params props on payload', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+      params: {
+        getArchived: true,
+      },
+    },
+  }
+  const handlers = {
+    GET: async (action: Action) => ({
+      ...action,
+      response: action.payload.getArchived
+        ? { status: 'ok', data: [] }
+        : { status: 'error', error: 'getArchived is not true' },
+    }),
+  }
+
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+
+  t.is(ret.status, 'ok', ret.error)
+})
+
 test('should return status noaction when no action', async (t) => {
   const action = null
   const handlers = {}

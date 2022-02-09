@@ -46,7 +46,8 @@ export default async function getMeta(
   const {
     payload: {
       type,
-      params: { keys = undefined, metaKey } = {},
+      keys = undefined,
+      metaKey,
       targetService: serviceId,
       endpoint: endpointId,
     },

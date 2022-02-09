@@ -81,7 +81,7 @@ const ident = { id: 'johnf' }
 test('should get from source service and set on target service', async (t) => {
   const action = {
     type: 'SYNC',
-    payload: { type: 'entry', params: { from: 'entries', to: 'store' } },
+    payload: { type: 'entry', from: 'entries', to: 'store' },
     meta: { ident, project: 'project1', id: 'sync1', cid: '12345' },
   }
   const dispatch = sinon.spy(
@@ -92,12 +92,12 @@ test('should get from source service and set on target service', async (t) => {
   )
   const expected1 = {
     type: 'GET',
-    payload: { type: 'entry', params: {}, targetService: 'entries' },
+    payload: { type: 'entry', targetService: 'entries' },
     meta: { ident, project: 'project1', cid: '12345' },
   }
   const expected2 = {
     type: 'SET',
-    payload: { type: 'entry', data, params: {}, targetService: 'store' },
+    payload: { type: 'entry', data, targetService: 'store' },
     meta: { ident, project: 'project1', cid: '12345', queue: true },
   }
 
@@ -112,7 +112,7 @@ test('should get from source service and set on target service', async (t) => {
 test('should not SET with no data', async (t) => {
   const action = {
     type: 'SYNC',
-    payload: { type: 'entry', params: { from: 'entries', to: 'store' } },
+    payload: { type: 'entry', from: 'entries', to: 'store' },
     meta: { ident, project: 'project1' },
   }
   const dispatch = sinon.spy(
@@ -134,7 +134,9 @@ test('should SET with no data when alwaysSet is true', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', alwaysSet: true },
+      from: 'entries',
+      to: 'store',
+      alwaysSet: true,
     },
     meta: { ident, project: 'project1' },
   }
@@ -146,7 +148,7 @@ test('should SET with no data when alwaysSet is true', async (t) => {
   )
   const expected2 = {
     type: 'SET',
-    payload: { type: 'entry', data: [], params: {}, targetService: 'store' },
+    payload: { type: 'entry', data: [], targetService: 'store' },
     meta: { ident, project: 'project1', queue: true },
   }
 
@@ -163,7 +165,9 @@ test('should split in several SET actions when item count is higher than maxPerS
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', maxPerSet: 2 },
+      from: 'entries',
+      to: 'store',
+      maxPerSet: 2,
     },
     meta: { ident, project: 'project1' },
   }
@@ -178,7 +182,6 @@ test('should split in several SET actions when item count is higher than maxPerS
     payload: {
       type: 'entry',
       data: [data[0], data2[0]],
-      params: {},
       targetService: 'store',
     },
     meta: { ident, project: 'project1', queue: true },
@@ -188,7 +191,6 @@ test('should split in several SET actions when item count is higher than maxPerS
     payload: {
       type: 'entry',
       data: [data[1]],
-      params: {},
       targetService: 'store',
     },
     meta: { ident, project: 'project1', queue: true },
@@ -207,10 +209,8 @@ test('should use params from from and to', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: { service: 'entries', type: 'special', onlyPublic: true },
-        to: { service: 'store', type: 'other', overwrite: false },
-      },
+      from: { service: 'entries', type: 'special', onlyPublic: true },
+      to: { service: 'store', type: 'other', overwrite: false },
     },
     meta: { ident, project: 'project1' },
   }
@@ -224,7 +224,7 @@ test('should use params from from and to', async (t) => {
     type: 'GET',
     payload: {
       type: 'special',
-      params: { onlyPublic: true },
+      onlyPublic: true,
       targetService: 'entries',
     },
     meta: { ident, project: 'project1' },
@@ -234,7 +234,7 @@ test('should use params from from and to', async (t) => {
     payload: {
       type: 'other',
       data,
-      params: { overwrite: false },
+      overwrite: false,
       targetService: 'store',
     },
     meta: { ident, project: 'project1', queue: true },
@@ -253,10 +253,8 @@ test('should override action types', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: { service: 'entries', action: 'GET_ALL' },
-        to: { service: 'store', action: 'SET_SOME' },
-      },
+      from: { service: 'entries', action: 'GET_ALL' },
+      to: { service: 'store', action: 'SET_SOME' },
     },
     meta: { ident, project: 'project1' },
   }
@@ -268,12 +266,12 @@ test('should override action types', async (t) => {
   )
   const expected1 = {
     type: 'GET_ALL',
-    payload: { type: 'entry', params: {}, targetService: 'entries' },
+    payload: { type: 'entry', targetService: 'entries' },
     meta: { ident, project: 'project1' },
   }
   const expected2 = {
     type: 'SET_SOME',
-    payload: { type: 'entry', data, params: {}, targetService: 'store' },
+    payload: { type: 'entry', data, targetService: 'store' },
     meta: { ident, project: 'project1', queue: true },
   }
 
@@ -290,19 +288,17 @@ test('should set page params on payload', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: {
-          service: 'entries',
-          other: true,
-          page: 1,
-          pageOffset: 3,
-          pageSize: 500,
-          pageAfter: 'ent3',
-          pageBefore: 'ent5',
-          pageId: 'page1',
-        },
-        to: 'store',
+      from: {
+        service: 'entries',
+        other: true,
+        page: 1,
+        pageOffset: 3,
+        pageSize: 500,
+        pageAfter: 'ent3',
+        pageBefore: 'ent5',
+        pageId: 'page1',
       },
+      to: 'store',
     },
     meta: { ident, project: 'project1' },
   }
@@ -316,7 +312,7 @@ test('should set page params on payload', async (t) => {
     type: 'GET',
     payload: {
       type: 'entry',
-      params: { other: true },
+      other: true,
       targetService: 'entries',
       page: 1,
       pageOffset: 3,
@@ -340,7 +336,9 @@ test('should not queue SET when doQueueSet is false', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', doQueueSet: false },
+      from: 'entries',
+      to: 'store',
+      doQueueSet: false,
     },
     meta: { ident, project: 'project1' },
   }
@@ -352,7 +350,7 @@ test('should not queue SET when doQueueSet is false', async (t) => {
   )
   const expected2 = {
     type: 'SET',
-    payload: { type: 'entry', data, params: {}, targetService: 'store' },
+    payload: { type: 'entry', data, targetService: 'store' },
     meta: { ident, project: 'project1', queue: false },
   }
 
@@ -368,7 +366,8 @@ test('should get from several source services', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: ['entries', 'otherEntries'], to: 'store' },
+      from: ['entries', 'otherEntries'],
+      to: 'store',
       targetService: 'store',
     },
     meta: { ident, project: 'project1' },
@@ -381,12 +380,12 @@ test('should get from several source services', async (t) => {
   )
   const expected1 = {
     type: 'GET',
-    payload: { type: 'entry', params: {}, targetService: 'entries' },
+    payload: { type: 'entry', targetService: 'entries' },
     meta: { ident, project: 'project1' },
   }
   const expected2 = {
     type: 'GET',
-    payload: { type: 'entry', params: {}, targetService: 'otherEntries' },
+    payload: { type: 'entry', targetService: 'otherEntries' },
     meta: { ident, project: 'project1' },
   }
   const expected3 = {
@@ -394,7 +393,6 @@ test('should get from several source services', async (t) => {
     payload: {
       type: 'entry',
       data: [data[0], data2[0], data[1]],
-      params: {},
       targetService: 'store',
     },
     meta: { ident, project: 'project1', queue: true },
@@ -412,7 +410,7 @@ test('should get from several source services', async (t) => {
 test('should remove untyped data', async (t) => {
   const action = {
     type: 'SYNC',
-    payload: { type: 'entry', params: { from: 'entries', to: 'store' } },
+    payload: { type: 'entry', from: 'entries', to: 'store' },
     meta: { ident, project: 'project1' },
   }
   const dispatch = sinon.spy(
@@ -423,12 +421,12 @@ test('should remove untyped data', async (t) => {
   )
   const expected1 = {
     type: 'GET',
-    payload: { type: 'entry', params: {}, targetService: 'entries' },
+    payload: { type: 'entry', targetService: 'entries' },
     meta: { ident, project: 'project1' },
   }
   const expected2 = {
     type: 'SET',
-    payload: { type: 'entry', data, params: {}, targetService: 'store' },
+    payload: { type: 'entry', data, targetService: 'store' },
     meta: { ident, project: 'project1', queue: true },
   }
 
@@ -444,7 +442,7 @@ test('should report progress', async (t) => {
   const setProgress = sinon.stub()
   const action = {
     type: 'SYNC',
-    payload: { type: 'entry', params: { from: 'entries', to: 'store' } },
+    payload: { type: 'entry', from: 'entries', to: 'store' },
     meta: { ident, project: 'project1', id: 'sync1', cid: '12345' },
   }
   const dispatch = sinon.spy(
@@ -476,7 +474,10 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', updatedAfter, updatedUntil },
+      from: 'entries',
+      to: 'store',
+      updatedAfter,
+      updatedUntil,
     },
     meta: { ident, project: 'project1' },
   }
@@ -490,12 +491,10 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
     type: 'GET',
     payload: {
       type: 'entry',
-      params: {
-        updatedAfter,
-        updatedSince,
-        updatedUntil,
-        updatedBefore,
-      },
+      updatedAfter,
+      updatedSince,
+      updatedUntil,
+      updatedBefore,
       targetService: 'entries',
     },
     meta: { ident, project: 'project1' },
@@ -505,7 +504,10 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
     payload: {
       type: 'entry',
       data,
-      params: { updatedAfter, updatedSince, updatedUntil, updatedBefore },
+      updatedAfter,
+      updatedSince,
+      updatedUntil,
+      updatedBefore,
       targetService: 'store',
     },
     meta: { ident, project: 'project1', queue: true },
@@ -528,7 +530,10 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', updatedSince, updatedBefore },
+      from: 'entries',
+      to: 'store',
+      updatedSince,
+      updatedBefore,
     },
     meta: { ident, project: 'project1' },
   }
@@ -542,12 +547,10 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
     type: 'GET',
     payload: {
       type: 'entry',
-      params: {
-        updatedAfter,
-        updatedSince,
-        updatedUntil,
-        updatedBefore,
-      },
+      updatedAfter,
+      updatedSince,
+      updatedUntil,
+      updatedBefore,
       targetService: 'entries',
     },
     meta: { ident, project: 'project1' },
@@ -557,7 +560,10 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
     payload: {
       type: 'entry',
       data,
-      params: { updatedAfter, updatedSince, updatedUntil, updatedBefore },
+      updatedAfter,
+      updatedSince,
+      updatedUntil,
+      updatedBefore,
       targetService: 'store',
     },
     meta: { ident, project: 'project1', queue: true },
@@ -580,12 +586,10 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: 'entries',
-        to: 'store',
-        updatedAfter: '2021-01-03T02:11:07Z',
-        updatedUntil: '2021-01-18T02:14:34Z',
-      },
+      from: 'entries',
+      to: 'store',
+      updatedAfter: '2021-01-03T02:11:07Z',
+      updatedUntil: '2021-01-18T02:14:34Z',
     },
     meta: { ident, project: 'project1' },
   }
@@ -599,12 +603,10 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
     type: 'GET',
     payload: {
       type: 'entry',
-      params: {
-        updatedAfter,
-        updatedSince,
-        updatedUntil,
-        updatedBefore,
-      },
+      updatedAfter,
+      updatedSince,
+      updatedUntil,
+      updatedBefore,
       targetService: 'entries',
     },
     meta: { ident, project: 'project1' },
@@ -614,7 +616,10 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
     payload: {
       type: 'entry',
       data,
-      params: { updatedAfter, updatedSince, updatedUntil, updatedBefore },
+      updatedAfter,
+      updatedSince,
+      updatedUntil,
+      updatedBefore,
       targetService: 'store',
     },
     meta: { ident, project: 'project1', queue: true },
@@ -637,12 +642,10 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: 'entries',
-        to: 'store',
-        updatedSince: '2021-01-03T02:11:07Z',
-        updatedBefore: '2021-01-18T02:14:34Z',
-      },
+      from: 'entries',
+      to: 'store',
+      updatedSince: '2021-01-03T02:11:07Z',
+      updatedBefore: '2021-01-18T02:14:34Z',
     },
     meta: { ident, project: 'project1' },
   }
@@ -656,12 +659,10 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
     type: 'GET',
     payload: {
       type: 'entry',
-      params: {
-        updatedAfter,
-        updatedSince,
-        updatedUntil,
-        updatedBefore,
-      },
+      updatedAfter,
+      updatedSince,
+      updatedUntil,
+      updatedBefore,
       targetService: 'entries',
     },
     meta: { ident, project: 'project1' },
@@ -671,7 +672,10 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
     payload: {
       type: 'entry',
       data,
-      params: { updatedAfter, updatedSince, updatedUntil, updatedBefore },
+      updatedAfter,
+      updatedSince,
+      updatedUntil,
+      updatedBefore,
       targetService: 'store',
     },
     meta: { ident, project: 'project1', queue: true },
@@ -691,7 +695,9 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', retrieve: 'updated' },
+      from: 'entries',
+      to: 'store',
+      retrieve: 'updated',
     },
     meta: { ident, project: 'project1', id: 'sync1', cid: '12345' },
   }
@@ -706,23 +712,24 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
     type: 'GET_META',
     payload: {
       type: 'entry',
-      params: { keys: 'lastSyncedAt', metaKey: undefined },
+      keys: 'lastSyncedAt',
+      metaKey: undefined,
       targetService: 'entries',
     },
     meta: { ident, cid: '12345', project: 'project1' },
   }
-  const expectedParams = {
-    updatedAfter: new Date(lastSyncedAt),
-    updatedSince: new Date('2021-01-03T04:48:18.001Z'),
-  }
+  const expectedUpdatedAfter = new Date(lastSyncedAt)
+  const expectedUpdatedSince = new Date('2021-01-03T04:48:18.001Z')
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 4)
   t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0].payload.params, expectedParams)
-  t.deepEqual(dispatch.args[2][0].payload.params, expectedParams)
+  t.deepEqual(dispatch.args[1][0].payload.updatedAfter, expectedUpdatedAfter)
+  t.deepEqual(dispatch.args[1][0].payload.updatedSince, expectedUpdatedSince)
+  t.deepEqual(dispatch.args[2][0].payload.updatedAfter, expectedUpdatedAfter)
+  t.deepEqual(dispatch.args[2][0].payload.updatedSince, expectedUpdatedSince)
 })
 
 test('should use metaKey when fetching lastSyncedAt', async (t) => {
@@ -731,12 +738,10 @@ test('should use metaKey when fetching lastSyncedAt', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: 'entries',
-        to: 'store',
-        retrieve: 'updated',
-        metaKey: 'sports',
-      },
+      from: 'entries',
+      to: 'store',
+      retrieve: 'updated',
+      metaKey: 'sports',
     },
     meta: { ident, project: 'project1' },
   }
@@ -751,7 +756,8 @@ test('should use metaKey when fetching lastSyncedAt', async (t) => {
     type: 'GET_META',
     payload: {
       type: 'entry',
-      params: { keys: 'lastSyncedAt', metaKey: 'sports' },
+      keys: 'lastSyncedAt',
+      metaKey: 'sports',
       targetService: 'entries',
     },
     meta: { ident, project: 'project1' },
@@ -769,12 +775,10 @@ test('should not use lastSyncedAt meta when updatedAfter is provided', async (t)
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: 'entries',
-        to: 'store',
-        retrieve: 'updated',
-        updatedAfter: new Date('2021-01-02T01:00:11Z'),
-      },
+      from: 'entries',
+      to: 'store',
+      retrieve: 'updated',
+      updatedAfter: new Date('2021-01-02T01:00:11Z'),
     },
     meta: { ident, project: 'project1' },
   }
@@ -785,17 +789,16 @@ test('should not use lastSyncedAt meta when updatedAfter is provided', async (t)
       SET: updateAction('ok'),
     })
   )
-  const expectedParams = {
-    updatedAfter: new Date('2021-01-02T01:00:11Z'),
-    updatedSince: new Date('2021-01-02T01:00:11.001Z'),
-  }
+  const expectedUpdatedAfter = new Date('2021-01-02T01:00:11Z')
+  const expectedUpdatedSince = new Date('2021-01-02T01:00:11.001Z')
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 3)
   t.is(dispatch.args[0][0].type, 'GET')
-  t.deepEqual(dispatch.args[0][0].payload.params, expectedParams)
+  t.deepEqual(dispatch.args[0][0].payload.updatedAfter, expectedUpdatedAfter)
+  t.deepEqual(dispatch.args[0][0].payload.updatedSince, expectedUpdatedSince)
 })
 
 test('should use lastSyncedAt meta from several services', async (t) => {
@@ -805,12 +808,10 @@ test('should use lastSyncedAt meta from several services', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: ['entries', 'other'],
-        to: 'store',
-        retrieve: 'updated',
-        metaKey: 'sports',
-      },
+      from: ['entries', 'other'],
+      to: 'store',
+      retrieve: 'updated',
+      metaKey: 'sports',
     },
     meta: { ident, project: 'project1' },
   }
@@ -828,14 +829,6 @@ test('should use lastSyncedAt meta from several services', async (t) => {
       SET: updateAction('ok'),
     })
   )
-  const expectedParams3 = {
-    updatedAfter: lastSyncedAt1,
-    updatedSince: new Date('2021-01-03T04:48:18.001Z'),
-  }
-  const expectedParams4and5 = {
-    updatedAfter: lastSyncedAt2,
-    updatedSince: new Date('2021-01-03T02:30:11.001Z'),
-  }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
@@ -844,14 +837,26 @@ test('should use lastSyncedAt meta from several services', async (t) => {
   t.deepEqual(dispatch.args[0][0].type, 'GET_META')
   t.deepEqual(dispatch.args[0][0].payload.type, 'entry')
   t.deepEqual(dispatch.args[0][0].payload.targetService, 'entries')
-  t.deepEqual(dispatch.args[0][0].payload.params?.metaKey, 'sports')
+  t.deepEqual(dispatch.args[0][0].payload.metaKey, 'sports')
   t.deepEqual(dispatch.args[1][0].type, 'GET_META')
   t.deepEqual(dispatch.args[1][0].payload.type, 'entry')
   t.deepEqual(dispatch.args[1][0].payload.targetService, 'other')
-  t.deepEqual(dispatch.args[1][0].payload.params?.metaKey, 'sports')
-  t.deepEqual(dispatch.args[2][0].payload.params, expectedParams3)
-  t.deepEqual(dispatch.args[3][0].payload.params, expectedParams4and5)
-  t.deepEqual(dispatch.args[4][0].payload.params, expectedParams4and5)
+  t.deepEqual(dispatch.args[1][0].payload.metaKey, 'sports')
+  t.deepEqual(dispatch.args[2][0].payload.updatedAfter, lastSyncedAt1)
+  t.deepEqual(
+    dispatch.args[2][0].payload.updatedSince,
+    new Date('2021-01-03T04:48:18.001Z')
+  )
+  t.deepEqual(dispatch.args[3][0].payload.updatedAfter, lastSyncedAt2)
+  t.deepEqual(
+    dispatch.args[3][0].payload.updatedSince,
+    new Date('2021-01-03T02:30:11.001Z')
+  )
+  t.deepEqual(dispatch.args[4][0].payload.updatedAfter, lastSyncedAt2)
+  t.deepEqual(
+    dispatch.args[4][0].payload.updatedSince,
+    new Date('2021-01-03T02:30:11.001Z')
+  )
 })
 
 test('should filter away data updated before updatedAfter or after updatedUntil', async (t) => {
@@ -861,7 +866,10 @@ test('should filter away data updated before updatedAfter or after updatedUntil'
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', updatedAfter, updatedUntil },
+      from: 'entries',
+      to: 'store',
+      updatedAfter,
+      updatedUntil,
     },
     meta: { ident, project: 'project1' },
   }
@@ -891,7 +899,9 @@ test('should filter away data with different lastSyncedAt for each service', asy
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: ['entries', 'other'], to: 'store', retrieve: 'updated' },
+      from: ['entries', 'other'],
+      to: 'store',
+      retrieve: 'updated',
     },
     meta: { ident, project: 'project1' },
   }
@@ -928,12 +938,10 @@ test('should not filter away data when filterData is false', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: ['entries', 'other'],
-        to: 'store',
-        retrieve: 'updated',
-        doFilterData: false,
-      },
+      from: ['entries', 'other'],
+      to: 'store',
+      retrieve: 'updated',
+      doFilterData: false,
     },
     meta: { ident, project: 'project1' },
   }
@@ -967,11 +975,9 @@ test('should treat no updatedAfter as open-ended', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: 'entries',
-        to: 'store',
-        updatedAfter,
-      },
+      from: 'entries',
+      to: 'store',
+      updatedAfter,
     },
     meta: { ident, project: 'project1' },
   }
@@ -1004,12 +1010,10 @@ test('should set updatedUntil to now', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: 'entries',
-        to: 'store',
-        updatedAfter,
-        updatedUntil: 'now',
-      },
+      from: 'entries',
+      to: 'store',
+      updatedAfter,
+      updatedUntil: 'now',
     },
     meta: { ident, project: 'project1' },
   }
@@ -1035,7 +1039,7 @@ test('should set updatedUntil to now', async (t) => {
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
-  const setUpdatedUntil = dispatch.args[1][0].payload.params?.updatedUntil
+  const setUpdatedUntil = dispatch.args[1][0].payload.updatedUntil
   t.true(setUpdatedUntil instanceof Date)
   t.true((setUpdatedUntil as Date).getTime() >= before)
   t.true((setUpdatedUntil as Date).getTime() <= after)
@@ -1048,12 +1052,10 @@ test('should set updatedUntil with positive delta', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: 'entries',
-        to: 'store',
-        updatedAfter,
-        updatedUntil: '+1h',
-      },
+      from: 'entries',
+      to: 'store',
+      updatedAfter,
+      updatedUntil: '+1h',
     },
     meta: { ident, project: 'project1' },
   }
@@ -1070,7 +1072,7 @@ test('should set updatedUntil with positive delta', async (t) => {
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
-  const setUpdatedUntil = dispatch.args[1][0].payload.params?.updatedUntil
+  const setUpdatedUntil = dispatch.args[1][0].payload.updatedUntil
   t.true(setUpdatedUntil instanceof Date)
   t.true((setUpdatedUntil as Date).getTime() >= before + 3600000)
   t.true((setUpdatedUntil as Date).getTime() <= after + 3600000)
@@ -1082,12 +1084,10 @@ test('should set updatedUntil with negative delta', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: 'entries',
-        to: 'store',
-        updatedAfter,
-        updatedUntil: '-30m',
-      },
+      from: 'entries',
+      to: 'store',
+      updatedAfter,
+      updatedUntil: '-30m',
     },
     meta: { ident, project: 'project1' },
   }
@@ -1104,7 +1104,7 @@ test('should set updatedUntil with negative delta', async (t) => {
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
-  const setUpdatedUntil = dispatch.args[1][0].payload.params?.updatedUntil
+  const setUpdatedUntil = dispatch.args[1][0].payload.updatedUntil
   t.true(setUpdatedUntil instanceof Date)
   t.true((setUpdatedUntil as Date).getTime() >= before - 1800000)
   t.true((setUpdatedUntil as Date).getTime() <= after - 1800000)
@@ -1115,12 +1115,10 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: ['entries', 'other'],
-        to: 'store',
-        retrieve: 'updated',
-        updatedUntil: new Date('2021-01-05T00:00:00Z'),
-      },
+      from: ['entries', 'other'],
+      to: 'store',
+      retrieve: 'updated',
+      updatedUntil: new Date('2021-01-05T00:00:00Z'),
     },
     meta: { ident, id: 'sync1', cid: '12345', project: 'project1' },
   }
@@ -1136,10 +1134,8 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
     type: 'SET_META',
     payload: {
       type: 'entry',
-      params: {
-        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
-        metaKey: undefined,
-      },
+      meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+      metaKey: undefined,
       targetService: 'entries',
     },
     meta: { ident, cid: '12345', project: 'project1' },
@@ -1148,10 +1144,8 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
     type: 'SET_META',
     payload: {
       type: 'entry',
-      params: {
-        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
-        metaKey: undefined,
-      },
+      meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+      metaKey: undefined,
       targetService: 'other',
     },
     meta: { ident, cid: '12345', project: 'project1' },
@@ -1170,11 +1164,9 @@ test('should set lastSyncedAt meta to now when no updatedUntil', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: ['entries', 'other'],
-        to: 'store',
-        retrieve: 'updated',
-      },
+      from: ['entries', 'other'],
+      to: 'store',
+      retrieve: 'updated',
     },
     meta: { ident, project: 'project1' },
   }
@@ -1193,12 +1185,10 @@ test('should set lastSyncedAt meta to now when no updatedUntil', async (t) => {
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
-  const lastSyncedAt1 = (dispatch.args[5][0].payload.params?.meta as Meta)
-    .lastSyncedAt
+  const lastSyncedAt1 = (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt
   t.true(lastSyncedAt1 && lastSyncedAt1.getTime() >= before)
   t.true(lastSyncedAt1 && lastSyncedAt1.getTime() <= after)
-  const lastSyncedAt2 = (dispatch.args[6][0].payload.params?.meta as Meta)
-    .lastSyncedAt
+  const lastSyncedAt2 = (dispatch.args[6][0].payload.meta as Meta).lastSyncedAt
   t.true(lastSyncedAt2 && lastSyncedAt2.getTime() >= before)
   t.true(lastSyncedAt2 && lastSyncedAt2.getTime() <= after)
 })
@@ -1208,12 +1198,10 @@ test('should set lastSyncedAt meta to last updatedAt from data of each service',
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: ['entries', 'other'],
-        to: 'store',
-        retrieve: 'updated',
-        setLastSyncedAtFromData: true,
-      },
+      from: ['entries', 'other'],
+      to: 'store',
+      retrieve: 'updated',
+      setLastSyncedAtFromData: true,
     },
     meta: { ident, project: 'project1' },
   }
@@ -1238,11 +1226,11 @@ test('should set lastSyncedAt meta to last updatedAt from data of each service',
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
   t.deepEqual(
-    (dispatch.args[5][0].payload.params?.meta as Meta).lastSyncedAt,
+    (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt,
     new Date('2021-01-05T09:11:13Z')
   )
   t.deepEqual(
-    (dispatch.args[6][0].payload.params?.meta as Meta).lastSyncedAt,
+    (dispatch.args[6][0].payload.meta as Meta).lastSyncedAt,
     new Date('2021-01-03T23:50:23Z')
   )
 })
@@ -1252,12 +1240,10 @@ test('should set lastSyncedAt to now when date is in the future', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: ['entries', 'other'],
-        to: 'store',
-        retrieve: 'updated',
-        setLastSyncedAtFromData: true,
-      },
+      from: ['entries', 'other'],
+      to: 'store',
+      retrieve: 'updated',
+      setLastSyncedAtFromData: true,
     },
     meta: { ident, project: 'project1' },
   }
@@ -1293,7 +1279,7 @@ test('should set lastSyncedAt to now when date is in the future', async (t) => {
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
-  const updatedAt = (dispatch.args[5][0].payload.params?.meta as Meta)
+  const updatedAt = (dispatch.args[5][0].payload.meta as Meta)
     .lastSyncedAt as Date
   t.true(updatedAt.getTime() >= before)
   t.true(updatedAt.getTime() <= after)
@@ -1304,13 +1290,11 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: ['entries', 'other'],
-        to: 'store',
-        retrieve: 'updated',
-        metaKey: 'sports',
-        updatedUntil: new Date('2021-01-05T00:00:00Z'),
-      },
+      from: ['entries', 'other'],
+      to: 'store',
+      retrieve: 'updated',
+      metaKey: 'sports',
+      updatedUntil: new Date('2021-01-05T00:00:00Z'),
     },
     meta: { ident, project: 'project1' },
   }
@@ -1326,10 +1310,8 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
     type: 'SET_META',
     payload: {
       type: 'entry',
-      params: {
-        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
-        metaKey: 'sports',
-      },
+      meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+      metaKey: 'sports',
       targetService: 'entries',
     },
     meta: { ident, project: 'project1' },
@@ -1338,10 +1320,8 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
     type: 'SET_META',
     payload: {
       type: 'entry',
-      params: {
-        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
-        metaKey: 'sports',
-      },
+      meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+      metaKey: 'sports',
       targetService: 'other',
     },
     meta: { ident, project: 'project1' },
@@ -1360,12 +1340,10 @@ test('should not get or set lastSyncedAt meta when service id is missing', async
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: {},
-        to: 'store',
-        retrieve: 'updated',
-        updatedUntil: new Date('2021-01-05T00:00:00Z'),
-      },
+      from: {},
+      to: 'store',
+      retrieve: 'updated',
+      updatedUntil: new Date('2021-01-05T00:00:00Z'),
     },
     meta: { ident, project: 'project1' },
   }
@@ -1390,7 +1368,9 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = created', asy
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', retrieve: 'created' },
+      from: 'entries',
+      to: 'store',
+      retrieve: 'created',
     },
     meta: { ident, project: 'project1', id: 'sync1', cid: '12345' },
   }
@@ -1405,23 +1385,24 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = created', asy
     type: 'GET_META',
     payload: {
       type: 'entry',
-      params: { keys: 'lastSyncedAt', metaKey: undefined },
+      keys: 'lastSyncedAt',
+      metaKey: undefined,
       targetService: 'entries',
     },
     meta: { ident, cid: '12345', project: 'project1' },
   }
-  const expectedParams = {
-    createdAfter: new Date(lastSyncedAt),
-    createdSince: new Date('2021-01-03T04:48:18.001Z'),
-  }
+  const expectedCreatedAfter = new Date(lastSyncedAt)
+  const expectedCreatedSince = new Date('2021-01-03T04:48:18.001Z')
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 4)
   t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0].payload.params, expectedParams)
-  t.deepEqual(dispatch.args[2][0].payload.params, expectedParams)
+  t.deepEqual(dispatch.args[1][0].payload.createdAfter, expectedCreatedAfter)
+  t.deepEqual(dispatch.args[1][0].payload.createdSince, expectedCreatedSince)
+  t.deepEqual(dispatch.args[2][0].payload.createdAfter, expectedCreatedAfter)
+  t.deepEqual(dispatch.args[2][0].payload.createdSince, expectedCreatedSince)
 })
 
 test('should set lastSyncedAt for created', async (t) => {
@@ -1429,13 +1410,11 @@ test('should set lastSyncedAt for created', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: ['entries', 'other'],
-        to: 'store',
-        retrieve: 'created',
-        metaKey: 'sports',
-        createdUntil: new Date('2021-01-05T00:00:00Z'),
-      },
+      from: ['entries', 'other'],
+      to: 'store',
+      retrieve: 'created',
+      metaKey: 'sports',
+      createdUntil: new Date('2021-01-05T00:00:00Z'),
     },
     meta: { ident, project: 'project1' },
   }
@@ -1452,10 +1431,8 @@ test('should set lastSyncedAt for created', async (t) => {
     payload: {
       type: 'entry',
       data: [data[0], data[1], data2[0]], // Sorted after createdAt
-      params: {
-        createdBefore: new Date('2021-01-05T00:00:00.001Z'),
-        createdUntil: new Date('2021-01-05 00:00:00Z'),
-      },
+      createdBefore: new Date('2021-01-05T00:00:00.001Z'),
+      createdUntil: new Date('2021-01-05 00:00:00Z'),
       targetService: 'store',
     },
     meta: { ident, project: 'project1', queue: true },
@@ -1464,10 +1441,8 @@ test('should set lastSyncedAt for created', async (t) => {
     type: 'SET_META',
     payload: {
       type: 'entry',
-      params: {
-        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
-        metaKey: 'sports',
-      },
+      meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+      metaKey: 'sports',
       targetService: 'entries',
     },
     meta: { ident, project: 'project1' },
@@ -1476,10 +1451,8 @@ test('should set lastSyncedAt for created', async (t) => {
     type: 'SET_META',
     payload: {
       type: 'entry',
-      params: {
-        meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
-        metaKey: 'sports',
-      },
+      meta: { lastSyncedAt: new Date('2021-01-05T00:00:00Z') },
+      metaKey: 'sports',
       targetService: 'other',
     },
     meta: { ident, project: 'project1' },
@@ -1500,12 +1473,10 @@ test('should set createdUntil with delta', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: 'entries',
-        to: 'store',
-        createdAfter,
-        createdUntil: '+1h',
-      },
+      from: 'entries',
+      to: 'store',
+      createdAfter,
+      createdUntil: '+1h',
     },
     meta: { ident, project: 'project1' },
   }
@@ -1522,7 +1493,7 @@ test('should set createdUntil with delta', async (t) => {
   const after = Date.now()
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 2)
-  const setCreatedUntil = dispatch.args[1][0].payload.params?.createdUntil
+  const setCreatedUntil = dispatch.args[1][0].payload.createdUntil
   t.true(setCreatedUntil instanceof Date)
   t.true((setCreatedUntil as Date).getTime() >= before + 3600000)
   t.true((setCreatedUntil as Date).getTime() <= after + 3600000)
@@ -1533,12 +1504,10 @@ test('should set lastSyncedAt meta to last createdAt from data of each service',
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: ['entries', 'other'],
-        to: 'store',
-        retrieve: 'created',
-        setLastSyncedAtFromData: true,
-      },
+      from: ['entries', 'other'],
+      to: 'store',
+      retrieve: 'created',
+      setLastSyncedAtFromData: true,
     },
     meta: { ident, project: 'project1' },
   }
@@ -1563,11 +1532,11 @@ test('should set lastSyncedAt meta to last createdAt from data of each service',
   t.is(ret.response?.status, 'ok')
   t.is(dispatch.callCount, 7)
   t.deepEqual(
-    (dispatch.args[5][0].payload.params?.meta as Meta).lastSyncedAt,
+    (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt,
     new Date('2021-01-03T18:45:07Z')
   )
   t.deepEqual(
-    (dispatch.args[6][0].payload.params?.meta as Meta).lastSyncedAt,
+    (dispatch.args[6][0].payload.meta as Meta).lastSyncedAt,
     new Date('2021-01-04T23:49:58Z')
   )
 })
@@ -1575,7 +1544,7 @@ test('should set lastSyncedAt meta to last createdAt from data of each service',
 test('should return error when get action fails', async (t) => {
   const action = {
     type: 'SYNC',
-    payload: { type: 'entry', params: { from: 'entries', to: 'store' } },
+    payload: { type: 'entry', from: 'entries', to: 'store' },
     meta: { ident, project: 'project1' },
   }
   const dispatch = sinon.spy(
@@ -1595,7 +1564,7 @@ test('should return error when get action fails', async (t) => {
 test('should return error when set action fails', async (t) => {
   const action = {
     type: 'SYNC',
-    payload: { type: 'entry', params: { from: 'entries', to: 'store' } },
+    payload: { type: 'entry', from: 'entries', to: 'store' },
     meta: { ident, project: 'project1' },
   }
   const dispatch = sinon.spy(
@@ -1621,7 +1590,9 @@ test('should return error from first SET action with maxPerSet', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', maxPerSet: 2 },
+      from: 'entries',
+      to: 'store',
+      maxPerSet: 2,
     },
     meta: { ident, project: 'project1' },
   }
@@ -1644,7 +1615,9 @@ test('should return error from second SET action with maxPerSet', async (t) => {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: { from: 'entries', to: 'store', maxPerSet: 2 },
+      from: 'entries',
+      to: 'store',
+      maxPerSet: 2,
     },
     meta: { ident, project: 'project1' },
   }

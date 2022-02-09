@@ -231,7 +231,7 @@ test('should set to uri with params', async (t) => {
     type: 'SET',
     payload: {
       data: [{ id: 'ent1', $type: 'entry' }],
-      params: { typefolder: 'entries' },
+      typefolder: 'entries',
       targetService: 'entries',
     },
   }

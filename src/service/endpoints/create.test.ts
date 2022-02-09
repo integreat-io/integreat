@@ -60,7 +60,7 @@ const shouldHaveToken = () => (action: unknown) =>
         ...action,
         response: {
           ...action.response,
-          status: action.payload.params?.token ? null : 'badrequest',
+          status: action.payload.token ? null : 'badrequest',
         },
       }
     : action
@@ -333,7 +333,7 @@ test('should map response from service with service and endpoint mutations', (t)
   const actionWithProps = {
     ...action,
     payload: {
-      params: { message: 'Too much' },
+      message: 'Too much',
     },
     response: {
       ...action.response,

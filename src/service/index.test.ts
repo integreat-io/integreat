@@ -211,7 +211,7 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   }
 
@@ -256,7 +256,7 @@ test('authorizeAction should authorize action without type', (t) => {
   })
   const action = {
     type: 'SET',
-    payload: { params: { what: 'somethingelse' } },
+    payload: { what: 'somethingelse' },
     meta: { ident: { id: 'johnf' } },
   }
   const expectedAction = {
@@ -331,7 +331,7 @@ test('send should retrieve data from service', async (t) => {
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       authorized: true,
@@ -415,7 +415,7 @@ test('send should return error when no transport', async (t) => {
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       authorized: true,
@@ -461,7 +461,7 @@ test('send should authenticate and return with error', async (t) => {
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       authorized: true,
@@ -498,7 +498,7 @@ test('send should fail when not authorized', async (t) => {
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       authorized: false,
@@ -517,7 +517,7 @@ test('send should fail when not authorized', async (t) => {
 test('send should connect before sending request', async (t) => {
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       authorized: true,
@@ -585,7 +585,7 @@ test('send should store connection', async (t) => {
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       auth: { status: 'granted', token: 't0k3n' },
@@ -624,7 +624,7 @@ test('send should return error when connection fails', async (t) => {
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       auth: { status: 'granted', token: 't0k3n' },
@@ -664,7 +664,7 @@ test('send should retrieve error response from service', async (t) => {
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       authorized: true,
@@ -702,7 +702,7 @@ test('send should return with error when transport throws', async (t) => {
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       authorized: true,
@@ -744,7 +744,7 @@ test('send should do nothing when action has a response', async (t) => {
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     response: { status: 'badrequest', error: 'Bad request catched early' },
     meta: {
       ident: { id: 'johnf' },
@@ -774,7 +774,7 @@ test.serial('mapResponse should map data array from service', async (t) => {
   })
   const action = {
     type: 'GET',
-    payload: { id: 'ent1', type: 'entry', params: { source: 'thenews' } },
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     response: {
       status: 'ok',
       data: {

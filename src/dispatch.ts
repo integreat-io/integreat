@@ -16,6 +16,7 @@ import { Service } from './service/types'
 import { Schema } from './schema'
 import { createErrorOnAction } from './utils/createError'
 import { Endpoint } from './service/endpoints/types'
+import { isObject } from './utils/is'
 
 const debug = debugLib('great')
 
@@ -42,6 +43,17 @@ function getActionHandlerFromType(
   }
   return undefined
 }
+
+const exploadParams = ({
+  payload: { params, ...payload },
+  ...action
+}: Action) => ({
+  ...action,
+  payload: {
+    ...(isObject(params) ? params : {}),
+    ...payload,
+  },
+})
 
 function mapIncomingAction(
   action: Action,
@@ -104,7 +116,7 @@ const wrapDispatch =
         action: mappedAction,
         service,
         endpoint,
-      } = mapIncomingAction(action, getService)
+      } = mapIncomingAction(exploadParams(action), getService)
       // Return any error from mapIncomingRequest()
       if (mappedAction.response?.status) {
         resolve(responseFromAction(mappedAction))

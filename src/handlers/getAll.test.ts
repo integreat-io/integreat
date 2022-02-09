@@ -472,7 +472,7 @@ test('should not look for loop when noLoopCheck is true', async (t) => {
       type: 'event',
       page: 1,
       pageSize: 2,
-      params: { noLoopCheck: true },
+      noLoopCheck: true,
     },
     meta: { ident: { id: 'johnf' } },
   }

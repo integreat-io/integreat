@@ -11,7 +11,7 @@ const filterEntry1 = {
   'payload.data.title': { const: 'Entry 1' },
 }
 const filterParamAuthor = {
-  'payload.params.author': { const: 'johnf' },
+  'payload.author': { const: 'johnf' },
 }
 const filterMetaRootIdent = {
   'meta.ident.root': { const: true },
@@ -290,7 +290,7 @@ test('should match with required param', (t) => {
   const endpoint = endpointGetWithAuthor
   const action = {
     type: 'GET',
-    payload: { params: { author: 'johnf' }, type: 'entry' },
+    payload: { author: 'johnf', type: 'entry' },
   }
 
   t.true(isMatch(endpoint)(action))
@@ -300,7 +300,7 @@ test('should mismatch with required param', (t) => {
   const endpoint = endpointGetWithAuthor
   const action = {
     type: 'GET',
-    payload: { params: {}, type: 'entry' },
+    payload: { type: 'entry' },
   }
 
   t.false(isMatch(endpoint)(action))
@@ -310,7 +310,7 @@ test('should match with optional param', (t) => {
   const endpoints = endpointGetWithOptionalAuthor
   const action = {
     type: 'GET',
-    payload: { params: { author: 'johnf' }, type: 'entry' },
+    payload: { author: 'johnf', type: 'entry' },
   }
 
   t.true(isMatch(endpoints)(action))
@@ -320,7 +320,7 @@ test('should match without optional param', (t) => {
   const endpoints = endpointGetWithOptionalAuthor
   const action = {
     type: 'GET',
-    payload: { params: {}, type: 'entry' },
+    payload: { type: 'entry' },
   }
 
   t.true(isMatch(endpoints)(action))
@@ -391,7 +391,7 @@ test('should match with params filter', (t) => {
   const action = {
     type: 'SET',
     payload: {
-      params: { author: 'johnf' },
+      author: 'johnf',
       data: { $type: 'entry', title: 'Entry 1', draft: true },
     },
   }
@@ -404,7 +404,7 @@ test('should mismatch with params filter', (t) => {
   const action = {
     type: 'SET',
     payload: {
-      params: { author: 'lucyk' },
+      author: 'lucyk',
       data: { $type: 'entry', title: 'Entry 1', draft: true },
     },
   }

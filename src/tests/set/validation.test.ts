@@ -29,16 +29,18 @@ const entryWithoutAuthor = {
 }
 
 // Lots of typing hoops. Sorry
-const shouldHaveAuthor = () => (mappingObj: unknown): unknown => {
-  return (((mappingObj as unknown) as Response).data as DataObject).author
-    ? mappingObj
-    : {
-        ...(mappingObj as DataObject),
-        status: 'badrequest',
-        error: 'Error from validator',
-        data: undefined,
-      }
-}
+const shouldHaveAuthor =
+  () =>
+  (mappingObj: unknown): unknown => {
+    return ((mappingObj as unknown as Response).data as DataObject).author
+      ? mappingObj
+      : {
+          ...(mappingObj as DataObject),
+          status: 'badrequest',
+          error: 'Error from validator',
+          data: undefined,
+        }
+  }
 const resourcesWithTransformer = {
   ...resources,
   transformers: { ...resources.transformers, shouldHaveAuthor },
@@ -59,7 +61,7 @@ test('should respond with response from validation when not validated', async (t
     payload: {
       type: 'entry',
       data: entryWithoutAuthor,
-      params: { doValidate: true }, // TODO: Figure out what to do with params -- require them to be set on the params object?
+      doValidate: true,
     },
     meta: { ident: { id: 'johnf', roles: ['editor'] } },
   }
@@ -81,7 +83,7 @@ test('should respond with ok when validated', async (t) => {
     payload: {
       type: 'entry',
       data: entryWithAuthor,
-      params: { doValidate: true },
+      doValidate: true,
     },
     meta: { ident: { id: 'johnf', roles: ['editor'] } },
   }

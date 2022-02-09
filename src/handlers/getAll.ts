@@ -56,7 +56,7 @@ export default async function get(
   action: Action,
   { dispatch }: ActionHandlerResources
 ): Promise<Action> {
-  const { pageSize, params: { noLoopCheck = false } = {} } = action.payload
+  const { pageSize, noLoopCheck = false } = action.payload
 
   if (typeof pageSize !== 'number') {
     return dispatch({ type: 'GET', payload: action.payload, meta: action.meta })

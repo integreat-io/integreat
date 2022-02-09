@@ -67,7 +67,7 @@ test('should set metadata on service', async (t) => {
   const action = {
     type: 'SET_META',
     payload: {
-      params: { meta: { lastSyncedAt, status: 'busy' } },
+      meta: { lastSyncedAt, status: 'busy' },
       targetService: 'store',
     },
     meta: { ident },
@@ -97,7 +97,7 @@ test('should set metadata on service with type', async (t) => {
     type: 'SET_META',
     payload: {
       type: 'product',
-      params: { meta: { lastSyncedAt, status: 'busy' } },
+      meta: { lastSyncedAt, status: 'busy' },
       targetService: 'store',
     },
     meta: { ident },
@@ -127,7 +127,7 @@ test('should set metadata on service with several types', async (t) => {
     type: 'SET_META',
     payload: {
       type: ['entry', 'article'],
-      params: { meta: { lastSyncedAt, status: 'busy' } },
+      meta: { lastSyncedAt, status: 'busy' },
       targetService: 'store',
     },
     meta: { ident },
@@ -157,7 +157,8 @@ test('should set metadata on service with metaKey', async (t) => {
     type: 'SET_META',
     payload: {
       type: 'product',
-      params: { meta: { lastSyncedAt, status: 'busy' }, metaKey: 'hardware' },
+      meta: { lastSyncedAt, status: 'busy' },
+      metaKey: 'hardware',
       targetService: 'store',
     },
     meta: { ident },
@@ -182,7 +183,7 @@ test('should not set metadata on service when no meta type', async (t) => {
   const action = {
     type: 'SET_META',
     payload: {
-      params: { meta: { lastSyncedAt } },
+      meta: { lastSyncedAt },
       targetService: 'store',
     },
     meta: { ident },
@@ -218,7 +219,7 @@ test('should set metadata on other service', async (t) => {
   const action = {
     type: 'SET_META',
     payload: {
-      params: { meta: { lastSyncedAt } },
+      meta: { lastSyncedAt },
       targetService: 'entries',
       endpoint: 'setMeta',
     },
@@ -239,7 +240,7 @@ test('should return status noaction when meta is set to an unknown schema', asyn
   const action = {
     type: 'SET_META',
     payload: {
-      params: { meta: { lastSyncedAt } },
+      meta: { lastSyncedAt },
       targetService: 'store',
     },
     meta: { ident },
@@ -264,7 +265,7 @@ test('should refuse setting metadata on service when not authorized', async (t) 
   const action = {
     type: 'SET_META',
     payload: {
-      params: { meta: { lastSyncedAt, status: 'busy' } },
+      meta: { lastSyncedAt, status: 'busy' },
       targetService: 'store',
     },
   }
@@ -280,7 +281,7 @@ test('should return error for unknown service', async (t) => {
   const action = {
     type: 'SET_META',
     payload: {
-      params: { meta: { lastSyncedAt } },
+      meta: { lastSyncedAt },
       targetService: 'unknown',
     },
     meta: { ident },

@@ -84,7 +84,6 @@ export interface Payload<T = unknown> extends Record<string, unknown> {
   targetService?: string
   service?: string // For backward compability, may be removed
   endpoint?: string
-  params?: Params
   uri?: string
   method?: string
   headers?: Record<string, string>

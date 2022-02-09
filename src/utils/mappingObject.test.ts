@@ -15,7 +15,7 @@ test('should create mapping object from action for request', (t) => {
     payload: {
       id: 'johnf',
       type: 'user',
-      params: { searchDeleted: true },
+      searchDeleted: true,
       data,
     },
     response: { status: 'badrequest', error: 'No user by that name' },
@@ -58,7 +58,7 @@ test('should create mapping object from action for response', (t) => {
     payload: {
       id: 'johnf',
       type: 'user',
-      params: { searchDeleted: true },
+      searchDeleted: true,
       data: {},
     },
     response: {
@@ -139,7 +139,7 @@ test('should populate action from mapping object from response from service', (t
     payload: {
       id: 'johnf',
       type: 'user',
-      params: { searchDeleted: true },
+      searchDeleted: true,
       data: {},
       sendNoDefaults: true,
     },
@@ -197,7 +197,7 @@ test('should populate action from mapping object from request to service', (t) =
     payload: {
       id: 'johnf',
       type: 'user',
-      params: { searchDeleted: true },
+      searchDeleted: true,
       data,
     },
     response: { status: 'badrequest', error: 'No user by that name' },
@@ -244,7 +244,7 @@ test('should populate action from mapping object from request to service on succ
     payload: {
       id: 'johnf',
       type: 'user',
-      params: { searchDeleted: true },
+      searchDeleted: true,
       data,
     },
     meta: {
@@ -264,7 +264,7 @@ test('should populate action from mapping object from response to service', (t) 
   const action = {
     type: 'SET',
     payload: {
-      params: { isArchived: false },
+      isArchived: false,
     },
     response: {
       status: null,
@@ -294,7 +294,8 @@ test('should populate action from mapping object from response to service', (t) 
     payload: {
       id: 'johnf',
       type: 'user',
-      params: { searchDeleted: true, isArchived: false },
+      searchDeleted: true,
+      isArchived: false,
     },
     response: {
       status: 'badrequest',
@@ -344,7 +345,7 @@ test('should populate action from mapping object from request from service', (t)
     payload: {
       id: 'johnf',
       type: 'user',
-      params: { searchDeleted: true },
+      searchDeleted: true,
       data,
     },
     response: {
@@ -404,7 +405,7 @@ test('should populate action from mapping object with error message', (t) => {
     payload: {
       id: 'johnf',
       type: 'user',
-      params: { searchDeleted: true },
+      searchDeleted: true,
       data: {},
       sendNoDefaults: true,
     },

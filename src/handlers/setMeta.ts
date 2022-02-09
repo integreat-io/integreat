@@ -16,7 +16,8 @@ export default async function setMeta(
   const {
     payload: {
       type,
-      params: { meta = {}, metaKey } = {},
+      meta = {},
+      metaKey,
       targetService: serviceId,
       endpoint: endpointId,
     },
@@ -64,9 +65,7 @@ export default async function setMeta(
       type: metaType,
       data: { id: metaId, $type: metaType, ...(meta as DataObject) },
       sendNoDefaults: true,
-      params: {
-        keys: Object.keys(meta as DataObject),
-      },
+      keys: Object.keys(meta as DataObject),
       endpoint: endpointId,
     },
     meta: { ident },

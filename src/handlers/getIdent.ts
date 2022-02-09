@@ -5,9 +5,8 @@ import { getFirstIfArray } from '../utils/array'
 import { Action, Ident, ActionHandlerResources } from '../types'
 import getHandler from './get'
 
-interface IdentParams {
+interface IdentParams extends Record<string, unknown> {
   id?: string
-  params?: Record<string, string>
 }
 
 const preparePropKeys = ({
@@ -27,11 +26,9 @@ const prepareParams = (
   keys: Record<string, string>
 ): IdentParams | null =>
   ident.id
-    ? keys.id === 'id'
-      ? { [keys.id]: ident.id }
-      : { params: { [keys.id]: ident.id } }
+    ? { [keys.id]: ident.id }
     : ident.withToken
-    ? { params: { [keys.tokens]: ident.withToken } }
+    ? { [keys.tokens]: ident.withToken }
     : null
 
 const wrapOk = (action: Action, data: unknown, ident: Ident) => ({

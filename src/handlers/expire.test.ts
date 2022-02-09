@@ -38,10 +38,8 @@ test('should dispatch GET to expired endpoint', async (t) => {
     type: 'GET',
     payload: {
       type: 'entry',
-      params: {
-        timestamp: theTime,
-        isodate: new Date(theTime).toISOString(),
-      },
+      timestamp: theTime,
+      isodate: new Date(theTime).toISOString(),
       targetService: 'store',
       endpoint: 'getExpired',
     },
@@ -63,17 +61,15 @@ test('should add msFromNow to current timestamp', async (t) => {
     type: 'EXPIRE',
     payload: {
       type: 'entry',
-      params: { msFromNow: 3600000 },
+      msFromNow: 3600000,
       targetService: 'store',
       endpoint: 'getExpired',
     },
   }
   const expected = {
     payload: {
-      params: {
-        timestamp: theTime + 3600000,
-        isodate: new Date(theTime + 3600000).toISOString(),
-      },
+      timestamp: theTime + 3600000,
+      isodate: new Date(theTime + 3600000).toISOString(),
     },
   }
 

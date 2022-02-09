@@ -50,10 +50,8 @@ test('should get all entries with transformed param', async (t) => {
     type: 'GET',
     payload: {
       type: 'entry',
-      params: {
-        updatedSince: new Date('2021-07-05T14:07:19Z'),
-        updatedUntil: new Date('2021-07-05T23:59:59.999Z'),
-      },
+      updatedSince: new Date('2021-07-05T14:07:19Z'),
+      updatedUntil: new Date('2021-07-05T23:59:59.999Z'),
     },
     meta: { ident: { id: 'johnf' } },
   }

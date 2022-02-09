@@ -106,7 +106,7 @@ test('should get all items from service', async (t) => {
     type: 'GET',
     payload: {
       type: 'entry',
-      params: { source: 'thenews' },
+      source: 'thenews',
       targetService: 'entries',
     },
     meta: { ident: { id: 'johnf' } },
@@ -485,7 +485,7 @@ test('should return noaction when no endpoint matches', async (t) => {
     type: 'GET',
     payload: {
       type: 'entry',
-      params: { source: 'thenews' },
+      source: 'thenews',
       endpoint: 'unknown',
       targetService: 'entries',
     },

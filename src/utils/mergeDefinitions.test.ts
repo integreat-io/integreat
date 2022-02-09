@@ -89,10 +89,8 @@ const schedule1 = {
     type: 'SYNC',
     payload: {
       type: 'entry',
-      params: {
-        from: 'old',
-        to: 'new',
-      },
+      from: 'old',
+      to: 'new',
     },
   },
 }
@@ -103,10 +101,8 @@ const schedule2 = {
     type: 'SYNC',
     payload: {
       type: 'user',
-      params: {
-        from: 'old',
-        to: 'new',
-      },
+      from: 'old',
+      to: 'new',
     },
   },
 }

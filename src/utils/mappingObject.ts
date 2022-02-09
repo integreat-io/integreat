@@ -1,4 +1,3 @@
-import { isEmptyObject } from './is'
 import { Action, Paging, Params, Ident, Meta } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
 
@@ -30,14 +29,14 @@ export function mappingObjectFromAction(
 ): MappingObject {
   const {
     type: actionType,
-    payload: { data: requestData, params, ...reqParams },
+    payload: { data: requestData, ...params },
     response: { status = null, data: responseData, error, paging } = {},
     meta: { options, ident, ...meta } = {},
   } = action
   return {
     action: actionType,
     status,
-    params: { ...reqParams, ...params },
+    params,
     data: isRequest ? requestData : responseData,
     error,
     paging,
@@ -61,7 +60,7 @@ export function actionFromMappingObject(
     data,
     paging,
     error,
-    params: { id, type, sendNoDefaults, ...params } = {},
+    params,
     options,
     headers,
   } = mappingObject
@@ -87,13 +86,8 @@ export function actionFromMappingObject(
     ...action,
     payload: {
       ...action.payload,
+      ...params,
       ...(isRequest && { data }),
-      ...(id && { id }),
-      ...(type && { type }),
-      ...(sendNoDefaults && { sendNoDefaults }),
-      ...(!isEmptyObject(params) && {
-        params: { ...action.payload.params, ...(params as Params) },
-      }),
     },
     ...(response && { response }),
     meta: {

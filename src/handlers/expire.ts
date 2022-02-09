@@ -25,7 +25,8 @@ const getExpired = async (
     type: 'GET',
     payload: {
       type,
-      params: { timestamp, isodate },
+      timestamp,
+      isodate,
       targetService,
       endpoint: endpointId,
     },
@@ -69,10 +70,10 @@ export default async function expire(
   { dispatch }: ActionHandlerResources
 ): Promise<Action> {
   const {
-    payload: { type, params, endpoint: endpointId, targetService: serviceId },
+    payload: { type, endpoint: endpointId, targetService: serviceId },
     meta: { ident } = {},
   } = action
-  const msFromNow = (params?.msFromNow as number) || 0
+  const msFromNow = (action.payload.msFromNow as number) || 0
 
   if (!serviceId) {
     return createErrorOnAction(

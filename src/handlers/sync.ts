@@ -32,7 +32,7 @@ interface ActionParams extends Record<string, unknown> {
   createdBefore?: Date
 }
 
-interface SyncParams extends Record<string, unknown> {
+interface SyncParams extends Payload {
   from?: string | Partial<ActionParams> | (string | Partial<ActionParams>)[]
   to?: string | Partial<ActionParams>
   updatedAfter?: Date
@@ -58,24 +58,6 @@ interface MetaData {
   }
 }
 
-const extractKnownParams = ({
-  page,
-  pageOffset,
-  pageSize,
-  pageAfter,
-  pageBefore,
-  pageId,
-  ...params
-}: Payload) => ({
-  ...(page ? { page } : {}),
-  ...(pageOffset ? { pageOffset } : {}),
-  ...(pageSize ? { pageSize } : {}),
-  ...(pageAfter ? { pageAfter } : {}),
-  ...(pageBefore ? { pageBefore } : {}),
-  ...(pageId ? { pageId } : {}),
-  params,
-})
-
 const createGetMetaAction = (
   targetService: string,
   type?: string | string[],
@@ -83,7 +65,7 @@ const createGetMetaAction = (
   meta?: Meta
 ) => ({
   type: 'GET_META',
-  payload: { type, params: { keys: 'lastSyncedAt', metaKey }, targetService },
+  payload: { type, keys: 'lastSyncedAt', metaKey, targetService },
   meta,
 })
 
@@ -95,27 +77,27 @@ const createSetMetaAction = (
   meta?: Meta
 ) => ({
   type: 'SET_META',
-  payload: { type, params: { meta: { lastSyncedAt }, metaKey }, targetService },
+  payload: { type, meta: { lastSyncedAt }, metaKey, targetService },
   meta,
 })
 
 const createGetAction = (
-  { type, service: targetService, action = 'GET', ...params }: ActionParams,
+  { service: targetService, action = 'GET', ...params }: ActionParams,
   meta?: Meta
 ) => ({
   type: action,
-  payload: { type, targetService, ...extractKnownParams(params) },
+  payload: { targetService, ...params },
   meta,
 })
 
 const createSetAction = (
   data: unknown,
-  { type, service: targetService, action = 'SET', ...params }: ActionParams,
+  { service: targetService, action = 'SET', ...params }: ActionParams,
   doQueueSet: boolean,
   meta?: Meta
 ): Action => ({
   type: action,
-  payload: { type, data, params, targetService },
+  payload: { data, targetService, ...params },
   meta: { ...meta, queue: doQueueSet },
 })
 
@@ -264,10 +246,7 @@ const setDatesAndType = (
 
 const setMetaFromParams = (
   dispatch: HandlerDispatch,
-  {
-    payload: { type, params: { metaKey } = {} },
-    meta: { id, ...meta } = {},
-  }: Action,
+  { payload: { type, metaKey }, meta: { id, ...meta } = {} }: Action,
   datesFromData: (Date | undefined)[],
   gottenDataDate: Date
 ) =>
@@ -301,13 +280,13 @@ const paramsAsObject = (params?: string | Partial<ActionParams>) =>
 const generateFromParams = async (
   dispatch: HandlerDispatch,
   type: string | string[],
-  { payload: { params = {} }, meta: { id, ...meta } = {} }: Action
+  { payload, meta: { id, ...meta } = {} }: Action
 ) =>
   Promise.all(
-    ensureArray((params as SyncParams).from)
+    ensureArray((payload as SyncParams).from)
       .map(paramsAsObject)
       .filter(isNotNullOrUndefined)
-      .map(setDatesAndType(dispatch, type, params, meta))
+      .map(setDatesAndType(dispatch, type, payload, meta))
       .map((p) => pLimit(1)(() => p)) // Run one promise at a time
   )
 
@@ -346,15 +325,15 @@ function generateSetDates(
 function generateToParams(
   fromParams: ActionParams[],
   type: string | string[],
-  { payload: { params = {} } }: Action
+  { payload }: Action
 ): ActionParams {
-  const { to, maxPerSet, alwaysSet }: SyncParams = params
+  const { to, maxPerSet, alwaysSet }: SyncParams = payload
   return {
     type,
     alwaysSet,
     maxPerSet,
-    ...generateSetDates(fromParams, params, 'updated'),
-    ...generateSetDates(fromParams, params, 'created'),
+    ...generateSetDates(fromParams, payload, 'updated'),
+    ...generateSetDates(fromParams, payload, 'created'),
     ...paramsAsObject(to),
   }
 }
@@ -435,16 +414,13 @@ function generateUntilDate(date: unknown) {
   return date
 }
 
-const prepareInputParams = (action: Action) => ({
+const prepareInputParams = (action: Action<SyncParams>) => ({
   ...action,
   payload: {
     ...action.payload,
-    params: {
-      ...action.payload.params,
-      updatedUntil: generateUntilDate(action.payload.params?.updatedUntil),
-      createdUntil: generateUntilDate(action.payload.params?.createdUntil),
-      retrieve: action.payload.params?.retrieve ?? 'all',
-    } as SyncParams,
+    updatedUntil: generateUntilDate(action.payload.updatedUntil),
+    createdUntil: generateUntilDate(action.payload.createdUntil),
+    retrieve: action.payload.retrieve ?? 'all',
   },
 })
 
@@ -506,12 +482,10 @@ export default async function syncHandler(
   const action = prepareInputParams(inputAction)
   const {
     payload: {
-      params: {
-        retrieve,
-        setLastSyncedAtFromData = false,
-        doFilterData = true,
-        doQueueSet = true,
-      },
+      retrieve,
+      setLastSyncedAtFromData = false,
+      doFilterData = true,
+      doQueueSet = true,
     },
     meta: { id, ...meta } = {},
   } = action

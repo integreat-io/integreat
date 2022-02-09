@@ -66,7 +66,7 @@ test('should get metadata for service', async (t) => {
   const action = {
     type: 'GET_META',
     payload: {
-      params: { keys: 'lastSyncedAt' },
+      keys: 'lastSyncedAt',
       targetService: 'store',
     },
     meta: { ident },
@@ -98,7 +98,7 @@ test('should get several metadata for service', async (t) => {
   const action = {
     type: 'GET_META',
     payload: {
-      params: { keys: ['lastSyncedAt', 'count'] },
+      keys: ['lastSyncedAt', 'count'],
       targetService: 'store',
       endpoint: 'getMeta',
     },
@@ -156,7 +156,7 @@ test('should get metadata for service with type', async (t) => {
     type: 'GET_META',
     payload: {
       type: 'entry',
-      params: { keys: 'lastSyncedAt' },
+      keys: 'lastSyncedAt',
       targetService: 'store',
     },
     meta: { ident },
@@ -184,7 +184,7 @@ test('should get metadata for service with several types', async (t) => {
     type: 'GET_META',
     payload: {
       type: ['entry', 'article'],
-      params: { keys: 'lastSyncedAt' },
+      keys: 'lastSyncedAt',
       targetService: 'store',
     },
     meta: { ident },
@@ -216,7 +216,8 @@ test('should get metadata for service with metaKey', async (t) => {
     type: 'GET_META',
     payload: {
       type: 'product',
-      params: { keys: 'lastSyncedAt', metaKey: 'hardware' },
+      keys: 'lastSyncedAt',
+      metaKey: 'hardware',
       targetService: 'store',
     },
     meta: { ident },
@@ -248,7 +249,7 @@ test('should return null for metadata when not set on service', async (t) => {
   const action = {
     type: 'GET_META',
     payload: {
-      params: { keys: 'lastSyncedAt' },
+      keys: 'lastSyncedAt',
       targetService: 'store',
     },
     meta: { ident },
@@ -277,7 +278,7 @@ test('should return reply from service when not ok', async (t) => {
   const action = {
     type: 'GET_META',
     payload: {
-      params: { keys: 'lastSyncedAt' },
+      keys: 'lastSyncedAt',
       targetService: 'store',
     },
     meta: { ident },
@@ -305,7 +306,7 @@ test('should return noaction when when no meta type is set', async (t) => {
   const action = {
     type: 'GET_META',
     payload: {
-      params: { keys: 'lastSyncedAt' },
+      keys: 'lastSyncedAt',
       targetService: 'store',
     },
     meta: { ident },
@@ -339,7 +340,7 @@ test('should get metadata from other service', async (t) => {
   const action = {
     type: 'GET_META',
     payload: {
-      params: { keys: 'lastSyncedAt' },
+      keys: 'lastSyncedAt',
       targetService: 'entries',
     },
     meta: { ident },
@@ -360,7 +361,7 @@ test('should return noaction when meta is set to an unknown type', async (t) => 
   const action = {
     type: 'GET_META',
     payload: {
-      params: { keys: 'lastSyncedAt' },
+      keys: 'lastSyncedAt',
       targetService: 'entries',
     },
     meta: { ident },
@@ -377,7 +378,7 @@ test('should return error for unknown service', async (t) => {
   const action = {
     type: 'GET_META',
     payload: {
-      params: { keys: 'lastSyncedAt' },
+      keys: 'lastSyncedAt',
       targetService: 'unknown',
     },
     meta: { ident },
@@ -401,7 +402,7 @@ test('should respond with noaccess when not authorized', async (t) => {
   const action = {
     type: 'GET_META',
     payload: {
-      params: { keys: 'lastSyncedAt' },
+      keys: 'lastSyncedAt',
       targetService: 'store',
     },
   }
