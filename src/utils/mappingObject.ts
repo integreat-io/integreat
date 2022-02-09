@@ -56,6 +56,7 @@ export function actionFromMappingObject(
   }
   const actionStatus = action.response?.status
   const {
+    action: actionType,
     status: mappedStatus,
     data,
     paging,
@@ -84,6 +85,7 @@ export function actionFromMappingObject(
 
   return {
     ...action,
+    type: actionType || action.type,
     payload: {
       ...action.payload,
       ...params,

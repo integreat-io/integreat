@@ -331,7 +331,7 @@ test('should populate action from mapping object from request from service', (t)
     },
   }
   const mappingObject = {
-    action: 'GET',
+    action: 'GET_SOMETHING',
     status: 'ok',
     params: { id: 'johnf', type: 'user', searchDeleted: true },
     data,
@@ -341,7 +341,7 @@ test('should populate action from mapping object from request from service', (t)
     ident: { id: 'johnf' },
   }
   const expected = {
-    type: 'GET',
+    type: 'GET_SOMETHING',
     payload: {
       id: 'johnf',
       type: 'user',
