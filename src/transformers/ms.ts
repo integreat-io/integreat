@@ -1,7 +1,7 @@
 import { isDate } from '../utils/is'
 
 export default () =>
-  function formatDate(
+  function ms(
     value: unknown,
     { rev }: { rev: boolean }
   ): number | Date | null | undefined {
