@@ -43,8 +43,10 @@ const getPrefixesFromElement =
     if (Array.isArray(data)) {
       return data
         .map((element) => getPrefixParents(element, prefixes))
-        .reduce((prefixParents, prefixChildren) =>
-          setChildrenOrParent(prefixParents, prefixChildren, parent)
+        .reduce(
+          (prefixParents, prefixChildren) =>
+            setChildrenOrParent(prefixParents, prefixChildren, parent),
+          {}
         )
     }
 
@@ -70,7 +72,7 @@ const getPrefixesFromElement =
     return parents.reduce(
       (prefixParents, prefixChildren) =>
         setChildrenOrParent(prefixParents, prefixChildren, data),
-      localPrefixParents as PrefixParents
+      localPrefixParents
     )
   }
 

@@ -196,6 +196,34 @@ test('should declare namespace on first parent of occurences including attribute
   t.deepEqual(ret, expected)
 })
 
+test('should set namespace on element without children', (t) => {
+  const namespaces = {
+    'http://example.com/webservices': '',
+    'http://www.w3.org/2003/05/soap-envelope': 'soap',
+  }
+  const data = {
+    'soap:Envelope': {
+      'soap:Body': {
+        GetPaymentMethodsResponse: {},
+      },
+    },
+  }
+  const expected = {
+    'soap:Envelope': {
+      '@xmlns:soap': 'http://www.w3.org/2003/05/soap-envelope',
+      'soap:Body': {
+        GetPaymentMethodsResponse: {
+          '@xmlns': 'http://example.com/webservices',
+        },
+      },
+    },
+  }
+
+  const ret = setNamespaceAttrs(data, namespaces)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should not include undefined values', (t) => {
   const namespaces = {
     'http://example.com/webservices': '',
