@@ -59,6 +59,7 @@ test('should map incoming action data and response data', async (t) => {
     content: {
       title: 'Entry 1',
       main: 'The text of entry 1',
+      sections: [],
     },
     meta: {
       created: createdAt,

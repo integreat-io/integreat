@@ -27,6 +27,7 @@ test('should use incoming endpoint over non-incoming', async (t) => {
       type: 'entry',
       id: 'ent1',
       sourceService: 'api', // Makes this a candidate for incoming mapping
+      section: 'news',
     },
     meta: { ident: { root: true } },
   }
@@ -35,6 +36,7 @@ test('should use incoming endpoint over non-incoming', async (t) => {
     content: {
       title: 'Entry 1',
       main: 'The text of entry 1',
+      sections: ['news'],
     },
     meta: {
       created: createdAt,

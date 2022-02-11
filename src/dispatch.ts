@@ -232,7 +232,7 @@ export default function createDispatch({
           const next = async (action: Action) =>
             handleAction(action.type, action, resources, handlers)
           const response = await middlewareFn(next)(nextAction)
-          resolve(response)
+          resolve({ ...nextAction, response: response.response })
         }
       } catch (err) {
         resolve(createErrorOnAction(action, `Error thrown in dispatch: ${err}`))

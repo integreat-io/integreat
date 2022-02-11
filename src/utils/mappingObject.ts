@@ -29,14 +29,20 @@ export function mappingObjectFromAction(
 ): MappingObject {
   const {
     type: actionType,
-    payload: { data: requestData, ...params },
-    response: { status = null, data: responseData, error, paging } = {},
+    payload: { data: requestData, ...requestParams },
+    response: {
+      status = null,
+      data: responseData,
+      error,
+      params: responseParams,
+      paging,
+    } = {},
     meta: { options, ident, ...meta } = {},
   } = action
   return {
     action: actionType,
     status,
-    params,
+    params: { ...requestParams, ...responseParams },
     data: isRequest ? requestData : responseData,
     error,
     paging,

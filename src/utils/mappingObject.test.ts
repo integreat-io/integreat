@@ -64,6 +64,7 @@ test('should create mapping object from action for response', (t) => {
     response: {
       status: null,
       data,
+      params: { moreData: true },
       paging: { next: { offset: 'page2', type: 'entry' } },
     },
     meta: {
@@ -76,7 +77,7 @@ test('should create mapping object from action for response', (t) => {
   const expected = {
     action: 'GET',
     status: null,
-    params: { id: 'johnf', type: 'user', searchDeleted: true },
+    params: { id: 'johnf', type: 'user', searchDeleted: true, moreData: true },
     data,
     paging: { next: { offset: 'page2', type: 'entry' } },
     error: undefined,
