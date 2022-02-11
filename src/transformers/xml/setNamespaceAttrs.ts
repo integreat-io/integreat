@@ -112,6 +112,9 @@ function fixLeavesInValue(
   if (value === null) {
     return { [`@${xsiNs}:nil`]: 'true' }
   } else if (Array.isArray(value)) {
+    if (value.length === 1) {
+      return fixLeavesInValue(key, value[0], xsiNs)
+    }
     return value.flatMap((val) => fixLeavesInValue(key, val, xsiNs)) as
       | string
       | ElementValue

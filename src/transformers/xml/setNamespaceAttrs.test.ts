@@ -234,7 +234,7 @@ test('should not include undefined values', (t) => {
       'soap:Body': {
         GetPaymentMethodsResponse: {
           GetPaymentMethodsResult: {
-            PaymentMethod: [{ Id: { $value: '1' }, Name: undefined }],
+            PaymentMethod: { Id: { $value: '1' }, Name: undefined },
           },
         },
       },
@@ -247,7 +247,7 @@ test('should not include undefined values', (t) => {
         GetPaymentMethodsResponse: {
           '@xmlns': 'http://example.com/webservices',
           GetPaymentMethodsResult: {
-            PaymentMethod: [{ Id: { $value: '1' } }],
+            PaymentMethod: { Id: { $value: '1' } },
           },
         },
       },
@@ -551,6 +551,51 @@ test('should declare namespace on first parent of occurences of prefix in array'
               'a:customername': { $value: 'Inger' },
             },
           ],
+        },
+      },
+    },
+  }
+
+  const ret = setNamespaceAttrs(data, namespaces)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should declare namespace on element in array when its the only item', (t) => {
+  const namespaces = {
+    'http://example.com/webservices/': '',
+    'http://www.w3.org/2003/05/soap-envelope': 'soap',
+    'http://schemas.datacontract.org/2004/07/Common': 'a',
+  }
+  const data = {
+    'soap:Envelope': {
+      'soap:Body': {
+        CardNew: {
+          Customer: [
+            {
+              'a:customerkey': {
+                $value: 'AD0B2E69-4640-FBF4-9CC7-0C713FDF3B11',
+              },
+              'a:customername': { $value: 'Rolf' },
+            },
+          ],
+        },
+      },
+    },
+  }
+  const expected = {
+    'soap:Envelope': {
+      '@xmlns:soap': 'http://www.w3.org/2003/05/soap-envelope',
+      'soap:Body': {
+        CardNew: {
+          '@xmlns': 'http://example.com/webservices/',
+          Customer: {
+            '@xmlns:a': 'http://schemas.datacontract.org/2004/07/Common',
+            'a:customerkey': {
+              $value: 'AD0B2E69-4640-FBF4-9CC7-0C713FDF3B11',
+            },
+            'a:customername': { $value: 'Rolf' },
+          },
         },
       },
     },
