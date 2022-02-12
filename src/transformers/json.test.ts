@@ -26,20 +26,20 @@ test('should parse json from service', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should return undefined from service when invalid json', (t) => {
-  const data = 'Not json'
-
-  const ret = json(operands, options)(data, context)
-
-  t.is(ret, undefined)
-})
-
-test('should return undefined from service when not a string', (t) => {
+test('should return array as is', (t) => {
   const data = [{ key: 'ent1' }, { key: 'ent2' }]
 
   const ret = json(operands, options)(data, context)
 
-  t.is(ret, undefined)
+  t.deepEqual(ret, data)
+})
+
+test('should return object as is', (t) => {
+  const data = { key: 'ent1', title: 'Entry 1', tags: ['news', 'sports'] }
+
+  const ret = json(operands, options)(data, context)
+
+  t.deepEqual(ret, data)
 })
 
 test('should parse iso date strings from service as strings', (t) => {
@@ -49,6 +49,21 @@ test('should parse iso date strings from service as strings', (t) => {
   const ret = json(operands, options)(data, context)
 
   t.deepEqual(ret, expected)
+})
+
+test('should return undefined from service when invalid json', (t) => {
+  const data = 'Not json'
+
+  const ret = json(operands, options)(data, context)
+
+  t.is(ret, undefined)
+})
+
+test('should return undefined from service when not JSON', (t) => {
+  t.is(json(operands, options)(1, context), undefined)
+  t.is(json(operands, options)(false, context), undefined)
+  t.is(json(operands, options)(null, context), undefined)
+  t.is(json(operands, options)(undefined, context), undefined)
 })
 
 // Tests -- to service
