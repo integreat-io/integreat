@@ -24,20 +24,23 @@ interface Resources {
 const setServiceIdAsSourceServiceOnAction = (
   action: Action | null,
   serviceId: string,
-  incomingIdent: string
+  incomingIdent?: string
 ) =>
   action
     ? {
         ...action,
         payload: { ...action.payload, sourceService: serviceId },
-        meta: { ident: { id: incomingIdent }, ...action.meta },
+        meta: {
+          ident: incomingIdent ? { id: incomingIdent } : undefined,
+          ...action.meta,
+        },
       }
     : null
 
 // TODO: Consider if this is the correct approach - it's very convoluted and
 // require tests for the progress part
 const setServiceIdOnDispatchedAction =
-  (dispatch: Dispatch, serviceId: string, incomingIdent: string) =>
+  (dispatch: Dispatch, serviceId: string, incomingIdent?: string) =>
   (action: Action | null) =>
     new PProgress<Response>(async (resolve, _reject, setProgress) => {
       const p = dispatch(
@@ -99,7 +102,7 @@ export default ({
     id: serviceId,
     transporter: transporterId,
     auth,
-    incomingIdent = 'incoming',
+    incomingIdent,
     meta,
     options = {},
     mutation,

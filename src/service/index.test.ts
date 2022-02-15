@@ -1419,7 +1419,7 @@ test('listen should call transporter.listen', async (t) => {
   t.deepEqual(listenStub.args[0][1], expectedConnection)
 })
 
-test('listen should set sourceService and ident on dispatched actions', async (t) => {
+test('listen should set sourceService', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -1450,7 +1450,7 @@ test('listen should set sourceService and ident on dispatched actions', async (t
   const expectedAction = {
     type: 'SET',
     payload: { data: [], sourceService: 'entries' },
-    meta: { ident: { id: 'incoming' } },
+    meta: { ident: undefined },
   }
   const expectedResponse = { status: 'ok' }
 
