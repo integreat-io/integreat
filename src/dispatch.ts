@@ -119,7 +119,11 @@ const wrapDispatch =
       } = mapIncomingAction(exploadParams(action), getService)
       // Return any error from mapIncomingRequest()
       if (mappedAction.response?.status) {
-        resolve(responseFromAction(mappedAction))
+        resolve(
+          responseFromAction(
+            mapIncomingResponse(mappedAction, service, endpoint)
+          )
+        )
         return
       }
 

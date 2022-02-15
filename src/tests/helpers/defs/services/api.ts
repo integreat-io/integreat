@@ -18,6 +18,28 @@ export default {
       ],
     },
     {
+      match: {
+        action: 'SET',
+        incoming: true,
+        filters: { 'payload.data': { type: 'null' } },
+      },
+      mutation: [
+        {
+          $direction: 'fwd',
+          status: { $transform: 'value', value: 'badrequest' },
+          error: { $transform: 'value', value: 'We failed!' },
+        },
+        {
+          $direction: 'rev',
+          $flip: true,
+          data: {
+            code: 'status',
+            error: 'error',
+          },
+        },
+      ],
+    },
+    {
       match: { action: 'GET' },
       mutation: {
         data: ['data.article', { $apply: 'api-entry' }],
