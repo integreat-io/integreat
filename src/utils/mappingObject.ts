@@ -70,6 +70,7 @@ export function actionFromMappingObject(
     params,
     options,
     headers,
+    ident,
   } = mappingObject
   const status =
     actionStatus &&
@@ -100,6 +101,7 @@ export function actionFromMappingObject(
     ...(response && { response }),
     meta: {
       ...action.meta,
+      ident: ident || action.meta?.ident,
       ...(options && { options: { ...action?.meta?.options, ...options } }),
     },
   }

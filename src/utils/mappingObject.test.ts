@@ -191,7 +191,7 @@ test('should populate action from mapping object from request to service', (t) =
     paging: undefined,
     error: 'No user by that name',
     options: { uri: 'http://some.api.com/1.0' },
-    ident: { id: 'johnf' },
+    ident: { id: 'lucyk' },
   }
   const expected = {
     type: 'SET',
@@ -204,7 +204,7 @@ test('should populate action from mapping object from request to service', (t) =
     response: { status: 'badrequest', error: 'No user by that name' },
     meta: {
       options: { uri: 'http://some.api.com/1.0' },
-      ident: { id: 'johnf' },
+      ident: { id: 'lucyk' },
     },
   }
 
