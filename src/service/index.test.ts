@@ -1406,6 +1406,7 @@ test('listen should call transporter.listen', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
+    options: { listen: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedResponse = { status: 'ok' }
@@ -1417,6 +1418,40 @@ test('listen should call transporter.listen', async (t) => {
   t.is(listenStub.callCount, 1)
   t.is(typeof listenStub.args[0][0], 'function') // We check that the dispatch function is called in the next test
   t.deepEqual(listenStub.args[0][1], expectedConnection)
+})
+
+test('listen should not call transporter.listen when transport.shouldListen returns false', async (t) => {
+  const listenStub = sinon.stub().resolves({ status: 'ok' })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        shouldListen: () => false,
+        listen: listenStub,
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'http',
+    options: {},
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedResponse = {
+    status: 'noaction',
+    error: 'Transporter is not configured to listen',
+  }
+
+  const ret = await service.listen(dispatch)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(listenStub.callCount, 0)
 })
 
 test('listen should set sourceService', async (t) => {
@@ -1431,6 +1466,7 @@ test('listen should set sourceService', async (t) => {
       ...jsonResources.transporters,
       http: {
         ...jsonResources.transporters.http,
+        shouldListen: () => true,
         listen: async (dispatch: Dispatch) => {
           dispatch(action)
           return { status: 'ok' }
@@ -1445,6 +1481,7 @@ test('listen should set sourceService', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
+    options: { listen: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedAction = {
@@ -1488,6 +1525,7 @@ test('listen should set ident on dispatched actions from incomingIdent', async (
     auth: 'granting',
     incomingIdent: 'reidar',
     transporter: 'http',
+    options: { listen: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedAction = {
@@ -1526,6 +1564,7 @@ test('listen should return error when connection fails', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
+    options: { listen: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedResponse = {
@@ -1556,6 +1595,7 @@ test('listen should return error when authentication fails', async (t) => {
     id: 'entries',
     auth: 'refusing',
     transporter: 'http',
+    options: { listen: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedResponse = {
@@ -1580,6 +1620,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'granting',
     transporter: 'http',
+    options: { listen: { port: 8080 } },
   })
   const expectedResponse = {
     status: 'noaction',
@@ -1610,6 +1651,7 @@ test('listen should return error when no transporter', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'unknown',
+    options: { listen: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedResponse = {

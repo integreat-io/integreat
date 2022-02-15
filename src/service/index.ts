@@ -262,6 +262,16 @@ export default ({
           )
         }
 
+        if (
+          typeof transporter.shouldListen === 'function' &&
+          !transporter.shouldListen(options)
+        ) {
+          return createErrorResponse(
+            'Transporter is not configured to listen',
+            'noaction'
+          )
+        }
+
         if (authorization && !(await authorization.authenticate(null))) {
           return authorization.getStatusObject()
         }
