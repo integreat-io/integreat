@@ -98,6 +98,11 @@ const action = {
       { id: 'ent2', $type: 'entry', title: 'Entry 2', published: true },
     ],
   },
+  meta: { ident: { id: 'johnf' } },
+}
+
+const actionWithResponse = {
+  ...action,
   response: {
     status: 'ok',
     data: {
@@ -108,7 +113,6 @@ const action = {
       },
     },
   },
-  meta: { ident: { id: 'johnf' } },
 }
 
 const serviceId = 'accountStore'
@@ -244,9 +248,9 @@ test('should map response from service with endpoint mutation', (t) => {
   }
   const theTime = new Date()
   const expected = {
-    ...action,
+    ...actionWithResponse,
     response: {
-      ...action.response,
+      ...actionWithResponse.response,
       data: [
         {
           $type: 'entry',
@@ -266,7 +270,7 @@ test('should map response from service with endpoint mutation', (t) => {
     mapOptions
   )(endpointDef)
 
-  const ret = endpoint.mutateResponse(action)
+  const ret = endpoint.mutateResponse(actionWithResponse)
 
   clock.restore()
   t.deepEqual(ret, expected)
@@ -287,9 +291,9 @@ test('should map action props from response', (t) => {
     options: { uri: 'http://some.api/1.0' },
   }
   const actionWithProps = {
-    ...action,
+    ...actionWithResponse,
     response: {
-      ...action.response,
+      ...actionWithResponse.response,
       data: {
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
         key: '7839',
@@ -331,12 +335,12 @@ test('should map response from service with service and endpoint mutations', (t)
     options: { uri: 'http://some.api/1.0' },
   }
   const actionWithProps = {
-    ...action,
+    ...actionWithResponse,
     payload: {
       message: 'Too much',
     },
     response: {
-      ...action.response,
+      ...actionWithResponse.response,
       data: JSON.stringify({
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
         result: 'badrequest',
@@ -364,9 +368,9 @@ test('should map response from service with service mutation only', (t) => {
     options: { uri: 'http://some.api/1.0' },
   }
   const actionWithProps = {
-    ...action,
+    ...actionWithResponse,
     response: {
-      ...action.response,
+      ...actionWithResponse.response,
       data: {
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
       },
@@ -400,9 +404,9 @@ test('should keep action props not mapped from response', (t) => {
     options: { uri: 'http://some.api/1.0' },
   }
   const actionWithProps = {
-    ...action,
+    ...actionWithResponse,
     response: {
-      ...action.response,
+      ...actionWithResponse.response,
       status: 'error',
       data: {
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
@@ -432,9 +436,9 @@ test('should set status to error for response with an error', (t) => {
     options: { uri: 'http://some.api/1.0' },
   }
   const actionWithProps = {
-    ...action,
+    ...actionWithResponse,
     response: {
-      ...action.response,
+      ...actionWithResponse.response,
       status: 'queued',
       data: {
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
@@ -462,9 +466,9 @@ test('should map to undefined from response when unknown path', (t) => {
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = {
-    ...action,
+    ...actionWithResponse,
     response: {
-      ...action.response,
+      ...actionWithResponse.response,
       data: undefined,
     },
   }
@@ -474,7 +478,7 @@ test('should map to undefined from response when unknown path', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateResponse(action)
+  const ret = endpoint.mutateResponse(actionWithResponse)
 
   t.deepEqual(ret, expected)
 })
@@ -487,9 +491,9 @@ test('should map to empty array from service when unknown path and expecting arr
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = {
-    ...action,
+    ...actionWithResponse,
     response: {
-      ...action.response,
+      ...actionWithResponse.response,
       data: [],
     },
   }
@@ -499,7 +503,7 @@ test('should map to empty array from service when unknown path and expecting arr
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateResponse(action)
+  const ret = endpoint.mutateResponse(actionWithResponse)
 
   t.deepEqual(ret, expected)
 })
@@ -512,9 +516,9 @@ test('should map from service without defaults', (t) => {
     options: { uri: 'http://some.api/1.0' },
   }
   const actionWithoutDefaults = {
-    ...action,
+    ...actionWithResponse,
     response: {
-      ...action.response,
+      ...actionWithResponse.response,
       returnNoDefaults: true,
     },
   }
@@ -533,14 +537,14 @@ test('should not map from service when no mutation pipeline', (t) => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
-  const expected = action
+  const expected = actionWithResponse
 
   const endpoint = createEndpoint(
     serviceId,
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateResponse(action)
+  const ret = endpoint.mutateResponse(actionWithResponse)
 
   t.deepEqual(ret, expected)
 })
@@ -553,14 +557,14 @@ test('should not map response from service when direction is rev', (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const expected = action
+  const expected = actionWithResponse
   const endpoint = createEndpoint(
     serviceId,
     serviceOptions,
     mapOptions
   )(endpointDef)
 
-  const ret = endpoint.mutateResponse(action)
+  const ret = endpoint.mutateResponse(actionWithResponse)
 
   t.deepEqual(ret, expected)
 })
