@@ -1498,6 +1498,50 @@ test('listen should set sourceService', async (t) => {
   t.deepEqual(ret, expectedResponse)
 })
 
+test('listen should not set sourceService when already set', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'other' },
+  }
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        shouldListen: () => true,
+        listen: async (dispatch: Dispatch) => {
+          dispatch(action)
+          return { status: 'ok' }
+        },
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'http',
+    options: { listen: { port: 8080 } },
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedAction = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'other' },
+    meta: { ident: undefined },
+  }
+  const expectedResponse = { status: 'ok' }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.is(dispatchStub.callCount, 1)
+  t.deepEqual(dispatchStub.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
+})
+
 test('listen should set ident on dispatched actions from incomingIdent', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {

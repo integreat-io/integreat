@@ -29,7 +29,10 @@ const setServiceIdAsSourceServiceOnAction = (
   action
     ? {
         ...action,
-        payload: { ...action.payload, sourceService: serviceId },
+        payload: {
+          ...action.payload,
+          sourceService: action.payload.sourceService || serviceId,
+        },
         meta: {
           ident: incomingIdent ? { id: incomingIdent } : undefined,
           ...action.meta,
