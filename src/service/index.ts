@@ -21,37 +21,39 @@ interface Resources {
   middleware?: Middleware[]
 }
 
-const setServiceIdAsSourceServiceOnAction = (
-  action: Action | null,
-  serviceId: string,
-  incomingIdent?: string
-) =>
-  action
-    ? {
-        ...action,
-        payload: {
-          ...action.payload,
-          sourceService: action.payload.sourceService || serviceId,
-        },
-        meta: {
-          ident: incomingIdent ? { id: incomingIdent } : undefined,
-          ...action.meta,
-        },
-      }
-    : null
+const setServiceIdAsSourceServiceOnAction =
+  (serviceId: string, incomingIdent?: string): Middleware =>
+  (next) =>
+  async (action: Action) =>
+    next({
+      ...action,
+      payload: {
+        ...action.payload,
+        sourceService: action.payload.sourceService || serviceId,
+      },
+      meta: {
+        ident: incomingIdent ? { id: incomingIdent } : undefined,
+        ...action.meta,
+      },
+    })
 
 // TODO: Consider if this is the correct approach - it's very convoluted and
 // require tests for the progress part
-const setServiceIdOnDispatchedAction =
-  (dispatch: Dispatch, serviceId: string, incomingIdent?: string) =>
-  (action: Action | null) =>
+const dispatchIncomingWithMiddleware =
+  (dispatch: Dispatch, middleware: Middleware) => (action: Action | null) =>
     new PProgress<Response>(async (resolve, _reject, setProgress) => {
-      const p = dispatch(
-        setServiceIdAsSourceServiceOnAction(action, serviceId, incomingIdent)
-      )
-      p.onProgress(setProgress)
-      const response = await p
-      resolve(response)
+      if (action) {
+        const response = await middleware(async (action) => {
+          const p = dispatch(action)
+          p.onProgress(setProgress)
+          const response = await p
+          return { ...action, response }
+        })(action)
+
+        resolve(response.response)
+      } else {
+        resolve({ status: 'noaction', error: 'No action was dispatched' })
+      }
     })
 
 const isTransporter = (transporter: unknown): transporter is Transporter =>
@@ -287,8 +289,13 @@ export default ({
           )
         }
 
+        const incomingMiddleware = compose(
+          runThroughMiddleware,
+          setServiceIdAsSourceServiceOnAction(serviceId, incomingIdent)
+        )
+
         return transporter.listen(
-          setServiceIdOnDispatchedAction(dispatch, serviceId, incomingIdent),
+          dispatchIncomingWithMiddleware(dispatch, incomingMiddleware),
           connection.object
         )
       },

@@ -356,7 +356,7 @@ test('send should retrieve data from service', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('send should use outgoing middleware', async (t) => {
+test('send should use service middleware', async (t) => {
   const failMiddleware = () => async (action: Action) => ({
     ...action,
     response: { status: 'badresponse' },
@@ -1706,6 +1706,79 @@ test('listen should return error when no transporter', async (t) => {
   const ret = await service.listen(dispatch)
 
   t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should use service middleware', async (t) => {
+  const failMiddleware = () => async (action: Action) => ({
+    ...action,
+    response: { status: 'badresponse' },
+  })
+  const action = {
+    type: 'SET',
+    payload: { data: [] },
+  }
+  let listenDispatch: Dispatch | undefined
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: async (dispatch: Dispatch) => {
+          listenDispatch = dispatch
+          return { status: 'ok' }
+        },
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+    middleware: [failMiddleware],
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'http',
+    options: { listen: { port: 8080 } },
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+
+  await service.listen(dispatch)
+  const ret = await listenDispatch!(action)
+
+  t.is(ret.status, 'badresponse', ret.error)
+})
+
+test('listen should return noaction when incoming action is null', async (t) => {
+  let listenDispatch: Dispatch | undefined
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: async (dispatch: Dispatch) => {
+          listenDispatch = dispatch
+          return { status: 'ok' }
+        },
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    auth: 'granting',
+    transporter: 'http',
+    options: { listen: { port: 8080 } },
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+
+  await service.listen(dispatch)
+  const ret = await listenDispatch!(null)
+
+  t.is(ret.status, 'noaction', ret.error)
 })
 
 // Tests -- close
