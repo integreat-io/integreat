@@ -9,6 +9,8 @@ const xmlData =
 
 const soapNamespaceOnParent = `<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><NaeringBrikkeListeResponse xmlns="http://internal.ws.no/webservices/"><NaeringBrikkeListeResult xmlns:a="http://schemas.datacontract.org/2004/07/Common"><a:Melding>Message</a:Melding><a:ReturKode>0</a:ReturKode><a:ReturVerdi>Value</a:ReturVerdi></NaeringBrikkeListeResult></NaeringBrikkeListeResponse></soap:Body></soap:Envelope>`
 
+const soapNoNamespace = `<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><NaeringBrikkeListeResponse><NaeringBrikkeListeResult xmlns:a="http://schemas.datacontract.org/2004/07/Common"><a:Melding>Message</a:Melding><a:ReturKode>0</a:ReturKode><a:ReturVerdi>Value</a:ReturVerdi></NaeringBrikkeListeResult></NaeringBrikkeListeResponse></soap:Body></soap:Envelope>`
+
 const namespaces = {
   'http://www.w3.org/2003/05/soap-envelope': 'soap',
   'http://example.com/webservices': '',
@@ -242,6 +244,32 @@ test('should set namespace on parent', async (t) => {
     },
   }
   const expected = soapNamespaceOnParent
+
+  const ret = stringify(data, namespaces)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not set no-namespace', async (t) => {
+  const namespaces = {
+    '': '',
+    'http://schemas.datacontract.org/2004/07/Common': 'a',
+    'http://schemas.xmlsoap.org/soap/envelope/': 'soap',
+  }
+  const data = {
+    'soap:Envelope': {
+      'soap:Body': {
+        NaeringBrikkeListeResponse: {
+          NaeringBrikkeListeResult: {
+            'a:Melding': 'Message',
+            'a:ReturKode': '0',
+            'a:ReturVerdi': 'Value',
+          },
+        },
+      },
+    },
+  }
+  const expected = soapNoNamespace
 
   const ret = stringify(data, namespaces)
 

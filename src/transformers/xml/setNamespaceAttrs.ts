@@ -95,7 +95,7 @@ function setAttrs(prefixParents: PrefixParents, namespaces: Namespaces) {
     const uri = namespaces[prefix]
     if (prefix) {
       element[`@xmlns:${prefix}`] = uri
-    } else {
+    } else if (uri) {
       element['@xmlns'] = uri
     }
   })
