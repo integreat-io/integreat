@@ -1,22 +1,15 @@
-import { isDate } from '../utils/is'
+import { castDate } from './builtIns/date'
 
 export default () =>
   function ms(
     value: unknown,
     { rev }: { rev: boolean }
   ): number | Date | null | undefined {
+    const date = castDate(value)
+
     if (rev) {
-      if (isDate(value)) {
-        return value.getTime()
-      } else if (typeof value === 'number') {
-        return value
-      }
-    } else {
-      // fwd
-      if (typeof value === 'number' || isDate(value)) {
-        return new Date(value)
-      }
+      return date instanceof Date ? date?.getTime() : undefined
     }
 
-    return undefined
+    return date || undefined
   }
