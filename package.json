@@ -45,7 +45,7 @@
     "got": "^11.8.3",
     "html-entities": "^2.3.2",
     "later": "^1.2.0",
-    "luxon": "^2.3.0",
+    "luxon": "^2.3.1",
     "map-any": "^0.2.1",
     "map-transform": "0.4.0-alpha.4",
     "ms": "^2.1.3",
