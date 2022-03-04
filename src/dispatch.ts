@@ -45,7 +45,7 @@ function getActionHandlerFromType(
 }
 
 const exploadParams = ({
-  payload: { params, ...payload },
+  payload: { params, ...payload } = {},
   ...action
 }: Action) => ({
   ...action,

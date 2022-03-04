@@ -56,12 +56,8 @@ function mutateAction(
     )
 }
 
-const flattenOne = <T>(arr: T[]): T | T[] => (arr.length <= 1 ? arr[0] : arr)
-
-const combineMutations = (
-  ...mutations: (MapDefinition | undefined)[]
-): MapDefinition =>
-  flattenOne((mutations.filter(Boolean) as MapDefinition[]).map(modify))
+const flattenIfOneOrNone = <T>(arr: T[]): T | T[] =>
+  arr.length <= 1 ? arr[0] : arr
 
 /**
  * Create endpoint from definition.
@@ -74,9 +70,10 @@ export default function createEndpoint(
   prepareOptions: PrepareOptions = (options) => options
 ) {
   return function (endpointDef: EndpointDef): Endpoint {
-    const mutation = combineMutations(
-      ...ensureArray(serviceMutation),
-      endpointDef.mutation
+    const mutation = flattenIfOneOrNone(
+      [...ensureArray(serviceMutation), endpointDef.mutation]
+        .filter((item): item is MapDefinition => !!item)
+        .map(modify)
     )
     const mutator = mutation ? mapTransform(mutation, mapOptions) : null
 

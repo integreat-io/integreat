@@ -4,9 +4,9 @@ export default [
     $flip: true,
     '.': '.',
     options: {
-      '.': '^options',
+      '.': 'options',
       headers: {
-        '.': '^options.headers', // TODO: Find a better way
+        '.': 'options.headers', // TODO: Find a better way
         'Content-Type': {
           $transform: 'value',
           value: 'application/json',
@@ -15,6 +15,7 @@ export default [
     },
   },
   {
+    '.': '.',
     data: ['data', { $transform: 'json' }],
   },
 ]

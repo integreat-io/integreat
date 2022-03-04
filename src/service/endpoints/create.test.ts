@@ -322,10 +322,11 @@ test('should map action props from response', (t) => {
 test('should map response from service with service and endpoint mutations', (t) => {
   const serviceMutation = [
     {
+      '.': '.',
       data: ['data', { $transform: 'json' }],
       error: 'params.message',
     },
-    { status: 'status' }, // Just to check that we're not missing any props
+    { '.': '.', status: 'status' }, // Just to check that we're not missing any props
   ]
   const endpointDef = {
     mutation: {
@@ -601,6 +602,86 @@ test('should map request with endpoint mutation', (t) => {
     mapOptions
   )(endpointDef)
   const ret = endpoint.mutateRequest(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should map request with service mutation', (t) => {
+  const serviceMutation = [
+    {
+      $direction: 'rev',
+      $flip: true,
+      '.': '.',
+      options: {
+        '.': 'options',
+        headers: {
+          '.': 'options.headers',
+          'Content-Type': {
+            $transform: 'value',
+            value: 'application/json',
+          },
+        },
+      },
+      data: ['data', { $transform: 'json' }],
+    },
+    {
+      $direction: 'rev',
+      $flip: true,
+      '.': '.',
+      options: {
+        '.': 'options',
+        uri: { $transform: 'template', templatePath: 'options.uri' },
+      },
+    },
+  ]
+  const endpointDef = {
+    mutation: {
+      data: ['data.content.data', { $apply: 'entry' }],
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const actionWithOptions = {
+    ...action,
+    payload: {
+      ...action.payload,
+      id: 'ent1',
+    },
+    meta: {
+      ...action.meta,
+      options: { uri: '/entries/{{params.type}}:{{params.id}}' },
+    },
+  }
+  const expected = {
+    ...actionWithOptions,
+    payload: {
+      ...actionWithOptions.payload,
+      data: JSON.stringify({
+        content: {
+          data: {
+            items: [
+              { key: 'ent1', header: 'Entry 1', activated: false },
+              { key: 'ent2', header: 'Entry 2', activated: true },
+            ],
+          },
+        },
+      }),
+    },
+    meta: {
+      ...actionWithOptions.meta,
+      options: {
+        uri: '/entries/entry:ent1',
+        headers: { 'Content-Type': 'application/json' },
+      },
+    },
+  }
+
+  const endpoint = createEndpoint(
+    serviceId,
+    serviceOptions,
+    mapOptions,
+    serviceMutation
+  )(endpointDef)
+  const ret = endpoint.mutateRequest(actionWithOptions)
 
   t.deepEqual(ret, expected)
 })
