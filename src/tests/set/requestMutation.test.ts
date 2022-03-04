@@ -53,16 +53,19 @@ test('should set data with endpoint mutation', async (t) => {
     meta: { ident: { root: true } },
   }
   const mutation = [
-    'data',
     {
       $direction: 'rev',
-      data: ['content.items[]', { $apply: 'entries-entry' }],
-      none0: ['content.footnote', { $transform: 'fixed', value: '' }],
-      'params.type': [
-        'content.meta',
-        { $transform: 'json', $direction: 'rev' },
-        'datatype',
-      ],
+      $flip: true,
+      data: {
+        content: {
+          'items[]': ['data', { $apply: 'entries-entry' }],
+          footnote: { $transform: 'fixed', value: '' },
+          meta: [
+            { $flip: true, datatype: 'params.type' },
+            { $transform: 'json', $direction: 'rev' },
+          ],
+        },
+      },
     },
   ]
   const defs = {
@@ -108,13 +111,12 @@ test('should set data with service and endpoint mutation', async (t) => {
   }
   const serviceMutation = { data: 'data.content' }
   const mutation = [
-    'data',
     {
       $direction: 'rev',
-      data: ['items[]', { $apply: 'entries-entry' }],
-      none0: ['footnote', { $transform: 'fixed', value: '' }],
+      data: ['data.items[]', { $apply: 'entries-entry' }],
+      none0: ['data.footnote', { $transform: 'fixed', value: '' }],
       'params.type': [
-        'meta',
+        'data.meta',
         { $transform: 'json', $direction: 'rev' },
         'datatype',
       ],

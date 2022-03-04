@@ -71,9 +71,10 @@ export default function createEndpoint(
 ) {
   return function (endpointDef: EndpointDef): Endpoint {
     const mutation = flattenIfOneOrNone(
-      [...ensureArray(serviceMutation), endpointDef.mutation]
-        .filter((item): item is MapDefinition => !!item)
-        .map(modify)
+      [
+        ...ensureArray(serviceMutation),
+        ...ensureArray(endpointDef.mutation),
+      ].map(modify)
     )
     const mutator = mutation ? mapTransform(mutation, mapOptions) : null
 

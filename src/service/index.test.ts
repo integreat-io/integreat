@@ -1281,14 +1281,18 @@ test('mapRequest should use mutation pipeline', async (t) => {
     endpoints: [
       {
         mutation: [
-          'data',
           {
+            $direction: 'rev',
             data: [
+              'data',
               'StupidSoapOperator.StupidSoapEmptyArgs',
               { $alt: 'value', value: {} },
             ],
           },
-          { $apply: 'entry' },
+          {
+            $direction: 'fwd',
+            data: [{ $apply: 'entry' }],
+          },
         ],
         options: { uri: 'http://soap.api/1.1' },
       },

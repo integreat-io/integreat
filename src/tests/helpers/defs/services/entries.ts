@@ -157,9 +157,8 @@ export default {
       mutation: [
         {
           $direction: 'rev',
+          '.': '.',
           data: ['data', { $apply: 'entries-entry' }],
-          status: 'status', // TODO: Find a way to remove the need for this type of through-mapping
-          error: 'error',
         },
         {
           $direction: 'fwd',
