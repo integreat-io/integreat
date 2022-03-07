@@ -1282,16 +1282,11 @@ test('mapRequest should use mutation pipeline', async (t) => {
       {
         mutation: [
           {
-            $direction: 'rev',
             data: [
               'data',
               'StupidSoapOperator.StupidSoapEmptyArgs',
               { $alt: 'value', value: {} },
             ],
-          },
-          {
-            $direction: 'fwd',
-            data: [{ $apply: 'entry' }],
           },
         ],
         options: { uri: 'http://soap.api/1.1' },
@@ -1410,18 +1405,19 @@ test('listen should call transporter.listen', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
-    options: { listen: { port: 8080 } },
+    options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedResponse = { status: 'ok' }
-  const expectedConnection = { status: 'ok' }
 
   const ret = await service.listen(dispatch)
 
   t.deepEqual(ret, expectedResponse)
   t.is(listenStub.callCount, 1)
   t.is(typeof listenStub.args[0][0], 'function') // We check that the dispatch function is called in the next test
-  t.deepEqual(listenStub.args[0][1], expectedConnection)
+  const connection = listenStub.args[0][1]
+  t.truthy(connection)
+  t.is(connection.status, 'ok')
 })
 
 test('listen should not call transporter.listen when transport.shouldListen returns false', async (t) => {
@@ -1485,7 +1481,7 @@ test('listen should set sourceService', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
-    options: { listen: { port: 8080 } },
+    options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedAction = {
@@ -1529,7 +1525,7 @@ test('listen should not set sourceService when already set', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
-    options: { listen: { port: 8080 } },
+    options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedAction = {
@@ -1573,7 +1569,7 @@ test('listen should set ident on dispatched actions from incomingIdent', async (
     auth: 'granting',
     incomingIdent: 'reidar',
     transporter: 'http',
-    options: { listen: { port: 8080 } },
+    options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedAction = {
@@ -1612,7 +1608,7 @@ test('listen should return error when connection fails', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
-    options: { listen: { port: 8080 } },
+    options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedResponse = {
@@ -1643,7 +1639,7 @@ test('listen should return error when authentication fails', async (t) => {
     id: 'entries',
     auth: 'refusing',
     transporter: 'http',
-    options: { listen: { port: 8080 } },
+    options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedResponse = {
@@ -1659,6 +1655,13 @@ test('listen should return error when authentication fails', async (t) => {
 test('listen should do nothing when transporter has no listen method', async (t) => {
   const resources = {
     ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters.http,
+        listen: undefined,
+      },
+    },
     mapOptions,
     schemas,
     auths,
@@ -1668,7 +1671,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'granting',
     transporter: 'http',
-    options: { listen: { port: 8080 } },
+    options: { incoming: { port: 8080 } },
   })
   const expectedResponse = {
     status: 'noaction',
@@ -1699,7 +1702,7 @@ test('listen should return error when no transporter', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'unknown',
-    options: { listen: { port: 8080 } },
+    options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedResponse = {
@@ -1743,7 +1746,7 @@ test('listen should use service middleware', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
-    options: { listen: { port: 8080 } },
+    options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
 
@@ -1775,7 +1778,7 @@ test('listen should return noaction when incoming action is null', async (t) => 
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
-    options: { listen: { port: 8080 } },
+    options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
 
@@ -1807,17 +1810,19 @@ test('close should disconnect transporter', async (t) => {
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
+    options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
   const expectedResponse = { status: 'ok' }
-  const expectedConnection = { status: 'ok' }
 
   await service.listen(dispatch)
   const ret = await service.close()
 
   t.deepEqual(ret, expectedResponse)
   t.is(disconnectStub.callCount, 1)
-  t.deepEqual(disconnectStub.args[0][0], expectedConnection)
+  const connection = disconnectStub.args[0][0]
+  t.truthy(connection)
+  t.is(connection.status, 'ok')
 })
 
 test('close should probihit closed connection from behind used again', async (t) => {
