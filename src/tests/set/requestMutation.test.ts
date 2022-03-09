@@ -115,11 +115,7 @@ test('should set data with service and endpoint mutation', async (t) => {
       $direction: 'rev',
       data: ['data.items[]', { $apply: 'entries-entry' }],
       none0: ['data.footnote', { $transform: 'fixed', value: '' }],
-      'params.type': [
-        'data.meta',
-        { $transform: 'json', $direction: 'rev' },
-        'datatype',
-      ],
+      'params.type': ['data.meta', { $transform: 'json' }, 'datatype'],
     },
   ]
   const defs = {
