@@ -23,5 +23,7 @@ export default function createMapOptions(
     },
     functions,
     dictionaries,
+    fwdAlias: 'from',
+    revAlias: 'to',
   }
 }

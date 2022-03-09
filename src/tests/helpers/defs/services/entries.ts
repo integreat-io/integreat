@@ -9,7 +9,7 @@ export default {
       match: { action: 'GET', scope: 'collection', params: { offset: false } },
       mutation: [
         {
-          $direction: 'rev',
+          $direction: 'to', // Alias for `rev`
           $flip: true,
           options: {
             '.': 'options', // TODO: Find a better way to do this?
@@ -19,7 +19,7 @@ export default {
           },
         },
         {
-          $direction: 'fwd',
+          $direction: 'from', // Alias for `fwd`
           data: ['data.data[]', { $apply: 'entries-entry' }],
           paging: {
             next: [

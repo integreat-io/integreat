@@ -7,6 +7,8 @@ export interface MapOptions {
   functions?: Record<string, CustomFunction>
   dictionaries?: Dictionaries
   mutateNull?: boolean
+  fwdAlias?: string
+  revAlias?: string
 }
 
 export type MapDefinitions = Record<string, string | MapDefinition>
