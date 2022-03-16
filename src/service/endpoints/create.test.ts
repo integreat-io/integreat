@@ -492,10 +492,12 @@ test('should map to undefined from response when unknown path', (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const { data, ...response } = actionWithResponse.response
   const expected = {
     ...actionWithResponse,
-    response,
+    response: {
+      ...actionWithResponse.response,
+      data: undefined,
+    },
   }
 
   const endpoint = createEndpoint(

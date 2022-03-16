@@ -212,6 +212,49 @@ test('should populate action from mapped action to service on success', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should not use original data when data is mapped to undefined', (t) => {
+  const isRequest = false
+  const action = {
+    type: 'GET',
+    payload: {
+      data: {},
+      sendNoDefaults: true,
+    },
+    response: {
+      status: 'ok',
+      data: { id: 'johnf' },
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const mappedAction = {
+    type: 'GET',
+    payload: {
+      data: undefined,
+    },
+    response: {
+      status: 'error',
+      data: undefined,
+    },
+    meta: {},
+  }
+  const expected = {
+    type: 'GET',
+    payload: {
+      data: undefined,
+      sendNoDefaults: true,
+    },
+    response: {
+      status: 'error',
+      data: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = populateActionAfterMapping(action, mappedAction, isRequest)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should populate action from mapped action to service - response?', (t) => {
   const isRequest = false
   const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
@@ -316,6 +359,7 @@ test('should populate action from mapped action from service - request?', (t) =>
     },
     response: {
       status: 'ok',
+      data: null,
       paging: { next: { offset: 'page2', type: 'entry' } },
     },
     meta: {

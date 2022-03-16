@@ -58,13 +58,14 @@ export function populateActionAfterMapping(
     (isOkStatus(mappedStatus) || actionStatus !== 'error')
       ? actionStatus // Don't override action error status with ok or a more generic error from mapping
       : mappedStatus || actionStatus || null // Use status from mapping if it exists
-  const { data, ...actionResponse } = action.response || {}
   const response =
     !isRequest || status
       ? {
-          ...actionResponse,
+          ...action.response,
           status: isOkStatus(status) && error ? 'error' : status,
-          ...(responseData ? { data: responseData } : {}),
+          ...(mappedAction.response?.hasOwnProperty('data')
+            ? { data: responseData }
+            : {}),
           ...(paging && { paging }),
           ...(error && { error }),
           ...(headers && { headers }),
@@ -78,7 +79,9 @@ export function populateActionAfterMapping(
     payload: {
       ...action.payload,
       ...params,
-      ...(requestData ? { data: requestData } : {}),
+      ...(mappedAction.payload?.hasOwnProperty('data')
+        ? { data: requestData }
+        : {}),
     },
     ...(response && { response }),
     meta: {
