@@ -4,7 +4,7 @@ export default [
     id: 'id',
     title: 'content.title',
     text: 'content.main',
-    '^params.section': 'content.sections[]',
+    '^payload.section': 'content.sections[]',
     createdAt: 'meta.created',
     updatedAt: 'meta.updated',
     'author.id': 'meta.author.id',

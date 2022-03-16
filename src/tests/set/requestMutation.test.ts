@@ -56,14 +56,17 @@ test('should set data with endpoint mutation', async (t) => {
     {
       $direction: 'rev',
       $flip: true,
-      data: {
-        content: {
-          'items[]': ['data', { $apply: 'entries-entry' }],
-          footnote: { $transform: 'fixed', value: '' },
-          meta: [
-            { $flip: true, datatype: 'params.type' },
-            { $transform: 'json', $direction: 'rev' },
-          ],
+      payload: {
+        id: 'payload.id', // TODO: Works, but not as expected
+        data: {
+          content: {
+            'items[]': ['payload.data', { $apply: 'entries-entry' }],
+            footnote: { $transform: 'fixed', value: '' },
+            meta: [
+              { $flip: true, datatype: 'payload.type' },
+              { $transform: 'json', $direction: 'rev' },
+            ],
+          },
         },
       },
     },
@@ -76,7 +79,7 @@ test('should set data with endpoint mutation', async (t) => {
         endpoints: [
           {
             mutation,
-            options: { uri: '/entries/{{params.id}}' },
+            options: { uri: '/entries/{{payload.id}}' },
           },
         ],
       },
@@ -109,13 +112,19 @@ test('should set data with service and endpoint mutation', async (t) => {
     payload: { type: 'entry', data: entry1Item },
     meta: { ident: { root: true } },
   }
-  const serviceMutation = { data: 'data.content' }
+  const serviceMutation = {
+    'payload.id': 'payload.id', // TODO: Find a better way
+    'payload.data': 'payload.data.content',
+  }
   const mutation = [
     {
       $direction: 'rev',
-      data: ['data.items[]', { $apply: 'entries-entry' }],
-      none0: ['data.footnote', { $transform: 'fixed', value: '' }],
-      'params.type': ['data.meta', { $transform: 'json' }, 'datatype'],
+      payload: {
+        id: 'payload.id',
+        data: ['payload.data.items[]', { $apply: 'entries-entry' }],
+        none0: ['payload.data.footnote', { $transform: 'fixed', value: '' }],
+        type: ['payload.data.meta', { $transform: 'json' }, 'datatype'],
+      },
     },
   ]
   const defs = {
@@ -127,7 +136,7 @@ test('should set data with service and endpoint mutation', async (t) => {
         endpoints: [
           {
             mutation,
-            options: { uri: '/entries/{{params.id}}' },
+            options: { uri: '/entries/{{payload.id}}' },
           },
         ],
       },

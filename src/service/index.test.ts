@@ -50,7 +50,7 @@ const entryMapping = [
     title: 'header',
     one: 'one',
     two: 'two',
-    source: '^params.source',
+    source: '^payload.source',
     author: '^access.ident.id',
     createdAt: 'created',
     updatedAt: 'updated',
@@ -93,24 +93,68 @@ const endpoints = [
   {
     id: 'endpoint1',
     match: { type: 'entry' },
-    mutation: { data: ['data', { $apply: 'entry' }] },
+    mutation: {
+      response: 'response',
+      'response.data': ['response.data', { $apply: 'entry' }],
+    },
     options: { uri: 'http://test.api/1' },
   },
   {
     id: 'endpoint2',
     match: { type: 'entry', scope: 'member' },
-    mutation: { data: ['data', { $apply: 'entry' }] },
+    mutation: {
+      response: 'response',
+      'response.data': ['response.data', { $apply: 'entry' }],
+    },
     options: { uri: 'http://test.api/2' },
   },
   {
     id: 'endpoint3',
+    match: { type: 'account', incoming: true },
+    mutation: [
+      {
+        $direction: 'fwd',
+        payload: {
+          '.': 'payload',
+          data: ['payload.data', { $apply: 'account' }],
+        },
+      },
+      {
+        $direction: 'rev',
+        response: {
+          '.': 'response',
+          data: ['response.data', { $apply: 'account' }],
+        },
+      },
+    ],
+    options: { uri: 'http://some.api/1.0' },
+  },
+  {
     match: { type: 'account' },
-    mutation: { data: ['data', { $apply: 'account' }] },
+    mutation: [
+      {
+        $direction: 'rev',
+        payload: {
+          '.': 'payload',
+          data: ['payload.data', { $apply: 'account' }],
+        },
+      },
+      {
+        $direction: 'fwd',
+        response: {
+          '.': 'response',
+          data: ['response.data', { $apply: 'account' }],
+        },
+      },
+    ],
     options: { uri: 'http://some.api/1.0' },
   },
   {
     match: { action: 'SET' },
-    mutation: { data: ['data', { $apply: 'entry' }] },
+    mutation: {
+      response: 'response',
+      'response.data': ['response.data', { $apply: 'entry' }],
+    },
     options: { uri: 'http://some.api/1.0/untyped' },
   },
 ]
@@ -766,7 +810,10 @@ test.serial('mapResponse should map data array from service', async (t) => {
     id: 'entries',
     endpoints: [
       {
-        mutation: { data: ['data.content.data', { $apply: 'entry' }] },
+        mutation: {
+          response: 'response',
+          'response.data': ['response.data.content.data', { $apply: 'entry' }],
+        },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -825,7 +872,13 @@ test('mapResponse should map data object from service', async (t) => {
     id: 'accounts',
     endpoints: [
       {
-        mutation: { data: ['data.content.data', { $apply: 'account' }] },
+        mutation: {
+          response: 'response',
+          'response.data': [
+            'response.data.content.data',
+            { $apply: 'account' },
+          ],
+        },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -859,7 +912,10 @@ test('mapResponse should map null to undefined', async (t) => {
     id: 'accounts',
     endpoints: [
       {
-        mutation: { data: ['data', { $apply: 'account' }] },
+        mutation: {
+          response: 'response',
+          'response.data': ['response.data', { $apply: 'account' }],
+        },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -893,7 +949,10 @@ test('should authorize typed data in array from service', async (t) => {
     id: 'accounts',
     endpoints: [
       {
-        mutation: { data: ['data', { $apply: 'account' }] },
+        mutation: {
+          response: 'response',
+          'response.data': ['response.data', { $apply: 'account' }],
+        },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -932,7 +991,10 @@ test('should authorize typed data object from service', async (t) => {
     id: 'accounts',
     endpoints: [
       {
-        mutation: { data: ['data', { $apply: 'account' }] },
+        mutation: {
+          response: 'response',
+          'response.data': ['response.data', { $apply: 'account' }],
+        },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -963,7 +1025,10 @@ test('should authorize typed data in array to service', async (t) => {
     id: 'accounts',
     endpoints: [
       {
-        mutation: { data: ['data', { $apply: 'account' }] },
+        mutation: {
+          response: 'response',
+          'response.data': ['response.data', { $apply: 'account' }],
+        },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -1001,7 +1066,10 @@ test('mapResponse should map without default values', async (t) => {
     id: 'entries',
     endpoints: [
       {
-        mutation: { data: ['data', { $apply: 'entry' }] },
+        mutation: {
+          response: 'response',
+          'response.data': ['response.data', { $apply: 'entry' }],
+        },
         options: { uri: 'http://some.api/1.0' },
       },
     ],
@@ -1035,7 +1103,10 @@ test('mapResponse should map without default values - defined on endpoint', asyn
     id: 'entries',
     endpoints: [
       {
-        mutation: { data: ['data', { $apply: 'entry' }] },
+        mutation: {
+          response: 'response',
+          'response.data': ['response.data', { $apply: 'entry' }],
+        },
         options: { uri: 'http://some.api/1.0' },
         returnNoDefaults: true,
       },
@@ -1074,7 +1145,11 @@ test('mapRequest should set endpoint options and cast and map request data', asy
     endpoints: [
       {
         mutation: {
-          data: ['data.content.data[].createOrMutate', { $apply: 'entry' }],
+          payload: 'payload',
+          'payload.data': [
+            'payload.data.content.data[].createOrMutate',
+            { $apply: 'entry' },
+          ],
         },
         options: { uri: 'http://some.api/1.0' },
       },
@@ -1235,6 +1310,7 @@ test('mapRequest should authorize data object going to service', async (t) => {
 })
 
 test('mapRequest should authorize data array coming from service', async (t) => {
+  const isIncoming = true
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
@@ -1257,12 +1333,11 @@ test('mapRequest should authorize data array coming from service', async (t) => 
       authorized: true,
     },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = service.endpointFromAction(action, isIncoming)
   const expectedResponse = {
     status: null,
     warning: '1 item was removed from request data due to lack of access',
   }
-  const isIncoming = true
 
   const ret = service.mapRequest(action, endpoint!, isIncoming)
 
@@ -1282,8 +1357,9 @@ test('mapRequest should use mutation pipeline', async (t) => {
       {
         mutation: [
           {
-            data: [
-              'data',
+            payload: 'payload',
+            'payload.data': [
+              'payload.data',
               'StupidSoapOperator.StupidSoapEmptyArgs',
               { $alt: 'value', value: {} },
             ],
@@ -1315,7 +1391,11 @@ test('mapRequest should map without default values', async (t) => {
     endpoints: [
       {
         mutation: {
-          data: ['data.content.data[].createOrMutate', { $apply: 'entry' }],
+          payload: 'payload',
+          'payload.data': [
+            'payload.data.content.data[].createOrMutate',
+            { $apply: 'entry' },
+          ],
         },
         options: { uri: 'http://some.api/1.0' },
       },
@@ -1353,7 +1433,11 @@ test('mapRequest should map without default values - defined on enpoint', async 
     endpoints: [
       {
         mutation: {
-          data: ['data.content.data[].createOrMutate', { $apply: 'entry' }],
+          payload: 'payload',
+          'payload.data': [
+            'payload.data.content.data[].createOrMutate',
+            { $apply: 'entry' },
+          ],
         },
         options: { uri: 'http://some.api/1.0' },
         sendNoDefaults: true,

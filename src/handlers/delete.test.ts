@@ -71,8 +71,8 @@ test('should delete items from service', async (t) => {
       {
         match: { action: 'DELETE' },
         mutation: {
-          $direction: 'rev',
-          data: ['data.docs[]', { $apply: 'entry' }],
+          $direction: 'to',
+          'payload.data': ['payload.data.docs[]', { $apply: 'entry' }],
         },
         options: {
           uri: 'http://api1.test/database/bulk_delete',
@@ -113,9 +113,13 @@ test('should delete one item from service', async (t) => {
           action: 'DELETE',
           scope: 'member',
         },
-        mutation: { data: ['data', { $apply: 'entry' }] },
+        mutation: {
+          payload: 'payload',
+          'payload.data': ['payload.data', { $apply: 'entry' }],
+        },
+        allowRawResponse: true,
         options: {
-          uri: 'http://api1.test/database/{{params.id}}',
+          uri: 'http://api1.test/database/{{payload.id}}',
           method: 'DELETE',
         },
       },
@@ -149,7 +153,7 @@ test('should infer service id from type', async (t) => {
         match: { action: 'DELETE' },
         mutation: {
           $direction: 'rev',
-          data: ['data.docs[', { $apply: 'entry' }],
+          'payload.data': ['payload.data.docs[', { $apply: 'entry' }],
         },
         options: {
           uri: 'http://api2.test/database/bulk_delete',
@@ -190,7 +194,7 @@ test('should return error from response', async (t) => {
         id: 'delete',
         mutation: {
           $direction: 'rev',
-          data: ['data.docs[]', { $apply: 'entry' }],
+          'payload.data': ['payload.data.docs[]', { $apply: 'entry' }],
         },
         options: {
           uri: 'http://api5.test/database/bulk_delete',
@@ -224,7 +228,7 @@ test('should return noaction when nothing to delete', async (t) => {
     endpoints: [
       {
         id: 'delete',
-        mutation: { data: ['data', { $apply: 'entry' }] },
+        mutation: { 'payload.data': ['payload.data', { $apply: 'entry' }] },
         options: { uri: 'http://api1.test/database/bulk_delete' },
       },
     ],
@@ -247,7 +251,7 @@ test('should skip null values in data array', async (t) => {
     endpoints: [
       {
         id: 'delete',
-        mutation: { data: ['data', { $apply: 'entry' }] },
+        mutation: { 'payload.data': ['payload.data', { $apply: 'entry' }] },
         options: { uri: 'http://api1.test/database/bulk_delete' },
       },
     ],
@@ -278,7 +282,7 @@ test('should only delete items the ident is authorized to', async (t) => {
         match: { action: 'DELETE' },
         mutation: {
           $direction: 'rev',
-          data: ['data.docs[', { $apply: 'account' }],
+          'payload.data': ['payload.data.docs[', { $apply: 'account' }],
         },
         options: {
           uri: 'http://api4.test/database/bulk_delete',

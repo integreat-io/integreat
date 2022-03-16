@@ -48,9 +48,13 @@ test('should map response and merge with request data', async (t) => {
           {
             mutation: {
               $direction: 'fwd',
-              data: ['data.content.items', { $apply: 'entries-entry' }],
+              response: 'response',
+              'response.data': [
+                'response.data.content.items',
+                { $apply: 'entries-entry' },
+              ],
             },
-            options: { uri: '/entries/{{params.id}}' },
+            options: { uri: '/entries/{{payload.id}}' },
           },
         ],
       },

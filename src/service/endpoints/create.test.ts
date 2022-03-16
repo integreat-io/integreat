@@ -242,7 +242,8 @@ test('should return false when no match to action', (t) => {
 test('should map response from service with endpoint mutation', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data.content.data', { $apply: 'entry' }],
+      response: 'response',
+      'response.data': ['response.data.content.data', { $apply: 'entry' }],
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -279,14 +280,20 @@ test('should map response from service with endpoint mutation', (t) => {
 test('should map action props from response', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data.content', { $apply: 'entry' }],
-      status: 'data.result',
-      error: 'data.message',
-      'params.id': 'data.key',
-      'paging.next': {
-        offset: 'data.offset',
-        type: { $transform: 'fixed', value: 'entry' },
-      },
+      response: [
+        'response',
+        {
+          '.': '.',
+          data: ['data.content', { $apply: 'entry' }],
+          status: 'data.result',
+          error: 'data.message',
+          'params.id': 'data.key',
+          'paging.next': {
+            offset: 'data.offset',
+            type: { $transform: 'fixed', value: 'entry' },
+          },
+        },
+      ],
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -313,25 +320,30 @@ test('should map action props from response', (t) => {
   const ret = endpoint.mutateResponse(actionWithProps)
 
   t.is(ret.response?.status, 'badrequest')
-  t.is(ret.payload.id, '7839')
   t.is(ret.response?.error, 'Not valid')
   t.is((ret.response?.data as DataObject[]).length, 1)
   t.deepEqual(ret.response?.paging, expectedPaging)
+  t.is(ret.response?.params?.id, '7839')
 })
 
 test('should map response from service with service and endpoint mutations', (t) => {
   const serviceMutation = [
     {
-      '.': '.',
-      data: ['data', { $transform: 'json' }],
-      error: 'params.message',
+      response: {
+        '.': 'response',
+        data: ['response.data', { $transform: 'json' }],
+        error: 'payload.message',
+      },
     },
-    { '.': '.', status: 'status' }, // Just to check that we're not missing any props
+    { response: { '.': 'response', status: 'response.status' } }, // Just to check that we're not missing any props
   ]
   const endpointDef = {
     mutation: {
-      data: ['data.content', { $apply: 'entry' }],
-      status: 'data.result',
+      response: {
+        '.': 'response',
+        data: ['response.data.content', { $apply: 'entry' }],
+        status: 'response.data.result',
+      },
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -378,7 +390,8 @@ test('should map response from service with service mutation only', (t) => {
     },
   }
   const serviceMutation = {
-    data: ['data.content', { $apply: 'entry' }],
+    response: 'response',
+    'response.data': ['response.data.content', { $apply: 'entry' }],
   }
 
   const endpoint = createEndpoint(
@@ -398,9 +411,15 @@ test('should map response from service with service mutation only', (t) => {
 test('should keep action props not mapped from response', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data.content', { $apply: 'entry' }],
-      status: 'data.result',
-      error: 'data.message',
+      response: [
+        'response',
+        {
+          '.': '.',
+          data: ['data.content', { $apply: 'entry' }],
+          status: 'data.result',
+          error: 'data.message',
+        },
+      ],
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -431,8 +450,14 @@ test('should keep action props not mapped from response', (t) => {
 test('should set status to error for response with an error', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data.content', { $apply: 'entry' }],
-      error: 'data.message',
+      response: [
+        'response',
+        {
+          '.': '.',
+          data: ['data.content', { $apply: 'entry' }],
+          error: 'data.message',
+        },
+      ],
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -462,16 +487,15 @@ test('should set status to error for response with an error', (t) => {
 test('should map to undefined from response when unknown path', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data.content.unknown', { $apply: 'entry2' }],
+      response: 'response',
+      'response.data': ['response.data.unknown', { $apply: 'entry2' }],
     },
     options: { uri: 'http://some.api/1.0' },
   }
+  const { data, ...response } = actionWithResponse.response
   const expected = {
     ...actionWithResponse,
-    response: {
-      ...actionWithResponse.response,
-      data: undefined,
-    },
+    response,
   }
 
   const endpoint = createEndpoint(
@@ -487,7 +511,8 @@ test('should map to undefined from response when unknown path', (t) => {
 test('should map to empty array from service when unknown path and expecting array', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data.content.unknown', { $apply: 'entry' }],
+      response: 'response',
+      'response.data': ['response.data.content.unknown', { $apply: 'entry' }],
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -512,7 +537,8 @@ test('should map to empty array from service when unknown path and expecting arr
 test('should map from service without defaults', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data.content.data', { $apply: 'entry' }],
+      response: 'response',
+      'response.data': ['response.data.content.data', { $apply: 'entry' }],
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -554,7 +580,8 @@ test('should not map response from service when direction is rev', (t) => {
   const endpointDef = {
     mutation: {
       $direction: 'rev',
-      data: ['data.content.data', { $apply: 'entry' }],
+      response: 'response',
+      'response.data': ['response.data.content.data', { $apply: 'entry' }], // Not relevant in a rev-mutation, so this is just for testing
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -575,7 +602,8 @@ test('should not map response from service when direction is rev', (t) => {
 test('should map request with endpoint mutation', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data.content.data', { $apply: 'entry' }],
+      payload: 'payload',
+      'payload.data': ['payload.data.content.data', { $apply: 'entry' }],
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -611,32 +639,40 @@ test('should map request with service mutation', (t) => {
     {
       $direction: 'rev',
       $flip: true,
-      '.': '.',
-      options: {
-        '.': 'options',
-        headers: {
-          '.': 'options.headers',
-          'Content-Type': {
-            $transform: 'value',
-            value: 'application/json',
+      payload: {
+        '.': 'payload',
+        data: ['payload.data', { $transform: 'json' }],
+      },
+      meta: {
+        '.': 'meta',
+        options: {
+          '.': 'meta.options',
+          headers: {
+            '.': 'meta.options.headers',
+            'Content-Type': {
+              $transform: 'value',
+              value: 'application/json',
+            },
           },
         },
       },
-      data: ['data', { $transform: 'json' }],
     },
     {
       $direction: 'rev',
       $flip: true,
-      '.': '.',
-      options: {
-        '.': 'options',
-        uri: { $transform: 'template', templatePath: 'options.uri' },
+      meta: {
+        '.': 'meta',
+        options: {
+          '.': 'meta.options',
+          uri: { $transform: 'template', templatePath: 'meta.options.uri' },
+        },
       },
     },
   ]
   const endpointDef = {
     mutation: {
-      data: ['data.content.data', { $apply: 'entry' }],
+      payload: 'payload',
+      'payload.data': ['payload.data.content.data', { $apply: 'entry' }],
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -648,7 +684,7 @@ test('should map request with service mutation', (t) => {
     },
     meta: {
       ...action.meta,
-      options: { uri: '/entries/{{params.type}}:{{params.id}}' },
+      options: { uri: '/entries/{{payload.type}}:{{payload.id}}' },
     },
   }
   const expected = {
@@ -689,7 +725,8 @@ test('should map request with service mutation', (t) => {
 test('should map request with root array path', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data', { $apply: 'entry3' }], // Has root path '[]'
+      payload: 'payload',
+      'payload.data': ['payload.data', { $apply: 'entry3' }], // Has root path '[]'
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -717,7 +754,8 @@ test('should map request with root array path', (t) => {
 test('should map to service with no defaults', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data.content.data', { $apply: 'entry' }],
+      payload: 'payload',
+      'payload.data': ['payload.data.content.data', { $apply: 'entry' }],
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -763,7 +801,8 @@ test('should not map request with mutation when direction is set to fwd', (t) =>
   const endpointDef = {
     mutation: {
       $direction: 'fwd',
-      data: ['data.content', { $apply: 'entry' }],
+      payload: 'payload',
+      'payload.data': ['payload.data.content', { $apply: 'entry' }],
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -788,7 +827,8 @@ test('should not map request with mutation when direction is set to fwd', (t) =>
 test('should map request from service (incoming)', (t) => {
   const endpointDef = {
     mutation: {
-      data: ['data.content.data', { $apply: 'entry' }],
+      payload: 'payload',
+      'payload.data': ['payload.data.content.data', { $apply: 'entry' }],
     },
     options: { uri: 'http://some.api/1.0' },
   }

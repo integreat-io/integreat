@@ -80,8 +80,8 @@ test('should map incoming action data and response data', async (t) => {
   t.is(send.callCount, 1)
   const sentAction = send.args[0][0]
   t.is(sentAction.type, 'SET')
-  t.is(sentAction.payload.data, expectedRequestData)
   t.is(sentAction.payload.id, 'ent1')
   t.is(sentAction.payload.type, 'entry')
+  t.is(sentAction.payload.data, expectedRequestData)
   t.deepEqual(ret, expectedResponse)
 })

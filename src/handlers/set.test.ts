@@ -74,11 +74,23 @@ const setupService = (uri: string, id = 'entries', method = 'POST') => {
         mutation: [
           {
             $direction: 'rev',
-            data: ['data.docs[]', { $apply: typeMappingFromServiceId(id) }],
+            payload: {
+              id: 'payload.id',
+              type: 'payload.type',
+              typefolder: 'payload.typefolder',
+              data: [
+                'payload.data.docs[]',
+                { $apply: typeMappingFromServiceId(id) },
+              ],
+            },
           },
           {
             $direction: 'fwd',
-            data: ['data', { $apply: typeMappingFromServiceId(id) }],
+            response: 'response',
+            'response.data': [
+              'response.data',
+              { $apply: typeMappingFromServiceId(id) },
+            ],
           },
         ],
         options: { uri, method },
@@ -165,8 +177,8 @@ test('should send without default values', async (t) => {
     },
   }
   const src = setupService(
-    'http://api5.test/database/{{params.type}}:{{params.id}}',
-    undefined,
+    'http://api5.test/database/{{payload.type}}:{{payload.id}}',
+    'entries',
     'PUT'
   )
   const getService = (type?: string | string[], _service?: string) =>
@@ -223,7 +235,7 @@ test('should set to specified endpoint', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should set to uri with params', async (t) => {
+test('should set to uri with payload params', async (t) => {
   const scope = nock('http://api3.test')
     .post('/entries/_bulk_docs')
     .reply(201, [{ ok: true }])
@@ -235,7 +247,7 @@ test('should set to uri with params', async (t) => {
       targetService: 'entries',
     },
   }
-  const src = setupService('http://api3.test/{{params.typefolder}}/_bulk_docs')
+  const src = setupService('http://api3.test/{{payload.typefolder}}/_bulk_docs')
   const getService = () => src
 
   const ret = await set(action, { ...handlerResources, getService })

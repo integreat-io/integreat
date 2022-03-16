@@ -9,11 +9,13 @@ export default {
       mutation: [
         {
           $direction: 'fwd',
-          data: ['data.article', { $apply: 'api-entry' }],
+          payload: 'payload',
+          'payload.data': ['payload.data.article', { $apply: 'api-entry' }],
         },
         {
           $direction: 'rev',
-          data: ['data', { $apply: 'api-entry' }],
+          response: 'response',
+          'response.data': ['response.data', { $apply: 'api-entry' }],
         },
       ],
     },
@@ -25,16 +27,22 @@ export default {
       },
       mutation: [
         {
-          $direction: 'fwd',
-          status: { $transform: 'value', value: 'badrequest' },
-          error: { $transform: 'value', value: 'We failed!' },
+          $direction: 'from',
+          response: {
+            '.': 'response',
+            status: { $value: 'badrequest' },
+            error: { $value: 'We failed!' },
+          },
         },
         {
-          $direction: 'rev',
+          $direction: 'to',
           $flip: true,
-          data: {
-            code: 'status',
-            error: 'error',
+          response: {
+            '.': 'response',
+            data: {
+              code: 'response.status',
+              error: 'response.error',
+            },
           },
         },
       ],
@@ -42,19 +50,22 @@ export default {
     {
       match: { action: 'GET' },
       mutation: {
-        data: ['data.article', { $apply: 'api-entry' }],
+        response: 'response',
+        'response.data': ['response.data.article', { $apply: 'api-entry' }],
       },
     },
     {
       match: { action: 'GET', incoming: true },
       mutation: [
         {
-          $direction: 'fwd',
-          'params.source': 'params.source', // Just to have a fwd mutation
+          $direction: 'from',
+          payload: 'payload',
+          'payload.source': 'payload.source', // Just to have a from mutation
         },
         {
-          $direction: 'rev',
-          data: ['data', { $apply: 'api-entry' }],
+          $direction: 'to',
+          response: 'response',
+          'response.data': ['response.data', { $apply: 'api-entry' }],
         },
       ],
     },

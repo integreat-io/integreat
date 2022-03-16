@@ -2,7 +2,7 @@ import test from 'ava'
 import nock = require('nock')
 import defs from '../helpers/defs'
 import resources from '../helpers/resources'
-import { DataObject, Response } from '../../types'
+import { DataObject, Action } from '../../types'
 
 import Integreat from '../..'
 
@@ -31,14 +31,17 @@ const entryWithoutAuthor = {
 // Lots of typing hoops. Sorry
 const shouldHaveAuthor =
   () =>
-  (mappingObj: unknown): unknown => {
-    return ((mappingObj as unknown as Response).data as DataObject).author
-      ? mappingObj
+  (action: unknown): unknown => {
+    return ((action as Action).payload?.data as DataObject).author
+      ? action
       : {
-          ...(mappingObj as DataObject),
-          status: 'badrequest',
-          error: 'Error from validator',
-          data: undefined,
+          ...(action as Action),
+          response: {
+            ...(action as Action).response,
+            status: 'badrequest',
+            error: 'Error from validator',
+            data: undefined,
+          },
         }
   }
 const resourcesWithTransformer = {

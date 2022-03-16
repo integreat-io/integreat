@@ -3,10 +3,10 @@ export default [
     $direction: 'rev',
     $flip: true,
     '.': '.',
-    options: {
-      '.': 'options',
+    'meta.options': {
+      '.': 'meta.options',
       headers: {
-        '.': 'options.headers', // TODO: Find a better way
+        '.': 'meta.options.headers', // TODO: Find a better way
         'Content-Type': {
           $transform: 'value',
           value: 'application/json',
@@ -16,6 +16,10 @@ export default [
   },
   {
     '.': '.',
-    data: ['data', { $transform: 'json' }],
+    payload: { '.': 'payload', data: ['payload.data', { $transform: 'json' }] },
+    response: {
+      '.': 'response',
+      data: ['response.data', { $transform: 'json' }],
+    },
   },
 ]

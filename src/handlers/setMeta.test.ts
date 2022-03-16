@@ -39,7 +39,18 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
   mutations,
 })
 
-const mutation = { data: ['data', { $apply: 'cast_meta' }] }
+const mutation = [
+  {
+    $direction: 'to',
+    payload: 'payload',
+    'payload.data': ['payload.data', { $apply: 'cast_meta' }],
+  },
+  {
+    $direction: 'from',
+    response: 'response',
+    'response.data': ['response.data', { $apply: 'cast_meta' }],
+  },
+]
 
 const ident = { id: 'johnf' }
 const lastSyncedAt = new Date()
@@ -59,7 +70,7 @@ test('should set metadata on service', async (t) => {
     })
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [
-    { options: { uri: 'http://api1.test/database/{{params.id}}' }, mutation },
+    { options: { uri: 'http://api1.test/database/{{payload.id}}' }, mutation },
   ]
   const great = Integreat.create(defs(endpoints), resources)
   const getService = (type?: string | string[], service?: string) =>
@@ -88,7 +99,7 @@ test('should set metadata on service with type', async (t) => {
     })
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [
-    { options: { uri: 'http://api1.test/database/{{params.id}}' }, mutation },
+    { options: { uri: 'http://api1.test/database/{{payload.id}}' }, mutation },
   ]
   const great = Integreat.create(defs(endpoints), resources)
   const getService = (type?: string | string[], service?: string) =>
@@ -118,7 +129,7 @@ test('should set metadata on service with several types', async (t) => {
     })
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [
-    { options: { uri: 'http://api1.test/database/{{params.id}}' }, mutation },
+    { options: { uri: 'http://api1.test/database/{{payload.id}}' }, mutation },
   ]
   const great = Integreat.create(defs(endpoints), resources)
   const getService = (type?: string | string[], service?: string) =>
@@ -148,7 +159,7 @@ test('should set metadata on service with metaKey', async (t) => {
     })
     .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
   const endpoints = [
-    { options: { uri: 'http://api1.test/database/{{params.id}}' }, mutation },
+    { options: { uri: 'http://api1.test/database/{{payload.id}}' }, mutation },
   ]
   const great = Integreat.create(defs(endpoints), resources)
   const getService = (type?: string | string[], service?: string) =>
@@ -205,7 +216,7 @@ test('should set metadata on other service', async (t) => {
   const endpoints = [
     {
       id: 'setMeta',
-      options: { uri: 'http://api3.test/database/{{params.id}}' },
+      options: { uri: 'http://api3.test/database/{{payload.id}}' },
       mutation,
     },
   ]

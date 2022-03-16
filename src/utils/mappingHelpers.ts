@@ -20,73 +20,55 @@ export interface MappingObject {
   meta?: Meta
 }
 
-const isOkStatus = (status: string | null) =>
-  status !== null && ['ok', 'queued'].includes(status)
+const isOkStatus = (status?: string | null) =>
+  typeof status === 'string' && ['ok', 'queued'].includes(status)
 
-export function mappingObjectFromAction(
+export function prepareActionForMapping(
   action: Action,
-  isRequest = false
-): MappingObject {
-  const {
-    type: actionType,
-    payload: { data: requestData, ...requestParams },
-    response: {
-      status = null,
-      data: responseData,
-      error,
-      params: responseParams,
-      paging,
-    } = {},
-    meta: { options, ident, ...meta } = {},
-  } = action
-  return {
-    action: actionType,
-    status,
-    params: { ...requestParams, ...responseParams },
-    data: isRequest ? requestData : responseData,
-    error,
-    paging,
-    ...(options ? { options } : {}),
-    ident,
-    meta,
-  }
+  _isRequest = false
+): Action {
+  return action
 }
 
-export function actionFromMappingObject(
+export function populateActionAfterMapping(
   action: Action,
-  mappingObject?: MappingObject,
+  mappedAction?: Partial<Action>,
   isRequest = false
 ): Action {
-  if (!mappingObject) {
+  if (!mappedAction) {
     return action
   }
   const actionStatus = action.response?.status
   const {
-    action: actionType,
-    status: mappedStatus,
-    data,
-    paging,
-    error,
-    params,
-    options,
-    headers,
-    ident,
-  } = mappingObject
+    type: actionType,
+    payload: { data: requestData, ...params } = {},
+    response: {
+      status: mappedStatus,
+      error,
+      paging,
+      headers,
+      data: responseData,
+      params: responseParams,
+    } = {},
+    meta: { options, ident } = {},
+  } = mappedAction
   const status =
     actionStatus &&
     !isOkStatus(actionStatus) &&
     (isOkStatus(mappedStatus) || actionStatus !== 'error')
       ? actionStatus // Don't override action error status with ok or a more generic error from mapping
       : mappedStatus || actionStatus || null // Use status from mapping if it exists
+  const { data, ...actionResponse } = action.response || {}
   const response =
     !isRequest || status
       ? {
-          ...action.response,
-          ...(!isRequest && { data }),
+          ...actionResponse,
+          status: isOkStatus(status) && error ? 'error' : status,
+          ...(responseData ? { data: responseData } : {}),
           ...(paging && { paging }),
           ...(error && { error }),
           ...(headers && { headers }),
-          status: isOkStatus(status) && error ? 'error' : status,
+          ...(responseParams && { params: responseParams }),
         }
       : undefined
 
@@ -96,7 +78,7 @@ export function actionFromMappingObject(
     payload: {
       ...action.payload,
       ...params,
-      ...(isRequest && { data }),
+      ...(requestData ? { data: requestData } : {}),
     },
     ...(response && { response }),
     meta: {

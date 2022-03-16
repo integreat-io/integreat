@@ -1,13 +1,13 @@
 import test from 'ava'
 
 import {
-  mappingObjectFromAction,
-  actionFromMappingObject,
-} from './mappingObject'
+  prepareActionForMapping,
+  populateActionAfterMapping,
+} from './mappingHelpers'
 
 // Tests -- mappingObjectFromAction
 
-test('should create mapping object from action for request', (t) => {
+test('should simply return action as mapping object', (t) => {
   const isRequest = true
   const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
   const action = {
@@ -26,77 +26,16 @@ test('should create mapping object from action for request', (t) => {
       cid: '880432',
     },
   }
-  const expected = {
-    action: 'SET',
-    status: 'badrequest',
-    params: {
-      id: 'johnf',
-      type: 'user',
-      searchDeleted: true,
-    },
-    data,
-    paging: undefined,
-    error: 'No user by that name',
-    options: { uri: 'http://some.api.com/1.0' },
-    ident: { id: 'johnf' },
-    meta: {
-      id: '12345',
-      cid: '880432',
-    },
-  }
+  const expected = action
 
-  const ret = mappingObjectFromAction(action, isRequest)
-
-  t.deepEqual(ret, expected)
-})
-
-test('should create mapping object from action for response', (t) => {
-  const isRequest = false
-  const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
-  const action = {
-    type: 'GET',
-    payload: {
-      id: 'johnf',
-      type: 'user',
-      searchDeleted: true,
-      data: {},
-    },
-    response: {
-      status: null,
-      data,
-      params: { moreData: true },
-      paging: { next: { offset: 'page2', type: 'entry' } },
-    },
-    meta: {
-      options: { uri: 'http://some.api.com/1.0' },
-      ident: { id: 'johnf' },
-      id: '12345',
-      cid: '880432',
-    },
-  }
-  const expected = {
-    action: 'GET',
-    status: null,
-    params: { id: 'johnf', type: 'user', searchDeleted: true, moreData: true },
-    data,
-    paging: { next: { offset: 'page2', type: 'entry' } },
-    error: undefined,
-    options: { uri: 'http://some.api.com/1.0' },
-    ident: { id: 'johnf' },
-    meta: {
-      id: '12345',
-      cid: '880432',
-    },
-  }
-
-  const ret = mappingObjectFromAction(action, isRequest)
+  const ret = prepareActionForMapping(action, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
 // Tests -- actionFromMappingObject
 
-test('should populate action from mapping object from response from service', (t) => {
+test('should populate action from mapped action from service', (t) => {
   const isRequest = false
   const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
   const action = {
@@ -110,30 +49,35 @@ test('should populate action from mapping object from response from service', (t
       data: { id: 'johnf' },
     },
     meta: {
-      options: { uri: 'http://some.api.com/1.0/users/{{params.id}}' },
+      options: { uri: 'http://some.api.com/1.0/users/{{payload.id}}' },
       ident: { id: 'johnf' },
     },
   }
-  const mappingObject = {
-    action: 'GET',
-    status: 'ok',
-    params: {
+  const mappedAction = {
+    type: 'GET',
+    payload: {
       id: 'johnf',
       type: 'user',
       searchDeleted: true,
       sendNoDefaults: true,
     },
-    data,
-    paging: { next: { offset: 'page2', type: 'entry' } },
-    error: undefined,
-    options: {
-      uri: 'http://some.api.com/1.0/users/johnf',
-      queryParams: { order: 'desc' },
+    response: {
+      status: 'ok',
+      error: undefined,
+      data,
+      paging: { next: { offset: 'page2', type: 'entry' } },
+      headers: {
+        'content-type': 'application/json',
+      },
+      params: { archived: true },
     },
-    headers: {
-      'content-type': 'application/json',
+    meta: {
+      options: {
+        uri: 'http://some.api.com/1.0/users/johnf',
+        queryParams: { order: 'desc' },
+      },
+      ident: { id: 'johnf' },
     },
-    ident: { id: 'johnf' },
   }
   const expected = {
     type: 'GET',
@@ -151,6 +95,7 @@ test('should populate action from mapping object from response from service', (t
       headers: {
         'content-type': 'application/json',
       },
+      params: { archived: true },
     },
     meta: {
       options: {
@@ -161,17 +106,18 @@ test('should populate action from mapping object from response from service', (t
     },
   }
 
-  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+  const ret = populateActionAfterMapping(action, mappedAction, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
-test('should populate action from mapping object from request to service', (t) => {
+test('should populate action from mapped action to service', (t) => {
   const isRequest = true
   const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
   const action = {
     type: 'SET',
     payload: {
+      id: 'johnf',
       data: [{ id: 'johnf' }],
     },
     meta: {
@@ -179,19 +125,22 @@ test('should populate action from mapping object from request to service', (t) =
       ident: { id: 'johnf' },
     },
   }
-  const mappingObject = {
-    action: 'SET',
-    status: 'badrequest',
-    params: {
-      id: 'johnf',
+  const mappedAction = {
+    type: 'SET',
+    payload: {
       type: 'user',
       searchDeleted: true,
+      data,
     },
-    data,
-    paging: undefined,
-    error: 'No user by that name',
-    options: { uri: 'http://some.api.com/1.0' },
-    ident: { id: 'lucyk' },
+    response: {
+      status: 'badrequest',
+      error: 'No user by that name',
+      paging: undefined,
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'lucyk' },
+    },
   }
   const expected = {
     type: 'SET',
@@ -208,12 +157,12 @@ test('should populate action from mapping object from request to service', (t) =
     },
   }
 
-  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+  const ret = populateActionAfterMapping(action, mappedAction, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
-test('should populate action from mapping object from request to service on success', (t) => {
+test('should populate action from mapped action to service on success', (t) => {
   const isRequest = true
   const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
   const action = {
@@ -226,19 +175,23 @@ test('should populate action from mapping object from request to service on succ
       ident: { id: 'johnf' },
     },
   }
-  const mappingObject = {
-    action: 'SET',
-    status: null,
-    params: {
+  const mappedAction = {
+    type: 'SET',
+    payload: {
       id: 'johnf',
       type: 'user',
       searchDeleted: true,
+      data,
     },
-    data,
-    paging: undefined,
-    error: undefined,
-    options: { uri: 'http://some.api.com/1.0' },
-    ident: { id: 'johnf' },
+    response: {
+      status: null,
+      error: undefined,
+      paging: undefined,
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
   }
   const expected = {
     type: 'SET',
@@ -254,12 +207,12 @@ test('should populate action from mapping object from request to service on succ
     },
   }
 
-  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+  const ret = populateActionAfterMapping(action, mappedAction, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
-test('should populate action from mapping object from response to service', (t) => {
+test('should populate action from mapped action to service - response?', (t) => {
   const isRequest = false
   const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
   const action = {
@@ -276,19 +229,23 @@ test('should populate action from mapping object from response to service', (t) 
       ident: { id: 'johnf' },
     },
   }
-  const mappingObject = {
-    action: 'SET',
-    status: 'badrequest',
-    params: {
+  const mappedAction = {
+    type: 'SET',
+    payload: {
       id: 'johnf',
       type: 'user',
       searchDeleted: true,
     },
-    data,
-    paging: undefined,
-    error: 'No user by that name',
-    options: { uri: 'http://some.api.com/1.0' },
-    ident: { id: 'johnf' },
+    response: {
+      status: 'badrequest',
+      error: 'No user by that name',
+      data,
+      paging: undefined,
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
   }
   const expected = {
     type: 'SET',
@@ -309,12 +266,12 @@ test('should populate action from mapping object from response to service', (t) 
     },
   }
 
-  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+  const ret = populateActionAfterMapping(action, mappedAction, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
-test('should populate action from mapping object from request from service', (t) => {
+test('should populate action from mapped action from service - request?', (t) => {
   const isRequest = true
   const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
   const action = {
@@ -331,15 +288,23 @@ test('should populate action from mapping object from request from service', (t)
       ident: { id: 'johnf' },
     },
   }
-  const mappingObject = {
-    action: 'GET_SOMETHING',
-    status: 'ok',
-    params: { id: 'johnf', type: 'user', searchDeleted: true },
-    data,
-    paging: { next: { offset: 'page2', type: 'entry' } },
-    error: undefined,
-    options: { uri: 'http://some.api.com/1.0' },
-    ident: { id: 'johnf' },
+  const mappedAction = {
+    type: 'GET_SOMETHING',
+    payload: {
+      id: 'johnf',
+      type: 'user',
+      searchDeleted: true,
+      data,
+    },
+    response: {
+      status: 'ok',
+      error: undefined,
+      paging: { next: { offset: 'page2', type: 'entry' } },
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
   }
   const expected = {
     type: 'GET_SOMETHING',
@@ -351,7 +316,6 @@ test('should populate action from mapping object from request from service', (t)
     },
     response: {
       status: 'ok',
-      data: null,
       paging: { next: { offset: 'page2', type: 'entry' } },
     },
     meta: {
@@ -360,12 +324,12 @@ test('should populate action from mapping object from request from service', (t)
     },
   }
 
-  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+  const ret = populateActionAfterMapping(action, mappedAction, isRequest)
 
   t.deepEqual(ret, expected)
 })
 
-test('should populate action from mapping object with error message', (t) => {
+test('should populate action from mapped action with error message', (t) => {
   const isRequest = false
   const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
   const action = {
@@ -379,27 +343,31 @@ test('should populate action from mapping object with error message', (t) => {
       data: { id: 'johnf' },
     },
     meta: {
-      options: { uri: 'http://some.api.com/1.0/users/{{params.id}}' },
+      options: { uri: 'http://some.api.com/1.0/users/{{payload.id}}' },
       ident: { id: 'johnf' },
     },
   }
-  const mappingObject = {
-    action: 'GET',
-    status: 'ok',
-    params: {
+  const mappedAction = {
+    type: 'GET',
+    payload: {
       id: 'johnf',
       type: 'user',
       searchDeleted: true,
       sendNoDefaults: true,
     },
-    data,
-    paging: { next: { offset: 'page2', type: 'entry' } },
-    error: 'Something went wrong',
-    options: {
-      uri: 'http://some.api.com/1.0/users/johnf',
-      queryParams: { order: 'desc' },
+    response: {
+      status: 'ok',
+      error: 'Something went wrong',
+      data,
+      paging: { next: { offset: 'page2', type: 'entry' } },
     },
-    ident: { id: 'johnf' },
+    meta: {
+      options: {
+        uri: 'http://some.api.com/1.0/users/johnf',
+        queryParams: { order: 'desc' },
+      },
+      ident: { id: 'johnf' },
+    },
   }
   const expected = {
     type: 'GET',
@@ -425,7 +393,7 @@ test('should populate action from mapping object with error message', (t) => {
     },
   }
 
-  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+  const ret = populateActionAfterMapping(action, mappedAction, isRequest)
 
   t.deepEqual(ret, expected)
 })
@@ -445,11 +413,12 @@ test('should not override error status from service with ok status from data', (
       ident: { id: 'johnf' },
     },
   }
-  const mappingObject = {
-    action: 'GET',
-    status: 'ok',
-    params: {},
-    data,
+  const mappedAction = {
+    type: 'GET',
+    response: {
+      status: 'ok',
+      data,
+    },
   }
   const expected = {
     type: 'GET',
@@ -464,7 +433,7 @@ test('should not override error status from service with ok status from data', (
     },
   }
 
-  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+  const ret = populateActionAfterMapping(action, mappedAction, isRequest)
 
   t.deepEqual(ret, expected)
 })
@@ -484,11 +453,12 @@ test('should not override specific error status from service with error status f
       ident: { id: 'johnf' },
     },
   }
-  const mappingObject = {
-    action: 'GET',
-    status: 'error',
-    params: {},
-    data,
+  const mappedAction = {
+    type: 'GET',
+    response: {
+      status: 'error',
+      data,
+    },
   }
   const expected = {
     type: 'GET',
@@ -503,7 +473,7 @@ test('should not override specific error status from service with error status f
     },
   }
 
-  const ret = actionFromMappingObject(action, mappingObject, isRequest)
+  const ret = populateActionAfterMapping(action, mappedAction, isRequest)
 
   t.deepEqual(ret, expected)
 })

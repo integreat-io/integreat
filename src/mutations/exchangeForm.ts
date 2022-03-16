@@ -1,3 +1,4 @@
 export default {
-  data: ['data', { $transform: 'form' }],
+  'payload.data': ['payload.data', { $transform: 'form' }],
+  'response.data': ['response.data', { $transform: 'form' }],
 }

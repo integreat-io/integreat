@@ -9,9 +9,9 @@ import { MapOptions } from '../types'
 import { EndpointDef, Endpoint, EndpointOptions } from './types'
 import isMatch from './match'
 import {
-  mappingObjectFromAction,
-  actionFromMappingObject,
-} from '../../utils/mappingObject'
+  prepareActionForMapping,
+  populateActionAfterMapping,
+} from '../../utils/mappingHelpers'
 import { ensureArray } from '../../utils/array'
 
 export interface PrepareOptions {
@@ -41,11 +41,11 @@ function mutateAction(
   }
 
   return (action: Action, isIncoming = false) =>
-    actionFromMappingObject(
+    populateActionAfterMapping(
       action,
       mutate(
         mutator,
-        mappingObjectFromAction(action, isRequest),
+        prepareActionForMapping(action, isRequest),
         isRequest ? !!isIncoming : !isIncoming,
         mapNoDefaults ||
           (isRequest

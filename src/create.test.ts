@@ -17,7 +17,9 @@ const services = [
     endpoints: [
       {
         options: { uri: 'http://some.api/entries' },
-        mutation: { data: ['data', { $apply: 'entries_entry' }] },
+        mutation: {
+          'response.data': ['response.data', { $apply: 'entries_entry' }],
+        },
       },
     ],
   },
@@ -50,7 +52,7 @@ const mutations = {
     {
       $iterate: true,
       id: 'key',
-      title: ['headline', { $transform: 'exclamate' }],
+      title: ['headline', { $transform: 'exclaimate' }],
       text: 'body',
       'sections[]': ['type', { $transform: 'map', dictionary: 'section' }],
       unknown: [],
@@ -69,7 +71,7 @@ const resourcesWithTrans = {
   ...resources,
   transformers: {
     ...resources.transformers,
-    exclamate: () => (value: unknown) =>
+    exclaimate: () => (value: unknown) =>
       typeof value === 'string' ? `${value}!` : value,
   },
 }

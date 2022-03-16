@@ -26,9 +26,15 @@ const resourcesWithTrans = {
 
 const mutation = {
   $direction: 'fwd',
-  status: 'data.responseValue',
-  data: ['data.responseContent.articles', { $apply: 'entries-entry' }],
-  error: 'data.responseMessage',
+  response: [
+    'response',
+    {
+      '.': 'response',
+      status: 'data.responseValue',
+      data: ['data.responseContent.articles', { $apply: 'entries-entry' }],
+      error: 'data.responseMessage',
+    },
+  ],
 }
 
 const defsWithMutation = (
@@ -45,7 +51,7 @@ const defsWithMutation = (
       endpoints: [
         {
           mutation,
-          options: { uri: '/entries/{{params.id}}' },
+          options: { uri: '/entries/{{payload.id}}' },
         },
       ],
     },
@@ -100,12 +106,16 @@ test('should map with service mutation', async (t) => {
   }
   const mutation = {
     $direction: 'fwd',
-    data: ['data', { $apply: 'entries-entry' }],
+    response: 'response',
+    'response.data': ['response.data', { $apply: 'entries-entry' }],
   }
   const serviceMutation = {
     $direction: 'fwd',
-    status: 'data.result',
-    data: 'data.articles',
+    response: {
+      '.': 'response',
+      status: 'response.data.result',
+      data: 'response.data.articles',
+    },
   }
   const defs = defsWithMutation(mutation, serviceMutation)
 
@@ -169,12 +179,15 @@ test('should transform at paths within the data', async (t) => {
   }
   const mutation = {
     $direction: 'fwd',
-    'data[]': [
-      'data.responseContent',
-      { $transform: 'json' },
-      'articles[]',
-      { $apply: 'entries-entry' },
-    ],
+    response: {
+      '.': 'response',
+      'data[]': [
+        'response.data.responseContent',
+        { $transform: 'json' },
+        'articles[]',
+        { $apply: 'entries-entry' },
+      ],
+    },
   }
   const defs = defsWithMutation(mutation)
 

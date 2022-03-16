@@ -11,14 +11,18 @@ export default {
         {
           $direction: 'rev',
           $flip: true,
-          options: {
-            '.': 'options', // TODO: Find a better way to do this?
-            'queryParams.tokens': 'params.tokens',
+          meta: {
+            '.': 'meta',
+            options: {
+              '.': 'meta.options', // TODO: Find a better way to do this?
+              'queryParams.tokens': 'payload.tokens',
+            },
           },
         },
         {
           $direction: 'fwd',
-          data: ['data.data', { $apply: 'users-user' }],
+          response: 'response',
+          'response.data': ['response.data.data', { $apply: 'users-user' }],
         },
       ],
       options: { uri: '/users' },
@@ -27,7 +31,8 @@ export default {
       match: { action: 'GET', scope: 'collection' },
       mutation: {
         $direction: 'fwd',
-        data: ['data.data', { $apply: 'users-user' }],
+        response: 'response',
+        'response.data': ['response.data.data', { $apply: 'users-user' }],
       },
       options: { uri: '/users' },
     },
@@ -35,7 +40,8 @@ export default {
       match: { action: 'SET', scope: 'collection' },
       mutation: {
         $direction: 'fwd',
-        data: ['data.data', { $apply: 'users-user' }],
+        response: 'response',
+        'response.data': ['response.data.data', { $apply: 'users-user' }],
       },
       options: { uri: '/users', method: 'POST' },
     },
@@ -43,9 +49,10 @@ export default {
       match: { action: 'GET', scope: 'member' },
       mutation: {
         $direction: 'fwd',
-        data: ['data.data', { $apply: 'users-user' }],
+        response: 'response',
+        'response.data': ['response.data.data', { $apply: 'users-user' }],
       },
-      options: { uri: '/users/{{params.id}}' },
+      options: { uri: '/users/{{payload.id}}' },
     },
   ],
 }

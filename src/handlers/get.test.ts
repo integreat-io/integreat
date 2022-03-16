@@ -43,7 +43,7 @@ const pipelines = {
       title: 'headline',
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
-      source: '^params.source',
+      source: '^payload.source',
     },
     { $apply: 'cast_entry' },
   ],
@@ -72,13 +72,20 @@ const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
         match,
         options: { uri },
         mutation: {
-          data: ['data', { $apply: id === 'accounts' ? 'account' : 'entry' }],
+          response: 'response',
+          'response.data': [
+            'response.data',
+            { $apply: id === 'accounts' ? 'account' : 'entry' },
+          ],
         },
       },
       {
         id: 'other',
         options: { uri: 'http://api5.test/other' },
-        mutation: { data: ['data', { $apply: 'entry' }] },
+        mutation: {
+          response: 'response',
+          'response.data': ['response.data', { $apply: 'entry' }],
+        },
       },
     ],
   })
@@ -148,7 +155,7 @@ test('should get item by id from service', async (t) => {
     },
   }
   const svc = setupService(
-    'http://api1.test/database/{{params.type}}:{{params.id}}'
+    'http://api1.test/database/{{payload.type}}:{{payload.id}}'
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
@@ -175,7 +182,7 @@ test('should get items by id array from service from member_s_ endpoint', async 
       targetService: 'entries',
     },
   }
-  const svc = setupService('http://api12.test/entries?id={{params.id}}', {
+  const svc = setupService('http://api12.test/entries?id={{payload.id}}', {
     scope: 'members',
     id: 'membersEndpoint',
   })
@@ -207,7 +214,7 @@ test('should get items by id array from member endpoints', async (t) => {
       targetService: 'entries',
     },
   }
-  const svc = setupService('http://api6.test/entries/{{params.id}}', {
+  const svc = setupService('http://api6.test/entries/{{payload.id}}', {
     scope: 'member',
   })
   const getService = (_type?: string | string[], service?: string) =>
@@ -288,7 +295,7 @@ test('should get item by id from service when id is array of one', async (t) => 
       targetService: 'entries',
     },
   }
-  const svc = setupService('http://api7.test/entries/{{params.id}}', {
+  const svc = setupService('http://api7.test/entries/{{payload.id}}', {
     scope: 'member',
   })
   const getService = () => svc
