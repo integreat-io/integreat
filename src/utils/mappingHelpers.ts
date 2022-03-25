@@ -1,3 +1,4 @@
+import { isObject } from './is'
 import { Action, Response } from '../types'
 
 export function prepareActionForMapping(
@@ -7,9 +8,20 @@ export function prepareActionForMapping(
   return action
 }
 
-const setStatus = (response: Partial<Response>): Response => ({
+const isResponseObject = (response: unknown): response is Response =>
+  isObject(response) && Object.keys(response).length > 0
+
+const setStatus = (
+  response: Partial<Response>,
+  originalStatus: string | null = null
+): Response => ({
   ...response,
-  status: response.status || (response.error ? 'error' : null),
+  status:
+    response.status === undefined
+      ? response.error && (!originalStatus || originalStatus === 'ok')
+        ? 'error'
+        : originalStatus
+      : response.status,
 })
 
 export function populateActionAfterMapping(
@@ -24,7 +36,9 @@ export function populateActionAfterMapping(
   return {
     type: type || action.type,
     payload: payload || action.payload,
-    ...(response && { response: setStatus(response) }),
+    ...(isResponseObject(response) && {
+      response: setStatus(response, action.response?.status),
+    }),
     meta: meta || action.meta,
   }
 }

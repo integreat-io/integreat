@@ -126,7 +126,46 @@ test('should keep the untouched parts from the original action', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should set status to null on response when not set', (t) => {
+test('should set status to original status when not set in mapped action', (t) => {
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: { status: 'ok' },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappedAction = {
+    response: {
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+  } as Action // To allow the missing `status`
+  const expected = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: {
+      status: 'ok',
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = populateActionAfterMapping(action, mappedAction)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should set status to null on response when not set and no original status', (t) => {
   const action = {
     type: 'SET',
     payload: {
@@ -143,6 +182,46 @@ test('should set status to null on response when not set', (t) => {
       data: [{ id: 'ent1', $type: 'entry' }],
     },
   } as Action // To allow the missing `status`
+  const expected = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: {
+      status: null,
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = populateActionAfterMapping(action, mappedAction)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should keep status null from mapped action', (t) => {
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: { status: 'error' },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappedAction = {
+    response: {
+      status: null,
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+  }
   const expected = {
     type: 'SET',
     payload: {
@@ -202,6 +281,45 @@ test('should set status to error when error string is present', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should set use original error status when error string is present', (t) => {
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: { status: 'noaccess' },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappedAction = {
+    response: {
+      error: 'Something failed big time',
+    },
+  } as Action // To allow the missing `status`
+  const expected = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: {
+      status: 'noaccess',
+      error: 'Something failed big time',
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = populateActionAfterMapping(action, mappedAction)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should not set response when not present', (t) => {
   const action = {
     type: 'SET',
@@ -229,6 +347,37 @@ test('should not set response when not present', (t) => {
       type: 'user',
       searchDeleted: true,
       data: [{ $type: 'user', id: 'johnf', name: 'John F.' }],
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = populateActionAfterMapping(action, mappedAction)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not set empty response object', (t) => {
+  const action = {
+    type: 'SET',
+    payload: {
+      data: [{ id: 'johnf' }],
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappedAction = {
+    type: 'SET_USER',
+    response: {},
+  } as Action // To allow the missing `status`
+  const expected = {
+    type: 'SET_USER',
+    payload: {
+      data: [{ id: 'johnf' }],
     },
     meta: {
       options: { uri: 'http://some.api.com/1.0' },
