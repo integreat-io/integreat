@@ -148,25 +148,6 @@ test('should use status code mapped from data', async (t) => {
   t.is(ret.error, 'Oh no!')
 })
 
-test('should not override transporter error with data status', async (t) => {
-  nock('http://some.api').get('/entries/ent2').reply(404, {
-    responseContent: null,
-    responseValue: 'ok',
-  })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry', id: 'ent2' },
-  }
-  const defs = defsWithMutation(mutation)
-
-  const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
-
-  t.is(ret.status, 'notfound')
-  t.is(typeof ret.error, 'string')
-  t.falsy(ret.data)
-})
-
 test('should transform at paths within the data', async (t) => {
   nock('http://some.api')
     .get('/entries/ent3')

@@ -18,6 +18,7 @@ const services = [
       {
         options: { uri: 'http://some.api/entries' },
         mutation: {
+          response: 'response',
           'response.data': ['response.data', { $apply: 'entries_entry' }],
         },
       },

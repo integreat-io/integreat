@@ -51,8 +51,7 @@ function mutateAction(
           (isRequest
             ? action.payload.sendNoDefaults
             : action.response?.returnNoDefaults)
-      ),
-      isRequest
+      )
     )
 }
 

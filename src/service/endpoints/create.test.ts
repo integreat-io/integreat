@@ -453,7 +453,6 @@ test('should set status to error for response with an error', (t) => {
       response: [
         'response',
         {
-          '.': '.',
           data: ['data.content', { $apply: 'entry' }],
           error: 'data.message',
         },
@@ -465,7 +464,6 @@ test('should set status to error for response with an error', (t) => {
     ...actionWithResponse,
     response: {
       ...actionWithResponse.response,
-      status: 'queued',
       data: {
         content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
         message: 'Not valid',
