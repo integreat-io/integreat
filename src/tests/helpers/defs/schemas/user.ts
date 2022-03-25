@@ -8,10 +8,10 @@ export default {
     yearOfBirth: 'integer',
     roles: 'string[]',
     tokens: 'string[]',
-    feeds: 'feed',
-    createdBy: 'user'
+    feeds: 'feed[]',
+    createdBy: 'user',
   },
   access: {
-    identFromField: 'id'
-  }
+    identFromField: 'id',
+  },
 }

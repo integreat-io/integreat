@@ -314,3 +314,25 @@ test('should not cast undefined in array', (t) => {
 
   t.deepEqual(ret, expected)
 })
+
+test('should not return array when expecting value', (t) => {
+  const def = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    shape: {
+      id: 'string',
+      title: 'string',
+    },
+  }
+  const data = {
+    id: '35',
+    title: ['Entry 1', 'Entry 2'],
+  }
+
+  const mapping = schema(def).mapping
+  const ret = mapTransform(mapping, { functions: builtIns })(data)
+
+  const { title } = ret as DataObject
+  t.is(title, undefined)
+})

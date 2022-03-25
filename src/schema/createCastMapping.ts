@@ -43,7 +43,7 @@ const hasArrayNotation = (value: string) => value.endsWith('[]')
 
 const extractType = (type: string) =>
   hasArrayNotation(type)
-    ? ([type.substr(0, type.length - 2), true] as const)
+    ? ([type.slice(0, type.length - 2), true] as const)
     : ([type, false] as const)
 
 const appendBrackets = (field: string) => `${field}[]`
@@ -82,6 +82,9 @@ const mappingFromSchema = (schema: Shape, iterate = false): MapObject =>
         ...mapping,
         [realField]: [
           realField,
+          isArray || realType === 'unknown'
+            ? undefined
+            : { $transform: 'unarray' },
           defaultFromProp(prop),
           transformFromType(realType),
         ].filter(Boolean),

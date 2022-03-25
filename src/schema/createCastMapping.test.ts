@@ -5,6 +5,8 @@ import { TypedData } from '../types'
 
 import createCastMapping from './createCastMapping'
 
+// Tests
+
 test('should create mapping definition from schema', (t) => {
   const schema = {
     id: 'string',

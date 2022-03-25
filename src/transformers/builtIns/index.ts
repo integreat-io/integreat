@@ -5,6 +5,7 @@ import number from './number'
 import object from './object'
 import reference from './reference'
 import string from './string'
+import unarray from './unarray'
 
 export default {
   boolean,
@@ -14,4 +15,5 @@ export default {
   object,
   reference,
   string,
+  unarray,
 }
