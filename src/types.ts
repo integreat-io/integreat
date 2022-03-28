@@ -76,6 +76,8 @@ export interface Paging {
   prev?: Payload
 }
 
+export type Headers = Record<string, string | string[]>
+
 export interface Payload<T = unknown> extends Record<string, unknown> {
   type?: string | string[]
   id?: string | string[]
@@ -86,7 +88,7 @@ export interface Payload<T = unknown> extends Record<string, unknown> {
   endpoint?: string
   uri?: string
   method?: string
-  headers?: Record<string, string>
+  headers?: Headers
   page?: number
   pageOffset?: number
   pageSize?: number
@@ -115,7 +117,7 @@ export interface Response<T = unknown> {
   warning?: string
   paging?: Paging
   params?: Params
-  headers?: Record<string, string>
+  headers?: Headers
   returnNoDefaults?: boolean
   responses?: Response[] // TODO: Is this the right way?
   access?: Record<string, unknown>
