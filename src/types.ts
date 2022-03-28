@@ -76,7 +76,7 @@ export interface Paging {
   prev?: Payload
 }
 
-export type Headers = Record<string, string | string[]>
+export type Headers = Record<string, string | string[] | undefined>
 
 export interface Payload<T = unknown> extends Record<string, unknown> {
   type?: string | string[]

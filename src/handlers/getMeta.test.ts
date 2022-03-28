@@ -77,6 +77,9 @@ test('should get metadata for service', async (t) => {
   const expectedResponse = {
     status: 'ok',
     data: { service: 'store', meta: { lastSyncedAt } },
+    headers: {
+      'content-type': 'application/json',
+    },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
@@ -167,6 +170,9 @@ test('should get metadata for service with type', async (t) => {
   const expectedResponse = {
     status: 'ok',
     data: { service: 'store', meta: { lastSyncedAt } },
+    headers: {
+      'content-type': 'application/json',
+    },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
@@ -195,6 +201,9 @@ test('should get metadata for service with several types', async (t) => {
   const expectedResponse = {
     status: 'ok',
     data: { service: 'store', meta: { lastSyncedAt } },
+    headers: {
+      'content-type': 'application/json',
+    },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
@@ -228,6 +237,9 @@ test('should get metadata for service with metaKey', async (t) => {
   const expectedResponse = {
     status: 'ok',
     data: { service: 'store', meta: { lastSyncedAt } },
+    headers: {
+      'content-type': 'application/json',
+    },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })

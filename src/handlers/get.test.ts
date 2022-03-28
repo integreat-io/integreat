@@ -134,6 +134,9 @@ test('should get all items from service', async (t) => {
         source: { id: 'thenews', $ref: 'source' },
       },
     ],
+    headers: {
+      'content-type': 'application/json',
+    },
   }
 
   const ret = await get(action, { ...handlerResources, getService })
