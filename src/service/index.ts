@@ -1,3 +1,4 @@
+import debugLib = require('debug')
 import PProgress = require('p-progress')
 import createEndpointMappers from './endpoints'
 import { createErrorOnAction, createErrorResponse } from '../utils/createError'
@@ -12,6 +13,8 @@ import deepClone from '../utils/deepClone'
 import * as authorizeData from './authorize/data'
 import authorizeAction from './authorize/action'
 import { compose } from '../dispatch'
+
+const debug = debugLib('great')
 
 interface Resources {
   transporters?: Record<string, Transporter>
@@ -251,16 +254,20 @@ export default ({
        * as actions to the provided `dispatch()` function.
        */
       async listen(dispatch) {
+        debug('Set up service listening ...')
         if (!isTransporter(transporter)) {
+          debug(`Service '${serviceId}' has no transporter`)
           return createErrorResponse(
             `Service '${serviceId}' has no transporter`
           )
         }
         if (!connection) {
+          debug(`Service '${serviceId}' has no connection`)
           return createErrorResponse(`Service '${serviceId}' has no connection`)
         }
 
         if (typeof transporter.listen !== 'function') {
+          debug('Transporter has no listen method')
           return createErrorResponse(
             'Transporter has no listen method',
             'noaction'
@@ -271,6 +278,7 @@ export default ({
           typeof transporter.shouldListen === 'function' &&
           !transporter.shouldListen(options)
         ) {
+          debug('Transporter is not configured to listen')
           return createErrorResponse(
             'Transporter is not configured to listen',
             'noaction'
@@ -278,12 +286,14 @@ export default ({
         }
 
         if (authorization && !(await authorization.authenticate(null))) {
+          debug('Could not authenticate')
           return authorization.getStatusObject()
         }
 
         if (
           !(await connection.connect(authorization?.getAuthObject(transporter)))
         ) {
+          debug(`Could not listen to '${serviceId}' service. Failed to connect`)
           return createErrorResponse(
             `Could not listen to '${serviceId}' service. Failed to connect`
           )
@@ -294,6 +304,7 @@ export default ({
           setServiceIdAsSourceServiceOnAction(serviceId, incomingIdent)
         )
 
+        debug('Calling transporter listen() ...')
         return transporter.listen(
           dispatchIncomingWithMiddleware(dispatch, incomingMiddleware),
           connection.object
@@ -304,12 +315,15 @@ export default ({
        * Will disconnect the transporter
        */
       async close() {
+        debug(`Close service '${serviceId}'`)
         if (!isTransporter(transporter) || !connection) {
+          debug('No transporter to disconnect')
           return createErrorResponse('No transporter to disconnect', 'noaction')
         }
 
         await transporter.disconnect(connection.object)
         connection = null
+        debug(`Closed`)
         return { status: 'ok' }
       },
     }
