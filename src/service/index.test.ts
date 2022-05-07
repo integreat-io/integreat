@@ -160,7 +160,7 @@ const endpoints = [
 ]
 
 const auths = {
-  granting: new Auth('granting', tokenAuth, { token: 't0k3n' }),
+  granting: new Auth('granting', tokenAuth, { token: 't0k3n', type: 'Bearer' }),
   refusing: new Auth('refusing', tokenAuth, {}),
 }
 

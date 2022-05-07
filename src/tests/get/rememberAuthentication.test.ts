@@ -38,7 +38,7 @@ test('should not authenticate twice', async (t) => {
       {
         id: 'entriesToken',
         authenticator: 'token',
-        options: { token: 't0k3n' },
+        options: { token: 't0k3n', type: 'Bearer' },
       },
     ],
   }

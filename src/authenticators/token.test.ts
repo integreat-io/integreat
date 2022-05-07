@@ -18,7 +18,7 @@ test('authenticate should return granted when token is set', async (t) => {
     status: 'granted',
     token: 'someToken',
     encode: false,
-    type: 'Bearer',
+    type: undefined,
   }
 
   const ret = await authenticator.authenticate(options, action)
@@ -67,6 +67,18 @@ test('asHttpHeaders should return auth header with given type', (t) => {
     type: 'Basic',
   }
   const expected = { Authorization: 'Basic someToken' }
+
+  const ret = authenticator.authentication.asHttpHeaders(authentication)
+
+  t.deepEqual(ret, expected)
+})
+
+test('asHttpHeaders should return auth header without type', (t) => {
+  const authentication = {
+    status: 'granted',
+    token: 'someToken',
+  }
+  const expected = { Authorization: 'someToken' }
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 

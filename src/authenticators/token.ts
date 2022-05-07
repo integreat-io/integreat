@@ -37,7 +37,7 @@ const tokenAuth: Authenticator = {
    * but in tokenAuth the token is set as from the options object.
    */
   async authenticate(options, _action) {
-    const { token = null, type = 'Bearer', encode = false } = options || {}
+    const { token = null, type, encode = false } = options || {}
     return token
       ? { status: 'granted', token, type, encode }
       : { status: 'refused' }
@@ -75,7 +75,7 @@ const tokenAuth: Authenticator = {
      */
     asHttpHeaders(authentication: TokenAuthentication | null): TokenHeaders {
       const { type, token } = getTypeAndToken(authentication)
-      return token ? { Authorization: `${type} ${token}` } : {}
+      return token ? { Authorization: type ? `${type} ${token}` : token } : {}
     },
   },
 }

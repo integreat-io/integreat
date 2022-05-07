@@ -42,7 +42,7 @@ test('should get entries from service requiring authentication', async (t) => {
       {
         id: 'entriesToken',
         authenticator: 'token',
-        options: { token: 't0k3n' },
+        options: { token: 't0k3n', type: 'Bearer' },
       },
     ],
   }
