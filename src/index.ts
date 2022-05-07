@@ -2,7 +2,7 @@ import create from './create'
 import mergeDefinitions from './utils/mergeDefinitions'
 import mergeResources from './utils/mergeResources'
 
-export { CustomFunction as Transformer } from 'map-transform'
+export { CustomFunction as Transformer, MapDefinition } from 'map-transform'
 export {
   Action,
   Payload,
