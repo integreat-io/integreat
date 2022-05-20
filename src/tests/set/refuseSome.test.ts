@@ -2,7 +2,6 @@ import test from 'ava'
 import nock = require('nock')
 import resources from '../helpers/resources'
 import defs from '../helpers/defs'
-import { TypedData } from '../../types'
 
 import Integreat from '../..'
 
@@ -34,7 +33,7 @@ test('should refuse to set entries where ident has no access', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-  const data = ret.data as TypedData
+  const data = ret.data
   t.false(Array.isArray(data))
   t.is(data, undefined)
 

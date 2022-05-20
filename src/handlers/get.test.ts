@@ -227,10 +227,10 @@ test('should get items by id array from member endpoints', async (t) => {
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(Array.isArray(ret.response?.data))
-  const data = ret.response?.data as DataObject[]
+  const data = ret.response?.data as (DataObject | undefined)[]
   t.is(data.length, 3)
-  t.is(data[0].id, 'ent1')
-  t.is(data[1].id, 'ent2')
+  t.is(data[0]?.id, 'ent1')
+  t.is(data[1]?.id, 'ent2')
   t.is(data[2], undefined)
   t.true(scope.isDone())
 })

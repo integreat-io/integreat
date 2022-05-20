@@ -56,7 +56,7 @@ test('should throw when no authenticator', (t) => {
   const err = t.throws(() => new Auth(id, authenticator, options))
 
   t.true(err instanceof Error)
-  t.is(err.message, 'Auth requires an authenticator')
+  t.is(err?.message, 'Auth requires an authenticator')
 })
 
 test('should authenticate and return true on success', async (t) => {
