@@ -2,7 +2,7 @@ import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
 import { isDate } from '../utils/is'
 
-const uriPart: CustomFunction = (_operands, _options) => (value, context) =>
+const uriPart: CustomFunction = (_operands, _options) => (value, state) =>
   mapAny(function (value) {
     if (value === null || value === undefined) {
       return undefined
@@ -15,7 +15,7 @@ const uriPart: CustomFunction = (_operands, _options) => (value, context) =>
       return undefined
     }
 
-    return context.rev ? encodeURIComponent(part) : decodeURIComponent(part)
+    return state.rev ? encodeURIComponent(part) : decodeURIComponent(part)
   }, value)
 
 export default uriPart

@@ -4,20 +4,26 @@ import unique from './unique'
 
 // Setup
 
-const context = {
+const state = {
   rev: false,
   onlyMappedValues: false,
+  root: {},
+  context: {},
+  value: {},
 }
-const contextRev = {
+const stateRev = {
   rev: true,
   onlyMappedValues: false,
+  root: {},
+  context: {},
+  value: {},
 }
 
 // Tests
 
 test('should return unique string', (t) => {
-  const ret1 = unique({})(undefined, context)
-  const ret2 = unique({})(undefined, context)
+  const ret1 = unique({})(undefined, state)
+  const ret2 = unique({})(undefined, state)
 
   t.is(typeof ret1, 'string')
   t.is(typeof ret2, 'string')
@@ -25,8 +31,8 @@ test('should return unique string', (t) => {
 })
 
 test('should return uuid in lowercase', (t) => {
-  const ret1 = unique({ type: 'uuid' })(undefined, context)
-  const ret2 = unique({ type: 'uuid' })(undefined, context)
+  const ret1 = unique({ type: 'uuid' })(undefined, state)
+  const ret2 = unique({ type: 'uuid' })(undefined, state)
 
   t.regex(
     ret1 as string,
@@ -40,8 +46,8 @@ test('should return uuid in lowercase', (t) => {
 })
 
 test('should return uuid in lowercase when using alias', (t) => {
-  const ret1 = unique({ type: 'uuidLower' })(undefined, context)
-  const ret2 = unique({ type: 'uuidLower' })(undefined, context)
+  const ret1 = unique({ type: 'uuidLower' })(undefined, state)
+  const ret2 = unique({ type: 'uuidLower' })(undefined, state)
 
   t.regex(
     ret1 as string,
@@ -55,8 +61,8 @@ test('should return uuid in lowercase when using alias', (t) => {
 })
 
 test('should return uuid in uppercase', (t) => {
-  const ret1 = unique({ type: 'uuidUpper' })(undefined, context)
-  const ret2 = unique({ type: 'uuidUpper' })(undefined, context)
+  const ret1 = unique({ type: 'uuidUpper' })(undefined, state)
+  const ret2 = unique({ type: 'uuidUpper' })(undefined, state)
 
   t.regex(
     ret1 as string,
@@ -70,8 +76,8 @@ test('should return uuid in uppercase', (t) => {
 })
 
 test('should return unique string in rev', (t) => {
-  const ret1 = unique({})(undefined, contextRev)
-  const ret2 = unique({})(undefined, contextRev)
+  const ret1 = unique({})(undefined, stateRev)
+  const ret2 = unique({})(undefined, stateRev)
 
   t.is(typeof ret1, 'string')
   t.is(typeof ret2, 'string')

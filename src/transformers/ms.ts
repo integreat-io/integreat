@@ -3,7 +3,7 @@ import { castDate } from './builtIns/date'
 export default () =>
   function ms(
     value: unknown,
-    { rev }: { rev: boolean }
+    { rev = false }: { rev?: boolean }
   ): number | Date | null | undefined {
     const date = castDate(value)
 

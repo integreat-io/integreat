@@ -6,31 +6,31 @@ import trim from './trim'
 
 const operands = {}
 const options = {}
-const context = {
+const state = {
   rev: false,
   onlyMappedValues: false,
+  root: {},
+  context: {},
+  value: {},
 }
 
 // Tests
 
 test('should trim from service', (t) => {
   t.is(
-    trim(operands, options)(' Space on each side ', context),
+    trim(operands, options)(' Space on each side ', state),
     'Space on each side'
   )
-  t.is(trim(operands, options)(' Space in front', context), 'Space in front')
-  t.is(
-    trim(operands, options)('Space on the end ', context),
-    'Space on the end'
-  )
-  t.is(trim(operands, options)('No space', context), 'No space')
-  t.is(trim(operands, options)(' ', context), '')
+  t.is(trim(operands, options)(' Space in front', state), 'Space in front')
+  t.is(trim(operands, options)('Space on the end ', state), 'Space on the end')
+  t.is(trim(operands, options)('No space', state), 'No space')
+  t.is(trim(operands, options)(' ', state), '')
 })
 
 test('should not touch things that are not string from service', (t) => {
-  t.is(trim(operands, options)(3, context), 3)
-  t.is(trim(operands, options)(true, context), true)
-  t.is(trim(operands, options)(null, context), null)
-  t.is(trim(operands, options)(undefined, context), undefined)
-  t.deepEqual(trim(operands, options)({}, context), {})
+  t.is(trim(operands, options)(3, state), 3)
+  t.is(trim(operands, options)(true, state), true)
+  t.is(trim(operands, options)(null, state), null)
+  t.is(trim(operands, options)(undefined, state), undefined)
+  t.deepEqual(trim(operands, options)({}, state), {})
 })

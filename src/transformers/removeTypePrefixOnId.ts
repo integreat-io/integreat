@@ -27,10 +27,8 @@ const removeTypePrefixOnIdRev = (item: unknown) => {
   return item
 }
 
-const removeTypePrefixOnId: CustomFunction = (_operands, _options) => (
-  value,
-  context
-) =>
-  context.rev ? removeTypePrefixOnIdRev(value) : removeTypePrefixOnIdFwd(value)
+const removeTypePrefixOnId: CustomFunction =
+  (_operands, _options) => (value, state) =>
+    state.rev ? removeTypePrefixOnIdRev(value) : removeTypePrefixOnIdFwd(value)
 
 export default removeTypePrefixOnId

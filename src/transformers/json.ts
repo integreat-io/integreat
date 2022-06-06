@@ -18,7 +18,7 @@ function stringify(data: unknown) {
   return JSON.stringify(data)
 }
 
-const json: CustomFunction = (_operands, _options) => (data, context) =>
-  context.rev ? stringify(data) : parse(data)
+const json: CustomFunction = (_operands, _options) => (data, state) =>
+  state.rev ? stringify(data) : parse(data)
 
 export default json

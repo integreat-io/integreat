@@ -6,24 +6,30 @@ import object from './object'
 
 const operands = {}
 const options = {}
-const context = { rev: false, onlyMappedValues: false }
+const state = {
+  rev: false,
+  onlyMappedValues: false,
+  root: {},
+  context: {},
+  value: {},
+}
 
 // Tests
 
 test('should return object untouched', (t) => {
   const value = { id: '15', title: 'Entry 15' }
 
-  const ret = object(operands, options)(value, context)
+  const ret = object(operands, options)(value, state)
 
   t.is(ret, value)
 })
 
 test('should return undefined for non-objects', (t) => {
-  t.is(object(operands, options)('hello', context), undefined)
-  t.is(object(operands, options)(true, context), undefined)
-  t.is(object(operands, options)(14, context), undefined)
-  t.is(object(operands, options)(null, context), undefined)
-  t.is(object(operands, options)(undefined, context), undefined)
+  t.is(object(operands, options)('hello', state), undefined)
+  t.is(object(operands, options)(true, state), undefined)
+  t.is(object(operands, options)(14, state), undefined)
+  t.is(object(operands, options)(null, state), undefined)
+  t.is(object(operands, options)(undefined, state), undefined)
 })
 
 test('should iterate array', (t) => {
@@ -44,7 +50,7 @@ test('should iterate array', (t) => {
     undefined,
   ]
 
-  const ret = object(operands, options)(value, context)
+  const ret = object(operands, options)(value, state)
 
   t.deepEqual(ret, expected)
 })

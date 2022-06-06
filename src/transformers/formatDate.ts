@@ -49,7 +49,7 @@ function formatDateRev(value: unknown, format: string) {
 export default ({ format = 'ISO' }: Operands) =>
   function formatDate(
     value: unknown,
-    { rev }: { rev: boolean }
+    { rev = false }: { rev?: boolean }
   ): string | Date | null | undefined {
     return rev ? formatDateRev(value, format) : formatDateFwd(value, format)
   }

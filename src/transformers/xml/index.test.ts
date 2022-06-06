@@ -7,13 +7,19 @@ import xml from '.'
 const xmlData = `<?xml version="1.0" encoding="utf-8"?><env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope"><env:Body><GetPaymentMethodsResponse xmlns="http://example.com/webservices"><GetPaymentMethodsResult><PaymentMethod Id="1"><Name>Cash</Name></PaymentMethod><PaymentMethod Id="2"><Name>Invoice</Name></PaymentMethod></GetPaymentMethodsResult></GetPaymentMethodsResponse></env:Body></env:Envelope>`
 
 const options = {}
-const context = {
+const state = {
   rev: false,
   onlyMappedValues: false,
+  root: {},
+  context: {},
+  value: {},
 }
-const contextRev = {
+const stateRev = {
   rev: true,
   onlyMappedValues: false,
+  root: {},
+  context: {},
+  value: {},
 }
 
 // Tests -- from service
@@ -35,7 +41,7 @@ test('should parse xml from service', (t) => {
     },
   }
 
-  const ret = xml({}, options)(data, context)
+  const ret = xml({}, options)(data, state)
 
   t.deepEqual(ret, expected)
 })
@@ -61,7 +67,7 @@ test('should use provided namespaces', (t) => {
     },
   }
 
-  const ret = xml({ namespaces }, options)(data, context)
+  const ret = xml({ namespaces }, options)(data, state)
 
   t.deepEqual(ret, expected)
 })
@@ -90,7 +96,7 @@ test('should stringify xml to service', (t) => {
   }
   const expected = xmlData
 
-  const ret = xml({ namespaces }, options)(data, contextRev)
+  const ret = xml({ namespaces }, options)(data, stateRev)
 
   t.is(ret, expected)
 })

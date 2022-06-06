@@ -6,13 +6,19 @@ import trans from './removeTypePrefixOnId'
 
 const operands = {}
 const options = {}
-const context = {
+const state = {
   rev: false,
   onlyMappedValues: false,
+  root: {},
+  context: {},
+  value: {},
 }
-const contextRev = {
+const stateRev = {
   rev: true,
   onlyMappedValues: false,
+  root: {},
+  context: {},
+  value: {},
 }
 
 // Tests -- from service
@@ -21,7 +27,7 @@ test('should remove type going from service', (t) => {
   const item = { id: 'entry:ent1', $type: 'entry' }
   const expected = { id: 'ent1', $type: 'entry' }
 
-  const ret = trans(operands, options)(item, context)
+  const ret = trans(operands, options)(item, state)
 
   t.deepEqual(ret, expected)
 })
@@ -29,7 +35,7 @@ test('should remove type going from service', (t) => {
 test('should not touch unprefixed id going from service', (t) => {
   const item = { id: 'ent1', $type: 'entry' }
 
-  const ret = trans(operands, options)(item, context)
+  const ret = trans(operands, options)(item, state)
 
   t.deepEqual(ret, item)
 })
@@ -40,7 +46,7 @@ test('should add type going to service', (t) => {
   const item = { id: 'ent1', $type: 'entry' }
   const expected = { id: 'entry:ent1', $type: 'entry' }
 
-  const ret = trans(operands, options)(item, contextRev)
+  const ret = trans(operands, options)(item, stateRev)
 
   t.deepEqual(ret, expected)
 })
@@ -48,7 +54,7 @@ test('should add type going to service', (t) => {
 test('should not touch prefixed id going to service', (t) => {
   const item = { id: 'entry:ent1', $type: 'entry' }
 
-  const ret = trans(operands, options)(item, contextRev)
+  const ret = trans(operands, options)(item, stateRev)
 
   t.deepEqual(ret, item)
 })

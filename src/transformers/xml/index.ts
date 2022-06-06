@@ -20,9 +20,9 @@ export interface Operands {
   namespaces?: Namespaces
 }
 
-const xml: CustomFunction = ({ namespaces }: Operands, _options) => (
-  data,
-  context
-) => (context.rev ? stringify(data, namespaces) : parse(data, namespaces))
+const xml: CustomFunction =
+  ({ namespaces }: Operands, _options) =>
+  (data, state) =>
+    state.rev ? stringify(data, namespaces) : parse(data, namespaces)
 
 export default xml

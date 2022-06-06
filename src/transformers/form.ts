@@ -41,7 +41,7 @@ const stringifyForm = (data: unknown) =>
         .join('&')
     : null
 
-const form: CustomFunction = (_operands, _options) => (data, context) =>
-  context.rev ? stringifyForm(getFirstIfArray(data)) : parseForm(data)
+const form: CustomFunction = (_operands, _options) => (data, state) =>
+  state.rev ? stringifyForm(getFirstIfArray(data)) : parseForm(data)
 
 export default form

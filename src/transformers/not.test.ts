@@ -6,19 +6,22 @@ import not from './not'
 
 const operands = {}
 const options = {}
-const context = {
+const state = {
   rev: false,
   onlyMappedValues: false,
+  root: {},
+  context: {},
+  value: {},
 }
 
 // Tests
 
 test('should perform logical not', (t) => {
-  t.false(not(operands, options)(true, context))
-  t.true(not(operands, options)(false, context))
+  t.false(not(operands, options)(true, state))
+  t.true(not(operands, options)(false, state))
 })
 
 test('should treat value as truthy or falsy', (t) => {
-  t.true(not(operands, options)(null, context))
-  t.false(not(operands, options)('something', context))
+  t.true(not(operands, options)(null, state))
+  t.false(not(operands, options)('something', state))
 })

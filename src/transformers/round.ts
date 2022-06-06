@@ -14,7 +14,7 @@ const getNumber = (value: unknown): number | undefined =>
 
 export default function round({
   precision,
-}: Operands): (value: unknown, context: unknown) => number | undefined {
+}: Operands): (value: unknown, state: unknown) => number | undefined {
   const factor = 10 ** (precision ?? 0)
   return function round(value) {
     const number = getNumber(value)
