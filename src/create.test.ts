@@ -79,7 +79,7 @@ const resourcesWithTrans = {
 
 // Tests
 
-test('should return object with dispatch, schemas, services, identType, and queueService', (t) => {
+test('should return object with dispatch, on, schemas, services, identType, and queueService', (t) => {
   const identConfig = { type: 'account' }
   const great = create(
     { services, schemas, identConfig, queueService: 'queue' },
@@ -87,6 +87,7 @@ test('should return object with dispatch, schemas, services, identType, and queu
   )
 
   t.is(typeof great.dispatch, 'function')
+  t.is(typeof great.on, 'function')
   t.truthy(great.schemas)
   t.truthy(great.schemas.entry)
   t.truthy(great.services)

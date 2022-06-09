@@ -160,7 +160,8 @@ export interface Transporter {
   connect: (
     options: Record<string, unknown>,
     authentication: Record<string, unknown> | null,
-    connection: Connection | null
+    connection: Connection | null,
+    emit: (eventType: string, ...args: unknown[]) => void
   ) => Promise<Connection | null>
   send: (action: Action, connection: Connection | null) => Promise<Response>
   shouldListen?: (options: EndpointOptions) => boolean

@@ -1,3 +1,4 @@
+import EventEmitter = require('node:events')
 import { Dictionaries, CustomFunction, MapDefinition } from 'map-transform'
 import {
   Middleware,
@@ -58,6 +59,10 @@ export interface Instance<ResponseData = unknown> {
   dispatchScheduled: (from: Date, to: Date) => Promise<Action[]>
   listen: () => Promise<Response>
   close: () => Promise<Response>
+  on: (
+    eventName: string,
+    listener: (...args: unknown[]) => void
+  ) => EventEmitter
 }
 
 /*
@@ -83,6 +88,9 @@ export default function create(
       'Please provide Integreat with at least services and schemas'
     )
   }
+
+  // Set up event emitter
+  const emitter = new EventEmitter()
 
   // Prepare schemas
   const schemas = schemaDefs
@@ -120,6 +128,7 @@ export default function create(
         schemas,
         mapOptions,
         middleware: middlewareForService,
+        emit: emitter.emit.bind(emitter),
       })
     )
     .reduce(indexById, {} as Record<string, Service>)
@@ -147,5 +156,6 @@ export default function create(
     dispatchScheduled,
     listen: async () => listen(Object.values(services), dispatch),
     close: async () => close(Object.values(services)),
+    on: (eventName, listener) => emitter.on(eventName, listener),
   }
 }

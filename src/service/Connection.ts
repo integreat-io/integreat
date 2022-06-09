@@ -13,11 +13,17 @@ export default class Connection {
   #transporter: Transporter
   #options: EndpointOptions
   #connection: ConnectionObject | null
+  #emit: (eventType: string, ...args: unknown[]) => void
 
-  constructor(transporter: Transporter, options: EndpointOptions) {
+  constructor(
+    transporter: Transporter,
+    options: EndpointOptions,
+    emit: (eventType: string, ...args: unknown[]) => void
+  ) {
     this.#transporter = transporter
     this.#options = options
     this.#connection = null
+    this.#emit = emit
   }
 
   async connect(auth?: Record<string, unknown> | null): Promise<boolean> {
@@ -25,7 +31,8 @@ export default class Connection {
       this.#connection = (await this.#transporter.connect(
         this.#options,
         auth || null,
-        this.#connection?.status === 'ok' ? this.#connection : null
+        this.#connection?.status === 'ok' ? this.#connection : null,
+        this.#emit
       )) || { status: 'ok' }
     } else {
       this.#connection = { status: 'ok' }

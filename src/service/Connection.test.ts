@@ -9,6 +9,7 @@ import Connection from './Connection'
 
 const options = { uri: 'http://api.test/1.0' }
 const auth = { Authorization: 'Bearer t0k3n' }
+const emit = () => undefined
 
 // Tests
 
@@ -19,7 +20,7 @@ test('should call transporter connect method and return true', async (t) => {
     connect,
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
   t.is(connect.callCount, 1)
@@ -37,7 +38,7 @@ test('should call transporter connect method with previous connection', async (t
     connect,
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   await connection.connect(auth)
   await connection.connect(auth)
 
@@ -53,7 +54,7 @@ test('should return false when connection fails', async (t) => {
     connect,
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
   t.is(connect.callCount, 1)
@@ -66,7 +67,7 @@ test('should return true when connection status is noaction', async (t) => {
     connect: async () => ({ status: 'noaction' }),
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
   t.true(ret)
@@ -78,16 +79,16 @@ test('should return true when service returns null', async (t) => {
     connect: async () => null,
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
   t.true(ret)
 })
 
 test('should return true when service has no connect method', async (t) => {
-  const transporter = ({} as unknown) as Transporter
+  const transporter = {} as unknown as Transporter
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
   t.true(ret)
@@ -100,7 +101,7 @@ test('should call transporter connect method with null after connection failure'
     connect,
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   await connection.connect(auth)
   await connection.connect(auth)
 
@@ -119,7 +120,7 @@ test('should get connection status and error', async (t) => {
     }),
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   await connection.connect(auth)
 
   t.is(connection.status, 'error')
@@ -135,7 +136,7 @@ test('should get null for error when no error', async (t) => {
     }),
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   await connection.connect(auth)
 
   t.is(connection.status, 'ok')
@@ -151,7 +152,7 @@ test('should get null for status when no connection', async (t) => {
     }),
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
 
   t.is(connection.status, null)
   t.is(connection.error, null)
@@ -164,7 +165,7 @@ test('should get service connection object', async (t) => {
     connect: async () => serviceConnection,
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   await connection.connect(auth)
 
   t.deepEqual(connection.object, serviceConnection)
@@ -179,7 +180,7 @@ test('should call transporter disconnect with connection object and remove local
     disconnect,
   }
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   await connection.connect(auth)
   await connection.disconnect()
 
@@ -190,13 +191,32 @@ test('should call transporter disconnect with connection object and remove local
 
 test('should just remove local object when transporter has no disconnect method', async (t) => {
   const serviceConnection = { status: 'ok', internalStuff: {} }
-  const transporter = ({
+  const transporter = {
     connect: async () => serviceConnection,
-  } as unknown) as Transporter
+  } as unknown as Transporter
 
-  const connection = new Connection(transporter, options)
+  const connection = new Connection(transporter, options, emit)
   await connection.connect(auth)
   await connection.disconnect()
 
   t.is(connection.object, null)
+})
+
+test('should provide connect method with an emitter method', async (t) => {
+  const emit = sinon.stub()
+  const transporter: Transporter = {
+    ...httpTransporter,
+    connect: async (_options, _auth, _conn, emitFn) => {
+      emitFn('error', new Error('We failed'))
+      return { status: 'ok' }
+    },
+  }
+
+  const connection = new Connection(transporter, options, emit)
+  const ret = await connection.connect(auth)
+
+  t.is(emit.callCount, 1)
+  t.is(emit.args[0][0], 'error')
+  t.deepEqual(emit.args[0][1], new Error('We failed'))
+  t.true(ret)
 })

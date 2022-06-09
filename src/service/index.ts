@@ -22,6 +22,7 @@ interface Resources {
   schemas: Record<string, Schema>
   mapOptions?: MapOptions
   middleware?: Middleware[]
+  emit?: (eventType: string, ...args: unknown[]) => void
 }
 
 const setServiceIdAsSourceServiceOnAction =
@@ -105,6 +106,7 @@ export default ({
     schemas,
     mapOptions = {},
     middleware = [],
+    emit = () => undefined, // Provide a fallback for tests
   }: Resources) =>
   ({
     id: serviceId,
@@ -144,7 +146,7 @@ export default ({
       middleware.length > 0 ? compose(...middleware) : (fn) => fn
 
     let connection = isTransporter(transporter)
-      ? new Connection(transporter, options)
+      ? new Connection(transporter, options, emit)
       : null
 
     // Create the service instance
