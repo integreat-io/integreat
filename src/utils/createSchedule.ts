@@ -1,5 +1,6 @@
 import later = require('later')
-import { ScheduleObject, ScheduleDef, Action } from '../types'
+import { ScheduleObject, JobDef, Action } from '../types'
+import { isAction } from './is'
 
 later.date.UTC()
 
@@ -30,7 +31,9 @@ export default function createSchedule({
   cron,
   human,
   action,
-}: ScheduleDef): Schedule | undefined {
-  const schedule = parseSched(schedules, exceptions, cron, human)
-  return schedule ? { later: later.schedule(schedule), action } : undefined
+}: JobDef): Schedule | undefined {
+  if (isAction(action)) {
+    const schedule = parseSched(schedules, exceptions, cron, human)
+    return schedule ? { later: later.schedule(schedule), action } : undefined
+  } else return undefined
 }

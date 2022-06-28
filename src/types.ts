@@ -1,4 +1,5 @@
 import PProgress = require('p-progress')
+import { MapDefinition } from 'map-transform'
 import { EndpointOptions } from './service/endpoints/types'
 import { IdentConfig } from './service/types'
 import { Service } from './service/types'
@@ -42,12 +43,22 @@ export type ScheduleObject = {
   wy?: number[]
 }
 
-export interface ScheduleDef {
+export interface JobStep {
+  id: string
+  action?: Action | (JobStep | JobStep[])[]
+  mutation?: MapDefinition
+}
+
+export interface Job {
+  id?: string
+  action: Action | (JobStep | JobStep[])[]
+}
+
+export interface JobDef extends Job {
   schedules?: ScheduleObject[]
   exceptions?: ScheduleObject[]
   cron?: string
   human?: string
-  action: Action
 }
 
 export interface DataFunction {

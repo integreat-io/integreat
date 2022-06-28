@@ -83,7 +83,7 @@ const usersAuth = {
   options: { token: 's3cr3t' },
 }
 
-const schedule1 = {
+const job1 = {
   cron: '5 2 * * *',
   action: {
     type: 'SYNC',
@@ -95,7 +95,7 @@ const schedule1 = {
   },
 }
 
-const schedule2 = {
+const job2 = {
   cron: '0 4 * * *',
   action: {
     type: 'SYNC',
@@ -116,7 +116,7 @@ test('should merge three definitions', (t) => {
     services: [entriesService],
     mutations: { 'entries-entry': entryMutation },
     dictionaries: { currencies },
-    schedules: [schedule1],
+    jobs: [job1],
     identConfig: {
       type: 'unknown',
     },
@@ -124,7 +124,7 @@ test('should merge three definitions', (t) => {
   const def2 = {
     services: [queueService],
     queueService: 'queue',
-    schedules: [],
+    jobs: [],
   }
   const def3 = {
     auths: [usersAuth],
@@ -132,7 +132,7 @@ test('should merge three definitions', (t) => {
     services: [usersService],
     mutations: {},
     dictionaries: { roles },
-    schedules: [schedule2],
+    jobs: [job2],
     identConfig: {
       type: 'user',
       props: { tokens: 'secrets' },
@@ -148,7 +148,7 @@ test('should merge three definitions', (t) => {
       currencies,
       roles,
     },
-    schedules: [schedule1, schedule2],
+    jobs: [job1, job2],
     identConfig: {
       type: 'user',
       props: { tokens: 'secrets' },
@@ -159,12 +159,3 @@ test('should merge three definitions', (t) => {
 
   t.deepEqual(ret, expected)
 })
-
-// schemas: SchemaDef[]
-// services: ServiceDef[]
-// mutations?: Record<string, MapDefinition>
-// auths?: AuthDef[]
-// identConfig?: IdentConfig
-// queueService?: string
-// dictionaries?: Dictionaries
-// schedules?: ScheduleDef[]

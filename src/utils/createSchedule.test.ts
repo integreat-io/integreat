@@ -89,3 +89,22 @@ test('should return undefined when no matching schedule', (t) => {
 
   t.is(ret, undefined)
 })
+
+test('should return undefined when action is a flow', (t) => {
+  const def = {
+    schedules: [{ m: [50] }],
+    action: [
+      {
+        id: 'step1',
+        action: {
+          type: 'SYNC',
+          payload: { type: 'entry', from: 'entryDb', to: 'dwh' },
+        },
+      },
+    ],
+  }
+
+  const ret = createSchedule(def)
+
+  t.is(ret, undefined)
+})

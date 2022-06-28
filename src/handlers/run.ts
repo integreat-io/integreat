@@ -1,5 +1,4 @@
 /* eslint-disable security/detect-object-injection */
-import { MapDefinition } from 'map-transform'
 import {
   Action,
   ActionHandlerResources,
@@ -7,20 +6,11 @@ import {
   Meta,
   Payload as BasePayload,
   Response,
+  JobStep,
+  Job,
 } from '../types'
 import { createErrorOnAction } from '../utils/createError'
 import { isObject } from '../utils/is'
-
-export interface JobStep {
-  id: string
-  action?: Action | (JobStep | JobStep[])[]
-  mutation?: MapDefinition
-}
-
-export interface Job {
-  id: string
-  action: Action | (JobStep | JobStep[])[]
-}
 
 export interface Payload extends BasePayload {
   jobId?: string
@@ -144,7 +134,7 @@ async function runFlow(
   return {}
 }
 
-export default (jobs: Job[]) =>
+export default (jobs: Record<string, Job>) =>
   async function set(
     action: Action,
     { dispatch }: ActionHandlerResources
@@ -153,8 +143,8 @@ export default (jobs: Job[]) =>
       payload: { jobId },
       meta,
     } = action
-    const job = jobs.find((job) => job.id === jobId)
-    if (!job) {
+    const job = typeof jobId === 'string' ? jobs[jobId] : undefined
+    if (!job || !job.id) {
       return createErrorOnAction(
         action,
         `No job with id '${jobId}'`,

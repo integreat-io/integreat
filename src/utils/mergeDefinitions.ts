@@ -17,7 +17,7 @@ const mergeDefs = (
   services: mergeArrays(defs.services, def.services),
   mutations: { ...defs.mutations, ...def.mutations },
   dictionaries: { ...defs.dictionaries, ...def.dictionaries },
-  schedules: mergeArrays(defs.schedules, def.schedules),
+  jobs: mergeArrays(defs.jobs, def.jobs),
   identConfig: def.identConfig || defs.identConfig,
   queueService: def.queueService || defs.queueService,
 })
@@ -31,7 +31,7 @@ export default function mergeDefinitions(
     services: [],
     mutations: {},
     dictionaries: {},
-    schedules: [],
+    jobs: [],
     identConfig: undefined,
     queueService: undefined,
   })

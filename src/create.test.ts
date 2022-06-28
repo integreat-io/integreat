@@ -230,20 +230,56 @@ test('should map data', async (t) => {
 })
 
 test('should dispatch scheduled', async (t) => {
-  const action = { type: 'TEST', payload: {} }
   const handler = sinon
     .stub()
     .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
   const handlers = { TEST: handler }
-  const schedules = [{ schedules: [{ m: [45] }], action }]
+  const jobs = [
+    { schedules: [{ m: [45] }], action: { type: 'TEST', payload: {} } },
+  ]
   const fromDate = new Date('2021-05-11T14:32Z')
   const toDate = new Date('2021-05-11T14:59Z')
 
   const great = create(
-    { services, schemas, mutations, schedules },
+    { services, schemas, mutations, jobs },
     { ...resourcesWithTrans, handlers }
   )
   await great.dispatchScheduled(fromDate, toDate)
+
+  t.is(handler.callCount, 1) // If the action handler was called, the action was dispatched
+})
+
+test('should skip jobs without schedule', async (t) => {
+  const handler = sinon
+    .stub()
+    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const handlers = { TEST: handler }
+  const jobs = [{ id: 'someAction', action: { type: 'TEST', payload: {} } }]
+  const fromDate = new Date('2021-05-11T14:32Z')
+  const toDate = new Date('2021-05-11T14:59Z')
+
+  const great = create(
+    { services, schemas, mutations, jobs },
+    { ...resourcesWithTrans, handlers }
+  )
+  await great.dispatchScheduled(fromDate, toDate)
+
+  t.is(handler.callCount, 0)
+})
+
+test('should set up RUN handler with jobs', async (t) => {
+  const handler = sinon
+    .stub()
+    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const handlers = { TEST: handler }
+  const jobs = [{ id: 'theJob', action: { type: 'TEST', payload: {} } }]
+  const action = { type: 'RUN', payload: { jobId: 'theJob' } }
+
+  const great = create(
+    { services, schemas, mutations, jobs },
+    { ...resourcesWithTrans, handlers }
+  )
+  await great.dispatch(action)
 
   t.is(handler.callCount, 1) // If the action handler was called, the action was dispatched
 })

@@ -10,12 +10,12 @@ test('should run a simple action', async (t) => {
   const dispatch = sinon.stub().resolves({
     response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
   })
-  const jobs = [
-    {
+  const jobs = {
+    action1: {
       id: 'action1',
       action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
     },
-  ]
+  }
   const action = {
     type: 'RUN',
     payload: {
@@ -45,8 +45,8 @@ test('should run a simple flow with one action', async (t) => {
   const dispatch = sinon.stub().resolves({
     response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
   })
-  const jobs = [
-    {
+  const jobs = {
+    action1: {
       id: 'action1',
       action: [
         {
@@ -55,7 +55,7 @@ test('should run a simple flow with one action', async (t) => {
         },
       ],
     },
-  ]
+  }
   const action = {
     type: 'RUN',
     payload: {
@@ -85,8 +85,8 @@ test('should run two actions in sequence', async (t) => {
   const dispatch = sinon.stub().resolves({
     response: { status: 'ok' },
   })
-  const jobs = [
-    {
+  const jobs = {
+    action2: {
       id: 'action2',
       action: [
         {
@@ -112,7 +112,7 @@ test('should run two actions in sequence', async (t) => {
         },
       ],
     },
-  ]
+  }
   const action = {
     type: 'RUN',
     payload: {
@@ -159,8 +159,8 @@ test('should not run second action when first in sequence fails', async (t) => {
     })
     .onCall(0)
     .resolves({ response: { status: 'timeout', error: 'Too slow' } })
-  const jobs = [
-    {
+  const jobs = {
+    action2: {
       id: 'action2',
       action: [
         {
@@ -186,7 +186,7 @@ test('should not run second action when first in sequence fails', async (t) => {
         },
       ],
     },
-  ]
+  }
   const action = {
     type: 'RUN',
     payload: {
@@ -208,8 +208,8 @@ test('should run two actions in parallel', async (t) => {
   const dispatch = sinon.stub().resolves({
     response: { status: 'ok' },
   })
-  const jobs = [
-    {
+  const jobs = {
+    action3: {
       id: 'action3',
       action: [
         [
@@ -237,7 +237,7 @@ test('should run two actions in parallel', async (t) => {
         ],
       ],
     },
-  ]
+  }
   const action = {
     type: 'RUN',
     payload: {
@@ -284,8 +284,8 @@ test('should run all actions in parallel even if one of them fails', async (t) =
     })
     .onCall(0)
     .resolves({ response: { status: 'timeout', error: 'Too slow' } })
-  const jobs = [
-    {
+  const jobs = {
+    action3: {
       id: 'action3',
       action: [
         [
@@ -313,7 +313,7 @@ test('should run all actions in parallel even if one of them fails', async (t) =
         ],
       ],
     },
-  ]
+  }
   const action = {
     type: 'RUN',
     payload: {
@@ -336,8 +336,8 @@ test('should return error from all parallel actions', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ response: { status: 'timeout', error: 'Too slow' } })
-  const jobs = [
-    {
+  const jobs = {
+    action3: {
       id: 'action3',
       action: [
         [
@@ -365,7 +365,7 @@ test('should return error from all parallel actions', async (t) => {
         ],
       ],
     },
-  ]
+  }
   const action = {
     type: 'RUN',
     payload: {
@@ -386,12 +386,12 @@ test('should return error from all parallel actions', async (t) => {
 
 test('should return noaction when job has no action', async (t) => {
   const dispatch = sinon.stub().resolves({ response: { status: 'ok' } })
-  const jobs = [
-    {
+  const jobs = {
+    action1: {
       id: 'action1',
       action: [],
     },
-  ]
+  }
   const action = {
     type: 'RUN',
     payload: {
@@ -408,12 +408,12 @@ test('should return noaction when job has no action', async (t) => {
 
 test('should return notfound for unknown job', async (t) => {
   const dispatch = sinon.stub().resolves({ response: { status: 'ok' } })
-  const jobs = [
-    {
+  const jobs = {
+    action1: {
       id: 'action1',
       action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
     },
-  ]
+  }
   const action = {
     type: 'RUN',
     payload: {

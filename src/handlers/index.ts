@@ -2,6 +2,7 @@ import GET from './get'
 import GET_ALL from './getAll'
 import GET_META from './getMeta'
 import GET_IDENT from './getIdent'
+import runFn from './run'
 import SET from './set'
 import SET_META from './setMeta'
 import DELETE from './delete'
@@ -16,6 +17,7 @@ const handlers: Record<string, ActionHandler> = {
   GET_ALL,
   GET_META,
   GET_IDENT,
+  RUN: runFn({}), // This includes the handler with no jobs. Will be overwritten in `create()`
   SET,
   SET_META,
   DELETE,

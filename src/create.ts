@@ -4,7 +4,7 @@ import {
   Middleware,
   Transporter,
   Dispatch,
-  ScheduleDef,
+  JobDef,
   Action,
   Response,
   ActionHandler,
@@ -19,6 +19,7 @@ import {
 import { SchemaDef } from './schema/types'
 import Auth from './service/Auth'
 import builtinHandlers from './handlers'
+import runFn from './handlers/run'
 import builtinTransformers from './transformers/builtIns'
 import createSchema, { Schema } from './schema'
 import createService from './service'
@@ -40,7 +41,7 @@ export interface Definitions {
   identConfig?: IdentConfig
   queueService?: string
   dictionaries?: Dictionaries
-  schedules?: ScheduleDef[]
+  jobs?: JobDef[]
 }
 
 export interface Resources {
@@ -77,7 +78,7 @@ export default function create(
     identConfig,
     queueService,
     dictionaries,
-    schedules: scheduleDefs = [],
+    jobs: jobsDefs = [],
   }: Definitions,
   { transporters, transformers, handlers, authenticators }: Resources,
   middlewareForDispatch: Middleware[] = [],
@@ -133,17 +134,24 @@ export default function create(
     )
     .reduce(indexById, {} as Record<string, Service>)
 
+  // Prepare jobs
+  const jobs = jobsDefs.reduce(
+    (jobs, job) =>
+      typeof job.id === 'string' ? { ...jobs, [job.id]: job } : jobs,
+    {}
+  )
+
   // Create dispatch
   const dispatch = createDispatch({
     schemas,
     services,
-    handlers: { ...builtinHandlers, ...handlers },
+    handlers: { ...builtinHandlers, ...handlers, RUN: runFn(jobs) }, // Set `RUN` handle here to include jobs
     middleware: middlewareForDispatch,
     options: { identConfig, queueService },
   })
 
   // Prepare scheduled actions
-  const scheduled = scheduleDefs.filter(isObject).map(createSchedule)
+  const scheduled = jobsDefs.filter(isObject).map(createSchedule)
   const dispatchScheduled = createDispatchScheduled(dispatch, scheduled)
 
   // Return instance
