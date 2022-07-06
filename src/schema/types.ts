@@ -34,6 +34,7 @@ export interface SchemaDef {
   id: string
   plural?: string
   service?: string
+  generateId?: boolean
   shape?: Shape
   access?: string | AccessDef
   internal?: boolean

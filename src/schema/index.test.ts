@@ -227,11 +227,33 @@ test('should cast id to string', (t) => {
   t.is(id, '35')
 })
 
-test('should generate id when not set', (t) => {
+test('should set missing id to null', (t) => {
   const def = {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
+    shape: {
+      id: 'string',
+      title: 'string',
+    },
+  }
+  const data = {
+    title: 'Entry 1',
+  }
+
+  const mapping = schema(def).mapping
+  const ret = mapTransform(mapping, { functions: builtIns })(data)
+
+  const { id } = ret as DataObject
+  t.is(id, null)
+})
+
+test('should generate id when not set and generateId is true', (t) => {
+  const def = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    generateId: true,
     shape: {
       id: 'string',
       title: 'string',

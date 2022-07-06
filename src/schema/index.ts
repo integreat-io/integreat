@@ -41,6 +41,7 @@ export default function createSchema({
   id,
   plural,
   service,
+  generateId = false,
   shape,
   access,
   internal = false,
@@ -61,7 +62,7 @@ export default function createSchema({
     mapping: createCastMapping(
       {
         ...shape,
-        id: { $cast: 'string', $default: defaultId },
+        id: { $cast: 'string', $default: generateId ? defaultId : null },
         createdAt: { $cast: 'date', $default: defaultDate },
         updatedAt: { $cast: 'date', $default: defaultDate },
       },
