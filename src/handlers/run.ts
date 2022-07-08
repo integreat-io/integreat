@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection */
+import { mapTransform, MapObject } from 'map-transform'
 import {
   Action,
   ActionHandlerResources,
@@ -9,8 +10,9 @@ import {
   JobStep,
   Job,
 } from '../types'
+import { MapOptions } from '../service/types'
 import { createErrorOnAction } from '../utils/createError'
-import { isObject } from '../utils/is'
+import { isObject, isAction } from '../utils/is'
 
 export interface Payload extends BasePayload {
   jobId?: string
@@ -23,6 +25,23 @@ const prepareAction = (action: Action, meta?: Meta) => ({
   ...action,
   meta,
 })
+
+function mutateAction(
+  action: Action | (JobStep | JobStep[])[] | undefined,
+  mutation: MapObject | undefined,
+  responses: Record<string, Action>,
+  mapOptions: MapOptions
+) {
+  if (mutation && isAction(action)) {
+    const mutationIncludingAction = { '.': '$action', ...mutation }
+    const responsesIncludingAction = { ...responses, $action: action }
+    return mapTransform(
+      mutationIncludingAction,
+      mapOptions
+    )(responsesIncludingAction)
+  }
+  return action
+}
 
 async function runAction(
   action: Action | undefined,
@@ -98,43 +117,72 @@ const setResponses = (
     target[key] = value
   })
 
-async function runFlow(
-  flow: Action | (JobStep | JobStep[])[] | undefined,
-  parentId: string,
+async function runStep(
+  step: JobStep,
+  responses: Record<string, Action>,
+  newResponses: Record<string, Action>,
   dispatch: HandlerDispatch,
+  mapOptions: MapOptions,
+  meta?: Meta
+) {
+  const response = await runFlow(step, responses, dispatch, mapOptions, meta)
+  setResponses(response, newResponses)
+  return response
+}
+
+async function runFlow(
+  job: JobStep,
+  prevResponses: Record<string, Action>,
+  dispatch: HandlerDispatch,
+  mapOptions: MapOptions,
   meta?: Meta
 ): Promise<Record<string, Action>> {
-  if (Array.isArray(flow)) {
+  const { action, id: parentId, mutation } = job
+  if (Array.isArray(action)) {
     // We have sequence of job steps – go through them one by one
-    const responses = {}
-    for (const step of flow) {
+    const newResponses = {}
+    for (const step of action) {
+      const responses = { ...prevResponses, ...newResponses }
       if (isJobStep(step)) {
         // One step in a sequence – run it
-        const response = await runFlow(step.action, step.id, dispatch, meta)
-        setResponses(response, responses)
+        // Note: `runStep()` will mutate `newResponses` as it runs
+        const response = await runStep(
+          step,
+          responses,
+          newResponses,
+          dispatch,
+          mapOptions,
+          meta
+        )
         if (response[step.id].response?.status !== 'ok') {
-          return responses
+          return newResponses
         }
       } else if (Array.isArray(step)) {
         // An array of steps within a sequence – run them in parallel
-        const ret = await Promise.all(
+        await Promise.all(
           // TODO: Is Promise.all correct here? I think not ...
-          step.map((step) => runFlow(step.action, step.id, dispatch, meta))
+          step.map((step) =>
+            // Note: `runStep()` will mutate `newResponses` as it runs
+            runStep(step, responses, newResponses, dispatch, mapOptions, meta)
+          )
         )
-        ret.forEach((response) => {
-          setResponses(response, responses)
-        })
       }
     }
-    return responses
-  } else if (flow) {
+    return newResponses
+  } else if (action && parentId) {
     // We've got one action – run it
-    return { [parentId]: await runAction(flow, dispatch, meta) }
+    return {
+      [parentId]: await runAction(
+        mutateAction(action, mutation, prevResponses, mapOptions),
+        dispatch,
+        meta
+      ),
+    }
   }
   return {}
 }
 
-export default (jobs: Record<string, Job>) =>
+export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
   async function set(
     action: Action,
     { dispatch }: ActionHandlerResources
@@ -144,7 +192,7 @@ export default (jobs: Record<string, Job>) =>
       meta,
     } = action
     const job = typeof jobId === 'string' ? jobs[jobId] : undefined
-    if (!job || !job.id) {
+    if (!isJobStep(job)) {
       return createErrorOnAction(
         action,
         `No job with id '${jobId}'`,
@@ -152,7 +200,7 @@ export default (jobs: Record<string, Job>) =>
       )
     }
 
-    const responses = await runFlow(job.action, job.id, dispatch, meta)
+    const responses = await runFlow(job, {}, dispatch, mapOptions, meta)
 
     if (Array.isArray(job.action)) {
       const lastResponse = getLastJobWithResponse(job.action, responses)

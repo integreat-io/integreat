@@ -145,7 +145,7 @@ export default function create(
   const dispatch = createDispatch({
     schemas,
     services,
-    handlers: { ...builtinHandlers, ...handlers, RUN: runFn(jobs) }, // Set `RUN` handle here to include jobs
+    handlers: { ...builtinHandlers, ...handlers, RUN: runFn(jobs, mapOptions) }, // Set `RUN` handle here to include jobs
     middleware: middlewareForDispatch,
     options: { identConfig, queueService },
   })

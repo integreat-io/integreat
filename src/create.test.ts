@@ -271,17 +271,35 @@ test('should set up RUN handler with jobs', async (t) => {
   const handler = sinon
     .stub()
     .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const jobs = [
+    {
+      id: 'theJob',
+      action: { type: 'TEST', payload: {} },
+      mutation: { 'payload.timestamp': { $transform: 'now' } },
+    },
+  ]
+  const nowDate = new Date()
+  const transformers = { now: () => () => nowDate }
   const handlers = { TEST: handler }
-  const jobs = [{ id: 'theJob', action: { type: 'TEST', payload: {} } }]
-  const action = { type: 'RUN', payload: { jobId: 'theJob' } }
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'theJob' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    type: 'TEST',
+    payload: { timestamp: nowDate },
+    meta: { ident: { id: 'johnf' } },
+  }
 
   const great = create(
     { services, schemas, mutations, jobs },
-    { ...resourcesWithTrans, handlers }
+    { ...resourcesWithTrans, handlers, transformers }
   )
   await great.dispatch(action)
 
-  t.is(handler.callCount, 1) // If the action handler was called, the action was dispatched
+  t.is(handler.callCount, 1)
+  t.deepEqual(handler.args[0][0], expected)
 })
 
 test('should use auth', async (t) => {
