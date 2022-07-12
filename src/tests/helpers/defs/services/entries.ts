@@ -9,12 +9,12 @@ export default {
       match: { action: 'GET', scope: 'collection', params: { offset: false } },
       mutation: [
         {
-          $direction: 'to', // Alias for `rev`
+          $direction: 'to',
           $flip: true,
           meta: {
-            '.': 'meta',
+            $modify: 'meta',
             options: {
-              '.': 'meta.options', // TODO: Find a better way to do this?
+              $modify: 'meta.options',
               queryParams: {
                 offset: 'payload.offset',
               },
@@ -22,9 +22,9 @@ export default {
           },
         },
         {
-          $direction: 'from', // Alias for `fwd`
+          $direction: 'from',
           response: {
-            '.': 'response',
+            $modify: 'response',
             data: ['response.data.data[]', { $apply: 'entries-entry' }],
             paging: {
               next: [
@@ -65,10 +65,10 @@ export default {
       },
       mutation: [
         {
-          $direction: 'rev',
+          $direction: 'to', // Keep `rev` to make sure it still works
           $flip: true,
           payload: {
-            '.': 'payload',
+            $modify: 'payload',
             updatedSince: [
               'payload.updatedSince',
               { $transform: 'formatDate', format: 'ISO' },
@@ -80,12 +80,11 @@ export default {
           },
         },
         {
-          $direction: 'fwd',
-          response: 'response',
-          'response.data': [
-            'response.data.data[]',
-            { $apply: 'entries-entry' },
-          ],
+          $direction: 'fwd', // Keep `fwd` to make sure it still works
+          response: {
+            $modify: 'response',
+            data: ['response.data.data[]', { $apply: 'entries-entry' }],
+          },
         },
       ],
       options: {
@@ -97,18 +96,18 @@ export default {
       match: { action: 'SET', scope: 'collection' },
       mutation: [
         {
-          $direction: 'rev',
+          $direction: 'to',
           $flip: true,
           meta: {
-            '.': 'meta',
+            $modify: 'meta',
             options: {
-              '.': '^meta.options', // Not sure why we use the carret here
+              $modify: 'meta.options',
               'headers.x-correlation-id': 'meta.cid',
             },
           },
         },
         {
-          $direction: 'fwd',
+          $direction: 'from',
           response: 'response',
           'response.data': [
             'response.data.data[]',
@@ -126,9 +125,11 @@ export default {
         params: { rawForAll: true },
       },
       mutation: {
-        $direction: 'fwd',
-        response: 'response',
-        'response.data': ['response.data.data[]', { $apply: 'entries-entry' }],
+        $direction: 'from',
+        response: {
+          $modify: 'response',
+          data: ['response.data.data[]', { $apply: 'entries-entry' }],
+        },
       },
       options: { uri: '/entries', method: 'POST' },
       allowRawRequest: true,
@@ -136,9 +137,9 @@ export default {
     {
       match: { action: 'GET', scope: 'member' },
       mutation: {
-        $direction: 'fwd',
+        $direction: 'from',
         response: {
-          '.': 'response',
+          $modify: 'response',
           data: ['response.data.data', { $apply: 'entries-entry' }],
           headers: {
             'content-type': { $value: 'application/json' },
@@ -151,8 +152,8 @@ export default {
       // Endpoint that returns raw response for all users
       match: { action: 'GET', scope: 'member', params: { rawForAll: true } },
       mutation: {
-        $direction: 'fwd',
-        response: { '.': 'response', data: 'response.data.data' },
+        $direction: 'from',
+        response: { $modify: 'response', data: 'response.data.data' },
       },
       options: { uri: '/entries/{{payload.id}}' },
       allowRawResponse: true,
@@ -161,9 +162,8 @@ export default {
       // Endpoint that returns raw response for root user only
       match: { action: 'GET', scope: 'member', params: { rawForRoot: true } },
       mutation: {
-        $direction: 'fwd',
-        response: 'response',
-        'response.data': 'response.data.data',
+        $direction: 'from',
+        response: { $modify: 'response', data: 'response.data.data' },
       },
       options: { uri: '/entries/{{payload.id}}' },
     },
@@ -171,16 +171,19 @@ export default {
       match: { action: 'SET', scope: 'member' },
       mutation: [
         {
-          $direction: 'rev',
-          '.': '.',
-          payload: 'payload',
-          'payload.data': ['payload.data', { $apply: 'entries-entry' }],
+          $direction: 'to',
+          $flip: true,
+          payload: {
+            $modify: 'payload',
+            data: ['payload.data', { $apply: 'entries-entry' }],
+          },
         },
         {
-          $direction: 'fwd',
-          '.': '.',
-          response: 'response',
-          'response.data': ['response.data.data', { $apply: 'entries-entry' }],
+          $direction: 'from',
+          response: {
+            $modify: 'response',
+            data: ['response.data.data', { $apply: 'entries-entry' }],
+          },
         },
       ],
       options: { uri: '/entries/{{payload.id}}' },
@@ -189,25 +192,32 @@ export default {
       match: { action: 'SET', scope: 'member', params: { doValidate: true } },
       mutation: [
         {
-          $direction: 'rev',
-          payload: 'payload',
-          'payload.data': ['payload.data', { $apply: 'entries-entry' }],
+          $direction: 'to',
+          $flip: true,
+          payload: {
+            $modify: 'payload',
+            data: ['payload.data', { $apply: 'entries-entry' }],
+          },
         },
         {
-          $direction: 'fwd',
-          response: 'response',
-          'response.data': ['response.data.data', { $apply: 'entries-entry' }],
+          $direction: 'from',
+          response: {
+            $modify: 'response',
+            data: ['response.data.data', { $apply: 'entries-entry' }],
+          },
         },
-        { $transform: 'shouldHaveAuthor', $direction: 'rev' },
+        { $transform: 'shouldHaveAuthor', $direction: 'to' },
       ],
       options: { uri: '/entries/{{payload.id}}' },
     },
     {
       match: { action: 'GET', params: { author: true } },
       mutation: {
-        $direction: 'fwd',
-        response: 'response',
-        'response.data': ['response.data.data', { $apply: 'entries-entry' }],
+        $direction: 'from',
+        response: {
+          $modify: 'response',
+          data: ['response.data.data', { $apply: 'entries-entry' }],
+        },
       },
       options: { uri: '/entries?author={{payload.author}}' },
     },

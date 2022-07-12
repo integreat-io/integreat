@@ -8,14 +8,19 @@ export default {
       match: { action: 'SET', incoming: true },
       mutation: [
         {
-          $direction: 'fwd',
-          payload: 'payload',
-          'payload.data': ['payload.data.article', { $apply: 'api-entry' }],
+          $direction: 'from',
+          payload: {
+            $modify: 'payload',
+            data: ['payload.data.article', { $apply: 'api-entry' }],
+          },
         },
         {
-          $direction: 'rev',
-          response: 'response',
-          'response.data': ['response.data', { $apply: 'api-entry' }],
+          $direction: 'to',
+          $flip: true,
+          response: {
+            $modify: 'response',
+            data: ['response.data', { $apply: 'api-entry' }],
+          },
         },
       ],
     },
@@ -29,7 +34,7 @@ export default {
         {
           $direction: 'from',
           response: {
-            '.': 'response',
+            $modify: 'response',
             status: { $value: 'badrequest' },
             error: { $value: 'We failed!' },
           },
@@ -38,7 +43,7 @@ export default {
           $direction: 'to',
           $flip: true,
           response: {
-            '.': 'response',
+            $modify: 'response',
             data: {
               code: 'response.status',
               error: 'response.error',
@@ -50,8 +55,10 @@ export default {
     {
       match: { action: 'GET' },
       mutation: {
-        response: 'response',
-        'response.data': ['response.data.article', { $apply: 'api-entry' }],
+        response: {
+          $modify: 'response',
+          data: ['response.data.article', { $apply: 'api-entry' }],
+        },
       },
     },
     {
@@ -59,13 +66,18 @@ export default {
       mutation: [
         {
           $direction: 'from',
-          payload: 'payload',
-          'payload.source': 'payload.source', // Just to have a from mutation
+          payload: {
+            $modify: 'payload',
+            source: 'payload.source', // Just to have a from mutation
+          },
         },
         {
           $direction: 'to',
-          response: 'response',
-          'response.data': ['response.data', { $apply: 'api-entry' }],
+          $flip: true,
+          response: {
+            $modify: 'response',
+            data: ['response.data', { $apply: 'api-entry' }],
+          },
         },
       ],
     },
