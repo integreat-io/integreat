@@ -42,7 +42,7 @@ test('should get all entries with transformed param', async (t) => {
   nock('http://some.api')
     .get('/entries')
     .query({
-      since: '2021-07-05T14:07:19.000Z',
+      'created[gte]': '2021-07-05T14:07:19.000Z',
       until: '2021-07-05T23:59:59.999Z',
     })
     .reply(200, { data: entriesData })

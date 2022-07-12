@@ -67,16 +67,21 @@ export default {
         {
           $direction: 'to', // Keep `rev` to make sure it still works
           $flip: true,
-          payload: {
-            $modify: 'payload',
-            updatedSince: [
-              'payload.updatedSince',
-              { $transform: 'formatDate', format: 'ISO' },
-            ],
-            updatedUntil: [
-              'payload.updatedUntil',
-              { $transform: 'formatDate', format: 'ISO' },
-            ],
+          meta: {
+            $modify: 'meta',
+            options: {
+              $modify: 'meta.options',
+              queryParams: {
+                'created\\[gte]': [
+                  'payload.updatedSince',
+                  { $transform: 'formatDate', format: 'ISO' },
+                ],
+                until: [
+                  'payload.updatedUntil',
+                  { $transform: 'formatDate', format: 'ISO' },
+                ],
+              },
+            },
           },
         },
         {
@@ -89,7 +94,7 @@ export default {
       ],
       options: {
         method: 'GET',
-        uri: '/entries?since={{{payload.updatedSince}}}&until={{{payload.updatedUntil}}}',
+        uri: '/entries',
       },
     },
     {
