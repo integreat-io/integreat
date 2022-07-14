@@ -698,6 +698,63 @@ test('should mutate action with result from previous and parallel actions', asyn
   t.deepEqual(ret, expectedResponse)
 })
 
+test('should mutate action with data from the original action', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    response: { status: 'ok' },
+  })
+  const jobs = {
+    action5: {
+      id: 'action5',
+      action: [
+        {
+          id: 'setData',
+          action: {
+            type: 'SET',
+            payload: { type: 'entry' },
+          },
+          mutation: {
+            'payload.toSection': 'action.payload.section',
+            'payload.data': 'action.payload.data',
+          },
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action5',
+      section: 'news',
+      data: [
+        { id: 'ent1', $type: 'entry' },
+        { id: 'ent5', $type: 'entry' },
+      ],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      toSection: 'news',
+      data: [
+        { id: 'ent1', $type: 'entry' },
+        { id: 'ent5', $type: 'entry' },
+      ],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedAction)
+})
+
 test('should mutate with transformers and pipelines', async (t) => {
   const dispatch = sinon.stub().resolves({
     response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },

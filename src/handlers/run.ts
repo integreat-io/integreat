@@ -26,6 +26,7 @@ const prepareAction = (action: Action, meta?: Meta) => ({
   meta,
 })
 
+// TODO: Prepare mutations in `../create.ts` and call a `mutate()` function here
 function mutateAction(
   action: Action | (JobStep | JobStep[])[] | undefined,
   mutation: MapObject | undefined,
@@ -33,7 +34,7 @@ function mutateAction(
   mapOptions: MapOptions
 ) {
   if (mutation && isAction(action)) {
-    const mutationIncludingAction = { '.': '$action', ...mutation }
+    const mutationIncludingAction = { '.': '$action', ...mutation } // $action is the action we're mutation to
     const responsesIncludingAction = { ...responses, $action: action }
     return mapTransform(
       mutationIncludingAction,
@@ -183,7 +184,7 @@ async function runFlow(
 }
 
 export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
-  async function set(
+  async function run(
     action: Action,
     { dispatch }: ActionHandlerResources
   ): Promise<Action> {
@@ -200,7 +201,14 @@ export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
       )
     }
 
-    const responses = await runFlow(job, {}, dispatch, mapOptions, meta)
+    const prevResponses = { action } // Include the incomin action in previous responses, to allow mutating from it
+    const responses = await runFlow(
+      job,
+      prevResponses,
+      dispatch,
+      mapOptions,
+      meta
+    )
 
     if (Array.isArray(job.action)) {
       const lastResponse = getLastJobWithResponse(job.action, responses)
