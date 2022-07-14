@@ -2,7 +2,7 @@ export default {
   id: 'entries',
   transporter: 'http',
   auth: true,
-  options: { baseUri: 'http://some.api' },
+  options: { baseUri: 'http://some.api', method: 'GET' },
   mutation: [{ $apply: 'exchange:json' }, { $apply: 'exchange:uri' }],
   endpoints: [
     {
@@ -93,7 +93,6 @@ export default {
         },
       ],
       options: {
-        method: 'GET',
         uri: '/entries',
       },
     },
@@ -160,8 +159,8 @@ export default {
         $direction: 'from',
         response: { $modify: 'response', data: 'response.data.data' },
       },
-      options: { uri: '/entries/{{payload.id}}' },
       allowRawResponse: true,
+      options: { uri: '/entries/{{payload.id}}' },
     },
     {
       // Endpoint that returns raw response for root user only
@@ -191,8 +190,29 @@ export default {
           },
         },
       ],
-      options: { uri: '/entries/{{payload.id}}' },
+      options: { uri: '/entries/{{payload.id}}', method: 'PUT' },
     },
+    // {
+    //   match: { action: 'SET', scope: 'new' },
+    //   mutation: [
+    //     {
+    //       $direction: 'to',
+    //       $flip: true,
+    //       payload: {
+    //         $modify: 'payload',
+    //         data: ['payload.data', { $apply: 'entries-entry' }],
+    //       },
+    //     },
+    //     {
+    //       $direction: 'from',
+    //       response: {
+    //         $modify: 'response',
+    //         data: ['response.data.data', { $apply: 'entries-entry' }],
+    //       },
+    //     },
+    //   ],
+    //   options: { uri: '/entries', method: 'POST' },
+    // },
     {
       match: { action: 'SET', scope: 'member', params: { doValidate: true } },
       mutation: [
@@ -213,7 +233,7 @@ export default {
         },
         { $transform: 'shouldHaveAuthor', $direction: 'to' },
       ],
-      options: { uri: '/entries/{{payload.id}}' },
+      options: { uri: '/entries/{{payload.id}}', method: 'PUT' },
     },
     {
       match: { action: 'GET', params: { author: true } },

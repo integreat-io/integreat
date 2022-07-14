@@ -79,7 +79,7 @@ test('should set data with endpoint mutation', async (t) => {
         endpoints: [
           {
             mutation,
-            options: { uri: '/entries/{{payload.id}}' },
+            options: { uri: '/entries/{{payload.id}}', method: 'PUT' },
           },
         ],
       },
@@ -136,7 +136,7 @@ test('should set data with service and endpoint mutation', async (t) => {
         endpoints: [
           {
             mutation,
-            options: { uri: '/entries/{{payload.id}}' },
+            options: { uri: '/entries/{{payload.id}}', method: 'PUT' },
           },
         ],
       },

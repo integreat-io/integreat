@@ -54,7 +54,7 @@ test('should map response and merge with request data', async (t) => {
                 { $apply: 'entries-entry' },
               ],
             },
-            options: { uri: '/entries/{{payload.id}}' },
+            options: { uri: '/entries/{{payload.id}}', method: 'PUT' },
           },
         ],
       },
