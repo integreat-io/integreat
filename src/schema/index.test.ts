@@ -156,22 +156,34 @@ test('should provide cast mapping', (t) => {
   ]
   const expected = [
     {
-      $type: 'entry',
       id: '12345',
+      $type: 'entry',
       title: 'Entry with no name',
       text: 'The first entry',
       age: 244511383,
-      createdAt: date,
-      updatedAt: date,
       author: { id: 'maryk', $ref: 'user' },
       comments: [{ id: 'comment23', $ref: 'comment' }],
+      createdAt: date,
+      updatedAt: date,
     },
+  ]
+  const expectedOrder = [
+    'id',
+    '$type',
+    'title',
+    'text',
+    'age',
+    'author',
+    'comments',
+    'createdAt',
+    'updatedAt',
   ]
 
   const mapping = schema(def).mapping
   const ret = mapTransform(mapping, { functions: builtIns })(data)
 
   t.deepEqual(ret, expected)
+  t.deepEqual(Object.keys(ret[0]), expectedOrder)
 })
 
 test('should set createdAt and updatedAt to now when not set', (t) => {
