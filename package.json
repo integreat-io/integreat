@@ -48,7 +48,7 @@
     "later": "^1.2.0",
     "luxon": "^3.0.1",
     "map-any": "^0.2.1",
-    "map-transform": "0.4.0-alpha.19",
+    "map-transform": "0.4.0-alpha.20",
     "ms": "^2.1.3",
     "nanoid": "^3.3.4",
     "p-limit": "^3.1.0",
