@@ -243,6 +243,52 @@ test('should keep status null from mapped action', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should join array of error strings to one string', (t) => {
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappedAction = {
+    response: {
+      status: 'ok',
+      error: [
+        'Something failed',
+        'Something else failed',
+        'A third thing failed',
+      ],
+    },
+  }
+  const expected = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: {
+      status: 'error',
+      error: 'Something failed | Something else failed | A third thing failed',
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = populateActionAfterMapping(
+    action,
+    mappedAction as unknown as Action
+  )
+
+  t.deepEqual(ret, expected)
+})
+
 test('should set status to error when error string is present', (t) => {
   const action = {
     type: 'SET',
@@ -257,9 +303,10 @@ test('should set status to error when error string is present', (t) => {
   }
   const mappedAction = {
     response: {
+      status: 'ok',
       error: 'Something failed big time',
     },
-  } as Action // To allow the missing `status`
+  }
   const expected = {
     type: 'SET',
     payload: {
@@ -281,7 +328,7 @@ test('should set status to error when error string is present', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should set use original error status when error string is present', (t) => {
+test('should use original error status when error string is present', (t) => {
   const action = {
     type: 'SET',
     payload: {

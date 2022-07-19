@@ -11,17 +11,26 @@ export function prepareActionForMapping(
 const isResponseObject = (response: unknown): response is Response =>
   isObject(response) && Object.keys(response).length > 0
 
-const setStatus = (
+const setStatusAndError = (
   response: Partial<Response>,
   originalStatus: string | null = null
 ): Response => ({
   ...response,
   status:
-    response.status === undefined
-      ? response.error && (!originalStatus || originalStatus === 'ok')
-        ? 'error'
-        : originalStatus
-      : response.status,
+    response.error &&
+    ['ok', null, undefined].includes(response.status) &&
+    (!originalStatus || originalStatus === 'ok')
+      ? 'error'
+      : response.status === null
+      ? null
+      : response.status || originalStatus,
+  ...(response.error
+    ? {
+        error: Array.isArray(response.error)
+          ? response.error.join(' | ')
+          : response.error,
+      }
+    : {}),
 })
 
 export function populateActionAfterMapping(
@@ -37,7 +46,7 @@ export function populateActionAfterMapping(
     type: type || action.type,
     payload: payload || action.payload,
     ...(isResponseObject(response) && {
-      response: setStatus(response, action.response?.status),
+      response: setStatusAndError(response, action.response?.status),
     }),
     meta: meta || action.meta,
   }
