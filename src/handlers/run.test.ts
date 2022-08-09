@@ -562,6 +562,60 @@ test('should not treat noaction as error in parallel actions', async (t) => {
   t.is(dispatch.callCount, 2)
 })
 
+test('should handle rejections in parallel steps', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ response: { status: 'ok', data: [] } })
+    .onCall(0)
+    .rejects(new Error('Failure!'))
+  const jobs = {
+    action3: {
+      id: 'action3',
+      action: [
+        [
+          {
+            id: 'setEntry',
+            action: {
+              type: 'SET',
+              payload: {
+                type: 'entry',
+                id: 'ent1',
+                data: [{ id: 'ent1', $type: 'entry' }],
+              },
+            },
+          },
+          {
+            id: 'setDate',
+            action: {
+              type: 'SET',
+              payload: { type: 'date', id: 'updatedAt' },
+            },
+          },
+        ],
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(
+    ret.response?.error,
+    "Could not finish job 'action3', the following steps failed: 'setEntry' (rejected: Failure!)"
+  )
+  t.is(dispatch.callCount, 2)
+})
+
 test('should not run second action when its conditions fail', async (t) => {
   const dispatch = sinon
     .stub()

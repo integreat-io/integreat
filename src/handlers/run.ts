@@ -77,14 +77,14 @@ const errorMessageFromResponses = (
   indices
     .map(
       (index) =>
-        `'${ids[index]}' (${responses[index].response?.status}: ${responses[index].response?.error})`
+        `'${ids[index]}' (${responses[index]?.response?.status}: ${responses[index]?.response?.error})`
     )
     .join(', ')
 
 function responseFromResponses(responses: Action[], ids: string[]) {
   const errorIndices = responses
     .map((response, index) =>
-      isOkResponse(response.response) ? undefined : index
+      isOkResponse(response?.response) ? undefined : index
     )
     .filter((index): index is number => index !== undefined)
   return {
@@ -123,6 +123,18 @@ const setResponses = (
     target[key] = value
   })
 
+const setStepError = (
+  responses: Record<string, Action>,
+  stepId: string,
+  error: string,
+  status = 'error'
+) => ({
+  ...responses,
+  [stepId]: {
+    response: { status, error },
+  } as Action, // Allow partial action in this case
+})
+
 async function runStep(
   step: JobStep,
   responses: Record<string, Action>,
@@ -131,20 +143,20 @@ async function runStep(
   mapOptions: MapOptions,
   meta?: Meta
 ) {
-  const response = await runFlow(step, responses, dispatch, mapOptions, meta)
+  let response
+  try {
+    response = await runFlow(step, responses, dispatch, mapOptions, meta)
+  } catch (error) {
+    response = setStepError(
+      {},
+      step.id,
+      error instanceof Error ? error.message : String(error),
+      'rejected'
+    )
+  }
   setResponses(response, newResponses)
   return response
 }
-
-const setConditionError = (
-  step: JobStep,
-  responses: Record<string, Action>
-) => ({
-  ...responses,
-  [step.id]: {
-    response: { status: 'error', error: 'Conditions were not met' },
-  } as Action, // Allow a partial action in this case
-})
 
 function isStepOk(
   steps: JobStep | JobStep[], // One step may consist of several steps
@@ -175,7 +187,11 @@ async function runFlow(
         if (step.conditions) {
           // Validate specific conditions
           if (!validateFilters(step.conditions)(responses)) {
-            return setConditionError(step, newResponses)
+            return setStepError(
+              newResponses,
+              step.id,
+              'Conditions were not met'
+            )
           }
         } else if (index > 0) {
           // No conditions are specified -- validate the status of the previous step
@@ -189,8 +205,9 @@ async function runFlow(
         await runStep(step, responses, newResponses, dispatch, mapOptions, meta)
       } else if (Array.isArray(step)) {
         // An array of steps within a sequence – run them in parallel
+        // Note that it is okay to use `Promise.all` here, as rejection is
+        // handled in `runStep()`
         await Promise.all(
-          // TODO: Is Promise.all correct here? I think not ...
           step.map((step) =>
             // Note: `runStep()` will mutate `newResponses` as it runs
             runStep(step, responses, newResponses, dispatch, mapOptions, meta)
