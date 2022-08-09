@@ -149,6 +149,13 @@ async function getLastSyncedAt(
   const metaResponse = await dispatch(
     createGetMetaAction(service, type, metaKey, meta)
   )
+
+  if (metaResponse.response?.status !== 'ok') {
+    throw new Error(
+      `Could not fetch last synced date for service '${service}': [${metaResponse.response?.status}] ${metaResponse.response?.error}`
+    )
+  }
+
   return (
     castDate(
       (metaResponse.response?.data as MetaData | undefined)?.meta.lastSyncedAt
@@ -489,7 +496,18 @@ export default async function syncHandler(
     },
     meta: { id, ...meta } = {},
   } = action
-  const [fromParams, toParams] = await extractActionParams(action, dispatch)
+
+  let fromParams, toParams
+  try {
+    ;[fromParams, toParams] = await extractActionParams(action, dispatch)
+  } catch (error) {
+    return createErrorOnAction(
+      action,
+      `Failed to prepare params for SYNC: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    )
+  }
 
   if (fromParams.length === 0 || !toParams) {
     return createErrorOnAction(
