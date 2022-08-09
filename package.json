@@ -37,7 +37,7 @@
   "dependencies": {
     "@types/debug": "^4.1.7",
     "@types/later": "^1.2.7",
-    "@types/luxon": "^2.3.2",
+    "@types/luxon": "^2.4.0",
     "@types/nanoid": "^3.0.0",
     "@types/sax": "^1.2.4",
     "@types/uuid": "^8.3.4",
@@ -59,10 +59,10 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@integreat/ts-dev-setup": "^2.3.0",
-    "@types/sinon": "^10.0.12",
+    "@integreat/ts-dev-setup": "^2.3.1",
+    "@types/sinon": "^10.0.13",
     "integreat-transporter-http": "0.1.0-alpha.26",
-    "nock": "^13.2.8",
+    "nock": "^13.2.9",
     "sinon": "^14.0.0"
   }
 }
