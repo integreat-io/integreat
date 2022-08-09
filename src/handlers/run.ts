@@ -26,6 +26,10 @@ const prepareAction = (action: Action, meta?: Meta) => ({
   meta,
 })
 
+const isOkResponse = (response?: Response) =>
+  typeof response?.status === 'string' &&
+  ['ok', 'noaction'].includes(response.status)
+
 // TODO: Prepare mutations in `../create.ts` and call a `mutate()` function here
 function mutateAction(
   action: Action | (JobStep | JobStep[])[] | undefined,
@@ -79,7 +83,7 @@ const errorMessageFromResponses = (
 function responseFromResponses(responses: Action[], ids: string[]) {
   const errorIndices = responses
     .map((response, index) =>
-      response.response?.status === 'ok' ? undefined : index
+      isOkResponse(response.response) ? undefined : index
     )
     .filter((index): index is number => index !== undefined)
   return {
@@ -155,7 +159,7 @@ async function runFlow(
           mapOptions,
           meta
         )
-        if (response[step.id].response?.status !== 'ok') {
+        if (!isOkResponse(response[step.id].response)) {
           return newResponses
         }
       } else if (Array.isArray(step)) {
