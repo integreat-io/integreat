@@ -4,6 +4,8 @@ import { EndpointOptions } from './service/endpoints/types'
 import { IdentConfig } from './service/types'
 import { Service } from './service/types'
 
+export type JsonSchema = Record<string, unknown> | boolean
+
 export interface Reference {
   id: string | null
   $ref: string
@@ -45,6 +47,7 @@ export type ScheduleObject = {
 
 export interface JobStep {
   id: string
+  conditions?: Record<string, JsonSchema | undefined>
   action?: Action | (JobStep | JobStep[])[]
   mutation?: MapObject
 }

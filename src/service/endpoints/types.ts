@@ -1,9 +1,7 @@
 import { MapDefinition } from 'map-transform'
-import { Action } from '../../types'
+import { Action, JsonSchema } from '../../types'
 
 export type EndpointOptions = Record<string, unknown>
-
-export type JsonSchema = Record<string, unknown> | boolean
 
 export interface MatchObject {
   action?: string | string[]

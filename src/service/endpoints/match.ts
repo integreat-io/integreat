@@ -1,9 +1,7 @@
-import { validate } from 'map-transform'
+import validateFilters from '../../utils/validateFilters'
 import { Action, Params } from '../../types'
 import { EndpointDef } from './types'
 import { arrayIncludes } from '../../utils/array'
-
-type FilterFn = (action: Action) => boolean
 
 const matchValue = (match?: string | string[], value?: string | string[]) =>
   arrayIncludes(match, value)
@@ -43,15 +41,6 @@ const matchParams = (
     ([key, isRequired]) => !isRequired || hasParam(payload, key)
   )
 
-const matchFilters = (
-  filters: FilterFn[],
-  action: Action,
-  isOrFilters: boolean
-) =>
-  isOrFilters
-    ? filters.some((filter) => filter(action))
-    : filters.every((filter) => filter(action))
-
 const matchIncoming = (
   { match: { incoming: incomingEndpoint } = {} }: EndpointDef,
   isIncoming: boolean
@@ -67,14 +56,9 @@ export default function isMatch(
   endpoint: EndpointDef
 ): (action: Action, isIncoming?: boolean) => boolean {
   const match = endpoint.match || {}
-  const isOrFilters = (match.filters && match.filters.$or === true) || false
-  const filters = match.filters
-    ? (Object.entries(match.filters)
-        .filter(([path]) => path !== '$or')
-        .map(([path, filter]) =>
-          filter ? validate(path, filter) : undefined
-        ) as FilterFn[])
-    : []
+  const matchFilters = match.filters
+    ? validateFilters(match.filters)
+    : () => true
 
   return (action, isIncoming = false) =>
     matchId(endpoint, action) &&
@@ -83,5 +67,5 @@ export default function isMatch(
     matchAction(endpoint, action) &&
     matchParams(endpoint, action) &&
     matchIncoming(endpoint, isIncoming) &&
-    matchFilters(filters, action, isOrFilters)
+    matchFilters(action)
 }

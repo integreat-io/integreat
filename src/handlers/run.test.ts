@@ -406,6 +406,59 @@ test('should run all actions in parallel even if one of them fails', async (t) =
   t.is(dispatch.callCount, 2)
 })
 
+test('should not run next step after any parallel steps failed', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ response: { status: 'ok', data: [] } })
+    .onCall(0)
+    .resolves({ response: { status: 'timeout', error: 'Too slow' } })
+  const jobs = {
+    action6: {
+      id: 'action6',
+      action: [
+        [
+          {
+            id: 'getEntries',
+            action: {
+              type: 'GET',
+              payload: { type: 'entry' },
+            },
+          },
+          {
+            id: 'getUsers',
+            action: {
+              type: 'GET',
+              payload: { type: 'user' },
+            },
+          },
+        ],
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: { type: 'date', id: 'updatedAt' },
+          },
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(dispatch.callCount, 2) // Only the two parallel steps should run
+  t.is(ret.response?.status, 'error', ret.response?.error)
+})
+
 test('should return error from all parallel actions', async (t) => {
   const dispatch = sinon
     .stub()
@@ -485,10 +538,7 @@ test('should not treat noaction as error in parallel actions', async (t) => {
             id: 'setDate',
             action: {
               type: 'SET',
-              payload: {
-                type: 'date',
-                id: 'updatedAt',
-              },
+              payload: { type: 'date', id: 'updatedAt' },
             },
           },
         ],
@@ -510,6 +560,108 @@ test('should not treat noaction as error in parallel actions', async (t) => {
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is(dispatch.callCount, 2)
+})
+
+test('should not run second action when its conditions fail', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: { status: 'ok' },
+    })
+    .onCall(0)
+    .resolves({ response: { status: 'ok', data: [] } })
+  const jobs = {
+    action6: {
+      id: 'action6',
+      action: [
+        {
+          id: 'getEntries',
+          action: {
+            type: 'GET',
+            payload: { type: 'entry' },
+          },
+        },
+        {
+          id: 'setEntries',
+          conditions: {
+            'getEntries.response.data': { type: 'array', minItems: 1 },
+          },
+          action: {
+            type: 'SET',
+            payload: { type: 'entry' },
+          },
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(dispatch.callCount, 1) // Only the first step should run
+  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(
+    ret.response?.error,
+    "Could not finish job 'action6', the following steps failed: 'setEntries' (error: Conditions were not met)"
+  )
+})
+
+test('should run second action when its conditions are fulfilled', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: { status: 'ok' },
+    })
+    .onCall(0)
+    .resolves({
+      response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+    })
+  const jobs = {
+    action6: {
+      id: 'action6',
+      action: [
+        {
+          id: 'getEntries',
+          action: {
+            type: 'GET',
+            payload: { type: 'entry' },
+          },
+        },
+        {
+          id: 'setEntries',
+          conditions: {
+            'getEntries.response.data': { type: 'array', minItems: 1 },
+          },
+          action: {
+            type: 'SET',
+            payload: { type: 'entry' },
+          },
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(dispatch.callCount, 2) // Both steps run
+  t.is(ret.response?.status, 'ok', ret.response?.error)
 })
 
 test('should return noaction when job has no action', async (t) => {

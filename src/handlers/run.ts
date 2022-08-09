@@ -13,6 +13,7 @@ import {
 import { MapOptions } from '../service/types'
 import { createErrorOnAction } from '../utils/createError'
 import { isObject, isAction } from '../utils/is'
+import validateFilters from '../utils/validateFilters'
 
 export interface Payload extends BasePayload {
   jobId?: string
@@ -135,6 +136,27 @@ async function runStep(
   return response
 }
 
+const setConditionError = (
+  step: JobStep,
+  responses: Record<string, Action>
+) => ({
+  ...responses,
+  [step.id]: {
+    response: { status: 'error', error: 'Conditions were not met' },
+  } as Action, // Allow a partial action in this case
+})
+
+function isStepOk(
+  steps: JobStep | JobStep[], // One step may consist of several steps
+  responses: Record<string, Action>
+) {
+  if (Array.isArray(steps)) {
+    return steps.every((step) => isOkResponse(responses[step.id]?.response))
+  } else {
+    return isOkResponse(responses[steps.id]?.response)
+  }
+}
+
 async function runFlow(
   job: JobStep,
   prevResponses: Record<string, Action>,
@@ -146,22 +168,25 @@ async function runFlow(
   if (Array.isArray(action)) {
     // We have sequence of job steps – go through them one by one
     const newResponses = {}
-    for (const step of action) {
+    for (const [index, step] of action.entries()) {
       const responses = { ...prevResponses, ...newResponses }
       if (isJobStep(step)) {
-        // One step in a sequence – run it
-        // Note: `runStep()` will mutate `newResponses` as it runs
-        const response = await runStep(
-          step,
-          responses,
-          newResponses,
-          dispatch,
-          mapOptions,
-          meta
-        )
-        if (!isOkResponse(response[step.id].response)) {
-          return newResponses
+        // One step in a sequence – run it if conditions are met
+        if (step.conditions) {
+          // Validate specific conditions
+          if (!validateFilters(step.conditions)(responses)) {
+            return setConditionError(step, newResponses)
+          }
+        } else if (index > 0) {
+          // No conditions are specified -- validate the status of the previous step
+          const prevStep = action[index - 1]
+          if (!isStepOk(prevStep, responses)) {
+            return newResponses
+          }
         }
+
+        // Note: `runStep()` will mutate `newResponses` as it runs
+        await runStep(step, responses, newResponses, dispatch, mapOptions, meta)
       } else if (Array.isArray(step)) {
         // An array of steps within a sequence – run them in parallel
         await Promise.all(
@@ -205,7 +230,7 @@ export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
       )
     }
 
-    const prevResponses = { action } // Include the incomin action in previous responses, to allow mutating from it
+    const prevResponses = { action } // Include the incoming action in previous responses, to allow mutating from it
     const responses = await runFlow(
       job,
       prevResponses,
