@@ -63,6 +63,7 @@ export interface JobDef extends Job {
   exceptions?: ScheduleObject[]
   cron?: string
   human?: string
+  responseMutation?: MapObject
 }
 
 export interface DataFunction {

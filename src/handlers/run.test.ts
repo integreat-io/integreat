@@ -1119,3 +1119,67 @@ test('should mutate with transformers and pipelines', async (t) => {
   t.deepEqual(dispatch.args[0][0], expectedAction)
   t.deepEqual(ret, expectedResponse)
 })
+
+test('should return data based on mutation', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ response: { status: 'ok', data: [] } })
+    .onCall(0)
+    .resolves({
+      response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+    })
+    .onCall(1)
+    .resolves({
+      response: { status: 'ok', data: [{ id: 'johnf', $type: 'user' }] },
+    })
+  const jobs = {
+    action6: {
+      id: 'action6',
+      action: [
+        [
+          {
+            id: 'getEntries',
+            action: {
+              type: 'GET',
+              payload: { type: 'entry' },
+            },
+          },
+          {
+            id: 'getUsers',
+            action: {
+              type: 'GET',
+              payload: { type: 'user' },
+            },
+          },
+        ],
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: { type: 'date', id: 'updatedAt' },
+          },
+        },
+      ],
+      responseMutation: {
+        'response.data': 'getEntries.response.data',
+      },
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = [{ id: 'ent1', $type: 'entry' }]
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret.response?.data, expected)
+  t.is(dispatch.callCount, 3)
+})

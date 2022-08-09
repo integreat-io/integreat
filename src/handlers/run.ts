@@ -7,6 +7,7 @@ import {
   Meta,
   Payload as BasePayload,
   Response,
+  JobDef,
   JobStep,
   Job,
 } from '../types'
@@ -15,12 +16,19 @@ import { createErrorOnAction } from '../utils/createError'
 import { isObject, isAction } from '../utils/is'
 import validateFilters from '../utils/validateFilters'
 
+interface JobDefWithId extends JobDef {
+  id: string
+}
+
 export interface Payload extends BasePayload {
   jobId?: string
 }
 
 const isJobStep = (step: unknown): step is JobStep =>
   isObject(step) && typeof step.id === 'string'
+
+const isJobDefWithId = (job: unknown): job is JobDefWithId =>
+  isJobStep(job) && !!job.action
 
 const prepareAction = (action: Action, meta?: Meta) => ({
   ...action,
@@ -229,6 +237,21 @@ async function runFlow(
   return {}
 }
 
+function getFlowResponse(job: JobStep, responses: Record<string, Action>) {
+  if (Array.isArray(job.action)) {
+    const lastResponse = getLastJobWithResponse(job.action, responses)
+    return (
+      prependResponseError(
+        lastResponse?.response,
+        `Could not finish job '${job.id}', the following steps failed: `
+      ) || { status: 'noaction' }
+    )
+  } else {
+    const response = responses[job.id]
+    return response.response
+  }
+}
+
 export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
   async function run(
     action: Action,
@@ -239,7 +262,7 @@ export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
       meta,
     } = action
     const job = typeof jobId === 'string' ? jobs[jobId] : undefined
-    if (!isJobStep(job)) {
+    if (!isJobDefWithId(job)) {
       return createErrorOnAction(
         action,
         `No job with id '${jobId}'`,
@@ -256,20 +279,11 @@ export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
       meta
     )
 
-    if (Array.isArray(job.action)) {
-      const lastResponse = getLastJobWithResponse(job.action, responses)
-      return {
-        ...action,
-        response: prependResponseError(
-          lastResponse?.response,
-          `Could not finish job '${job.id}', the following steps failed: `
-        ) || { status: 'noaction' },
-      }
-    } else {
-      const response = responses[job.id]
-      return {
-        ...action,
-        response: response.response,
-      }
-    }
+    const response = getFlowResponse(job, responses)
+    return mutateAction(
+      { ...action, response },
+      job.responseMutation,
+      responses,
+      mapOptions
+    )
   }
