@@ -122,7 +122,7 @@ test('should not allow QUEUE when set as an action type', async (t) => {
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
 
-  t.is(ret.status, 'noaction')
+  t.is(ret.status, 'error')
   t.is(handlers.QUEUE.callCount, 0)
 })
 

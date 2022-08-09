@@ -205,9 +205,7 @@ export default function createDispatch({
       // Refuse attempt to dispatch a QUEUE action, as it would never stop being
       // sent to queue.
       if (action.type === 'QUEUE') {
-        resolve(
-          createErrorOnAction(action, 'No handler for QUEUE action', 'noaction')
-        )
+        resolve(createErrorOnAction(action, 'No handler for QUEUE action'))
         return
       }
 
