@@ -29,8 +29,7 @@ const entryMutation = [
     $iterate: true,
     id: ['key', { $transform: 'prefixId' }],
     title: [
-      'headline',
-      { $alt: 'value', value: 'An entry' },
+      { $alt: ['headline', { $value: 'An entry' }] },
       { $transform: 'trim' },
     ],
   },

@@ -2,7 +2,7 @@ export default [
   {
     $iterate: true,
     id: 'key',
-    title: ['headline', { $alt: 'value', value: 'An entry' }],
+    title: { $alt: ['headline', { $value: 'An entry' }] },
     'title/1': 'originalTitle',
     text: 'body',
     createdAt: 'createdAt',

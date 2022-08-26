@@ -11,7 +11,7 @@ const entryMutation = [
   {
     $iterate: true,
     id: 'key',
-    title: ['headline', { $alt: 'value', value: 'An entry' }],
+    title: { $alt: ['headline', { $value: 'An entry' }] },
     text: 'body',
     author: ['author', { $apply: 'entries-user' }],
   },

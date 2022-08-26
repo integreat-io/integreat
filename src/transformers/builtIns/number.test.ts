@@ -9,8 +9,7 @@ const options = {}
 const state = {
   rev: false,
   onlyMappedValues: false,
-  root: {},
-  context: {},
+  context: [],
   value: {},
 }
 

@@ -10,8 +10,8 @@ import Integreat from '../..'
 
 // Setup
 
-const createdAt = new Date()
-const updatedAt = new Date()
+const createdAt = new Date('2022-05-03T18:43:11+02:00')
+const updatedAt = new Date('2022-05-04T07:18:03+02:00')
 
 const entry1Item = {
   $type: 'entry',

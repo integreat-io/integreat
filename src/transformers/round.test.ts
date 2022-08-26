@@ -7,8 +7,7 @@ import round from './round'
 const state = {
   rev: false,
   onlyMappedValues: false, // Will apply in both directions
-  root: {},
-  context: {},
+  context: [],
   value: {},
 }
 

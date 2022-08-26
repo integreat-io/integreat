@@ -19,7 +19,7 @@ const mapping = [
   {
     $iterate: true,
     id: 'key',
-    title: ['headline', { $alt: 'value', value: 'No title' }],
+    title: { $alt: ['headline', { $value: 'No title' }] },
     text: 'body',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',

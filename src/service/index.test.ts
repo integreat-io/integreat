@@ -50,8 +50,8 @@ const entryMapping = [
     title: 'header',
     one: 'one',
     two: 'two',
-    source: '^payload.source',
-    author: '^access.ident.id',
+    source: '^^payload.source',
+    author: '^^access.ident.id',
     createdAt: 'created',
     updatedAt: 'updated',
   },
@@ -1361,7 +1361,7 @@ test('mapRequest should use mutation pipeline', async (t) => {
             'payload.data': [
               'payload.data',
               'StupidSoapOperator.StupidSoapEmptyArgs',
-              { $alt: 'value', value: {} },
+              { $alt: [{ $value: {} }] },
             ],
           },
         ],
@@ -1423,10 +1423,11 @@ test('mapRequest should map without default values', async (t) => {
   const data = ((ret.payload.data as DataObject).content as DataObject)
     .data as DataObject[]
   const items = (data[0].createOrMutate as DataObject).items as DataObject[]
+
   t.is(items[0].one, undefined)
 })
 
-test('mapRequest should map without default values - defined on enpoint', async (t) => {
+test('mapRequest should map without default values - defined on endpoint', async (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'entries',
     transporter: 'http',
@@ -1465,6 +1466,7 @@ test('mapRequest should map without default values - defined on enpoint', async 
   const data = ((ret.payload.data as DataObject).content as DataObject)
     .data as DataObject[]
   const items = (data[0].createOrMutate as DataObject).items as DataObject[]
+
   t.is(items[0].one, undefined)
 })
 

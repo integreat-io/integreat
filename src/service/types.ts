@@ -6,7 +6,7 @@ export interface MapOptions {
   pipelines?: Record<string, MapDefinition>
   functions?: Record<string, CustomFunction>
   dictionaries?: Dictionaries
-  mutateNull?: boolean
+  noneValues?: unknown[]
   fwdAlias?: string
   revAlias?: string
 }

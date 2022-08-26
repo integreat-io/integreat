@@ -7,15 +7,13 @@ import unique from './unique'
 const state = {
   rev: false,
   onlyMappedValues: false,
-  root: {},
-  context: {},
+  context: [],
   value: {},
 }
 const stateRev = {
   rev: true,
   onlyMappedValues: false,
-  root: {},
-  context: {},
+  context: [],
   value: {},
 }
 

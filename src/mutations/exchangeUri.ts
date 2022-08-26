@@ -1,9 +1,12 @@
 export default {
   $direction: 'rev',
   $flip: true,
-  meta: 'meta',
-  'meta.options': {
-    '.': 'meta.options',
-    uri: { $transform: 'template', templatePath: 'meta.options.uri' },
+  $modify: '.',
+  meta: {
+    $modify: 'meta',
+    options: {
+      $modify: 'meta.options',
+      uri: { $transform: 'template', templatePath: 'meta.options.uri' },
+    },
   },
 }

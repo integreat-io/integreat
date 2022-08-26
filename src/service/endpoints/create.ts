@@ -1,8 +1,8 @@
 import {
   mapTransform,
-  modify,
   MapDefinition,
   MapTransform,
+  MapPipe,
 } from 'map-transform'
 import { Action } from '../../types'
 import { MapOptions } from '../types'
@@ -13,6 +13,7 @@ import {
   populateActionAfterMapping,
 } from '../../utils/mappingHelpers'
 import { ensureArray } from '../../utils/array'
+import { isNotNullOrUndefined, isObject } from '../../utils/is'
 
 export interface PrepareOptions {
   (options: EndpointOptions, serviceId: string): EndpointOptions
@@ -58,6 +59,9 @@ function mutateAction(
 const flattenIfOneOrNone = <T>(arr: T[]): T | T[] =>
   arr.length <= 1 ? arr[0] : arr
 
+const setModifyFlag = (def?: MapDefinition) =>
+  isObject(def) ? { ...def, $modify: true } : def
+
 /**
  * Create endpoint from definition.
  */
@@ -70,11 +74,10 @@ export default function createEndpoint(
 ) {
   return function (endpointDef: EndpointDef): Endpoint {
     const mutation = flattenIfOneOrNone(
-      [
-        ...ensureArray(serviceMutation),
-        ...ensureArray(endpointDef.mutation),
-      ].map(modify)
-    )
+      [...ensureArray(serviceMutation), ...ensureArray(endpointDef.mutation)]
+        .map(setModifyFlag)
+        .filter(isNotNullOrUndefined)
+    ) as MapPipe | MapDefinition
     const mutator = mutation ? mapTransform(mutation, mapOptions) : null
 
     const options = prepareOptions(

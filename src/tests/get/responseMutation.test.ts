@@ -160,9 +160,11 @@ test('should transform at paths within the data', async (t) => {
   }
   const mutation = {
     $direction: 'fwd',
+    $modify: '.',
     response: {
-      '.': 'response',
-      'data[]': [
+      $modify: 'response',
+      data: [
+        // TODO map-transform: Putting 'data[]' here results in an empty array
         'response.data.responseContent',
         { $transform: 'json' },
         'articles[]',
@@ -175,7 +177,7 @@ test('should transform at paths within the data', async (t) => {
   const great = Integreat.create(defs, resourcesWithTrans)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   const data = ret.data as TypedData[]
   t.true(Array.isArray(data))
   t.is(data.length, 2)
