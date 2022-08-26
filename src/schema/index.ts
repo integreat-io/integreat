@@ -46,6 +46,16 @@ export default function createSchema({
   access,
   internal = false,
 }: SchemaDef): Schema {
+  const mapping = createCastMapping(
+    {
+      ...shape,
+      id: { $cast: 'string', $default: generateId ? defaultId : null },
+      createdAt: { $cast: 'date', $default: defaultDate },
+      updatedAt: { $cast: 'date', $default: defaultDate },
+    },
+    id
+  )
+
   return {
     id,
     plural: plural || `${id}s`,
@@ -59,14 +69,6 @@ export default function createSchema({
     },
     access,
     accessForAction: accessForAction(access),
-    mapping: createCastMapping(
-      {
-        ...shape,
-        id: { $cast: 'string', $default: generateId ? defaultId : null },
-        createdAt: { $cast: 'date', $default: defaultDate },
-        updatedAt: { $cast: 'date', $default: defaultDate },
-      },
-      id
-    ),
+    mapping,
   }
 }

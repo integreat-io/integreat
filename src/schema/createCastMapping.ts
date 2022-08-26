@@ -33,7 +33,7 @@ const defaultFromProp = (prop?: string | PropertyShape) => {
     if (prop.hasOwnProperty('$const')) {
       return { $transform: 'fixed', value: prop.$const }
     } else if (prop.hasOwnProperty('$default')) {
-      return { $alt: 'value', value: prop.$default }
+      return { $alt: [{ $value: prop.$default }] }
     }
   }
   return undefined
@@ -123,21 +123,17 @@ export default function createCastMapping(
   type: string
 ): MapDefinition {
   const filterItem = filter(includeInCasting(type))
-  const cleanUpTransform = transform(
-    cleanUpCast(type, true), // Forward
-    cleanUpCast(type, false) // Reverse
-  )
+  const fieldsMapping = mappingFromSchema(schema, true) // true to get $iterate
 
   return [
     fwd(filterItem),
-    rev(cleanUpTransform),
+    rev(transform(cleanUpCast(type, false))),
     {
-      $iterate: true,
-      ...mappingFromSchema(schema),
+      ...fieldsMapping,
       isNew: ['isNew', { $transform: 'boolean' }],
       isDeleted: ['isDeleted', { $transform: 'boolean' }],
     },
-    fwd(cleanUpTransform),
+    fwd(transform(cleanUpCast(type, true))),
     rev(filterItem),
   ]
 }

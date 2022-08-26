@@ -392,7 +392,7 @@ test('should skip items already cast with another $type in reverse', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should remove $type when casting in reverse', (t) => {
+test('should not set $type when casting in reverse', (t) => {
   const schema = {
     id: 'string',
     title: 'string',
