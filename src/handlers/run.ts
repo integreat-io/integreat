@@ -132,39 +132,14 @@ const setResponses = (
   })
 
 const setStepError = (
-  responses: Record<string, Action>,
   stepId: string,
   error: string,
   status = 'error'
-) => ({
-  ...responses,
+): Record<string, Action> => ({
   [stepId]: {
     response: { status, error },
   } as Action, // Allow partial action in this case
 })
-
-async function runStep(
-  step: JobStep,
-  responses: Record<string, Action>,
-  newResponses: Record<string, Action>,
-  dispatch: HandlerDispatch,
-  mapOptions: MapOptions,
-  meta?: Meta
-) {
-  let response
-  try {
-    response = await runFlow(step, responses, dispatch, mapOptions, meta)
-  } catch (error) {
-    response = setStepError(
-      {},
-      step.id,
-      error instanceof Error ? error.message : String(error),
-      'rejected'
-    )
-  }
-  setResponses(response, newResponses)
-  return response
-}
 
 function isStepOk(
   steps: JobStep | JobStep[], // One step may consist of several steps
@@ -175,6 +150,46 @@ function isStepOk(
   } else {
     return isOkResponse(responses[steps.id]?.response)
   }
+}
+
+async function runStep(
+  step: JobStep,
+  responses: Record<string, Action>,
+  newResponses: Record<string, Action>,
+  dispatch: HandlerDispatch,
+  mapOptions: MapOptions,
+  meta?: Meta,
+  prevStep?: JobStep | JobStep[]
+) {
+  let response: Record<string, Action> | undefined
+
+  // Check if conditions are met
+  if (step.conditions) {
+    // Validate specific conditions
+    if (!validateFilters(step.conditions)(responses)) {
+      response = setStepError(step.id, 'Conditions were not met')
+    }
+  } else if (prevStep) {
+    // No conditions are specified -- validate the status of the previous step
+    if (!isStepOk(prevStep, responses)) {
+      response = newResponses
+    }
+  }
+
+  if (!response) {
+    try {
+      response = await runFlow(step, responses, dispatch, mapOptions, meta)
+    } catch (error) {
+      response = setStepError(
+        step.id,
+        error instanceof Error ? error.message : String(error),
+        'rejected'
+      )
+    }
+  }
+
+  setResponses(response, newResponses)
+  return response
 }
 
 async function runFlow(
@@ -190,27 +205,20 @@ async function runFlow(
     const newResponses = {}
     for (const [index, step] of action.entries()) {
       const responses = { ...prevResponses, ...newResponses }
-      if (isJobStep(step)) {
-        // One step in a sequence – run it if conditions are met
-        if (step.conditions) {
-          // Validate specific conditions
-          if (!validateFilters(step.conditions)(responses)) {
-            return setStepError(
-              newResponses,
-              step.id,
-              'Conditions were not met'
-            )
-          }
-        } else if (index > 0) {
-          // No conditions are specified -- validate the status of the previous step
-          const prevStep = action[index - 1]
-          if (!isStepOk(prevStep, responses)) {
-            return newResponses
-          }
-        }
+      const prevStep = index > 0 ? action[index - 1] : undefined
 
+      if (isJobStep(step)) {
+        // A single step
         // Note: `runStep()` will mutate `newResponses` as it runs
-        await runStep(step, responses, newResponses, dispatch, mapOptions, meta)
+        await runStep(
+          step,
+          responses,
+          newResponses,
+          dispatch,
+          mapOptions,
+          meta,
+          prevStep
+        )
       } else if (Array.isArray(step)) {
         // An array of steps within a sequence – run them in parallel
         // Note that it is okay to use `Promise.all` here, as rejection is
@@ -218,7 +226,15 @@ async function runFlow(
         await Promise.all(
           step.map((step) =>
             // Note: `runStep()` will mutate `newResponses` as it runs
-            runStep(step, responses, newResponses, dispatch, mapOptions, meta)
+            runStep(
+              step,
+              responses,
+              newResponses,
+              dispatch,
+              mapOptions,
+              meta,
+              prevStep
+            )
           )
         )
       }

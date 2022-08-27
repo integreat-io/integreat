@@ -718,6 +718,65 @@ test('should run second action when its conditions are fulfilled', async (t) => 
   t.is(ret.response?.status, 'ok', ret.response?.error)
 })
 
+test('should validate conditionss in parallel actions too', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: { status: 'ok' },
+    })
+    .onCall(0)
+    .resolves({ response: { status: 'ok', data: [] } })
+  const jobs = {
+    action3: {
+      id: 'action3',
+      action: [
+        [
+          {
+            id: 'setEntry',
+            conditions: {
+              'action.payload.id': { type: 'string' },
+            },
+            action: {
+              type: 'SET',
+              payload: {
+                type: 'entry',
+                id: 'ent1',
+                data: [{ id: 'ent1', $type: 'entry' }],
+              },
+            },
+          },
+          {
+            id: 'setDate',
+            action: {
+              type: 'SET',
+              payload: { type: 'date', id: 'updatedAt' },
+            },
+          },
+        ],
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+      id: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(dispatch.callCount, 1) // Only the first step should run
+  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(
+    ret.response?.error,
+    "Could not finish job 'action3', the following steps failed: 'setEntry' (error: Conditions were not met)"
+  )
+})
+
 test('should return noaction when job has no action', async (t) => {
   const dispatch = sinon.stub().resolves({ response: { status: 'ok' } })
   const jobs = {
@@ -1264,14 +1323,12 @@ test('should return response with error message', async (t) => {
 })
 
 test('should join array of error messsages', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({
-      response: {
-        status: 'ok',
-        data: { errorMessages: ['No data', 'And no fun either'] },
-      },
-    })
+  const dispatch = sinon.stub().resolves({
+    response: {
+      status: 'ok',
+      data: { errorMessages: ['No data', 'And no fun either'] },
+    },
+  })
   const jobs = {
     action7: {
       id: 'action7',
