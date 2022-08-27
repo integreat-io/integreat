@@ -1183,3 +1183,126 @@ test('should return data based on mutation', async (t) => {
   t.deepEqual(ret.response?.data, expected)
   t.is(dispatch.callCount, 3)
 })
+
+test('should return data based on mutation from original action', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ response: { status: 'ok', data: [] } })
+  const jobs = {
+    action7: {
+      id: 'action7',
+      action: [
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: { type: 'date', id: 'updatedAt' },
+          },
+        },
+      ],
+      responseMutation: {
+        'response.data': 'action.payload.data',
+      },
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action7',
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = [{ id: 'ent1', $type: 'entry' }]
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret.response?.data, expected)
+})
+
+test('should return response with error message', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ response: { status: 'ok', data: { errorMessage: 'No data' } } })
+  const jobs = {
+    action7: {
+      id: 'action7',
+      action: [
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: { type: 'date', id: 'updatedAt' },
+          },
+        },
+      ],
+      responseMutation: {
+        'response.error': 'setDate.response.data.errorMessage',
+      },
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action7',
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.deepEqual(ret.response?.error, 'No data')
+})
+
+test('should join array of error messsages', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: {
+        status: 'ok',
+        data: { errorMessages: ['No data', 'And no fun either'] },
+      },
+    })
+  const jobs = {
+    action7: {
+      id: 'action7',
+      action: [
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: { type: 'date', id: 'updatedAt' },
+          },
+        },
+      ],
+      responseMutation: {
+        'response.error': 'setDate.response.data.errorMessages',
+      },
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action7',
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.deepEqual(ret.response?.error, 'No data | And no fun either')
+})

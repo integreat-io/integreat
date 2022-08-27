@@ -252,6 +252,22 @@ function getFlowResponse(job: JobStep, responses: Record<string, Action>) {
   }
 }
 
+const cleanUpResponse = (action: Action) => ({
+  ...action,
+  response: {
+    ...action.response,
+    status:
+      action.response?.status === 'ok' && action.response?.error
+        ? 'error'
+        : action.response?.status || 'ok',
+    ...(action.response?.error && {
+      error: Array.isArray(action.response.error)
+        ? action.response.error.join(' | ')
+        : action.response.error,
+    }),
+  },
+})
+
 export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
   async function run(
     action: Action,
@@ -280,10 +296,12 @@ export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
     )
 
     const response = getFlowResponse(job, responses)
-    return mutateAction(
-      { ...action, response },
-      job.responseMutation,
-      responses,
-      mapOptions
+    return cleanUpResponse(
+      mutateAction(
+        { ...action, response },
+        job.responseMutation,
+        { ...responses, action },
+        mapOptions
+      )
     )
   }
