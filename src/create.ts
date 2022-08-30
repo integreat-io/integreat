@@ -138,7 +138,7 @@ export default function create(
   const jobs = jobsDefs.reduce(
     (jobs, job) =>
       typeof job.id === 'string' ? { ...jobs, [job.id]: job } : jobs,
-    {}
+    {} as Record<string, JobDef>
   )
 
   // Create dispatch

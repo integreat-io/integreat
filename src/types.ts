@@ -45,20 +45,26 @@ export type ScheduleObject = {
   wy?: number[]
 }
 
-export interface JobStep {
+interface JobFields {
   id: string
   conditions?: Record<string, JsonSchema | undefined>
-  action?: Action | (JobStep | JobStep[])[]
   mutation?: MapObject
 }
 
-export interface Job {
+export interface JobWithFlow extends JobFields {
+  flow: (Job | Job[])[]
+}
+
+export interface JobWithAction extends JobFields {
+  action: Action
+}
+
+export type Job = JobWithAction | JobWithFlow
+
+export interface JobDef {
   id?: string
-  action: Action | (JobStep | JobStep[])[]
-  mutation?: MapObject
-}
-
-export interface JobDef extends Job {
+  action?: Action
+  flow?: (Job | Job[])[]
   schedules?: ScheduleObject[]
   exceptions?: ScheduleObject[]
   cron?: string

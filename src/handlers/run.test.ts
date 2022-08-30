@@ -55,7 +55,7 @@ test('should run a simple flow with one action', async (t) => {
   const jobs = {
     action1: {
       id: 'action1',
-      action: [
+      flow: [
         {
           id: 'getEntry',
           action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
@@ -98,7 +98,7 @@ test('should run two actions in sequence', async (t) => {
   const jobs = {
     action2: {
       id: 'action2',
-      action: [
+      flow: [
         {
           id: 'setEntry',
           action: {
@@ -175,7 +175,7 @@ test('should not run second action when first in sequence fails', async (t) => {
   const jobs = {
     action2: {
       id: 'action2',
-      action: [
+      flow: [
         {
           id: 'setEntry',
           action: {
@@ -231,7 +231,7 @@ test('should not treat noaction as error', async (t) => {
   const jobs = {
     action2: {
       id: 'action2',
-      action: [
+      flow: [
         {
           id: 'setEntry',
           action: {
@@ -279,7 +279,7 @@ test('should run two actions in parallel', async (t) => {
   const jobs = {
     action3: {
       id: 'action3',
-      action: [
+      flow: [
         [
           {
             id: 'setEntry',
@@ -358,7 +358,7 @@ test('should run all actions in parallel even if one of them fails', async (t) =
   const jobs = {
     action3: {
       id: 'action3',
-      action: [
+      flow: [
         [
           {
             id: 'setEntry',
@@ -415,7 +415,7 @@ test('should not run next step after any parallel steps failed', async (t) => {
   const jobs = {
     action6: {
       id: 'action6',
-      action: [
+      flow: [
         [
           {
             id: 'getEntries',
@@ -466,7 +466,7 @@ test('should return error from all parallel actions', async (t) => {
   const jobs = {
     action3: {
       id: 'action3',
-      action: [
+      flow: [
         [
           {
             id: 'setEntry',
@@ -521,7 +521,7 @@ test('should not treat noaction as error in parallel actions', async (t) => {
   const jobs = {
     action3: {
       id: 'action3',
-      action: [
+      flow: [
         [
           {
             id: 'setEntry',
@@ -571,7 +571,7 @@ test('should handle rejections in parallel steps', async (t) => {
   const jobs = {
     action3: {
       id: 'action3',
-      action: [
+      flow: [
         [
           {
             id: 'setEntry',
@@ -627,7 +627,7 @@ test('should not run second action when its conditions fail', async (t) => {
   const jobs = {
     action6: {
       id: 'action6',
-      action: [
+      flow: [
         {
           id: 'getEntries',
           action: {
@@ -681,7 +681,7 @@ test('should run second action when its conditions are fulfilled', async (t) => 
   const jobs = {
     action6: {
       id: 'action6',
-      action: [
+      flow: [
         {
           id: 'getEntries',
           action: {
@@ -729,7 +729,7 @@ test('should validate conditionss in parallel actions too', async (t) => {
   const jobs = {
     action3: {
       id: 'action3',
-      action: [
+      flow: [
         [
           {
             id: 'setEntry',
@@ -777,12 +777,12 @@ test('should validate conditionss in parallel actions too', async (t) => {
   )
 })
 
-test('should return noaction when job has no action', async (t) => {
+test('should return noaction when job has an empty flow', async (t) => {
   const dispatch = sinon.stub().resolves({ response: { status: 'ok' } })
   const jobs = {
     action1: {
       id: 'action1',
-      action: [],
+      flow: [],
     },
   }
   const action = {
@@ -886,7 +886,7 @@ test('should mutate action with result from previous action', async (t) => {
   const jobs = {
     action3: {
       id: 'action3',
-      action: [
+      flow: [
         {
           id: 'getEntries',
           action: {
@@ -977,7 +977,7 @@ test('should mutate action with result from previous and parallel actions', asyn
   const jobs = {
     action3: {
       id: 'action3',
-      action: [
+      flow: [
         {
           id: 'getLastSyncedDate',
           action: {
@@ -1073,7 +1073,7 @@ test('should mutate action with data from the original action', async (t) => {
   const jobs = {
     action5: {
       id: 'action5',
-      action: [
+      flow: [
         {
           id: 'setData',
           action: {
@@ -1139,7 +1139,7 @@ test('should mutate with transformers and pipelines', async (t) => {
   const jobs = {
     action1: {
       id: 'action1',
-      action: [
+      flow: [
         {
           id: 'getEntry',
           action: { type: 'GET', payload: { type: 'entry' } },
@@ -1194,7 +1194,7 @@ test('should return data based on mutation', async (t) => {
   const jobs = {
     action6: {
       id: 'action6',
-      action: [
+      flow: [
         [
           {
             id: 'getEntries',
@@ -1250,7 +1250,7 @@ test('should return data based on mutation from original action', async (t) => {
   const jobs = {
     action7: {
       id: 'action7',
-      action: [
+      flow: [
         {
           id: 'setDate',
           action: {
@@ -1290,7 +1290,7 @@ test('should return response with error message', async (t) => {
   const jobs = {
     action7: {
       id: 'action7',
-      action: [
+      flow: [
         {
           id: 'setDate',
           action: {
@@ -1332,7 +1332,7 @@ test('should join array of error messsages', async (t) => {
   const jobs = {
     action7: {
       id: 'action7',
-      action: [
+      flow: [
         {
           id: 'setDate',
           action: {
@@ -1363,3 +1363,5 @@ test('should join array of error messsages', async (t) => {
   t.is(ret.response?.status, 'error', ret.response?.error)
   t.deepEqual(ret.response?.error, 'No data | And no fun either')
 })
+
+test.todo('should return error for invalid job (missing action and flow)')

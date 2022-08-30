@@ -90,10 +90,10 @@ test('should return undefined when no matching schedule', (t) => {
   t.is(ret, undefined)
 })
 
-test('should return undefined when action is a flow', (t) => {
+test('should return undefined when job has a flow', (t) => {
   const def = {
     schedules: [{ m: [50] }],
-    action: [
+    flow: [
       {
         id: 'step1',
         action: {
@@ -104,7 +104,8 @@ test('should return undefined when action is a flow', (t) => {
     ],
   }
 
-  const ret = createSchedule(def)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ret = createSchedule(def as any)
 
   t.is(ret, undefined)
 })

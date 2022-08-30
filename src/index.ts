@@ -22,7 +22,7 @@ export {
   HandlerDispatch,
   SetProgress,
   JobDef,
-  JobStep,
+  Job,
 } from './types'
 export { Authenticator, AuthDef, ServiceDef } from './service/types'
 export { Instance, Definitions, Resources } from './create'

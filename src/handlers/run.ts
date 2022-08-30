@@ -7,28 +7,23 @@ import {
   Meta,
   Payload as BasePayload,
   Response,
-  JobDef,
-  JobStep,
   Job,
+  JobDef,
 } from '../types'
 import { MapOptions } from '../service/types'
 import { createErrorOnAction } from '../utils/createError'
-import { isObject, isAction } from '../utils/is'
+import {
+  isJob,
+  isJobStep,
+  isJobWithAction,
+  isJobWithFlow,
+  isAction,
+} from '../utils/is'
 import validateFilters from '../utils/validateFilters'
-
-interface JobDefWithId extends JobDef {
-  id: string
-}
 
 export interface Payload extends BasePayload {
   jobId?: string
 }
-
-const isJobStep = (step: unknown): step is JobStep =>
-  isObject(step) && typeof step.id === 'string'
-
-const isJobDefWithId = (job: unknown): job is JobDefWithId =>
-  isJobStep(job) && !!job.action
 
 const prepareAction = (action: Action, meta?: Meta) => ({
   ...action,
@@ -41,7 +36,7 @@ const isOkResponse = (response?: Response) =>
 
 // TODO: Prepare mutations in `../create.ts` and call a `mutate()` function here
 function mutateAction(
-  action: Action | (JobStep | JobStep[])[] | undefined,
+  action: Action | (Job | Job[])[] | undefined,
   mutation: MapObject | undefined,
   responses: Record<string, Action>,
   mapOptions: MapOptions
@@ -107,7 +102,7 @@ function responseFromResponses(responses: Action[], ids: string[]) {
 }
 
 function getLastJobWithResponse(
-  flow: (JobStep | JobStep[])[],
+  flow: (Job | Job[])[],
   responses: Record<string, Action>
 ) {
   for (let i = flow.length - 1; i > -1; i--) {
@@ -142,7 +137,7 @@ const setStepError = (
 })
 
 function isStepOk(
-  steps: JobStep | JobStep[], // One step may consist of several steps
+  steps: Job | Job[], // One step may consist of several steps
   responses: Record<string, Action>
 ) {
   if (Array.isArray(steps)) {
@@ -153,13 +148,13 @@ function isStepOk(
 }
 
 async function runStep(
-  step: JobStep,
+  step: Job,
   responses: Record<string, Action>,
   newResponses: Record<string, Action>,
   dispatch: HandlerDispatch,
   mapOptions: MapOptions,
   meta?: Meta,
-  prevStep?: JobStep | JobStep[]
+  prevStep?: Job | Job[]
 ) {
   let response: Record<string, Action> | undefined
 
@@ -193,19 +188,20 @@ async function runStep(
 }
 
 async function runFlow(
-  job: JobStep,
+  job: Job,
   prevResponses: Record<string, Action>,
   dispatch: HandlerDispatch,
   mapOptions: MapOptions,
   meta?: Meta
 ): Promise<Record<string, Action>> {
-  const { action, id: parentId, mutation } = job
-  if (Array.isArray(action)) {
+  const { id: parentId, mutation } = job
+  if (isJobWithFlow(job)) {
     // We have sequence of job steps – go through them one by one
+    const flow = job.flow
     const newResponses = {}
-    for (const [index, step] of action.entries()) {
+    for (const [index, step] of flow.entries()) {
       const responses = { ...prevResponses, ...newResponses }
-      const prevStep = index > 0 ? action[index - 1] : undefined
+      const prevStep = index > 0 ? flow[index - 1] : undefined
 
       if (isJobStep(step)) {
         // A single step
@@ -240,11 +236,11 @@ async function runFlow(
       }
     }
     return newResponses
-  } else if (action && parentId) {
+  } else if (isJobWithAction(job) && parentId) {
     // We've got one action – run it
     return {
       [parentId]: await runAction(
-        mutateAction(action, mutation, prevResponses, mapOptions),
+        mutateAction(job.action, mutation, prevResponses, mapOptions),
         dispatch,
         meta
       ),
@@ -253,9 +249,9 @@ async function runFlow(
   return {}
 }
 
-function getFlowResponse(job: JobStep, responses: Record<string, Action>) {
-  if (Array.isArray(job.action)) {
-    const lastResponse = getLastJobWithResponse(job.action, responses)
+function getFlowResponse(job: Job, responses: Record<string, Action>) {
+  if (isJobWithFlow(job)) {
+    const lastResponse = getLastJobWithResponse(job.flow, responses)
     return (
       prependResponseError(
         lastResponse?.response,
@@ -284,7 +280,7 @@ const cleanUpResponse = (action: Action) => ({
   },
 })
 
-export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
+export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
   async function run(
     action: Action,
     { dispatch }: ActionHandlerResources
@@ -294,7 +290,7 @@ export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
       meta,
     } = action
     const job = typeof jobId === 'string' ? jobs[jobId] : undefined
-    if (!isJobDefWithId(job)) {
+    if (!isJob(job)) {
       return createErrorOnAction(
         action,
         `No job with id '${jobId}'`,
@@ -315,7 +311,7 @@ export default (jobs: Record<string, Job>, mapOptions: MapOptions) =>
     return cleanUpResponse(
       mutateAction(
         { ...action, response },
-        job.responseMutation,
+        (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
         { ...responses, action },
         mapOptions
       )

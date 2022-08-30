@@ -1,4 +1,12 @@
-import { DataObject, TypedData, Reference, Action } from '../types'
+import {
+  DataObject,
+  TypedData,
+  Reference,
+  Action,
+  Job,
+  JobWithAction,
+  JobWithFlow,
+} from '../types'
 import { Shape, PropertyShape } from '../schema/types'
 
 export const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -40,3 +48,17 @@ export const isAction = (action: unknown): action is Action =>
 export const isTruthy = (value: unknown): boolean => !!value
 export const isFalsy = (value: unknown): boolean => !value
 export const not = isFalsy
+
+export const isJobStep = (step: unknown): step is Job =>
+  isObject(step) && typeof step.id === 'string'
+
+export const isJob = (job: unknown): job is Job =>
+  isJobStep(job) &&
+  typeof job.id === 'string' &&
+  !!((job as JobWithAction).action || (job as JobWithFlow).flow)
+
+export const isJobWithAction = (job: Job): job is JobWithAction =>
+  isObject((job as JobWithAction).action)
+
+export const isJobWithFlow = (job: Job): job is JobWithFlow =>
+  Array.isArray((job as JobWithFlow).flow)
