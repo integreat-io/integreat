@@ -37,7 +37,7 @@
   "dependencies": {
     "@types/debug": "^4.1.7",
     "@types/later": "^1.2.7",
-    "@types/luxon": "^3.0.0",
+    "@types/luxon": "^3.0.1",
     "@types/nanoid": "^3.0.0",
     "@types/sax": "^1.2.4",
     "@types/uuid": "^8.3.4",
@@ -48,7 +48,7 @@
     "later": "^1.2.0",
     "luxon": "^3.0.3",
     "map-any": "^0.2.1",
-    "map-transform": "0.4.0-alpha.31",
+    "map-transform": "0.4.0-alpha.32",
     "ms": "^2.1.3",
     "nanoid": "^3.3.4",
     "p-limit": "^3.1.0",
