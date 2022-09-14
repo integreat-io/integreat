@@ -1,14 +1,15 @@
 import { Action, Payload, Meta, ActionHandlerResources } from '../types'
 import { isObject, isTypedData } from '../utils/is'
 
-const extractLastId = (data: unknown) =>
+const extractLastId = (data: unknown, field = 'id') =>
   Array.isArray(data) && isObject(data[data.length - 1])
-    ? data[data.length - 1]?.id
+    ? // eslint-disable-next-line security/detect-object-injection
+      data[data.length - 1] && data[data.length - 1][field]
     : undefined
 
 const createAction = (
   page: number,
-  payload: Payload,
+  { pageAfterField, ...payload }: Payload,
   paging?: Payload,
   data?: unknown,
   meta?: Meta
@@ -21,7 +22,10 @@ const createAction = (
           ...payload,
           page: Math.floor(page),
           pageOffset: (page - 1) * (payload.pageSize as number),
-          pageAfter: extractLastId(data),
+          pageAfter: extractLastId(
+            data,
+            typeof pageAfterField === 'string' ? pageAfterField : undefined
+          ),
         },
         meta,
       }

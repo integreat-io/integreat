@@ -7,9 +7,10 @@ import getAll from './getAll'
 
 // Setup
 
-const event = (id: string) => ({
+const event = (id: string, externalId?: string) => ({
   id,
   $type: 'event',
+  externalId,
   createdAt: new Date(),
 })
 
@@ -226,6 +227,52 @@ test('should get all pages using pageAfter', async (t) => {
       type: 'event',
       pageOffset: 0,
       pageSize: 2,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await getAll(action, { ...handlerResources, dispatch })
+
+  t.is(dispatch.callCount, 3)
+  t.is(dispatch.args[0][0].payload.pageAfter, undefined)
+  t.is(dispatch.args[1][0].payload.pageAfter, 'ev1')
+  t.is(dispatch.args[2][0].payload.pageAfter, 'ev3')
+  t.is(ret.response?.status, 'ok')
+  t.is((ret.response?.data as TypedData[]).length, 5)
+})
+
+test('should get all pages using pageAfter with id from another field', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .onFirstCall()
+    .resolves({
+      type: 'GET',
+      response: {
+        status: 'ok',
+        data: [event('id0', 'ev0'), event('id1', 'ev1')],
+      },
+    })
+    .onSecondCall()
+    .resolves({
+      type: 'GET',
+      response: {
+        status: 'ok',
+        data: [event('id2', 'ev2'), event('id3', 'ev3')],
+      },
+    })
+    .onThirdCall()
+    .resolves({
+      type: 'GET',
+      response: { status: 'ok', data: [event('id4', 'ev4')] },
+    })
+  const action = {
+    type: 'GET_ALL',
+    payload: {
+      type: 'event',
+      pageOffset: 0,
+      pageSize: 2,
+      pageAfterField: 'externalId',
     },
     meta: { ident: { id: 'johnf' } },
   }
