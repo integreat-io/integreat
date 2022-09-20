@@ -1179,6 +1179,47 @@ test('should mutate with transformers and pipelines', async (t) => {
   t.deepEqual(ret, expectedResponse)
 })
 
+test('should mutate simple action with pipeline', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+  })
+  const jobs = {
+    action1: {
+      id: 'action1',
+      action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
+      mutation: [
+        { $modify: true, payload: 'payload', 'payload.flag': { $value: true } },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent1', flag: true },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedResponse = {
+    ...action,
+    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
+})
+
 test('should return data based on mutation', async (t) => {
   const dispatch = sinon
     .stub()
@@ -1362,6 +1403,48 @@ test('should join array of error messsages', async (t) => {
 
   t.is(ret.response?.status, 'error', ret.response?.error)
   t.deepEqual(ret.response?.error, 'No data | And no fun either')
+})
+
+test('should return response with responseMutation pipeline', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ response: { status: 'ok', data: { errorMessage: 'No data' } } })
+  const jobs = {
+    action7: {
+      id: 'action7',
+      flow: [
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: { type: 'date', id: 'updatedAt' },
+          },
+        },
+      ],
+      responseMutation: [
+        {
+          $modify: true,
+          'response.error': '^^setDate.response.data.errorMessage',
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action7',
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.deepEqual(ret.response?.error, 'No data')
 })
 
 test.todo('should return error for invalid job (missing action and flow)')

@@ -1,5 +1,5 @@
 import PProgress = require('p-progress')
-import { MapObject } from 'map-transform'
+import { MapObject, MapPipe } from 'map-transform'
 import { EndpointOptions } from './service/endpoints/types'
 import { IdentConfig } from './service/types'
 import { Service } from './service/types'
@@ -48,7 +48,7 @@ export type ScheduleObject = {
 interface JobFields {
   id: string
   conditions?: Record<string, JsonSchema | undefined>
-  mutation?: MapObject
+  mutation?: MapObject | MapPipe
 }
 
 export interface JobWithFlow extends JobFields {
@@ -69,7 +69,7 @@ export interface JobDef {
   exceptions?: ScheduleObject[]
   cron?: string
   human?: string
-  responseMutation?: MapObject
+  responseMutation?: MapObject | MapPipe
 }
 
 export interface DataFunction {

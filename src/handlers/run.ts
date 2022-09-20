@@ -1,5 +1,5 @@
 /* eslint-disable security/detect-object-injection */
-import { mapTransform, MapObject } from 'map-transform'
+import { mapTransform, MapObject, MapPipe } from 'map-transform'
 import {
   Action,
   ActionHandlerResources,
@@ -37,12 +37,14 @@ const isOkResponse = (response?: Response) =>
 // TODO: Prepare mutations in `../create.ts` and call a `mutate()` function here
 function mutateAction(
   action: Action | (Job | Job[])[] | undefined,
-  mutation: MapObject | undefined,
+  mutation: MapObject | MapPipe | undefined,
   responses: Record<string, Action>,
   mapOptions: MapOptions
 ) {
   if (mutation && isAction(action)) {
-    const mutationIncludingAction = { '.': '$action', ...mutation } // $action is the action we're mutation to
+    const mutationIncludingAction = Array.isArray(mutation)
+      ? ['$action', ...mutation]
+      : { '.': '$action', ...mutation } // $action is the action we're mutation to
     const responsesIncludingAction = { ...responses, $action: action }
     return mapTransform(
       mutationIncludingAction,
@@ -260,7 +262,7 @@ function getFlowResponse(job: Job, responses: Record<string, Action>) {
     )
   } else {
     const response = responses[job.id]
-    return response.response
+    return response?.response
   }
 }
 
@@ -269,7 +271,8 @@ const cleanUpResponse = (action: Action) => ({
   response: {
     ...action.response,
     status:
-      action.response?.status === 'ok' && action.response?.error
+      (action.response?.status === 'ok' || !action.response?.status) &&
+      action.response?.error
         ? 'error'
         : action.response?.status || 'ok',
     ...(action.response?.error && {
