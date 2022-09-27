@@ -1,8 +1,7 @@
 import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
-import { Data } from '../../types'
 
-const castBoolean = (value: Data) => {
+const castBoolean = (value: unknown) => {
   if (value === null || value === undefined) {
     return value
   } else {

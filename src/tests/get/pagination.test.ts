@@ -5,7 +5,7 @@ import resources from '../helpers/resources'
 import entry1Data from '../helpers/data/entry1'
 import entry2Data from '../helpers/data/entry2'
 import entry3Data from '../helpers/data/entry3'
-import { DataObject, Action } from '../../types'
+import { TypedData, Action } from '../../types'
 
 import Integreat from '../..'
 
@@ -38,16 +38,16 @@ test('should get first and second page of entries from service', async (t) => {
   const ret3 = await great.dispatch(action3 as Action)
 
   t.is(ret1.status, 'ok', ret1.error)
-  const data1 = ret1.data as DataObject[]
+  const data1 = ret1.data as TypedData[]
   t.is(data1.length, 2)
   t.is(data1[0].id, 'ent1')
   t.is(data1[1].id, 'ent2')
   t.is(ret2.status, 'ok', ret2.error)
-  const data2 = ret2.data as DataObject[]
+  const data2 = ret2.data as TypedData[]
   t.is(data2.length, 1)
   t.is(data2[0].id, 'ent3')
   t.is(ret3.status, 'ok', ret3.error)
-  const data3 = ret3.data as DataObject[]
+  const data3 = ret3.data as TypedData[]
   t.is(data3.length, 2)
   t.is(data3[0].id, 'ent1')
   t.is(data3[1].id, 'ent2')

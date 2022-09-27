@@ -10,7 +10,7 @@ import {
 import schema from '../schema'
 import functions from '../transformers/builtIns'
 import handlerResources from '../tests/helpers/handlerResources'
-import { Action, DataObject } from '../types'
+import { Action, TypedData } from '../types'
 
 import get from './get'
 
@@ -166,7 +166,7 @@ test('should get item by id from service', async (t) => {
   const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is((ret.response?.data as DataObject).id, 'ent1')
+  t.is((ret.response?.data as TypedData).id, 'ent1')
 })
 
 test('should get items by id array from service from member_s_ endpoint', async (t) => {
@@ -195,7 +195,7 @@ test('should get items by id array from service from member_s_ endpoint', async 
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(Array.isArray(ret.response?.data))
-  const data = ret.response?.data as DataObject[]
+  const data = ret.response?.data as TypedData[]
   t.is(data.length, 2)
   t.is(data[0].id, 'ent1')
   t.is(data[1].id, 'ent2')
@@ -227,7 +227,7 @@ test('should get items by id array from member endpoints', async (t) => {
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(Array.isArray(ret.response?.data))
-  const data = ret.response?.data as (DataObject | undefined)[]
+  const data = ret.response?.data as (TypedData | undefined)[]
   t.is(data.length, 3)
   t.is(data[0]?.id, 'ent1')
   t.is(data[1]?.id, 'ent2')
@@ -306,7 +306,7 @@ test('should get item by id from service when id is array of one', async (t) => 
   const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is((ret.response?.data as DataObject).id, 'ent1')
+  t.is((ret.response?.data as TypedData).id, 'ent1')
 })
 
 test('should get default values from type', async (t) => {
@@ -325,7 +325,7 @@ test('should get default values from type', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is((ret.response?.data as DataObject[])[0].byline, 'Somebody')
+  t.is((ret.response?.data as TypedData[])[0].byline, 'Somebody')
 })
 
 test('should not get default values from type', async (t) => {
@@ -345,7 +345,7 @@ test('should not get default values from type', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is((ret.response?.data as DataObject[])[0].byline, undefined)
+  t.is((ret.response?.data as TypedData[])[0].byline, undefined)
 })
 
 test('should infer service id from type', async (t) => {
@@ -360,7 +360,7 @@ test('should infer service id from type', async (t) => {
   const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as DataObject[])[0].id, 'ent1')
+  t.is((ret.response?.data as TypedData[])[0].id, 'ent1')
 })
 
 test('should get from other endpoint', async (t) => {
@@ -380,7 +380,7 @@ test('should get from other endpoint', async (t) => {
   const ret = await get(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is((ret.response?.data as DataObject[])[0].id, 'ent1')
+  t.is((ret.response?.data as TypedData[])[0].id, 'ent1')
 })
 
 test('should return error on not found', async (t) => {

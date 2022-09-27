@@ -6,7 +6,7 @@ import functions from '../transformers/builtIns'
 import createSchema from '../schema'
 import dispatch from '../tests/helpers/dispatch'
 import { ServiceDef } from './types'
-import { TypedData, Connection, Action, DataObject, Dispatch } from '../types'
+import { Connection, Action, TypedData, Dispatch } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
 import Auth from './Auth'
 import tokenAuth from '../authenticators/token'
@@ -901,7 +901,7 @@ test('mapResponse should map data object from service', async (t) => {
 
   const ret = service.mapResponse(action, endpoint!)
 
-  const data = ret.response?.data as DataObject
+  const data = ret.response?.data as TypedData
   t.false(Array.isArray(data))
   t.is(data.id, 'johnf')
   t.is(data.$type, 'account')
@@ -977,7 +977,7 @@ test('should authorize typed data in array from service', async (t) => {
   const ret = service.mapResponse(action, endpoint!)
 
   t.is(ret.response?.status, 'ok')
-  const data = ret.response?.data as DataObject[]
+  const data = ret.response?.data as TypedData[]
   t.is(data.length, 1)
   t.is(data[0].id, 'johnf')
   t.is(
@@ -1052,7 +1052,7 @@ test('should authorize typed data in array to service', async (t) => {
   const ret = service.mapResponse(action, endpoint!, isIncoming)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
-  const accounts = (ret.response?.data as DataObject).accounts as DataObject[]
+  const accounts = (ret.response?.data as TypedData).accounts as TypedData[]
   t.is(accounts.length, 1)
   t.is(accounts[0].id, 'johnf')
   t.is(
@@ -1271,7 +1271,7 @@ test('mapRequest should authorize data array going to service', async (t) => {
 
   const ret = service.mapRequest(action, endpoint!)
 
-  const accounts = (ret.payload.data as DataObject).accounts as DataObject[]
+  const accounts = (ret.payload.data as TypedData).accounts as TypedData[]
   t.is(accounts.length, 1)
   t.is(accounts[0].id, 'johnf')
   t.deepEqual(ret.response, expectedResponse)
@@ -1305,7 +1305,7 @@ test('mapRequest should authorize data object going to service', async (t) => {
 
   const ret = service.mapRequest(action, endpoint!)
 
-  t.is((ret.payload.data as DataObject).accounts, undefined)
+  t.is((ret.payload.data as TypedData).accounts, undefined)
   t.deepEqual(ret.response, expectedResponse)
 })
 
@@ -1342,7 +1342,7 @@ test('mapRequest should authorize data array coming from service', async (t) => 
   const ret = service.mapRequest(action, endpoint!, isIncoming)
 
   t.is(ret.response?.status, null, ret.response?.error)
-  const data = ret.payload.data as DataObject[]
+  const data = ret.payload.data as TypedData[]
   t.is(data.length, 1)
   t.is(data[0].id, 'johnf')
   t.is(data[0].$type, 'account')
@@ -1420,9 +1420,9 @@ test('mapRequest should map without default values', async (t) => {
 
   const ret = service.mapRequest(action, endpoint!)
 
-  const data = ((ret.payload.data as DataObject).content as DataObject)
-    .data as DataObject[]
-  const items = (data[0].createOrMutate as DataObject).items as DataObject[]
+  const data = ((ret.payload.data as TypedData).content as TypedData)
+    .data as TypedData[]
+  const items = (data[0].createOrMutate as TypedData).items as TypedData[]
 
   t.is(items[0].one, undefined)
 })
@@ -1463,9 +1463,9 @@ test('mapRequest should map without default values - defined on endpoint', async
 
   const ret = service.mapRequest(action, endpoint!)
 
-  const data = ((ret.payload.data as DataObject).content as DataObject)
-    .data as DataObject[]
-  const items = (data[0].createOrMutate as DataObject).items as DataObject[]
+  const data = ((ret.payload.data as TypedData).content as TypedData)
+    .data as TypedData[]
+  const items = (data[0].createOrMutate as TypedData).items as TypedData[]
 
   t.is(items[0].one, undefined)
 })

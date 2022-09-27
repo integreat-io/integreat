@@ -2,7 +2,7 @@ import test from 'ava'
 import nock = require('nock')
 import defs from '../helpers/defs'
 import resources from '../helpers/resources'
-import { DataObject, Action } from '../../types'
+import { TypedData, Action } from '../../types'
 
 import Integreat from '../..'
 
@@ -32,7 +32,7 @@ const entryWithoutAuthor = {
 const shouldHaveAuthor =
   () =>
   (action: unknown): unknown => {
-    return ((action as Action).payload?.data as DataObject).author
+    return ((action as Action).payload?.data as TypedData).author
       ? action
       : {
           ...(action as Action),

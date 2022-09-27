@@ -11,7 +11,6 @@ export {
   Headers,
   Ident,
   Dispatch,
-  Data,
   TypedData,
   Reference,
   Transporter,

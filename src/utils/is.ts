@@ -1,5 +1,4 @@
 import {
-  DataObject,
   TypedData,
   Reference,
   Action,
@@ -19,8 +18,9 @@ export const isDate = (value: unknown): value is Date =>
 export const isEmptyObject = (value: unknown): value is {} =>
   isObject(value) && Object.keys(value).length === 0
 
-export const isDataObject = (value: unknown): value is DataObject =>
-  isObject(value)
+export const isDataObject = (
+  value: unknown
+): value is Record<string, unknown> => isObject(value)
 
 export const isTypedData = (value: unknown): value is TypedData =>
   isDataObject(value) && value.hasOwnProperty('$type')

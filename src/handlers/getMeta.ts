@@ -1,16 +1,16 @@
 import debugLib = require('debug')
 import { createErrorOnAction } from '../utils/createError'
-import { Action, DataObject, ActionHandlerResources } from '../types'
+import { Action, ActionHandlerResources } from '../types'
 import getHandler from './get'
 import { isDataObject } from '../utils/is'
 
 const debug = debugLib('great')
 
 const isMetaField = (key: string) => key !== 'id' && !key.startsWith('$')
-const extractAllMetaFields = (meta: DataObject) =>
+const extractAllMetaFields = (meta: Record<string, unknown>) =>
   Object.keys(meta).filter(isMetaField)
 
-const extractMeta = (meta: unknown, keys: unknown): DataObject =>
+const extractMeta = (meta: unknown, keys: unknown): Record<string, unknown> =>
   isDataObject(meta)
     ? typeof keys === 'string' || Array.isArray(keys)
       ? ([] as string[])

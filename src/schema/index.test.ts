@@ -1,7 +1,7 @@
 import test from 'ava'
 import { mapTransform } from 'map-transform'
 import builtIns from '../transformers/builtIns'
-import { DataObject } from '../types'
+import { TypedData } from '../types'
 
 import schema from '.'
 
@@ -208,7 +208,7 @@ test('should set createdAt and updatedAt to now when not set', (t) => {
   const ret = mapTransform(mapping, { functions: builtIns })(data)
 
   const after = Date.now()
-  const { createdAt, updatedAt } = ret as DataObject
+  const { createdAt, updatedAt } = ret as TypedData
   t.true(createdAt instanceof Date)
   t.true(updatedAt instanceof Date)
   t.true((createdAt as Date).getTime() >= before)
@@ -235,7 +235,7 @@ test('should cast id to string', (t) => {
   const mapping = schema(def).mapping
   const ret = mapTransform(mapping, { functions: builtIns })(data)
 
-  const { id } = ret as DataObject
+  const { id } = ret as TypedData
   t.is(id, '35')
 })
 
@@ -256,7 +256,7 @@ test('should set missing id to null', (t) => {
   const mapping = schema(def).mapping
   const ret = mapTransform(mapping, { functions: builtIns })(data)
 
-  const { id } = ret as DataObject
+  const { id } = ret as TypedData
   t.is(id, null)
 })
 
@@ -278,7 +278,7 @@ test('should generate id when not set and generateId is true', (t) => {
   const mapping = schema(def).mapping
   const ret = mapTransform(mapping, { functions: builtIns })(data)
 
-  const { id } = ret as DataObject
+  const { id } = ret as TypedData
   t.is(typeof id, 'string')
   t.true((id as string).length >= 21)
 })
@@ -367,6 +367,6 @@ test('should not return array when expecting value', (t) => {
   const mapping = schema(def).mapping
   const ret = mapTransform(mapping, { functions: builtIns })(data)
 
-  const { title } = ret as DataObject
+  const { title } = ret as TypedData
   t.is(title, undefined)
 })

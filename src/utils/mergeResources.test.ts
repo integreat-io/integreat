@@ -1,5 +1,5 @@
 import test from 'ava'
-import { ActionHandler, Data, DataObject, Transporter } from '../types'
+import { ActionHandler, Transporter } from '../types'
 import { Authenticator } from '../service/types'
 
 import mergeResources from './mergeResources'
@@ -8,8 +8,8 @@ import mergeResources from './mergeResources'
 
 const mockTransporter = {} as Transporter
 const mockTransformer =
-  (_operators: DataObject) =>
-  (_value: unknown): Data =>
+  (_operators: Record<string, unknown>) =>
+  (_value: unknown): unknown =>
     undefined
 const unrealTransporter = {} as Transporter
 const mockHandler = {} as ActionHandler

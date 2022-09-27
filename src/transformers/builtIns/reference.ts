@@ -1,13 +1,12 @@
 import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
 import { isDataObject, isTypedData, isReference, isDate } from '../../utils/is'
-import { Data } from '../../types'
 
 interface Operands extends Record<string, unknown> {
   type?: string
 }
 
-function extractId(value: Data) {
+function extractId(value: unknown) {
   if (isDataObject(value)) {
     return value.id
   } else {
@@ -15,7 +14,7 @@ function extractId(value: Data) {
   }
 }
 
-function extractProps(value: Data) {
+function extractProps(value: unknown) {
   if (isDataObject(value)) {
     const { isNew, isDeleted } = value
     return {
@@ -26,7 +25,7 @@ function extractProps(value: Data) {
   return {}
 }
 
-const castItem = (type: string | undefined) => (value: Data) => {
+const castItem = (type: string | undefined) => (value: unknown) => {
   if (type === undefined) {
     return undefined
   }

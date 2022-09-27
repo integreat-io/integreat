@@ -69,7 +69,7 @@ export interface ServiceDef {
   auth?: boolean | AuthDef | string | null
   incomingIdent?: string
   meta?: string
-  options?: { [key: string]: unknown }
+  options?: Record<string, unknown>
   mutation?: MapDefinition
   endpoints: EndpointDef[]
 }

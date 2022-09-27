@@ -13,17 +13,9 @@ export interface Reference {
   isDeleted?: boolean
 }
 
-export type DataValue = string | number | boolean | Date | null | undefined
-
-export interface DataObject {
-  [key: string]: Data
-}
-
-export type Data = DataValue | Reference | DataObject | Data[]
-
-export interface TypedData extends DataObject {
+export interface TypedData extends Record<string, unknown> {
   $type: string
-  id?: string
+  id?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   isNew?: boolean
@@ -73,14 +65,14 @@ export interface JobDef {
 }
 
 export interface DataFunction {
-  (): Data
+  (): unknown
 }
 
 export interface TransformFunction<
-  T extends DataObject = DataObject,
-  U extends Data = Data
+  T extends Record<string, unknown> = Record<string, unknown>,
+  U = unknown
 > {
-  (operands: T): (value: Data) => U
+  (operands: T): (value: unknown) => U
 }
 
 export interface Ident {

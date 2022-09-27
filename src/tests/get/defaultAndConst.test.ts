@@ -5,7 +5,7 @@ import entrySchema from '../helpers/defs/schemas/entry'
 import entriesService from '../helpers/defs/services/entries'
 import mutations from '../../mutations'
 import entry1 from '../helpers/data/entry1'
-import { TypedData, DataObject } from '../../types'
+import { TypedData } from '../../types'
 
 import Integreat from '../..'
 
@@ -63,12 +63,12 @@ test('should transform entry', async (t) => {
   const item0 = data[0]
   t.is(item0.id, 'ent1')
   t.is(item0.title, 'Entry 1')
-  t.is((item0.author as DataObject).id, 'admin')
-  t.is((item0.author as DataObject).$ref, 'user')
+  t.is((item0.author as TypedData).id, 'admin')
+  t.is((item0.author as TypedData).$ref, 'user')
   const item1 = data[1]
   t.is(item1.id, 'ent2')
   t.is(item1.title, 'No title')
-  t.is((item1.author as DataObject).id, 'admin')
+  t.is((item1.author as TypedData).id, 'admin')
 })
 
 test('should transform entry without defaults', async (t) => {
@@ -90,5 +90,5 @@ test('should transform entry without defaults', async (t) => {
   t.is(data.length, 1)
   t.is(data[0].id, 'ent2')
   t.is(data[0].title, undefined) // Default -- should not be mapped
-  t.is((data[0].author as DataObject).id, 'admin') // Fixed -- should be mapped
+  t.is((data[0].author as TypedData).id, 'admin') // Fixed -- should be mapped
 })

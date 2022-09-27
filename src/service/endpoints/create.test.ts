@@ -2,7 +2,7 @@ import test from 'ava'
 import sinon = require('sinon')
 import createSchema from '../../schema'
 import builtInFunctions from '../../transformers/builtIns'
-import { DataObject } from '../../types'
+import { TypedData } from '../../types'
 import { MapOptions } from '../types'
 import json from '../../transformers/json'
 import { isAction } from '../../utils/is'
@@ -321,7 +321,7 @@ test('should map action props from response', (t) => {
 
   t.is(ret.response?.status, 'badrequest')
   t.is(ret.response?.error, 'Not valid')
-  t.is((ret.response?.data as DataObject[]).length, 1)
+  t.is((ret.response?.data as TypedData[]).length, 1)
   t.deepEqual(ret.response?.paging, expectedPaging)
   t.is(ret.response?.params?.id, '7839')
 })
@@ -369,7 +369,7 @@ test('should map response from service with service and endpoint mutations', (t)
   )(endpointDef)
   const ret = endpoint.mutateResponse(actionWithProps)
 
-  const data = ret.response?.data as DataObject[]
+  const data = ret.response?.data as TypedData[]
   t.is(data.length, 1)
   t.is(data[0].id, 'ent1')
   t.is(ret.response?.status, 'badrequest')
@@ -403,7 +403,7 @@ test('should map response from service with service mutation only', (t) => {
   const ret = endpoint.mutateResponse(actionWithProps)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
-  const data = ret.response?.data as DataObject[]
+  const data = ret.response?.data as TypedData[]
   t.is(data.length, 1)
   t.is(data[0].id, 'ent1')
 })
@@ -444,7 +444,7 @@ test('should keep action props not mapped from response', (t) => {
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, 'Not valid')
-  t.is((ret.response?.data as DataObject[]).length, 1)
+  t.is((ret.response?.data as TypedData[]).length, 1)
 })
 
 test('should set status to error for response with an error', (t) => {
@@ -557,7 +557,7 @@ test('should map from service without defaults', (t) => {
   )(endpointDef)
   const ret = endpoint.mutateResponse(actionWithoutDefaults)
 
-  t.is((ret.response?.data as DataObject[])[0].published, undefined)
+  t.is((ret.response?.data as TypedData[])[0].published, undefined)
 })
 
 test('should not map from service when no mutation pipeline', (t) => {
@@ -775,8 +775,8 @@ test('should map to service with no defaults', (t) => {
   const ret = endpoint.mutateRequest(actionWithoutDefaults)
 
   const items = (
-    ((ret.payload.data as DataObject).content as DataObject).data as DataObject
-  ).items as DataObject[]
+    ((ret.payload.data as TypedData).content as TypedData).data as TypedData
+  ).items as TypedData[]
   t.is(items[0].activated, undefined)
   t.is(items[1].activated, true)
 })
@@ -851,7 +851,7 @@ test('should map request from service (incoming)', (t) => {
 
   const ret = endpoint.mutateRequest(incomingAction, isIncoming)
 
-  const data = ret.payload.data as DataObject[]
+  const data = ret.payload.data as TypedData[]
   t.is(data.length, 1)
   t.is(data[0].id, 'ent1')
   t.is(data[0].$type, 'entry')

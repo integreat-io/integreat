@@ -3,7 +3,7 @@ import sinon = require('sinon')
 import { jsonServiceDef } from './tests/helpers/json'
 import builtInMutations from './mutations'
 import resources from './tests/helpers/resources'
-import { Action, HandlerDispatch, DataObject } from './types'
+import { Action, HandlerDispatch } from './types'
 
 import create, { Definitions } from './create'
 
@@ -219,7 +219,7 @@ test('should map data', async (t) => {
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)
-  const data = ret.data as DataObject[]
+  const data = ret.data as Record<string, unknown>[]
   t.is(data.length, 1)
   const item = data[0]
   t.is(item.id, 'ent1')

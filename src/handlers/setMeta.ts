@@ -1,6 +1,6 @@
 import debugLib = require('debug')
 import { createErrorOnAction } from '../utils/createError'
-import { DataObject, Action, ActionHandlerResources } from '../types'
+import { Action, ActionHandlerResources } from '../types'
 import setHandler from './set'
 import { generateMetaId } from './getMeta'
 
@@ -63,9 +63,13 @@ export default async function setMeta(
     payload: {
       id: metaId,
       type: metaType,
-      data: { id: metaId, $type: metaType, ...(meta as DataObject) },
+      data: {
+        id: metaId,
+        $type: metaType,
+        ...(meta as Record<string, unknown>),
+      },
       sendNoDefaults: true,
-      keys: Object.keys(meta as DataObject),
+      keys: Object.keys(meta as Record<string, unknown>),
       endpoint: endpointId,
     },
     meta: { ident },

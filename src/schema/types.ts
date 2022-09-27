@@ -1,9 +1,9 @@
-import { Data, DataFunction } from '../types'
+import { DataFunction } from '../types'
 
 export interface PropertyShape {
   $cast: string
-  $default?: Data | DataFunction
-  $const?: Data | DataFunction
+  $default?: unknown | DataFunction
+  $const?: unknown | DataFunction
 }
 
 export interface Shape {

@@ -1,9 +1,8 @@
 import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
 import { isDate } from '../../utils/is'
-import { Data } from '../../types'
 
-function castString(value: Data): string | null | undefined {
+function castString(value: Record<string, unknown>): string | null | undefined {
   if (value === null || value === undefined) {
     return value
   } else if (typeof value === 'object') {
