@@ -4,6 +4,7 @@ import { EndpointOptions } from './service/endpoints/types'
 import { IdentConfig } from './service/types'
 import { Service } from './service/types'
 
+// TODO: Make this type more accurate
 export type JsonSchema = Record<string, unknown> | boolean
 
 export interface Reference {

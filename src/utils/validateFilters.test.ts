@@ -34,11 +34,29 @@ test('should return false when filters are invalid', (t) => {
   t.false(ret)
 })
 
-test('should return true when or filters and one is valid', (t) => {
+test('should return true when $or is true and one filter is valid', (t) => {
   const filters = {
     $or: true,
     'payload.data.draft': { const: false },
     'payload.data.title': { const: 'Entry 1' },
+  }
+  const data = {
+    type: 'SET',
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
+  }
+
+  const ret = validateFilters(filters)(data)
+
+  t.true(ret)
+})
+
+test('should return true when one filter in an $or object is valid', (t) => {
+  const filters = {
+    'payload.data.$type': { const: 'entry' },
+    $or: {
+      'payload.data.draft': { const: false },
+      'payload.data.title': { const: 'Entry 1' },
+    },
   }
   const data = {
     type: 'SET',
