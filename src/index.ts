@@ -33,7 +33,7 @@ export { default as transformers } from './transformers'
 export { default as middleware } from './middleware'
 
 export default {
-  version: '0.8.0-beta.1',
+  version: '0.8.0-beta.2',
   create,
   mergeDefinitions,
   mergeResources,
