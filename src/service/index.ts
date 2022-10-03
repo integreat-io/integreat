@@ -124,7 +124,7 @@ export default ({
 
     const transporter = lookupById(transporterId, transporters)
 
-    mapOptions = { noneValues: [undefined, null], ...mapOptions }
+    mapOptions = { noneValues: [undefined, null, ''], ...mapOptions }
 
     const authorization =
       typeof auth === 'string' ? lookupById(auth, auths) : undefined
