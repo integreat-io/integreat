@@ -18,8 +18,11 @@ import {
   isJobWithAction,
   isJobWithFlow,
   isAction,
+  isObject,
 } from '../utils/is'
 import validateFilters from '../utils/validateFilters'
+
+type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType[number]
 
 export interface Payload extends BasePayload {
   jobId?: string
@@ -34,6 +37,9 @@ const isOkResponse = (response?: Response) =>
   typeof response?.status === 'string' &&
   ['ok', 'noaction'].includes(response.status)
 
+const addModify = (mutation: ArrayElement<MapPipe>) =>
+  isObject(mutation) ? { $modify: true, ...mutation } : mutation
+
 // TODO: Prepare mutations in `../create.ts` and call a `mutate()` function here
 function mutateAction(
   action: Action | (Job | Job[])[] | undefined,
@@ -43,7 +49,7 @@ function mutateAction(
 ) {
   if (mutation && isAction(action)) {
     const mutationIncludingAction = Array.isArray(mutation)
-      ? ['$action', ...mutation]
+      ? ['$action', ...mutation.map(addModify)]
       : { '.': '$action', ...mutation } // $action is the action we're mutation to
     const responsesIncludingAction = { ...responses, $action: action }
     return mapTransform(
@@ -310,12 +316,15 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
       meta
     )
 
-    const response = getFlowResponse(job, responses)
+    const actionWithResponse = {
+      ...action,
+      response: getFlowResponse(job, responses),
+    }
     return cleanUpResponse(
       mutateAction(
-        { ...action, response },
+        actionWithResponse,
         (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
-        { ...responses, action },
+        { ...responses, action: actionWithResponse },
         mapOptions
       )
     )

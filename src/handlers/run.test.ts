@@ -6,6 +6,12 @@ import run from './run'
 
 // Setup
 
+const defaultResources = {
+  getService: () => undefined,
+  setProgress: () => undefined,
+  options: {},
+}
+
 const mapOptions = {}
 
 // Tests
@@ -1188,7 +1194,7 @@ test('should mutate simple action with pipeline', async (t) => {
       id: 'action1',
       action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
       mutation: [
-        { $modify: true, payload: 'payload', 'payload.flag': { $value: true } },
+        { payload: 'payload', 'payload.flag': { $value: true } }, // `$modify: true` is added
       ],
     },
   }
@@ -1408,6 +1414,141 @@ test('should join array of error messsages', async (t) => {
 test('should return response with responseMutation pipeline', async (t) => {
   const dispatch = sinon
     .stub()
+    .onCall(0)
+    .resolves({
+      response: {
+        status: 'ok',
+        data: [{ id: 'ent1', $type: 'entry' }],
+      },
+    })
+    .onCall(1)
+    .resolves({
+      response: {
+        status: 'ok',
+        data: {
+          id: 'date1',
+          $type: 'date',
+          date: new Date('2022-09-14T00:43:44Z'),
+        },
+        params: { queue: true },
+      },
+    })
+  const jobs = {
+    action8: {
+      id: 'action8',
+      flow: [
+        {
+          id: 'getEntries',
+          action: { type: 'GET', payload: { type: 'entries' } },
+        },
+        {
+          id: 'setDate',
+          action: { type: 'SET', payload: { type: 'date', id: 'updatedAt' } },
+        },
+      ],
+      responseMutation: [
+        {
+          'response.data': '^^getEntries.response.data',
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action8' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
+    // params: { queue: true },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.deepEqual(ret.response, expected)
+})
+
+test('should return error from a sub-flow started with RUN and make it available on action.response', async (t) => {
+  const jobs = {
+    action9: {
+      id: 'action9',
+      flow: [
+        {
+          id: 'getEntries',
+          action: { type: 'GET', payload: { type: 'entry' } },
+        },
+        {
+          id: 'setEntriesInOtherFlow',
+          action: { type: 'RUN', payload: { jobId: 'action10' } },
+          mutation: {
+            'payload.data': 'getEntries.response.data',
+          },
+        },
+        {
+          id: 'setDate',
+          action: { type: 'SET', payload: { type: 'date', id: 'updatedAt' } },
+        },
+      ],
+      responseMutation: {
+        response: {
+          $if: {
+            $transform: 'compare',
+            path: 'getEntries.status',
+            match: 'notfound',
+          },
+          then: { status: 'ok' },
+          else: 'action.response',
+        },
+      },
+    },
+    action10: {
+      id: 'action10',
+      flow: [
+        {
+          id: 'setEntries',
+          conditions: {
+            'action.payload.data': { type: 'array', minItems: 1 },
+          },
+          action: { type: 'SET', payload: { type: 'entry' } },
+          mutation: {
+            'payload.data': 'action.payload.data',
+          },
+        },
+      ],
+    },
+  }
+  const runFn = run(jobs, mapOptions)
+  const dispatch = sinon
+    .stub()
+    .onCall(0)
+    .resolves({ response: { status: 'ok', data: [] } })
+    .onCall(1)
+    .callsFake((action) => runFn(action, { ...defaultResources, dispatch }))
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action9' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action9', the following steps failed: 'setEntriesInOtherFlow' (error: Could not finish job 'action10', the following steps failed: 'setEntries' (error: Conditions were not met))",
+  }
+
+  const ret = await runFn(action, { ...handlerResources, dispatch })
+
+  t.deepEqual(ret.response, expected)
+  t.is(dispatch.callCount, 2)
+  // t.deepEqual(dispatch.args[1][0], {})
+})
+
+test('should return response with error from data', async (t) => {
+  const dispatch = sinon
+    .stub()
     .resolves({ response: { status: 'ok', data: { errorMessage: 'No data' } } })
   const jobs = {
     action7: {
@@ -1423,7 +1564,6 @@ test('should return response with responseMutation pipeline', async (t) => {
       ],
       responseMutation: [
         {
-          $modify: true,
           'response.error': '^^setDate.response.data.errorMessage',
         },
       ],
