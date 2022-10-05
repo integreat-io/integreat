@@ -169,8 +169,9 @@ async function runStep(
   // Check if conditions are met
   if (step.conditions) {
     // Validate specific conditions
-    if (!validateFilters(step.conditions)(responses)) {
-      response = setStepError(step.id, 'Conditions were not met')
+    const validationErrors = validateFilters(step.conditions, true)(responses)
+    if (validationErrors.length > 0) {
+      response = setStepError(step.id, validationErrors.join(' | '))
     }
   } else if (prevStep) {
     // No conditions are specified -- validate the status of the previous step

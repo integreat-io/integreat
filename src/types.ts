@@ -4,9 +4,6 @@ import { EndpointOptions } from './service/endpoints/types'
 import { IdentConfig } from './service/types'
 import { Service } from './service/types'
 
-// TODO: Make this type more accurate
-export type JsonSchema = Record<string, unknown> | boolean
-
 export interface Reference {
   id: string | null
   $ref: string
@@ -38,9 +35,13 @@ export type ScheduleObject = {
   wy?: number[]
 }
 
+export interface Condition extends Record<string, unknown> {
+  failMessage?: string
+}
+
 interface JobFields {
   id: string
-  conditions?: Record<string, JsonSchema | undefined>
+  conditions?: Record<string, Condition | undefined>
   mutation?: MapObject | MapPipe
 }
 

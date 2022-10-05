@@ -56,9 +56,7 @@ export default function isMatch(
   endpoint: EndpointDef
 ): (action: Action, isIncoming?: boolean) => boolean {
   const match = endpoint.match || {}
-  const matchFilters = match.filters
-    ? validateFilters(match.filters)
-    : () => true
+  const matchFilters = match.filters ? validateFilters(match.filters) : () => []
 
   return (action, isIncoming = false) =>
     matchId(endpoint, action) &&
@@ -67,5 +65,5 @@ export default function isMatch(
     matchAction(endpoint, action) &&
     matchParams(endpoint, action) &&
     matchIncoming(endpoint, isIncoming) &&
-    matchFilters(action)
+    matchFilters(action).length === 0 // Not too pretty
 }

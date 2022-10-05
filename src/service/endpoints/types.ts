@@ -1,5 +1,5 @@
 import { MapDefinition } from 'map-transform'
-import { Action, JsonSchema } from '../../types'
+import { Action, Condition } from '../../types'
 
 export type EndpointOptions = Record<string, unknown>
 
@@ -8,7 +8,7 @@ export interface MatchObject {
   type?: string | string[]
   scope?: string | string[]
   params?: Record<string, boolean | undefined>
-  filters?: Record<string, JsonSchema | undefined>
+  filters?: Record<string, Condition | boolean | undefined>
   incoming?: boolean
 }
 

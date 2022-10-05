@@ -670,7 +670,63 @@ test('should not run second action when its conditions fail', async (t) => {
   t.is(ret.response?.status, 'error', ret.response?.error)
   t.is(
     ret.response?.error,
-    "Could not finish job 'action6', the following steps failed: 'setEntries' (error: Conditions were not met)"
+    "Could not finish job 'action6', the following steps failed: 'setEntries' (error: 'getEntries.response.data' did not pass { type: 'array', minItems: 1 })"
+  )
+})
+
+test('should use fail message from failed condition', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: { status: 'ok' },
+    })
+    .onCall(0)
+    .resolves({ response: { status: 'ok', data: [] } })
+  const jobs = {
+    action6: {
+      id: 'action6',
+      flow: [
+        {
+          id: 'getEntries',
+          action: {
+            type: 'GET',
+            payload: { type: 'entry' },
+          },
+        },
+        {
+          id: 'setEntries',
+          conditions: {
+            'getEntries.response.data': {
+              type: 'array',
+              minItems: 1,
+              failMessage: 'Data must be an array with at least one item',
+            },
+          },
+          action: {
+            type: 'SET',
+            payload: { type: 'entry' },
+          },
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(dispatch.callCount, 1) // Only the first step should run
+  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(
+    ret.response?.error,
+    "Could not finish job 'action6', the following steps failed: 'setEntries' (error: Data must be an array with at least one item)"
   )
 })
 
@@ -779,7 +835,7 @@ test('should validate conditionss in parallel actions too', async (t) => {
   t.is(ret.response?.status, 'error', ret.response?.error)
   t.is(
     ret.response?.error,
-    "Could not finish job 'action3', the following steps failed: 'setEntry' (error: Conditions were not met)"
+    "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' })"
   )
 })
 
@@ -1511,7 +1567,11 @@ test('should return error from a sub-flow started with RUN and make it available
         {
           id: 'setEntries',
           conditions: {
-            'action.payload.data': { type: 'array', minItems: 1 },
+            'action.payload.data': {
+              type: 'array',
+              minItems: 1,
+              failMessage: 'Need at least one data item',
+            },
           },
           action: { type: 'SET', payload: { type: 'entry' } },
           mutation: {
@@ -1536,7 +1596,7 @@ test('should return error from a sub-flow started with RUN and make it available
   const expected = {
     status: 'error',
     error:
-      "Could not finish job 'action9', the following steps failed: 'setEntriesInOtherFlow' (error: Could not finish job 'action10', the following steps failed: 'setEntries' (error: Conditions were not met))",
+      "Could not finish job 'action9', the following steps failed: 'setEntriesInOtherFlow' (error: Could not finish job 'action10', the following steps failed: 'setEntries' (error: Need at least one data item))",
   }
 
   const ret = await runFn(action, { ...handlerResources, dispatch })
