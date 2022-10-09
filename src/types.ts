@@ -35,8 +35,13 @@ export type ScheduleObject = {
   wy?: number[]
 }
 
+export interface ConditionFailObject extends Record<string, unknown> {
+  message?: string
+  status?: string
+}
+
 export interface Condition extends Record<string, unknown> {
-  failMessage?: string
+  onFail?: ConditionFailObject | string
 }
 
 interface JobFields {

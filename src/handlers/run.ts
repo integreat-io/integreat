@@ -9,6 +9,7 @@ import {
   Response,
   Job,
   JobDef,
+  ConditionFailObject,
 } from '../types'
 import { MapOptions } from '../service/types'
 import { createErrorOnAction } from '../utils/createError'
@@ -80,16 +81,14 @@ const prependResponseError = (
     ? { ...response, error: `${message}${response.error}` }
     : response
 
-const errorMessageFromResponses = (
-  indices: number[],
-  responses: Action[],
-  ids: string[]
-) =>
-  indices
-    .map(
-      (index) =>
-        `'${ids[index]}' (${responses[index]?.response?.status}: ${responses[index]?.response?.error})`
+const errorMessageFromResponses = (responses: Action[], ids: string[]) =>
+  responses
+    .map((response, index) =>
+      response.response?.error
+        ? `'${ids[index]}' (${response.response?.status}: ${response.response?.error})`
+        : undefined
     )
+    .filter(Boolean)
     .join(', ')
 
 function responseFromResponses(responses: Action[], ids: string[]) {
@@ -98,13 +97,16 @@ function responseFromResponses(responses: Action[], ids: string[]) {
       isOkResponse(response?.response) ? undefined : index
     )
     .filter((index): index is number => index !== undefined)
+  const message = errorMessageFromResponses(responses, ids)
   return {
     response:
       errorIndices.length > 0
         ? {
             status: 'error',
-            error: errorMessageFromResponses(errorIndices, responses, ids),
+            error: message,
           }
+        : message
+        ? { status: 'ok', warning: `Message from steps: ${message}` }
         : { status: 'ok' },
   } as Action
 }
@@ -155,6 +157,20 @@ function isStepOk(
   }
 }
 
+const messageFromValidationErrors = (vals: ConditionFailObject[]) =>
+  vals
+    .map((val) => val.message)
+    .filter(Boolean)
+    .join(' | ')
+
+function statusFromValidationErrors(vals: ConditionFailObject[]) {
+  const statuses = vals.map((val) => val.status).filter(Boolean)
+  if (statuses.length === 0) {
+    return undefined
+  }
+  return statuses[0]
+}
+
 async function runStep(
   step: Job,
   responses: Record<string, Action>,
@@ -171,7 +187,11 @@ async function runStep(
     // Validate specific conditions
     const validationErrors = validateFilters(step.conditions, true)(responses)
     if (validationErrors.length > 0) {
-      response = setStepError(step.id, validationErrors.join(' | '))
+      response = setStepError(
+        step.id,
+        messageFromValidationErrors(validationErrors),
+        statusFromValidationErrors(validationErrors)
+      )
     }
   } else if (prevStep) {
     // No conditions are specified -- validate the status of the previous step

@@ -1,13 +1,13 @@
 import util = require('util')
 import { validate } from 'map-transform'
-import { Condition } from '../types'
+import { Condition, ConditionFailObject } from '../types'
 import { isObject } from './is'
 
 export type FilterFn = (data: unknown) => boolean
 
-type FilterAndMessage = [FilterFn, () => string]
+type FilterAndMessage = [FilterFn, () => ConditionFailObject]
 
-const cleanCondition = ({ failMessage, ...filter }: Condition) => filter
+const cleanCondition = ({ onFail, ...filter }: Condition) => filter
 const cleanFilter = (filter: Condition | boolean) =>
   isObject(filter) ? cleanCondition(filter) : filter
 
@@ -33,10 +33,13 @@ const prepareMessage = (
   !useFriendlyMessages
     ? () => path
     : isObject(filter)
-    ? filter.failMessage
-      ? () => filter.failMessage
-      : () => `'${path}' did not pass ${util.inspect(filter)}`
-    : () => `'${path}' did not pass its condition`
+    ? filter.onFail
+      ? () =>
+          typeof filter.onFail === 'string'
+            ? { message: filter.onFail }
+            : filter.onFail
+      : () => ({ message: `'${path}' did not pass ${util.inspect(filter)}` })
+    : () => ({ message: `'${path}' did not pass its condition` })
 
 export default function validateFilters(
   filters: Record<string, Condition | boolean | undefined>,
@@ -50,10 +53,12 @@ export default function validateFilters(
     .filter(([filter]) => !!filter) as FilterAndMessage[]
   const isOrFilters = filters.$or === true
 
-  return function validate(data: unknown): string[] {
-    const errors = filterFns
+  return function validate(data: unknown): ConditionFailObject[] {
+    const failObjects = filterFns
       .map(([filter, getMessage]) => (filter(data) ? undefined : getMessage()))
-      .filter(Boolean) as string[]
-    return isOrFilters && errors.length < filterFns.length ? [] : errors
+      .filter(Boolean) as ConditionFailObject[]
+    return isOrFilters && failObjects.length < filterFns.length
+      ? []
+      : failObjects
   }
 }

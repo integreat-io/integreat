@@ -674,7 +674,7 @@ test('should not run second action when its conditions fail', async (t) => {
   )
 })
 
-test('should use fail message from failed condition', async (t) => {
+test('should use fail message and status from failed condition', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({
@@ -696,10 +696,17 @@ test('should use fail message from failed condition', async (t) => {
         {
           id: 'setEntries',
           conditions: {
+            'getEntries.response.status': {
+              const: 'ok',
+              onFail: { message: 'Response must be ok' },
+            },
             'getEntries.response.data': {
               type: 'array',
               minItems: 1,
-              failMessage: 'Data must be an array with at least one item',
+              onFail: {
+                message: 'No data to set',
+                status: 'noaction',
+              },
             },
           },
           action: {
@@ -723,10 +730,10 @@ test('should use fail message from failed condition', async (t) => {
   })
 
   t.is(dispatch.callCount, 1) // Only the first step should run
-  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is(
-    ret.response?.error,
-    "Could not finish job 'action6', the following steps failed: 'setEntries' (error: Data must be an array with at least one item)"
+    ret.response?.warning,
+    "Message from steps: 'setEntries' (noaction: No data to set)"
   )
 })
 
@@ -1570,7 +1577,7 @@ test('should return error from a sub-flow started with RUN and make it available
             'action.payload.data': {
               type: 'array',
               minItems: 1,
-              failMessage: 'Need at least one data item',
+              onFail: 'Need at least one data item',
             },
           },
           action: { type: 'SET', payload: { type: 'entry' } },
