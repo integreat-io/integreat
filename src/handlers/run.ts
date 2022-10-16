@@ -298,11 +298,14 @@ async function runFlow(
     return newResponses
   } else if (isJobWithAction(job) && parentId) {
     // We've got one action – run it
+    const action = mutateAction(job.action, mutation, prevResponses, mapOptions)
+    const response = await runAction(action, dispatch, meta)
     return {
-      [parentId]: await runAction(
-        mutateAction(job.action, mutation, prevResponses, mapOptions),
-        dispatch,
-        meta
+      [parentId]: mutateResponse(
+        { ...action, response: response.response },
+        job,
+        prevResponses,
+        mapOptions
       ),
     }
   }
@@ -341,6 +344,22 @@ const cleanUpResponse = (action: Action) => ({
   },
 })
 
+function mutateResponse(
+  action: Action,
+  job: Job,
+  responses: Record<string, Action>,
+  mapOptions: MapOptions
+) {
+  return cleanUpResponse(
+    mutateAction(
+      action,
+      (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
+      { ...responses, action },
+      mapOptions
+    )
+  )
+}
+
 export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
   async function run(
     action: Action,
@@ -368,16 +387,26 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
       meta
     )
 
-    const actionWithResponse = {
-      ...action,
-      response: getFlowResponse(job, responses),
-    }
-    return cleanUpResponse(
-      mutateAction(
-        actionWithResponse,
-        (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
-        { ...responses, action: actionWithResponse },
-        mapOptions
-      )
+    return mutateResponse(
+      {
+        ...action,
+        response: getFlowResponse(job, responses),
+      },
+      job,
+      responses,
+      mapOptions
     )
+
+    // const actionWithResponse = {
+    //   ...action,
+    //   response: getFlowResponse(job, responses),
+    // }
+    // return cleanUpResponse(
+    //   mutateAction(
+    //     actionWithResponse,
+    //     (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
+    //     { ...responses, action: actionWithResponse },
+    //     mapOptions
+    //   )
+    // )
   }

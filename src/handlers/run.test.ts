@@ -1592,7 +1592,56 @@ test('should return response with responseMutation pipeline', async (t) => {
   const expected = {
     status: 'ok',
     data: [{ id: 'ent1', $type: 'entry' }],
-    // params: { queue: true },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.deepEqual(ret.response, expected)
+})
+
+test('should run responseMutation pipeline on response from step', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ response: { status: 'ok', data: [] } })
+  const jobs = {
+    action8: {
+      id: 'action8',
+      flow: [
+        {
+          id: 'getEntries',
+          action: { type: 'GET', payload: { type: 'entries' } },
+          responseMutation: [
+            {
+              'response.status': {
+                $if: {
+                  $transform: 'compare',
+                  path: 'response.status',
+                  match: 'ok',
+                },
+                then: { $value: 'error' },
+                else: 'response.status',
+              },
+            },
+          ],
+        },
+        {
+          id: 'setDate',
+          action: { type: 'SET', payload: { type: 'date', id: 'updatedAt' } },
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action8' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error: '',
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -1722,4 +1771,6 @@ test('should return response with error from data', async (t) => {
   t.deepEqual(ret.response?.error, 'No data')
 })
 
+test.todo('should support sub-flow')
+test.todo('should run responseMutation pipeline on response from sub-flow')
 test.todo('should return error for invalid job (missing action and flow)')
