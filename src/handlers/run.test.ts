@@ -787,7 +787,7 @@ test('should run second action when its conditions are fulfilled', async (t) => 
   t.is(ret.response?.status, 'ok', ret.response?.error)
 })
 
-test('should validate conditionss in parallel actions too', async (t) => {
+test('should validate conditions in parallel actions too', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({
@@ -1286,6 +1286,74 @@ test('should mutate simple action with pipeline', async (t) => {
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('should mutate action into several actions based on data array', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: { status: 'ok', data: [] },
+    })
+    .onCall(2)
+    .resolves({
+      response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
+    })
+  const jobs = {
+    action11: {
+      id: 'action11',
+      flow: [
+        {
+          id: 'setItem',
+          action: { type: 'SET', payload: { type: 'entry' } },
+          iteratePath: 'action.payload.data.items',
+          mutation: { 'payload.flag': { $value: true } }, // `$modify: true` is added
+        },
+      ],
+      responseMutation: {
+        response: {
+          $modify: 'response',
+          data: 'setItem_2.response.data', // To verify that the actions get postfixed with index
+        },
+      },
+    },
+  }
+  const data = { items: [{ id: 'ent1' }, { id: 'ent2' }, { id: 'ent3' }] }
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action11', data },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction0 = {
+    type: 'SET',
+    payload: { type: 'entry', data: { id: 'ent1' }, flag: true },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction1 = {
+    type: 'SET',
+    payload: { type: 'entry', data: { id: 'ent2' }, flag: true },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction2 = {
+    type: 'SET',
+    payload: { type: 'entry', data: { id: 'ent3' }, flag: true },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedResponse = {
+    ...action,
+    response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(dispatch.callCount, 3)
+  t.deepEqual(dispatch.args[0][0], expectedAction0)
+  t.deepEqual(dispatch.args[1][0], expectedAction1)
+  t.deepEqual(dispatch.args[2][0], expectedAction2)
   t.deepEqual(ret, expectedResponse)
 })
 

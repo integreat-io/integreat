@@ -56,6 +56,7 @@ export interface JobWithFlow extends JobFields {
 
 export interface JobWithAction extends JobFields {
   action: Action
+  iteratePath?: string
 }
 
 export type Job = JobWithAction | JobWithFlow

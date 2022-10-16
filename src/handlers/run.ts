@@ -10,6 +10,7 @@ import {
   Job,
   JobDef,
   ConditionFailObject,
+  JobWithAction,
 } from '../types'
 import { MapOptions } from '../service/types'
 import { createErrorOnAction } from '../utils/createError'
@@ -21,6 +22,7 @@ import {
   isAction,
   isObject,
 } from '../utils/is'
+import { ensureArray } from '../utils/array'
 import validateFilters from '../utils/validateFilters'
 
 type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType[number]
@@ -216,6 +218,33 @@ async function runStep(
   return response
 }
 
+const isJobWithIteratePath = (step: unknown): step is JobWithAction =>
+  isJobStep(step) && typeof (step as JobWithAction).iteratePath === 'string'
+
+const setData = (action: Action, data: unknown) => ({
+  ...action,
+  payload: { ...action.payload, data },
+})
+
+function unpackIterationSteps(
+  step: Job | Job[],
+  responses: Record<string, Action>,
+  mapOptions: MapOptions
+) {
+  if (!isJobWithIteratePath(step)) {
+    return step
+  }
+
+  const getter = mapTransform(step.iteratePath as string, mapOptions) // We know this is a string
+  const items = ensureArray(getter(responses))
+
+  return items.map((data, index) => ({
+    ...step,
+    id: `${step.id}_${index}`,
+    action: setData(step.action, data),
+  }))
+}
+
 async function runFlow(
   job: Job,
   prevResponses: Record<string, Action>,
@@ -227,10 +256,12 @@ async function runFlow(
   if (isJobWithFlow(job)) {
     // We have sequence of job steps – go through them one by one
     const flow = job.flow
-    const newResponses = {}
-    for (const [index, step] of flow.entries()) {
+    const newResponses: Record<string, Action> = {}
+    for (const [index, rawStep] of flow.entries()) {
       const responses = { ...prevResponses, ...newResponses }
       const prevStep = index > 0 ? flow[index - 1] : undefined
+
+      const step = unpackIterationSteps(rawStep, responses, mapOptions)
 
       if (isJobStep(step)) {
         // A single step
@@ -246,7 +277,7 @@ async function runFlow(
         )
       } else if (Array.isArray(step)) {
         // An array of steps within a sequence – run them in parallel
-        // Note that it is okay to use `Promise.all` here, as rejection is
+        // Note that it is okay to use `Promise.all` here, as rejections are
         // handled in `runStep()`
         await Promise.all(
           step.map((step) =>
