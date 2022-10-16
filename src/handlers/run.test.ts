@@ -737,6 +737,72 @@ test('should use fail message and status from failed condition', async (t) => {
   )
 })
 
+test('should not continue flow when condition marked with break fails', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: { status: 'ok' },
+    })
+    .onCall(0)
+    .resolves({ response: { status: 'ok', data: [] } })
+  const jobs = {
+    action6: {
+      id: 'action6',
+      flow: [
+        {
+          id: 'getEntries',
+          conditions: {
+            'action.payload.id': {
+              type: 'string',
+              onFail: {
+                status: 'badrequest',
+                message: 'Must be called with an id',
+                break: true,
+              },
+            },
+          },
+          action: {
+            type: 'GET',
+            payload: { type: 'entry' },
+          },
+        },
+        {
+          id: 'setEntries',
+          conditions: {
+            'getEntries.response.data': {
+              type: 'array',
+              minItems: 1,
+            },
+          },
+          action: {
+            type: 'SET',
+            payload: { type: 'entry' },
+          },
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+      id: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(dispatch.callCount, 0) // No steps should be run
+  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(
+    ret.response?.error,
+    "Could not finish job 'action6', the following steps failed: 'getEntries' (badrequest: Must be called with an id)"
+  )
+})
+
 test('should run second action when its conditions are fulfilled', async (t) => {
   const dispatch = sinon
     .stub()

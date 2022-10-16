@@ -38,6 +38,7 @@ export type ScheduleObject = {
 export interface ConditionFailObject extends Record<string, unknown> {
   message?: string
   status?: string
+  break?: boolean
 }
 
 export interface Condition extends Record<string, unknown> {
@@ -57,6 +58,7 @@ export interface JobWithFlow extends JobFields {
 export interface JobWithAction extends JobFields {
   action: Action
   iteratePath?: string
+  responseMutation?: MapObject | MapPipe
 }
 
 export type Job = JobWithAction | JobWithFlow

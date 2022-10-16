@@ -181,41 +181,40 @@ async function runStep(
   mapOptions: MapOptions,
   meta?: Meta,
   prevStep?: Job | Job[]
-) {
-  let response: Record<string, Action> | undefined
-
+): Promise<boolean> {
   // Check if conditions are met
   if (step.conditions) {
     // Validate specific conditions
     const validationErrors = validateFilters(step.conditions, true)(responses)
     if (validationErrors.length > 0) {
-      response = setStepError(
+      const response = setStepError(
         step.id,
         messageFromValidationErrors(validationErrors),
         statusFromValidationErrors(validationErrors)
       )
+      setResponses(response, newResponses)
+      return validationErrors.some((val) => val.break)
     }
   } else if (prevStep) {
     // No conditions are specified -- validate the status of the previous step
     if (!isStepOk(prevStep, responses)) {
-      response = newResponses
+      return false
     }
   }
 
-  if (!response) {
-    try {
-      response = await runFlow(step, responses, dispatch, mapOptions, meta)
-    } catch (error) {
-      response = setStepError(
-        step.id,
-        error instanceof Error ? error.message : String(error),
-        'rejected'
-      )
-    }
+  let response: Record<string, Action> | undefined
+  try {
+    response = await runFlow(step, responses, dispatch, mapOptions, meta)
+  } catch (error) {
+    response = setStepError(
+      step.id,
+      error instanceof Error ? error.message : String(error),
+      'rejected'
+    )
   }
 
   setResponses(response, newResponses)
-  return response
+  return false
 }
 
 const isJobWithIteratePath = (step: unknown): step is JobWithAction =>
@@ -266,7 +265,7 @@ async function runFlow(
       if (isJobStep(step)) {
         // A single step
         // Note: `runStep()` will mutate `newResponses` as it runs
-        await runStep(
+        const doBreak = await runStep(
           step,
           responses,
           newResponses,
@@ -275,11 +274,15 @@ async function runFlow(
           meta,
           prevStep
         )
+        // Break if step returned true
+        if (doBreak) {
+          return newResponses
+        }
       } else if (Array.isArray(step)) {
         // An array of steps within a sequence – run them in parallel
         // Note that it is okay to use `Promise.all` here, as rejections are
         // handled in `runStep()`
-        await Promise.all(
+        const doBreak = await Promise.all(
           step.map((step) =>
             // Note: `runStep()` will mutate `newResponses` as it runs
             runStep(
@@ -293,8 +296,13 @@ async function runFlow(
             )
           )
         )
+        // Break if any of the steps returned true
+        if (doBreak.includes(true)) {
+          return newResponses
+        }
       }
     }
+    // Flow completed - return responses
     return newResponses
   } else if (isJobWithAction(job) && parentId) {
     // We've got one action – run it
@@ -396,17 +404,4 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
       responses,
       mapOptions
     )
-
-    // const actionWithResponse = {
-    //   ...action,
-    //   response: getFlowResponse(job, responses),
-    // }
-    // return cleanUpResponse(
-    //   mutateAction(
-    //     actionWithResponse,
-    //     (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
-    //     { ...responses, action: actionWithResponse },
-    //     mapOptions
-    //   )
-    // )
   }
