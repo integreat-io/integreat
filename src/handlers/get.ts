@@ -8,7 +8,6 @@ import { Service } from '../service/types'
 import { Endpoint } from '../service/endpoints/types'
 
 const debug = debugLib('great')
-const limit = pLimit(1)
 
 const isErrorAction = (action: Action) =>
   action.response?.status !== 'ok' && action.response?.status !== 'notfound'
@@ -65,7 +64,7 @@ async function runAsIndividualActions(
   return combineActions(
     action,
     await Promise.all(
-      actions.map((action) => limit(() => mapPerId(endpoint)(action)))
+      actions.map((action) => pLimit(1)(() => mapPerId(endpoint)(action)))
     )
   )
 }
