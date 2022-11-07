@@ -1,5 +1,6 @@
 /* eslint-disable security/detect-object-injection */
 import { mapTransform, MapObject, MapPipe } from 'map-transform'
+import pLimit = require('p-limit')
 import {
   Action,
   ActionHandlerResources,
@@ -286,15 +287,17 @@ async function runFlow(
         // handled in `runStep()`
         const doBreak = await Promise.all(
           step.map((step) =>
-            // Note: `runStep()` will mutate `arrayResponses` as it runs
-            runStep(
-              step,
-              responses,
-              arrayResponses,
-              dispatch,
-              mapOptions,
-              meta,
-              prevStep
+            pLimit(1)(() =>
+              // Note: `runStep()` will mutate `arrayResponses` as it runs
+              runStep(
+                step,
+                responses,
+                arrayResponses,
+                dispatch,
+                mapOptions,
+                meta,
+                prevStep
+              )
             )
           )
         )
