@@ -279,16 +279,18 @@ async function runFlow(
           return newResponses
         }
       } else if (Array.isArray(step)) {
+        const arrayResponses: Record<string, Action> = {}
+
         // An array of steps within a sequence – run them in parallel
         // Note that it is okay to use `Promise.all` here, as rejections are
         // handled in `runStep()`
         const doBreak = await Promise.all(
           step.map((step) =>
-            // Note: `runStep()` will mutate `newResponses` as it runs
+            // Note: `runStep()` will mutate `arrayResponses` as it runs
             runStep(
               step,
               responses,
-              newResponses,
+              arrayResponses,
               dispatch,
               mapOptions,
               meta,
@@ -296,6 +298,7 @@ async function runFlow(
             )
           )
         )
+        setResponses(arrayResponses, newResponses)
 
         // Break if any of the steps returned true
         if (doBreak.includes(true)) {
@@ -304,7 +307,7 @@ async function runFlow(
 
         // Combine response data for original action when this was unpacked actions
         if (isObject(rawStep) && typeof rawStep.id === 'string') {
-          const data = Object.values(newResponses).map(
+          const data = Object.values(arrayResponses).map(
             (response) => response.response?.data
           )
           newResponses[rawStep.id] = {

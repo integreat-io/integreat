@@ -1355,7 +1355,7 @@ test('should mutate simple action with pipeline', async (t) => {
   t.deepEqual(ret, expectedResponse)
 })
 
-test('should mutate action into several actions based on data array', async (t) => {
+test('should mutate action into several actions based on iterate path', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({
@@ -1423,24 +1423,28 @@ test('should mutate action into several actions based on data array', async (t) 
   t.deepEqual(ret, expectedResponse)
 })
 
-test('should combine response data from several actions based on data array', async (t) => {
+test('should combine response data from several actions based on iterate path', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ response: { status: 'ok', data: [] } })
-    .onCall(0)
-    .resolves({ response: { status: 'ok', data: { id: 'ent1' } } })
+    .resolves({ response: { status: 'ok', data: ['ent1', 'ent2', 'ent3'] } })
     .onCall(1)
-    .resolves({ response: { status: 'ok', data: { id: 'ent2' } } })
+    .resolves({ response: { status: 'ok', data: { id: 'ent1' } } })
     .onCall(2)
+    .resolves({ response: { status: 'ok', data: { id: 'ent2' } } })
+    .onCall(3)
     .resolves({ response: { status: 'ok', data: { id: 'ent3' } } })
   const jobs = {
     action12: {
       id: 'action12',
       flow: [
         {
+          id: 'getIds',
+          action: { type: 'GET', payload: { type: 'entry' } },
+        },
+        {
           id: 'getItems',
           action: { type: 'GET', payload: {} },
-          iteratePath: 'action.payload.ids',
+          iteratePath: 'getIds.response.data',
           mutation: {
             payload: { type: { $value: 'entry' }, id: '$action.payload.data' },
           },
@@ -1461,15 +1465,20 @@ test('should combine response data from several actions based on data array', as
   }
   const expectedAction0 = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent1' },
+    payload: { type: 'entry' },
     meta: { ident: { id: 'johnf' } },
   }
   const expectedAction1 = {
     type: 'GET',
-    payload: { type: 'entry', id: 'ent2' },
+    payload: { type: 'entry', id: 'ent1' },
     meta: { ident: { id: 'johnf' } },
   }
   const expectedAction2 = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent2' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction3 = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent3' },
     meta: { ident: { id: 'johnf' } },
@@ -1488,10 +1497,11 @@ test('should combine response data from several actions based on data array', as
   })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is(dispatch.callCount, 3)
+  t.is(dispatch.callCount, 4)
   t.deepEqual(dispatch.args[0][0], expectedAction0)
   t.deepEqual(dispatch.args[1][0], expectedAction1)
   t.deepEqual(dispatch.args[2][0], expectedAction2)
+  t.deepEqual(dispatch.args[3][0], expectedAction3)
   t.deepEqual(ret, expectedResponse)
 })
 
