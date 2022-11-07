@@ -296,9 +296,20 @@ async function runFlow(
             )
           )
         )
+
         // Break if any of the steps returned true
         if (doBreak.includes(true)) {
           return newResponses
+        }
+
+        // Combine response data for original action when this was unpacked actions
+        if (isObject(rawStep) && typeof rawStep.id === 'string') {
+          const data = Object.values(newResponses).map(
+            (response) => response.response?.data
+          )
+          newResponses[rawStep.id] = {
+            response: { status: 'ok', data },
+          } as Action // It's ok to not have a payload here
         }
       }
     }

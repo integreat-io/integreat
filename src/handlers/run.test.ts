@@ -1423,6 +1423,78 @@ test('should mutate action into several actions based on data array', async (t) 
   t.deepEqual(ret, expectedResponse)
 })
 
+test('should combine response data from several actions based on data array', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ response: { status: 'ok', data: [] } })
+    .onCall(0)
+    .resolves({ response: { status: 'ok', data: { id: 'ent1' } } })
+    .onCall(1)
+    .resolves({ response: { status: 'ok', data: { id: 'ent2' } } })
+    .onCall(2)
+    .resolves({ response: { status: 'ok', data: { id: 'ent3' } } })
+  const jobs = {
+    action12: {
+      id: 'action12',
+      flow: [
+        {
+          id: 'getItems',
+          action: { type: 'GET', payload: {} },
+          iteratePath: 'action.payload.ids',
+          mutation: {
+            payload: { type: { $value: 'entry' }, id: '$action.payload.data' },
+          },
+        },
+      ],
+      responseMutation: {
+        response: {
+          $modify: 'response',
+          data: 'getItems.response.data', // Will be the combined response data from all individual actions
+        },
+      },
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action12', ids: ['ent1', 'ent2', 'ent3'] },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction0 = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent1' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction1 = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent2' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction2 = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent3' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedResponse = {
+    ...action,
+    response: {
+      status: 'ok',
+      data: [{ id: 'ent1' }, { id: 'ent2' }, { id: 'ent3' }],
+    },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(dispatch.callCount, 3)
+  t.deepEqual(dispatch.args[0][0], expectedAction0)
+  t.deepEqual(dispatch.args[1][0], expectedAction1)
+  t.deepEqual(dispatch.args[2][0], expectedAction2)
+  t.deepEqual(ret, expectedResponse)
+})
+
 test('should return data based on mutation', async (t) => {
   const dispatch = sinon
     .stub()
