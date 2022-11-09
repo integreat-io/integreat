@@ -164,6 +164,30 @@ test('should map and set one item to service', async (t) => {
   t.true(scope.isDone())
 })
 
+test('should map and set with id to service', async (t) => {
+  const scope = nock('http://api11.test')
+    .post('/database/entry:ent1')
+    .reply(201, [{ ok: true }])
+  const action = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      id: 'ent1',
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const src = setupService(
+    'http://api11.test/database/{{payload.type}}:{{payload.id}}'
+  )
+  const getService = () => src
+
+  const ret = await set(action, { ...handlerResources, getService })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.true(scope.isDone())
+})
+
 test('should send without default values', async (t) => {
   const scope = nock('http://api5.test')
     .put('/database/entry:ent1', { docs: [{ id: 'ent1' }] })

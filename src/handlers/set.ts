@@ -10,8 +10,8 @@ const debug = debugLib('great')
 const extractType = (action: Action, data?: unknown) =>
   action.payload.type || (isTypedData(data) && data.$type) || undefined
 
-const extractId = (data?: unknown) =>
-  (isTypedData(data) && data.id) || undefined
+const extractId = (action: Action, data?: unknown) =>
+  action.payload.id || (isTypedData(data) && data.id) || undefined
 
 const setIdAndTypeOnAction = (
   action: Action,
@@ -36,7 +36,7 @@ export default async function set(
   } = action.payload
 
   const type = extractType(action, data)
-  const id = extractId(data)
+  const id = extractId(action, data)
 
   const service = getService(type, serviceId)
   if (!service) {
