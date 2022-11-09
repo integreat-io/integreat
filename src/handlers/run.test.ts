@@ -970,7 +970,11 @@ test('should mutate simple action', async (t) => {
   const jobs = {
     action1: {
       id: 'action1',
-      action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
+      action: {
+        type: 'GET',
+        payload: { type: 'entry', id: 'ent1' },
+        meta: { queue: true },
+      },
       mutation: { 'payload.flag': { $value: true } },
     },
   }
@@ -984,7 +988,7 @@ test('should mutate simple action', async (t) => {
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1', flag: true },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, queue: true },
   }
   const expectedResponse = {
     ...action,

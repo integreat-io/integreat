@@ -34,7 +34,10 @@ export interface Payload extends BasePayload {
 
 const prepareAction = (action: Action, meta?: Meta) => ({
   ...action,
-  meta,
+  meta: {
+    ...meta,
+    ...(action.meta?.queue ?? meta?.queue ? { queue: true } : {}),
+  },
 })
 
 const isOkResponse = (response?: Response) =>
