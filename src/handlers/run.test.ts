@@ -1040,8 +1040,8 @@ test('should mutate action with result from previous action', async (t) => {
             payload: { type: 'entry' },
           },
           mutation: {
-            'payload.data': 'getEntries.response.data',
-            'payload.sections': 'getEntries.response.data.section',
+            'payload.data': '^^getEntries.response.data',
+            'payload.sections': '^^getEntries.response.data.section',
           },
         },
       ],
@@ -1079,6 +1079,77 @@ test('should mutate action with result from previous action', async (t) => {
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[1][0], expectedAction2)
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('should mutate action with payload from original action', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    response: { status: 'ok' },
+  })
+  const jobs = {
+    action3: {
+      id: 'action3',
+      flow: [
+        {
+          id: 'setEntries',
+          action: {
+            type: 'SET',
+            payload: { type: 'entry' },
+          },
+          mutation: {
+            'payload.data': '^^action.payload.data',
+            'payload.sections': [
+              '^^action.payload',
+              {
+                $alt: ['section', 'data.section[]'],
+              },
+              {
+                $transform: 'template',
+                template: 'section-{{.}}',
+                $iterate: true,
+              },
+            ],
+          },
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+      data: [
+        { id: 'ent1', $type: 'entry', section: 'news' },
+        { id: 'ent2', $type: 'entry', section: 'sports' },
+      ],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      sections: ['section-news', 'section-sports'],
+      data: [
+        { id: 'ent1', $type: 'entry', section: 'news' },
+        { id: 'ent2', $type: 'entry', section: 'sports' },
+      ],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedResponse = {
+    ...action,
+    response: { status: 'ok' }, // Won't return data unless specified
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedAction)
   t.deepEqual(ret, expectedResponse)
 })
 
@@ -1132,7 +1203,7 @@ test('should mutate action with result from previous and parallel actions', asyn
               payload: { type: 'entry' },
             },
             mutation: {
-              'payload.since': 'getLastSyncedDate.response.data.date',
+              'payload.since': '^^getLastSyncedDate.response.data.date',
             },
           },
           {
@@ -1150,10 +1221,10 @@ test('should mutate action with result from previous and parallel actions', asyn
             payload: { type: 'entry' },
           },
           mutation: {
-            'payload.data': 'getEntries.response.data',
-            'payload.sections': 'getEntries.response.data.section',
-            'payload.user': 'getUser.response.data.name',
-            'payload.entriesSince': 'getLastSyncedDate.response.data.date',
+            'payload.data': '^^getEntries.response.data',
+            'payload.sections': '^^getEntries.response.data.section',
+            'payload.user': '^^getUser.response.data.name',
+            'payload.entriesSince': '^^getLastSyncedDate.response.data.date',
           },
         },
       ],
@@ -1220,8 +1291,8 @@ test('should mutate action with data from the original action', async (t) => {
             payload: { type: 'entry' },
           },
           mutation: {
-            'payload.toSection': 'action.payload.section',
-            'payload.data': 'action.payload.data',
+            'payload.toSection': '^^action.payload.section',
+            'payload.data': '^^action.payload.data',
           },
         },
       ],
@@ -1383,7 +1454,7 @@ test('should mutate action into several actions based on iterate path', async (t
       responseMutation: {
         response: {
           $modify: 'response',
-          data: 'setItem_2.response.data', // To verify that the actions get postfixed with index
+          data: '^^setItem_2.response.data', // To verify that the actions get postfixed with index
         },
       },
     },
@@ -1450,14 +1521,14 @@ test('should combine response data from several actions based on iterate path', 
           action: { type: 'GET', payload: {} },
           iteratePath: 'getIds.response.data',
           mutation: {
-            payload: { type: { $value: 'entry' }, id: '$action.payload.data' },
+            payload: { type: { $value: 'entry' }, id: 'payload.data' },
           },
         },
       ],
       responseMutation: {
         response: {
           $modify: 'response',
-          data: 'getItems.response.data', // Will be the combined response data from all individual actions
+          data: '^^getItems.response.data', // Will be the combined response data from all individual actions
         },
       },
     },
@@ -1509,7 +1580,39 @@ test('should combine response data from several actions based on iterate path', 
   t.deepEqual(ret, expectedResponse)
 })
 
-test('should return data based on mutation', async (t) => {
+test('should return data from simple action based on mutation', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+  })
+  const jobs = {
+    action1: {
+      id: 'action1',
+      action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
+      responseMutation: {
+        'response.data': 'response.data[0]',
+      },
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = { id: 'ent1', $type: 'entry' }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret.response?.data, expected)
+  t.is(dispatch.callCount, 1)
+})
+
+test('should return data from flow based on mutation', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ response: { status: 'ok', data: [] } })
@@ -1550,7 +1653,7 @@ test('should return data based on mutation', async (t) => {
         },
       ],
       responseMutation: {
-        'response.data': 'getEntries.response.data',
+        'response.data': '^^getEntries.response.data',
       },
     },
   }
@@ -1590,7 +1693,7 @@ test('should return data based on mutation from original action', async (t) => {
         },
       ],
       responseMutation: {
-        'response.data': 'action.payload.data',
+        'response.data': 'payload.data',
       },
     },
   }
@@ -1630,7 +1733,7 @@ test('should return response with error message', async (t) => {
         },
       ],
       responseMutation: {
-        'response.error': 'setDate.response.data.errorMessage',
+        'response.error': '^^setDate.response.data.errorMessage',
       },
     },
   }
@@ -1672,7 +1775,7 @@ test('should join array of error messsages', async (t) => {
         },
       ],
       responseMutation: {
-        'response.error': 'setDate.response.data.errorMessages',
+        'response.error': '^^setDate.response.data.errorMessages',
       },
     },
   }
@@ -1817,7 +1920,7 @@ test('should return error from a sub-flow started with RUN and make it available
           id: 'setEntriesInOtherFlow',
           action: { type: 'RUN', payload: { jobId: 'action10' } },
           mutation: {
-            'payload.data': 'getEntries.response.data',
+            'payload.data': '^^getEntries.response.data',
           },
         },
         {
@@ -1829,11 +1932,11 @@ test('should return error from a sub-flow started with RUN and make it available
         response: {
           $if: {
             $transform: 'compare',
-            path: 'getEntries.status',
+            path: '^^getEntries.status',
             match: 'notfound',
           },
           then: { status: 'ok' },
-          else: 'action.response',
+          else: '^^action.response',
         },
       },
     },
@@ -1851,7 +1954,7 @@ test('should return error from a sub-flow started with RUN and make it available
           },
           action: { type: 'SET', payload: { type: 'entry' } },
           mutation: {
-            'payload.data': 'action.payload.data',
+            'payload.data': '^^action.payload.data',
           },
         },
       ],

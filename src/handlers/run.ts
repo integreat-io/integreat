@@ -57,7 +57,7 @@ function mutateAction(
   if (mutation && isAction(action)) {
     const mutationIncludingAction = Array.isArray(mutation)
       ? ['$action', ...mutation.map(addModify)]
-      : { '.': '$action', ...mutation } // $action is the action we're mutation to
+      : ['$action', { '.': '.', ...mutation }] // $action is the action we're mutating to
     const responsesIncludingAction = { ...responses, $action: action }
     return mapTransform(
       mutationIncludingAction,
@@ -248,6 +248,54 @@ function unpackIterationSteps(
   }))
 }
 
+function getFlowResponse(job: Job, responses: Record<string, Action>) {
+  if (isJobWithFlow(job)) {
+    const lastResponse = getLastJobWithResponse(job.flow, responses)
+    return (
+      prependResponseError(
+        lastResponse?.response,
+        `Could not finish job '${job.id}', the following steps failed: `
+      ) || { status: 'noaction' }
+    )
+  } else {
+    const response = responses[job.id]
+    return response?.response
+  }
+}
+
+const cleanUpResponse = (action: Action) => ({
+  ...action,
+  response: {
+    ...action.response,
+    status:
+      (action.response?.status === 'ok' || !action.response?.status) &&
+      action.response?.error
+        ? 'error'
+        : action.response?.status || 'ok',
+    ...(action.response?.error && {
+      error: Array.isArray(action.response.error)
+        ? action.response.error.join(' | ')
+        : action.response.error,
+    }),
+  },
+})
+
+function mutateResponse(
+  action: Action,
+  job: Job,
+  responses: Record<string, Action>,
+  mapOptions: MapOptions
+) {
+  return cleanUpResponse(
+    mutateAction(
+      action,
+      (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
+      { ...responses, action },
+      mapOptions
+    )
+  )
+}
+
 async function runFlow(
   job: Job,
   prevResponses: Record<string, Action>,
@@ -340,54 +388,6 @@ async function runFlow(
   return {}
 }
 
-function getFlowResponse(job: Job, responses: Record<string, Action>) {
-  if (isJobWithFlow(job)) {
-    const lastResponse = getLastJobWithResponse(job.flow, responses)
-    return (
-      prependResponseError(
-        lastResponse?.response,
-        `Could not finish job '${job.id}', the following steps failed: `
-      ) || { status: 'noaction' }
-    )
-  } else {
-    const response = responses[job.id]
-    return response?.response
-  }
-}
-
-const cleanUpResponse = (action: Action) => ({
-  ...action,
-  response: {
-    ...action.response,
-    status:
-      (action.response?.status === 'ok' || !action.response?.status) &&
-      action.response?.error
-        ? 'error'
-        : action.response?.status || 'ok',
-    ...(action.response?.error && {
-      error: Array.isArray(action.response.error)
-        ? action.response.error.join(' | ')
-        : action.response.error,
-    }),
-  },
-})
-
-function mutateResponse(
-  action: Action,
-  job: Job,
-  responses: Record<string, Action>,
-  mapOptions: MapOptions
-) {
-  return cleanUpResponse(
-    mutateAction(
-      action,
-      (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
-      { ...responses, action },
-      mapOptions
-    )
-  )
-}
-
 export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
   async function run(
     action: Action,
@@ -415,13 +415,11 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
       meta
     )
 
-    return mutateResponse(
-      {
-        ...action,
-        response: getFlowResponse(job, responses),
-      },
-      job,
-      responses,
-      mapOptions
-    )
+    const responseAction = {
+      ...action,
+      response: getFlowResponse(job, responses),
+    }
+    return isJobWithAction(job)
+      ? cleanUpResponse(responseAction) // The response has alreay been mutated
+      : mutateResponse(responseAction, job, responses, mapOptions) // Mutate response
   }
