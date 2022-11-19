@@ -6,9 +6,13 @@ import {
   fwd,
   rev,
   filter,
+  ifelse,
+  apply,
+  iterate,
 } from 'map-transform'
 import { Shape, PropertyShape } from './types'
 import {
+  isObject,
   isSchema,
   isPropertySchema,
   isDataObject,
@@ -48,6 +52,16 @@ const extractType = (type: string) =>
 
 const appendBrackets = (field: string) => `${field}[]`
 
+const isRef = (type: string) => (value: unknown) => {
+  if (!isObject(value)) {
+    return true
+  }
+  const noOfKeys = Object.keys(value).length
+  return (
+    !!value.id && (noOfKeys === 1 || (noOfKeys === 2 && value.$ref === type))
+  )
+}
+
 const transformFromType = (type: string) => {
   if (primitiveTypes.includes(type)) {
     return { $transform: type }
@@ -56,7 +70,13 @@ const transformFromType = (type: string) => {
   } else if (type === 'unknown') {
     return undefined
   } else {
-    return { $transform: 'reference', type }
+    return iterate(
+      ifelse(
+        isRef(type),
+        { $transform: 'reference', type },
+        apply(`cast_${type}`)
+      )
+    )
   }
 }
 

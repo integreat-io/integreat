@@ -226,7 +226,7 @@ test('should be iteratable', (t) => {
 })
 
 test('should create mapping definition from nested schema', (t) => {
-  const schema = {
+  const entrySchema = {
     id: 'string',
     type: { $cast: 'string', $const: 'entry' },
     attributes: {
@@ -238,17 +238,18 @@ test('should create mapping definition from nested schema', (t) => {
       comments: 'comment[]',
     },
   }
+  const userSchema = {
+    id: 'string',
+    name: 'string',
+  }
   const data = [
     {
       id: 12345,
       type: 'entry',
       attributes: { title: 'Entry 1', age: '180734118' },
       relationships: {
-        author: { id: 'johnf', $ref: 'user' },
-        comments: [
-          { id: 'comment12', $ref: 'comment' },
-          { id: 'comment13', $ref: 'comment' },
-        ],
+        author: { id: 'johnf', name: 'John F' },
+        comments: [{ id: 'comment12', $ref: 'comment' }, { id: 'comment13' }],
         unknown: 'Drop this',
       },
     },
@@ -268,7 +269,7 @@ test('should create mapping definition from nested schema', (t) => {
       type: 'entry',
       attributes: { title: 'Entry 1', age: 180734118 },
       relationships: {
-        author: { id: 'johnf', $ref: 'user' },
+        author: { id: 'johnf', $type: 'user', name: 'John F' },
         comments: [
           { id: 'comment12', $ref: 'comment' },
           { id: 'comment13', $ref: 'comment' },
@@ -287,8 +288,11 @@ test('should create mapping definition from nested schema', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+  const ret = mapTransform(createCastMapping(entrySchema, 'entry'), {
     functions: transformFunctions,
+    pipelines: {
+      cast_user: createCastMapping(userSchema, 'user'),
+    },
   })(data)
 
   t.deepEqual(ret, expected)
