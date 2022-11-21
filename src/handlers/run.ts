@@ -42,7 +42,7 @@ const prepareAction = (action: Action, meta?: Meta) => ({
 
 const isOkResponse = (response?: Response) =>
   typeof response?.status === 'string' &&
-  ['ok', 'noaction'].includes(response.status)
+  ['ok', 'noaction', 'queued'].includes(response.status)
 
 const addModify = (mutation: ArrayElement<MapPipe>) =>
   isObject(mutation) ? { $modify: true, ...mutation } : mutation

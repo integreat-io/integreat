@@ -226,6 +226,59 @@ test('should not run second action when first in sequence fails', async (t) => {
   )
 })
 
+test('should continue when action is queued', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: { status: 'ok' },
+    })
+    .onCall(0)
+    .resolves({ response: { status: 'queued' } })
+  const jobs = {
+    action2: {
+      id: 'action2',
+      flow: [
+        {
+          id: 'setEntry',
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'entry',
+              id: 'ent1',
+              data: [{ id: 'ent1', $type: 'entry' }],
+            },
+          },
+        },
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'date',
+              id: 'updatedAt',
+            },
+          },
+        },
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action2',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(dispatch.callCount, 2)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.response?.error, undefined)
+})
+
 test('should not treat noaction as error', async (t) => {
   const dispatch = sinon
     .stub()
