@@ -177,10 +177,41 @@ function statusFromValidationErrors(vals: ConditionFailObject[]) {
   return statuses[0]
 }
 
-async function runStep(
+const isStepWithIteratePath = (step: unknown): step is JobWithAction =>
+  isJobStep(step) && typeof (step as JobWithAction).iteratePath === 'string'
+
+const setData = (action: Action, data: unknown): Action => ({
+  ...action,
+  payload: { ...action.payload, data },
+})
+
+function unpackIterationSteps(
   step: Job,
   responses: Record<string, Action>,
-  newResponses: Record<string, Action>,
+  mapOptions: MapOptions
+): Job {
+  if (!isStepWithIteratePath(step)) {
+    return step
+  }
+
+  const getter = mapTransform(step.iteratePath as string, mapOptions) // We know this is a string
+  const items = ensureArray(getter(responses))
+
+  return {
+    id: step.id,
+    flow: items.map((data, index) => ({
+      id: `${step.id}_${index}`,
+      action: setData(step.action, data),
+      mutation: step.mutation,
+    })),
+    responseMutation: step.responseMutation,
+  }
+}
+
+async function runStep(
+  step: Job,
+  allResponses: Record<string, Action>,
+  flowResponses: Record<string, Action>,
   dispatch: HandlerDispatch,
   mapOptions: MapOptions,
   meta?: Meta,
@@ -189,63 +220,54 @@ async function runStep(
   // Check if conditions are met
   if (step.conditions) {
     // Validate specific conditions
-    const validationErrors = validateFilters(step.conditions, true)(responses)
+    const validationErrors = validateFilters(
+      step.conditions,
+      true
+    )(allResponses)
     if (validationErrors.length > 0) {
       const response = setStepError(
         step.id,
         messageFromValidationErrors(validationErrors),
         statusFromValidationErrors(validationErrors)
       )
-      setResponses(response, newResponses)
+      setResponses(response, flowResponses)
       return validationErrors.some((val) => val.break)
     }
   } else if (prevStep) {
     // No conditions are specified -- validate the status of the previous step
-    if (!isStepOk(prevStep, responses)) {
+    if (!isStepOk(prevStep, allResponses)) {
       return false
     }
   }
 
-  let response: Record<string, Action> | undefined
+  let ourResponses: Record<string, Action> | undefined
   try {
-    response = await runFlow(step, responses, dispatch, mapOptions, meta)
+    const unpackedStep = unpackIterationSteps(step, allResponses, mapOptions)
+    ourResponses = await runFlow(
+      unpackedStep,
+      allResponses,
+      dispatch,
+      mapOptions,
+      meta
+    )
+    if (isJobWithAction(step) && isJobWithFlow(unpackedStep)) {
+      ourResponses[step.id] = {
+        response: {
+          status: 'ok',
+          data: Object.values(ourResponses).map((resp) => resp.response?.data),
+        },
+      } as Action // We're okay with this action having only a response
+    }
   } catch (error) {
-    response = setStepError(
+    ourResponses = setStepError(
       step.id,
       error instanceof Error ? error.message : String(error),
       'rejected'
     )
   }
 
-  setResponses(response, newResponses)
+  setResponses(ourResponses, flowResponses)
   return false
-}
-
-const isJobWithIteratePath = (step: unknown): step is JobWithAction =>
-  isJobStep(step) && typeof (step as JobWithAction).iteratePath === 'string'
-
-const setData = (action: Action, data: unknown) => ({
-  ...action,
-  payload: { ...action.payload, data },
-})
-
-function unpackIterationSteps(
-  step: Job | Job[],
-  responses: Record<string, Action>,
-  mapOptions: MapOptions
-) {
-  if (!isJobWithIteratePath(step)) {
-    return step
-  }
-
-  const getter = mapTransform(step.iteratePath as string, mapOptions) // We know this is a string
-  const items = ensureArray(getter(responses))
-
-  return items.map((data, index) => ({
-    ...step,
-    id: `${step.id}_${index}`,
-    action: setData(step.action, data),
-  }))
 }
 
 function getFlowResponse(job: Job, responses: Record<string, Action>) {
@@ -307,20 +329,18 @@ async function runFlow(
   if (isJobWithFlow(job)) {
     // We have sequence of job steps – go through them one by one
     const flow = job.flow
-    const newResponses: Record<string, Action> = {}
-    for (const [index, rawStep] of flow.entries()) {
-      const responses = { ...prevResponses, ...newResponses }
+    const flowResponses: Record<string, Action> = {}
+    for (const [index, steps] of flow.entries()) {
+      const responses = { ...prevResponses, ...flowResponses }
       const prevStep = index > 0 ? flow[index - 1] : undefined
 
-      const step = unpackIterationSteps(rawStep, responses, mapOptions)
-
-      if (isJobStep(step)) {
+      if (isJobStep(steps)) {
         // A single step
         // Note: `runStep()` will mutate `newResponses` as it runs
         const doBreak = await runStep(
-          step,
+          steps,
           responses,
-          newResponses,
+          flowResponses,
           dispatch,
           mapOptions,
           meta,
@@ -328,22 +348,22 @@ async function runFlow(
         )
         // Break if step returned true
         if (doBreak) {
-          return newResponses
+          return flowResponses
         }
-      } else if (Array.isArray(step)) {
-        const arrayResponses: Record<string, Action> = {}
+      } else if (Array.isArray(steps)) {
+        const parallelResponses: Record<string, Action> = {}
 
         // An array of steps within a sequence – run them in parallel
         // Note that it is okay to use `Promise.all` here, as rejections are
         // handled in `runStep()`
         const doBreak = await Promise.all(
-          step.map((step) =>
+          steps.map((step) =>
             pLimit(1)(() =>
               // Note: `runStep()` will mutate `arrayResponses` as it runs
               runStep(
                 step,
                 responses,
-                arrayResponses,
+                parallelResponses,
                 dispatch,
                 mapOptions,
                 meta,
@@ -352,26 +372,16 @@ async function runFlow(
             )
           )
         )
-        setResponses(arrayResponses, newResponses)
+        setResponses(parallelResponses, flowResponses)
 
         // Break if any of the steps returned true
         if (doBreak.includes(true)) {
-          return newResponses
-        }
-
-        // Combine response data for original action when this was unpacked actions
-        if (isObject(rawStep) && typeof rawStep.id === 'string') {
-          const data = Object.values(arrayResponses).map(
-            (response) => response.response?.data
-          )
-          newResponses[rawStep.id] = {
-            response: { status: 'ok', data },
-          } as Action // It's ok to not have a payload here
+          return flowResponses
         }
       }
     }
     // Flow completed - return responses
-    return newResponses
+    return flowResponses
   } else if (isJobWithAction(job) && parentId) {
     // We've got one action – run it
     const action = mutateAction(job.action, mutation, prevResponses, mapOptions)
