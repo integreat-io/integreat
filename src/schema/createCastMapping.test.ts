@@ -261,6 +261,11 @@ test('should create mapping definition from nested schema', (t) => {
         comments: 'comment23',
       },
     },
+    {
+      id: 'ent3',
+      attributes: { title: 'Entry 3', age: 0 },
+      relationships: {},
+    },
   ]
   const expected = [
     {
@@ -285,6 +290,13 @@ test('should create mapping definition from nested schema', (t) => {
         author: { id: 'maryk', $ref: 'user' },
         comments: [{ id: 'comment23', $ref: 'comment' }],
       },
+    },
+    {
+      $type: 'entry',
+      id: 'ent3',
+      type: 'entry',
+      attributes: { title: 'Entry 3', age: 0 },
+      relationships: { author: undefined, comments: [] },
     },
   ]
 
