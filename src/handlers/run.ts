@@ -32,7 +32,13 @@ export interface Payload extends BasePayload {
   jobId?: string
 }
 
-const prepareAction = (action: Action, meta?: Meta) => ({
+const cleanMeta = ({ ident, project, queue }: Meta) => ({
+  ident,
+  ...(project ? { project } : {}),
+  ...(queue ? { queue } : {}),
+})
+
+const prepareAction = (action: Action, meta: Meta) => ({
   ...action,
   meta: {
     ...meta,
@@ -70,7 +76,7 @@ function mutateAction(
 async function runAction(
   action: Action | undefined,
   dispatch: HandlerDispatch,
-  meta?: Meta
+  meta: Meta
 ) {
   if (action) {
     return await dispatch(prepareAction(action, meta))
@@ -214,7 +220,7 @@ async function runStep(
   flowResponses: Record<string, Action>,
   dispatch: HandlerDispatch,
   mapOptions: MapOptions,
-  meta?: Meta,
+  meta: Meta,
   prevStep?: Job | Job[]
 ): Promise<boolean> {
   // Check if conditions are met
@@ -323,7 +329,7 @@ async function runFlow(
   prevResponses: Record<string, Action>,
   dispatch: HandlerDispatch,
   mapOptions: MapOptions,
-  meta?: Meta
+  meta: Meta
 ): Promise<Record<string, Action>> {
   const { id: parentId, mutation } = job
   if (isJobWithFlow(job)) {
@@ -422,7 +428,7 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
       prevResponses,
       dispatch,
       mapOptions,
-      meta
+      cleanMeta(meta || {})
     )
 
     const responseAction = {

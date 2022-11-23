@@ -31,12 +31,12 @@ test('should run a simple action', async (t) => {
     payload: {
       jobId: 'action1',
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, id: '12345', project: 'test' },
   }
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, project: 'test' },
   }
   const expectedResponse = {
     ...action,
