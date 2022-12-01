@@ -1501,7 +1501,7 @@ test('should mutate action into several actions based on iterate path', async (t
           id: 'setItem',
           action: { type: 'SET', payload: { type: 'entry' } },
           iteratePath: 'action.payload.data.items',
-          mutation: { 'payload.flag': { $value: true } }, // `$modify: true` is added
+          mutation: { 'payload.key': 'payload.data.id' },
         },
       ],
       responseMutation: {
@@ -1520,17 +1520,17 @@ test('should mutate action into several actions based on iterate path', async (t
   }
   const expectedAction0 = {
     type: 'SET',
-    payload: { type: 'entry', data: { id: 'ent1' }, flag: true },
+    payload: { type: 'entry', data: { id: 'ent1' }, key: 'ent1' },
     meta: { ident: { id: 'johnf' } },
   }
   const expectedAction1 = {
     type: 'SET',
-    payload: { type: 'entry', data: { id: 'ent2' }, flag: true },
+    payload: { type: 'entry', data: { id: 'ent2' }, key: 'ent2' },
     meta: { ident: { id: 'johnf' } },
   }
   const expectedAction2 = {
     type: 'SET',
-    payload: { type: 'entry', data: { id: 'ent3' }, flag: true },
+    payload: { type: 'entry', data: { id: 'ent3' }, key: 'ent3' },
     meta: { ident: { id: 'johnf' } },
   }
   const expectedResponse = {
