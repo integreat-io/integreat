@@ -2155,6 +2155,73 @@ test('should return error from a sub-flow started with RUN and make it available
   // t.deepEqual(dispatch.args[1][0], {})
 })
 
+test('should have the original action available on each step in a flow', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .onCall(0)
+    .resolves({ response: { status: 'ok', data: [] } })
+  const jobs = {
+    action9: {
+      id: 'action9',
+      flow: [
+        {
+          id: 'getEntries',
+          action: { type: 'GET', payload: { type: 'entry' } },
+        },
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'date',
+              id: 'updatedAt',
+            },
+          },
+          mutation: {
+            'payload.date': '^^action.payload.nextDate', // Verify that we have access to the original action here
+          },
+          responseMutation: {
+            'response.data': {
+              date: '^^action.payload.nextDate', // Verify that we have access to the original action here
+            },
+          },
+        },
+      ],
+      responseMutation: {
+        'response.data': '^^setDate.response.data',
+        'response.date': '^^action.payload.nextDate', // Verify that we have access to the original action here
+      },
+    },
+  }
+  const runFn = run(jobs, mapOptions)
+  const date = new Date()
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action9', nextDate: date },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    data: { date },
+    date,
+  }
+  const expectedAction = {
+    type: 'SET',
+    payload: {
+      type: 'date',
+      id: 'updatedAt',
+      date,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await runFn(action, { ...handlerResources, dispatch })
+
+  t.deepEqual(ret.response, expected)
+  t.is(dispatch.callCount, 2)
+  t.deepEqual(dispatch.args[1][0], expectedAction)
+})
+
 test('should return response with error from data', async (t) => {
   const dispatch = sinon
     .stub()

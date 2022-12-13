@@ -257,10 +257,11 @@ async function runStep(
         mapOptions
       )
       const response = await runAction(action, dispatch, meta)
+      const actionWithResponse = { ...action, response: response?.response }
       setResponses(
         {
           [job.id]: mutateResponse(
-            { ...action, response: response.response },
+            actionWithResponse,
             job,
             allResponses,
             mapOptions
@@ -347,7 +348,7 @@ function mutateResponse(
     mutateAction(
       action,
       (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
-      { ...responses, action },
+      responses,
       mapOptions
     )
   )
@@ -451,5 +452,10 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
     }
     return isJobWithAction(job)
       ? cleanUpResponse(responseAction) // The response has alreay been mutated
-      : mutateResponse(responseAction, job, responses, mapOptions) // Mutate response
+      : mutateResponse(
+          responseAction,
+          job,
+          { ...responses, action: responseAction },
+          mapOptions
+        ) // Mutate response
   }
