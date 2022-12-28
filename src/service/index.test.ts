@@ -159,12 +159,33 @@ const endpoints = [
   },
 ]
 
+const grantingAuth = {
+  id: 'granting',
+  authenticator: 'token',
+  options: { token: 't0k3n', type: 'Bearer' },
+}
+
 const auths = {
-  granting: new Auth('granting', tokenAuth, { token: 't0k3n', type: 'Bearer' }),
+  granting: new Auth('granting', tokenAuth, grantingAuth.options),
   refusing: new Auth('refusing', tokenAuth, {}),
 }
 
-const authDef = { id: 'auth1', authenticator: 'auth', options: {} }
+const mockResources = (data: unknown) => ({
+  ...jsonResources,
+  authenticators: {
+    token: tokenAuth,
+  },
+  transporters: {
+    ...jsonResources.transporters,
+    http: {
+      ...jsonResources.transporters.http,
+      send: async (_action: Action) => ({ status: 'ok', data }),
+    },
+  },
+  mapOptions,
+  schemas,
+  auths,
+})
 
 // Tests
 
@@ -270,7 +291,7 @@ test('authorizeAction should set authorized flag', (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: authDef,
+    auth: 'granting',
     endpoints,
   })
   const action = {
@@ -295,7 +316,7 @@ test('authorizeAction should authorize action without type', (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: authDef,
+    auth: 'granting',
     endpoints,
   })
   const action = {
@@ -320,7 +341,7 @@ test('authorizeAction should refuse based on schema', (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: authDef,
+    auth: 'granting',
     endpoints,
   })
   const action = {
@@ -354,20 +375,7 @@ test('send should retrieve data from service', async (t) => {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const resources = {
-    ...jsonResources,
-    transporters: {
-      ...jsonResources.transporters,
-      http: {
-        ...jsonResources.transporters.http,
-        send: async (_action: Action) => ({ status: 'ok', data }),
-      },
-    },
-    mapOptions,
-    schemas,
-    auths,
-  }
-  const service = setupService(resources)({
+  const service = setupService(mockResources(data))({
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'granting',
@@ -439,20 +447,7 @@ test('send should return error when no transport', async (t) => {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const resources = {
-    ...jsonResources,
-    transporters: {
-      ...jsonResources.transporters,
-      http: {
-        ...jsonResources.transporters.http,
-        send: async (_action: Action) => ({ status: 'ok', data }),
-      },
-    },
-    mapOptions,
-    schemas,
-    auths,
-  }
-  const service = setupService(resources)({
+  const service = setupService(mockResources(data))({
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'granting',
@@ -478,26 +473,13 @@ test('send should return error when no transport', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('send should authenticate and return with error', async (t) => {
+test('send should try to authenticate and return with error when it fails', async (t) => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const resources = {
-    ...jsonResources,
-    transporters: {
-      ...jsonResources.transporters,
-      http: {
-        ...jsonResources.transporters.http,
-        send: async (_action: Action) => ({ status: 'ok', data }),
-      },
-    },
-    mapOptions,
-    schemas,
-    auths,
-  }
-  const service = setupService(resources)({
+  const service = setupService(mockResources(data))({
     id: 'entries',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'refusing',
@@ -520,6 +502,123 @@ test('send should authenticate and return with error', async (t) => {
     meta: {
       ...action.meta,
       auth: null,
+    },
+  }
+
+  const ret = await service.send(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('send should authenticate with auth id on `outgoing` prop', async (t) => {
+  const data = {
+    content: {
+      data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+    },
+  }
+  const service = setupService(mockResources(data))({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    auth: { outgoing: 'granting' },
+    transporter: 'http',
+  })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
+  const expected = {
+    ...action,
+    response: {
+      status: 'ok',
+      data,
+    },
+    meta: {
+      ...action.meta,
+      auth: {
+        Authorization: 'Bearer t0k3n',
+      },
+    },
+  }
+
+  const ret = await service.send(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('send should authenticate with auth def', async (t) => {
+  const data = {
+    content: {
+      data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+    },
+  }
+  const service = setupService(mockResources(data))({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    auth: grantingAuth,
+    transporter: 'http',
+  })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
+  const expected = {
+    ...action,
+    response: {
+      status: 'ok',
+      data,
+    },
+    meta: {
+      ...action.meta,
+      auth: {
+        Authorization: 'Bearer t0k3n',
+      },
+    },
+  }
+
+  const ret = await service.send(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('send should authenticate with auth def on `outgoing` prop', async (t) => {
+  const data = {
+    content: {
+      data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+    },
+  }
+  const service = setupService(mockResources(data))({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    auth: { outgoing: grantingAuth },
+    transporter: 'http',
+  })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
+  const expected = {
+    ...action,
+    response: {
+      status: 'ok',
+      data,
+    },
+    meta: {
+      ...action.meta,
+      auth: {
+        Authorization: 'Bearer t0k3n',
+      },
     },
   }
 
@@ -1241,7 +1340,7 @@ test('mapRequest should authorize data array going to service', async (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: authDef,
+    auth: 'granting',
     endpoints,
   })
   const action = {
@@ -1281,7 +1380,7 @@ test('mapRequest should authorize data object going to service', async (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: authDef,
+    auth: 'granting',
     endpoints,
   })
   const action = {
@@ -1314,7 +1413,7 @@ test('mapRequest should authorize data array coming from service', async (t) => 
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
     id: 'accounts',
     transporter: 'http',
-    auth: authDef,
+    auth: 'granting',
     endpoints,
   })
   const action = {

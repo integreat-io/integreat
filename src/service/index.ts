@@ -3,7 +3,15 @@ import PProgress = require('p-progress')
 import createEndpointMappers from './endpoints'
 import { createErrorOnAction, createErrorResponse } from '../utils/createError'
 import { Action, Response, Dispatch, Middleware, Transporter } from '../types'
-import { Service, ServiceDef, MapOptions } from './types'
+import {
+  Service,
+  ServiceDef,
+  MapOptions,
+  AuthObject,
+  AuthProp,
+  Authenticator,
+  AuthDef,
+} from './types'
 import Connection from './Connection'
 import { Schema } from '../schema'
 import Auth from './Auth'
@@ -18,6 +26,7 @@ const debug = debugLib('great')
 
 interface Resources {
   transporters?: Record<string, Transporter>
+  authenticators?: Record<string, Authenticator>
   auths?: Record<string, Auth>
   schemas: Record<string, Schema>
   mapOptions?: MapOptions
@@ -97,11 +106,39 @@ const sendToTransporter = (
     }
   }
 
+const isAuthDef = (def: unknown): def is AuthDef =>
+  isObject(def) &&
+  typeof def.id === 'string' &&
+  typeof def.authenticator === 'string'
+
+function retrieveAuthorization(
+  authenticators: Record<string, Authenticator>,
+  auths?: Record<string, Auth>,
+  auth?: AuthObject | AuthProp
+): Auth | undefined {
+  if (isObject(auth) && !!auth.outgoing) {
+    auth = auth.outgoing
+  }
+
+  if (typeof auth === 'string') {
+    return lookupById(auth, auths)
+  } else if (isAuthDef(auth)) {
+    return new Auth(
+      auth.id,
+      lookupById(auth.authenticator, authenticators),
+      auth.options
+    )
+  } else {
+    return undefined
+  }
+}
+
 /**
  * Create a service with the given id and transporter.
  */
 export default ({
     transporters,
+    authenticators = {},
     auths,
     schemas,
     mapOptions = {},
@@ -126,8 +163,7 @@ export default ({
 
     mapOptions = { noneValues: [undefined, null, ''], ...mapOptions }
 
-    const authorization =
-      typeof auth === 'string' ? lookupById(auth, auths) : undefined
+    const authorization = retrieveAuthorization(authenticators, auths, auth)
     const requireAuth = !!auth
 
     const authorizeDataFromService = authorizeData.fromService(schemas)

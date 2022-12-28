@@ -63,10 +63,17 @@ export interface AuthDef {
   options: AuthOptions
 }
 
+export type AuthProp = AuthDef | string | boolean | null
+
+export interface AuthObject {
+  incoming?: AuthProp
+  outgoing?: AuthProp
+}
+
 export interface ServiceDef {
   id: string
   transporter?: string | Transporter
-  auth?: boolean | AuthDef | string | null
+  auth?: AuthObject | AuthProp
   incomingIdent?: string
   meta?: string
   options?: Record<string, unknown>

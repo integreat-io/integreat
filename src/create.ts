@@ -125,6 +125,7 @@ export default function create(
     .map(
       createService({
         transporters,
+        authenticators,
         auths,
         schemas,
         mapOptions,
