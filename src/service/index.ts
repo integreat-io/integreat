@@ -85,8 +85,8 @@ const dispatchIncoming = (
     return { ...action, response }
   }
 
-// TODO: Consider if this is the correct approach - it's very convoluted and
-// require tests for the progress part
+// TODO: Consider if there is an easier way to pass the `setProgress` method
+// through to the caller, i.e. to preserve the PProgress
 const dispatchIncomingWithMiddleware =
   (dispatch: Dispatch, middleware: Middleware, auth?: Auth) =>
   (action: Action | null) =>
