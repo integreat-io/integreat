@@ -27,6 +27,18 @@ test('should create an error response on action object', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should extract error message from Error', (t) => {
+  const message = new Error('An ugly error')
+  const expected = {
+    ...action,
+    response: { status: 'error', error: 'An ugly error', data },
+  }
+
+  const ret = createErrorOnAction(action, message)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should create error with other status', (t) => {
   const message = 'Not found'
   const status = 'notfound'

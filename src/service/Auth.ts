@@ -54,6 +54,25 @@ export default class Auth {
     return this.#authentication?.status === 'granted'
   }
 
+  async authenticateAndGetAuthObject(
+    action: Action | null,
+    method: string
+  ): Promise<Record<string, unknown> | null> {
+    // eslint-disable-next-line security/detect-object-injection
+    const fn = this.#authenticator.authentication[method]
+
+    if (typeof fn === 'function') {
+      const auth = await this.#authenticator.authenticate(this.#options, action)
+      if (auth.status === 'granted') {
+        return fn(auth)
+      } else {
+        throw new Error(auth.error || 'Authentication failed')
+      }
+    }
+
+    return null
+  }
+
   getAuthObject(transporter: Transporter): Record<string, unknown> | null {
     const auth = this.#authentication
     if (!auth || auth.status !== 'granted') {

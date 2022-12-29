@@ -5,11 +5,13 @@ import jsonResources from '../tests/helpers/resources'
 import functions from '../transformers/builtIns'
 import createSchema from '../schema'
 import dispatch from '../tests/helpers/dispatch'
-import { ServiceDef } from './types'
+import { isObject } from '../utils/is'
+import { Authenticator, ServiceDef } from './types'
 import { Connection, Action, TypedData, Dispatch } from '../types'
 import { EndpointOptions } from '../service/endpoints/types'
 import Auth from './Auth'
 import tokenAuth from '../authenticators/token'
+import optionsAuth from '../authenticators/options'
 
 import setupService from '.'
 
@@ -165,14 +167,35 @@ const grantingAuth = {
   options: { token: 't0k3n', type: 'Bearer' },
 }
 
+const testAuth: Authenticator = {
+  async authenticate(_options, action) {
+    const id = action?.payload.headers && action?.payload.headers['API-TOKEN']
+    return id
+      ? { status: 'granted', ident: { id } }
+      : { status: 'rejected', error: 'Missing API-TOKEN header' }
+  },
+  isAuthenticated: (_authentication, _action) => false,
+  authentication: {
+    asObject: (authentication) =>
+      isObject(authentication?.ident) ? authentication!.ident : {},
+  },
+}
+
+// payload: { data: [], headers: { 'API-TOKEN': 'wr0ng' } },
+
 const auths = {
   granting: new Auth('granting', tokenAuth, grantingAuth.options),
   refusing: new Auth('refusing', tokenAuth, {}),
+  apiToken: new Auth('apiToken', testAuth, {}),
 }
 
-const mockResources = (data: unknown) => ({
+const mockResources = (
+  data: unknown,
+  action = { type: 'GET', payload: {} }
+) => ({
   ...jsonResources,
   authenticators: {
+    options: optionsAuth,
     token: tokenAuth,
   },
   transporters: {
@@ -180,6 +203,10 @@ const mockResources = (data: unknown) => ({
     http: {
       ...jsonResources.transporters.http,
       send: async (_action: Action) => ({ status: 'ok', data }),
+      listen: async (dispatch: Dispatch) => {
+        const response = await dispatch(action)
+        return response || { status: 'ok' }
+      },
     },
   },
   mapOptions,
@@ -1645,24 +1672,7 @@ test('listen should set sourceService', async (t) => {
     type: 'SET',
     payload: { data: [] },
   }
-  const resources = {
-    ...jsonResources,
-    transporters: {
-      ...jsonResources.transporters,
-      http: {
-        ...jsonResources.transporters.http,
-        shouldListen: () => true,
-        listen: async (dispatch: Dispatch) => {
-          dispatch(action)
-          return { status: 'ok' }
-        },
-      },
-    },
-    mapOptions,
-    schemas,
-    auths,
-  }
-  const service = setupService(resources)({
+  const service = setupService(mockResources({}, action))({
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
@@ -1689,24 +1699,7 @@ test('listen should not set sourceService when already set', async (t) => {
     type: 'SET',
     payload: { data: [], sourceService: 'other' },
   }
-  const resources = {
-    ...jsonResources,
-    transporters: {
-      ...jsonResources.transporters,
-      http: {
-        ...jsonResources.transporters.http,
-        shouldListen: () => true,
-        listen: async (dispatch: Dispatch) => {
-          dispatch(action)
-          return { status: 'ok' }
-        },
-      },
-    },
-    mapOptions,
-    schemas,
-    auths,
-  }
-  const service = setupService(resources)({
+  const service = setupService(mockResources({}, action))({
     id: 'entries',
     auth: 'granting',
     transporter: 'http',
@@ -1727,32 +1720,73 @@ test('listen should not set sourceService when already set', async (t) => {
   t.deepEqual(ret, expectedResponse)
 })
 
-test('listen should set ident on dispatched actions from incomingIdent', async (t) => {
+test('listen should authorize incoming action', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], headers: { 'API-TOKEN': 't0k3n' } },
+  }
+  const service = setupService(mockResources({}, action))({
+    id: 'entries',
+    auth: { outgoing: 'granting', incoming: 'apiToken' },
+    transporter: 'http',
+    options: { incoming: { port: 8080 } },
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedAction = {
+    ...action,
+    payload: { ...action.payload, sourceService: 'entries' },
+    meta: { ident: { id: 't0k3n' } },
+  }
+  const expectedResponse = { status: 'ok' }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.is(dispatchStub.callCount, 1)
+  t.deepEqual(dispatchStub.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should respond with error when authentication fails', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], headers: {} }, // No API-TOKEN header will cause the auth to fail
+  }
+  const service = setupService(mockResources({}, action))({
+    id: 'entries',
+    auth: { outgoing: 'granting', incoming: 'apiToken' },
+    transporter: 'http',
+    options: { incoming: { port: 8080 } },
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedResponse = {
+    status: 'autherror',
+    error: 'Missing API-TOKEN header',
+  }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.is(dispatchStub.callCount, 0)
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should set ident on dispatched actions from options authenticator', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
     payload: { data: [] },
   }
-  const resources = {
-    ...jsonResources,
-    transporters: {
-      ...jsonResources.transporters,
-      http: {
-        ...jsonResources.transporters.http,
-        listen: async (dispatch: Dispatch) => {
-          dispatch(action)
-          return { status: 'ok' }
-        },
+  const service = setupService(mockResources({}, action))({
+    id: 'entries',
+    auth: {
+      outgoing: 'granting',
+      incoming: {
+        id: 'staticAuth',
+        authenticator: 'options',
+        options: { id: 'reidar' },
       },
     },
-    mapOptions,
-    schemas,
-    auths,
-  }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    incomingIdent: 'reidar',
     transporter: 'http',
     options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -1761,6 +1795,34 @@ test('listen should set ident on dispatched actions from incomingIdent', async (
     type: 'SET',
     payload: { data: [], sourceService: 'entries' },
     meta: { ident: { id: 'reidar' } },
+  }
+  const expectedResponse = { status: 'ok' }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.is(dispatchStub.callCount, 1)
+  t.deepEqual(dispatchStub.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should remove ident when no incoming auth is provided', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [] },
+    meta: { ident: { id: 'anonymous' } }, // Should be removed
+  }
+  const service = setupService(mockResources({}, action))({
+    id: 'entries',
+    auth: { outgoing: 'granting' }, // No incoming
+    transporter: 'http',
+    options: { incoming: { port: 8080 } },
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedAction = {
+    ...action,
+    payload: { ...action.payload, sourceService: 'entries' },
+    meta: { ident: undefined },
   }
   const expectedResponse = { status: 'ok' }
 
@@ -1807,20 +1869,7 @@ test('listen should return error when connection fails', async (t) => {
 })
 
 test('listen should return error when authentication fails', async (t) => {
-  const resources = {
-    ...jsonResources,
-    transporters: {
-      ...jsonResources.transporters,
-      http: {
-        ...jsonResources.transporters.http,
-        listen: async () => ({ status: 'ok' }),
-      },
-    },
-    mapOptions,
-    schemas,
-    auths,
-  }
-  const service = setupService(resources)({
+  const service = setupService(mockResources({}))({
     id: 'entries',
     auth: 'refusing',
     transporter: 'http',

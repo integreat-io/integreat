@@ -74,7 +74,6 @@ export interface ServiceDef {
   id: string
   transporter?: string | Transporter
   auth?: AuthObject | AuthProp
-  incomingIdent?: string
   meta?: string
   options?: Record<string, unknown>
   mutation?: MapDefinition

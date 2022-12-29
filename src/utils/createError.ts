@@ -1,18 +1,23 @@
 import { Action, Response } from '../types'
 
 export function createErrorResponse(
-  error?: string,
+  error: unknown,
   status = 'error'
 ): Response {
   return {
     status,
-    error,
+    error:
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+        ? error
+        : 'Unknown error',
   }
 }
 
 export function createErrorOnAction(
   action: Action,
-  error?: string,
+  error: unknown,
   status = 'error'
 ): Action {
   return {

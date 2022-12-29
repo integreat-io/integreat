@@ -2,7 +2,14 @@ import debugLib = require('debug')
 import PProgress = require('p-progress')
 import createEndpointMappers from './endpoints'
 import { createErrorOnAction, createErrorResponse } from '../utils/createError'
-import { Action, Response, Dispatch, Middleware, Transporter } from '../types'
+import {
+  Action,
+  Response,
+  Ident,
+  Dispatch,
+  Middleware,
+  Transporter,
+} from '../types'
 import {
   Service,
   ServiceDef,
@@ -35,7 +42,7 @@ interface Resources {
 }
 
 const setServiceIdAsSourceServiceOnAction =
-  (serviceId: string, incomingIdent?: string): Middleware =>
+  (serviceId: string): Middleware =>
   (next) =>
   async (action: Action) =>
     next({
@@ -44,24 +51,50 @@ const setServiceIdAsSourceServiceOnAction =
         ...action.payload,
         sourceService: action.payload.sourceService || serviceId,
       },
-      meta: {
-        ident: incomingIdent ? { id: incomingIdent } : undefined,
-        ...action.meta,
-      },
     })
+
+const isIdent = (ident: unknown): ident is Ident => isObject(ident)
+
+async function authorizeIncoming(action: Action, auth?: Auth) {
+  if (auth) {
+    try {
+      const ident = await auth.authenticateAndGetAuthObject(action, 'asObject')
+      if (isIdent(ident)) {
+        return { ...action, meta: { ...action.meta, ident } }
+      }
+    } catch (err) {
+      return createErrorOnAction(action, err, 'autherror')
+    }
+  }
+
+  return { ...action, meta: { ...action.meta, ident: undefined } }
+}
+
+const dispatchIncoming = (
+  dispatch: Dispatch,
+  setProgress: PProgress.ProgressNotifier
+) =>
+  async function (action: Action) {
+    if (typeof action.response?.status === 'string') {
+      return action
+    }
+
+    const p = dispatch(action)
+    p.onProgress(setProgress)
+    const response = await p
+    return { ...action, response }
+  }
 
 // TODO: Consider if this is the correct approach - it's very convoluted and
 // require tests for the progress part
 const dispatchIncomingWithMiddleware =
-  (dispatch: Dispatch, middleware: Middleware) => (action: Action | null) =>
+  (dispatch: Dispatch, middleware: Middleware, auth?: Auth) =>
+  (action: Action | null) =>
     new PProgress<Response>(async (resolve, _reject, setProgress) => {
       if (action) {
-        const response = await middleware(async (action) => {
-          const p = dispatch(action)
-          p.onProgress(setProgress)
-          const response = await p
-          return { ...action, response }
-        })(action)
+        const response = await middleware(
+          dispatchIncoming(dispatch, setProgress)
+        )(await authorizeIncoming(action, auth))
 
         resolve(response.response)
       } else {
@@ -149,7 +182,6 @@ export default ({
     id: serviceId,
     transporter: transporterId,
     auth,
-    incomingIdent,
     meta,
     options = {},
     mutation,
@@ -164,6 +196,10 @@ export default ({
     mapOptions = { noneValues: [undefined, null, ''], ...mapOptions }
 
     const authorization = retrieveAuthorization(authenticators, auths, auth)
+    const incomingAuth =
+      isObject(auth) && auth.incoming
+        ? retrieveAuthorization(authenticators, auths, auth.incoming)
+        : undefined
     const requireAuth = !!auth
 
     const authorizeDataFromService = authorizeData.fromService(schemas)
@@ -339,12 +375,16 @@ export default ({
 
         const incomingMiddleware = compose(
           runThroughMiddleware,
-          setServiceIdAsSourceServiceOnAction(serviceId, incomingIdent)
+          setServiceIdAsSourceServiceOnAction(serviceId)
         )
 
         debug('Calling transporter listen() ...')
         return transporter.listen(
-          dispatchIncomingWithMiddleware(dispatch, incomingMiddleware),
+          dispatchIncomingWithMiddleware(
+            dispatch,
+            incomingMiddleware,
+            incomingAuth
+          ),
           connection.object
         )
       },

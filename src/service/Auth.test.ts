@@ -15,6 +15,7 @@ const authenticator: Authenticator = {
     status: options?.token === 't0k3n' ? 'granted' : 'refused',
     expired: options?.expired,
     token: options?.token,
+    ...(options?.token === 't0k3n' ? {} : { error: 'Wrong token' }),
   }),
 
   isAuthenticated: (
@@ -25,6 +26,8 @@ const authenticator: Authenticator = {
   authentication: {
     asHttpHeaders: (auth: Authentication | null) =>
       auth?.token ? { Authorization: auth.token } : {},
+    asObject: (auth: Authentication | null) =>
+      auth?.token ? { token: auth.token } : {},
   },
 }
 
@@ -363,4 +366,34 @@ test('should set status autherror and auth object to null on auth error', async 
   const ret = auth.applyToAction(action, transporter)
 
   t.deepEqual(ret, expected)
+})
+
+// Tests --
+
+test('should authenticate and return as object', async (t) => {
+  const auth = new Auth(id, authenticator, options)
+  const expected = { token: 't0k3n' }
+
+  const ret = await auth.authenticateAndGetAuthObject(action, 'asObject')
+
+  t.deepEqual(ret, expected)
+})
+
+test('should reject when authenticate fails', async (t) => {
+  const options = { token: 'wr0ng' }
+  const auth = new Auth(id, authenticator, options)
+
+  const err = await t.throwsAsync(
+    auth.authenticateAndGetAuthObject(action, 'asObject')
+  )
+
+  t.is(err?.message, 'Wrong token')
+})
+
+test('should return null for unknown method', async (t) => {
+  const auth = new Auth(id, authenticator, options)
+
+  const ret = await auth.authenticateAndGetAuthObject(action, 'asUnknown')
+
+  t.is(ret, null)
 })
