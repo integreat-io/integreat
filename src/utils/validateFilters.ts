@@ -20,7 +20,7 @@ function prepareFilter(
       return validateFilters({ $or: true, ...filter })
     }
   } else if (filter) {
-    return validate(path, cleanFilter(filter))
+    return validate({ path, schema: cleanFilter(filter) })
   }
   return undefined
 }
