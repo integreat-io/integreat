@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import form from './form'
+import form from './form.js'
 
 // Setup
 

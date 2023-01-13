@@ -1,5 +1,5 @@
-import options from './options'
-import token from './token'
+import options from './options.js'
+import token from './token.js'
 
 export default {
   options,

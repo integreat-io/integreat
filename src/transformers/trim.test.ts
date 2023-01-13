@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import trim from './trim'
+import trim from './trim.js'
 
 // Setup
 

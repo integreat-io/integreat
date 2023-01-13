@@ -1,7 +1,7 @@
 import test from 'ava'
-import createSchema from '../schema'
+import createSchema from '../schema/index.js'
 
-import createMapOptions from './createMapOptions'
+import createMapOptions from './createMapOptions.js'
 
 // Setup
 

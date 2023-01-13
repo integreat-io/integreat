@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon = require('sinon')
-import { jsonServiceDef } from './tests/helpers/json'
-import builtInMutations from './mutations'
-import resources from './tests/helpers/resources'
-import { Action, HandlerDispatch } from './types'
+import { jsonServiceDef } from './tests/helpers/json.js'
+import builtInMutations from './mutations/index.js'
+import resources from './tests/helpers/resources/index.js'
+import { Action, HandlerDispatch } from './types.js'
 
-import create, { Definitions } from './create'
+import create, { Definitions, Resources } from './create.js'
 
 // Setup
 
@@ -75,7 +76,7 @@ const resourcesWithTrans = {
     exclaimate: () => (value: unknown) =>
       typeof value === 'string' ? `${value}!` : value,
   },
-}
+} as unknown as Resources
 
 // Tests
 
@@ -139,7 +140,7 @@ test('should dispatch with builtin action handler', async (t) => {
     transporters: {
       ...resourcesWithTrans.transporters,
       http: {
-        ...resourcesWithTrans.transporters.http,
+        ...resourcesWithTrans.transporters!.http,
         send,
       },
     },
@@ -196,7 +197,7 @@ test('should map data', async (t) => {
     transporters: {
       ...resourcesWithTrans.transporters,
       http: {
-        ...resourcesWithTrans.transporters.http,
+        ...resourcesWithTrans.transporters!.http,
         send: async (action: Action) => ({
           ...action.response,
           status: 'ok',
@@ -318,7 +319,7 @@ test('should use auth', async (t) => {
     transporters: {
       ...resourcesWithTrans.transporters,
       http: {
-        ...resourcesWithTrans.transporters.http,
+        ...resourcesWithTrans.transporters!.http,
         send: async () => ({ status: 'ok', data: '[]' }),
       },
     },

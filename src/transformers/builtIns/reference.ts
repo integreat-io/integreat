@@ -1,6 +1,11 @@
 import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
-import { isDataObject, isTypedData, isReference, isDate } from '../../utils/is'
+import {
+  isDataObject,
+  isTypedData,
+  isReference,
+  isDate,
+} from '../../utils/is.js'
 
 interface Operands extends Record<string, unknown> {
   type?: string

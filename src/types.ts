@@ -1,8 +1,8 @@
-import PProgress = require('p-progress')
+import { PProgress } from 'p-progress'
 import { MapObject, MapPipe } from 'map-transform'
-import { EndpointOptions } from './service/endpoints/types'
-import { IdentConfig } from './service/types'
-import { Service } from './service/types'
+import { EndpointOptions } from './service/endpoints/types.js'
+import { IdentConfig } from './service/types.js'
+import { Service } from './service/types.js'
 
 export interface Reference {
   id: string | null

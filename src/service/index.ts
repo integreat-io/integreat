@@ -1,7 +1,10 @@
 import debugLib = require('debug')
-import PProgress = require('p-progress')
-import createEndpointMappers from './endpoints'
-import { createErrorOnAction, createErrorResponse } from '../utils/createError'
+import pProgress, { ProgressNotifier } from 'p-progress'
+import createEndpointMappers from './endpoints/index.js'
+import {
+  createErrorOnAction,
+  createErrorResponse,
+} from '../utils/createError.js'
 import {
   Action,
   Response,
@@ -9,7 +12,7 @@ import {
   Dispatch,
   Middleware,
   Transporter,
-} from '../types'
+} from '../types.js'
 import {
   Service,
   ServiceDef,
@@ -18,16 +21,16 @@ import {
   AuthProp,
   Authenticator,
   AuthDef,
-} from './types'
-import Connection from './Connection'
-import { Schema } from '../schema'
-import Auth from './Auth'
-import { lookupById } from '../utils/indexUtils'
-import { isObject } from '../utils/is'
-import deepClone from '../utils/deepClone'
-import * as authorizeData from './authorize/data'
-import authorizeAction from './authorize/action'
-import { compose } from '../dispatch'
+} from './types.js'
+import Connection from './Connection.js'
+import { Schema } from '../schema/index.js'
+import Auth from './Auth.js'
+import { lookupById } from '../utils/indexUtils.js'
+import { isObject } from '../utils/is.js'
+import deepClone from '../utils/deepClone.js'
+import * as authorizeData from './authorize/data.js'
+import authorizeAction from './authorize/action.js'
+import { compose } from '../dispatch.js'
 
 const debug = debugLib('great')
 
@@ -70,10 +73,7 @@ async function authorizeIncoming(action: Action, auth?: Auth) {
   return { ...action, meta: { ...action.meta, ident: undefined } }
 }
 
-const dispatchIncoming = (
-  dispatch: Dispatch,
-  setProgress: PProgress.ProgressNotifier
-) =>
+const dispatchIncoming = (dispatch: Dispatch, setProgress: ProgressNotifier) =>
   async function (action: Action) {
     if (typeof action.response?.status === 'string') {
       return action
@@ -90,15 +90,15 @@ const dispatchIncoming = (
 const dispatchIncomingWithMiddleware =
   (dispatch: Dispatch, middleware: Middleware, auth?: Auth) =>
   (action: Action | null) =>
-    new PProgress<Response>(async (resolve, _reject, setProgress) => {
+    pProgress<Response>(async (setProgress) => {
       if (action) {
         const response = await middleware(
           dispatchIncoming(dispatch, setProgress)
         )(await authorizeIncoming(action, auth))
 
-        resolve(response.response)
+        return response.response || { status: 'error' }
       } else {
-        resolve({ status: 'noaction', error: 'No action was dispatched' })
+        return { status: 'noaction', error: 'No action was dispatched' }
       }
     })
 

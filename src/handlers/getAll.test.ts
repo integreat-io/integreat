@@ -1,9 +1,9 @@
 import test from 'ava'
 import sinon = require('sinon')
-import handlerResources from '../tests/helpers/handlerResources'
-import { TypedData } from '../types'
+import handlerResources from '../tests/helpers/handlerResources.js'
+import { TypedData } from '../types.js'
 
-import getAll from './getAll'
+import getAll from './getAll.js'
 
 // Setup
 

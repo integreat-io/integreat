@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import formatDate from './formatDate'
+import formatDate from './formatDate.js'
 
 // Setup
 

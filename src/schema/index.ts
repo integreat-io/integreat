@@ -1,8 +1,8 @@
-import createCastMapping from './createCastMapping'
-import accessForAction from './accessForAction'
+import createCastMapping from './createCastMapping.js'
+import accessForAction from './accessForAction.js'
 import { MapDefinition } from 'map-transform'
-import { SchemaDef, PropertyShape, Shape, Access, AccessDef } from './types'
-import { isSchema } from '../utils/is'
+import { SchemaDef, PropertyShape, Shape, Access, AccessDef } from './types.js'
+import { isSchema } from '../utils/is.js'
 import { nanoid } from 'nanoid'
 
 const expandField = (val: Shape | PropertyShape | string | undefined) =>

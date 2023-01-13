@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon = require('sinon')
 
-import completeIdent from './completeIdent'
+import completeIdent from './completeIdent.js'
 
 // Tests
 

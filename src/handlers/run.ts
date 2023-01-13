@@ -1,6 +1,6 @@
 /* eslint-disable security/detect-object-injection */
 import { mapTransform, MapObject, MapPipe } from 'map-transform'
-import pLimit = require('p-limit')
+import pLimit from 'p-limit'
 import {
   Action,
   ActionHandlerResources,
@@ -12,9 +12,9 @@ import {
   JobDef,
   ConditionFailObject,
   JobWithAction,
-} from '../types'
-import { MapOptions } from '../service/types'
-import { createErrorOnAction } from '../utils/createError'
+} from '../types.js'
+import { MapOptions } from '../service/types.js'
+import { createErrorOnAction } from '../utils/createError.js'
 import {
   isJob,
   isJobStep,
@@ -22,9 +22,9 @@ import {
   isJobWithFlow,
   isAction,
   isObject,
-} from '../utils/is'
-import { ensureArray } from '../utils/array'
-import validateFilters from '../utils/validateFilters'
+} from '../utils/is.js'
+import { ensureArray } from '../utils/array.js'
+import validateFilters from '../utils/validateFilters.js'
 
 type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType[number]
 

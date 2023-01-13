@@ -1,6 +1,6 @@
 import mapAny = require('map-any')
 import { CustomFunction } from 'map-transform'
-import { isObject } from '../../utils/is'
+import { isObject } from '../../utils/is.js'
 
 const castObject = (value: unknown) => {
   if (isObject(value)) {

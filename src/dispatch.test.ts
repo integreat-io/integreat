@@ -5,10 +5,10 @@ import {
   Middleware,
   ActionHandler,
   ActionHandlerResources,
-} from './types'
-import createService from './service'
+} from './types.js'
+import createService from './service/index.js'
 
-import dispatch from './dispatch'
+import dispatch from './dispatch.js'
 
 // Setup
 

@@ -10,7 +10,7 @@ import {
   apply,
   iterate,
 } from 'map-transform'
-import { Shape, PropertyShape } from './types'
+import { Shape, PropertyShape } from './types.js'
 import {
   isObject,
   isSchema,
@@ -18,7 +18,7 @@ import {
   isDataObject,
   isTypedData,
   isNullOrUndefined,
-} from '../utils/is'
+} from '../utils/is.js'
 
 const primitiveTypes = [
   'string',

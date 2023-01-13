@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import mergeDefinitions from './mergeDefinitions'
+import mergeDefinitions from './mergeDefinitions.js'
 
 // Setup
 

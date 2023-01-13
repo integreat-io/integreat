@@ -1,17 +1,17 @@
 import test from 'ava'
 import nock = require('nock')
-import createService from '../service'
+import createService from '../service/index.js'
 import {
   jsonServiceDef,
   jsonPipelines,
   jsonFunctions,
-} from '../tests/helpers/json'
-import schema from '../schema'
-import functions from '../transformers/builtIns'
-import handlerResources from '../tests/helpers/handlerResources'
-import { TypedData } from '../types'
+} from '../tests/helpers/json.js'
+import schema from '../schema/index.js'
+import functions from '../transformers/builtIns/index.js'
+import handlerResources from '../tests/helpers/handlerResources.js'
+import { TypedData } from '../types.js'
 
-import set from './set'
+import set from './set.js'
 
 // Setup
 

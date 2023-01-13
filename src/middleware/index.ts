@@ -1,4 +1,4 @@
-import completeIdent from './completeIdent'
+import completeIdent from './completeIdent.js'
 
 export default {
   completeIdent,

@@ -1,6 +1,6 @@
 import debugLib = require('debug')
-import { createErrorOnAction } from './createError'
-import { Action } from '../types'
+import { createErrorOnAction } from './createError.js'
+import { Action } from '../types.js'
 
 const debug = debugLib('great')
 

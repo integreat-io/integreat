@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import auth from '.'
+import auth from './index.js'
 
 test('should return object with auth strats', (t) => {
   const ret = auth

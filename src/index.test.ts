@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import Integreat, { authenticators, mutations, transformers } from '.'
+import Integreat, { authenticators, mutations, transformers } from './index.js'
 
 // Tests
 

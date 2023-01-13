@@ -1,12 +1,12 @@
 import test from 'ava'
 import nock = require('nock')
-import defs from '../helpers/defs'
-import resources from '../helpers/resources'
-import johnfData from '../helpers/data/userJohnf'
-import bettyData from '../helpers/data/userBetty'
-import { TypedData } from '../../types'
+import defs from '../helpers/defs/index.js'
+import resources from '../helpers/resources/index.js'
+import johnfData from '../helpers/data/userJohnf.js'
+import bettyData from '../helpers/data/userBetty.js'
+import { TypedData } from '../../types.js'
 
-import Integreat from '../..'
+import Integreat from '../../index.js'
 
 // Setups
 

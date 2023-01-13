@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import integer from './integer'
+import integer from './integer.js'
 
 // Setup
 

@@ -1,15 +1,15 @@
-import entrySchema from './schemas/entry'
-import userSchema from './schemas/user'
+import entrySchema from './schemas/entry.js'
+import userSchema from './schemas/user.js'
 
-import apiService from './services/api'
-import entriesService from './services/entries'
-import usersService from './services/users'
+import apiService from './services/api.js'
+import entriesService from './services/entries.js'
+import usersService from './services/users.js'
 
-import apiEntryMutation from './mutations/api-entry'
-import entriesEntryMutation from './mutations/entries-entry'
-import exchangeJsonMutation from '../../../mutations/exchangeJson'
-import exchangeUriMutation from '../../../mutations/exchangeUri'
-import usersUserMutation from './mutations/users-user'
+import apiEntryMutation from './mutations/api-entry.js'
+import entriesEntryMutation from './mutations/entries-entry.js'
+import exchangeJsonMutation from '../../../mutations/exchangeJson.js'
+import exchangeUriMutation from '../../../mutations/exchangeUri.js'
+import usersUserMutation from './mutations/users-user.js'
 
 export default {
   schemas: [entrySchema, userSchema],

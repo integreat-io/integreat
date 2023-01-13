@@ -1,7 +1,7 @@
-import validateFilters from '../../utils/validateFilters'
-import { Action, Params } from '../../types'
-import { EndpointDef } from './types'
-import { arrayIncludes } from '../../utils/array'
+import validateFilters from '../../utils/validateFilters.js'
+import { Action, Params } from '../../types.js'
+import { EndpointDef } from './types.js'
+import { arrayIncludes } from '../../utils/array.js'
 
 const matchValue = (match?: string | string[], value?: string | string[]) =>
   arrayIncludes(match, value)

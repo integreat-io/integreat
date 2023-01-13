@@ -1,7 +1,7 @@
 /* eslint-disable security/detect-object-injection */
 import { CustomFunction } from 'map-transform'
-import { getFirstIfArray } from '../utils/array'
-import { isObject, isDataObject } from '../utils/is'
+import { getFirstIfArray } from '../utils/array.js'
+import { isObject, isDataObject } from '../utils/is.js'
 
 const parseObject = (value: string) => {
   try {

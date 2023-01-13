@@ -1,4 +1,4 @@
-import { HandlerDispatch, Middleware, Ident } from '../types'
+import { HandlerDispatch, Middleware, Ident } from '../types.js'
 
 const getIdent = async (ident: Ident, dispatch: HandlerDispatch) => {
   const responseAction = await dispatch({

@@ -1,12 +1,12 @@
 import test from 'ava'
 import sinon = require('sinon')
-import tokenAuth from '../../authenticators/token'
-import defs from '../helpers/defs'
-import resources from '../helpers/resources'
-import entriesData from '../helpers/data/entries'
-import { Connection, Action } from '../../types'
+import tokenAuth from '../../authenticators/token.js'
+import defs from '../helpers/defs/index.js'
+import resources from '../helpers/resources/index.js'
+import entriesData from '../helpers/data/entries.js'
+import { Connection, Action } from '../../types.js'
 
-import Integreat from '../..'
+import Integreat from '../../index.js'
 
 // Tests
 

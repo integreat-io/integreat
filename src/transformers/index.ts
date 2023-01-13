@@ -1,8 +1,8 @@
-import form from './form'
-import formatDate from './formatDate'
-import json from './json'
-import not from './not'
-import trim from './trim'
+import form from './form.js'
+import formatDate from './formatDate.js'
+import json from './json.js'
+import not from './not.js'
+import trim from './trim.js'
 
 export default {
   form,

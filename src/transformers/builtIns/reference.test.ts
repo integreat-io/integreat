@@ -1,7 +1,7 @@
 import test from 'ava'
-import { Reference } from '../../types'
+import { Reference } from '../../types.js'
 
-import reference from './reference'
+import reference from './reference.js'
 
 // Setup
 

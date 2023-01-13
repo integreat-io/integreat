@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import stringFn from './string'
+import stringFn from './string.js'
 
 // Setup
 

@@ -1,5 +1,5 @@
 import { CustomFunction } from 'map-transform'
-import { isObject } from '../utils/is'
+import { isObject } from '../utils/is.js'
 
 const isParsed = (data: unknown) => Array.isArray(data) || isObject(data)
 

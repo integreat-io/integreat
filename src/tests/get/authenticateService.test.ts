@@ -1,14 +1,14 @@
 import test from 'ava'
 import nock = require('nock')
-import defs from '../helpers/defs'
-import resources from '../helpers/resources'
-import tokenAuth from '../../authenticators/token'
-import entriesService from '../helpers/defs/services/entries'
-import entriesData from '../helpers/data/entries'
-import { TypedData } from '../../types'
-import { ServiceDef } from '../../service/types'
+import defs from '../helpers/defs/index.js'
+import resources from '../helpers/resources/index.js'
+import tokenAuth from '../../authenticators/token.js'
+import entriesService from '../helpers/defs/services/entries.js'
+import entriesData from '../helpers/data/entries.js'
+import { TypedData } from '../../types.js'
+import { ServiceDef } from '../../service/types.js'
 
-import Integreat from '../..'
+import Integreat from '../../index.js'
 
 // Setup
 

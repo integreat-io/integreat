@@ -1,4 +1,4 @@
-import pLimit = require('p-limit')
+import pLimit from 'p-limit'
 import ms = require('ms')
 import {
   Action,
@@ -9,12 +9,12 @@ import {
   TypedData,
   Params,
   ActionHandlerResources,
-} from '../types'
-import { createErrorOnAction } from '../utils/createError'
-import { isTypedData, isNotNullOrUndefined } from '../utils/is'
-import { ensureArray } from '../utils/array'
-import { castDate } from '../transformers/builtIns/date'
-import { castNumber } from '../transformers/builtIns/number'
+} from '../types.js'
+import { createErrorOnAction } from '../utils/createError.js'
+import { isTypedData, isNotNullOrUndefined } from '../utils/is.js'
+import { ensureArray } from '../utils/array.js'
+import { castDate } from '../transformers/builtIns/date.js'
+import { castNumber } from '../transformers/builtIns/number.js'
 
 type RetrieveOptions = 'all' | 'updated' | 'created'
 

@@ -1,11 +1,11 @@
 import test from 'ava'
 import sinon = require('sinon')
-import defs from '../helpers/defs'
-import resources from '../helpers/resources'
-import ent1Data from '../helpers/data/entry1'
-import { Action } from '../../types'
+import defs from '../helpers/defs/index.js'
+import resources from '../helpers/resources/index.js'
+import ent1Data from '../helpers/data/entry1.js'
+import { Action } from '../../types.js'
 
-import Integreat from '../..'
+import Integreat from '../../index.js'
 
 // Setup
 

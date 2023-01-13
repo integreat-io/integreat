@@ -1,5 +1,5 @@
-import { isObject } from './is'
-import { Action, Response } from '../types'
+import { isObject } from './is.js'
+import { Action, Response } from '../types.js'
 
 export function prepareActionForMapping(
   action: Action,

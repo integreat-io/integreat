@@ -1,4 +1,4 @@
-import { Resources } from '../create'
+import { Resources } from '../create.js'
 
 export default function mergeResources(...resources: Resources[]): Resources {
   return resources.reduce(

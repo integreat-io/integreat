@@ -1,10 +1,10 @@
 import test from 'ava'
-import { Action } from '../types'
+import { Action } from '../types.js'
 
 import {
   prepareActionForMapping,
   populateActionAfterMapping,
-} from './mappingHelpers'
+} from './mappingHelpers.js'
 
 // Tests -- prepareActionForMapping
 

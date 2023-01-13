@@ -1,4 +1,4 @@
-import { DataFunction } from '../types'
+import { DataFunction } from '../types.js'
 
 export interface PropertyShape {
   $cast: string

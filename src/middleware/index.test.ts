@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import middleware from '.'
+import middleware from './index.js'
 
 test('should be an object with middleware', (t) => {
   t.truthy(middleware)

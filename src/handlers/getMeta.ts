@@ -1,8 +1,8 @@
 import debugLib = require('debug')
-import { createErrorOnAction } from '../utils/createError'
-import { Action, ActionHandlerResources } from '../types'
-import getHandler from './get'
-import { isDataObject } from '../utils/is'
+import { createErrorOnAction } from '../utils/createError.js'
+import { Action, ActionHandlerResources } from '../types.js'
+import getHandler from './get.js'
+import { isDataObject } from '../utils/is.js'
 
 const debug = debugLib('great')
 

@@ -1,4 +1,4 @@
-import { isDate } from '../utils/is'
+import { isDate } from '../utils/is.js'
 import Luxon = require('luxon')
 const { DateTime } = Luxon
 

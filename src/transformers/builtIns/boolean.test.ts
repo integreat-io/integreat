@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import boolean from './boolean'
+import boolean from './boolean.js'
 
 // Setup
 

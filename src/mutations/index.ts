@@ -1,6 +1,6 @@
-import exchangeForm from './exchangeForm'
-import exchangeJson from './exchangeJson'
-import exchangeUri from './exchangeUri'
+import exchangeForm from './exchangeForm.js'
+import exchangeJson from './exchangeJson.js'
+import exchangeUri from './exchangeUri.js'
 
 export default {
   'exchange:form': exchangeForm,

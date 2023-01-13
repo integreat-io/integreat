@@ -1,5 +1,5 @@
-import createUnknownServiceError from '../utils/createUnknownServiceError'
-import { Action, ActionHandlerResources } from '../types'
+import createUnknownServiceError from '../utils/createUnknownServiceError.js'
+import { Action, ActionHandlerResources } from '../types.js'
 
 const authorizeAction = ({ meta, ...action }: Action) => ({
   ...action,

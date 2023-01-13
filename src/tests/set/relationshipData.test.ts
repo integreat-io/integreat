@@ -1,9 +1,9 @@
 import test from 'ava'
 import nock = require('nock')
-import resources from '../helpers/resources'
-import defsBase from '../helpers/defs'
+import defsBase from '../helpers/defs/index.js'
+import resources from '../helpers/resources/index.js'
 
-import Integreat from '../..'
+import Integreat from '../../index.js'
 
 // Setup
 

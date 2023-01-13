@@ -1,7 +1,7 @@
 import util = require('util')
 import { validate } from 'map-transform'
-import { Condition, ConditionFailObject } from '../types'
-import { isObject } from './is'
+import { Condition, ConditionFailObject } from '../types.js'
+import { isObject } from './is.js'
 
 export type FilterFn = (data: unknown) => boolean
 

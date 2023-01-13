@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import object from './object'
+import object from './object.js'
 
 // Setup
 

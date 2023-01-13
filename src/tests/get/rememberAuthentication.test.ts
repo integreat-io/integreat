@@ -1,15 +1,15 @@
 import test from 'ava'
 import sinon = require('sinon')
 import nock = require('nock')
-import tokenAuth from '../../authenticators/token'
-import defs from '../helpers/defs'
-import resources from '../helpers/resources'
-import entriesService from '../helpers/defs/services/entries'
-import entriesData from '../helpers/data/entries'
-import { TypedData } from '../../types'
-import { ServiceDef } from '../../service/types'
+import tokenAuth from '../../authenticators/token.js'
+import defs from '../helpers/defs/index.js'
+import resources from '../helpers/resources/index.js'
+import entriesService from '../helpers/defs/services/entries.js'
+import entriesData from '../helpers/data/entries.js'
+import { TypedData } from '../../types.js'
+import { ServiceDef } from '../../service/types.js'
 
-import Integreat from '../..'
+import Integreat from '../../index.js'
 
 // Tests
 

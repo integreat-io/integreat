@@ -4,13 +4,13 @@ import {
   jsonServiceDef,
   jsonPipelines,
   jsonFunctions,
-} from '../tests/helpers/json'
-import createService from '../service'
-import createSchema from '../schema'
-import functions from '../transformers/builtIns'
-import handlerResources from '../tests/helpers/handlerResources'
+} from '../tests/helpers/json.js'
+import createService from '../service/index.js'
+import createSchema from '../schema/index.js'
+import functions from '../transformers/builtIns/index.js'
+import handlerResources from '../tests/helpers/handlerResources.js'
 
-import deleteFn from './delete'
+import deleteFn from './delete.js'
 
 // Setup
 

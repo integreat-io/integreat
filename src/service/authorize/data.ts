@@ -1,8 +1,8 @@
-import getField from '../../utils/getField'
-import { arrayIncludes } from '../../utils/array'
-import { isTypedData, isNullOrUndefined } from '../../utils/is'
-import { Action, TypedData, Ident } from '../../types'
-import { Schema } from '../../schema'
+import getField from '../../utils/getField.js'
+import { arrayIncludes } from '../../utils/array.js'
+import { isTypedData, isNullOrUndefined } from '../../utils/is.js'
+import { Action, TypedData, Ident } from '../../types.js'
+import { Schema } from '../../schema/index.js'
 
 export interface AuthorizeDataFn {
   (action: Action, allowRaw?: boolean): Action
@@ -20,47 +20,49 @@ function getValueAndCompare(
   return isStringOrArray(values) && arrayIncludes(compareValue, values)
 }
 
-const authorizeItem = (
-  schemas: Record<string, Schema>,
-  actionType: string,
-  allowRaw: boolean,
-  ident?: Ident
-) => (item: unknown): string | undefined => {
-  if (!isTypedData(item)) {
-    return allowRaw ? undefined : 'RAW_DATA'
-  }
-  const schema = schemas[item.$type]
-  if (!schema) {
-    return 'NO_SCHEMA'
-  }
-  const { identFromField, roleFromField } = schema.accessForAction(actionType)
-  const validateIdent = typeof identFromField === 'string'
-  const validateRole = typeof roleFromField === 'string'
+const authorizeItem =
+  (
+    schemas: Record<string, Schema>,
+    actionType: string,
+    allowRaw: boolean,
+    ident?: Ident
+  ) =>
+  (item: unknown): string | undefined => {
+    if (!isTypedData(item)) {
+      return allowRaw ? undefined : 'RAW_DATA'
+    }
+    const schema = schemas[item.$type]
+    if (!schema) {
+      return 'NO_SCHEMA'
+    }
+    const { identFromField, roleFromField } = schema.accessForAction(actionType)
+    const validateIdent = typeof identFromField === 'string'
+    const validateRole = typeof roleFromField === 'string'
 
-  // Authorize when neither ident nor role should be validated
-  if (!validateIdent && !validateRole) {
-    return undefined
-  }
+    // Authorize when neither ident nor role should be validated
+    if (!validateIdent && !validateRole) {
+      return undefined
+    }
 
-  // Get validation results for the required methods
-  const identResult =
-    !validateIdent ||
-    getValueAndCompare(item, identFromField as string, ident?.id)
-  const roleResult =
-    !validateRole ||
-    getValueAndCompare(item, roleFromField as string, ident?.roles)
+    // Get validation results for the required methods
+    const identResult =
+      !validateIdent ||
+      getValueAndCompare(item, identFromField as string, ident?.id)
+    const roleResult =
+      !validateRole ||
+      getValueAndCompare(item, roleFromField as string, ident?.roles)
 
-  // Authorize if either ident or role validation passes
-  if (validateIdent && validateRole && (identResult || roleResult)) {
-    return undefined
+    // Authorize if either ident or role validation passes
+    if (validateIdent && validateRole && (identResult || roleResult)) {
+      return undefined
+    }
+    // We are supposed to validate by only one of the methods - do it
+    return (
+      (!identResult && 'WRONG_IDENT') ||
+      (!roleResult && 'MISSING_ROLE') ||
+      undefined
+    )
   }
-  // We are supposed to validate by only one of the methods - do it
-  return (
-    (!identResult && 'WRONG_IDENT') ||
-    (!roleResult && 'MISSING_ROLE') ||
-    undefined
-  )
-}
 
 const generateWarning = (removedCount: number, isToService: boolean) =>
   removedCount > 0

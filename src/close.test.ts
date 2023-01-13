@@ -1,8 +1,8 @@
 import test from 'ava'
 import sinon = require('sinon')
-import { Action } from './types'
+import { Action } from './types.js'
 
-import close from './close'
+import close from './close.js'
 
 // Setup
 

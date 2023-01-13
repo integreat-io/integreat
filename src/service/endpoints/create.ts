@@ -4,16 +4,16 @@ import {
   MapTransform,
   MapPipe,
 } from 'map-transform'
-import { Action } from '../../types'
-import { MapOptions } from '../types'
-import { EndpointDef, Endpoint, EndpointOptions } from './types'
-import isMatch from './match'
+import { Action } from '../../types.js'
+import { MapOptions } from '../types.js'
+import { EndpointDef, Endpoint, EndpointOptions } from './types.js'
+import isMatch from './match.js'
 import {
   prepareActionForMapping,
   populateActionAfterMapping,
-} from '../../utils/mappingHelpers'
-import { ensureArray } from '../../utils/array'
-import { isNotNullOrUndefined, isObject } from '../../utils/is'
+} from '../../utils/mappingHelpers.js'
+import { ensureArray } from '../../utils/array.js'
+import { isNotNullOrUndefined, isObject } from '../../utils/is.js'
 
 export interface PrepareOptions {
   (options: EndpointOptions, serviceId: string): EndpointOptions

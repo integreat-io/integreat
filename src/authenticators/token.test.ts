@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import authenticator from './token'
+import authenticator from './token.js'
 
 // Setup
 

@@ -1,13 +1,11 @@
-import PProgress = require('p-progress')
-import { GetService, HandlerDispatch, SetProgress } from '../../types'
+import pProgress from 'p-progress'
+import { GetService, HandlerDispatch, SetProgress } from '../../types.js'
 
 const dispatch: HandlerDispatch = (action) =>
-  new PProgress((resolve) => {
-    resolve({
-      ...action,
-      response: { ...action.response, status: 'ok' },
-    })
-  })
+  pProgress(() => ({
+    ...action,
+    response: { ...action.response, status: 'ok' },
+  }))
 
 const getService: GetService = (_type, _service) => undefined
 

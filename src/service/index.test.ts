@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon = require('sinon')
-import PProgress = require('p-progress')
-import jsonResources from '../tests/helpers/resources'
-import functions from '../transformers/builtIns'
-import createSchema from '../schema'
-import dispatch from '../tests/helpers/dispatch'
-import { isObject } from '../utils/is'
-import { Authenticator, ServiceDef } from './types'
-import { Connection, Action, Response, TypedData, Dispatch } from '../types'
-import { EndpointOptions } from '../service/endpoints/types'
-import Auth from './Auth'
-import tokenAuth from '../authenticators/token'
-import optionsAuth from '../authenticators/options'
+import pProgress from 'p-progress'
+import jsonResources from '../tests/helpers/resources/index.js'
+import functions from '../transformers/builtIns/index.js'
+import createSchema from '../schema/index.js'
+import dispatch from '../tests/helpers/dispatch.js'
+import { isObject } from '../utils/is.js'
+import { Authenticator, ServiceDef } from './types.js'
+import { Connection, Action, Response, TypedData, Dispatch } from '../types.js'
+import { EndpointOptions } from '../service/endpoints/types.js'
+import Auth from './Auth.js'
+import tokenAuth from '../authenticators/token.js'
+import optionsAuth from '../authenticators/options.js'
 
-import setupService from '.'
+import setupService from './index.js'
 
 // Setup
 
@@ -1723,9 +1723,9 @@ test('listen should not set sourceService when already set', async (t) => {
 
 test('should support progress reporting', async (t) => {
   const dispatch = (_action: Action | null) =>
-    new PProgress<Response>(async (resolve, _reject, setProgress) => {
+    pProgress<Response>(async (setProgress) => {
       setProgress(0.5)
-      resolve({ status: 'ok', data: [] })
+      return { status: 'ok', data: [] }
     })
   const progressStub = sinon.stub()
   const listenStub = sinon.stub().resolves({ status: 'ok' })

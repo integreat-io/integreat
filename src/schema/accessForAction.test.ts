@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import accessForAction from './accessForAction'
+import accessForAction from './accessForAction.js'
 
 // Tests
 

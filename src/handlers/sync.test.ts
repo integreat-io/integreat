@@ -1,10 +1,10 @@
 import test from 'ava'
 import sinon = require('sinon')
-import { createErrorOnAction } from '../utils/createError'
-import handlerResources from '../tests/helpers/handlerResources'
-import { Action, HandlerDispatch, TypedData } from '../types'
+import { createErrorOnAction } from '../utils/createError.js'
+import handlerResources from '../tests/helpers/handlerResources.js'
+import { Action, HandlerDispatch, TypedData } from '../types.js'
 
-import sync from './sync'
+import sync from './sync.js'
 
 // Setup
 

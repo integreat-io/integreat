@@ -5,8 +5,8 @@ import {
   Job,
   JobWithAction,
   JobWithFlow,
-} from '../types'
-import { Shape, PropertyShape } from '../schema/types'
+} from '../types.js'
+import { Shape, PropertyShape } from '../schema/types.js'
 
 export const isObject = (value: unknown): value is Record<string, unknown> =>
   Object.prototype.toString.call(value) === '[object Object]'

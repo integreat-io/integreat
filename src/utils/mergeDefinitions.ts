@@ -1,4 +1,4 @@
-import { Definitions } from '../create'
+import { Definitions } from '../create.js'
 
 const arrOrEmptyArr = <T>(arr?: T[]): T[] => (Array.isArray(arr) ? arr : [])
 

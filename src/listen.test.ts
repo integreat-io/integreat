@@ -1,9 +1,9 @@
 import test from 'ava'
 import sinon = require('sinon')
-import dispatch from './tests/helpers/dispatch'
-import { Action } from './types'
+import dispatch from './tests/helpers/dispatch.js'
+import { Action } from './types.js'
 
-import listen from './listen'
+import listen from './listen.js'
 
 // Setup
 

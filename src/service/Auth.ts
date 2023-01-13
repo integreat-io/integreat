@@ -1,6 +1,6 @@
-import { Authenticator, AuthOptions, Authentication } from './types'
-import { Action, Transporter } from '../types'
-import { isObject } from '../utils/is'
+import { Authenticator, AuthOptions, Authentication } from './types.js'
+import { Action, Transporter } from '../types.js'
+import { isObject } from '../utils/is.js'
 
 const MAX_RETRIES = 1
 

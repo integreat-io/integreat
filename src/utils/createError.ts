@@ -1,4 +1,4 @@
-import { Action, Response } from '../types'
+import { Action, Response } from '../types.js'
 
 export function createErrorResponse(
   error: unknown,

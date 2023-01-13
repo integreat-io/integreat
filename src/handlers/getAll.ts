@@ -1,5 +1,5 @@
-import { Action, Payload, Meta, ActionHandlerResources } from '../types'
-import { isObject, isTypedData } from '../utils/is'
+import { Action, Payload, Meta, ActionHandlerResources } from '../types.js'
+import { isObject, isTypedData } from '../utils/is.js'
 
 const extractLastId = (data: unknown, field = 'id') =>
   Array.isArray(data) && isObject(data[data.length - 1])

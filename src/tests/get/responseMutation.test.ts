@@ -2,17 +2,17 @@
 import test from 'ava'
 import nock = require('nock')
 import { MapDefinition, MapPipe } from 'map-transform'
-import resources from '../helpers/resources'
-import entrySchema from '../helpers/defs/schemas/entry'
-import entriesService from '../helpers/defs/services/entries'
-import entry1 from '../helpers/data/entry1'
-import entry2 from '../helpers/data/entry2'
-import mutations from '../../mutations'
-import entriesMutation from '../helpers/defs/mutations/entries-entry'
-import json from '../../transformers/json'
-import { TypedData, Response } from '../../types'
+import resources from '../helpers/resources/index.js'
+import entrySchema from '../helpers/defs/schemas/entry.js'
+import entriesService from '../helpers/defs/services/entries.js'
+import entry1 from '../helpers/data/entry1.js'
+import entry2 from '../helpers/data/entry2.js'
+import mutations from '../../mutations/index.js'
+import entriesMutation from '../helpers/defs/mutations/entries-entry.js'
+import json from '../../transformers/json.js'
+import { TypedData, Response } from '../../types.js'
 
-import Integreat from '../..'
+import Integreat from '../../index.js'
 
 // Setup
 

@@ -1,6 +1,6 @@
 import debugLib = require('debug')
-import PProgress = require('p-progress')
-import setupGetService from './utils/getService'
+import pProgress from 'p-progress'
+import setupGetService from './utils/getService.js'
 import {
   Dispatch,
   InternalDispatch,
@@ -11,12 +11,12 @@ import {
   ActionHandlerResources,
   GetService,
   HandlerOptions,
-} from './types'
-import { Service } from './service/types'
-import { Schema } from './schema'
-import { createErrorOnAction } from './utils/createError'
-import { Endpoint } from './service/endpoints/types'
-import { isObject } from './utils/is'
+} from './types.js'
+import { Service } from './service/types.js'
+import { Schema } from './schema/index.js'
+import { createErrorOnAction } from './utils/createError.js'
+import { Endpoint } from './service/endpoints/types.js'
+import { isObject } from './utils/is.js'
 
 const debug = debugLib('great')
 
@@ -105,10 +105,9 @@ const responseFromAction = ({
 const wrapDispatch =
   (internalDispatch: InternalDispatch, getService: GetService): Dispatch =>
   (action: Action | null) =>
-    new PProgress(async (resolve, _reject, setProgress) => {
+    pProgress(async (setProgress) => {
       if (!action) {
-        resolve({ status: 'noaction', error: 'Dispatched no action' })
-        return
+        return { status: 'noaction', error: 'Dispatched no action' }
       }
 
       // Map incoming request data when needed
@@ -119,12 +118,9 @@ const wrapDispatch =
       } = mapIncomingAction(exploadParams(action), getService)
       // Return any error from mapIncomingRequest()
       if (mappedAction.response?.status) {
-        resolve(
-          responseFromAction(
-            mapIncomingResponse(mappedAction, service, endpoint)
-          )
+        return responseFromAction(
+          mapIncomingResponse(mappedAction, service, endpoint)
         )
-        return
       }
 
       // Dispatch
@@ -133,10 +129,8 @@ const wrapDispatch =
       const responseAction = await p
 
       // Map respons data when needed
-      resolve(
-        responseFromAction(
-          mapIncomingResponse(responseAction, service, endpoint)
-        )
+      return responseFromAction(
+        mapIncomingResponse(responseAction, service, endpoint)
       )
     })
 
@@ -199,14 +193,13 @@ export default function createDispatch({
       : (next: HandlerDispatch) => async (action: Action) => next(action)
 
   const internalDispatch = (action: Action) =>
-    new PProgress<Action>(async (resolve, _reject, setProgress) => {
+    pProgress<Action>(async (setProgress) => {
       debug('Dispatch: %o', action)
 
       // Refuse attempt to dispatch a QUEUE action, as it would never stop being
       // sent to queue.
       if (action.type === 'QUEUE') {
-        resolve(createErrorOnAction(action, 'No handler for QUEUE action'))
-        return
+        return createErrorOnAction(action, 'No handler for QUEUE action')
       }
 
       const nextAction = prepareAction(action)
@@ -227,17 +220,17 @@ export default function createDispatch({
             resources,
             handlers
           )
-          resolve(response)
+          return response
         } else {
           // Send action through middleware before sending to the relevant
           // handler
           const next = async (action: Action) =>
             handleAction(action.type, action, resources, handlers)
           const response = await middlewareFn(next)(nextAction)
-          resolve({ ...nextAction, response: response.response })
+          return { ...nextAction, response: response.response }
         }
       } catch (err) {
-        resolve(createErrorOnAction(action, `Error thrown in dispatch: ${err}`))
+        return createErrorOnAction(action, `Error thrown in dispatch: ${err}`)
       }
     })
 

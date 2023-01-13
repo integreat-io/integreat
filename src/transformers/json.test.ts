@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import json from './json'
+import json from './json.js'
 
 // Setup
 

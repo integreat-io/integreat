@@ -1,13 +1,13 @@
 import test from 'ava'
 import nock = require('nock')
-import Integreat from '..'
-import { jsonServiceDef } from '../tests/helpers/json'
-import mutations from '../mutations'
-import resources from '../tests/helpers/resources'
-import handlerResources from '../tests/helpers/handlerResources'
-import { EndpointDef } from '../service/endpoints/types'
+import Integreat from '../index.js'
+import { jsonServiceDef } from '../tests/helpers/json.js'
+import mutations from '../mutations/index.js'
+import resources from '../tests/helpers/resources/index.js'
+import handlerResources from '../tests/helpers/handlerResources.js'
+import { EndpointDef } from '../service/endpoints/types.js'
 
-import setMeta from './setMeta'
+import setMeta from './setMeta.js'
 
 // Setup
 

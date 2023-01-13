@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import authenticator from './options'
+import authenticator from './options.js'
 
 // Setup
 

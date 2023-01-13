@@ -1,9 +1,9 @@
 import test from 'ava'
 import sinon = require('sinon')
-import defs from '../helpers/defs'
-import resources from '../helpers/resources'
+import defs from '../helpers/defs/index.js'
+import resources from '../helpers/resources/index.js'
 
-import Integreat, { Transporter } from '../..'
+import Integreat, { Transporter } from '../../index.js'
 
 // Tests
 

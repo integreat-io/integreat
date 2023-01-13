@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import nock = require('nock')
-import defs from '../helpers/defs'
-import resources from '../helpers/resources'
-import entriesData from '../helpers/data/entries'
-import { TypedData } from '../../types'
+import defs from '../helpers/defs/index.js'
+import resources from '../helpers/resources/index.js'
+import entriesData from '../helpers/data/entries.js'
+import { TypedData } from '../../types.js'
 
-import Integreat from '../..'
+import Integreat from '../../index.js'
 
 // Setup
 

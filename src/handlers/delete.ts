@@ -1,8 +1,8 @@
 import debugLib = require('debug')
-import pPipe = require('p-pipe')
-import { createErrorOnAction } from '../utils/createError'
-import createUnknownServiceError from '../utils/createUnknownServiceError'
-import { Action, Payload, ActionHandlerResources } from '../types'
+import pPipe from 'p-pipe'
+import { createErrorOnAction } from '../utils/createError.js'
+import createUnknownServiceError from '../utils/createUnknownServiceError.js'
+import { Action, Payload, ActionHandlerResources } from '../types.js'
 
 const debug = debugLib('great')
 

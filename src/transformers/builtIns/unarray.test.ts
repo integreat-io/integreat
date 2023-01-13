@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import unarray from './unarray'
+import unarray from './unarray.js'
 
 // Setup
 

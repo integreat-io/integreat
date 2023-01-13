@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 
-import createSchedule from './createSchedule'
+import createSchedule from './createSchedule.js'
 
 // Tests
 

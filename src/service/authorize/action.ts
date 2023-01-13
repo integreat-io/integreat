@@ -1,7 +1,7 @@
-import { ensureArray } from '../../utils/array'
-import { Action, Ident } from '../../types'
-import { AccessDef } from '../../schema/types'
-import { Schema } from '../../schema'
+import { ensureArray } from '../../utils/array.js'
+import { Action, Ident } from '../../types.js'
+import { AccessDef } from '../../schema/types.js'
+import { Schema } from '../../schema/index.js'
 
 const isRoot = (ident?: Ident) => Boolean(ident?.root)
 

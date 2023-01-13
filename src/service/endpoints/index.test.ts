@@ -1,8 +1,8 @@
 import test from 'ava'
-import { Endpoint } from './types'
-import createSchema from '../../schema'
+import { Endpoint } from './types.js'
+import createSchema from '../../schema/index.js'
 
-import createEndpointMappers from '.'
+import createEndpointMappers from './index.js'
 
 // Setup
 

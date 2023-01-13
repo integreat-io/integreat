@@ -1,4 +1,4 @@
-import { Authenticator, Authentication } from '../service/types'
+import { Authenticator, Authentication } from '../service/types.js'
 
 interface TokenAuthentication extends Authentication {
   token?: string | null

@@ -1,13 +1,13 @@
 import test from 'ava'
 import nock = require('nock')
-import resources from '../helpers/resources'
-import entrySchema from '../helpers/defs/schemas/entry'
-import entriesService from '../helpers/defs/services/entries'
-import mutations from '../../mutations'
-import entry1 from '../helpers/data/entry1'
-import { TypedData } from '../../types'
+import resources from '../helpers/resources/index.js'
+import entrySchema from '../helpers/defs/schemas/entry.js'
+import entriesService from '../helpers/defs/services/entries.js'
+import mutations from '../../mutations/index.js'
+import entry1 from '../helpers/data/entry1.js'
+import { TypedData } from '../../types.js'
 
-import Integreat from '../..'
+import Integreat from '../../index.js'
 
 // Setup
 

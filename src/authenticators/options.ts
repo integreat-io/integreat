@@ -1,5 +1,5 @@
-import { Authenticator, Authentication } from '../service/types'
-import { isObject } from '../utils/is'
+import { Authenticator, Authentication } from '../service/types.js'
+import { isObject } from '../utils/is.js'
 
 /**
  * The options authenticator. Will always be authenticated, and will return the

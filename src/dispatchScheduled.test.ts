@@ -1,9 +1,9 @@
 import test from 'ava'
 import sinon = require('sinon')
-import createSchedule from './utils/createSchedule'
-import { Action } from './types'
+import createSchedule from './utils/createSchedule.js'
+import { Action } from './types.js'
 
-import dispatchScheduled, { Scheduled } from './dispatchScheduled'
+import dispatchScheduled, { Scheduled } from './dispatchScheduled.js'
 
 // Setup
 

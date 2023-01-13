@@ -1,11 +1,11 @@
-import boolean from './boolean'
-import date from './date'
-import integer from './integer'
-import number from './number'
-import object from './object'
-import reference from './reference'
-import string from './string'
-import unarray from './unarray'
+import boolean from './boolean.js'
+import date from './date.js'
+import integer from './integer.js'
+import number from './number.js'
+import object from './object.js'
+import reference from './reference.js'
+import string from './string.js'
+import unarray from './unarray.js'
 
 export default {
   boolean,

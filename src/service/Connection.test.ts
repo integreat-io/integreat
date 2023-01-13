@@ -1,11 +1,13 @@
 import test from 'ava'
 import sinon = require('sinon')
-import httpTransporter from 'integreat-transporter-http'
-import { Transporter } from '../types'
+import httpTransp from 'integreat-transporter-http'
+import { Transporter } from '../types.js'
 
-import Connection from './Connection'
+import Connection from './Connection.js'
 
 // Setup
+
+const httpTransporter = httpTransp.default
 
 const options = { uri: 'http://api.test/1.0' }
 const auth = { Authorization: 'Bearer t0k3n' }

@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { createErrorOnAction, createErrorResponse } from './createError'
+import { createErrorOnAction, createErrorResponse } from './createError.js'
 
 // Setup
 

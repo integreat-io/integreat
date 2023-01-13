@@ -1,9 +1,9 @@
 import test from 'ava'
 import { mapTransform, MapDefinition } from 'map-transform'
-import transformFunctions from '../transformers/builtIns'
-import { TypedData } from '../types'
+import transformFunctions from '../transformers/builtIns/index.js'
+import { TypedData } from '../types.js'
 
-import createCastMapping from './createCastMapping'
+import createCastMapping from './createCastMapping.js'
 
 // Tests
 

@@ -1,4 +1,4 @@
-import { TypedData } from '../../types'
+import { TypedData } from '../../types.js'
 
 export default (
   id: string,

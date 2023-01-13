@@ -1,8 +1,8 @@
 import test from 'ava'
 import sinon = require('sinon')
-import handlerResources from '../tests/helpers/handlerResources'
+import handlerResources from '../tests/helpers/handlerResources.js'
 
-import run from './run'
+import run from './run.js'
 
 // Setup
 

@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import isMatch from './match'
+import isMatch from './match.js'
 
 // Setup
 

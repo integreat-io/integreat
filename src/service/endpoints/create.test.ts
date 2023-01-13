@@ -1,13 +1,13 @@
 import test from 'ava'
 import sinon = require('sinon')
-import createSchema from '../../schema'
-import builtInFunctions from '../../transformers/builtIns'
-import { TypedData } from '../../types'
-import { MapOptions } from '../types'
-import json from '../../transformers/json'
-import { isAction } from '../../utils/is'
+import createSchema from '../../schema/index.js'
+import builtInFunctions from '../../transformers/builtIns/index.js'
+import { TypedData } from '../../types.js'
+import { MapOptions } from '../types.js'
+import json from '../../transformers/json.js'
+import { isAction } from '../../utils/is.js'
 
-import createEndpoint from './create'
+import createEndpoint from './create.js'
 
 // Setup
 

@@ -1,4 +1,5 @@
-import { EndpointDef, MatchObject } from './types'
+import { EndpointDef, MatchObject } from './types.js'
+
 const has = (prop: unknown) => Number(prop !== undefined)
 const hasArray = (prop: unknown) => Number(Array.isArray(prop) && prop.length)
 const hasParams = ({ params }: MatchObject, required: boolean) =>

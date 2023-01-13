@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import createAction from './createAction'
+import createAction from './createAction.js'
 
 test('should exist', (t) => {
   t.is(typeof createAction, 'function')
@@ -51,7 +51,7 @@ test('should set meta', (t) => {
 test('should return null if no type', (t) => {
   const payload = { id: 'ent1', type: 'entry' }
 
-  const ret = createAction((null as unknown) as string, payload)
+  const ret = createAction(null as unknown as string, payload)
 
   t.is(ret, null)
 })

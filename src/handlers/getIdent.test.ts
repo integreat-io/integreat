@@ -1,14 +1,14 @@
 import test from 'ava'
 import nock = require('nock')
-import Integreat from '..'
-import defs from '../tests/helpers/defs'
-import resources from '../tests/helpers/resources'
-import johnfData from '../tests/helpers/data/userJohnf'
-import ent1Data from '../tests/helpers/data/entry1'
-import defaultHandlerResources from '../tests/helpers/handlerResources'
-import { TypedData } from '../types'
+import Integreat from '../index.js'
+import defs from '../tests/helpers/defs/index.js'
+import resources from '../tests/helpers/resources/index.js'
+import johnfData from '../tests/helpers/data/userJohnf.js'
+import ent1Data from '../tests/helpers/data/entry1.js'
+import defaultHandlerResources from '../tests/helpers/handlerResources.js'
+import { TypedData } from '../types.js'
 
-import getIdent from './getIdent'
+import getIdent from './getIdent.js'
 
 // Setup
 

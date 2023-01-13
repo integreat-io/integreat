@@ -1,11 +1,11 @@
 import debugLib = require('debug')
-import pPipe = require('p-pipe')
-import pLimit = require('p-limit')
-import { createErrorOnAction } from '../utils/createError'
-import createUnknownServiceError from '../utils/createUnknownServiceError'
-import { Action, ActionHandlerResources } from '../types'
-import { Service } from '../service/types'
-import { Endpoint } from '../service/endpoints/types'
+import pPipe from 'p-pipe'
+import pLimit from 'p-limit'
+import { createErrorOnAction } from '../utils/createError.js'
+import createUnknownServiceError from '../utils/createUnknownServiceError.js'
+import { Action, ActionHandlerResources } from '../types.js'
+import { Service } from '../service/types.js'
+import { Endpoint } from '../service/endpoints/types.js'
 
 const debug = debugLib('great')
 

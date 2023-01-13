@@ -1,6 +1,6 @@
 import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
-import { Action, Response, Dispatch, Transporter } from '../types'
-import { EndpointDef, Endpoint } from './endpoints/types'
+import { Action, Response, Dispatch, Transporter } from '../types.js'
+import { EndpointDef, Endpoint } from './endpoints/types.js'
 
 export interface MapOptions {
   pipelines?: Record<string, MapDefinition>

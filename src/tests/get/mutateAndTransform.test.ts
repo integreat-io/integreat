@@ -1,16 +1,16 @@
 import test from 'ava'
 import nock = require('nock')
 import mapAny = require('map-any')
-import resources from '../helpers/resources'
-import mutations from '../../mutations'
-import entrySchema from '../helpers/defs/schemas/entry'
-import entriesService from '../helpers/defs/services/entries'
-import entry1 from '../helpers/data/entry1'
-import entry2 from '../helpers/data/entry2'
-import { isDataObject } from '../../utils/is'
-import { TypedData } from '../../types'
+import resources from '../helpers/resources/index.js'
+import mutations from '../../mutations/index.js'
+import entrySchema from '../helpers/defs/schemas/entry.js'
+import entriesService from '../helpers/defs/services/entries.js'
+import entry1 from '../helpers/data/entry1.js'
+import entry2 from '../helpers/data/entry2.js'
+import { isDataObject } from '../../utils/is.js'
+import { TypedData } from '../../types.js'
 
-import Integreat from '../..'
+import Integreat from '../../index.js'
 
 // Setup
 

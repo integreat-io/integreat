@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { isObject, isDate } from './is'
+import { isObject, isDate } from './is.js'
 
 // Tests -- isObject
 

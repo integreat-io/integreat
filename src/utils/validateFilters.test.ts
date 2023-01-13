@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import validateFilters from './validateFilters'
+import validateFilters from './validateFilters.js'
 
 // Tests
 

@@ -1,5 +1,5 @@
 import Later = require('later')
-import { Dispatch, Action } from './types'
+import { Dispatch, Action } from './types.js'
 
 export interface Scheduled {
   later: Later.Schedule

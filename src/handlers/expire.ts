@@ -1,12 +1,12 @@
-import { createErrorOnAction } from '../utils/createError'
-import { isTypedData } from '../utils/is'
+import { createErrorOnAction } from '../utils/createError.js'
+import { isTypedData } from '../utils/is.js'
 import {
   Action,
   HandlerDispatch,
   Ident,
   TypedData,
   ActionHandlerResources,
-} from '../types'
+} from '../types.js'
 
 const isTypedDataArray = (value: unknown): value is TypedData[] =>
   Array.isArray(value) && isTypedData(value[0])

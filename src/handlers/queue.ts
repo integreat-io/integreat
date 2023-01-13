@@ -1,4 +1,4 @@
-import { Action, ActionHandlerResources } from '../types'
+import { Action, ActionHandlerResources } from '../types.js'
 
 const authorizeAction = ({ meta, ...action }: Action) => ({
   ...action,

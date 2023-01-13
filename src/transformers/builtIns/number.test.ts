@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import number from './number'
+import number from './number.js'
 
 // Setup
 

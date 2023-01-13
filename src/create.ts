@@ -8,30 +8,30 @@ import {
   Action,
   Response,
   ActionHandler,
-} from './types'
+} from './types.js'
 import {
   ServiceDef,
   IdentConfig,
   AuthDef,
   Authenticator,
   Service,
-} from './service/types'
-import { SchemaDef } from './schema/types'
-import Auth from './service/Auth'
-import builtinHandlers from './handlers'
-import runFn from './handlers/run'
-import builtinTransformers from './transformers/builtIns'
-import createSchema, { Schema } from './schema'
-import createService from './service'
-import { isObject } from './utils/is'
-import createMapOptions from './utils/createMapOptions'
-import { lookupById } from './utils/indexUtils'
-import createDispatch from './dispatch'
-import listen from './listen'
-import close from './close'
-import { indexById } from './utils/indexUtils'
-import createSchedule from './utils/createSchedule'
-import createDispatchScheduled from './dispatchScheduled'
+} from './service/types.js'
+import { SchemaDef } from './schema/types.js'
+import Auth from './service/Auth.js'
+import builtinHandlers from './handlers/index.js'
+import runFn from './handlers/run.js'
+import builtinTransformers from './transformers/builtIns/index.js'
+import createSchema, { Schema } from './schema/index.js'
+import createService from './service/index.js'
+import { isObject } from './utils/is.js'
+import createMapOptions from './utils/createMapOptions.js'
+import { lookupById } from './utils/indexUtils.js'
+import createDispatch from './dispatch.js'
+import listen from './listen.js'
+import close from './close.js'
+import { indexById } from './utils/indexUtils.js'
+import createSchedule from './utils/createSchedule.js'
+import createDispatchScheduled from './dispatchScheduled.js'
 
 export interface Definitions {
   schemas: SchemaDef[]

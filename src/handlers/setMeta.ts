@@ -1,8 +1,8 @@
 import debugLib = require('debug')
-import { createErrorOnAction } from '../utils/createError'
-import { Action, ActionHandlerResources } from '../types'
-import setHandler from './set'
-import { generateMetaId } from './getMeta'
+import { createErrorOnAction } from '../utils/createError.js'
+import { Action, ActionHandlerResources } from '../types.js'
+import setHandler from './set.js'
+import { generateMetaId } from './getMeta.js'
 
 const debug = debugLib('great')
 

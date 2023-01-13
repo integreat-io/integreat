@@ -1,9 +1,9 @@
 import test from 'ava'
 import sinon = require('sinon')
-import { Authenticator, Authentication, AuthOptions } from './types'
-import { Transporter, Action } from '../types'
+import { Authenticator, Authentication, AuthOptions } from './types.js'
+import { Transporter, Action } from '../types.js'
 
-import Auth from './Auth'
+import Auth from './Auth.js'
 
 // Setup
 

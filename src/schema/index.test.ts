@@ -1,9 +1,9 @@
 import test from 'ava'
 import { mapTransform } from 'map-transform'
-import builtIns from '../transformers/builtIns'
-import { TypedData } from '../types'
+import builtIns from '../transformers/builtIns/index.js'
+import { TypedData } from '../types.js'
 
-import schema from '.'
+import schema from './index.js'
 
 // Tests
 

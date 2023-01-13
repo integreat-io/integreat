@@ -1,9 +1,9 @@
 import util = require('util')
-import getField from '../utils/getField'
-import { createErrorOnAction } from '../utils/createError'
-import { getFirstIfArray } from '../utils/array'
-import { Action, Ident, ActionHandlerResources } from '../types'
-import getHandler from './get'
+import getField from '../utils/getField.js'
+import { createErrorOnAction } from '../utils/createError.js'
+import { getFirstIfArray } from '../utils/array.js'
+import { Action, Ident, ActionHandlerResources } from '../types.js'
+import getHandler from './get.js'
 
 interface IdentParams extends Record<string, unknown> {
   id?: string
