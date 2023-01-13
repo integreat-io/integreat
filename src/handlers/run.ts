@@ -69,8 +69,9 @@ function mutateAction(
       mutationIncludingAction,
       mapOptions
     )(responsesIncludingAction)
+  } else {
+    return action
   }
-  return action
 }
 
 async function runAction(
@@ -103,24 +104,43 @@ const errorMessageFromResponses = (responses: Action[], ids: string[]) =>
     .filter(Boolean)
     .join(', ')
 
-function responseFromResponses(responses: Action[], ids: string[]) {
+const makeResponseOk = ({ error, ...response }: Response = {}) => ({
+  ...response,
+  status: 'ok',
+})
+
+function responseFromResponses(responses: Action[], ids: string[]): Action {
   const errorIndices = responses
     .map((response, index) =>
       isOkResponse(response?.response) ? undefined : index
     )
     .filter((index): index is number => index !== undefined)
   const message = errorMessageFromResponses(responses, ids)
-  return {
-    response:
-      errorIndices.length > 0
-        ? {
-            status: 'error',
-            error: message,
-          }
-        : message
-        ? { status: 'ok', warning: `Message from steps: ${message}` }
-        : { status: 'ok' },
-  } as Action
+
+  if (errorIndices.length > 0) {
+    return {
+      response: {
+        status: 'error',
+        error: message,
+      },
+    } as Action
+  } else if (responses.length === 1 && responses[0]) {
+    const response = responses[0]
+    return {
+      ...response,
+      response: {
+        ...makeResponseOk(response.response),
+        ...(message ? { warning: `Message from steps: ${message}` } : {}),
+      },
+    }
+  } else {
+    return {
+      response: {
+        status: 'ok',
+        ...(message ? { warning: `Message from steps: ${message}` } : {}),
+      },
+    } as Action // Ok to have an Action with a response only here
+  }
 }
 
 function getLastJobWithResponse(
@@ -432,7 +452,7 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
     if (!isJob(job)) {
       return createErrorOnAction(
         action,
-        `No job with id '${jobId}'`,
+        `No valid job with id '${jobId}'`,
         'notfound'
       )
     }

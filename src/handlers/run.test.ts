@@ -83,7 +83,7 @@ test('should run a simple flow with one action', async (t) => {
   }
   const expectedResponse = {
     ...action,
-    response: { status: 'ok' }, // We don't return data in flows by default
+    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -1012,7 +1012,7 @@ test('should return notfound for unknown job', async (t) => {
   })
 
   t.is(ret.response?.status, 'notfound', ret.response?.error)
-  t.is(ret.response?.error, "No job with id 'action0'")
+  t.is(ret.response?.error, "No valid job with id 'action0'")
   t.is(dispatch.callCount, 0)
 })
 
@@ -1428,7 +1428,7 @@ test('should mutate with transformers and pipelines', async (t) => {
   }
   const expectedResponse = {
     ...action,
-    response: { status: 'ok' }, // We don't return data in flows by default
+    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -1750,7 +1750,7 @@ test('should mutate action into several actions based on iterate path in paralle
   t.deepEqual(ret, expectedResponse)
 })
 
-test('should return data from simple action based on mutation', async (t) => {
+test('should return data from simple action based on response mutation', async (t) => {
   const dispatch = sinon.stub().resolves({
     response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
   })
@@ -2263,6 +2263,38 @@ test('should return response with error from data', async (t) => {
   t.deepEqual(ret.response?.error, 'No data')
 })
 
+test('should return error when job has no action or flow', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+  })
+  const jobs = {
+    action0: {
+      id: 'action0',
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action0',
+    },
+    meta: { ident: { id: 'johnf' }, id: '12345', project: 'test' },
+  }
+  const expectedResponse = {
+    ...action,
+    response: {
+      status: 'notfound',
+      error: "No valid job with id 'action0'",
+    },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatch.callCount, 0)
+})
+
 test.todo('should support sub-flow')
 test.todo('should run responseMutation pipeline on response from sub-flow')
-test.todo('should return error for invalid job (missing action and flow)')
