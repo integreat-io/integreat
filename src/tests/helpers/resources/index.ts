@@ -4,7 +4,7 @@ import json from '../../../transformers/json.js'
 import { Resources } from '../../../create.js'
 
 const resources: Resources = {
-  transporters: { http: httpTransporter.default },
+  transporters: { http: httpTransporter },
   transformers: { formatDate, json },
 }
 
