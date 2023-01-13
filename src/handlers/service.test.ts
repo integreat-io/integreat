@@ -56,7 +56,7 @@ test('should send action straight to service', async (t) => {
 })
 
 test('should return error when service does not return a status', async (t) => {
-  const send = async () => ({ status: null })
+  const send = async () => ({})
   const transporter = { ...baseTransporter, send }
   const someService = createService({ schemas, mapOptions })({
     ...serviceDefs,

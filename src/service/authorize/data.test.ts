@@ -343,7 +343,7 @@ test('should remove unauthorized items in request data', (t) => {
     ...action,
     payload: { type: 'account', data: [account0] },
     response: {
-      status: null,
+      status: undefined,
       warning: '2 items were removed from request data due to lack of access',
     },
   }

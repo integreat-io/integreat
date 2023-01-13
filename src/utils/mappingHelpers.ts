@@ -21,9 +21,7 @@ const setStatusAndError = (
     ['ok', null, undefined].includes(response.status) &&
     (!originalStatus || originalStatus === 'ok')
       ? 'error'
-      : response.status === null
-      ? null
-      : response.status || originalStatus,
+      : response.status || originalStatus || undefined,
   ...(response.error
     ? {
         error: Array.isArray(response.error)

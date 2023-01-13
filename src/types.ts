@@ -134,7 +134,7 @@ export interface Meta extends Record<string, unknown> {
 }
 
 export interface Response<T = unknown> {
-  status: string | null
+  status?: string
   data?: T
   reason?: string
   error?: string

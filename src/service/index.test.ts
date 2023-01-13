@@ -1392,7 +1392,7 @@ test('mapRequest should authorize data array going to service', async (t) => {
   }
   const endpoint = service.endpointFromAction(action)
   const expectedResponse = {
-    status: null,
+    status: undefined,
     warning: '1 item was removed from request data due to lack of access',
   }
 
@@ -1462,13 +1462,13 @@ test('mapRequest should authorize data array coming from service', async (t) => 
   }
   const endpoint = service.endpointFromAction(action, isIncoming)
   const expectedResponse = {
-    status: null,
+    status: undefined,
     warning: '1 item was removed from request data due to lack of access',
   }
 
   const ret = service.mapRequest(action, endpoint!, isIncoming)
 
-  t.is(ret.response?.status, null, ret.response?.error)
+  t.is(ret.response?.status, undefined, ret.response?.error)
   const data = ret.payload.data as TypedData[]
   t.is(data.length, 1)
   t.is(data[0].id, 'johnf')

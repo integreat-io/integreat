@@ -83,7 +83,7 @@ test('should return error from queue', async (t) => {
 })
 
 test('should return error when queue does not respond status', async (t) => {
-  const send = async () => ({ status: null })
+  const send = async () => ({ status: undefined })
   const options = { queueService: 'queue' }
   const queueTransporter = { ...baseTransporter, send }
   const queueService = createService({ schemas, mapOptions })({

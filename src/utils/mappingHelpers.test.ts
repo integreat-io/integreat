@@ -44,7 +44,7 @@ test('should return mapped action when all parts are replaced', (t) => {
       sendNoDefaults: true,
     },
     response: {
-      status: null,
+      status: undefined,
       data: { id: 'johnf' },
     },
     meta: {
@@ -189,47 +189,7 @@ test('should set status to null on response when not set and no original status'
       data: [{ id: 'johnf' }],
     },
     response: {
-      status: null,
-      data: [{ id: 'ent1', $type: 'entry' }],
-    },
-    meta: {
-      options: { uri: 'http://some.api.com/1.0' },
-      ident: { id: 'johnf' },
-    },
-  }
-
-  const ret = populateActionAfterMapping(action, mappedAction)
-
-  t.deepEqual(ret, expected)
-})
-
-test('should keep status null from mapped action', (t) => {
-  const action = {
-    type: 'SET',
-    payload: {
-      id: 'johnf',
-      data: [{ id: 'johnf' }],
-    },
-    response: { status: 'error' },
-    meta: {
-      options: { uri: 'http://some.api.com/1.0' },
-      ident: { id: 'johnf' },
-    },
-  }
-  const mappedAction = {
-    response: {
-      status: null,
-      data: [{ id: 'ent1', $type: 'entry' }],
-    },
-  }
-  const expected = {
-    type: 'SET',
-    payload: {
-      id: 'johnf',
-      data: [{ id: 'johnf' }],
-    },
-    response: {
-      status: null,
+      status: undefined,
       data: [{ id: 'ent1', $type: 'entry' }],
     },
     meta: {

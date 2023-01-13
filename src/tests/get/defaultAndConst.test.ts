@@ -78,7 +78,7 @@ test('should transform entry without defaults', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent2' },
-    response: { status: null, returnNoDefaults: true },
+    response: { status: undefined, returnNoDefaults: true },
     meta: { ident: { id: 'johnf' } },
   }
 

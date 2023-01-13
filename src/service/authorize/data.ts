@@ -148,7 +148,7 @@ const authorizeDataBase = (
             ...(!action.response?.error && error && { error }),
             ...(!action.response?.error && reason && { reason }),
             ...(warning && { warning }),
-            status: status || null,
+            status,
           }
         : undefined
 

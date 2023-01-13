@@ -30,7 +30,7 @@ const getExpired = async (
       targetService,
       endpoint: endpointId,
     },
-    response: { status: null, returnNoDefaults: true },
+    response: { status: undefined, returnNoDefaults: true },
     meta: { ident },
   })
 }
@@ -126,7 +126,7 @@ export default async function expire(
     response: {
       ...action.response,
       ...responseAction.response,
-      status: responseAction.response?.status || null,
+      status: responseAction.response?.status,
     },
   }
 }

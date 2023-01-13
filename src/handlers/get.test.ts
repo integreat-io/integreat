@@ -338,7 +338,7 @@ test('should not get default values from type', async (t) => {
       type: 'entry',
       targetService: 'entries',
     },
-    response: { status: null, returnNoDefaults: true },
+    response: { status: undefined, returnNoDefaults: true },
   }
   const svc = setupService('http://api1.test/database')
   const getService = () => svc

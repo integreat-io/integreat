@@ -98,9 +98,9 @@ const mapIncomingResponse = (
   service && endpoint ? service.mapResponse(action, endpoint, true) : action
 
 const responseFromAction = ({
-  response: { status, ...response } = { status: null },
+  response: { status, ...response } = {},
   meta: { ident } = {},
-}: Action) => ({ ...response, status: status || null, access: { ident } })
+}: Action) => ({ ...response, status, access: { ident } })
 
 const wrapDispatch =
   (internalDispatch: InternalDispatch, getService: GetService): Dispatch =>
