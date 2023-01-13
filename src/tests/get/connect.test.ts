@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon = require('sinon')
 import tokenAuth from '../../authenticators/token.js'
@@ -27,7 +28,7 @@ test('should connect to service and reuse connection', async (t) => {
     transporters: {
       ...resources.transporters,
       http: {
-        ...resources.transporters.http,
+        ...resources.transporters!.http,
         connect,
         send,
       },

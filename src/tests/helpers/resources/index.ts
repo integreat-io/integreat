@@ -1,8 +1,11 @@
 import httpTransporter from 'integreat-transporter-http'
 import formatDate from '../../../transformers/formatDate.js'
 import json from '../../../transformers/json.js'
+import { Resources } from '../../../create.js'
 
-export default {
+const resources: Resources = {
   transporters: { http: httpTransporter.default },
   transformers: { formatDate, json },
 }
+
+export default resources

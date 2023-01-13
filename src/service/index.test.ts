@@ -202,7 +202,7 @@ const mockResources = (
   transporters: {
     ...jsonResources.transporters,
     http: {
-      ...jsonResources.transporters.http,
+      ...jsonResources.transporters!.http,
       send: async (_action: Action) => ({ status: 'ok', data }),
       listen: async (dispatch: Dispatch) => {
         const response = await dispatch(action)
@@ -704,7 +704,7 @@ test('send should connect before sending request', async (t) => {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
-      http: { ...jsonResources.transporters.http, connect, send },
+      http: { ...jsonResources.transporters!.http, connect, send },
     },
     mapOptions,
     schemas,
@@ -739,7 +739,7 @@ test('send should store connection', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         connect,
         send: async (_action: Action) => ({ status: 'ok', data: {} }),
       },
@@ -778,7 +778,7 @@ test('send should return error when connection fails', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         connect: async () => ({ status: 'notfound', error: 'Not found' }),
         send: async (_action: Action) => ({ status: 'ok', data: {} }),
       },
@@ -818,7 +818,7 @@ test('send should retrieve error response from service', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         send: async (_action: Action) => ({
           status: 'badrequest',
           error: 'Real bad request',
@@ -857,7 +857,7 @@ test('send should return with error when transport throws', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         send: async (_action: Action) => {
           throw new Error('We did not expect this')
         },
@@ -898,7 +898,7 @@ test('send should do nothing when action has a response', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         send: async (_action: Action) => ({
           status: 'error',
           error: 'Should not be called',
@@ -1606,7 +1606,7 @@ test('listen should call transporter.listen', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         listen: listenStub,
       },
     },
@@ -1640,7 +1640,7 @@ test('listen should not call transporter.listen when transport.shouldListen retu
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         shouldListen: () => false,
         listen: listenStub,
       },
@@ -1734,7 +1734,7 @@ test('should support progress reporting', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         listen: listenStub,
       },
     },
@@ -1889,7 +1889,7 @@ test('listen should return error when connection fails', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         listen: async () => ({ status: 'ok' }),
         connect: async () => ({
           status: 'timeout',
@@ -1942,7 +1942,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         listen: undefined,
       },
     },
@@ -1974,7 +1974,7 @@ test('listen should return error when no transporter', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         listen: listenStub,
       },
     },
@@ -2014,7 +2014,7 @@ test('listen should use service middleware', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         listen: async (dispatch: Dispatch) => {
           listenDispatch = dispatch
           return { status: 'ok' }
@@ -2047,7 +2047,7 @@ test('listen should return noaction when incoming action is null', async (t) => 
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         listen: async (dispatch: Dispatch) => {
           listenDispatch = dispatch
           return { status: 'ok' }
@@ -2081,7 +2081,7 @@ test('close should disconnect transporter', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
         disconnect: disconnectStub,
       },
@@ -2115,7 +2115,7 @@ test('close should probihit closed connection from behind used again', async (t)
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters.http,
+        ...jsonResources.transporters!.http,
         listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
         disconnect: async () => undefined,
       },

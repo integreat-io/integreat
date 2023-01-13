@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon = require('sinon')
 import defs from '../helpers/defs/index.js'
@@ -16,7 +17,7 @@ const updatedAt = '2017-11-24T07:11:43.000Z'
 
 test('should use incoming endpoint over non-incoming', async (t) => {
   const send = sinon
-    .stub(resources.transporters.http, 'send')
+    .stub(resources.transporters!.http, 'send')
     .callsFake(async (_action: Action) => ({
       status: 'ok',
       data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),
@@ -71,7 +72,7 @@ test('should use non-incoming endpoint over incoming', async (t) => {
     transporters: {
       ...resources.transporters,
       http: {
-        ...resources.transporters.http,
+        ...resources.transporters!.http,
         send: async (_action: Action) => ({
           status: 'ok',
           data: JSON.stringify({

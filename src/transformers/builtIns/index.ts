@@ -1,3 +1,4 @@
+import { CustomFunction } from 'map-transform'
 import boolean from './boolean.js'
 import date from './date.js'
 import integer from './integer.js'
@@ -7,7 +8,7 @@ import reference from './reference.js'
 import string from './string.js'
 import unarray from './unarray.js'
 
-export default {
+const transformers: Record<string, CustomFunction> = {
   boolean,
   date,
   integer,
@@ -17,3 +18,5 @@ export default {
   string,
   unarray,
 }
+
+export default transformers

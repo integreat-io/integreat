@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon = require('sinon')
 import defs from '../helpers/defs/index.js'
@@ -16,7 +17,7 @@ const updatedAt = '2017-11-24T07:11:43.000Z'
 
 test('should map incoming action data to error status and map response', async (t) => {
   const send = sinon
-    .stub(resources.transporters.http, 'send')
+    .stub(resources.transporters!.http, 'send')
     .callsFake(async (_action: Action) => ({
       status: 'ok',
       data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),

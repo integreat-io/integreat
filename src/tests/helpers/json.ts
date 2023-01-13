@@ -1,4 +1,5 @@
 import httpTransporter from 'integreat-transporter-http'
+import { CustomFunction } from 'map-transform'
 import mutations from '../../mutations/index.js'
 import json from '../../transformers/json.js'
 
@@ -11,4 +12,4 @@ export const jsonServiceDef = {
   mutation: [{ $apply: 'exchange:json' }, { $apply: 'exchange:uri' }],
 }
 
-export const jsonFunctions = { json }
+export const jsonFunctions: Record<string, CustomFunction> = { json }

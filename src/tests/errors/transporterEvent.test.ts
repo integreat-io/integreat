@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon = require('sinon')
 import defs from '../helpers/defs/index.js'
@@ -10,7 +11,7 @@ import Integreat, { Transporter } from '../../index.js'
 test('should emit event from transporter', async (t) => {
   const listener = sinon.stub()
   const mockedHttp: Transporter = {
-    ...resources.transporters.http,
+    ...resources.transporters!.http,
     connect: async (_options, _auth, _conn, emitFn) => {
       emitFn('error', new Error('We failed'))
       return { status: 'error' } // Make sure we don't call the service
