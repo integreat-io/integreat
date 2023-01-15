@@ -51,7 +51,7 @@
     "later": "^1.2.0",
     "luxon": "^3.2.1",
     "map-any": "^0.2.1",
-    "map-transform": "0.4.0-beta.5",
+    "map-transform": "0.4.0-beta.6",
     "ms": "^2.1.3",
     "nanoid": "^4.0.0",
     "p-limit": "^4.0.0",
@@ -62,7 +62,7 @@
   "devDependencies": {
     "@integreat/ts-dev-setup": "^4.0.0",
     "@types/sinon": "^10.0.13",
-    "integreat-transporter-http": "0.1.0-beta.3",
+    "integreat-transporter-http": "0.1.0-beta.4",
     "nock": "^13.3.0",
     "sinon": "^15.0.1"
   }
