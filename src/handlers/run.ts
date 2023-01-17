@@ -1,5 +1,5 @@
 /* eslint-disable security/detect-object-injection */
-import { mapTransform, MapObject, MapPipe } from 'map-transform'
+import { mapTransform, MapObject, MapPipe, MapDefinition } from 'map-transform'
 import pLimit from 'p-limit'
 import {
   Action,
@@ -203,24 +203,28 @@ function statusFromValidationErrors(vals: ConditionFailObject[]) {
   return statuses[0]
 }
 
-const isStepWithIteratePath = (step: unknown): step is JobWithAction =>
-  isJobStep(step) && typeof (step as JobWithAction).iteratePath === 'string'
-
 const setData = (action: Action, data: unknown): Action => ({
   ...action,
   payload: { ...action.payload, data },
 })
+
+const getIteratePipeline = (step: JobWithAction): MapDefinition | undefined =>
+  step.iterate || step.iteratePath
 
 function unpackIterationSteps(
   step: Job,
   responses: Record<string, Action>,
   mapOptions: MapOptions
 ): Job {
-  if (!isStepWithIteratePath(step)) {
+  if (!isJobWithAction(step)) {
+    return step
+  }
+  const iteratePipeline = getIteratePipeline(step)
+  if (!iteratePipeline) {
     return step
   }
 
-  const getter = mapTransform(step.iteratePath as string, mapOptions) // We know this is a string
+  const getter = mapTransform(iteratePipeline as string, mapOptions)
   const items = ensureArray(getter(responses))
 
   return {

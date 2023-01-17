@@ -1483,6 +1483,85 @@ test('should mutate simple action with pipeline', async (t) => {
   t.deepEqual(ret, expectedResponse)
 })
 
+test('should mutate action into several actions based on iterate pipeline', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: { status: 'ok', data: [] },
+    })
+    .onCall(1)
+    .resolves({
+      response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
+    })
+  const jobs = {
+    action11: {
+      id: 'action11',
+      flow: [
+        {
+          id: 'setItem',
+          action: { type: 'SET', payload: { type: 'entry' } },
+          iterate: [
+            'action.payload.data.items[]',
+            { $filter: 'compare', path: 'include', match: true },
+          ],
+          mutation: { 'payload.key': 'payload.data.id' },
+        },
+      ],
+      responseMutation: {
+        response: {
+          $modify: 'response',
+          data: '^^setItem_1.response.data', // To verify that the actions get postfixed with index
+        },
+      },
+    },
+  }
+  const data = {
+    items: [
+      { id: 'ent1', include: true },
+      { id: 'ent2', include: false },
+      { id: 'ent3', include: true },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action11', data },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction0 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: { id: 'ent1', include: true },
+      key: 'ent1',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction1 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: { id: 'ent3', include: true },
+      key: 'ent3',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedResponse = {
+    ...action,
+    response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(dispatch.callCount, 2)
+  t.deepEqual(dispatch.args[0][0], expectedAction0)
+  t.deepEqual(dispatch.args[1][0], expectedAction1)
+  t.deepEqual(ret, expectedResponse)
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+})
+
 test('should mutate action into several actions based on iterate path', async (t) => {
   const dispatch = sinon
     .stub()

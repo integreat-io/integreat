@@ -1,5 +1,5 @@
 import { PProgress } from 'p-progress'
-import { MapObject, MapPipe } from 'map-transform'
+import { MapDefinition, MapObject, MapPipe } from 'map-transform'
 import { EndpointOptions } from './service/endpoints/types.js'
 import { IdentConfig } from './service/types.js'
 import { Service } from './service/types.js'
@@ -57,6 +57,7 @@ export interface JobWithFlow extends JobFields {
 
 export interface JobWithAction extends JobFields {
   action: Action
+  iterate?: MapDefinition
   iteratePath?: string
   responseMutation?: MapObject | MapPipe
 }
