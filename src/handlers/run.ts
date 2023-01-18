@@ -104,12 +104,27 @@ const errorMessageFromResponses = (responses: Action[], ids: string[]) =>
     .filter(Boolean)
     .join(', ')
 
-const makeResponseOk = ({ error, ...response }: Response = {}) => ({
-  ...response,
-  status: 'ok',
-})
+const removeError = ({ error, ...response }: Response) => response
 
 function responseFromResponses(responses: Action[], ids: string[]): Action {
+  if (responses.length === 1 && responses[0]) {
+    const response = responses[0]
+    const status = isOkResponse(response.response) ? 'ok' : 'error'
+    const message = errorMessageFromResponses(responses, ids)
+    return {
+      ...response,
+      response: {
+        ...removeError(response.response || {}),
+        status,
+        ...(message
+          ? status === 'ok'
+            ? { warning: `Message from steps: ${message}` }
+            : { error: message }
+          : {}),
+      },
+    }
+  }
+
   const errorIndices = responses
     .map((response, index) =>
       isOkResponse(response?.response) ? undefined : index
@@ -124,15 +139,6 @@ function responseFromResponses(responses: Action[], ids: string[]): Action {
         error: message,
       },
     } as Action
-  } else if (responses.length === 1 && responses[0]) {
-    const response = responses[0]
-    return {
-      ...response,
-      response: {
-        ...makeResponseOk(response.response),
-        ...(message ? { warning: `Message from steps: ${message}` } : {}),
-      },
-    }
   } else {
     return {
       response: {
@@ -229,13 +235,36 @@ function unpackIterationSteps(
 
   return {
     id: step.id,
-    flow: items.map((data, index) => ({
+    flow: items.map((item, index) => ({
       id: `${step.id}_${index}`,
-      action: setData(step.action, data),
+      action: setData(step.action, item),
       mutation: step.mutation,
     })),
     responseMutation: step.responseMutation,
   }
+}
+
+function generateIterateResponse(responses: Action[]) {
+  const errors = responses.filter(
+    (response) => !isOkResponse(response.response)
+  )
+  const status = errors.length === 0 ? 'ok' : 'error'
+  const error = errors
+    .map((response) =>
+      response.response
+        ? `[${response.response.status}] ${response.response.error}`
+        : undefined
+    )
+    .filter(Boolean)
+    .join(' | ')
+  const data = responses.flatMap((resp) => resp.response?.data)
+  return {
+    response: {
+      status,
+      data,
+      ...(error && { error }),
+    },
+  } as Action // We're okay with this action having only a response
 }
 
 async function runStep(
@@ -303,16 +332,11 @@ async function runStep(
         meta
       )
       if (isJobWithAction(step) && isJobWithFlow(job)) {
-        // This was originally a job with an action that was unpacked to a flow.
-        // Gather all responses and set them as response data on the original job
-        stepResponses[step.id] = {
-          response: {
-            status: 'ok',
-            data: Object.values(stepResponses).flatMap(
-              (resp) => resp.response?.data
-            ),
-          },
-        } as Action // We're okay with this action having only a response
+        // This was originally a job with an action that was unpacked to a flow,
+        // so gather all responses and set an aggregated response
+        stepResponses[step.id] = generateIterateResponse(
+          Object.values(stepResponses)
+        )
       }
       setResponses(stepResponses, ourResponses)
     }

@@ -1829,6 +1829,58 @@ test('should mutate action into several actions based on iterate path in paralle
   t.deepEqual(ret, expectedResponse)
 })
 
+test('should fail step if a iteration step fails', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: { status: 'ok', data: [] },
+    })
+    .onCall(0)
+    .resolves({
+      response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+    })
+    .onCall(1)
+    .resolves({
+      response: { status: 'badrequest', error: 'Too cool' },
+    })
+  const jobs = {
+    action11: {
+      id: 'action11',
+      flow: [
+        {
+          id: 'setItem',
+          action: { type: 'SET', payload: { type: 'entry' } },
+          iterate: 'action.payload.data.items',
+          mutation: { 'payload.key': 'payload.data.id' },
+        },
+      ],
+    },
+  }
+  const data = { items: [{ id: 'ent1' }, { id: 'ent2' }, { id: 'ent3' }] }
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action11', data },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedResponse = {
+    ...action,
+    response: {
+      status: 'error',
+      error:
+        "Could not finish job 'action11', the following steps failed: 'setItem' (error: [badrequest] Too cool)",
+      data: [{ id: 'ent1', $type: 'entry' }, undefined],
+    },
+  }
+
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(dispatch.callCount, 2)
+  t.deepEqual(ret, expectedResponse)
+})
+
 test('should return data from simple action based on response mutation', async (t) => {
   const dispatch = sinon.stub().resolves({
     response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
@@ -2145,7 +2197,6 @@ test('should run responseMutation pipeline on response from step', async (t) => 
   }
   const expected = {
     status: 'error',
-    error: '',
   }
 
   const ret = await run(jobs, mapOptions)(action, {
