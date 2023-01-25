@@ -16,7 +16,6 @@ import {
   isSchema,
   isPropertySchema,
   isDataObject,
-  isTypedData,
   isNullOrUndefined,
 } from '../utils/is.js'
 
@@ -113,13 +112,9 @@ const mappingFromSchema = (schema: Shape, iterate = false): MapObject =>
     iterate ? { $iterate: true } : {}
   )
 
-const noSchemaOrEqualType = (data: unknown, type: string) =>
-  !isTypedData(data) || data.$type === type
-
 const includeInCasting = (type: string) =>
   type
-    ? (data: unknown) =>
-        !isNullOrUndefined(data) && noSchemaOrEqualType(data, type)
+    ? (data: unknown) => !isNullOrUndefined(data)
     : (data: unknown) => !isNullOrUndefined(data)
 
 const cleanUpCast = (type: string, isFwd: boolean) =>

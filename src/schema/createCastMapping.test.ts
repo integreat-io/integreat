@@ -1,7 +1,6 @@
 import test from 'ava'
 import { mapTransform, MapDefinition } from 'map-transform'
 import transformFunctions from '../transformers/builtIns/index.js'
-import { TypedData } from '../types.js'
 
 import createCastMapping from './createCastMapping.js'
 
@@ -345,7 +344,7 @@ test('should skip properties with invalid $cast', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should skip items already cast with another $type', (t) => {
+test('should recast items already cast with another $type', (t) => {
   const schema = {
     id: 'string',
     title: 'string',
@@ -357,7 +356,7 @@ test('should skip items already cast with another $type', (t) => {
       name: 'John F.',
     },
   ]
-  const expected = [] as TypedData[]
+  const expected = [{ id: 'johnf', $type: 'entry', title: undefined }]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     functions: transformFunctions,
@@ -387,7 +386,7 @@ test('should pass on items already cast with this $type', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should skip items already cast with another $type in reverse', (t) => {
+test('should recast items already cast with another $type in reverse', (t) => {
   const schema = {
     id: 'string',
     title: 'string',
@@ -399,7 +398,7 @@ test('should skip items already cast with another $type in reverse', (t) => {
       name: 'John F.',
     },
   ]
-  const expected = [] as TypedData[]
+  const expected = [{ id: 'johnf', title: undefined }]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     functions: transformFunctions,
