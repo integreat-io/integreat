@@ -1,6 +1,6 @@
 import test from 'ava'
 import { mapTransform, MapDefinition } from 'map-transform'
-import transformFunctions from '../transformers/builtIns/index.js'
+import transformers from '../transformers/builtIns/index.js'
 
 import createCastMapping from './createCastMapping.js'
 
@@ -98,7 +98,7 @@ test('should create mapping definition from schema', (t) => {
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   })(data)
 
   t.deepEqual(ret, expected)
@@ -180,7 +180,7 @@ test('should reverse transform with mapping definition from schema', (t) => {
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   }).rev(data)
 
   t.deepEqual(ret, expected)
@@ -217,7 +217,7 @@ test('should be iteratable', (t) => {
   const ret = mapTransform(
     [createCastMapping(schema, 'entry')] as MapDefinition,
     {
-      functions: transformFunctions,
+      transformers,
     }
   )(data)
 
@@ -300,7 +300,7 @@ test('should create mapping definition from nested schema', (t) => {
   ]
 
   const ret = mapTransform(createCastMapping(entrySchema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
     pipelines: {
       cast_user: createCastMapping(userSchema, 'user'),
     },
@@ -338,7 +338,7 @@ test('should skip properties with invalid $cast', (t) => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ret = mapTransform(createCastMapping(schema as any, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   })(data)
 
   t.deepEqual(ret, expected)
@@ -359,7 +359,7 @@ test('should recast items already cast with another $type', (t) => {
   const expected = [{ id: 'johnf', $type: 'entry', title: undefined }]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   })(data)
 
   t.deepEqual(ret, expected)
@@ -380,7 +380,7 @@ test('should pass on items already cast with this $type', (t) => {
   const expected = data
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   })(data)
 
   t.deepEqual(ret, expected)
@@ -401,7 +401,7 @@ test('should recast items already cast with another $type in reverse', (t) => {
   const expected = [{ id: 'johnf', title: undefined }]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   }).rev(data)
 
   t.deepEqual(ret, expected)
@@ -427,7 +427,7 @@ test('should not set $type when casting in reverse', (t) => {
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   }).rev(data)
 
   t.deepEqual(ret, expected)
@@ -457,7 +457,7 @@ test('should keep isNew and isDeleted when true', (t) => {
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   })(data)
 
   t.deepEqual(ret, expected)
@@ -485,7 +485,7 @@ test('should remove isNew and isDeleted when false', (t) => {
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   })(data)
 
   t.deepEqual(ret, expected)
@@ -514,7 +514,7 @@ test('should keep isNew and isDeleted when true in reverse', (t) => {
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   }).rev(data)
 
   t.deepEqual(ret, expected)
@@ -541,7 +541,7 @@ test('should remove isNew and isDeleted when false in reverse', (t) => {
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   }).rev(data)
 
   t.deepEqual(ret, expected)
@@ -562,7 +562,7 @@ test('should not cast null or undefined', (t) => {
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   })(data)
 
   t.deepEqual(ret, expected)
@@ -582,7 +582,7 @@ test('should not cast null or undefined in reverse', (t) => {
   ]
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    functions: transformFunctions,
+    transformers,
   }).rev(data)
 
   t.deepEqual(ret, expected)

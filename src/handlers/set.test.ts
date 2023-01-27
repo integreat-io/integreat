@@ -7,7 +7,7 @@ import {
   jsonFunctions,
 } from '../tests/helpers/json.js'
 import schema from '../schema/index.js'
-import functions from '../transformers/builtIns/index.js'
+import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import { TypedData } from '../types.js'
 
@@ -56,7 +56,7 @@ const mapOptions = {
     ['cast_entry']: schemas.entry.mapping,
     ['cast_account']: schemas.account.mapping,
   },
-  functions: { ...functions, ...jsonFunctions },
+  transformers: { ...transformers, ...jsonFunctions },
 }
 
 const typeMappingFromServiceId = (serviceId: string) =>

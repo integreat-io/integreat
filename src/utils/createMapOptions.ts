@@ -13,7 +13,7 @@ const pipelinesFromSchemas = (
 export default function createMapOptions(
   schemas: Record<string, Schema>,
   mutations?: Record<string, MapDefinition>,
-  functions?: Record<string, CustomFunction>,
+  transformers?: Record<string, CustomFunction>,
   dictionaries?: Dictionaries
 ): MapOptions {
   return {
@@ -21,7 +21,7 @@ export default function createMapOptions(
       ...mutations,
       ...pipelinesFromSchemas(schemas),
     },
-    functions,
+    transformers,
     dictionaries,
     fwdAlias: 'from',
     revAlias: 'to',

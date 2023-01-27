@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon = require('sinon')
 import createSchema from '../../schema/index.js'
-import builtInFunctions from '../../transformers/builtIns/index.js'
+import builtInTransformers from '../../transformers/builtIns/index.js'
 import { TypedData } from '../../types.js'
 import { MapOptions } from '../types.js'
 import json from '../../transformers/json.js'
@@ -81,8 +81,8 @@ const mapOptions = {
     entry2: entryMapping2,
     entry3: entryMapping3,
   },
-  functions: {
-    ...builtInFunctions,
+  transformers: {
+    ...builtInTransformers,
     shouldHaveToken,
     alwaysOk,
     json,

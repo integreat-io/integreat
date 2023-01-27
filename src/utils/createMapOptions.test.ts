@@ -29,7 +29,7 @@ const schemas = {
   }),
 }
 
-const transformFunctions = {
+const transformers = {
   string: () => (value: unknown) => String(value),
 }
 
@@ -41,7 +41,7 @@ const dictionaries = {
 
 test('should return map options with pipelines from mutations', (t) => {
   const expected = mutations
-  const ret = createMapOptions({}, mutations, transformFunctions)
+  const ret = createMapOptions({}, mutations, transformers)
 
   t.deepEqual(ret.pipelines, expected)
 })
@@ -53,24 +53,19 @@ test('should include schema cast mutations in pipelines', (t) => {
     ['cast_user']: schemas.user.mapping,
   }
 
-  const ret = createMapOptions(schemas, mutations, transformFunctions)
+  const ret = createMapOptions(schemas, mutations, transformers)
 
   t.deepEqual(ret.pipelines, expected)
 })
 
-test('should include transform functions', (t) => {
-  const ret = createMapOptions(schemas, mutations, transformFunctions)
+test('should include transformers', (t) => {
+  const ret = createMapOptions(schemas, mutations, transformers)
 
-  t.is(ret.functions, transformFunctions)
+  t.is(ret.transformers, transformers)
 })
 
-test('should include dictionaries functions', (t) => {
-  const ret = createMapOptions(
-    schemas,
-    mutations,
-    transformFunctions,
-    dictionaries
-  )
+test('should include dictionaries', (t) => {
+  const ret = createMapOptions(schemas, mutations, transformers, dictionaries)
 
   t.is(ret.dictionaries, dictionaries)
 })

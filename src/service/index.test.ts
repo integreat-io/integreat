@@ -3,7 +3,7 @@ import test from 'ava'
 import sinon = require('sinon')
 import pProgress from 'p-progress'
 import jsonResources from '../tests/helpers/resources/index.js'
-import functions from '../transformers/builtIns/index.js'
+import transformers from '../transformers/builtIns/index.js'
 import createSchema from '../schema/index.js'
 import dispatch from '../tests/helpers/dispatch.js'
 import { isObject } from '../utils/is.js'
@@ -89,7 +89,7 @@ const mapOptions = {
     entry2: entry2Mapping,
     account: accountMapping,
   },
-  functions,
+  transformers,
 }
 
 const endpoints = [

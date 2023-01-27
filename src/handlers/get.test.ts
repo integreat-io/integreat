@@ -8,7 +8,7 @@ import {
   jsonFunctions,
 } from '../tests/helpers/json.js'
 import schema from '../schema/index.js'
-import functions from '../transformers/builtIns/index.js'
+import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import { Action, TypedData } from '../types.js'
 
@@ -61,7 +61,10 @@ const pipelines = {
   ['cast_account']: schemas.account.mapping,
 }
 
-const mapOptions = { pipelines, functions: { ...functions, ...jsonFunctions } }
+const mapOptions = {
+  pipelines,
+  transformers: { ...transformers, ...jsonFunctions },
+}
 
 const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
   createService({ schemas, mapOptions })({

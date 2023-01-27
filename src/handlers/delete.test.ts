@@ -7,7 +7,7 @@ import {
 } from '../tests/helpers/json.js'
 import createService from '../service/index.js'
 import createSchema from '../schema/index.js'
-import functions from '../transformers/builtIns/index.js'
+import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 
 import deleteFn from './delete.js'
@@ -44,7 +44,7 @@ const mapOptions = {
     ['cast_entry']: schemas.entry.mapping,
     ['cast_account']: schemas.account.mapping,
   },
-  functions: { ...functions, ...jsonFunctions },
+  transformers: { ...transformers, ...jsonFunctions },
 }
 
 const setupService = createService({ schemas, mapOptions })

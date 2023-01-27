@@ -4,7 +4,7 @@ import { EndpointDef, Endpoint } from './endpoints/types.js'
 
 export interface MapOptions {
   pipelines?: Record<string, MapDefinition>
-  functions?: Record<string, CustomFunction>
+  transformers?: Record<string, CustomFunction>
   dictionaries?: Dictionaries
   noneValues?: unknown[]
   fwdAlias?: string

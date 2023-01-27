@@ -1392,7 +1392,7 @@ test('should mutate with transformers and pipelines', async (t) => {
   })
   const nowDate = new Date()
   const mapOptions = {
-    functions: {
+    transformers: {
       now: () => () => nowDate,
     },
     pipelines: {

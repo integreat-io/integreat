@@ -39,7 +39,7 @@ const mapOptions = {
     ['cast_entry']: schemas.entry.mapping,
     entry: entryMapping,
   },
-  functions: {},
+  transformers: {},
 }
 
 const serviceId = 'accountStore'

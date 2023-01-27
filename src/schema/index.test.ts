@@ -1,6 +1,6 @@
 import test from 'ava'
 import { mapTransform } from 'map-transform'
-import builtIns from '../transformers/builtIns/index.js'
+import transformers from '../transformers/builtIns/index.js'
 import { TypedData } from '../types.js'
 
 import schema from './index.js'
@@ -180,7 +180,7 @@ test('should provide cast mapping', (t) => {
   ]
 
   const mapping = schema(def).mapping
-  const ret = mapTransform(mapping, { functions: builtIns })(data)
+  const ret = mapTransform(mapping, { transformers })(data)
 
   t.deepEqual(ret, expected)
   t.deepEqual(Object.keys(ret[0]), expectedOrder)
@@ -205,7 +205,7 @@ test('should set createdAt and updatedAt to now when not set', (t) => {
   const before = Date.now()
 
   const mapping = schema(def).mapping
-  const ret = mapTransform(mapping, { functions: builtIns })(data)
+  const ret = mapTransform(mapping, { transformers })(data)
 
   const after = Date.now()
   const { createdAt, updatedAt } = ret as TypedData
@@ -233,7 +233,7 @@ test('should cast id to string', (t) => {
   }
 
   const mapping = schema(def).mapping
-  const ret = mapTransform(mapping, { functions: builtIns })(data)
+  const ret = mapTransform(mapping, { transformers })(data)
 
   const { id } = ret as TypedData
   t.is(id, '35')
@@ -254,7 +254,7 @@ test('should set missing id to null', (t) => {
   }
 
   const mapping = schema(def).mapping
-  const ret = mapTransform(mapping, { functions: builtIns })(data)
+  const ret = mapTransform(mapping, { transformers })(data)
 
   const { id } = ret as TypedData
   t.is(id, null)
@@ -276,7 +276,7 @@ test('should generate id when not set and generateId is true', (t) => {
   }
 
   const mapping = schema(def).mapping
-  const ret = mapTransform(mapping, { functions: builtIns })(data)
+  const ret = mapTransform(mapping, { transformers })(data)
 
   const { id } = ret as TypedData
   t.is(typeof id, 'string')
@@ -297,7 +297,7 @@ test('should not cast undefined', (t) => {
   const expected = undefined
 
   const mapping = schema(def).mapping
-  const ret = mapTransform(mapping, { functions: builtIns })(data)
+  const ret = mapTransform(mapping, { transformers })(data)
 
   t.deepEqual(ret, expected)
 })
@@ -316,7 +316,7 @@ test('should not cast null', (t) => {
   const expected = undefined
 
   const mapping = schema(def).mapping
-  const ret = mapTransform(mapping, { functions: builtIns })(data)
+  const ret = mapTransform(mapping, { transformers })(data)
 
   t.deepEqual(ret, expected)
 })
@@ -344,7 +344,7 @@ test('should not cast undefined in array', (t) => {
   ]
 
   const mapping = schema(def).mapping
-  const ret = mapTransform(mapping, { functions: builtIns })(data)
+  const ret = mapTransform(mapping, { transformers })(data)
 
   t.deepEqual(ret, expected)
 })
@@ -365,7 +365,7 @@ test('should not return array when expecting value', (t) => {
   }
 
   const mapping = schema(def).mapping
-  const ret = mapTransform(mapping, { functions: builtIns })(data)
+  const ret = mapTransform(mapping, { transformers })(data)
 
   const { title } = ret as TypedData
   t.is(title, undefined)
