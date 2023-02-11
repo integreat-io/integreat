@@ -74,12 +74,9 @@ export default {
               queryParams: {
                 'created\\[gte]': [
                   'payload.updatedSince',
-                  { $transform: 'formatDate', format: 'ISO' },
+                  { $transform: 'isoDate' },
                 ],
-                until: [
-                  'payload.updatedUntil',
-                  { $transform: 'formatDate', format: 'ISO' },
-                ],
+                until: ['payload.updatedUntil', { $transform: 'isoDate' }],
               },
             },
           },
