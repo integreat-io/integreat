@@ -1,4 +1,4 @@
-import { CustomFunction } from 'map-transform'
+import { Transformer } from 'map-transform'
 import { isObject } from '../utils/is.js'
 
 const isParsed = (data: unknown) => Array.isArray(data) || isObject(data)
@@ -18,7 +18,7 @@ function stringify(data: unknown) {
   return JSON.stringify(data)
 }
 
-const json: CustomFunction = (_operands, _options) => (data, state) =>
+const json: Transformer = (_operands, _options) => (data, state) =>
   state.rev ? stringify(data) : parse(data)
 
 export default json

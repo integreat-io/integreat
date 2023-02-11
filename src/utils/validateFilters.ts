@@ -1,11 +1,9 @@
 import util = require('util')
-import { validate } from 'map-transform'
+import { validate, DataMapper } from 'map-transform'
 import { Condition, ConditionFailObject } from '../types.js'
 import { isObject } from './is.js'
 
-export type FilterFn = (data: unknown) => boolean
-
-type FilterAndMessage = [FilterFn, () => ConditionFailObject]
+type FilterAndMessage = [DataMapper, () => ConditionFailObject]
 
 const cleanCondition = ({ onFail, ...filter }: Condition) => filter
 const cleanFilter = (filter: Condition | boolean) =>
@@ -54,8 +52,11 @@ export default function validateFilters(
   const isOrFilters = filters.$or === true
 
   return function validate(data: unknown): ConditionFailObject[] {
+    const state = { context: [], value: data } // Hack because we are using the `filter` transformer here
     const failObjects = filterFns
-      .map(([filter, getMessage]) => (filter(data) ? undefined : getMessage()))
+      .map(([filter, getMessage]) =>
+        filter(data, state) ? undefined : getMessage()
+      )
       .filter(Boolean) as ConditionFailObject[]
     return isOrFilters && failObjects.length < filterFns.length
       ? []

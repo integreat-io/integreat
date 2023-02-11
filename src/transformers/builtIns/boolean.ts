@@ -1,5 +1,5 @@
 import mapAny = require('map-any')
-import { CustomFunction } from 'map-transform'
+import { Transformer } from 'map-transform'
 
 const castBoolean = (value: unknown) => {
   if (value === null || value === undefined) {
@@ -9,6 +9,6 @@ const castBoolean = (value: unknown) => {
   }
 }
 
-const boolean: CustomFunction = (_operands) => mapAny(castBoolean)
+const boolean: Transformer = (_operands) => mapAny(castBoolean)
 
 export default boolean

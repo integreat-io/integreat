@@ -1,10 +1,10 @@
-import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
+import { MapDefinition, Transformer, Dictionaries } from 'map-transform'
 import { Action, Response, Dispatch, Transporter } from '../types.js'
 import { EndpointDef, Endpoint } from './endpoints/types.js'
 
 export interface MapOptions {
   pipelines?: Record<string, MapDefinition>
-  transformers?: Record<string, CustomFunction>
+  transformers?: Record<string, Transformer>
   dictionaries?: Dictionaries
   noneValues?: unknown[]
   fwdAlias?: string

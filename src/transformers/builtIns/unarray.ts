@@ -1,6 +1,6 @@
-import { CustomFunction } from 'map-transform'
+import { Transformer } from 'map-transform'
 
-const unarray: CustomFunction = (_operands) =>
+const unarray: Transformer = (_operands) =>
   function unarray(value: unknown) {
     return Array.isArray(value)
       ? value.length === 1

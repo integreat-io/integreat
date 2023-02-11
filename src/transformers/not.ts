@@ -1,5 +1,5 @@
-import { CustomFunction } from 'map-transform'
+import { Transformer } from 'map-transform'
 
-const not: CustomFunction = (_operands, _options) => (value, _context) => !value
+const not: Transformer = (_operands, _options) => (value, _context) => !value
 
 export default not

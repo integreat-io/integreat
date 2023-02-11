@@ -1,5 +1,5 @@
 import mapAny = require('map-any')
-import { CustomFunction } from 'map-transform'
+import { Transformer } from 'map-transform'
 import {
   isDataObject,
   isTypedData,
@@ -54,7 +54,7 @@ const castItem = (type: string | undefined) => (value: unknown) => {
   }
 }
 
-const reference: CustomFunction =
+const reference: Transformer =
   ({ type }: Operands) =>
   (value, _context) =>
     mapAny(castItem(type), value)

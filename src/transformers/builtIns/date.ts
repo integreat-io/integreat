@@ -1,5 +1,5 @@
 import mapAny = require('map-any')
-import { CustomFunction } from 'map-transform'
+import { Transformer } from 'map-transform'
 import { isDate } from '../../utils/is.js'
 
 export function castDate(value: unknown): Date | null | undefined {
@@ -17,6 +17,6 @@ export function castDate(value: unknown): Date | null | undefined {
   }
 }
 
-const date: CustomFunction = (_operands) => mapAny(castDate)
+const date: Transformer = (_operands) => mapAny(castDate)
 
 export default date

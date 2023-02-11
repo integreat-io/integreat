@@ -1,5 +1,5 @@
 import EventEmitter = require('node:events')
-import { Dictionaries, CustomFunction, MapDefinition } from 'map-transform'
+import { Dictionaries, Transformer, MapDefinition } from 'map-transform'
 import {
   Middleware,
   Transporter,
@@ -48,7 +48,7 @@ export interface Resources {
   transporters?: Record<string, Transporter>
   handlers?: Record<string, ActionHandler>
   authenticators?: Record<string, Authenticator>
-  transformers?: Record<string, CustomFunction>
+  transformers?: Record<string, Transformer>
 }
 
 export interface Instance<ResponseData = unknown> {

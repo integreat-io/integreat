@@ -1,4 +1,4 @@
-import { MapDefinition, CustomFunction, Dictionaries } from 'map-transform'
+import { MapDefinition, Transformer, Dictionaries } from 'map-transform'
 import { Schema } from '../schema/index.js'
 import { MapOptions } from '../service/types.js'
 
@@ -13,7 +13,7 @@ const pipelinesFromSchemas = (
 export default function createMapOptions(
   schemas: Record<string, Schema>,
   mutations?: Record<string, MapDefinition>,
-  transformers?: Record<string, CustomFunction>,
+  transformers?: Record<string, Transformer>,
   dictionaries?: Dictionaries
 ): MapOptions {
   return {

@@ -1,5 +1,5 @@
 /* eslint-disable security/detect-object-injection */
-import { CustomFunction } from 'map-transform'
+import { Transformer } from 'map-transform'
 import { getFirstIfArray } from '../utils/array.js'
 import { isObject, isDataObject } from '../utils/is.js'
 
@@ -41,7 +41,7 @@ const stringifyForm = (data: unknown) =>
         .join('&')
     : null
 
-const form: CustomFunction = (_operands, _options) => (data, state) =>
+const form: Transformer = (_operands, _options) => (data, state) =>
   state.rev ? stringifyForm(getFirstIfArray(data)) : parseForm(data)
 
 export default form
