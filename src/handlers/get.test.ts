@@ -267,6 +267,28 @@ test('should pass on ident when getting from id array', async (t) => {
   t.deepEqual(action1.meta?.ident, { id: 'johnf' })
 })
 
+test('should return noaction when members action has empty id array', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: [],
+      type: 'entry',
+      targetService: 'entries',
+    },
+  }
+  const svc = setupService('http://api13.test/entries?id={{payload.id}}', {
+    scope: 'members',
+    id: 'membersEndpoint',
+  })
+  const getService = () => svc
+
+  const ret = await get(action, { ...handlerResources, getService })
+
+  t.is(ret.response?.status, 'noaction', ret.response?.error)
+  t.is(ret.response?.error, 'GET action was dispatched with empty array of ids')
+  t.is(ret.response?.data, undefined)
+})
+
 test('should return error when one or more requests for individual ids fails', async (t) => {
   nock('http://api8.test')
     .get('/entries/ent1')

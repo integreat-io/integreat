@@ -103,13 +103,22 @@ export default async function get(
     endpoint: endpointId,
   } = action.payload
 
+  const id = getIdFromAction(action)
+  if (Array.isArray(id) && id.length === 0) {
+    return {
+      ...action,
+      response: {
+        status: 'noaction',
+        error: 'GET action was dispatched with empty array of ids',
+      },
+    }
+  }
+
   const service =
     typeof getService === 'function' ? getService(type, serviceId) : null
   if (!service) {
     return createUnknownServiceError(action, type, serviceId, 'GET')
   }
-
-  const id = getIdFromAction(action)
 
   const endpointDebug = endpointId
     ? `endpoint '${endpointId}'`
