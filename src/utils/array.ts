@@ -6,6 +6,12 @@ export function ensureArray<T = unknown>(value: T | T[]): NonNullable<T>[] {
     )
 }
 
+export function ensureArrayOrUndefined<T = unknown>(
+  value: T | T[]
+): NonNullable<T>[] | undefined {
+  return value === undefined ? undefined : ensureArray(value)
+}
+
 export function arrayIncludes<T = unknown>(a: T | T[], b: T | T[]): boolean {
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.some((item) => b.includes(item))

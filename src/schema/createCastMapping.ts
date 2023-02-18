@@ -2,6 +2,7 @@ import mapAny = require('map-any')
 import {
   MapObject,
   MapDefinition,
+  MapPipe,
   transform,
   fwd,
   rev,
@@ -18,6 +19,7 @@ import {
   isDataObject,
   isNullOrUndefined,
 } from '../utils/is.js'
+import { ensureArrayOrUndefined } from '../utils/array.js'
 
 const primitiveTypes = [
   'string',
@@ -28,28 +30,29 @@ const primitiveTypes = [
   'object',
 ]
 
-const typeFromProp = (prop: unknown) =>
+const typeFromProp = (prop?: string | PropertyShape) =>
   isPropertySchema(prop) ? prop.$cast : prop
 
 const defaultFromProp = (prop?: string | PropertyShape) => {
   if (isPropertySchema(prop)) {
     if (prop.hasOwnProperty('$const')) {
-      return { $transform: 'fixed', value: prop.$const }
+      return [{ $transform: 'fixed', value: prop.$const }]
     } else if (prop.hasOwnProperty('$default')) {
-      return { $alt: [{ $value: prop.$default }] }
+      return [{ $alt: [{ $value: prop.$default }] }]
     }
   }
-  return undefined
+  return []
 }
+
+const unarray = (type: string, isArray: boolean) =>
+  isArray || type === 'unknown' ? [] : [{ $transform: 'unarray' }]
 
 const hasArrayNotation = (value: string) => value.endsWith('[]')
 
-const extractType = (type: string) =>
-  hasArrayNotation(type)
-    ? ([type.slice(0, type.length - 2), true] as const)
-    : ([type, false] as const)
-
-const appendBrackets = (field: string) => `${field}[]`
+const removeArrayNotation = (key: string) =>
+  hasArrayNotation(key)
+    ? ([key.slice(0, key.length - 2), true] as const)
+    : ([key, false] as const)
 
 const isRef = (type: string) => (value: unknown) => {
   if (!isObject(value)) {
@@ -63,29 +66,48 @@ const isRef = (type: string) => (value: unknown) => {
 
 const transformFromType = (type: string) => {
   if (primitiveTypes.includes(type)) {
-    return { $transform: type }
+    return [{ $transform: type }]
   } else if (type === 'float') {
-    return { $transform: 'number' }
+    return [{ $transform: 'number' }]
   } else if (type === 'unknown') {
-    return undefined
+    return []
   } else {
-    return iterate(
-      ifelse(
-        isRef(type),
-        { $transform: 'reference', type },
-        apply(`cast_${type}`)
-      )
-    )
+    return [
+      iterate(
+        ifelse(
+          isRef(type),
+          { $transform: 'reference', type },
+          apply(`cast_${type}`)
+        )
+      ),
+    ]
   }
 }
+
+const generateFieldPipeline = (
+  field: string,
+  isArray: boolean,
+  pipeline: MapPipe
+) => ({
+  [field]: [
+    field,
+    isArray ? rev(transform(ensureArrayOrUndefined)) : undefined,
+    ...pipeline,
+    isArray ? fwd(transform(ensureArrayOrUndefined)) : undefined,
+  ].filter(Boolean),
+})
 
 const mappingFromSchema = (schema: Shape, iterate = false): MapObject =>
   Object.entries(schema).reduce(
     (mapping, [field, prop]) => {
+      const [realField, isFieldArray] = removeArrayNotation(field)
+
       if (isSchema(prop)) {
         return {
           ...mapping,
-          [field]: [field, mappingFromSchema(prop, hasArrayNotation(field))],
+          ...generateFieldPipeline(realField, isFieldArray, [
+            mappingFromSchema(prop, hasArrayNotation(field)),
+          ]),
         }
       }
 
@@ -94,19 +116,16 @@ const mappingFromSchema = (schema: Shape, iterate = false): MapObject =>
         return mapping
       }
 
-      const [realType, isArray] = extractType(type)
-      const realField = isArray ? appendBrackets(field) : field
+      const [realType, isTypeArray] = removeArrayNotation(type)
+      const isArray = isTypeArray || isFieldArray
 
       return {
         ...mapping,
-        [realField]: [
-          realField,
-          isArray || realType === 'unknown'
-            ? undefined
-            : { $transform: 'unarray' },
-          defaultFromProp(prop),
-          transformFromType(realType),
-        ].filter(Boolean),
+        ...generateFieldPipeline(realField, isArray, [
+          ...unarray(realType, isArray),
+          ...defaultFromProp(prop),
+          ...transformFromType(realType),
+        ]),
       }
     },
     iterate ? { $iterate: true } : {}
