@@ -25,5 +25,6 @@ export default function createMapOptions(
     dictionaries,
     fwdAlias: 'from',
     revAlias: 'to',
+    noneValues: [undefined, null, ''],
   }
 }

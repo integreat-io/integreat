@@ -13,6 +13,7 @@ import Integreat from '../../index.js'
 
 const entryNoHeadline = {
   key: 'ent2',
+  headline: null,
 }
 
 const mapping = [

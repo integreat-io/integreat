@@ -193,8 +193,6 @@ export default ({
 
     const transporter = lookupById(transporterId, transporters)
 
-    mapOptions = { noneValues: [undefined, null, ''], ...mapOptions }
-
     const authorization = retrieveAuthorization(authenticators, auths, auth)
     const incomingAuth =
       isObject(auth) && auth.incoming

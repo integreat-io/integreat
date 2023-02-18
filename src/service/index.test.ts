@@ -90,6 +90,7 @@ const mapOptions = {
     account: accountMapping,
   },
   transformers,
+  noneValues: [undefined, null, ''],
 }
 
 const endpoints = [
