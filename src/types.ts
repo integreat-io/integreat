@@ -144,7 +144,7 @@ export interface Response<T = unknown> {
   params?: Params
   headers?: Headers
   returnNoDefaults?: boolean
-  responses?: Response[] // TODO: Is this the right way?
+  responses?: Response[]
   access?: Record<string, unknown>
   meta?: Meta
 }

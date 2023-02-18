@@ -217,13 +217,15 @@ test('should not run second action when first in sequence fails', async (t) => {
     ...handlerResources,
     dispatch,
   })
+  const expectedErrorResponses = [{ status: 'timeout', error: 'Too slow' }]
 
-  t.is(dispatch.callCount, 1) // Only the first action should run
+  t.is(dispatch.callCount, 1) // Should break after first step
   t.is(ret.response?.status, 'error', ret.response?.error)
   t.is(
     ret.response?.error,
     "Could not finish job 'action2', the following steps failed: 'setEntry' (timeout: Too slow)"
   )
+  t.deepEqual(ret.response?.responses, expectedErrorResponses)
 })
 
 test('should continue when action is queued', async (t) => {
@@ -1829,7 +1831,7 @@ test('should mutate action into several actions based on iterate path in paralle
   t.deepEqual(ret, expectedResponse)
 })
 
-test('should fail step if a iteration step fails', async (t) => {
+test('should fail step if an iteration step fails', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({
@@ -1869,6 +1871,13 @@ test('should fail step if a iteration step fails', async (t) => {
       error:
         "Could not finish job 'action11', the following steps failed: 'setItem' (error: [badrequest] Too cool)",
       data: [{ id: 'ent1', $type: 'entry' }, undefined],
+      responses: [
+        {
+          status: 'error',
+          error: '[badrequest] Too cool',
+          data: [{ id: 'ent1', $type: 'entry' }, undefined],
+        },
+      ],
     },
   }
 
@@ -2197,6 +2206,7 @@ test('should run responseMutation pipeline on response from step', async (t) => 
   }
   const expected = {
     status: 'error',
+    responses: [{ status: 'error' }],
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -2276,6 +2286,19 @@ test('should return error from a sub-flow started with RUN and make it available
     status: 'error',
     error:
       "Could not finish job 'action9', the following steps failed: 'setEntriesInOtherFlow' (error: Could not finish job 'action10', the following steps failed: 'setEntries' (error: Need at least one data item))",
+    responses: [
+      {
+        status: 'error',
+        error:
+          "Could not finish job 'action10', the following steps failed: 'setEntries' (error: Need at least one data item)",
+        responses: [
+          {
+            status: 'error',
+            error: 'Need at least one data item',
+          },
+        ],
+      },
+    ],
   }
 
   const ret = await runFn(action, { ...handlerResources, dispatch })

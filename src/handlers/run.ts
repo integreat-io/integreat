@@ -121,24 +121,32 @@ function responseFromResponses(responses: Action[], ids: string[]): Action {
             ? { warning: `Message from steps: ${message}` }
             : { error: message }
           : {}),
+        ...(status === 'error'
+          ? {
+              responses: responses
+                .map((response) => response.response)
+                .filter(Boolean) as Response[],
+            }
+          : {}),
       },
     }
   }
 
-  const errorIndices = responses
-    .map((response, index) =>
-      isOkResponse(response?.response) ? undefined : index
-    )
-    .filter((index): index is number => index !== undefined)
+  const errorResponses = responses.filter(
+    (response) => !isOkResponse(response?.response)
+  )
   const message = errorMessageFromResponses(responses, ids)
 
-  if (errorIndices.length > 0) {
+  if (errorResponses.length > 0) {
     return {
       response: {
         status: 'error',
         error: message,
+        responses: errorResponses
+          .map((response) => response.response)
+          .filter(Boolean),
       },
-    } as Action
+    } as unknown as Action
   } else {
     return {
       response: {
