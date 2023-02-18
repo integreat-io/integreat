@@ -46,7 +46,7 @@ const createNoEndpointError = (action: Action, serviceId: string) =>
   createErrorOnAction(
     action,
     `No endpoint matching ${action.type} request to service '${serviceId}'.`,
-    'noaction'
+    'badrequest'
   )
 
 async function runAsIndividualActions(

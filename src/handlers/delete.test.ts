@@ -351,3 +351,28 @@ test('should return error if no getService', async (t) => {
 
   t.is(ret.response?.status, 'error')
 })
+
+test('should return badrequest when no endpoint matches', async (t) => {
+  const src = setupService({
+    id: 'entries',
+    ...jsonServiceDef,
+    endpoints: [], // No endpoints, so none will match
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+  const action = {
+    type: 'DELETE',
+    payload: {
+      data: [
+        { id: 'ent1', $type: 'entry' },
+        { id: 'ent2', $type: 'entry' },
+      ],
+      targetService: 'entries',
+    },
+  }
+
+  const ret = await deleteFn(action, { ...handlerResources, getService })
+
+  t.is(ret.response?.status, 'badrequest', ret.response?.error)
+  t.is(typeof ret.response?.error, 'string')
+})

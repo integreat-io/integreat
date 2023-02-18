@@ -58,7 +58,7 @@ export default async function deleteFn(
     return createErrorOnAction(
       nextAction,
       `No endpoint matching ${nextAction.type} request to service '${serviceId}'.`,
-      'noaction'
+      'badrequest'
     )
   }
 

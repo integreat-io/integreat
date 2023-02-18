@@ -515,7 +515,7 @@ test('should get only authorized items', async (t) => {
   t.deepEqual(data, expectedData)
 })
 
-test('should return noaction when no endpoint matches', async (t) => {
+test('should return badrequest when no endpoint matches', async (t) => {
   const action = {
     type: 'GET',
     payload: {
@@ -532,6 +532,6 @@ test('should return noaction when no endpoint matches', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaction', ret.response?.error)
+  t.is(ret.response?.status, 'badrequest', ret.response?.error)
   t.is(typeof ret.response?.error, 'string')
 })

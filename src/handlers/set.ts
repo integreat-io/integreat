@@ -52,7 +52,7 @@ export default async function set(
     return createErrorOnAction(
       action,
       `No endpoint matching ${action.type} request to service '${serviceId}'.`,
-      'noaction'
+      'badrequest'
     )
   }
 

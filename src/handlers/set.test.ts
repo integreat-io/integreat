@@ -479,7 +479,7 @@ test('should allow null as request data', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should return noaction when no endpoint matches', async (t) => {
+test('should return badrequest when no endpoint matches', async (t) => {
   const action = {
     type: 'SET',
     payload: {
@@ -498,6 +498,6 @@ test('should return noaction when no endpoint matches', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaction', ret.response?.error)
+  t.is(ret.response?.status, 'badrequest', ret.response?.error)
   t.is(typeof ret.response?.error, 'string')
 })

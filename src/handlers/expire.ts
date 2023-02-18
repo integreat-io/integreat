@@ -107,7 +107,7 @@ export default async function expire(
     return createErrorOnAction(
       action,
       `Could not get items from service '${serviceId}'. Reason: ${expiredAction.response?.status} ${expiredAction.response?.error}`,
-      'noaction'
+      'error'
     )
   }
   const data = expiredAction.response?.data

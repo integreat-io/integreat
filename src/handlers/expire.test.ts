@@ -173,7 +173,7 @@ test('should not queue when GET returns error', async (t) => {
 
   t.false(dispatch.calledWithMatch({ type: 'DELETE' }))
   t.truthy(ret)
-  t.is(ret.response?.status, 'noaction')
+  t.is(ret.response?.status, 'error')
 })
 
 test('should return error when no service', async (t) => {
