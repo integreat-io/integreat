@@ -17,6 +17,7 @@ import { Schema } from './schema/index.js'
 import { createErrorOnAction } from './utils/createError.js'
 import { Endpoint } from './service/endpoints/types.js'
 import { isObject } from './utils/is.js'
+import { nanoid } from 'nanoid'
 
 const debug = debugLib('great')
 
@@ -102,6 +103,13 @@ const responseFromAction = ({
   meta: { ident } = {},
 }: Action) => ({ ...response, status, access: { ident } })
 
+function setIds(action: Action): Action {
+  const id = action.meta?.id || nanoid()
+  const cid = action.meta?.cid || id
+
+  return { ...action, meta: { ...action.meta, id, cid } }
+}
+
 const wrapDispatch =
   (internalDispatch: InternalDispatch, getService: GetService): Dispatch =>
   (action: Action | null) =>
@@ -110,12 +118,14 @@ const wrapDispatch =
         return { status: 'noaction', error: 'Dispatched no action' }
       }
 
+      const actionWithIds = setIds(action)
+
       // Map incoming request data when needed
       const {
         action: mappedAction,
         service,
         endpoint,
-      } = mapIncomingAction(exploadParams(action), getService)
+      } = mapIncomingAction(exploadParams(actionWithIds), getService)
       // Return any error from mapIncomingRequest()
       if (mappedAction.response?.status) {
         return responseFromAction(

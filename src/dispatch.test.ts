@@ -126,6 +126,86 @@ test('should not allow QUEUE when set as an action type', async (t) => {
   t.is(handlers.QUEUE.callCount, 0)
 })
 
+test('should set id and cid in meta when not already set', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+  }
+  const handlers = {
+    GET: async (action: Action) => ({
+      ...action,
+      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    }),
+  }
+  const getSpy = sinon.spy(handlers, 'GET')
+
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+
+  t.is(ret.status, 'ok')
+  t.is(getSpy.callCount, 1)
+  const calledAction = getSpy.args[0][0] as Action
+  t.is(typeof calledAction.meta?.id, 'string')
+  t.is(calledAction.meta?.cid, calledAction.meta?.id)
+})
+
+test('should not touch id and cid from action', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+    meta: { id: '11004', cid: '11005' },
+  }
+  const handlers = {
+    GET: async (action: Action) => ({
+      ...action,
+      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    }),
+  }
+  const getSpy = sinon.spy(handlers, 'GET')
+
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+
+  t.is(ret.status, 'ok')
+  t.is(getSpy.callCount, 1)
+  const calledAction = getSpy.args[0][0] as Action
+  t.is(calledAction.meta?.id, '11004')
+  t.is(calledAction.meta?.cid, '11005')
+})
+
+test('should set cid to same value as id when not already set', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+    meta: { id: '11004' },
+  }
+  const handlers = {
+    GET: async (action: Action) => ({
+      ...action,
+      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    }),
+  }
+  const getSpy = sinon.spy(handlers, 'GET')
+
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+
+  t.is(ret.status, 'ok')
+  t.is(getSpy.callCount, 1)
+  const calledAction = getSpy.args[0][0] as Action
+  t.is(calledAction.meta?.id, '11004')
+  t.is(calledAction.meta?.cid, '11004')
+})
+
 test('should map payload property service to targetService', async (t) => {
   const action = {
     type: 'GET',
@@ -207,7 +287,11 @@ test('should call action handler with action, dispatch, getService, and options'
   const schemas = {}
   const options = { identConfig: { type: 'account' }, queueService: 'queue' }
   const ident = { id: 'ident1', roles: [], tokens: [] }
-  const action = { type: 'GET', payload: {}, meta: { ident } }
+  const action = {
+    type: 'GET',
+    payload: {},
+    meta: { ident, id: '11004', cid: '11004' },
+  }
   const expected = action
 
   await dispatch({ handlers, services, schemas, options })(action)

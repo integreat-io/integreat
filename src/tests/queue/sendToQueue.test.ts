@@ -39,7 +39,7 @@ const entry1Item = {
 const action = {
   type: 'SET',
   payload: { type: 'entry', data: entry1Item },
-  meta: { ident: { id: 'johnf' }, queue: true },
+  meta: { ident: { id: 'johnf' }, queue: true, id: '11004' },
 }
 
 // Tests
@@ -58,7 +58,12 @@ test('should send action to queue', async (t) => {
   }
   const queuedAction = {
     ...action,
-    meta: { ident: { id: 'johnf' }, authorized: true },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+      id: '11004',
+      cid: '11004',
+    },
   }
 
   const great = Integreat.create(defsWithQueue, resourcesWithQueue)
