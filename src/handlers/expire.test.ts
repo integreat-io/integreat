@@ -32,7 +32,7 @@ test('should dispatch GET to expired endpoint', async (t) => {
   const action = {
     type: 'EXPIRE',
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
-    meta: { ident },
+    meta: { ident, id: '11004', cid: '11005' },
   }
   const expected = {
     type: 'GET',
@@ -47,7 +47,7 @@ test('should dispatch GET to expired endpoint', async (t) => {
       status: undefined,
       returnNoDefaults: true,
     },
-    meta: { ident },
+    meta: { ident, cid: '11005' },
   }
 
   await expire(action, { ...handlerResources, dispatch })
@@ -94,12 +94,12 @@ test('should queue DELETE for expired entries', async (t) => {
   const action = {
     type: 'EXPIRE',
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
-    meta: { ident },
+    meta: { ident, id: '11004', cid: '11005' },
   }
   const expected = {
     type: 'DELETE',
     payload: { data, targetService: 'store' },
-    meta: { ident },
+    meta: { ident, cid: '11005' },
   }
 
   const ret = await expire(action, { ...handlerResources, dispatch })

@@ -31,12 +31,17 @@ test('should run a simple action', async (t) => {
     payload: {
       jobId: 'action1',
     },
-    meta: { ident: { id: 'johnf' }, id: '12345', project: 'test' },
+    meta: {
+      ident: { id: 'johnf' },
+      id: '12345',
+      cid: '23456',
+      project: 'test',
+    },
   }
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' },
-    meta: { ident: { id: 'johnf' }, project: 'test' },
+    meta: { ident: { id: 'johnf' }, project: 'test', cid: '23456' },
   }
   const expectedResponse = {
     ...action,
@@ -74,12 +79,12 @@ test('should run a simple flow with one action', async (t) => {
     payload: {
       jobId: 'action1',
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
   }
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, cid: '23456' },
   }
   const expectedResponse = {
     ...action,
@@ -134,7 +139,7 @@ test('should run two actions in sequence', async (t) => {
     payload: {
       jobId: 'action2',
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
   }
   const expectedAction1 = {
     type: 'SET',
@@ -143,7 +148,7 @@ test('should run two actions in sequence', async (t) => {
       id: 'ent1',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, cid: '23456' },
   }
   const expectedAction2 = {
     type: 'SET',
@@ -151,7 +156,7 @@ test('should run two actions in sequence', async (t) => {
       type: 'date',
       id: 'updatedAt',
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, cid: '23456' },
   }
   const expectedResponse = {
     ...action,
@@ -372,7 +377,7 @@ test('should run two actions in parallel', async (t) => {
     payload: {
       jobId: 'action3',
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
   }
   const expectedAction1 = {
     type: 'SET',
@@ -381,7 +386,7 @@ test('should run two actions in parallel', async (t) => {
       id: 'ent1',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, cid: '23456' },
   }
   const expectedAction2 = {
     type: 'SET',
@@ -389,7 +394,7 @@ test('should run two actions in parallel', async (t) => {
       type: 'date',
       id: 'updatedAt',
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, cid: '23456' },
   }
   const expectedResponse = {
     ...action,

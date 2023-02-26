@@ -39,7 +39,7 @@ test('should get all pages', async (t) => {
       page: 1,
       pageSize: 2,
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
   }
 
   const ret = await getAll(action, { ...handlerResources, dispatch })
@@ -475,6 +475,45 @@ test('should require at least one non-undefined prop for next paging', async (t)
 test.todo(
   'should handle one page with max number of items in a paging approach'
 )
+
+test('should use original cid for all sub actions, but remove id', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .onFirstCall()
+    .resolves({
+      type: 'GET',
+      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
+    })
+    .onSecondCall()
+    .resolves({
+      type: 'GET',
+      response: { status: 'ok', data: [event('ev2'), event('ev3')] },
+    })
+    .onThirdCall()
+    .resolves({ type: 'GET', response: { status: 'ok', data: [event('ev4')] } })
+  const action = {
+    type: 'GET_ALL',
+    payload: {
+      type: 'event',
+      page: 1,
+      pageSize: 2,
+    },
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
+  }
+
+  const ret = await getAll(action, { ...handlerResources, dispatch })
+
+  t.is(dispatch.callCount, 3)
+  t.is(dispatch.args[0][0].meta?.id, undefined)
+  t.is(dispatch.args[0][0].meta?.cid, '23456')
+  t.is(dispatch.args[1][0].meta?.id, undefined)
+  t.is(dispatch.args[1][0].meta?.cid, '23456')
+  t.is(dispatch.args[2][0].meta?.id, undefined)
+  t.is(dispatch.args[2][0].meta?.cid, '23456')
+  t.is(ret.response?.status, 'ok')
+  t.is((ret.response?.data as TypedData[]).length, 5)
+})
 
 test('should recognize loop and return error', async (t) => {
   const dispatch = sinon.stub().resolves({

@@ -17,6 +17,7 @@ const getExpired = async (
   endpointId: string,
   msFromNow: number,
   dispatch: HandlerDispatch,
+  cid?: string,
   ident?: Ident
 ): Promise<Action> => {
   const timestamp = Date.now() + msFromNow
@@ -31,7 +32,7 @@ const getExpired = async (
       endpoint: endpointId,
     },
     response: { status: undefined, returnNoDefaults: true },
-    meta: { ident },
+    meta: { ident, cid },
   })
 }
 
@@ -39,6 +40,7 @@ const deleteExpired = async (
   data: TypedData[],
   targetService: string,
   dispatch: HandlerDispatch,
+  cid?: string,
   ident?: Ident
 ): Promise<Action> => {
   const deleteData = data.map((item) => ({ id: item.id, $type: item.$type }))
@@ -46,7 +48,7 @@ const deleteExpired = async (
   const deleteAction = {
     type: 'DELETE',
     payload: { data: deleteData, targetService },
-    meta: { ident, queue: true },
+    meta: { ident, queue: true, cid },
   }
 
   return dispatch(deleteAction)
@@ -71,7 +73,7 @@ export default async function expire(
 ): Promise<Action> {
   const {
     payload: { type, endpoint: endpointId, targetService: serviceId },
-    meta: { ident } = {},
+    meta: { ident, cid } = {},
   } = action
   const msFromNow = (action.payload.msFromNow as number) || 0
 
@@ -100,6 +102,7 @@ export default async function expire(
     endpointId,
     msFromNow,
     dispatch,
+    cid,
     ident
   )
 
@@ -119,7 +122,13 @@ export default async function expire(
     )
   }
 
-  const responseAction = await deleteExpired(data, serviceId, dispatch, ident)
+  const responseAction = await deleteExpired(
+    data,
+    serviceId,
+    dispatch,
+    cid,
+    ident
+  )
 
   return {
     ...action,

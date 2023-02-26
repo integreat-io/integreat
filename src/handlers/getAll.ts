@@ -7,6 +7,8 @@ const extractLastId = (data: unknown, field = 'id') =>
       data[data.length - 1] && data[data.length - 1][field]
     : undefined
 
+const cleanMeta = ({ id, ...meta }: Meta = {}) => meta
+
 const createAction = (
   page: number,
   { pageAfterField, ...payload }: Payload,
@@ -73,7 +75,7 @@ export default async function get(
   let prevFirstId: string | null | undefined = null
   do {
     const response: Action = await dispatch(
-      createAction(page++, action.payload, paging, data, action.meta)
+      createAction(page++, action.payload, paging, data, cleanMeta(action.meta))
     )
     if (response.response?.status !== 'ok') {
       // Stop and return errors right away

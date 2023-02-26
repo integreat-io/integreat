@@ -32,10 +32,11 @@ export interface Payload extends BasePayload {
   jobId?: string
 }
 
-const cleanMeta = ({ ident, project, queue }: Meta) => ({
+const cleanMeta = ({ ident, project, queue, cid }: Meta) => ({
   ident,
   ...(project ? { project } : {}),
   ...(queue ? { queue } : {}),
+  ...(cid ? { cid } : {}),
 })
 
 const prepareAction = (action: Action, meta: Meta) => ({
