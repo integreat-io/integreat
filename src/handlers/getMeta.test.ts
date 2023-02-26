@@ -85,6 +85,8 @@ test('should get metadata for service', async (t) => {
   const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.deepEqual(ret.response, expectedResponse)
+  t.is(ret.type, 'GET_META')
+  t.deepEqual(ret.payload, action.payload)
 })
 
 test('should get several metadata for service', async (t) => {

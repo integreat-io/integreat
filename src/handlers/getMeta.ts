@@ -90,19 +90,19 @@ export default async function getMeta(
     payload: { keys, type: metaType, id: metaId, endpoint: endpointId },
     meta: { ident: ident },
   }
-  const responseAction = await getHandler(nextAction, resources)
+  const response = await getHandler(nextAction, resources)
 
-  if (responseAction.response?.status === 'ok') {
-    const { data } = responseAction.response || {}
+  if (response.response?.status === 'ok') {
+    const { data } = response.response || {}
     const meta = extractMeta(data, keys)
     return {
-      ...responseAction,
+      ...action,
       response: {
-        ...responseAction.response,
+        ...response.response,
         data: { service: serviceId, meta },
       },
     }
   } else {
-    return responseAction
+    return { ...action, response: response.response }
   }
 }

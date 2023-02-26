@@ -87,6 +87,8 @@ test('should set metadata on service', async (t) => {
   const ret = await setMeta(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.type, 'SET_META')
+  t.deepEqual(ret.payload, action.payload)
   t.true(scope.isDone())
 })
 

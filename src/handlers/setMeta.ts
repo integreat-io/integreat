@@ -74,5 +74,10 @@ export default async function setMeta(
     },
     meta: { ident },
   }
-  return setHandler(setAction, resources)
+  const response = await setHandler(setAction, resources)
+
+  return {
+    ...action,
+    response: response.response,
+  }
 }
