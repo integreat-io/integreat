@@ -32,8 +32,12 @@ export interface Payload extends BasePayload {
   jobId?: string
 }
 
-const cleanMeta = ({ ident, project, queue, cid }: Meta) => ({
+const generateSubMeta = (
+  { ident, project, queue, cid }: Meta,
+  jobId: string
+) => ({
   ident,
+  jobId,
   ...(project ? { project } : {}),
   ...(queue ? { queue } : {}),
   ...(cid ? { cid } : {}),
@@ -478,7 +482,7 @@ async function runFlow(
 
 export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
   async function run(
-    action: Action,
+    action: Action<Payload>,
     { dispatch }: ActionHandlerResources
   ): Promise<Action> {
     const {
@@ -500,7 +504,7 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
       prevResponses,
       dispatch,
       mapOptions,
-      cleanMeta(meta || {})
+      generateSubMeta(meta || {}, jobId as string)
     )
 
     const responseAction = {

@@ -290,7 +290,7 @@ test('should set up RUN handler with jobs', async (t) => {
   const expected = {
     type: 'TEST',
     payload: { timestamp: nowDate },
-    meta: { ident: { id: 'johnf' }, cid: '23456' },
+    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'theJob' },
   }
 
   const great = create(

@@ -41,7 +41,12 @@ test('should run a simple action', async (t) => {
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' },
-    meta: { ident: { id: 'johnf' }, project: 'test', cid: '23456' },
+    meta: {
+      ident: { id: 'johnf' },
+      project: 'test',
+      cid: '23456',
+      jobId: 'action1',
+    },
   }
   const expectedResponse = {
     ...action,
@@ -84,7 +89,7 @@ test('should run a simple flow with one action', async (t) => {
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' },
-    meta: { ident: { id: 'johnf' }, cid: '23456' },
+    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action1' },
   }
   const expectedResponse = {
     ...action,
@@ -148,7 +153,7 @@ test('should run two actions in sequence', async (t) => {
       id: 'ent1',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456' },
+    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action2' },
   }
   const expectedAction2 = {
     type: 'SET',
@@ -156,7 +161,7 @@ test('should run two actions in sequence', async (t) => {
       type: 'date',
       id: 'updatedAt',
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456' },
+    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action2' },
   }
   const expectedResponse = {
     ...action,
@@ -386,7 +391,7 @@ test('should run two actions in parallel', async (t) => {
       id: 'ent1',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456' },
+    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
   }
   const expectedAction2 = {
     type: 'SET',
@@ -394,7 +399,7 @@ test('should run two actions in parallel', async (t) => {
       type: 'date',
       id: 'updatedAt',
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456' },
+    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
   }
   const expectedResponse = {
     ...action,
@@ -1048,7 +1053,7 @@ test('should mutate simple action', async (t) => {
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1', flag: true },
-    meta: { ident: { id: 'johnf' }, queue: true },
+    meta: { ident: { id: 'johnf' }, jobId: 'action1', queue: true },
   }
   const expectedResponse = {
     ...action,
@@ -1124,7 +1129,7 @@ test('should mutate action with result from previous action', async (t) => {
         { id: 'ent2', $type: 'entry', section: 'sports' },
       ],
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action3' },
   }
   const expectedResponse = {
     ...action,
@@ -1195,7 +1200,7 @@ test('should mutate action with payload from original action', async (t) => {
         { id: 'ent2', $type: 'entry', section: 'sports' },
       ],
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action3' },
   }
   const expectedResponse = {
     ...action,
@@ -1303,7 +1308,7 @@ test('should mutate action with result from previous and parallel actions', asyn
       type: 'entry',
       since: new Date('2022-06-14T18:43:11Z'),
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action3' },
   }
   const expectedAction4 = {
     type: 'SET',
@@ -1317,7 +1322,7 @@ test('should mutate action with result from previous and parallel actions', asyn
       user: 'John F.',
       entriesSince: new Date('2022-06-14T18:43:11Z'),
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action3' },
   }
   const expectedResponse = {
     ...action,
@@ -1380,7 +1385,7 @@ test('should mutate action with data from the original action', async (t) => {
         { id: 'ent5', $type: 'entry' },
       ],
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action5' },
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -1431,7 +1436,7 @@ test('should mutate with transformers and pipelines', async (t) => {
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', until: nowDate, user: 'johnf' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action1' },
   }
   const expectedResponse = {
     ...action,
@@ -1472,7 +1477,7 @@ test('should mutate simple action with pipeline', async (t) => {
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1', flag: true },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action1' },
   }
   const expectedResponse = {
     ...action,
@@ -1541,7 +1546,7 @@ test('should mutate action into several actions based on iterate pipeline', asyn
       data: { id: 'ent1', include: true },
       key: 'ent1',
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
   }
   const expectedAction1 = {
     type: 'SET',
@@ -1550,7 +1555,7 @@ test('should mutate action into several actions based on iterate pipeline', asyn
       data: { id: 'ent3', include: true },
       key: 'ent3',
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
   }
   const expectedResponse = {
     ...action,
@@ -1607,17 +1612,17 @@ test('should mutate action into several actions based on iterate path', async (t
   const expectedAction0 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent1' }, key: 'ent1' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
   }
   const expectedAction1 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent2' }, key: 'ent2' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
   }
   const expectedAction2 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent3' }, key: 'ent3' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
   }
   const expectedResponse = {
     ...action,
@@ -1664,17 +1669,17 @@ test('should mutate top level action into several actions based on iterate path'
   const expectedAction0 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent1' }, key: 'ent1' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action13' },
   }
   const expectedAction1 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent2' }, key: 'ent2' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action13' },
   }
   const expectedAction2 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent3' }, key: 'ent3' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action13' },
   }
   const expectedResponse = {
     ...action,
@@ -1737,22 +1742,22 @@ test('should combine response data from several actions based on iterate path', 
   const expectedAction0 = {
     type: 'GET',
     payload: { type: 'entry' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
   }
   const expectedAction1 = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
   }
   const expectedAction2 = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent2' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
   }
   const expectedAction3 = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent3' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
   }
   const expectedResponse = {
     ...action,
@@ -1816,7 +1821,7 @@ test('should mutate action into several actions based on iterate path in paralle
   const expectedAction0 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent1' }, flag: true },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
   }
   const expectedResponse = {
     ...action,
@@ -2370,7 +2375,7 @@ test('should have the original action available on each step in a flow', async (
       id: 'updatedAt',
       date,
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, jobId: 'action9' },
   }
 
   const ret = await runFn(action, { ...handlerResources, dispatch })
