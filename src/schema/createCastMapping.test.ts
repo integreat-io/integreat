@@ -1,5 +1,5 @@
 import test from 'ava'
-import { mapTransform, MapDefinition } from 'map-transform'
+import { mapTransform, MapDefinition, MapPipe } from 'map-transform'
 import transformers from '../transformers/builtIns/index.js'
 
 import createCastMapping from './createCastMapping.js'
@@ -255,6 +255,10 @@ test('should cast non-primitive fields with schema', (t) => {
       comments: 'comment[]',
     },
   }
+  const commentSchema = {
+    id: 'string',
+    comment: 'string',
+  }
   const userSchema = {
     id: 'string',
     name: 'string',
@@ -320,6 +324,7 @@ test('should cast non-primitive fields with schema', (t) => {
   const ret = mapTransform(createCastMapping(entrySchema, 'entry'), {
     transformers,
     pipelines: {
+      cast_comment: createCastMapping(commentSchema, 'comment'),
       cast_user: createCastMapping(userSchema, 'user'),
     },
   })(data)
@@ -339,6 +344,10 @@ test('should cast non-primitive fields with schema in reverse', (t) => {
       comments: 'comment[]',
       author: 'user',
     },
+  }
+  const commentSchema = {
+    id: 'string',
+    comment: 'string',
   }
   const userSchema = {
     id: 'string',
@@ -405,6 +414,93 @@ test('should cast non-primitive fields with schema in reverse', (t) => {
   const ret = mapTransform(createCastMapping(entrySchema, 'entry'), {
     transformers,
     pipelines: {
+      cast_comment: createCastMapping(commentSchema, 'comment'),
+      cast_user: createCastMapping(userSchema, 'user'),
+    },
+  }).rev(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should handle casting with array of non-primitive types within an iteration', (t) => {
+  const entrySchema = {
+    id: 'string',
+    title: { $cast: 'string', $default: 'Entry with no name' },
+    age: 'integer',
+    comments: 'comment[]',
+    author: 'user',
+  }
+  const commentSchema = {
+    id: 'string',
+    comment: 'string',
+  }
+  const userSchema = {
+    id: 'string',
+    name: 'string',
+  }
+  const data = {
+    data: [
+      {
+        $type: 'entry',
+        id: 12345,
+        title: 'Entry 1',
+        age: '180734118',
+        author: { id: 'johnf', $type: 'user', name: 'John F' },
+        comments: [
+          { id: 'comment12', $ref: 'comment' },
+          { id: 'comment13', $ref: 'comment' },
+        ],
+        unknown: 'Drop this',
+      },
+      {
+        $type: 'entry',
+        id: 'ent2',
+        age: 244511383,
+        author: { id: 'maryk', $ref: 'user' },
+        comments: [{ id: 'comment23', $ref: 'comment' }],
+      },
+      {
+        $type: 'entry',
+        id: 'ent3',
+        title: 'Entry 3',
+        age: 0,
+      },
+    ],
+  }
+  const expected = {
+    data: [
+      {
+        id: '12345',
+        title: 'Entry 1',
+        age: 180734118,
+        author: { id: 'johnf', name: 'John F' },
+        comments: [{ id: 'comment12' }, { id: 'comment13' }],
+      },
+      {
+        id: 'ent2',
+        title: 'Entry with no name',
+        age: 244511383,
+        author: { id: 'maryk' },
+        comments: [{ id: 'comment23' }],
+      },
+      {
+        id: 'ent3',
+        title: 'Entry 3',
+        age: 0,
+        author: undefined,
+        comments: undefined,
+      },
+    ],
+  }
+  const castPipeline = createCastMapping(entrySchema, 'entry')
+  const fullPipeline: MapDefinition = {
+    data: ['data[]', ...(castPipeline as MapPipe)],
+  }
+
+  const ret = mapTransform(fullPipeline, {
+    transformers,
+    pipelines: {
+      cast_comment: createCastMapping(commentSchema, 'comment'),
       cast_user: createCastMapping(userSchema, 'user'),
     },
   }).rev(data)

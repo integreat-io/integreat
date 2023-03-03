@@ -131,6 +131,7 @@ const mappingFromSchema = (schema: Shape, iterate = false): MapObject =>
     iterate ? { $iterate: true } : {}
   )
 
+// TODO: This looks kind of stupid?
 const includeInCasting = (type: string) =>
   type
     ? (data: unknown) => !isNullOrUndefined(data)
