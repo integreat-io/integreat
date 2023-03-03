@@ -30,33 +30,34 @@ function extractProps(value: unknown) {
   return {}
 }
 
-const castItem = (type: string | undefined) => (value: unknown) => {
-  if (type === undefined) {
-    return undefined
-  }
-  if (isTypedData(value)) {
-    return value.$type === type ? value : undefined
-  } else if (isReference(value) && value.$ref !== type) {
-    return undefined
-  }
-
-  const id = extractId(value)
-  if (typeof id === 'string' || (typeof id === 'number' && !isNaN(id))) {
-    return {
-      id: String(id),
-      $ref: type,
-      ...extractProps(value),
+const castItem =
+  (type: string | undefined, rev: boolean) => (value: unknown) => {
+    if (type === undefined) {
+      return undefined
     }
-  } else if (id === null) {
-    return null
-  } else {
-    return undefined
+    if (isTypedData(value)) {
+      return value.$type === type ? value : undefined
+    } else if (isReference(value) && value.$ref !== type) {
+      return undefined
+    }
+
+    const id = extractId(value)
+    if (typeof id === 'string' || (typeof id === 'number' && !isNaN(id))) {
+      return {
+        id: String(id),
+        ...(rev ? {} : { $ref: type }),
+        ...extractProps(value),
+      }
+    } else if (id === null) {
+      return null
+    } else {
+      return undefined
+    }
   }
-}
 
 const reference: Transformer =
   ({ type }: Operands) =>
-  (value, _context) =>
-    mapAny(castItem(type), value)
+  (value, state) =>
+    mapAny(castItem(type, !!state.rev), value)
 
 export default reference

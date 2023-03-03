@@ -56,10 +56,7 @@ test('should set new entry (getting role from identity)', async (t) => {
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
     authorId: 'johnf',
-    sections: [
-      { id: 'news', $ref: 'section' },
-      { id: 'sports', $ref: 'section' },
-    ],
+    sections: [{ id: 'news' }, { id: 'sports' }],
     props: [],
   }
   nock('http://some.api')

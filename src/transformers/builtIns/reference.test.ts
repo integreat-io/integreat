@@ -114,19 +114,18 @@ test('should not keep isNew and isDeleted when false', (t) => {
 })
 
 test('should return relationship object in reverse', (t) => {
-  t.deepEqual(reference(operands, options)('ent1', stateRev), createRel('ent1'))
+  t.deepEqual(reference(operands, options)('ent1', stateRev), { id: 'ent1' })
   t.deepEqual(
     reference(operands, options)({ id: 'ent1', $ref: 'entry' }, stateRev),
-    createRel('ent1')
+    { id: 'ent1' }
   )
-  t.deepEqual(
-    reference(operands, options)({ id: 'ent1' }, stateRev),
-    createRel('ent1')
-  )
+  t.deepEqual(reference(operands, options)({ id: 'ent1' }, stateRev), {
+    id: 'ent1',
+  })
 })
 
 test('should return array of relationship objects in reverse', (t) => {
-  const expected = [createRel('ent1'), createRel('ent2')]
+  const expected = [{ id: 'ent1' }, { id: 'ent2' }]
 
   t.deepEqual(
     reference(operands, options)(['ent1', 'ent2'], stateRev),
@@ -158,36 +157,36 @@ test('should return array of relationship objects in reverse', (t) => {
 test('should keep isNew and isDeleted when true in reverse', (t) => {
   t.deepEqual(
     reference(operands, options)({ id: 'ent1', isNew: true }, stateRev),
-    createRel('ent1', { isNew: true, $ref: 'entry' })
+    { id: 'ent1', isNew: true }
   )
   t.deepEqual(
     reference(operands, options)({ id: 'ent1', isDeleted: true }, stateRev),
-    createRel('ent1', { isDeleted: true, $ref: 'entry' })
+    { id: 'ent1', isDeleted: true }
   )
   t.deepEqual(
     reference(operands, options)(
       { id: 'ent1', isNew: true, isDeleted: true },
       stateRev
     ),
-    createRel('ent1', { isNew: true, isDeleted: true, $ref: 'entry' })
+    { id: 'ent1', isNew: true, isDeleted: true }
   )
 })
 
 test('should not keep isNew and isDeleted when false in reverse', (t) => {
   t.deepEqual(
     reference(operands, options)({ id: 'ent1', isNew: false }, stateRev),
-    createRel('ent1')
+    { id: 'ent1' }
   )
   t.deepEqual(
     reference(operands, options)({ id: 'ent1', isDeleted: false }, stateRev),
-    createRel('ent1')
+    { id: 'ent1' }
   )
   t.deepEqual(
     reference(operands, options)(
       { id: 'ent1', isNew: false, isDeleted: true },
       stateRev
     ),
-    createRel('ent1', { isDeleted: true, $ref: 'entry' })
+    { id: 'ent1', isDeleted: true }
   )
 })
 
@@ -286,11 +285,11 @@ test('should iterate array in reverse', (t) => {
     undefined,
   ]
   const expected = [
-    createRel('ent1'),
-    createRel('12345'),
+    { id: 'ent1' },
+    { id: '12345' },
     null,
-    createRel('ent1'),
-    createRel('ent1'),
+    { id: 'ent1' },
+    { id: 'ent1' },
     null,
     undefined,
   ]

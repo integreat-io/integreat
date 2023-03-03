@@ -139,7 +139,7 @@ const includeInCasting = (type: string) =>
 const cleanUpCast = (type: string, isFwd: boolean) =>
   mapAny((item: unknown) => {
     if (isDataObject(item)) {
-      const { $type, isNew, isDeleted, id, ...shape } = item
+      const { $type, $ref, isNew, isDeleted, id, ...shape } = item
       return {
         id,
         ...(isFwd && { $type: type }),

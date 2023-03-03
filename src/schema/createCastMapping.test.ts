@@ -114,10 +114,10 @@ test('should reverse transform with mapping definition from schema', (t) => {
     long: 'float',
     lat: 'number',
     active: 'boolean',
+    comments: 'comment[]',
     createdAt: 'date',
     author: 'user',
     payload: 'object',
-    comments: 'comment[]',
   }
   const data = [
     {
@@ -144,6 +144,13 @@ test('should reverse transform with mapping definition from schema', (t) => {
       payload: undefined,
       comments: [{ id: 'comment23', $ref: 'comment' }],
     },
+    {
+      $type: 'entry',
+      id: 'ent3',
+      createdAt: new Date('2019-03-18T05:14:59Z'),
+      age: '180735220',
+      author: 'whatson',
+    },
   ]
   const expected = [
     {
@@ -156,12 +163,9 @@ test('should reverse transform with mapping definition from schema', (t) => {
       lat: 5.326373,
       active: true,
       createdAt: new Date('2019-03-11T18:43:09Z'),
-      author: { id: 'johnf', $ref: 'user' },
-      payload: { type: 'entry', data: [{ id: 'ent1', $type: 'entry' }] },
-      comments: [
-        { id: 'comment12', $ref: 'comment' },
-        { id: 'comment13', $ref: 'comment' },
-      ],
+      author: { id: 'johnf' },
+      payload: { type: 'entry', data: [{ id: 'ent1', $type: 'entry' }] }, // This $type is not filtered away, as this is an `object` schema
+      comments: [{ id: 'comment12' }, { id: 'comment13' }],
     },
     {
       id: 'ent2',
@@ -173,9 +177,23 @@ test('should reverse transform with mapping definition from schema', (t) => {
       lat: undefined,
       active: undefined,
       createdAt: new Date('2019-03-12T09:40:43Z'),
-      author: { id: 'maryk', $ref: 'user' },
+      author: { id: 'maryk' },
       payload: undefined,
-      comments: [{ id: 'comment23', $ref: 'comment' }],
+      comments: [{ id: 'comment23' }],
+    },
+    {
+      id: 'ent3',
+      title: 'Entry with no name',
+      type: 'entry',
+      abstract: undefined,
+      age: 180735220,
+      long: undefined,
+      lat: undefined,
+      active: undefined,
+      createdAt: new Date('2019-03-18T05:14:59Z'),
+      author: { id: 'whatson' },
+      payload: undefined,
+      comments: undefined,
     },
   ]
 
@@ -224,7 +242,7 @@ test('should be iteratable', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should create mapping definition from nested schema', (t) => {
+test('should cast non-primitive fields with schema', (t) => {
   const entrySchema = {
     id: 'string',
     type: { $cast: 'string', $const: 'entry' },
@@ -305,6 +323,91 @@ test('should create mapping definition from nested schema', (t) => {
       cast_user: createCastMapping(userSchema, 'user'),
     },
   })(data)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should cast non-primitive fields with schema in reverse', (t) => {
+  const entrySchema = {
+    id: 'string',
+    type: { $cast: 'string', $const: 'entry' },
+    attributes: {
+      title: { $cast: 'string', $default: 'Entry with no name' },
+      age: 'integer',
+    },
+    relationships: {
+      comments: 'comment[]',
+      author: 'user',
+    },
+  }
+  const userSchema = {
+    id: 'string',
+    name: 'string',
+  }
+  const data = [
+    {
+      $type: 'entry',
+      id: 12345,
+      type: 'entry',
+      attributes: { title: 'Entry 1', age: '180734118' },
+      relationships: {
+        author: { id: 'johnf', $type: 'user', name: 'John F' },
+        comments: [
+          { id: 'comment12', $ref: 'comment' },
+          { id: 'comment13', $ref: 'comment' },
+        ],
+        unknown: 'Drop this',
+      },
+    },
+    {
+      $type: 'entry',
+      id: 'ent2',
+      attributes: { age: 244511383 },
+      relationships: {
+        author: { id: 'maryk', $ref: 'user' },
+        comments: [{ id: 'comment23', $ref: 'comment' }],
+      },
+    },
+    {
+      $type: 'entry',
+      id: 'ent3',
+      attributes: { title: 'Entry 3', age: 0 },
+      relationships: {},
+    },
+  ]
+  const expected = [
+    {
+      id: '12345',
+      type: 'entry',
+      attributes: { title: 'Entry 1', age: 180734118 },
+      relationships: {
+        author: { id: 'johnf', name: 'John F' },
+        comments: [{ id: 'comment12' }, { id: 'comment13' }],
+      },
+    },
+    {
+      id: 'ent2',
+      type: 'entry',
+      attributes: { title: 'Entry with no name', age: 244511383 },
+      relationships: {
+        author: { id: 'maryk' },
+        comments: [{ id: 'comment23' }],
+      },
+    },
+    {
+      id: 'ent3',
+      type: 'entry',
+      attributes: { title: 'Entry 3', age: 0 },
+      relationships: { author: undefined, comments: undefined },
+    },
+  ]
+
+  const ret = mapTransform(createCastMapping(entrySchema, 'entry'), {
+    transformers,
+    pipelines: {
+      cast_user: createCastMapping(userSchema, 'user'),
+    },
+  }).rev(data)
 
   t.deepEqual(ret, expected)
 })
