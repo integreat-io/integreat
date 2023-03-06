@@ -1,6 +1,7 @@
 import test from 'ava'
 import sinon = require('sinon')
 import handlerResources from '../tests/helpers/handlerResources.js'
+import transformers from '../transformers/index.js'
 
 import run from './run.js'
 
@@ -12,7 +13,7 @@ const defaultResources = {
   options: {},
 }
 
-const mapOptions = {}
+const mapOptions = { transformers }
 
 // Tests
 

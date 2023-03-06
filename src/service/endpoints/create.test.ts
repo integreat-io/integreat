@@ -2,9 +2,9 @@ import test from 'ava'
 import sinon = require('sinon')
 import createSchema from '../../schema/index.js'
 import builtInTransformers from '../../transformers/builtIns/index.js'
+import transformers from '../../transformers/index.js'
 import { TypedData } from '../../types.js'
 import { MapOptions } from '../types.js'
-import json from '../../transformers/json.js'
 import { isAction } from '../../utils/is.js'
 
 import createEndpoint from './create.js'
@@ -83,9 +83,9 @@ const mapOptions = {
   },
   transformers: {
     ...builtInTransformers,
+    ...transformers,
     shouldHaveToken,
     alwaysOk,
-    json,
   },
 }
 

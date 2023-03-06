@@ -1,6 +1,10 @@
-import { MapDefinition, Transformer, Dictionaries } from 'map-transform'
-import { Schema } from '../schema/index.js'
-import { MapOptions } from '../service/types.js'
+import type {
+  MapDefinition,
+  Transformer,
+  Dictionaries,
+} from 'map-transform/types.js'
+import type { Schema } from '../schema/index.js'
+import type { MapOptions } from '../service/types.js'
 
 const pipelinesFromSchemas = (
   schemas: Record<string, Schema>

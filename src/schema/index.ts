@@ -1,6 +1,6 @@
 import createCastMapping from './createCastMapping.js'
 import accessForAction from './accessForAction.js'
-import { MapDefinition } from 'map-transform'
+import type { MapDefinition } from 'map-transform/types.js'
 import { SchemaDef, PropertyShape, Shape, Access, AccessDef } from './types.js'
 import { isSchema } from '../utils/is.js'
 import { nanoid } from 'nanoid'

@@ -1,5 +1,6 @@
 import test from 'ava'
-import { mapTransform, MapDefinition, MapPipe } from 'map-transform'
+import mapTransform from 'map-transform'
+import type { MapDefinition, MapPipe } from 'map-transform/types.js'
 import transformers from '../transformers/builtIns/index.js'
 
 import createCastMapping from './createCastMapping.js'

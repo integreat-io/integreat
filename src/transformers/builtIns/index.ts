@@ -1,4 +1,4 @@
-import { Transformer } from 'map-transform'
+import type { Transformer } from 'map-transform/types.js'
 import boolean from './boolean.js'
 import date from './date.js'
 import integer from './integer.js'

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import nock = require('nock')
-import { MapDefinition, MapPipe } from 'map-transform'
+import type { MapDefinition, MapPipe } from 'map-transform/types.js'
 import resources from '../helpers/resources/index.js'
 import entrySchema from '../helpers/defs/schemas/entry.js'
 import entriesService from '../helpers/defs/services/entries.js'
@@ -10,7 +10,7 @@ import entry2 from '../helpers/data/entry2.js'
 import mutations from '../../mutations/index.js'
 import entriesMutation from '../helpers/defs/mutations/entries-entry.js'
 import json from '../../transformers/json.js'
-import { TypedData, Response } from '../../types.js'
+import type { TypedData, Response } from '../../types.js'
 
 import Integreat from '../../index.js'
 

@@ -1,5 +1,5 @@
 import test from 'ava'
-import { mapTransform } from 'map-transform'
+import mapTransform from 'map-transform'
 import transformers from '../transformers/builtIns/index.js'
 import { TypedData } from '../types.js'
 

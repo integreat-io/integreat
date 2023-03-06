@@ -1,4 +1,4 @@
-import { Transformer } from 'map-transform'
+import type { Transformer } from 'map-transform/types.js'
 
 const unarray: Transformer = (_operands) =>
   function unarray(value: unknown) {

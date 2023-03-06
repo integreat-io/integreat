@@ -1,8 +1,5 @@
 import mapAny = require('map-any')
 import {
-  MapObject,
-  MapDefinition,
-  MapPipe,
   transform,
   fwd,
   rev,
@@ -11,7 +8,8 @@ import {
   apply,
   iterate,
 } from 'map-transform'
-import { Shape, PropertyShape } from './types.js'
+import type { MapObject, MapDefinition, MapPipe } from 'map-transform/types.js'
+import type { Shape, PropertyShape } from './types.js'
 import {
   isObject,
   isSchema,

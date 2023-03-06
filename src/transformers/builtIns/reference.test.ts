@@ -1,5 +1,5 @@
 import test from 'ava'
-import { Reference } from '../../types.js'
+import type { Reference } from '../../types.js'
 
 import reference from './reference.js'
 

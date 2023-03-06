@@ -1,5 +1,5 @@
 import httpTransporter from 'integreat-transporter-http'
-import json from '../../../transformers/json.js'
+import transformers from '../../../transformers/index.js'
 import { Resources } from '../../../create.js'
 
 const isoDate = () => (date: unknown) =>
@@ -7,7 +7,7 @@ const isoDate = () => (date: unknown) =>
 
 const resources: Resources = {
   transporters: { http: httpTransporter },
-  transformers: { isoDate, json },
+  transformers: { ...transformers, isoDate },
 }
 
 export default resources

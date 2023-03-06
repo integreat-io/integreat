@@ -1,4 +1,4 @@
-import { MapDefinition } from 'map-transform'
+import type { MapDefinition } from 'map-transform/types.js'
 import { Action } from '../../types.js'
 import { MapOptions } from '../types.js'
 import { EndpointDef, EndpointOptions, Endpoint } from './types.js'

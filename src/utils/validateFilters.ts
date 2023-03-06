@@ -1,6 +1,7 @@
 import util = require('util')
-import { validate, DataMapper } from 'map-transform'
-import { Condition, ConditionFailObject } from '../types.js'
+import { validate } from 'map-transform'
+import type { DataMapper } from 'map-transform/types.js'
+import type { Condition, ConditionFailObject } from '../types.js'
 import { isObject } from './is.js'
 
 type FilterAndMessage = [DataMapper, () => ConditionFailObject]

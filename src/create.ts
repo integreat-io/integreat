@@ -1,6 +1,10 @@
 import EventEmitter = require('node:events')
-import { Dictionaries, Transformer, MapDefinition } from 'map-transform'
-import {
+import type {
+  Dictionaries,
+  Transformer,
+  MapDefinition,
+} from 'map-transform/types.js'
+import type {
   Middleware,
   Transporter,
   Dispatch,
@@ -9,14 +13,14 @@ import {
   Response,
   ActionHandler,
 } from './types.js'
-import {
+import type {
   ServiceDef,
   IdentConfig,
   AuthDef,
   Authenticator,
   Service,
 } from './service/types.js'
-import { SchemaDef } from './schema/types.js'
+import type { SchemaDef } from './schema/types.js'
 import Auth from './service/Auth.js'
 import builtinHandlers from './handlers/index.js'
 import runFn from './handlers/run.js'

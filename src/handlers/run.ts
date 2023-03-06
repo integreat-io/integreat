@@ -1,5 +1,6 @@
 /* eslint-disable security/detect-object-injection */
-import { mapTransform, MapObject, MapPipe, MapDefinition } from 'map-transform'
+import mapTransform from 'map-transform'
+import type { MapObject, MapPipe, MapDefinition } from 'map-transform/types.js'
 import pLimit from 'p-limit'
 import {
   Action,

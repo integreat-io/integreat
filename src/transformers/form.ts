@@ -1,5 +1,5 @@
 /* eslint-disable security/detect-object-injection */
-import { Transformer } from 'map-transform'
+import type { Transformer } from 'map-transform/types.js'
 import { getFirstIfArray } from '../utils/array.js'
 import { isObject, isDataObject } from '../utils/is.js'
 

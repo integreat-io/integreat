@@ -1,5 +1,5 @@
 import mapAny = require('map-any')
-import { Transformer } from 'map-transform'
+import type { Transformer } from 'map-transform/types.js'
 import { isObject } from '../../utils/is.js'
 
 const castObject = (value: unknown) => {

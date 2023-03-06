@@ -1,4 +1,8 @@
-import { MapDefinition, Transformer, Dictionaries } from 'map-transform'
+import type {
+  MapDefinition,
+  Transformer,
+  Dictionaries,
+} from 'map-transform/types.js'
 import { Action, Response, Dispatch, Transporter } from '../types.js'
 import { EndpointDef, Endpoint } from './endpoints/types.js'
 

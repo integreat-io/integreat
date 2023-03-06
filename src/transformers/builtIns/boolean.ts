@@ -1,5 +1,5 @@
 import mapAny = require('map-any')
-import { Transformer } from 'map-transform'
+import type { Transformer } from 'map-transform/types.js'
 
 const castBoolean = (value: unknown) => {
   if (value === null || value === undefined) {
