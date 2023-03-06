@@ -1884,6 +1884,62 @@ test('listen should remove ident when no incoming auth is provided', async (t) =
   t.deepEqual(ret, expectedResponse)
 })
 
+test('listen should not remove ident when auth incoming is true', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [] },
+    meta: { ident: { id: 'anonymous' } }, // Should be removed
+  }
+  const service = setupService(mockResources({}, action))({
+    id: 'entries',
+    auth: { incoming: true },
+    transporter: 'http',
+    options: { incoming: { port: 8080 } },
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedAction = {
+    ...action,
+    payload: { ...action.payload, sourceService: 'entries' },
+    meta: { ident: { id: 'anonymous' } },
+  }
+  const expectedResponse = { status: 'ok' }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.is(dispatchStub.callCount, 1)
+  t.deepEqual(dispatchStub.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should not remove ident when auth is true', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [] },
+    meta: { ident: { id: 'anonymous' } }, // Should be removed
+  }
+  const service = setupService(mockResources({}, action))({
+    id: 'entries',
+    auth: true,
+    transporter: 'http',
+    options: { incoming: { port: 8080 } },
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  })
+  const expectedAction = {
+    ...action,
+    payload: { ...action.payload, sourceService: 'entries' },
+    meta: { ident: { id: 'anonymous' } },
+  }
+  const expectedResponse = { status: 'ok' }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.is(dispatchStub.callCount, 1)
+  t.deepEqual(dispatchStub.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
+})
+
 test('listen should return error when connection fails', async (t) => {
   const resources = {
     ...jsonResources,
@@ -2165,3 +2221,6 @@ test('close should do nothing when no transporter', async (t) => {
 
   t.deepEqual(ret, expectedResponse)
 })
+
+test.todo('should not allow unauthorized access when auth is true')
+test.todo('should not allow unauthorized access when auth.outgoing is true')

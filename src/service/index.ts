@@ -58,8 +58,12 @@ const setServiceIdAsSourceServiceOnAction =
 
 const isIdent = (ident: unknown): ident is Ident => isObject(ident)
 
-async function authorizeIncoming(action: Action, auth?: Auth) {
+async function authorizeIncoming(action: Action, auth?: Auth | boolean) {
   if (auth) {
+    if (typeof auth === 'boolean') {
+      return action
+    }
+
     try {
       const ident = await auth.authenticateAndGetAuthObject(action, 'asObject')
       if (isIdent(ident)) {
@@ -88,7 +92,7 @@ const dispatchIncoming = (dispatch: Dispatch, setProgress: ProgressNotifier) =>
 // TODO: Consider if there is an easier way to pass the `setProgress` method
 // through to the caller, i.e. to preserve the PProgress
 const dispatchIncomingWithMiddleware =
-  (dispatch: Dispatch, middleware: Middleware, auth?: Auth) =>
+  (dispatch: Dispatch, middleware: Middleware, auth?: Auth | boolean) =>
   (action: Action | null) =>
     pProgress<Response>(async (setProgress) => {
       if (action) {
@@ -166,6 +170,20 @@ function retrieveAuthorization(
   }
 }
 
+function resolveIncomingAuth(
+  authenticators: Record<string, Authenticator>,
+  auths?: Record<string, Auth>,
+  auth?: AuthObject | AuthProp
+) {
+  if (isObject(auth) && auth.incoming) {
+    return auth.incoming === true
+      ? true
+      : retrieveAuthorization(authenticators, auths, auth.incoming)
+  } else {
+    return auth === true ? true : undefined
+  }
+}
+
 /**
  * Create a service with the given id and transporter.
  */
@@ -194,10 +212,7 @@ export default ({
     const transporter = lookupById(transporterId, transporters)
 
     const authorization = retrieveAuthorization(authenticators, auths, auth)
-    const incomingAuth =
-      isObject(auth) && auth.incoming
-        ? retrieveAuthorization(authenticators, auths, auth.incoming)
-        : undefined
+    const incomingAuth = resolveIncomingAuth(authenticators, auths, auth)
     const requireAuth = !!auth
 
     const authorizeDataFromService = authorizeData.fromService(schemas)
