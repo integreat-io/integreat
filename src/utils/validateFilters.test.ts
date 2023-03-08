@@ -34,7 +34,7 @@ test('should return failing paths when filters are invalid', (t) => {
   t.deepEqual(ret, ['payload.data.draft'])
 })
 
-test('should return error friendlier message when filters are invalid', (t) => {
+test('should return status noaction and friendly message when filters are invalid and no onFail', (t) => {
   const useFriendlyMessages = true
   const filters = {
     'payload.data.draft': { const: false },
@@ -48,7 +48,10 @@ test('should return error friendlier message when filters are invalid', (t) => {
   const ret = validateFilters(filters, useFriendlyMessages)(data)
 
   t.deepEqual(ret, [
-    { message: "'payload.data.draft' did not pass { const: false }" },
+    {
+      status: 'noaction',
+      message: "'payload.data.draft' did not pass { const: false }",
+    },
   ])
 })
 
@@ -69,8 +72,29 @@ test('should return fail message and fail status when provided', (t) => {
   const ret = validateFilters(filters, useFriendlyMessages)(data)
 
   t.deepEqual(ret, [
-    { message: "Can't be draft" },
+    { message: "Can't be draft", status: 'error' },
     { message: 'Should be Entry 1', status: 'noaction' },
+  ])
+})
+
+test('should return generate friendlier message when only fail status is provided', (t) => {
+  const useFriendlyMessages = true
+  const filters = {
+    'payload.data.draft': { const: false, onFail: { status: 'noaction' } },
+    'payload.data.title': { const: 'Entry 1' },
+  }
+  const data = {
+    type: 'SET',
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
+  }
+
+  const ret = validateFilters(filters, useFriendlyMessages)(data)
+
+  t.deepEqual(ret, [
+    {
+      message: "'payload.data.draft' did not pass { const: false }",
+      status: 'noaction',
+    },
   ])
 })
 

@@ -24,21 +24,32 @@ function prepareFilter(
   return undefined
 }
 
-const prepareMessage = (
+const stringifyFilter = ({ onFail, ...filter }: Condition) =>
+  util.inspect(filter)
+
+function prepareMessage(
   path: string,
   filter: Condition | boolean | undefined,
   useFriendlyMessages: boolean
-) =>
-  !useFriendlyMessages
-    ? () => path
-    : isObject(filter)
-    ? filter.onFail
-      ? () =>
-          typeof filter.onFail === 'string'
-            ? { message: filter.onFail }
-            : filter.onFail
-      : () => ({ message: `'${path}' did not pass ${util.inspect(filter)}` })
-    : () => ({ message: `'${path}' did not pass its condition` })
+) {
+  if (!useFriendlyMessages) {
+    return () => path
+  }
+  const onFail = isObject(filter)
+    ? typeof filter.onFail === 'string'
+      ? { message: filter.onFail }
+      : filter.onFail
+    : undefined
+  return () => ({
+    ...onFail,
+    status: onFail?.status || (onFail ? 'error' : 'noaction'),
+    message:
+      onFail?.message ||
+      `'${path}' did not pass ${
+        isObject(filter) ? stringifyFilter(filter) : 'its condition'
+      }`,
+  })
+}
 
 export default function validateFilters(
   filters: Record<string, Condition | boolean | undefined>,

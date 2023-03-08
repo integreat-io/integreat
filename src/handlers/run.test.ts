@@ -733,11 +733,8 @@ test('should not run second action when its conditions fail', async (t) => {
   })
 
   t.is(dispatch.callCount, 1) // Only the first step should run
-  t.is(ret.response?.status, 'error', ret.response?.error)
-  t.is(
-    ret.response?.error,
-    "Could not finish job 'action6', the following steps failed: 'setEntries' (error: 'getEntries.response.data' did not pass { type: 'array', minItems: 1 })"
-  )
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.response?.error, undefined)
 })
 
 test('should use fail message and status from failed condition', async (t) => {
@@ -838,6 +835,7 @@ test('should not continue flow when condition marked with break fails', async (t
             'getEntries.response.data': {
               type: 'array',
               minItems: 1,
+              onFail: 'Needs an array',
             },
           },
           action: {
@@ -919,7 +917,7 @@ test('should run second action when its conditions are fulfilled', async (t) => 
   t.is(ret.response?.status, 'ok', ret.response?.error)
 })
 
-test('should validate conditions in parallel actions too', async (t) => {
+test('should validate conditions in parallel actions', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({
@@ -935,7 +933,10 @@ test('should validate conditions in parallel actions too', async (t) => {
           {
             id: 'setEntry',
             conditions: {
-              'action.payload.id': { type: 'string' },
+              'action.payload.id': {
+                type: 'string',
+                onFail: { status: 'error' },
+              },
             },
             action: {
               type: 'SET',
@@ -975,6 +976,71 @@ test('should validate conditions in parallel actions too', async (t) => {
   t.is(
     ret.response?.error,
     "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' })"
+  )
+})
+
+test('should return error from conditions in parallel actions even though others give noaction', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({
+      response: { status: 'ok' },
+    })
+    .onCall(0)
+    .resolves({ response: { status: 'ok', data: [] } })
+  const jobs = {
+    action3: {
+      id: 'action3',
+      flow: [
+        [
+          {
+            id: 'setEntry',
+            conditions: {
+              'action.payload.id': {
+                type: 'string',
+                onFail: { status: 'error' },
+              },
+            },
+            action: {
+              type: 'SET',
+              payload: {
+                type: 'entry',
+                id: 'ent1',
+                data: [{ id: 'ent1', $type: 'entry' }],
+              },
+            },
+          },
+          {
+            id: 'setDate',
+            conditions: {
+              'action.payload.id': { type: 'string' },
+            },
+            action: {
+              type: 'SET',
+              payload: { type: 'date', id: 'updatedAt' },
+            },
+          },
+        ],
+      ],
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+      id: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const ret = await run(jobs, mapOptions)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(dispatch.callCount, 0) // None should run
+  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(
+    ret.response?.error,
+    "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' }), 'setDate' (noaction: 'action.payload.id' did not pass { type: 'string' })"
   )
 })
 

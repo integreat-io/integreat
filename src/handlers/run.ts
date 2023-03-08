@@ -217,10 +217,7 @@ const messageFromValidationErrors = (vals: ConditionFailObject[]) =>
 
 function statusFromValidationErrors(vals: ConditionFailObject[]) {
   const statuses = vals.map((val) => val.status).filter(Boolean)
-  if (statuses.length === 0) {
-    return undefined
-  }
-  return statuses[0]
+  return statuses.length === 0 ? undefined : statuses[0]
 }
 
 const setData = (action: Action, data: unknown): Action => ({
