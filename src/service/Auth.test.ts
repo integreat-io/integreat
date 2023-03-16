@@ -53,15 +53,6 @@ test('should create Auth instance', (t) => {
   t.is(auth.id, 'auth1')
 })
 
-test('should throw when no authenticator', (t) => {
-  const authenticator = undefined
-
-  const err = t.throws(() => new Auth(id, authenticator, options))
-
-  t.true(err instanceof Error)
-  t.is(err?.message, 'Auth requires an authenticator')
-})
-
 test('should authenticate and return true on success', async (t) => {
   const auth = new Auth(id, authenticator, options)
 

@@ -259,6 +259,25 @@ test('should throw when no id', (t) => {
   })
 })
 
+test('should throw when auth object references unknown authenticator', async (t) => {
+  const defs = {
+    id: 'entries',
+    auth: {
+      id: 'auth',
+      authenticator: 'unknown',
+      options: {},
+    },
+    transporter: 'http',
+    options: {},
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+  }
+  const resources = mockResources({})
+
+  const error = t.throws(() => setupService(resources)(defs))
+
+  t.true(error instanceof Error)
+})
+
 // Tests -- endpointFromAction
 
 test('endpointFromAction should return an endpoint for the action', (t) => {

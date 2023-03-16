@@ -20,15 +20,7 @@ export default class Auth {
   #options: AuthOptions
   #authentication: Authentication | null
 
-  constructor(
-    id: string,
-    authenticator?: Authenticator,
-    options?: AuthOptions
-  ) {
-    if (!authenticator) {
-      throw new TypeError('Auth requires an authenticator')
-    }
-
+  constructor(id: string, authenticator: Authenticator, options?: AuthOptions) {
     this.id = id
     this.#authenticator = authenticator
     this.#options = options || {}

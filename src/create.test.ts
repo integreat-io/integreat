@@ -354,6 +354,35 @@ test('should use auth', async (t) => {
   t.is(ret.status, 'noaccess', ret.error)
 })
 
+test('should throw when trying to use an unknown authenticator', async (t) => {
+  const authServices = [
+    {
+      ...services[0],
+      auth: 'mauth',
+    },
+  ]
+  const auths = [
+    {
+      id: 'mauth',
+      authenticator: 'unknown',
+      options: {},
+    },
+  ]
+
+  const error = t.throws(() =>
+    create(
+      { services: authServices, schemas, mutations, auths },
+      resourcesWithTransformer
+    )
+  )
+
+  t.true(error instanceof Error)
+  t.is(
+    error?.message,
+    "Auth config 'mauth' references an unknown authenticator id 'unknown'"
+  )
+})
+
 test('should have listen method', async (t) => {
   const great = create(
     { services, schemas, mutations },

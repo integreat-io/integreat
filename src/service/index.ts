@@ -31,6 +31,7 @@ import deepClone from '../utils/deepClone.js'
 import * as authorizeData from './authorize/data.js'
 import authorizeAction from './authorize/action.js'
 import { compose } from '../dispatch.js'
+import { setUpAuth } from '../create.js'
 
 const debug = debugLib('great')
 
@@ -160,11 +161,7 @@ function retrieveAuthorization(
   if (typeof auth === 'string') {
     return lookupById(auth, auths)
   } else if (isAuthDef(auth)) {
-    return new Auth(
-      auth.id,
-      lookupById(auth.authenticator, authenticators),
-      auth.options
-    )
+    return setUpAuth(authenticators)(auth)
   } else {
     return undefined
   }

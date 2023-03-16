@@ -70,6 +70,18 @@ export interface Instance<ResponseData = unknown> {
   ) => EventEmitter
 }
 
+export const setUpAuth = (authenticators?: Record<string, Authenticator>) =>
+  function setUpAuth(def: AuthDef) {
+    const authenticator = lookupById(def.authenticator, authenticators)
+    if (!authenticator) {
+      throw new Error(
+        `Auth config '${def.id}' references an unknown authenticator id '${def.authenticator}'`
+      )
+    }
+
+    return new Auth(def.id, authenticator, def.options)
+  }
+
 /*
  * Create an Integreat instance.
  */
@@ -113,14 +125,7 @@ export default function create(
   // Setup auths object from auth defs
   const auths = Array.isArray(authDefs)
     ? authDefs
-        .map(
-          (def) =>
-            new Auth(
-              def.id,
-              lookupById(def.authenticator, authenticators),
-              def.options
-            )
-        )
+        .map(setUpAuth(authenticators))
         .reduce(indexById, {} as Record<string, Auth>)
     : undefined
 
