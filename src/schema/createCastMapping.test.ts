@@ -253,6 +253,22 @@ test('should be iteratable', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should not cast null', (t) => {
+  const schema = {
+    id: 'string',
+    title: 'string',
+  }
+  const data = null
+  const expected = undefined
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    transformers,
+    pipelines,
+  })(data)
+
+  t.is(ret, expected)
+})
+
 test('should cast non-primitive fields with schema', (t) => {
   const entrySchema = {
     id: 'string',
@@ -298,6 +314,11 @@ test('should cast non-primitive fields with schema', (t) => {
       attributes: { title: 'Entry 3', age: 0 },
       relationships: {},
     },
+    {
+      id: 'ent4',
+      attributes: { title: 'Entry 4' },
+      relationships: { author: null },
+    },
   ]
   const expected = [
     {
@@ -329,6 +350,13 @@ test('should cast non-primitive fields with schema', (t) => {
       type: 'entry',
       attributes: { title: 'Entry 3', age: 0 },
       relationships: { author: undefined, comments: undefined },
+    },
+    {
+      $type: 'entry',
+      id: 'ent4',
+      type: 'entry',
+      attributes: { title: 'Entry 4', age: undefined },
+      relationships: { author: null, comments: undefined },
     },
   ]
 
