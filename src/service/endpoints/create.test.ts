@@ -538,32 +538,6 @@ test('should map to empty array from service when unknown path and expecting arr
   t.deepEqual(ret, expected)
 })
 
-test('should map from service without defaults', (t) => {
-  const endpointDef = {
-    mutation: {
-      response: 'response',
-      'response.data': ['response.data.content.data', { $apply: 'entry' }],
-    },
-    options: { uri: 'http://some.api/1.0' },
-  }
-  const actionWithoutDefaults = {
-    ...actionWithResponse,
-    response: {
-      ...actionWithResponse.response,
-      returnNoDefaults: true,
-    },
-  }
-
-  const endpoint = createEndpoint(
-    serviceId,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
-  const ret = endpoint.mutateResponse(actionWithoutDefaults)
-
-  t.is((ret.response?.data as TypedData[])[0].published, undefined)
-})
-
 test('should not map from service when no mutation pipeline', (t) => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
@@ -756,36 +730,6 @@ test('should map request with root array path', (t) => {
   const ret = endpoint.mutateRequest(action)
 
   t.deepEqual(ret, expected)
-})
-
-test('should map to service with no defaults', (t) => {
-  const endpointDef = {
-    mutation: {
-      payload: 'payload',
-      'payload.data': ['payload.data.content.data', { $apply: 'entry' }],
-    },
-    options: { uri: 'http://some.api/1.0' },
-  }
-  const actionWithoutDefaults = {
-    ...action,
-    payload: {
-      ...action.payload,
-      sendNoDefaults: true,
-    },
-  }
-
-  const endpoint = createEndpoint(
-    serviceId,
-    serviceOptions,
-    mapOptions
-  )(endpointDef)
-  const ret = endpoint.mutateRequest(actionWithoutDefaults)
-
-  const items = (
-    ((ret.payload.data as TypedData).content as TypedData).data as TypedData
-  ).items as TypedData[]
-  t.is(items[0].activated, undefined)
-  t.is(items[1].activated, true)
 })
 
 test('should not map to service when no mutation pipeline', (t) => {

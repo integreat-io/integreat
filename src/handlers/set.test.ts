@@ -188,32 +188,6 @@ test('should map and set with id to service', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should send without default values', async (t) => {
-  const scope = nock('http://api5.test')
-    .put('/database/entry:ent1', { docs: [{ id: 'ent1' }] })
-    .reply(200, { okay: true, id: 'ent1', rev: '000001' })
-  const action = {
-    type: 'SET',
-    payload: {
-      type: 'entry',
-      data: { $type: 'entry', id: 'ent1' },
-      sendNoDefaults: true,
-    },
-  }
-  const src = setupService(
-    'http://api5.test/database/{{payload.type}}:{{payload.id}}',
-    'entries',
-    'PUT'
-  )
-  const getService = (type?: string | string[], _service?: string) =>
-    type === 'entry' ? src : undefined
-
-  const ret = await set(action, { ...handlerResources, getService })
-
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.true(scope.isDone())
-})
-
 test('should infer service id from type', async (t) => {
   const scope = nock('http://api2.test')
     .post('/database/_bulk_docs')

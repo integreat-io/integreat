@@ -41,7 +41,6 @@ test('should return mapped action when all parts are replaced', (t) => {
     type: 'GET',
     payload: {
       data: {},
-      sendNoDefaults: true,
     },
     response: {
       status: undefined,
@@ -58,7 +57,6 @@ test('should return mapped action when all parts are replaced', (t) => {
       id: 'johnf',
       type: 'user',
       searchDeleted: true,
-      sendNoDefaults: true,
     },
     response: {
       status: 'ok',

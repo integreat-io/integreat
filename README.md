@@ -295,8 +295,6 @@ that this is an authenticated service.
   },
   validate: [],
   mutation: <mutation pipeline>,
-  sendNoDefaults: <boolean>,
-  returnNoDefaults: <boolean>,
   mappings: {
     <schema id>: <mapping definition | mapping id>,
   },
@@ -948,10 +946,6 @@ is fetched, if it exists.
 The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
 
-By default, the returned data will be cast with default values, but set
-`returnNoDefaults: true` on the action payload to get only values mapped from
-the service data.
-
 #### `GET_UNMAPPED`
 
 Get data from a service without applying the mapping rules. Returned in the
@@ -1052,12 +1046,6 @@ may be removed in future versions of Integreat.
 
 The endpoint will be picked according to the matching properties, unless an
 endpoint id is supplied as an `endpoint` property of `payload`.
-
-To send only fields mapped from the action data to the service, set
-`sendNoDefaults: true` on the endpoint config to cast the data going to the
-service without using default values. This will not affect the data coming back
-from the action, but set `returnNoDefaults: true` to leave defaults out of the
-response data.
 
 #### `SET_META`
 

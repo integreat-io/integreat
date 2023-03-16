@@ -17,8 +17,6 @@ export interface EndpointDef {
   match?: MatchObject
   options?: EndpointOptions
   mutation?: TransformDefinition
-  sendNoDefaults?: boolean
-  returnNoDefaults?: boolean
   allowRawRequest?: boolean
   allowRawResponse?: boolean
 }

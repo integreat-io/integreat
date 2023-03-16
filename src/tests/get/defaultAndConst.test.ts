@@ -69,25 +69,3 @@ test('should transform entry', async (t) => {
   t.is(item1.title, 'No title')
   t.is((item1.author as TypedData).id, 'admin')
 })
-
-test('should transform entry without defaults', async (t) => {
-  nock('http://some.api')
-    .get('/entries/ent2')
-    .reply(200, { data: [entryNoHeadline] })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry', id: 'ent2' },
-    response: { status: undefined, returnNoDefaults: true },
-    meta: { ident: { id: 'johnf' } },
-  }
-
-  const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
-
-  t.is(ret.status, 'ok', ret.error)
-  const data = ret.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'ent2')
-  t.is(data[0].title, undefined) // Default -- should not be mapped
-  t.is((data[0].author as TypedData).id, 'admin') // Fixed -- should be mapped
-})

@@ -124,7 +124,6 @@ export interface Payload<T = unknown> extends Record<string, unknown> {
   pageAfter?: string
   pageBefore?: string
   pageId?: string
-  sendNoDefaults?: boolean
 }
 
 export interface Meta extends Record<string, unknown> {
@@ -147,7 +146,6 @@ export interface Response<T = unknown> {
   paging?: Paging
   params?: Params
   headers?: Headers
-  returnNoDefaults?: boolean
   responses?: Response[]
   access?: Record<string, unknown>
   meta?: Meta

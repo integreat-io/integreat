@@ -14,25 +14,13 @@ import {
 } from '../../utils/mappingHelpers.js'
 import { ensureArray } from '../../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../../utils/is.js'
+import xor from '../../utils/xor.js'
 
 export interface PrepareOptions {
   (options: EndpointOptions, serviceId: string): EndpointOptions
 }
 
-function mutate(
-  mutator: DataMapperEntry,
-  data: unknown,
-  fromService: boolean,
-  noDefaults = false
-) {
-  return mutator(data, { noDefaults, rev: !fromService }) as Partial<Action>
-}
-
-function mutateAction(
-  mutator: DataMapperEntry | null,
-  isRequest: boolean,
-  mapNoDefaults: boolean
-) {
+function mutateAction(mutator: DataMapperEntry | null, isRev: boolean) {
   if (!mutator) {
     return (action: Action) => action
   }
@@ -40,15 +28,9 @@ function mutateAction(
   return (action: Action, isIncoming = false) =>
     populateActionAfterMapping(
       action,
-      mutate(
-        mutator,
-        prepareActionForMapping(action, isRequest),
-        isRequest ? !!isIncoming : !isIncoming,
-        mapNoDefaults ||
-          (isRequest
-            ? action.payload.sendNoDefaults
-            : action.response?.returnNoDefaults)
-      )
+      mutator(prepareActionForMapping(action, isRev), {
+        rev: xor(isRev, isIncoming),
+      }) as Partial<Action>
     )
 }
 
@@ -88,8 +70,6 @@ export default function createEndpoint(
       id,
       allowRawRequest = false,
       allowRawResponse = false,
-      sendNoDefaults = false,
-      returnNoDefaults = false,
       match,
     } = endpointDef
 
@@ -99,8 +79,8 @@ export default function createEndpoint(
       allowRawResponse,
       match,
       options,
-      mutateRequest: mutateAction(mutator, true, sendNoDefaults),
-      mutateResponse: mutateAction(mutator, false, returnNoDefaults),
+      mutateRequest: mutateAction(mutator, true),
+      mutateResponse: mutateAction(mutator, false),
       isMatch: isMatch(endpointDef),
     }
   }

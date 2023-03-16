@@ -367,26 +367,6 @@ test('should get default values from type', async (t) => {
   t.is((ret.response?.data as TypedData[])[0].byline, 'Somebody')
 })
 
-test('should not get default values from type', async (t) => {
-  nock('http://api1.test')
-    .get('/database')
-    .reply(200, [{ id: 'ent1', type: 'entry' }])
-  const action = {
-    type: 'GET',
-    payload: {
-      type: 'entry',
-      targetService: 'entries',
-    },
-    response: { status: undefined, returnNoDefaults: true },
-  }
-  const svc = setupService('http://api1.test/database')
-  const getService = () => svc
-
-  const ret = await get(action, { ...handlerResources, getService })
-
-  t.is((ret.response?.data as TypedData[])[0].byline, undefined)
-})
-
 test('should infer service id from type', async (t) => {
   nock('http://api1.test')
     .get('/database')
