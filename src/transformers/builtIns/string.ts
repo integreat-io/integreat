@@ -12,6 +12,6 @@ function castString(value: Record<string, unknown>): string | null | undefined {
   }
 }
 
-const string: Transformer = (_operands) => mapAny(castString)
+const string: Transformer = () => () => mapAny(castString)
 
 export default string

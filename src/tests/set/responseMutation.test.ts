@@ -1,11 +1,8 @@
 import test from 'ava'
 import nock = require('nock')
+import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
-import entrySchema from '../helpers/defs/schemas/entry.js'
 import entriesService from '../helpers/defs/services/entries.js'
-import entriesEntryMutation from '../helpers/defs/mutations/entries-entry.js'
-import exchangeJsonMutation from '../../mutations/exchangeJson.js'
-import exchangeUriMutation from '../../mutations/exchangeUri.js'
 import { TypedData } from '../../types.js'
 
 import Integreat from '../../index.js'
@@ -40,7 +37,7 @@ test('should map response and merge with request data', async (t) => {
     meta: { ident: { root: true } },
   }
   const defs = {
-    schemas: [entrySchema],
+    ...definitions,
     services: [
       {
         ...entriesService,
@@ -59,11 +56,6 @@ test('should map response and merge with request data', async (t) => {
         ],
       },
     ],
-    mutations: {
-      'entries-entry': entriesEntryMutation,
-      'exchange:json': exchangeJsonMutation,
-      'exchange:uri': exchangeUriMutation,
-    },
   }
 
   const great = Integreat.create(defs, resources)

@@ -7,7 +7,7 @@ import {
   isDate,
 } from '../../utils/is.js'
 
-interface Operands extends Record<string, unknown> {
+interface Props extends Record<string, unknown> {
   type?: string
 }
 
@@ -56,7 +56,8 @@ const castItem =
   }
 
 const reference: Transformer =
-  ({ type }: Operands) =>
+  ({ type }: Props) =>
+  () =>
   (value, state) =>
     mapAny(castItem(type, !!state.rev), value)
 

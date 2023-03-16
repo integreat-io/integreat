@@ -1,4 +1,7 @@
+import commentSchema from './schemas/comment.js'
 import entrySchema from './schemas/entry.js'
+import feedSchema from './schemas/feed.js'
+import sectionSchema from './schemas/section.js'
 import userSchema from './schemas/user.js'
 
 import apiService from './services/api.js'
@@ -12,7 +15,7 @@ import exchangeUriMutation from '../../../mutations/exchangeUri.js'
 import usersUserMutation from './mutations/users-user.js'
 
 export default {
-  schemas: [entrySchema, userSchema],
+  schemas: [commentSchema, entrySchema, feedSchema, sectionSchema, userSchema],
   services: [apiService, entriesService, usersService],
   mutations: {
     'api-entry': apiEntryMutation,

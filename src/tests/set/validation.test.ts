@@ -2,7 +2,6 @@ import test from 'ava'
 import nock = require('nock')
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
-import { TypedData, Action } from '../../types.js'
 
 import Integreat from '../../index.js'
 
@@ -28,27 +27,6 @@ const entryWithoutAuthor = {
   updatedAt,
 }
 
-// Lots of typing hoops. Sorry
-const shouldHaveAuthor =
-  () =>
-  (action: unknown): unknown => {
-    return ((action as Action).payload?.data as TypedData).author
-      ? action
-      : {
-          ...(action as Action),
-          response: {
-            ...(action as Action).response,
-            status: 'badrequest',
-            error: 'Error from validator',
-            data: undefined,
-          },
-        }
-  }
-const resourcesWithTransformer = {
-  ...resources,
-  transformers: { ...resources.transformers, shouldHaveAuthor },
-}
-
 test.after.always(() => {
   nock.restore()
 })
@@ -69,7 +47,7 @@ test('should respond with response from validation when not validated', async (t
     meta: { ident: { id: 'johnf', roles: ['editor'] } },
   }
 
-  const great = Integreat.create(defs, resourcesWithTransformer)
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'badrequest', ret.error)
@@ -91,7 +69,7 @@ test('should respond with ok when validated', async (t) => {
     meta: { ident: { id: 'johnf', roles: ['editor'] } },
   }
 
-  const great = Integreat.create(defs, resourcesWithTransformer)
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

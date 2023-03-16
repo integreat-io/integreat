@@ -1,6 +1,6 @@
 import createCastMapping from './createCastMapping.js'
 import accessForAction from './accessForAction.js'
-import type { MapDefinition } from 'map-transform/types.js'
+import type { TransformDefinition } from 'map-transform/types.js'
 import { SchemaDef, PropertyShape, Shape, Access, AccessDef } from './types.js'
 import { isSchema } from '../utils/is.js'
 import { nanoid } from 'nanoid'
@@ -28,7 +28,7 @@ export interface Schema {
   internal: boolean
   shape: Shape
   access?: string | AccessDef
-  mapping: MapDefinition
+  mapping: TransformDefinition
   accessForAction: (actionType?: string) => Access
 }
 

@@ -87,7 +87,7 @@ test('should use non-incoming endpoint over incoming', async (t) => {
     payload: {
       type: 'entry',
       id: 'ent1',
-      // No source service
+      // No source service specified
     },
     meta: { ident: { root: true } },
   }

@@ -1,21 +1,10 @@
-import type {
-  MapDefinition,
-  Transformer,
-  Dictionaries,
-} from 'map-transform/types.js'
+import type { TransformDefinition, Options } from 'map-transform/types.js'
 import { Action, Response, Dispatch, Transporter } from '../types.js'
 import { EndpointDef, Endpoint } from './endpoints/types.js'
 
-export interface MapOptions {
-  pipelines?: Record<string, MapDefinition>
-  transformers?: Record<string, Transformer>
-  dictionaries?: Dictionaries
-  noneValues?: unknown[]
-  fwdAlias?: string
-  revAlias?: string
-}
+export type MapOptions = Options
 
-export type MapDefinitions = Record<string, string | MapDefinition>
+export type TransformDefinitions = Record<string, string | TransformDefinition>
 
 export interface IdentConfig {
   type: string
@@ -80,7 +69,7 @@ export interface ServiceDef {
   auth?: AuthObject | AuthProp
   meta?: string
   options?: Record<string, unknown>
-  mutation?: MapDefinition
+  mutation?: TransformDefinition
   endpoints: EndpointDef[]
 }
 

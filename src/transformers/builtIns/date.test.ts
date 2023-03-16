@@ -19,32 +19,32 @@ const theDate = new Date('2019-05-22T13:43:11.345Z')
 
 test('should transform values to date', (t) => {
   t.deepEqual(
-    date(operands, options)(new Date('2019-05-22T13:43:11.345Z'), state),
+    date(operands)(options)(new Date('2019-05-22T13:43:11.345Z'), state),
     theDate
   )
   t.deepEqual(
-    date(operands, options)('2019-05-22T15:43:11.345+02:00', state),
+    date(operands)(options)('2019-05-22T15:43:11.345+02:00', state),
     theDate
   )
-  t.deepEqual(date(operands, options)(1558532591345, state), theDate)
+  t.deepEqual(date(operands)(options)(1558532591345, state), theDate)
 })
 
 test('should not touch null and undefined', (t) => {
-  t.is(date(operands, options)(null, state), null)
-  t.is(date(operands, options)(undefined, state), undefined)
+  t.is(date(operands)(options)(null, state), null)
+  t.is(date(operands)(options)(undefined, state), undefined)
 })
 
 test('should transform illegal values to undefined', (t) => {
-  t.is(date(operands, options)('Not a date', state), undefined)
-  t.is(date(operands, options)({}, state), undefined)
+  t.is(date(operands)(options)('Not a date', state), undefined)
+  t.is(date(operands)(options)({}, state), undefined)
   t.is(
-    date(operands, options)({ id: '12345', title: 'Wrong' }, state),
+    date(operands)(options)({ id: '12345', title: 'Wrong' }, state),
     undefined
   )
-  t.is(date(operands, options)(new Date('Not a date'), state), undefined)
-  t.is(date(operands, options)(NaN, state), undefined)
-  t.is(date(operands, options)(true, state), undefined)
-  t.is(date(operands, options)(false, state), undefined)
+  t.is(date(operands)(options)(new Date('Not a date'), state), undefined)
+  t.is(date(operands)(options)(NaN, state), undefined)
+  t.is(date(operands)(options)(true, state), undefined)
+  t.is(date(operands)(options)(false, state), undefined)
 })
 
 test('should iterate arrays', (t) => {
@@ -69,7 +69,7 @@ test('should iterate arrays', (t) => {
     undefined,
   ]
 
-  const ret = date(operands, options)(value, state)
+  const ret = date(operands)(options)(value, state)
 
   t.deepEqual(ret, expected)
 })

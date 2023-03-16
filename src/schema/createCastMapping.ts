@@ -8,7 +8,11 @@ import {
   apply,
   iterate,
 } from 'map-transform'
-import type { MapObject, MapDefinition, MapPipe } from 'map-transform/types.js'
+import type {
+  TransformDefinition,
+  TransformObject,
+  Pipeline,
+} from 'map-transform/types.js'
 import type { Shape, PropertyShape } from './types.js'
 import {
   isObject,
@@ -85,17 +89,17 @@ const transformFromType = (type: string) => {
 const generateFieldPipeline = (
   field: string,
   isArray: boolean,
-  pipeline: MapPipe
+  pipeline: Pipeline
 ) => ({
   [field]: [
     field,
-    isArray ? rev(transform(ensureArrayOrUndefined)) : undefined,
+    isArray ? rev(transform(() => ensureArrayOrUndefined)) : undefined,
     ...pipeline,
-    isArray ? fwd(transform(ensureArrayOrUndefined)) : undefined,
+    isArray ? fwd(transform(() => ensureArrayOrUndefined)) : undefined,
   ].filter(Boolean),
 })
 
-const mappingFromSchema = (schema: Shape, iterate = false): MapObject =>
+const mappingFromSchema = (schema: Shape, iterate = false): TransformObject =>
   Object.entries(schema).reduce(
     (mapping, [field, prop]) => {
       const [realField, isFieldArray] = removeArrayNotation(field)
@@ -130,12 +134,12 @@ const mappingFromSchema = (schema: Shape, iterate = false): MapObject =>
   )
 
 // TODO: This looks kind of stupid?
-const includeInCasting = (type: string) =>
+const includeInCasting = (type: string) => () =>
   type
     ? (data: unknown) => !isNullOrUndefined(data)
     : (data: unknown) => !isNullOrUndefined(data)
 
-const cleanUpCast = (type: string, isFwd: boolean) =>
+const cleanUpCast = (type: string, isFwd: boolean) => () =>
   mapAny((item: unknown) => {
     if (isDataObject(item)) {
       const { $type, $ref, isNew, isDeleted, id, ...shape } = item
@@ -154,7 +158,7 @@ const cleanUpCast = (type: string, isFwd: boolean) =>
 export default function createCastMapping(
   schema: Shape,
   type: string
-): MapDefinition {
+): TransformDefinition {
   const filterItem = filter(includeInCasting(type))
   const fieldsMapping = mappingFromSchema(schema, true) // true to get $iterate
 

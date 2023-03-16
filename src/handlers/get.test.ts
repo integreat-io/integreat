@@ -10,6 +10,7 @@ import {
 import schema from '../schema/index.js'
 import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
+import createMapOptions from '../utils/createMapOptions.js'
 import { Action, TypedData } from '../types.js'
 
 import get from './get.js'
@@ -31,6 +32,13 @@ const schemas = {
       name: 'string',
     },
     access: { identFromField: 'id' },
+  }),
+  source: schema({
+    id: 'source',
+    shape: {
+      name: 'string',
+    },
+    access: 'auth',
   }),
 }
 
@@ -59,12 +67,13 @@ const pipelines = {
   ],
   ['cast_entry']: schemas.entry.mapping,
   ['cast_account']: schemas.account.mapping,
+  ['cast_source']: schemas.source.mapping,
 }
 
-const mapOptions = {
-  pipelines,
-  transformers: { ...transformers, ...jsonFunctions },
-}
+const mapOptions = createMapOptions(schemas, pipelines, {
+  ...transformers,
+  ...jsonFunctions,
+})
 
 const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
   createService({ schemas, mapOptions })({
@@ -73,22 +82,27 @@ const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
     endpoints: [
       {
         match,
-        options: { uri },
         mutation: {
-          response: 'response',
-          'response.data': [
-            'response.data',
-            { $apply: id === 'accounts' ? 'account' : 'entry' },
-          ],
+          $direction: 'from',
+          response: {
+            $modify: 'response',
+            data: [
+              'response.data',
+              { $apply: id === 'accounts' ? 'account' : 'entry' },
+            ],
+          },
         },
+        options: { uri },
       },
       {
         id: 'other',
-        options: { uri: 'http://api5.test/other' },
         mutation: {
-          response: 'response',
-          'response.data': ['response.data', { $apply: 'entry' }],
+          response: {
+            $modify: 'response',
+            data: ['response.data', { $apply: 'entry' }],
+          },
         },
+        options: { uri: 'http://api5.test/other' },
       },
     ],
   })

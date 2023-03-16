@@ -1,13 +1,15 @@
 import test from 'ava'
 import mapTransform from 'map-transform'
 import transformers from '../transformers/builtIns/index.js'
+import user from '../tests/helpers/defs/schemas/user.js'
+import comment from '../tests/helpers/defs/schemas/comment.js'
 import { TypedData } from '../types.js'
 
-import schema from './index.js'
+import createSchema from './index.js'
 
 // Tests
 
-test('should setup schema', (t) => {
+test('should set up schema', (t) => {
   const def = {
     id: 'entry',
     plural: 'entries',
@@ -35,7 +37,7 @@ test('should setup schema', (t) => {
     comments: { $cast: 'comment' },
   }
 
-  const ret = schema(def)
+  const ret = createSchema(def)
 
   t.truthy(ret)
   t.is(ret.id, 'entry')
@@ -57,7 +59,7 @@ test('should provide accessForAction method', (t) => {
     access: { allow: 'all', actions: { SET: 'auth' } },
   }
 
-  const ret = schema(def)
+  const ret = createSchema(def)
 
   t.is(typeof ret.accessForAction, 'function')
   t.deepEqual(ret.accessForAction('GET'), { allow: 'all' })
@@ -71,7 +73,7 @@ test('should set internal prop', (t) => {
     internal: true,
   }
 
-  const ret = schema(def)
+  const ret = createSchema(def)
 
   t.true(ret.internal)
 })
@@ -82,7 +84,7 @@ test('should infer plural when not set', (t) => {
     shape: {},
   }
 
-  const ret = schema(type)
+  const ret = createSchema(type)
 
   t.is(ret.id, 'article')
   t.is(ret.plural, 'articles')
@@ -100,7 +102,7 @@ test('should include base fields', (t) => {
     updatedAt: { $cast: 'date' },
   }
 
-  const ret = schema(type)
+  const ret = createSchema(type)
 
   t.deepEqual(ret.shape, expected)
 })
@@ -121,16 +123,69 @@ test('should override base fields in definition', (t) => {
     updatedAt: { $cast: 'date' },
   }
 
-  const ret = schema(type)
+  const ret = createSchema(type)
 
   t.deepEqual(ret.shape, expected)
 })
 
-// Tests -- cast mapping
+// Tests -- cast mutation
 
-test('should provide cast mapping', (t) => {
+test('should provide cast mutation', (t) => {
   const date = new Date('2019-01-18T03:43:52Z')
-  const def = {
+  const entrySchema = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    shape: {
+      title: { $cast: 'string', $default: 'Entry with no name' },
+      text: 'string',
+      age: { $cast: 'integer' },
+    },
+    access: 'auth',
+  }
+  const data = [
+    {
+      id: 12345,
+      age: '244511383',
+      text: 'The first entry',
+      createdAt: date,
+      updatedAt: date,
+    },
+  ]
+  const expected = [
+    {
+      id: '12345',
+      $type: 'entry',
+      title: 'Entry with no name',
+      text: 'The first entry',
+      age: 244511383,
+      createdAt: date,
+      updatedAt: date,
+    },
+  ]
+  const expectedOrder = [
+    'id',
+    '$type',
+    'title',
+    'text',
+    'age',
+    'createdAt',
+    'updatedAt',
+  ]
+
+  const mapping = createSchema(entrySchema).mapping
+  const ret = mapTransform(mapping, { transformers })(data) as Record<
+    string,
+    unknown
+  >[]
+
+  t.deepEqual(ret, expected)
+  t.deepEqual(Object.keys(ret[0]), expectedOrder)
+})
+
+test('should provide cast mutation with sub schemas', (t) => {
+  const date = new Date('2019-01-18T03:43:52Z')
+  const entrySchema = {
     id: 'entry',
     plural: 'entries',
     service: 'entries',
@@ -143,6 +198,10 @@ test('should provide cast mapping', (t) => {
     },
     access: 'auth',
   }
+  const pipelines = {
+    cast_user: createSchema(user).mapping,
+    cast_comment: createSchema(comment).mapping,
+  }
   const data = [
     {
       id: 12345,
@@ -154,36 +213,16 @@ test('should provide cast mapping', (t) => {
       comments: 'comment23',
     },
   ]
-  const expected = [
-    {
-      id: '12345',
-      $type: 'entry',
-      title: 'Entry with no name',
-      text: 'The first entry',
-      age: 244511383,
-      author: { id: 'maryk', $ref: 'user' },
-      comments: [{ id: 'comment23', $ref: 'comment' }],
-      createdAt: date,
-      updatedAt: date,
-    },
-  ]
-  const expectedOrder = [
-    'id',
-    '$type',
-    'title',
-    'text',
-    'age',
-    'author',
-    'comments',
-    'createdAt',
-    'updatedAt',
-  ]
+  const expectedAuthor = { id: 'maryk', $ref: 'user' }
+  const expectedComments = [{ id: 'comment23', $ref: 'comment' }]
 
-  const mapping = schema(def).mapping
-  const ret = mapTransform(mapping, { transformers })(data)
+  const mapping = createSchema(entrySchema).mapping
+  const ret = mapTransform(mapping, { transformers, pipelines })(
+    data
+  ) as Record<string, unknown>[]
 
-  t.deepEqual(ret, expected)
-  t.deepEqual(Object.keys(ret[0]), expectedOrder)
+  t.deepEqual(ret[0].author, expectedAuthor)
+  t.deepEqual(ret[0].comments, expectedComments)
 })
 
 test('should set createdAt and updatedAt to now when not set', (t) => {
@@ -204,7 +243,7 @@ test('should set createdAt and updatedAt to now when not set', (t) => {
   }
   const before = Date.now()
 
-  const mapping = schema(def).mapping
+  const mapping = createSchema(def).mapping
   const ret = mapTransform(mapping, { transformers })(data)
 
   const after = Date.now()
@@ -232,7 +271,7 @@ test('should cast id to string', (t) => {
     title: 'Entry 1',
   }
 
-  const mapping = schema(def).mapping
+  const mapping = createSchema(def).mapping
   const ret = mapTransform(mapping, { transformers })(data)
 
   const { id } = ret as TypedData
@@ -253,7 +292,7 @@ test('should set missing id to null', (t) => {
     title: 'Entry 1',
   }
 
-  const mapping = schema(def).mapping
+  const mapping = createSchema(def).mapping
   const ret = mapTransform(mapping, { transformers })(data)
 
   const { id } = ret as TypedData
@@ -275,7 +314,7 @@ test('should generate id when not set and generateId is true', (t) => {
     title: 'Entry 1',
   }
 
-  const mapping = schema(def).mapping
+  const mapping = createSchema(def).mapping
   const ret = mapTransform(mapping, { transformers })(data)
 
   const { id } = ret as TypedData
@@ -296,7 +335,7 @@ test('should not cast undefined', (t) => {
   const data = undefined
   const expected = undefined
 
-  const mapping = schema(def).mapping
+  const mapping = createSchema(def).mapping
   const ret = mapTransform(mapping, { transformers })(data)
 
   t.deepEqual(ret, expected)
@@ -315,7 +354,7 @@ test('should not cast null', (t) => {
   const data = null
   const expected = undefined
 
-  const mapping = schema(def).mapping
+  const mapping = createSchema(def).mapping
   const ret = mapTransform(mapping, { transformers })(data)
 
   t.deepEqual(ret, expected)
@@ -343,7 +382,7 @@ test('should not cast undefined in array', (t) => {
     },
   ]
 
-  const mapping = schema(def).mapping
+  const mapping = createSchema(def).mapping
   const ret = mapTransform(mapping, { transformers })(data)
 
   t.deepEqual(ret, expected)
@@ -364,7 +403,7 @@ test('should not return array when expecting value', (t) => {
     title: ['Entry 1', 'Entry 2'],
   }
 
-  const mapping = schema(def).mapping
+  const mapping = createSchema(def).mapping
   const ret = mapTransform(mapping, { transformers })(data)
 
   const { title } = ret as TypedData

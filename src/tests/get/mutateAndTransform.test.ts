@@ -1,10 +1,9 @@
 import test from 'ava'
 import nock = require('nock')
 import mapAny = require('map-any')
+import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import mutations from '../../mutations/index.js'
-import entrySchema from '../helpers/defs/schemas/entry.js'
-import entriesService from '../helpers/defs/services/entries.js'
 import entry1 from '../helpers/data/entry1.js'
 import entry2 from '../helpers/data/entry2.js'
 import { isDataObject } from '../../utils/is.js'
@@ -15,9 +14,9 @@ import Integreat from '../../index.js'
 // Setup
 
 const transformers = {
-  upperCase: () => (value: unknown) =>
+  upperCase: () => () => (value: unknown) =>
     typeof value === 'string' ? value.toUpperCase() : value,
-  addSectionsToText: () =>
+  addSectionsToText: () => () =>
     mapAny((item: unknown) => {
       if (!isDataObject(item)) {
         return item
@@ -65,8 +64,7 @@ test('should transform entry', async (t) => {
     { $apply: 'cast_entry' },
   ]
   const defs = {
-    schemas: [entrySchema],
-    services: [entriesService],
+    ...definitions,
     mutations: {
       ...mutations,
       'entries-entry': mapping,
@@ -106,8 +104,7 @@ test('should transform array of entries', async (t) => {
     { $apply: 'cast_entry' },
   ]
   const defs = {
-    schemas: [entrySchema],
-    services: [entriesService],
+    ...definitions,
     mutations: {
       ...mutations,
       'entries-entry': mapping,

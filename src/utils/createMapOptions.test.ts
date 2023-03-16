@@ -30,7 +30,7 @@ const schemas = {
 }
 
 const transformers = {
-  string: () => (value: unknown) => String(value),
+  string: () => () => (value: unknown) => String(value),
 }
 
 const dictionaries = {

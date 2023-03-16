@@ -43,10 +43,6 @@ test('should dispatch GET to expired endpoint', async (t) => {
       targetService: 'store',
       endpoint: 'getExpired',
     },
-    response: {
-      status: undefined,
-      returnNoDefaults: true,
-    },
     meta: { ident, cid: '11005' },
   }
 

@@ -9,6 +9,6 @@ const castBoolean = (value: unknown) => {
   }
 }
 
-const boolean: Transformer = (_operands) => mapAny(castBoolean)
+const boolean: Transformer = () => () => mapAny(castBoolean)
 
 export default boolean

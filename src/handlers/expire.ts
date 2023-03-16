@@ -31,7 +31,6 @@ const getExpired = async (
       targetService,
       endpoint: endpointId,
     },
-    response: { status: undefined, returnNoDefaults: true },
     meta: { ident, cid },
   })
 }

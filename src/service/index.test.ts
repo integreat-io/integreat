@@ -7,6 +7,7 @@ import transformers from '../transformers/builtIns/index.js'
 import createSchema from '../schema/index.js'
 import dispatch from '../tests/helpers/dispatch.js'
 import { isObject } from '../utils/is.js'
+import createMapOptions from '../utils/createMapOptions.js'
 import { Authenticator, ServiceDef } from './types.js'
 import { Connection, Action, Response, TypedData, Dispatch } from '../types.js'
 import { EndpointOptions } from '../service/endpoints/types.js'
@@ -19,17 +20,6 @@ import setupService from './index.js'
 // Setup
 
 const schemas = {
-  entry: createSchema({
-    id: 'entry',
-    plural: 'entries',
-    shape: {
-      title: 'string',
-      one: { $cast: 'integer', $default: 1 },
-      two: 'integer',
-      source: 'source',
-    },
-    access: 'auth',
-  }),
   account: createSchema({
     id: 'account',
     shape: {
@@ -42,6 +32,24 @@ const schemas = {
         TEST: 'all',
       },
     },
+  }),
+  entry: createSchema({
+    id: 'entry',
+    plural: 'entries',
+    shape: {
+      title: 'string',
+      one: { $cast: 'integer', $default: 1 },
+      two: 'integer',
+      source: 'source',
+    },
+    access: 'auth',
+  }),
+  source: createSchema({
+    id: 'source',
+    shape: {
+      name: 'string',
+    },
+    access: 'auth',
   }),
 }
 
@@ -81,25 +89,24 @@ const accountMapping = [
   { $apply: 'cast_account' },
 ]
 
-const mapOptions = {
-  pipelines: {
-    ['cast_entry']: schemas.entry.mapping,
-    ['cast_account']: schemas.account.mapping,
-    entry: entryMapping,
-    entry2: entry2Mapping,
-    account: accountMapping,
-  },
-  transformers,
-  noneValues: [undefined, null, ''],
+const pipelines = {
+  entry: entryMapping,
+  entry2: entry2Mapping,
+  account: accountMapping,
 }
+
+const mapOptions = createMapOptions(schemas, pipelines, transformers)
 
 const endpoints = [
   {
     id: 'endpoint1',
     match: { type: 'entry' },
     mutation: {
-      response: 'response',
-      'response.data': ['response.data', { $apply: 'entry' }],
+      $direction: 'from',
+      response: {
+        $modify: 'response',
+        data: ['response.data', { $apply: 'entry' }],
+      },
     },
     options: { uri: 'http://test.api/1' },
   },
@@ -107,8 +114,11 @@ const endpoints = [
     id: 'endpoint2',
     match: { type: 'entry', scope: 'member' },
     mutation: {
-      response: 'response',
-      'response.data': ['response.data', { $apply: 'entry' }],
+      $direction: 'from',
+      response: {
+        $modify: 'response',
+        data: ['response.data', { $apply: 'entry' }],
+      },
     },
     options: { uri: 'http://test.api/2' },
   },
@@ -117,16 +127,17 @@ const endpoints = [
     match: { type: 'account', incoming: true },
     mutation: [
       {
-        $direction: 'fwd',
+        $direction: 'from',
         payload: {
-          '.': 'payload',
+          $modify: 'payload',
           data: ['payload.data', { $apply: 'account' }],
         },
       },
       {
-        $direction: 'rev',
+        $direction: 'to',
+        $flip: true,
         response: {
-          '.': 'response',
+          $modify: 'response',
           data: ['response.data', { $apply: 'account' }],
         },
       },
@@ -137,16 +148,17 @@ const endpoints = [
     match: { type: 'account' },
     mutation: [
       {
-        $direction: 'rev',
+        $direction: 'to',
+        $flip: true,
         payload: {
-          '.': 'payload',
+          $modify: 'payload',
           data: ['payload.data', { $apply: 'account' }],
         },
       },
       {
-        $direction: 'fwd',
+        $direction: 'from',
         response: {
-          '.': 'response',
+          $modify: 'response',
           data: ['response.data', { $apply: 'account' }],
         },
       },
@@ -156,8 +168,11 @@ const endpoints = [
   {
     match: { action: 'SET' },
     mutation: {
-      response: 'response',
-      'response.data': ['response.data', { $apply: 'entry' }],
+      $direction: 'from',
+      response: {
+        $modify: 'response',
+        data: ['response.data', { $apply: 'entry' }],
+      },
     },
     options: { uri: 'http://some.api/1.0/untyped' },
   },
@@ -939,8 +954,11 @@ test.serial('mapResponse should map data array from service', async (t) => {
     endpoints: [
       {
         mutation: {
-          response: 'response',
-          'response.data': ['response.data.content.data', { $apply: 'entry' }],
+          $direction: 'from',
+          response: {
+            $modify: 'response',
+            data: ['response.data.content.data', { $apply: 'entry' }],
+          },
         },
         options: { uri: 'http://some.api/1.0' },
       },

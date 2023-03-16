@@ -1,9 +1,19 @@
 import test from 'ava'
 import mapTransform from 'map-transform'
-import type { MapDefinition, MapPipe } from 'map-transform/types.js'
+import type { TransformDefinition, Pipeline } from 'map-transform/types.js'
 import transformers from '../transformers/builtIns/index.js'
+import user from '../tests/helpers/defs/schemas/user.js'
+import comment from '../tests/helpers/defs/schemas/comment.js'
+import createSchema from './index.js'
 
 import createCastMapping from './createCastMapping.js'
+
+// Setup
+
+const pipelines = {
+  cast_comment: createSchema(comment).mapping,
+  cast_user: createSchema(user).mapping,
+}
 
 // Tests
 
@@ -100,6 +110,7 @@ test('should create mapping definition from schema', (t) => {
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     transformers,
+    pipelines,
   })(data)
 
   t.deepEqual(ret, expected)
@@ -200,7 +211,8 @@ test('should reverse transform with mapping definition from schema', (t) => {
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     transformers,
-  }).rev(data)
+    pipelines,
+  })(data, { rev: true })
 
   t.deepEqual(ret, expected)
 })
@@ -233,12 +245,10 @@ test('should be iteratable', (t) => {
     },
   ]
 
-  const ret = mapTransform(
-    [createCastMapping(schema, 'entry')] as MapDefinition,
-    {
-      transformers,
-    }
-  )(data)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const ret = mapTransform([createCastMapping(schema, 'entry')!], {
+    transformers,
+  })(data)
 
   t.deepEqual(ret, expected)
 })
@@ -418,7 +428,7 @@ test('should cast non-primitive fields with schema in reverse', (t) => {
       cast_comment: createCastMapping(commentSchema, 'comment'),
       cast_user: createCastMapping(userSchema, 'user'),
     },
-  }).rev(data)
+  })(data, { rev: true })
 
   t.deepEqual(ret, expected)
 })
@@ -494,8 +504,8 @@ test('should handle casting with array of non-primitive types within an iteratio
     ],
   }
   const castPipeline = createCastMapping(entrySchema, 'entry')
-  const fullPipeline: MapDefinition = {
-    data: ['data[]', ...(castPipeline as MapPipe)],
+  const fullPipeline: TransformDefinition = {
+    data: ['data[]', ...(castPipeline as Pipeline)],
   }
 
   const ret = mapTransform(fullPipeline, {
@@ -504,7 +514,7 @@ test('should handle casting with array of non-primitive types within an iteratio
       cast_comment: createCastMapping(commentSchema, 'comment'),
       cast_user: createCastMapping(userSchema, 'user'),
     },
-  }).rev(data)
+  })(data, { rev: true })
 
   t.deepEqual(ret, expected)
 })
@@ -602,7 +612,7 @@ test('should recast items already cast with another $type in reverse', (t) => {
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     transformers,
-  }).rev(data)
+  })(data, { rev: true })
 
   t.deepEqual(ret, expected)
 })
@@ -628,7 +638,7 @@ test('should not set $type when casting in reverse', (t) => {
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     transformers,
-  }).rev(data)
+  })(data, { rev: true })
 
   t.deepEqual(ret, expected)
 })
@@ -715,7 +725,7 @@ test('should keep isNew and isDeleted when true in reverse', (t) => {
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     transformers,
-  }).rev(data)
+  })(data, { rev: true })
 
   t.deepEqual(ret, expected)
 })
@@ -742,7 +752,7 @@ test('should remove isNew and isDeleted when false in reverse', (t) => {
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     transformers,
-  }).rev(data)
+  })(data, { rev: true })
 
   t.deepEqual(ret, expected)
 })
@@ -783,7 +793,7 @@ test('should not cast null or undefined in reverse', (t) => {
 
   const ret = mapTransform(createCastMapping(schema, 'entry'), {
     transformers,
-  }).rev(data)
+  })(data, { rev: true })
 
   t.deepEqual(ret, expected)
 })

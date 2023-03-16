@@ -41,7 +41,7 @@ const stringifyForm = (data: unknown) =>
         .join('&')
     : null
 
-const form: Transformer = (_operands, _options) => (data, state) =>
+const form: Transformer = () => () => (data, state) =>
   state.rev ? stringifyForm(getFirstIfArray(data)) : parseForm(data)
 
 export default form

@@ -18,7 +18,7 @@ function stringify(data: unknown) {
   return JSON.stringify(data)
 }
 
-const json: Transformer = (_operands, _options) => (data, state) =>
+const json: Transformer = () => () => (data, state) =>
   state.rev ? stringify(data) : parse(data)
 
 export default json

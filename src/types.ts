@@ -1,5 +1,9 @@
 import type { PProgress } from 'p-progress'
-import type { MapDefinition, MapObject, MapPipe } from 'map-transform/types.js'
+import type {
+  TransformDefinition,
+  TransformObject,
+  Pipeline,
+} from 'map-transform/types.js'
 import type { EndpointOptions } from './service/endpoints/types.js'
 import type { IdentConfig } from './service/types.js'
 import type { Service } from './service/types.js'
@@ -48,7 +52,7 @@ export interface Condition extends Record<string, unknown> {
 interface JobFields {
   id: string
   conditions?: Record<string, Condition | undefined>
-  mutation?: MapObject | MapPipe
+  mutation?: TransformObject | Pipeline
 }
 
 export interface JobWithFlow extends JobFields {
@@ -57,9 +61,9 @@ export interface JobWithFlow extends JobFields {
 
 export interface JobWithAction extends JobFields {
   action: Action
-  iterate?: MapDefinition
+  iterate?: TransformDefinition
   iteratePath?: string
-  responseMutation?: MapObject | MapPipe
+  responseMutation?: TransformObject | Pipeline
 }
 
 export type Job = JobWithAction | JobWithFlow
@@ -72,7 +76,7 @@ export interface JobDef {
   exceptions?: ScheduleObject[]
   cron?: string
   human?: string
-  responseMutation?: MapObject | MapPipe
+  responseMutation?: TransformObject | Pipeline
 }
 
 export interface DataFunction {

@@ -1,5 +1,5 @@
 import type {
-  MapDefinition,
+  TransformDefinition,
   Transformer,
   Dictionaries,
 } from 'map-transform/types.js'
@@ -8,7 +8,7 @@ import type { MapOptions } from '../service/types.js'
 
 const pipelinesFromSchemas = (
   schemas: Record<string, Schema>
-): Record<string, MapDefinition> =>
+): Record<string, TransformDefinition> =>
   Object.entries(schemas).reduce(
     (pipelines, [id, def]) => ({ ...pipelines, [`cast_${id}`]: def.mapping }),
     {}
@@ -16,7 +16,7 @@ const pipelinesFromSchemas = (
 
 export default function createMapOptions(
   schemas: Record<string, Schema>,
-  mutations?: Record<string, MapDefinition>,
+  mutations?: Record<string, TransformDefinition>,
   transformers?: Record<string, Transformer>,
   dictionaries?: Dictionaries
 ): MapOptions {
@@ -29,6 +29,6 @@ export default function createMapOptions(
     dictionaries,
     fwdAlias: 'from',
     revAlias: 'to',
-    noneValues: [undefined, null, ''],
+    nonvalues: [undefined, null, ''],
   }
 }

@@ -10,6 +10,6 @@ const castObject = (value: unknown) => {
   }
 }
 
-const object: Transformer = (_operands) => mapAny(castObject)
+const object: Transformer = () => () => mapAny(castObject)
 
 export default object

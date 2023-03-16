@@ -2,7 +2,7 @@ import create from './create.js'
 import mergeDefinitions from './utils/mergeDefinitions.js'
 import mergeResources from './utils/mergeResources.js'
 
-export type { Transformer, MapDefinition } from 'map-transform/types.js'
+export type { Transformer, TransformDefinition } from 'map-transform/types.js'
 export type {
   Action,
   Payload,

@@ -6,6 +6,7 @@ import transformers from '../../transformers/index.js'
 import { TypedData } from '../../types.js'
 import { MapOptions } from '../types.js'
 import { isAction } from '../../utils/is.js'
+import createMapOptions from '../../utils/createMapOptions.js'
 
 import createEndpoint from './create.js'
 
@@ -54,7 +55,7 @@ const entryMapping3 = [
   { $apply: 'cast_entry' },
 ]
 
-const shouldHaveToken = () => (action: unknown) =>
+const shouldHaveToken = () => () => (action: unknown) =>
   isAction(action)
     ? {
         ...action,
@@ -65,7 +66,7 @@ const shouldHaveToken = () => (action: unknown) =>
       }
     : action
 
-const alwaysOk = () => (action: unknown) =>
+const alwaysOk = () => () => (action: unknown) =>
   isAction(action)
     ? {
         ...action,
@@ -74,20 +75,21 @@ const alwaysOk = () => (action: unknown) =>
       }
     : action
 
-const mapOptions = {
-  pipelines: {
-    ['cast_entry']: schemas.entry.mapping,
-    entry: entryMapping,
-    entry2: entryMapping2,
-    entry3: entryMapping3,
-  },
-  transformers: {
-    ...builtInTransformers,
-    ...transformers,
-    shouldHaveToken,
-    alwaysOk,
-  },
+const pipelines = {
+  ['cast_entry']: schemas.entry.mapping,
+  entry: entryMapping,
+  entry2: entryMapping2,
+  entry3: entryMapping3,
 }
+
+const allTransformers = {
+  ...builtInTransformers,
+  ...transformers,
+  shouldHaveToken,
+  alwaysOk,
+}
+
+const mapOptions = createMapOptions(schemas, pipelines, allTransformers)
 
 const action = {
   type: 'GET',
@@ -242,8 +244,10 @@ test('should return false when no match to action', (t) => {
 test('should map response from service with endpoint mutation', (t) => {
   const endpointDef = {
     mutation: {
-      response: 'response',
-      'response.data': ['response.data.content.data', { $apply: 'entry' }],
+      response: {
+        $modify: 'response',
+        data: ['response.data.content.data', { $apply: 'entry' }],
+      },
     },
     options: { uri: 'http://some.api/1.0' },
   }
@@ -664,7 +668,7 @@ test('should map request with service mutation', (t) => {
         '.': 'meta',
         options: {
           '.': 'meta.options',
-          uri: { $transform: 'template', templatePath: 'meta.options.uri' },
+          uri: { $transform: 'generateUri', templatePath: 'meta.options.uri' },
         },
       },
     },
@@ -725,8 +729,11 @@ test('should map request with service mutation', (t) => {
 test('should map request with root array path', (t) => {
   const endpointDef = {
     mutation: {
-      payload: 'payload',
-      'payload.data': ['payload.data', { $apply: 'entry3' }], // Has root path '[]'
+      $flip: true,
+      payload: {
+        $modify: 'payload',
+        data: ['payload.data', { $apply: 'entry3' }], // Has root path '[]'
+      },
     },
     options: { uri: 'http://some.api/1.0' },
   }

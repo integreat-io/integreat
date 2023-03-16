@@ -6,7 +6,7 @@ export default {
     $modify: 'meta',
     options: {
       $modify: 'meta.options',
-      uri: { $transform: 'template', templatePath: 'meta.options.uri' },
+      uri: { $transform: 'generateUri', templatePath: 'meta.options.uri' },
     },
   },
 }

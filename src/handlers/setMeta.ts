@@ -68,7 +68,6 @@ export default async function setMeta(
         $type: metaType,
         ...(meta as Record<string, unknown>),
       },
-      sendNoDefaults: true,
       keys: Object.keys(meta as Record<string, unknown>),
       endpoint: endpointId,
     },

@@ -2,7 +2,7 @@ import EventEmitter = require('node:events')
 import type {
   Dictionaries,
   Transformer,
-  MapDefinition,
+  TransformDefinition,
 } from 'map-transform/types.js'
 import type {
   Middleware,
@@ -40,7 +40,7 @@ import createDispatchScheduled from './dispatchScheduled.js'
 export interface Definitions {
   schemas: SchemaDef[]
   services: ServiceDef[]
-  mutations?: Record<string, MapDefinition>
+  mutations?: Record<string, TransformDefinition>
   auths?: AuthDef[]
   identConfig?: IdentConfig
   queueService?: string

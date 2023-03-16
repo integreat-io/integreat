@@ -16,24 +16,24 @@ const state = {
 // Tests
 
 test('should transform values to integer', (t) => {
-  t.is(integer(operands, options)(12345, state), 12345)
-  t.is(integer(operands, options)(12.345, state), 12)
-  t.is(integer(operands, options)(12.899, state), 13)
-  t.is(integer(operands, options)('12345', state), 12345)
-  t.is(integer(operands, options)('12345.30', state), 12345)
-  t.is(integer(operands, options)('12345NUM', state), 12345)
-  t.is(integer(operands, options)('-35', state), -35)
-  t.is(integer(operands, options)(true, state), 1)
-  t.is(integer(operands, options)(false, state), 0)
+  t.is(integer(operands)(options)(12345, state), 12345)
+  t.is(integer(operands)(options)(12.345, state), 12)
+  t.is(integer(operands)(options)(12.899, state), 13)
+  t.is(integer(operands)(options)('12345', state), 12345)
+  t.is(integer(operands)(options)('12345.30', state), 12345)
+  t.is(integer(operands)(options)('12345NUM', state), 12345)
+  t.is(integer(operands)(options)('-35', state), -35)
+  t.is(integer(operands)(options)(true, state), 1)
+  t.is(integer(operands)(options)(false, state), 0)
 })
 
 test('should transform dates to ms number', (t) => {
   t.is(
-    integer(operands, options)(new Date('2019-05-22T13:43:11.345Z'), state),
+    integer(operands)(options)(new Date('2019-05-22T13:43:11.345Z'), state),
     1558532591345
   )
   t.is(
-    integer(operands, options)(
+    integer(operands)(options)(
       new Date('2019-05-22T15:43:11.345+02:00'),
       state
     ),
@@ -42,20 +42,20 @@ test('should transform dates to ms number', (t) => {
 })
 
 test('should not touch null and undefined', (t) => {
-  t.is(integer(operands, options)(null, state), null)
-  t.is(integer(operands, options)(undefined, state), undefined)
+  t.is(integer(operands)(options)(null, state), null)
+  t.is(integer(operands)(options)(undefined, state), undefined)
 })
 
 test('should transform illegal values to undefined', (t) => {
-  t.is(integer(operands, options)('Not a number', state), undefined)
-  t.is(integer(operands, options)('NUM12345', state), undefined)
-  t.is(integer(operands, options)({}, state), undefined)
+  t.is(integer(operands)(options)('Not a number', state), undefined)
+  t.is(integer(operands)(options)('NUM12345', state), undefined)
+  t.is(integer(operands)(options)({}, state), undefined)
   t.is(
-    integer(operands, options)({ id: '12345', title: 'Wrong' }, state),
+    integer(operands)(options)({ id: '12345', title: 'Wrong' }, state),
     undefined
   )
-  t.is(integer(operands, options)(new Date('Not a date'), state), undefined)
-  t.is(integer(operands, options)(NaN, state), undefined)
+  t.is(integer(operands)(options)(new Date('Not a date'), state), undefined)
+  t.is(integer(operands)(options)(NaN, state), undefined)
 })
 
 test('should iterate arrays', (t) => {
@@ -80,7 +80,7 @@ test('should iterate arrays', (t) => {
     undefined,
   ]
 
-  const ret = integer(operands, options)(value, state)
+  const ret = integer(operands)(options)(value, state)
 
   t.deepEqual(ret, expected)
 })

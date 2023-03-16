@@ -1,8 +1,8 @@
 import mapTransform from 'map-transform'
 import type {
-  MapDefinition,
-  MapTransform,
-  MapPipe,
+  TransformDefinition,
+  DataMapperEntry,
+  Pipeline,
 } from 'map-transform/types.js'
 import { Action } from '../../types.js'
 import { MapOptions } from '../types.js'
@@ -20,20 +20,16 @@ export interface PrepareOptions {
 }
 
 function mutate(
-  mutator: MapTransform,
+  mutator: DataMapperEntry,
   data: unknown,
   fromService: boolean,
   noDefaults = false
 ) {
-  if (fromService) {
-    return noDefaults ? mutator.onlyMappedValues(data) : mutator(data)
-  } else {
-    return noDefaults ? mutator.rev.onlyMappedValues(data) : mutator.rev(data)
-  }
+  return mutator(data, { noDefaults, rev: !fromService }) as Partial<Action>
 }
 
 function mutateAction(
-  mutator: MapTransform | null,
+  mutator: DataMapperEntry | null,
   isRequest: boolean,
   mapNoDefaults: boolean
 ) {
@@ -59,7 +55,7 @@ function mutateAction(
 const flattenIfOneOrNone = <T>(arr: T[]): T | T[] =>
   arr.length <= 1 ? arr[0] : arr
 
-const setModifyFlag = (def?: MapDefinition) =>
+const setModifyFlag = (def?: TransformDefinition) =>
   isObject(def) ? { ...def, $modify: true } : def
 
 /**
@@ -69,7 +65,7 @@ export default function createEndpoint(
   serviceId: string,
   serviceOptions: EndpointOptions,
   mapOptions: MapOptions,
-  serviceMutation?: MapDefinition,
+  serviceMutation?: TransformDefinition,
   prepareOptions: PrepareOptions = (options) => options
 ) {
   return function (endpointDef: EndpointDef): Endpoint {
@@ -77,7 +73,7 @@ export default function createEndpoint(
       [...ensureArray(serviceMutation), ...ensureArray(endpointDef.mutation)]
         .map(setModifyFlag)
         .filter(isNotNullOrUndefined)
-    ) as MapPipe | MapDefinition
+    ) as Pipeline | TransformDefinition
     const mutator = mutation ? mapTransform(mutation, mapOptions) : null
 
     const options = prepareOptions(

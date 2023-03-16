@@ -1,4 +1,4 @@
-import type { MapDefinition } from 'map-transform/types.js'
+import type { TransformDefinition } from 'map-transform/types.js'
 import { Action } from '../../types.js'
 import { MapOptions } from '../types.js'
 import { EndpointDef, EndpointOptions, Endpoint } from './types.js'
@@ -10,7 +10,7 @@ export default function createEndpointMappers(
   endpointDefs: EndpointDef[],
   serviceOptions: EndpointOptions,
   mapOptions: MapOptions,
-  serviceMutation?: MapDefinition,
+  serviceMutation?: TransformDefinition,
   prepareOptions?: PrepareOptions
 ): (action: Action, isIncoming?: boolean) => Endpoint | undefined {
   const endpoints = endpointDefs

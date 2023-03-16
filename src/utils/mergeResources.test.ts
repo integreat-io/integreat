@@ -7,10 +7,7 @@ import mergeResources from './mergeResources.js'
 // Setup
 
 const mockTransporter = {} as Transporter
-const mockTransformer =
-  (_operators: Record<string, unknown>) =>
-  (_value: unknown): unknown =>
-    undefined
+const mockTransformer = () => () => (): unknown => undefined
 const unrealTransporter = {} as Transporter
 const mockHandler = {} as ActionHandler
 const mockAuth1 = {} as Authenticator

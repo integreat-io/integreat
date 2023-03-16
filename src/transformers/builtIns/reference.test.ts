@@ -31,21 +31,21 @@ const createRel = (
 // Tests
 
 test('should return relationship object from value', (t) => {
-  t.deepEqual(reference(operands, options)('ent1', state), createRel('ent1'))
+  t.deepEqual(reference(operands)(options)('ent1', state), createRel('ent1'))
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1' }, state),
+    reference(operands)(options)({ id: 'ent1' }, state),
     createRel('ent1')
   )
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1', $ref: 'entry' }, state),
+    reference(operands)(options)({ id: 'ent1', $ref: 'entry' }, state),
     createRel('ent1')
   )
   t.deepEqual(
-    reference(operands, options)({ id: 12345, $ref: 'entry' }, state),
+    reference(operands)(options)({ id: 12345, $ref: 'entry' }, state),
     createRel('12345')
   )
   t.deepEqual(
-    reference(operands, options)(new Date('2019-05-22T13:43:11.345Z'), state),
+    reference(operands)(options)(new Date('2019-05-22T13:43:11.345Z'), state),
     createRel('1558532591345')
   )
 })
@@ -53,13 +53,13 @@ test('should return relationship object from value', (t) => {
 test('should return array of relationship objects from value', (t) => {
   const expected = [createRel('ent1'), createRel('ent2')]
 
-  t.deepEqual(reference(operands, options)(['ent1', 'ent2'], state), expected)
+  t.deepEqual(reference(operands)(options)(['ent1', 'ent2'], state), expected)
   t.deepEqual(
-    reference(operands, options)([{ id: 'ent1' }, { id: 'ent2' }], state),
+    reference(operands)(options)([{ id: 'ent1' }, { id: 'ent2' }], state),
     expected
   )
   t.deepEqual(
-    reference(operands, options)(
+    reference(operands)(options)(
       [
         { id: 'ent1', $ref: 'entry' },
         { id: 'ent2', $ref: 'entry' },
@@ -69,7 +69,7 @@ test('should return array of relationship objects from value', (t) => {
     expected
   )
   t.deepEqual(
-    reference(operands, options)(
+    reference(operands)(options)(
       [{ id: 'ent1', $ref: 'entry' }, { id: 'ent2' }],
       state
     ),
@@ -79,15 +79,15 @@ test('should return array of relationship objects from value', (t) => {
 
 test('should keep isNew and isDeleted when true', (t) => {
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1', isNew: true }, state),
+    reference(operands)(options)({ id: 'ent1', isNew: true }, state),
     createRel('ent1', { isNew: true, $ref: 'entry' })
   )
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1', isDeleted: true }, state),
+    reference(operands)(options)({ id: 'ent1', isDeleted: true }, state),
     createRel('ent1', { isDeleted: true, $ref: 'entry' })
   )
   t.deepEqual(
-    reference(operands, options)(
+    reference(operands)(options)(
       { id: 'ent1', isNew: true, isDeleted: true },
       state
     ),
@@ -97,15 +97,15 @@ test('should keep isNew and isDeleted when true', (t) => {
 
 test('should not keep isNew and isDeleted when false', (t) => {
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1', isNew: false }, state),
+    reference(operands)(options)({ id: 'ent1', isNew: false }, state),
     createRel('ent1')
   )
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1', isDeleted: false }, state),
+    reference(operands)(options)({ id: 'ent1', isDeleted: false }, state),
     createRel('ent1')
   )
   t.deepEqual(
-    reference(operands, options)(
+    reference(operands)(options)(
       { id: 'ent1', isNew: false, isDeleted: true },
       state
     ),
@@ -114,12 +114,12 @@ test('should not keep isNew and isDeleted when false', (t) => {
 })
 
 test('should return relationship object in reverse', (t) => {
-  t.deepEqual(reference(operands, options)('ent1', stateRev), { id: 'ent1' })
+  t.deepEqual(reference(operands)(options)('ent1', stateRev), { id: 'ent1' })
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1', $ref: 'entry' }, stateRev),
+    reference(operands)(options)({ id: 'ent1', $ref: 'entry' }, stateRev),
     { id: 'ent1' }
   )
-  t.deepEqual(reference(operands, options)({ id: 'ent1' }, stateRev), {
+  t.deepEqual(reference(operands)(options)({ id: 'ent1' }, stateRev), {
     id: 'ent1',
   })
 })
@@ -128,15 +128,15 @@ test('should return array of relationship objects in reverse', (t) => {
   const expected = [{ id: 'ent1' }, { id: 'ent2' }]
 
   t.deepEqual(
-    reference(operands, options)(['ent1', 'ent2'], stateRev),
+    reference(operands)(options)(['ent1', 'ent2'], stateRev),
     expected
   )
   t.deepEqual(
-    reference(operands, options)([{ id: 'ent1' }, { id: 'ent2' }], stateRev),
+    reference(operands)(options)([{ id: 'ent1' }, { id: 'ent2' }], stateRev),
     expected
   )
   t.deepEqual(
-    reference(operands, options)(
+    reference(operands)(options)(
       [
         { id: 'ent1', $ref: 'entry' },
         { id: 'ent2', $ref: 'entry' },
@@ -146,7 +146,7 @@ test('should return array of relationship objects in reverse', (t) => {
     expected
   )
   t.deepEqual(
-    reference(operands, options)(
+    reference(operands)(options)(
       [{ id: 'ent1', $ref: 'entry' }, { id: 'ent2' }],
       stateRev
     ),
@@ -156,15 +156,15 @@ test('should return array of relationship objects in reverse', (t) => {
 
 test('should keep isNew and isDeleted when true in reverse', (t) => {
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1', isNew: true }, stateRev),
+    reference(operands)(options)({ id: 'ent1', isNew: true }, stateRev),
     { id: 'ent1', isNew: true }
   )
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1', isDeleted: true }, stateRev),
+    reference(operands)(options)({ id: 'ent1', isDeleted: true }, stateRev),
     { id: 'ent1', isDeleted: true }
   )
   t.deepEqual(
-    reference(operands, options)(
+    reference(operands)(options)(
       { id: 'ent1', isNew: true, isDeleted: true },
       stateRev
     ),
@@ -174,15 +174,15 @@ test('should keep isNew and isDeleted when true in reverse', (t) => {
 
 test('should not keep isNew and isDeleted when false in reverse', (t) => {
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1', isNew: false }, stateRev),
+    reference(operands)(options)({ id: 'ent1', isNew: false }, stateRev),
     { id: 'ent1' }
   )
   t.deepEqual(
-    reference(operands, options)({ id: 'ent1', isDeleted: false }, stateRev),
+    reference(operands)(options)({ id: 'ent1', isDeleted: false }, stateRev),
     { id: 'ent1' }
   )
   t.deepEqual(
-    reference(operands, options)(
+    reference(operands)(options)(
       { id: 'ent1', isNew: false, isDeleted: true },
       stateRev
     ),
@@ -191,15 +191,15 @@ test('should not keep isNew and isDeleted when false in reverse', (t) => {
 })
 
 test('should transform illegal values to undefined', (t) => {
-  t.is(reference(operands, options)({}, state), undefined)
+  t.is(reference(operands)(options)({}, state), undefined)
   t.is(
-    reference(operands, options)({ noid: '12345', title: 'Wrong' }, state),
+    reference(operands)(options)({ noid: '12345', title: 'Wrong' }, state),
     undefined
   )
-  t.is(reference(operands, options)(new Date('No date'), state), undefined)
-  t.is(reference(operands, options)(NaN, state), undefined)
-  t.is(reference(operands, options)(true, state), undefined)
-  t.is(reference(operands, options)(false, state), undefined)
+  t.is(reference(operands)(options)(new Date('No date'), state), undefined)
+  t.is(reference(operands)(options)(NaN, state), undefined)
+  t.is(reference(operands)(options)(true, state), undefined)
+  t.is(reference(operands)(options)(false, state), undefined)
 })
 
 test('should return undefined when existing $ref does not match type', (t) => {
@@ -209,7 +209,7 @@ test('should return undefined when existing $ref does not match type', (t) => {
   }
   const expected = undefined
 
-  const ret = reference(operands, options)(value, state)
+  const ret = reference(operands)(options)(value, state)
 
   t.is(ret, expected)
 })
@@ -222,7 +222,7 @@ test('should not touch object with $type', (t) => {
   }
   const expected = value
 
-  const ret = reference(operands, options)(value, state)
+  const ret = reference(operands)(options)(value, state)
 
   t.deepEqual(ret, expected)
 })
@@ -235,16 +235,16 @@ test('should return undefined when $type does not match type', (t) => {
   }
   const expected = undefined
 
-  const ret = reference(operands, options)(value, state)
+  const ret = reference(operands)(options)(value, state)
 
   t.is(ret, expected)
 })
 
 test('should not touch null and undefined', (t) => {
-  t.is(reference(operands, options)(null, state), null)
-  t.is(reference(operands, options)(undefined, state), undefined)
-  t.is(reference(operands, options)(null, stateRev), null)
-  t.is(reference(operands, options)(undefined, stateRev), undefined)
+  t.is(reference(operands)(options)(null, state), null)
+  t.is(reference(operands)(options)(undefined, state), undefined)
+  t.is(reference(operands)(options)(null, stateRev), null)
+  t.is(reference(operands)(options)(undefined, stateRev), undefined)
 })
 
 test('should iterate array', (t) => {
@@ -269,7 +269,7 @@ test('should iterate array', (t) => {
     undefined,
   ]
 
-  const ret = reference(operands, options)(value, state)
+  const ret = reference(operands)(options)(value, state)
 
   t.deepEqual(ret, expected)
 })
@@ -294,7 +294,7 @@ test('should iterate array in reverse', (t) => {
     undefined,
   ]
 
-  const ret = reference(operands, options)(value, stateRev)
+  const ret = reference(operands)(options)(value, stateRev)
 
   t.deepEqual(ret, expected)
 })

@@ -1,8 +1,7 @@
 import test from 'ava'
 import nock = require('nock')
+import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
-import entrySchema from '../helpers/defs/schemas/entry.js'
-import entriesService from '../helpers/defs/services/entries.js'
 import mutations from '../../mutations/index.js'
 import entry1 from '../helpers/data/entry1.js'
 import { TypedData } from '../../types.js'
@@ -31,8 +30,7 @@ const mapping = [
 ]
 
 const defs = {
-  schemas: [entrySchema],
-  services: [entriesService],
+  ...definitions,
   mutations: {
     'entries-entry': mapping,
     ...mutations,

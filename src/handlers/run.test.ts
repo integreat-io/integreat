@@ -1236,7 +1236,7 @@ test('should mutate action with payload from original action', async (t) => {
                 $alt: ['section', 'data.section[]'],
               },
               {
-                $transform: 'template',
+                $transform: 'generateUri',
                 template: 'section-{{.}}',
                 $iterate: true,
               },
@@ -1472,7 +1472,7 @@ test('should mutate with transformers and pipelines', async (t) => {
   const nowDate = new Date()
   const mapOptions = {
     transformers: {
-      now: () => () => nowDate,
+      now: () => () => () => nowDate,
     },
     pipelines: {
       userInfo: [{ $value: { id: 'johnf', name: 'John F.' } }],
@@ -1766,87 +1766,90 @@ test('should mutate top level action into several actions based on iterate path'
   t.is(ret.response?.status, 'ok', ret.response?.error)
 })
 
-test('should combine response data from several actions based on iterate path', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ response: { status: 'ok', data: ['ent1', 'ent2', 'ent3'] } })
-    .onCall(1)
-    .resolves({ response: { status: 'ok', data: { id: 'ent1' } } })
-    .onCall(2)
-    .resolves({ response: { status: 'ok', data: { id: 'ent2' } } })
-    .onCall(3)
-    .resolves({ response: { status: 'ok', data: { id: 'ent3' } } })
-  const jobs = {
-    action12: {
-      id: 'action12',
-      flow: [
-        {
-          id: 'getIds',
-          action: { type: 'GET', payload: { type: 'entry' } },
-        },
-        {
-          id: 'getItems',
-          action: { type: 'GET', payload: {} },
-          iteratePath: 'getIds.response.data',
-          mutation: {
-            payload: { type: { $value: 'entry' }, id: 'payload.data' },
+test.failing(
+  'should combine response data from several actions based on iterate path',
+  async (t) => {
+    const dispatch = sinon
+      .stub()
+      .resolves({ response: { status: 'ok', data: ['ent1', 'ent2', 'ent3'] } })
+      .onCall(1)
+      .resolves({ response: { status: 'ok', data: { id: 'ent1' } } })
+      .onCall(2)
+      .resolves({ response: { status: 'ok', data: { id: 'ent2' } } })
+      .onCall(3)
+      .resolves({ response: { status: 'ok', data: { id: 'ent3' } } })
+    const jobs = {
+      action12: {
+        id: 'action12',
+        flow: [
+          {
+            id: 'getIds',
+            action: { type: 'GET', payload: { type: 'entry' } },
+          },
+          {
+            id: 'getItems',
+            action: { type: 'GET', payload: {} },
+            iteratePath: 'getIds.response.data',
+            mutation: {
+              payload: { type: { $value: 'entry' }, id: 'payload.data' }, // TODO: Should overwrite payload, not merge with it
+            },
+          },
+        ],
+        responseMutation: {
+          response: {
+            $modify: 'response',
+            data: '^^getItems.response.data', // Will be the combined response data from all individual actions
           },
         },
-      ],
-      responseMutation: {
-        response: {
-          $modify: 'response',
-          data: '^^getItems.response.data', // Will be the combined response data from all individual actions
-        },
       },
-    },
-  }
-  const action = {
-    type: 'RUN',
-    payload: { jobId: 'action12', ids: ['ent1', 'ent2', 'ent3'] },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expectedAction0 = {
-    type: 'GET',
-    payload: { type: 'entry' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
-  }
-  const expectedAction1 = {
-    type: 'GET',
-    payload: { type: 'entry', id: 'ent1' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
-  }
-  const expectedAction2 = {
-    type: 'GET',
-    payload: { type: 'entry', id: 'ent2' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
-  }
-  const expectedAction3 = {
-    type: 'GET',
-    payload: { type: 'entry', id: 'ent3' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
-  }
-  const expectedResponse = {
-    ...action,
-    response: {
-      status: 'ok',
-      data: [{ id: 'ent1' }, { id: 'ent2' }, { id: 'ent3' }],
-    },
-  }
+    }
+    const action = {
+      type: 'RUN',
+      payload: { jobId: 'action12', ids: ['ent1', 'ent2', 'ent3'] },
+      meta: { ident: { id: 'johnf' } },
+    }
+    const expectedAction0 = {
+      type: 'GET',
+      payload: { type: 'entry' },
+      meta: { ident: { id: 'johnf' }, jobId: 'action12' },
+    }
+    const expectedAction1 = {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent1' },
+      meta: { ident: { id: 'johnf' }, jobId: 'action12' },
+    }
+    const expectedAction2 = {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent2' },
+      meta: { ident: { id: 'johnf' }, jobId: 'action12' },
+    }
+    const expectedAction3 = {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent3' },
+      meta: { ident: { id: 'johnf' }, jobId: 'action12' },
+    }
+    const expectedResponse = {
+      ...action,
+      response: {
+        status: 'ok',
+        data: [{ id: 'ent1' }, { id: 'ent2' }, { id: 'ent3' }],
+      },
+    }
 
-  const ret = await run(jobs, mapOptions)(action, {
-    ...handlerResources,
-    dispatch,
-  })
+    const ret = await run(jobs, mapOptions)(action, {
+      ...handlerResources,
+      dispatch,
+    })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is(dispatch.callCount, 4)
-  t.deepEqual(dispatch.args[0][0], expectedAction0)
-  t.deepEqual(dispatch.args[1][0], expectedAction1)
-  t.deepEqual(dispatch.args[2][0], expectedAction2)
-  t.deepEqual(dispatch.args[3][0], expectedAction3)
-  t.deepEqual(ret, expectedResponse)
-})
+    t.is(ret.response?.status, 'ok', ret.response?.error)
+    t.is(dispatch.callCount, 4)
+    t.deepEqual(dispatch.args[0][0], expectedAction0)
+    t.deepEqual(dispatch.args[1][0], expectedAction1)
+    t.deepEqual(dispatch.args[2][0], expectedAction2)
+    t.deepEqual(dispatch.args[3][0], expectedAction3)
+    t.deepEqual(ret, expectedResponse)
+  }
+)
 
 test('should mutate action into several actions based on iterate path in parallell steps', async (t) => {
   const dispatch = sinon

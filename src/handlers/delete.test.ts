@@ -58,7 +58,10 @@ test.after.always(() => {
 test('should delete items from service', async (t) => {
   const scope = nock('http://api1.test')
     .post('/database/bulk_delete', {
-      docs: [{ id: 'ent1' }, { id: 'ent2' }],
+      docs: [
+        { id: 'ent1', header: 'A title' }, // Default values are included and must be handled in mutation
+        { id: 'ent2', header: 'A title' },
+      ],
     })
     .reply(200, [
       { ok: true, id: 'ent1', rev: '2-000001' },

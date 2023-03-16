@@ -20,6 +20,6 @@ function castInteger(value: unknown): number | null | undefined {
   }
 }
 
-const integer: Transformer = (_operands) => mapAny(castInteger)
+const integer: Transformer = () => () => mapAny(castInteger)
 
 export default integer

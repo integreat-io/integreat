@@ -1,6 +1,10 @@
 /* eslint-disable security/detect-object-injection */
 import mapTransform from 'map-transform'
-import type { MapObject, MapPipe, MapDefinition } from 'map-transform/types.js'
+import type {
+  TransformDefinition,
+  TransformObject,
+  Pipeline,
+} from 'map-transform/types.js'
 import pLimit from 'p-limit'
 import {
   Action,
@@ -21,7 +25,6 @@ import {
   isJobStep,
   isJobWithAction,
   isJobWithFlow,
-  isAction,
   isObject,
 } from '../utils/is.js'
 import { ensureArray } from '../utils/array.js'
@@ -56,17 +59,17 @@ const isOkResponse = (response?: Response) =>
   typeof response?.status === 'string' &&
   ['ok', 'noaction', 'queued'].includes(response.status)
 
-const addModify = (mutation: ArrayElement<MapPipe>) =>
+const addModify = (mutation: ArrayElement<Pipeline>) =>
   isObject(mutation) ? { $modify: true, ...mutation } : mutation
 
 // TODO: Prepare mutations in `../create.ts` and call a `mutate()` function here
 function mutateAction(
-  action: Action | (Job | Job[])[] | undefined,
-  mutation: MapObject | MapPipe | undefined,
+  action: Action,
+  mutation: TransformObject | Pipeline | undefined,
   responses: Record<string, Action>,
   mapOptions: MapOptions
-) {
-  if (mutation && isAction(action)) {
+): Action {
+  if (mutation) {
     const mutationIncludingAction = Array.isArray(mutation)
       ? ['$action', ...mutation.map(addModify)]
       : ['$action', { '.': '.', ...mutation }] // $action is the action we're mutating to
@@ -74,7 +77,7 @@ function mutateAction(
     return mapTransform(
       mutationIncludingAction,
       mapOptions
-    )(responsesIncludingAction)
+    )(responsesIncludingAction) as Action
   } else {
     return action
   }
@@ -225,8 +228,9 @@ const setData = (action: Action, data: unknown): Action => ({
   payload: { ...action.payload, data },
 })
 
-const getIteratePipeline = (step: JobWithAction): MapDefinition | undefined =>
-  step.iterate || step.iteratePath
+const getIteratePipeline = (
+  step: JobWithAction
+): TransformDefinition | undefined => step.iterate || step.iteratePath
 
 function unpackIterationSteps(
   step: Job,
@@ -241,7 +245,7 @@ function unpackIterationSteps(
     return step
   }
 
-  const getter = mapTransform(iteratePipeline as string, mapOptions)
+  const getter = mapTransform(iteratePipeline, mapOptions)
   const items = ensureArray(getter(responses))
 
   return {

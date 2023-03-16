@@ -55,7 +55,7 @@ test.after.always(() => {
 
 // Tests
 
-test('should map full relationship item to service', async (t) => {
+test('should send item with sub schema to service', async (t) => {
   const putData = {
     key: 'ent1',
     headline: 'Entry 1',

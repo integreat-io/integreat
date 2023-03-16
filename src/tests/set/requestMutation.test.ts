@@ -1,10 +1,8 @@
 import test from 'ava'
 import nock = require('nock')
+import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
-import entrySchema from '../helpers/defs/schemas/entry.js'
 import entriesService from '../helpers/defs/services/entries.js'
-import entriesMutation from '../helpers/defs/mutations/entries-entry.js'
-import mutations from '../../mutations/index.js'
 
 import Integreat from '../../index.js'
 
@@ -72,7 +70,7 @@ test('should set data with endpoint mutation', async (t) => {
     },
   ]
   const defs = {
-    schemas: [entrySchema],
+    ...definitions,
     services: [
       {
         ...entriesService,
@@ -84,10 +82,6 @@ test('should set data with endpoint mutation', async (t) => {
         ],
       },
     ],
-    mutations: {
-      ...mutations,
-      'entries-entry': entriesMutation,
-    },
   }
 
   const great = Integreat.create(defs, resources)
@@ -128,7 +122,7 @@ test('should set data with service and endpoint mutation', async (t) => {
     },
   ]
   const defs = {
-    schemas: [entrySchema],
+    ...definitions,
     services: [
       {
         ...entriesService,
@@ -141,10 +135,6 @@ test('should set data with service and endpoint mutation', async (t) => {
         ],
       },
     ],
-    mutations: {
-      ...mutations,
-      'entries-entry': entriesMutation,
-    },
   }
 
   const great = Integreat.create(defs, resources)

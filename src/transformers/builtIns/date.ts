@@ -17,6 +17,6 @@ export function castDate(value: unknown): Date | null | undefined {
   }
 }
 
-const date: Transformer = (_operands) => mapAny(castDate)
+const date: Transformer = () => () => mapAny(castDate)
 
 export default date

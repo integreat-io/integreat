@@ -3,6 +3,7 @@ import test from 'ava'
 import sinon = require('sinon')
 import { jsonServiceDef } from './tests/helpers/json.js'
 import builtInMutations from './mutations/index.js'
+import user from './tests/helpers/defs/schemas/user.js'
 import resources from './tests/helpers/resources/index.js'
 import { Action, HandlerDispatch } from './types.js'
 
@@ -46,6 +47,7 @@ const schemas = [
     },
     access: 'all',
   },
+  user,
 ]
 
 const mutations = {
@@ -54,7 +56,7 @@ const mutations = {
     {
       $iterate: true,
       id: 'key',
-      title: ['headline', { $transform: 'exclaimate' }],
+      title: ['headline', { $transform: 'exclamate' }],
       text: 'body',
       'sections[]': ['type', { $transform: 'map', dictionary: 'section' }],
       unknown: [],
@@ -69,11 +71,11 @@ const dictionaries = {
   section: [['newsitem', 'news'] as const, ['fashionblog', 'fashion'] as const],
 }
 
-const resourcesWithTrans = {
+const resourcesWithTransformer = {
   ...resources,
   transformers: {
     ...resources.transformers,
-    exclaimate: () => (value: unknown) =>
+    exclamate: () => () => (value: unknown) =>
       typeof value === 'string' ? `${value}!` : value,
   },
 } as unknown as Resources
@@ -83,8 +85,8 @@ const resourcesWithTrans = {
 test('should return object with dispatch, on, schemas, services, identType, and queueService', (t) => {
   const identConfig = { type: 'account' }
   const great = create(
-    { services, schemas, identConfig, queueService: 'queue' },
-    resourcesWithTrans
+    { services, schemas, mutations, identConfig, queueService: 'queue' },
+    resourcesWithTransformer
   )
 
   t.is(typeof great.dispatch, 'function')
@@ -99,13 +101,13 @@ test('should return object with dispatch, on, schemas, services, identType, and 
 
 test('should throw when no services', (t) => {
   t.throws(() => {
-    create({ schemas } as unknown as Definitions, resourcesWithTrans)
+    create({ schemas } as unknown as Definitions, resourcesWithTransformer)
   })
 })
 
 test('should throw when no schemas', (t) => {
   t.throws(() => {
-    create({ services } as unknown as Definitions, resourcesWithTrans)
+    create({ services } as unknown as Definitions, resourcesWithTransformer)
   })
 })
 
@@ -120,7 +122,7 @@ test('should dispatch with resources', async (t) => {
 
   const great = create(
     { services, schemas, mutations, identConfig, queueService: 'queue' },
-    { ...resourcesWithTrans, handlers }
+    { ...resourcesWithTransformer, handlers }
   )
   await great.dispatch(action)
 
@@ -136,11 +138,11 @@ test('should dispatch with builtin action handler', async (t) => {
     response: { status: 'ok', data: '[]' },
   })
   const resourcesWithTransAndSend = {
-    ...resourcesWithTrans,
+    ...resourcesWithTransformer,
     transporters: {
-      ...resourcesWithTrans.transporters,
+      ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTrans.transporters!.http,
+        ...resourcesWithTransformer.transporters!.http,
         send,
       },
     },
@@ -175,7 +177,7 @@ test('should call middleware', async (t) => {
 
   const great = create(
     { services, schemas, mutations },
-    { ...resourcesWithTrans, handlers },
+    { ...resourcesWithTransformer, handlers },
     middleware
   )
   const ret = await great.dispatch(action)
@@ -193,11 +195,11 @@ test('should map data', async (t) => {
     date: '2019-10-11T18:43:00Z',
   }
   const resourcesWithTransAndSend = {
-    ...resourcesWithTrans,
+    ...resourcesWithTransformer,
     transporters: {
-      ...resourcesWithTrans.transporters,
+      ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTrans.transporters!.http,
+        ...resourcesWithTransformer.transporters!.http,
         send: async (action: Action) => ({
           ...action.response,
           status: 'ok',
@@ -243,7 +245,7 @@ test('should dispatch scheduled', async (t) => {
 
   const great = create(
     { services, schemas, mutations, jobs },
-    { ...resourcesWithTrans, handlers }
+    { ...resourcesWithTransformer, handlers }
   )
   await great.dispatchScheduled(fromDate, toDate)
 
@@ -261,7 +263,7 @@ test('should skip jobs without schedule', async (t) => {
 
   const great = create(
     { services, schemas, mutations, jobs },
-    { ...resourcesWithTrans, handlers }
+    { ...resourcesWithTransformer, handlers }
   )
   await great.dispatchScheduled(fromDate, toDate)
 
@@ -280,7 +282,7 @@ test('should set up RUN handler with jobs', async (t) => {
     },
   ]
   const nowDate = new Date()
-  const transformers = { now: () => () => nowDate }
+  const transformers = { now: () => () => () => nowDate }
   const handlers = { TEST: handler }
   const action = {
     type: 'RUN',
@@ -295,7 +297,7 @@ test('should set up RUN handler with jobs', async (t) => {
 
   const great = create(
     { services, schemas, mutations, jobs },
-    { ...resourcesWithTrans, handlers, transformers }
+    { ...resourcesWithTransformer, handlers, transformers }
   )
   await great.dispatch(action)
 
@@ -314,12 +316,12 @@ test('should use auth', async (t) => {
     },
   }
   const resourcesWithTransSendAndAuth = {
-    ...resourcesWithTrans,
+    ...resourcesWithTransformer,
     authenticators,
     transporters: {
-      ...resourcesWithTrans.transporters,
+      ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTrans.transporters!.http,
+        ...resourcesWithTransformer.transporters!.http,
         send: async () => ({ status: 'ok', data: '[]' }),
       },
     },
@@ -353,13 +355,19 @@ test('should use auth', async (t) => {
 })
 
 test('should have listen method', async (t) => {
-  const great = create({ services, schemas, mutations }, resourcesWithTrans)
+  const great = create(
+    { services, schemas, mutations },
+    resourcesWithTransformer
+  )
 
   t.is(typeof great.listen, 'function')
 })
 
 test('should have close method', async (t) => {
-  const great = create({ services, schemas, mutations }, resourcesWithTrans)
+  const great = create(
+    { services, schemas, mutations },
+    resourcesWithTransformer
+  )
 
   t.is(typeof great.close, 'function')
 })

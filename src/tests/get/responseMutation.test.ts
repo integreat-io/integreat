@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import nock = require('nock')
-import type { MapDefinition, MapPipe } from 'map-transform/types.js'
+import type { TransformDefinition } from 'map-transform/types.js'
+import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
-import entrySchema from '../helpers/defs/schemas/entry.js'
 import entriesService from '../helpers/defs/services/entries.js'
 import entry1 from '../helpers/data/entry1.js'
 import entry2 from '../helpers/data/entry2.js'
-import mutations from '../../mutations/index.js'
-import entriesMutation from '../helpers/defs/mutations/entries-entry.js'
 import json from '../../transformers/json.js'
 import type { TypedData, Response } from '../../types.js'
 
@@ -38,15 +36,15 @@ const mutation = {
 }
 
 const defsWithMutation = (
-  mutation: MapDefinition,
-  serviceMutation?: MapDefinition
+  mutation: TransformDefinition,
+  serviceMutation?: TransformDefinition
 ) => ({
-  schemas: [entrySchema],
+  ...definitions,
   services: [
     {
       ...entriesService,
       mutation: serviceMutation
-        ? ([...entriesService.mutation, serviceMutation] as MapPipe)
+        ? [...entriesService.mutation, serviceMutation]
         : entriesService.mutation,
       endpoints: [
         {
@@ -56,10 +54,6 @@ const defsWithMutation = (
       ],
     },
   ],
-  mutations: {
-    ...mutations,
-    'entries-entry': entriesMutation,
-  },
 })
 
 test.after.always(() => {

@@ -15,7 +15,7 @@ const prepareData = ({ type, id, data }: Payload) =>
 
 const setDataOnAction = (action: Action, data?: unknown) => ({
   ...action,
-  payload: { ...action.payload, data, sendNoDefaults: true },
+  payload: { ...action.payload, data },
 })
 
 /**

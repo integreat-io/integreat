@@ -20,6 +20,6 @@ export function castNumber(value: unknown): number | null | undefined {
   }
 }
 
-const number: Transformer = (_operands) => mapAny(castNumber)
+const number: Transformer = () => () => mapAny(castNumber)
 
 export default number

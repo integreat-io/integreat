@@ -1,8 +1,12 @@
 import util = require('util')
-import { validate } from 'map-transform'
+import ajv from 'ajv'
+import mapTransform from 'map-transform'
 import type { DataMapper } from 'map-transform/types.js'
 import type { Condition, ConditionFailObject } from '../types.js'
 import { isObject } from './is.js'
+
+const Ajv = ajv.default
+const validator = new Ajv()
 
 type FilterAndMessage = [DataMapper, () => ConditionFailObject]
 
@@ -19,7 +23,10 @@ function prepareFilter(
       return validateFilters({ $or: true, ...filter })
     }
   } else if (filter) {
-    return validate({ path, schema: cleanFilter(filter) })
+    const val = validator.compile(cleanFilter(filter))
+    const getFromPath = mapTransform(path)
+
+    return (data: unknown) => val(getFromPath(data))
   }
   return undefined
 }
