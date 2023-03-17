@@ -114,9 +114,29 @@ test('should not uri encode values when placeholder starts with plus', (t) => {
   t.is(ret, expected)
 })
 
+test('should handle uris with a lot of strange chars', (t) => {
+  const template =
+    '/data/query/production?query={payload.query}&$table={payload.table}'
+  const action = {
+    type: 'SET',
+    payload: {
+      type: 'job',
+      query:
+        "*[_type=='table'&&key==$table][0].fields{key,name,type,hidden,variant,currencyField,dateField,aggregation,size}",
+      table: '"orders"',
+    },
+  }
+  const expected =
+    "/data/query/production?query=*%5B_type%3D%3D'table'%26%26key%3D%3D%24table%5D%5B0%5D.fields%7Bkey%2Cname%2Ctype%2Chidden%2Cvariant%2CcurrencyField%2CdateField%2Caggregation%2Csize%7D&$table=%22orders%22"
+
+  const ret = generateUri({ template })(options)(action, state)
+
+  t.is(ret, expected)
+})
+
 test('should allow double and triple brackets for compability', (t) => {
   const template =
-    'http://json1.test/entries/{{payload.id}}?since={{{payload.updatedAfter}}}'
+    'http://json1.test/entries/{{{payload.id}}}?since={{payload.updatedAfter}}'
   const action = {
     type: 'GET',
     payload: {

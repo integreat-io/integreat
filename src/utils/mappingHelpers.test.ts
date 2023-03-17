@@ -47,7 +47,7 @@ test('should return mapped action when all parts are replaced', (t) => {
       data: { id: 'johnf' },
     },
     meta: {
-      options: { uri: 'http://some.api.com/1.0/users/{{payload.id}}' },
+      options: { uri: 'http://some.api.com/1.0/users/{payload.id}' },
       ident: { id: 'johnf' },
     },
   }

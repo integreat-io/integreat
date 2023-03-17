@@ -60,7 +60,7 @@ export default {
           data: ['response.data.data', { $apply: 'users-user' }],
         },
       },
-      options: { uri: '/users/{{payload.id}}' },
+      options: { uri: '/users/{payload.id}' },
     },
   ],
 }

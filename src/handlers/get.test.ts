@@ -198,7 +198,7 @@ test('should get item by id from service', async (t) => {
     },
   }
   const svc = setupService(
-    'http://api1.test/database/{{payload.type}}:{{payload.id}}'
+    'http://api1.test/database/{payload.type}:{payload.id}'
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
@@ -225,7 +225,7 @@ test('should get items by id array from service from member_s_ endpoint', async 
       targetService: 'entries',
     },
   }
-  const svc = setupService('http://api12.test/entries?id={{payload.id}}', {
+  const svc = setupService('http://api12.test/entries?id={payload.id}', {
     scope: 'members',
     id: 'membersEndpoint',
   })
@@ -257,7 +257,7 @@ test('should get items by id array from member endpoints', async (t) => {
       targetService: 'entries',
     },
   }
-  const svc = setupService('http://api6.test/entries/{{payload.id}}', {
+  const svc = setupService('http://api6.test/entries/{payload.id}', {
     scope: 'member',
   })
   const getService = (_type?: string | string[], service?: string) =>
@@ -313,7 +313,7 @@ test('should return noaction when members action has empty id array', async (t) 
       targetService: 'entries',
     },
   }
-  const svc = setupService('http://api13.test/entries?id={{payload.id}}', {
+  const svc = setupService('http://api13.test/entries?id={payload.id}', {
     scope: 'members',
     id: 'membersEndpoint',
   })
@@ -360,7 +360,7 @@ test('should get item by id from service when id is array of one', async (t) => 
       targetService: 'entries',
     },
   }
-  const svc = setupService('http://api7.test/entries/{{payload.id}}', {
+  const svc = setupService('http://api7.test/entries/{payload.id}', {
     scope: 'member',
   })
   const getService = () => svc

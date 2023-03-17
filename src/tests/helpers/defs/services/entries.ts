@@ -147,7 +147,7 @@ export default {
           },
         },
       },
-      options: { uri: '/entries/{{payload.id}}' },
+      options: { uri: '/entries/{payload.id}' },
     },
     {
       // Endpoint that returns raw response for all users
@@ -157,7 +157,7 @@ export default {
         response: { $modify: 'response', data: 'response.data.data' },
       },
       allowRawResponse: true,
-      options: { uri: '/entries/{{payload.id}}' },
+      options: { uri: '/entries/{payload.id}' },
     },
     {
       // Endpoint that returns raw response for root user only
@@ -166,7 +166,7 @@ export default {
         $direction: 'from',
         response: { $modify: 'response', data: 'response.data.data' },
       },
-      options: { uri: '/entries/{{payload.id}}' },
+      options: { uri: '/entries/{payload.id}' },
     },
     {
       match: { action: 'SET', scope: 'member' },
@@ -187,7 +187,7 @@ export default {
           },
         },
       ],
-      options: { uri: '/entries/{{payload.id}}', method: 'PUT' },
+      options: { uri: '/entries/{payload.id}', method: 'PUT' },
     },
     // {
     //   match: { action: 'SET', scope: 'new' },
@@ -230,7 +230,7 @@ export default {
         },
         { $transform: 'shouldHaveAuthor', $direction: 'to' },
       ],
-      options: { uri: '/entries/{{payload.id}}', method: 'PUT' },
+      options: { uri: '/entries/{payload.id}', method: 'PUT' },
     },
     {
       match: { action: 'GET', params: { author: true } },
@@ -241,7 +241,7 @@ export default {
           data: ['response.data.data', { $apply: 'entries-entry' }],
         },
       },
-      options: { uri: '/entries?author={{payload.author}}' },
+      options: { uri: '/entries?author={payload.author}' },
     },
   ],
 }

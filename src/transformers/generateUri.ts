@@ -48,7 +48,7 @@ function* split(template: string) {
     const part = parts[index++]
     if (part[0] === '{') {
       const path = parts[index++]
-      yield prepareReplacement(path, part.length === 2)
+      yield prepareReplacement(path, part.length === 3)
     } else if (part[0] !== '}') {
       yield part
     }

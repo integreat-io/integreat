@@ -185,7 +185,7 @@ test('should map and set with id to service', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const src = setupService(
-    'http://api11.test/database/{{payload.type}}:{{payload.id}}'
+    'http://api11.test/database/{payload.type}:{payload.id}'
   )
   const getService = () => src
 
@@ -252,7 +252,7 @@ test('should set to uri with payload params', async (t) => {
       targetService: 'entries',
     },
   }
-  const src = setupService('http://api3.test/{{payload.typefolder}}/_bulk_docs')
+  const src = setupService('http://api3.test/{payload.typefolder}/_bulk_docs')
   const getService = () => src
 
   const ret = await set(action, { ...handlerResources, getService })

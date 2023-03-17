@@ -1237,7 +1237,7 @@ test('should mutate action with payload from original action', async (t) => {
               },
               {
                 $transform: 'generateUri',
-                template: 'section-{{.}}',
+                template: 'section-{.}',
                 $iterate: true,
               },
             ],

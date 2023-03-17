@@ -126,7 +126,7 @@ test('should delete one item from service', async (t) => {
         },
         allowRawResponse: true,
         options: {
-          uri: 'http://api1.test/database/{{payload.id}}',
+          uri: 'http://api1.test/database/{payload.id}',
           method: 'DELETE',
         },
       },

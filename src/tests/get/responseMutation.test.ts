@@ -49,7 +49,7 @@ const defsWithMutation = (
       endpoints: [
         {
           mutation,
-          options: { uri: '/entries/{{payload.id}}' },
+          options: { uri: '/entries/{payload.id}' },
         },
       ],
     },

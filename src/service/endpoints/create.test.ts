@@ -663,7 +663,7 @@ test('should map request with service mutation', (t) => {
     },
     meta: {
       ...action.meta,
-      options: { uri: '/entries/{{payload.type}}:{{payload.id}}' },
+      options: { uri: '/entries/{payload.type}:{payload.id}' },
     },
   }
   const expected = {
