@@ -37,6 +37,8 @@ const schemas = [
       text: 'string',
       sections: 'string[]',
       author: 'user',
+      createdAt: 'date',
+      updatedAt: 'date',
     },
     access: 'all',
   },

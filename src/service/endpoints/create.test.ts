@@ -19,6 +19,8 @@ const schemas = {
     shape: {
       title: 'string',
       published: { $cast: 'boolean', $default: false },
+      createdAt: 'date',
+      updatedAt: 'date',
     },
     access: 'auth',
   }),
@@ -76,7 +78,6 @@ const alwaysOk = () => () => (action: unknown) =>
     : action
 
 const pipelines = {
-  ['cast_entry']: schemas.entry.mapping,
   entry: entryMapping,
   entry2: entryMapping2,
   entry3: entryMapping3,

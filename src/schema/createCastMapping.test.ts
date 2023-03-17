@@ -547,6 +547,166 @@ test('should handle casting with array of non-primitive types within an iteratio
   t.deepEqual(ret, expected)
 })
 
+test('should set createdAt and updatedAt if not set and present in schema', (t) => {
+  const schema = {
+    id: 'string',
+    title: 'string',
+    createdAt: 'date',
+    updatedAt: 'date',
+  }
+  const data = {
+    id: 'ent1',
+    title: 'Entry 1',
+  }
+  const before = Date.now()
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    transformers,
+    pipelines,
+  })(data) as Record<string, unknown>
+
+  const after = Date.now()
+  t.true(ret.createdAt instanceof Date)
+  t.true((ret.createdAt as Date).getTime() <= after)
+  t.true(ret.updatedAt instanceof Date)
+  t.true((ret.createdAt as Date).getTime() >= before)
+  t.deepEqual(ret.createdAt, ret.updatedAt)
+})
+
+test('should set only createdAt if not set and present in schema', (t) => {
+  const schema = {
+    id: 'string',
+    title: 'string',
+    createdAt: 'date',
+  }
+  const data = {
+    id: 'ent1',
+    title: 'Entry 1',
+  }
+  const before = Date.now()
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    transformers,
+    pipelines,
+  })(data) as Record<string, unknown>
+
+  const after = Date.now()
+  t.true(ret.createdAt instanceof Date)
+  t.true((ret.createdAt as Date).getTime() >= before)
+  t.true((ret.createdAt as Date).getTime() <= after)
+  t.is(ret.updatedAt, undefined)
+})
+
+test('should set only updatedAt if not set and present in schema', (t) => {
+  const schema = {
+    id: 'string',
+    title: 'string',
+    updatedAt: 'date',
+  }
+  const data = {
+    id: 'ent1',
+    title: 'Entry 1',
+  }
+  const before = Date.now()
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    transformers,
+    pipelines,
+  })(data) as Record<string, unknown>
+
+  const after = Date.now()
+  t.true(ret.updatedAt instanceof Date)
+  t.true((ret.updatedAt as Date).getTime() >= before)
+  t.true((ret.updatedAt as Date).getTime() <= after)
+  t.is(ret.createdAt, undefined)
+})
+
+test('should set updatedAt equal to createdAt', (t) => {
+  const schema = {
+    id: 'string',
+    title: 'string',
+    createdAt: 'date',
+    updatedAt: 'date',
+  }
+  const data = {
+    id: 'ent1',
+    title: 'Entry 1',
+    createdAt: new Date('2023-03-18T14:03:44Z'),
+  }
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    transformers,
+    pipelines,
+  })(data) as Record<string, unknown>
+
+  t.deepEqual(ret.updatedAt, new Date('2023-03-18T14:03:44Z'))
+  t.deepEqual(ret.createdAt, new Date('2023-03-18T14:03:44Z'))
+})
+
+test('should set createdAt equal to updatedAt', (t) => {
+  const schema = {
+    id: 'string',
+    title: 'string',
+    createdAt: 'date',
+    updatedAt: 'date',
+  }
+  const data = {
+    id: 'ent1',
+    title: 'Entry 1',
+    updatedAt: new Date('2023-03-18T17:15:18Z'),
+  }
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    transformers,
+    pipelines,
+  })(data) as Record<string, unknown>
+
+  t.deepEqual(ret.createdAt, new Date('2023-03-18T17:15:18Z'))
+  t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
+})
+
+test('should not set dates if not present in schema', (t) => {
+  const schema = {
+    id: 'string',
+    title: 'string',
+  }
+  const data = {
+    id: 'ent1',
+    title: 'Entry 1',
+  }
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    transformers,
+    pipelines,
+  })(data) as Record<string, unknown>
+
+  t.is(ret.createdAt, undefined)
+  t.is(ret.updatedAt, undefined)
+})
+
+test('should not set createdAt and updatedAt if already set', (t) => {
+  const schema = {
+    id: 'string',
+    title: 'string',
+    createdAt: 'date',
+    updatedAt: 'date',
+  }
+  const data = {
+    id: 'ent1',
+    title: 'Entry 1',
+    createdAt: new Date('2023-03-18T14:03:44Z'),
+    updatedAt: new Date('2023-03-18T17:15:18Z'),
+  }
+
+  const ret = mapTransform(createCastMapping(schema, 'entry'), {
+    transformers,
+    pipelines,
+  })(data) as Record<string, unknown>
+
+  t.deepEqual(ret.createdAt, new Date('2023-03-18T14:03:44Z'))
+  t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
+})
+
 test('should skip properties with invalid $cast', (t) => {
   const schema = {
     id: 'string',

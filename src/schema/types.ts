@@ -1,13 +1,13 @@
 import { DataFunction } from '../types.js'
 
-export interface PropertyShape {
+export interface FieldDefinition {
   $cast: string
   $default?: unknown | DataFunction
   $const?: unknown | DataFunction
 }
 
 export interface Shape {
-  [key: string]: Shape | PropertyShape | string | undefined
+  [key: string]: Shape | FieldDefinition | string | undefined
 }
 
 interface AccessDefBase {

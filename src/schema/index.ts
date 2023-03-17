@@ -1,14 +1,20 @@
 import createCastMapping from './createCastMapping.js'
 import accessForAction from './accessForAction.js'
 import type { TransformDefinition } from 'map-transform/types.js'
-import { SchemaDef, PropertyShape, Shape, Access, AccessDef } from './types.js'
-import { isSchema } from '../utils/is.js'
+import {
+  SchemaDef,
+  FieldDefinition,
+  Shape,
+  Access,
+  AccessDef,
+} from './types.js'
+import { isShape } from '../utils/is.js'
 import { nanoid } from 'nanoid'
 
-const expandField = (val: Shape | PropertyShape | string | undefined) =>
+const expandField = (val: Shape | FieldDefinition | string | undefined) =>
   typeof val === 'string'
     ? { $cast: val }
-    : isSchema(val)
+    : isShape(val)
     ? expandFields(val)
     : val
 
@@ -19,7 +25,6 @@ const expandFields = (vals: Shape): Shape =>
   )
 
 const defaultId = () => nanoid()
-const defaultDate = () => new Date()
 
 export interface Schema {
   id: string
@@ -42,31 +47,24 @@ export default function createSchema({
   plural,
   service,
   generateId = false,
-  shape,
+  shape: rawShape,
   access,
   internal = false,
 }: SchemaDef): Schema {
-  const mapping = createCastMapping(
-    {
-      ...shape,
-      id: { $cast: 'string', $default: generateId ? defaultId : null },
-      createdAt: { $cast: 'date', $default: defaultDate },
-      updatedAt: { $cast: 'date', $default: defaultDate },
-    },
-    id
-  )
+  const shape = {
+    ...expandFields(rawShape || {}),
+    id: { $cast: 'string', $default: generateId ? defaultId : null },
+    ...(rawShape?.createdAt ? { createdAt: { $cast: 'date' } } : {}),
+    ...(rawShape?.updatedAt ? { updatedAt: { $cast: 'date' } } : {}),
+  }
+  const mapping = createCastMapping(shape, id)
 
   return {
     id,
     plural: plural || `${id}s`,
     service,
     internal,
-    shape: {
-      ...expandFields(shape || {}),
-      id: { $cast: 'string' },
-      createdAt: { $cast: 'date' },
-      updatedAt: { $cast: 'date' },
-    },
+    shape,
     access,
     accessForAction: accessForAction(access),
     mapping,

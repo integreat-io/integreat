@@ -8,20 +8,20 @@ import {
   apply,
   iterate,
 } from 'map-transform'
+import {
+  isObject,
+  isShape,
+  isFieldDefinition,
+  isDataObject,
+  isNullOrUndefined,
+} from '../utils/is.js'
+import { ensureArrayOrUndefined } from '../utils/array.js'
 import type {
   TransformDefinition,
   TransformObject,
   Pipeline,
 } from 'map-transform/types.js'
-import type { Shape, PropertyShape } from './types.js'
-import {
-  isObject,
-  isSchema,
-  isPropertySchema,
-  isDataObject,
-  isNullOrUndefined,
-} from '../utils/is.js'
-import { ensureArrayOrUndefined } from '../utils/array.js'
+import type { Shape, FieldDefinition } from './types.js'
 
 const primitiveTypes = [
   'string',
@@ -32,11 +32,11 @@ const primitiveTypes = [
   'object',
 ]
 
-const typeFromProp = (prop?: string | PropertyShape) =>
-  isPropertySchema(prop) ? prop.$cast : prop
+const typeFromDef = (prop?: string | FieldDefinition) =>
+  isFieldDefinition(prop) ? prop.$cast : prop
 
-const defaultFromProp = (prop?: string | PropertyShape) => {
-  if (isPropertySchema(prop)) {
+const defaultFromProp = (prop?: string | FieldDefinition) => {
+  if (isFieldDefinition(prop)) {
     if (prop.hasOwnProperty('$const')) {
       return [{ $transform: 'fixed', value: prop.$const }]
     } else if (prop.hasOwnProperty('$default')) {
@@ -99,33 +99,36 @@ const generateFieldPipeline = (
   ].filter(Boolean),
 })
 
-const mappingFromSchema = (schema: Shape, iterate = false): TransformObject =>
-  Object.entries(schema).reduce(
-    (mapping, [field, prop]) => {
+const mutationObjectFromShape = (
+  shape: Shape,
+  iterate = false
+): TransformObject =>
+  Object.entries(shape).reduce(
+    (mutation, [field, def]) => {
       const [realField, isFieldArray] = removeArrayNotation(field)
 
-      if (isSchema(prop)) {
+      if (isShape(def)) {
         return {
-          ...mapping,
+          ...mutation,
           ...generateFieldPipeline(realField, isFieldArray, [
-            mappingFromSchema(prop, hasArrayNotation(field)),
+            mutationObjectFromShape(def, hasArrayNotation(field)),
           ]),
         }
       }
 
-      const type = typeFromProp(prop)
+      const type = typeFromDef(def)
       if (typeof type !== 'string') {
-        return mapping
+        return mutation
       }
 
       const [realType, isTypeArray] = removeArrayNotation(type)
       const isArray = isTypeArray || isFieldArray
 
       return {
-        ...mapping,
+        ...mutation,
         ...generateFieldPipeline(realField, isArray, [
           ...unarray(realType, isArray),
-          ...defaultFromProp(prop),
+          ...defaultFromProp(def),
           ...transformFromType(realType),
         ]),
       }
@@ -133,20 +136,42 @@ const mappingFromSchema = (schema: Shape, iterate = false): TransformObject =>
     iterate ? { $iterate: true } : {}
   )
 
-// TODO: This looks kind of stupid?
-const includeInCasting = (type: string) => () =>
-  type
-    ? (data: unknown) => !isNullOrUndefined(data)
-    : (data: unknown) => !isNullOrUndefined(data)
+function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
+  const nextCreatedAt = shape.createdAt // Should have
+    ? createdAt
+      ? createdAt // Already has
+      : updatedAt ?? new Date() // Use updatedAt or now
+    : undefined
+  const nextUpdatedAt = shape.updatedAt // Should have
+    ? updatedAt
+      ? updatedAt // Already has
+      : nextCreatedAt ?? new Date() // createdAt or now
+    : undefined
 
-const cleanUpCast = (type: string, isFwd: boolean) => () =>
+  return {
+    ...(nextCreatedAt ? { createdAt: nextCreatedAt } : {}),
+    ...(nextUpdatedAt ? { updatedAt: nextUpdatedAt } : {}),
+  }
+}
+
+const cleanUpCast = (type: string, shape: Shape, isFwd: boolean) => () =>
   mapAny((item: unknown) => {
     if (isDataObject(item)) {
-      const { $type, $ref, isNew, isDeleted, id, ...shape } = item
+      const {
+        $type,
+        $ref,
+        createdAt,
+        updatedAt,
+        isNew,
+        isDeleted,
+        id,
+        ...fields
+      } = item
       return {
         id,
         ...(isFwd && { $type: type }),
-        ...shape,
+        ...fields,
+        ...getDates(shape, createdAt, updatedAt),
         ...(isNew === true ? { isNew } : {}),
         ...(isDeleted === true ? { isDeleted } : {}),
       }
@@ -156,21 +181,21 @@ const cleanUpCast = (type: string, isFwd: boolean) => () =>
   })
 
 export default function createCastMapping(
-  schema: Shape,
+  shape: Shape,
   type: string
 ): TransformDefinition {
-  const filterItem = filter(includeInCasting(type))
-  const fieldsMapping = mappingFromSchema(schema, true) // true to get $iterate
+  const filterItem = filter(() => (data: unknown) => !isNullOrUndefined(data))
+  const mutationObject = mutationObjectFromShape(shape, true) // true to get $iterate
 
   return [
     fwd(filterItem),
-    rev(transform(cleanUpCast(type, false))),
+    rev(transform(cleanUpCast(type, shape, false))),
     {
-      ...fieldsMapping,
+      ...mutationObject,
       isNew: ['isNew', { $transform: 'boolean' }],
       isDeleted: ['isDeleted', { $transform: 'boolean' }],
     },
-    fwd(transform(cleanUpCast(type, true))),
+    fwd(transform(cleanUpCast(type, shape, true))),
     rev(filterItem),
   ]
 }

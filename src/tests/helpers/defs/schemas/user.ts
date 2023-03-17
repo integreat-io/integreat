@@ -10,6 +10,8 @@ export default {
     tokens: 'string[]',
     feeds: 'feed[]',
     createdBy: 'user',
+    createdAt: 'date',
+    updatedAt: 'date',
   },
   access: {
     identFromField: 'id',

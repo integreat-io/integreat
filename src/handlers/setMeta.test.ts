@@ -61,8 +61,7 @@ test.after(() => {
 
 // Tests
 
-// Will fail until we remove the createdAt and updatedAt as default fields in schemas
-test.failing('should set metadata on service', async (t) => {
+test('should set metadata on service', async (t) => {
   const scope = nock('http://api1.test')
     .put('/database/meta:store', {
       id: 'meta:store',
@@ -93,7 +92,7 @@ test.failing('should set metadata on service', async (t) => {
   t.true(scope.isDone())
 })
 
-test.failing('should set metadata on service with type', async (t) => {
+test('should set metadata on service with type', async (t) => {
   const scope = nock('http://api1.test')
     .put('/database/meta:store:product', {
       id: 'meta:store:product',
@@ -123,7 +122,7 @@ test.failing('should set metadata on service with type', async (t) => {
   t.true(scope.isDone())
 })
 
-test.failing('should set metadata on service with several types', async (t) => {
+test('should set metadata on service with several types', async (t) => {
   const scope = nock('http://api1.test')
     .put('/database/meta:store:entry|article', {
       id: 'meta:store:entry|article',
@@ -153,7 +152,7 @@ test.failing('should set metadata on service with several types', async (t) => {
   t.true(scope.isDone())
 })
 
-test.failing('should set metadata on service with metaKey', async (t) => {
+test('should set metadata on service with metaKey', async (t) => {
   const scope = nock('http://api1.test')
     .put('/database/meta:store:product:hardware', {
       id: 'meta:store:product:hardware',
@@ -209,7 +208,7 @@ test('should not set metadata on service when no meta type', async (t) => {
   t.false(scope.isDone())
 })
 
-test.failing('should set metadata on other service', async (t) => {
+test('should set metadata on other service', async (t) => {
   const scope = nock('http://api3.test')
     .put('/database/meta:entries', {
       id: 'meta:entries',

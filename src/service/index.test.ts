@@ -41,6 +41,8 @@ const schemas = {
       one: { $cast: 'integer', $default: 1 },
       two: 'integer',
       source: 'source',
+      createdAt: 'date',
+      updatedAt: 'date',
     },
     access: 'auth',
   }),

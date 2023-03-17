@@ -24,6 +24,8 @@ const schemas = {
       title: 'string',
       byline: { $cast: 'string', $default: 'Somebody' },
       source: 'source',
+      createdAt: 'date',
+      updatedAt: 'date',
     },
   }),
   account: schema({
@@ -466,7 +468,6 @@ test('should return error when specified service does not exist', async (t) => {
 })
 
 test('should get only authorized items', async (t) => {
-  const date = new Date()
   nock('http://api9.test')
     .get('/database')
     .reply(200, [
@@ -474,15 +475,11 @@ test('should get only authorized items', async (t) => {
         id: 'johnf',
         type: 'account',
         name: 'John F.',
-        createdAt: date.toISOString(),
-        updatedAt: date.toISOString(),
       },
       {
         id: 'betty',
         type: 'account',
         name: 'Betty K.',
-        createdAt: date.toISOString(),
-        updatedAt: date.toISOString(),
       },
     ])
   const action = {
@@ -501,8 +498,6 @@ test('should get only authorized items', async (t) => {
       $type: 'account',
       id: 'johnf',
       name: 'John F.',
-      createdAt: date,
-      updatedAt: date,
     },
   ]
 

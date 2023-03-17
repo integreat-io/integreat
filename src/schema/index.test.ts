@@ -90,19 +90,17 @@ test('should infer plural when not set', (t) => {
   t.is(ret.plural, 'articles')
 })
 
-test('should include base fields', (t) => {
-  const type = {
+test('should always include id in schema', (t) => {
+  const schema = {
     id: 'entry',
     service: 'entries',
     shape: {},
   }
   const expected = {
-    id: { $cast: 'string' },
-    createdAt: { $cast: 'date' },
-    updatedAt: { $cast: 'date' },
+    id: { $cast: 'string', $default: null },
   }
 
-  const ret = createSchema(type)
+  const ret = createSchema(schema)
 
   t.deepEqual(ret.shape, expected)
 })
@@ -118,7 +116,7 @@ test('should override base fields in definition', (t) => {
     },
   }
   const expected = {
-    id: { $cast: 'string' },
+    id: { $cast: 'string', $default: null },
     createdAt: { $cast: 'date' },
     updatedAt: { $cast: 'date' },
   }
@@ -140,6 +138,8 @@ test('should provide cast mutation', (t) => {
       title: { $cast: 'string', $default: 'Entry with no name' },
       text: 'string',
       age: { $cast: 'integer' },
+      createdAt: 'date',
+      updatedAt: 'date',
     },
     access: 'auth',
   }
@@ -181,6 +181,35 @@ test('should provide cast mutation', (t) => {
 
   t.deepEqual(ret, expected)
   t.deepEqual(Object.keys(ret[0]), expectedOrder)
+})
+
+test('should not include dates by default', (t) => {
+  const entrySchema = {
+    id: 'entry',
+    plural: 'entries',
+    service: 'entries',
+    shape: {
+      title: { $cast: 'string', $default: 'Entry with no name' },
+    },
+    access: 'auth',
+  }
+  const data = {
+    id: 12345,
+    text: 'The first entry',
+  }
+  const expected = {
+    id: '12345',
+    $type: 'entry',
+    title: 'Entry with no name',
+  }
+
+  const mapping = createSchema(entrySchema).mapping
+  const ret = mapTransform(mapping, { transformers })(data) as Record<
+    string,
+    unknown
+  >[]
+
+  t.deepEqual(ret, expected)
 })
 
 test('should provide cast mutation with sub schemas', (t) => {
@@ -361,7 +390,6 @@ test('should not cast null', (t) => {
 })
 
 test('should not cast undefined in array', (t) => {
-  const date = new Date('2019-01-18T03:43:52Z')
   const def = {
     id: 'entry',
     plural: 'entries',
@@ -371,14 +399,12 @@ test('should not cast undefined in array', (t) => {
     },
     access: 'auth',
   }
-  const data = [undefined, { id: 12345, createdAt: date, updatedAt: date }]
+  const data = [undefined, { id: 12345 }]
   const expected = [
     {
       $type: 'entry',
       id: '12345',
       title: 'Entry with no name',
-      createdAt: date,
-      updatedAt: date,
     },
   ]
 

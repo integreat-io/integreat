@@ -11,6 +11,8 @@ export default {
       key: 'string',
       value: 'string',
     },
+    createdAt: 'date',
+    updatedAt: 'date',
   },
   access: {
     allow: 'all',
