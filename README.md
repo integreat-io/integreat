@@ -7,9 +7,10 @@ An integration layer for node.js.
 [![Coverage Status](https://coveralls.io/repos/github/integreat-io/integreat/badge.svg?branch=master)](https://coveralls.io/github/integreat-io/integreat?branch=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a5bd9841a47ff9f74577/maintainability)](https://codeclimate.com/github/integreat-io/integreat/maintainability)
 
-**Note:** We're still changing the api rather drastically from release to
-release. We encourage trying it out and experimenting with Integreat, and we
-highly appreciate feedback, but know that anything might change.
+**Note:** We're closing in on a more stable version, but there might still be
+a few changes coming before v1.0. We encourage trying out and experimenting with
+Integreat, and we highly appreciate feedback, but know that anything might still
+change.
 
 The basic idea of Integreat is to make it easy to define a set of data services
 and expose them through a well defined interface, to abstract away the specifics
@@ -17,30 +18,39 @@ of each service, and map their data to defined schemas.
 
 This is done through:
 
-- adapters, that does all the hard work of communicating with the different
-  services
-- a definition format, for setting up each service with the right adapter and
-  parameters
-- a `dispatch()` function that sends actions to the right adapters via internal
-  action handlers
+- Transporters: Does all the hard work of communicating with the different
+  services over different protocols, http, ftp, mongodb, redis, etc., while
+  hiding the specifics.
+- Adapters: Adds another layer of normalization, e.g. by creating the same kind
+  of data structure from JSON, XML, CSV, etc.
+- Mutations and schemas: You describe how data coming from and going to a
+  service, will be transformed to and from schemas you define for your setup.
+  Working with mutation for different services to the same schemas, takes away a
+  lot of complexity, and you may switch out one service without affecting the
+  others.
+- A `dispatch()` function: Everything you do in Integreat is an "action" that
+  that describes what to do in a general form. When you dispatch the action,
+  Integreat takes care of all data mutation, authentication, caching, etc, and
+  sends the action to the right service(s).
 
-It is possible to set up Integreat to treat one service as a store/buffer for
-other services, and schedule syncs between the store and the other services.
-
-Finally, there will be different interface modules available, that will plug
-into the `dispatch()` function and offer other ways of reaching data from the
-services – such as out of the box REST or GraphQL APSs.
+Furthermore, a key idea in Integreat is that "everything is a service". Want to
+set up a queue? That's a service. Want caching? That's a service. By simply
+defining services and their specifics, you may set up a variety of
+different types of configurations with the same building blocks.
 
 ```
-            _________________
-           |    Integreat    |
-           |                 |
-           |        |-> Adapter <-> Service
-Action -> Dispatch -|        |
-           |        |-> Adapter <-> Service
-           |                 |
-           |_________________|
+              _______________________________________
+             |                                       |
+             |              Integreat                |
+             |                                       |
+             |      |-> Mutation <-> Adapter <-> Transporter <-> Service
+Action -> Dispatch -|                                |
+             |      |-> Mutation <-> Adapter <-> Transporter <-> Service
+             |                                       |
+             |_______________________________________|
 ```
+
+> Editor's note: Revise the following ...
 
 Data from the services is retrieved, normalized, and mapped by the adapter, and
 returned asynchronously back to the code that initiated the action. Actions for
@@ -55,16 +65,16 @@ only format that will be exposed to the code dispatching the actions. The
 mapping, normalizing, and serializing will happing to and from this format,
 according to the defined schemas and mapping rules.
 
-To deal with security and permissions, Integreat has a built-in concept of an
-ident. Other authentication schemes may be mapped to Integreat's ident scheme,
-to provide data security from a service to another service or to the dispatched
+To deal with security and permissions, Integreat has a concept of an ident.
+Other authentication schemes may be mapped to Integreat's ident scheme, to
+provide data security from a service to another service or to the dispatched
 action. A ground principle is that nothing that enters Integreat from an
 authenticated service, will leave Integreat unauthenticated. What this means,
 though, depends on how you define your services.
 
 ## Install
 
-Requires node v8.6.
+Requires node v18.
 
 Install from npm:
 
@@ -75,6 +85,8 @@ npm install integreat
 ## Hello world
 
 The hello world example of Integreat, would look something like this:
+
+> Editor's note: Provide an example that may be copy-pasted and run.
 
 ```javascript
 import Integreat from 'integreat'
@@ -127,27 +139,22 @@ returning the following json data:
 ## Schema definitions
 
 To do anything with Integreat, you need to define one or more schemas. They
-describe the data you expected to get out of Integreat. A type will be
-associated with a service, which is used to retrieve data for the type, unless
-another service is specified.
+describe the data you expected to get out of, or send through, Integreat. A
+schema will be associated with a service, which is used to retrieve data for
+the schema, unless another service is specified in an action payload.
 
 ```
 {
   id: <string>,
   plural: <string>,
   service: <serviceId>,
-  attributes: {
-    <attrId>: {
-      type: <string>,
-      default: <object>
-    }
-  },
-  relationships: {
-    <relId>: {
-      type: <string>,
-      default: <object>,
-      query: <query params>
-    }
+  shape: {
+    <fieldId>: <field type id>,
+    <fieldId>: {
+      $cast: <field type id>,
+      $default: <default value>
+      $const: <value that will override any other value>
+    },
   },
   auth: <auth def>
 }
@@ -155,64 +162,33 @@ another service is specified.
 
 The convention is to use singular mode for the `id`. The `plural` property is
 optional, but it's good practice to set it to the plural mode of the `id`, as
-some interfaces may use it. For instance,
-[`integreat-api-json`](https://github.com/integreat-io/integreat-api-json) uses
-it to build a RESTful endpoint structure, and will append an _s_ to `id` if
-`plural` is not set – which may be weird in some cases.
+some interfaces may use it.
 
-### Attributes
+### Fields
 
-Each attribute is defined with an id, which may contain only alphanumeric
-characters, and may not start with a digit. This id is used to reference the
-attribute.
+Each field is defined with an id, which may contain only alphanumeric
+characters, and may not start with a digit.
 
-The `type` defaults to `string`. Other options are `integer`, `float`,
-`boolean`, and `date`. Data from Integreat will be cast to corresponding
-JavaScript types.
+The `$cast` prop sets the type of the field (what it will be "cast" to). The
+available primitive types, are `string`, `integer`, `float` (or `number`),
+`boolean`, and `date`.
 
-The `default` value will be used when a data service does not provide this value.
-Default is `null`.
+A field may also have another schema as its type, in which case the id of the
+schema is set in `$cast`. An example can be an `article` schema with an `author`
+field of type `user`, referring to a schema with id `user`. When casting the
+`article`, data on the `author` prop will be cast with the `user` schema.
 
-### Relationships
+It follows from this that a schema cannot have the same id as a primitive type.
 
-Relationship is defined in the same way as attributes, but with one important
-difference: The `type` property refers to other Integreat schemas. E.g. a
-schema for an article may have a relationship called `author`, with
-`type: 'user'`, referring to the schema with id `user`. `type` is required on
-relationships.
+The `$default` value will be used when a data service does not provide this
+value. Default is `undefined`.
 
-The `default` property sets a default value for the relationship, in the same
-way as for attributes, but note that this value should be a valid id for an item
-of the type the relationship refers to.
-
-Finally, relationships have a `query` property, which is used to retrieve items
-for this relationship. In many cases, a service may not have data that maps to
-id(s) for a relationship directly, and this is the typical use case for this
-property.
-
-The `query` property is an object with key/value pairs, where the key is the id
-of a field (an attribute, a relationship, or `id`) on the schema the relationship
-refers to, and the value is the id of field on this schema.
-
-Example schema with a query definition:
-
-```
-{
-  id: 'user',
-  ...
-  relationships: {
-    articles: {type: 'article', query: {author: 'id'}}
-  }
-}
-```
-
-In this case, the `articles` relationship on the `user` schema may be fetched by
-querying for all items of type `article`, where the `author` field equals the
-`id` of the `user` item in question.
+The `$const` value override any value you provide to the field. This is a bit
+strange, and might be removed ...
 
 ### Authorization
 
-Set the `access` property to enforce permission checking on the schema. This
+Set the `access` property on a schema to enforce permission checking. This
 applies to any service that provides this schema.
 
 The simplest access type `auth`, which means that anyone can do anything with
@@ -223,8 +199,7 @@ Example of a schema with an access rule:
 ```javascript
 {
   id: 'entry',
-  attributes: {...},
-  relationships: {...},
+  shape: {...},
   access: 'auth'
 }
 ```
@@ -235,36 +210,35 @@ Integreat's principle of not letting authorized data out of Integreat without
 an authorization rule. In a way, you can say that `all` is an authorization
 rule, but it allows anybody to access the data, even the unauthenticated.
 
-The last of the simpler access types, is `none`, which will simly give no one
-access, no matter who they are.
+On the other end of the spectrum, `none` will allow no one to access data cast
+to this schema, no matter who they are.
 
 For a more fine-grained rules, set `access` to an access definition.
 
 ## Service definitions
 
 Service definitions are at the core of Integreat, as they define the services to
-fetch data from, how to map this data to a set of items to make available
-through Integreat's data api, and how to send data back to the service.
+fetch data from, how to mutate this data to schemas, and how to send data back
+to the service.
 
-A service definition object defines the adapter, any authentication method, the
-endpoints for fetching from and sending to the service, and mappings to the
-supported schemas (attributes and relationships):
+A service definition object includes the transporter id, adapter ids, any
+authentication method, the endpoints for fetching from and sending to the
+service, mutations that data to all endpoints will pass through, and options
+for transporters, adapters, etc.
 
 ```
 {
   id: <string>,
-  adapter: <string>,
+  transporter: <string>,
+  adatpers: [<string>, <string>, ...],
   auth: <auth id>,
   meta: <type id>,
   options: {...},
+  mutation: <mutation pipeline>,
   endpoints: [
     <endpoint definition>,
     ...
-  ],
-  mappings: {
-    <schema id>: <mapping definition | mapping id>,
-    ...
-  }
+  ]
 }
 ```
 
@@ -272,14 +246,14 @@ Service definitions are passed to Integreat on creation through the
 `Integreat.create()` function. There is no way to change services after
 creation.
 
-See [mapping definition](#mapping-definition) for a description of the
-relationship between services and mappings, and the `mappings` property.
+See [mutations](#mutations) for a description of how to define the mutation
+pipeline for a service.
 
 The `auth` property should normally be set to the id of an
-[auth definition](#service-authentication) if the service requires authentication.
-In cases where the service is authenticated by other means, e.g. by including
-username and password in the uri, set the `auth` property to `true` to signal
-that this is an authenticated service.
+[auth definition](#service-authentication), if the service requires
+authentication. In cases where the service is authenticated by other means, e.g.
+by including username and password in the uri, set the `auth` property to `true`
+to signal that this is an authenticated service.
 
 ### Endpoint definition
 
@@ -293,11 +267,7 @@ that this is an authenticated service.
     params: {...},
     filters: []
   },
-  validate: [],
   mutation: <mutation pipeline>,
-  mappings: {
-    <schema id>: <mapping definition | mapping id>,
-  },
   options: {...}
 }
 ```
@@ -308,15 +278,21 @@ An endpoint may specify none or more of the following match properties:
 
 - `id`: An action payload may include an `endpoint` property, that will be
   matched against this `id`. For actions with an endpoint id, no other matching
-  properties will be considered
+  properties will be considered.
 - `type`: When set, the endpoint will only be used for actions with the
-  specified schema type (not to be confused with the action type)
-- `scope`: May be `member` or `collection`, to specify that the endpoint should
-  be used to request one item (member) or an entire collection of items.
-  Setting this to `member` will require an `id` property in the action payload.
-  Not setting this property signals an endpoint that will work for both
+  specified schema type (the schema's id).
+- `scope`: May be `member`, `members`, or `collection`, to specify that the
+  endpoint should be used to request one item (member) by id, several items by
+  ids, or an entire collection of items. Setting this to `member` or `members`
+  will require an `id` property in the action payload, and this should be an
+  array of ids for `members`. Not setting this property signals an endpoint
+  that will work for all scopes.
+- `params`: TODO
+- `filters`: TODO
 - `action`: May be set to the type string of an action. The endpoint will match
-  only actions of this type
+  only actions of this type.
+
+> Editor's note: Double check that the order here is correct.
 
 Endpoints are matched to an action by picking the matching endpoint with highest
 level of specificity. E.g., for a GET action asking for resources of type
@@ -328,10 +304,10 @@ endpoints matches – e.g. one with a scope and the other with an action, the on
 matching with scope is picked. When two endpoints are equally specified with the
 same match properties specified, the first one is used.
 
-All match properties except `id` may be specified with an array of matching
-values, so that an endpoint may match more cases. However, when two endpoints
-match on a property specified as an array on one and as a single value on the
-other, the one with the single value is picked.
+All but `id` may be specified with an array of matching values, so that an
+endpoint may match more cases. However, when two endpoints match on a property
+specified as an array on one and as a single value on the other, the one with
+the single value is picked.
 
 When no match properties are set, the endpoint will match any actions, as long
 as no other endpoints match.
@@ -350,7 +326,7 @@ Example service definition with endpoint parameters:
 ```
 {
   id: 'entries',
-  adapter: 'json',
+  adapter: 'http',
   endpoints: [
     {
       params: {
@@ -374,35 +350,30 @@ unless to define them as required:
   included for `scope: 'collection'`, and optional when scope is not set.
 - `type`: The item type from the action payload or from the data property (if it
   is an object and not an array).
-- `typePlural`: The plural form of the type, gotten from the corresponding
-  schema's `plural` prop – or by adding an 's' to the type is `plural` is not
-  set.
+
+> Editor's note: Make sure what we say here about `id` is correct.
 
 #### Options property
 
-Unlike the match properties, the `options` property is required. This should be
-an object with properties to be passed to the adapter as part of a request. The
-props are completely adapter specific, so that each adapter can dictate what
-kind of information it will need, but there are a set of recommended props to
-use when they are relevant:
+Unlike the match properties, the `options` property is required (TODO: is it?).
+This should be an object with properties to be passed to the transporter and
+adapters as part of a request. The props are completely transporter/adapter
+specific, so that each one can dictate what kind of information it will need,
+but there are a set of recommended props to use when they are relevant:
 
-- `uri`: A uri template, where e.g. `{id}` will be placed with the value of the
-  parameter `id` from the action payload. For a full specification of the template
-  format, see
-  [Integreat URI Template](https://github.com/integreat-io/great-uri-template).
-
-- `path`: A [path](#paths) into the data, specific for this endpoint. It will
-  usually point to an array, in which the items can be found, but as mappings may
-  have their own `path`, the endpoint path may point to an object from where the
-  different mapping paths point to different arrays.
-
+- `uri`: A uri template, where e.g. `{payloadid}` will be replaced with the
+  value of the parameter `id` from the action payload.
+- `queryParams`: TODO
 - `method`: An adapter specific keyword, to tell the adapter which method of
   transportation to use. For adapters based on http, the options will typically
   be `PUT`, `POST`, etc. The method specified on the endpoint will override any
   method provided elsewhere. As an example, the `SET` action will use the `PUT`
   method as default, but only if no method is specified on the endpoint.
 
-## Mapping definition
+## Mutations
+
+> Editor's note: Everything here is wrong. How much should we describe here
+> before directing to map-transform?
 
 ```
 {
@@ -475,6 +446,8 @@ types, by referring to the mapping id from several service definitions.
 
 ### Paths
 
+> Editor's note: This should also be rewritten in light of map-transform.
+
 Mappings, attributes, and relationships all have an optional `path` property,
 for specifying what part of the data from the service to return in each case.
 (Endpoints may also have a `path` property, but not all adapters support this.)
@@ -531,52 +504,16 @@ You may optionally supply alternative paths by providing an array of paths. If
 the first one does not match any properties in the data, the next path is tried,
 and so on.
 
-### Qualifiers
-
-When a service returns data for several schemas, Integreat needs a way to
-recognize which schema to use for each item in the data. For some services,
-the different schemas may be find on different paths in the data, so
-specifying different paths on each mapping is sufficient. But when all items
-are returned in one array, for instance, you need to specify qualifiers for
-the mappings.
-
-A qualifier is simply a path with an expression that will evaluate to true or
-false. If a mapping has qualifiers, it will only be applied to data that
-satisfies all its qualifiers. Qualifiers are applied to the data at the
-mapping's path, before it is mapped and transformed.
-
-An example of two mappings with qualifiers:
-
-```
-...
-mappings: {
-  entry: {
-    attributes: {...},
-    qualifier: 'type="entry"'
-  },
-  admin: {
-    attributes: {...},
-    qualifier: [
-      'type="account"',
-      'permissions.roles[]="admin"'
-    ]
-  }
-}
-```
-
-When a qualifier points to an array, the qualifier returns true when at least
-one of the items in the array satisfies the condition.
-
 ### Configuring metadata
 
 If a service may send and receive metadata, set the `meta` property to the id of
-a schema defining the metadata as attributes.
+a schema defining the metadata as its shape.
 
 ```
 {
   id: 'meta',
   service: <id of service handling the metadata>,
-  attributes: {
+  shape: {
     <metadataKey>: {
       type: <string>
     }
@@ -585,36 +522,20 @@ a schema defining the metadata as attributes.
 ```
 
 The `service` property on the type defines the service that holds metadata for
-this type. In some cases the service you're defining metadata for and the service
-handling these metadata will be the same, but it is possible to let a service
-handle other services' metadata. If you're getting data from a read-only service,
-but need to, for instance, set the `lastSyncedAt` metadata for this store,
-you'll set up a service as a store for this (the store may also hold other types
-of data). Then the read-only store will be defined with `meta='meta'`, and the
-`meta` schema will have `service='store'`.
+this type. In some cases the service you're defining metadata for and the
+service handling these metadata, will be the same, but it is possible to let a
+service handle other services' metadata. If you're getting data from a read-only
+service, but need to, for instance, set the `lastSyncedAt` metadata for this
+store, you'll set up a service as a store for this (the store may also hold
+other types of data). Then the read-only store will be defined with
+`meta='meta'`, and the `meta` schema will have `service='store'`.
 
-It will usually make no sense to specify default values for metadata.
+> Editor's note: This is not easy to understand, and the following is wrong. :S
 
 As with other data received and sent to services, make sure to include endpoints
 for the service that will hold the metadata, matching the `GET_META` and
 `SET_META` actions, or the schema defining the metadata. The way you set up
 these endpoints will depend on your service.
-
-Also define a [mapping](#mapping-definition) between this schema and the
-service. You may leave out `attributes` and `relationships` definitions and the
-service will receive the metadata in Integreat's standard format:
-
-```
-{
-  id: <serviceId>,
-  type: <meta type>,
-  createdAt: <date>,
-  updatedAt: <date>,
-  attributes: {
-    <key>: <value>
-  }
-}
-```
 
 Finally, if a service will not have metadata, simply set `meta` to null or skip
 it all together.
@@ -638,7 +559,7 @@ Example ident:
 
 The actual value of the `id` is irrelevant to Integreat, as long as it is a
 string with A-Z, a-z, 0-9, \_, and -, and it's unique within one Integreat
-configuration. This means that mapped value from services may be used as ident
+configuration. This means that mapped values from services may be used as ident
 ids, but be careful to set this up right.
 
 `tokens` are other values that may identify this ident. E.g., an api that uses
@@ -652,11 +573,12 @@ setting the auth rules for a service, roles may be used to require that
 the request to get data of this schema, an ident with the role `admin` must
 be provided.
 
-Idents may be supplied with an action on the `meta.ident` property. It's up to
-the code dispatching an action to get hold of the properties of an ident in a
-secure way. Once Integreat receives an ident, it will assume this is accurate
-information and uphold its part of the security agreement and only return data
-and execute actions that the ident have permissions for.
+Actions are authenticated by setting an ident on the `meta.ident` property. It's
+up to the code dispatching an action to get hold of the properties of an ident
+in a secure way. Once Integreat receives an ident through a dispatch, it will
+assume this is accurate information and uphold its part of the security
+agreement and only return data and execute actions that the ident have
+permissions for.
 
 ### Access rules
 
