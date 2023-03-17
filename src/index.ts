@@ -33,7 +33,7 @@ export { default as middleware } from './middleware/index.js'
 export { createAction } from './utils/action.js'
 
 export default {
-  version: '0.8.0-beta.34',
+  version: '0.8.0-beta.35',
   create,
   mergeDefinitions,
   mergeResources,
