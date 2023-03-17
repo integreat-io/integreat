@@ -1,7 +1,10 @@
-import debugLib = require('debug')
+import { nanoid } from 'nanoid'
 import pProgress from 'p-progress'
+import debugLib = require('debug')
 import setupGetService from './utils/getService.js'
-import {
+import { setErrorOnAction, setResponseOnAction } from './utils/action.js'
+import { isObject } from './utils/is.js'
+import type {
   Dispatch,
   InternalDispatch,
   HandlerDispatch,
@@ -12,12 +15,9 @@ import {
   GetService,
   HandlerOptions,
 } from './types.js'
-import { Service } from './service/types.js'
-import { Schema } from './schema/index.js'
-import { createErrorOnAction } from './utils/createError.js'
-import { Endpoint } from './service/endpoints/types.js'
-import { isObject } from './utils/is.js'
-import { nanoid } from 'nanoid'
+import type { Service } from './service/types.js'
+import type { Schema } from './schema/index.js'
+import type { Endpoint } from './service/endpoints/types.js'
 
 const debug = debugLib('great')
 
@@ -65,7 +65,7 @@ function mapIncomingAction(
     const service = getService(undefined, sourceService)
     if (!service) {
       return {
-        action: createErrorOnAction(
+        action: setErrorOnAction(
           action,
           `Source service '${sourceService}' not found`,
           'badrequest'
@@ -75,7 +75,7 @@ function mapIncomingAction(
     const endpoint = service.endpointFromAction(action, true)
     if (!endpoint) {
       return {
-        action: createErrorOnAction(
+        action: setErrorOnAction(
           action,
           `No matching endpoint for incoming mapping on service '${sourceService}'`,
           'badrequest'
@@ -171,7 +171,7 @@ async function handleAction(
   // Find handler ...
   const handler = getActionHandlerFromType(handlerType, handlers)
   if (!handler) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `No handler for ${handlerType} action`,
       'badrequest'
@@ -209,7 +209,7 @@ export default function createDispatch({
       // Refuse attempt to dispatch a QUEUE action, as it would never stop being
       // sent to queue.
       if (action.type === 'QUEUE') {
-        return createErrorOnAction(action, 'No handler for QUEUE action')
+        return setErrorOnAction(action, 'No handler for QUEUE action')
       }
 
       const nextAction = prepareAction(action)
@@ -236,11 +236,11 @@ export default function createDispatch({
           // handler
           const next = async (action: Action) =>
             handleAction(action.type, action, resources, handlers)
-          const response = await middlewareFn(next)(nextAction)
-          return { ...nextAction, response: response.response }
+          const { response } = await middlewareFn(next)(nextAction)
+          return setResponseOnAction(nextAction, response)
         }
       } catch (err) {
-        return createErrorOnAction(action, `Error thrown in dispatch: ${err}`)
+        return setErrorOnAction(action, `Error thrown in dispatch: ${err}`)
       }
     })
 

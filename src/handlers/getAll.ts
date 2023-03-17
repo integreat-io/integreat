@@ -1,5 +1,6 @@
-import { Action, Payload, Meta, ActionHandlerResources } from '../types.js'
+import { setErrorOnAction, setResponseOnAction } from '../utils/action.js'
 import { isObject, isTypedData } from '../utils/is.js'
+import type { Action, Payload, Meta, ActionHandlerResources } from '../types.js'
 
 const extractLastId = (data: unknown, field = 'id') =>
   Array.isArray(data) && isObject(data[data.length - 1])
@@ -58,14 +59,19 @@ const createNextPaging = (payload: Payload, paging?: Payload) =>
  * Get all available pages of data, by calling `GET` with the given payload
  * untill the paging is exhausted.
  */
-export default async function get(
+export default async function getAll(
   action: Action,
   { dispatch }: ActionHandlerResources
 ): Promise<Action> {
   const { pageSize, noLoopCheck = false } = action.payload
 
   if (typeof pageSize !== 'number') {
-    return dispatch({ type: 'GET', payload: action.payload, meta: action.meta })
+    const { response } = await dispatch({
+      type: 'GET',
+      payload: action.payload,
+      meta: action.meta,
+    })
+    return setResponseOnAction(action, response)
   }
 
   const data: unknown[] = []
@@ -74,32 +80,28 @@ export default async function get(
   let lastSize = -1
   let prevFirstId: string | null | undefined = null
   do {
-    const response: Action = await dispatch(
+    const { response }: Action = await dispatch(
       createAction(page++, action.payload, paging, data, cleanMeta(action.meta))
     )
-    if (response.response?.status !== 'ok') {
+    if (response?.status !== 'ok') {
       // Stop and return errors right away
-      return response
+      return setResponseOnAction(action, response)
     }
 
     // Extract paging for next action
     const prevPaging = paging
-    paging = createNextPaging(action.payload, response.response?.paging?.next)
+    paging = createNextPaging(action.payload, response?.paging?.next)
 
     // Extract data
-    const responseData = response.response?.data
+    const responseData = response?.data
     if (Array.isArray(responseData)) {
       if (!noLoopCheck) {
         const firstId = getFirstId(responseData)
         if (typeof firstId === 'string' && firstId === prevFirstId) {
-          return {
-            ...action,
-            response: {
-              ...action.response,
-              status: 'error',
-              error: 'GET_ALL detected a possible infinite loop',
-            },
-          }
+          return setErrorOnAction(
+            action,
+            'GET_ALL detected a possible infinite loop'
+          )
         }
         prevFirstId = firstId
       }
@@ -114,5 +116,5 @@ export default async function get(
     }
   } while (lastSize === pageSize)
 
-  return { ...action, response: { ...action.response, status: 'ok', data } }
+  return setResponseOnAction(action, { status: 'ok', data })
 }

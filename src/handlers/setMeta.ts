@@ -1,8 +1,8 @@
 import debugLib = require('debug')
-import { createErrorOnAction } from '../utils/createError.js'
-import { Action, ActionHandlerResources } from '../types.js'
+import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
 import setHandler from './set.js'
 import { generateMetaId } from './getMeta.js'
+import type { Action, ActionHandlerResources } from '../types.js'
 
 const debug = debugLib('great')
 
@@ -29,7 +29,7 @@ export default async function setMeta(
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`SET_META: Service '${serviceId}' doesn't exist`)
-    return createErrorOnAction(action, `Service '${serviceId}' doesn't exist`)
+    return setErrorOnAction(action, `Service '${serviceId}' doesn't exist`)
   }
 
   const metaType = service.meta
@@ -40,7 +40,7 @@ export default async function setMeta(
     debug(
       `SET_META: Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`
     )
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'noaction'
@@ -73,10 +73,7 @@ export default async function setMeta(
     },
     meta: { ident },
   }
-  const response = await setHandler(setAction, resources)
+  const { response } = await setHandler(setAction, resources)
 
-  return {
-    ...action,
-    response: response.response,
-  }
+  return setResponseOnAction(action, response)
 }

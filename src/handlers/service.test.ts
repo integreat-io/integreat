@@ -2,7 +2,7 @@ import test from 'ava'
 import sinon = require('sinon')
 import createService from '../service/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
-import { Transporter } from '../types.js'
+import type { Transporter } from '../types.js'
 
 import service from './service.js'
 

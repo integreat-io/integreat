@@ -30,7 +30,7 @@ export { default as authenticators } from './authenticators/index.js'
 export { default as mutations } from './mutations/index.js'
 export { default as transformers } from './transformers/index.js'
 export { default as middleware } from './middleware/index.js'
-export { default as createAction } from './utils/createAction.js'
+export { createAction } from './utils/action.js'
 
 export default {
   version: '0.8.0-beta.33',

@@ -92,17 +92,20 @@ test('should queue DELETE for expired entries', async (t) => {
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
     meta: { ident, id: '11004', cid: '11005' },
   }
-  const expected = {
+  const expectedDeleteAction = {
     type: 'DELETE',
     payload: { data, targetService: 'store' },
     meta: { ident, cid: '11005' },
   }
+  const expectedResponseAction = {
+    ...action,
+    response: { status: 'queued' },
+  }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
-  t.truthy(ret)
-  t.is(ret.response?.status, 'queued', ret.response?.error)
-  t.true(dispatch.calledWithMatch(expected))
+  t.deepEqual(ret, expectedResponseAction)
+  t.true(dispatch.calledWithMatch(expectedDeleteAction))
 })
 
 test('should queue DELETE with id and type only', async (t) => {

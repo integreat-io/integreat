@@ -9,6 +9,7 @@ import createService from '../service/index.js'
 import createSchema from '../schema/index.js'
 import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
+import createMapOptions from '../utils/createMapOptions.js'
 
 import deleteFn from './delete.js'
 
@@ -30,23 +31,20 @@ const schemas = {
   }),
 }
 
-const mapOptions = {
-  pipelines: {
-    ...jsonPipelines,
-    entry: [
-      { $iterate: true, id: 'id', title: 'header' },
-      { $apply: 'cast_entry' },
-    ],
-    account: [
-      { $iterate: true, id: 'id', name: 'name' },
-      { $apply: 'cast_account' },
-    ],
-    ['cast_entry']: schemas.entry.mapping,
-    ['cast_account']: schemas.account.mapping,
-  },
-  transformers: { ...transformers, ...jsonFunctions },
+const pipelines = {
+  ...jsonPipelines,
+  entry: [
+    { $iterate: true, id: 'id', title: 'header' },
+    { $apply: 'cast_entry' },
+  ],
+  account: [
+    { $iterate: true, id: 'id', name: 'name' },
+    { $apply: 'cast_account' },
+  ],
 }
 
+const allTransformers = { ...transformers, ...jsonFunctions }
+const mapOptions = createMapOptions(schemas, pipelines, allTransformers)
 const setupService = createService({ schemas, mapOptions })
 
 test.after.always(() => {
@@ -73,10 +71,12 @@ test('should delete items from service', async (t) => {
     endpoints: [
       {
         match: { action: 'DELETE' },
-        mutation: {
-          $direction: 'to',
-          'payload.data': ['payload.data.docs[]', { $apply: 'entry' }],
-        },
+        mutation: [
+          {
+            'payload.data': ['payload.data.docs[]', { $apply: 'entry' }],
+            'response.data': { $value: null }, // Just remove response data now, so we don't have to expect it all
+          },
+        ],
         options: {
           uri: 'http://api1.test/database/bulk_delete',
           method: 'POST',
@@ -96,10 +96,14 @@ test('should delete items from service', async (t) => {
       targetService: 'entries',
     },
   }
+  const expected = {
+    ...action,
+    response: { status: 'ok', data: null },
+  }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret, expected)
   t.true(scope.isDone())
 })
 
@@ -340,19 +344,6 @@ test('should return error when specified service does not exist', async (t) => {
   t.truthy(ret)
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, "Service with id 'entries' does not exist")
-})
-
-test('should return error if no getService', async (t) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getService = undefined as any
-  const action = {
-    type: 'DELETE',
-    payload: { id: 'ent1', type: 'entry' },
-  }
-
-  const ret = await deleteFn(action, { ...handlerResources, getService })
-
-  t.is(ret.response?.status, 'error')
 })
 
 test('should return badrequest when no endpoint matches', async (t) => {

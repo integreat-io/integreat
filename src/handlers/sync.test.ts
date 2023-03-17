@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon = require('sinon')
-import { createErrorOnAction } from '../utils/createError.js'
+import { setErrorOnAction } from '../utils/action.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import { Action, HandlerDispatch, TypedData } from '../types.js'
 
@@ -90,23 +90,27 @@ test('should get from source service and set on target service', async (t) => {
       SET: setResponseOnAction('ok'),
     })
   )
-  const expected1 = {
+  const expectedAction0 = {
     type: 'GET',
     payload: { type: 'entry', targetService: 'entries' },
     meta: { ident, project: 'project1', cid: '12345' },
   }
-  const expected2 = {
+  const expectedAction1 = {
     type: 'SET',
     payload: { type: 'entry', data, targetService: 'store' },
     meta: { ident, project: 'project1', cid: '12345', queue: true },
   }
+  const expected = {
+    ...action,
+    response: { status: 'ok' },
+  }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0], expected2)
+  t.deepEqual(dispatch.args[0][0], expectedAction0)
+  t.deepEqual(dispatch.args[1][0], expectedAction1)
 })
 
 test('should not SET with no data', async (t) => {
@@ -1609,7 +1613,7 @@ test('should return error when get action fails', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: (action: Action) => createErrorOnAction(action, 'Fetching failed'),
+      GET: (action: Action) => setErrorOnAction(action, 'Fetching failed'),
       SET: setResponseOnAction('ok'),
     })
   )
@@ -1630,8 +1634,7 @@ test('should return error when set action fails', async (t) => {
   const dispatch = sinon.spy(
     setupDispatch({
       GET: setResponseOnAction('ok', { data }),
-      SET: (action: Action) =>
-        createErrorOnAction(action, 'Service is sleeping'),
+      SET: (action: Action) => setErrorOnAction(action, 'Service is sleeping'),
     })
   )
 

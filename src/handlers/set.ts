@@ -1,9 +1,9 @@
 import debugLib = require('debug')
 import pPipe from 'p-pipe'
-import { createErrorOnAction } from '../utils/createError.js'
+import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'
 import { isTypedData } from '../utils/is.js'
-import { Action, ActionHandlerResources } from '../types.js'
+import type { Action, ActionHandlerResources } from '../types.js'
 
 const debug = debugLib('great')
 
@@ -49,17 +49,18 @@ export default async function set(
   const nextAction = setIdAndTypeOnAction(action, id, type)
   const endpoint = service.endpointFromAction(nextAction)
   if (!endpoint) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `No endpoint matching ${action.type} request to service '${serviceId}'.`,
       'badrequest'
     )
   }
 
-  return pPipe(
+  const { response } = await pPipe(
     service.authorizeAction,
     (action: Action) => service.mapRequest(action, endpoint),
     service.send,
     (action: Action) => service.mapResponse(action, endpoint)
   )(nextAction)
+  return setResponseOnAction(action, response)
 }

@@ -1,4 +1,5 @@
-import { Action, ActionHandlerResources } from '../types.js'
+import { setResponseOnAction } from '../utils/action.js'
+import type { Action, ActionHandlerResources } from '../types.js'
 
 const authorizeAction = ({ meta, ...action }: Action) => ({
   ...action,
@@ -25,13 +26,10 @@ export default async function queue(
   const { response } = await service.send(nextAction) // TODO: Map data back and forth?
   const status = response?.status === 'ok' ? 'queued' : response?.status
 
-  return {
-    ...action,
-    response: {
-      ...action.response,
-      ...response,
-      status: status || 'badresponse',
-      ...(status ? {} : { error: 'Queue did not respond correctly' }),
-    },
-  }
+  return setResponseOnAction(action, {
+    ...action.response,
+    ...response,
+    status: status || 'badresponse',
+    ...(status ? {} : { error: 'Queue did not respond correctly' }),
+  })
 }

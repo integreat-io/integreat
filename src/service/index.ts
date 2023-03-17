@@ -2,26 +2,10 @@ import debugLib = require('debug')
 import pProgress, { ProgressNotifier } from 'p-progress'
 import createEndpointMappers from './endpoints/index.js'
 import {
-  createErrorOnAction,
+  setErrorOnAction,
   createErrorResponse,
-} from '../utils/createError.js'
-import {
-  Action,
-  Response,
-  Ident,
-  Dispatch,
-  Middleware,
-  Transporter,
-} from '../types.js'
-import {
-  Service,
-  ServiceDef,
-  MapOptions,
-  AuthObject,
-  AuthProp,
-  Authenticator,
-  AuthDef,
-} from './types.js'
+  setResponseOnAction,
+} from '../utils/action.js'
 import Connection from './Connection.js'
 import { Schema } from '../schema/index.js'
 import Auth from './Auth.js'
@@ -32,6 +16,23 @@ import * as authorizeData from './authorize/data.js'
 import authorizeAction from './authorize/action.js'
 import { compose } from '../dispatch.js'
 import { setUpAuth } from '../create.js'
+import type {
+  Action,
+  Response,
+  Ident,
+  Dispatch,
+  Middleware,
+  Transporter,
+} from '../types.js'
+import type {
+  Service,
+  ServiceDef,
+  MapOptions,
+  AuthObject,
+  AuthProp,
+  Authenticator,
+  AuthDef,
+} from './types.js'
 
 const debug = debugLib('great')
 
@@ -71,7 +72,7 @@ async function authorizeIncoming(action: Action, auth?: Auth | boolean) {
         return { ...action, meta: { ...action.meta, ident } }
       }
     } catch (err) {
-      return createErrorOnAction(action, err, 'autherror')
+      return setErrorOnAction(action, err, 'autherror')
     }
   }
 
@@ -97,11 +98,11 @@ const dispatchIncomingWithMiddleware =
   (action: Action | null) =>
     pProgress<Response>(async (setProgress) => {
       if (action) {
-        const response = await middleware(
+        const { response } = await middleware(
           dispatchIncoming(dispatch, setProgress)
         )(await authorizeIncoming(action, auth))
 
-        return response.response || { status: 'error' }
+        return response || { status: 'error' }
       } else {
         return { status: 'noaction', error: 'No action was dispatched' }
       }
@@ -119,15 +120,9 @@ const sendToTransporter = (
     try {
       if (await connection.connect(action.meta?.auth)) {
         const response = await transporter.send(action, connection.object)
-        return {
-          ...action,
-          response: {
-            ...action.response,
-            ...response,
-          },
-        }
+        return setResponseOnAction(action, response)
       } else {
-        return createErrorOnAction(
+        return setErrorOnAction(
           action,
           `Could not connect to service '${serviceId}'. [${
             connection.status
@@ -135,7 +130,7 @@ const sendToTransporter = (
         )
       }
     } catch (error) {
-      return createErrorOnAction(
+      return setErrorOnAction(
         action,
         `Error retrieving from service '${serviceId}': ${
           (error as Error).message
@@ -302,20 +297,20 @@ export default ({
         }
 
         if (!isTransporter(transporter)) {
-          return createErrorOnAction(
+          return setErrorOnAction(
             action,
             `Service '${serviceId}' has no transporter`
           )
         }
         if (!connection) {
-          return createErrorOnAction(
+          return setErrorOnAction(
             action,
             `Service '${serviceId}' has no connection`
           )
         }
 
         if (!action.meta?.authorized) {
-          return createErrorOnAction(action, 'Not authorized')
+          return setErrorOnAction(action, 'Not authorized')
         }
 
         // When an authenticator is set: Authenticate and apply result to action

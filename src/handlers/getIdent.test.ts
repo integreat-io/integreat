@@ -33,18 +33,23 @@ test('should complete ident with token', async (t) => {
   const scope = nock('http://some.api')
     .get('/users')
     .query({ tokens: 'twitter|23456' })
-    .reply(200, { data: { ...johnfData } })
+    .reply(200, { data: johnfData })
   const action = {
     type: 'GET_IDENT',
     payload: {},
     meta: { ident: { withToken: 'twitter|23456' } },
   }
+  const expectedMeta = {
+    ...action.meta,
+    ident: johnfIdent,
+  }
 
   const ret = await getIdent(action, handlerResources)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.meta?.ident, johnfIdent)
+  t.deepEqual(ret.meta, expectedMeta)
   t.is((ret.response?.data as TypedData).id, 'johnf')
+  t.deepEqual(ret.type, 'GET_IDENT')
   t.true(scope.isDone())
 })
 

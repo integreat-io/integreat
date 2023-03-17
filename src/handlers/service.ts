@@ -1,5 +1,6 @@
+import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'
-import { Action, ActionHandlerResources } from '../types.js'
+import type { Action, ActionHandlerResources } from '../types.js'
 
 const authorizeAction = ({ meta, ...action }: Action) => ({
   ...action,
@@ -24,17 +25,11 @@ export default async function service(
   const nextAction = authorizeAction(action) // TODO: Really authorize this?
   const { response } = await service.send(nextAction)
 
-  return {
-    ...action,
-    response: {
-      ...action.response,
-      ...response,
-      status: response?.status || 'badresponse',
-      ...(response?.status
-        ? {}
-        : {
-            error: `Service '${serviceId}' did not respond correctly to SERVICE action`,
-          }),
-    },
-  }
+  return response?.status
+    ? setResponseOnAction(action, response)
+    : setErrorOnAction(
+        action,
+        `Service '${serviceId}' did not respond correctly to SERVICE action`,
+        'badresponse'
+      )
 }

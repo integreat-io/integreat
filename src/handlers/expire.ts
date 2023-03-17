@@ -1,6 +1,6 @@
-import { createErrorOnAction } from '../utils/createError.js'
+import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
 import { isTypedData } from '../utils/is.js'
-import {
+import type {
   Action,
   HandlerDispatch,
   Ident,
@@ -50,7 +50,7 @@ const deleteExpired = async (
     meta: { ident, queue: true, cid },
   }
 
-  return dispatch(deleteAction)
+  return await dispatch(deleteAction)
 }
 
 /**
@@ -77,19 +77,19 @@ export default async function expire(
   const msFromNow = (action.payload.msFromNow as number) || 0
 
   if (!serviceId) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `Can't delete expired without a specified service`
     )
   }
   if (!endpointId) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `Can't delete expired from service '${serviceId}' without an endpoint`
     )
   }
   if (!type) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `Can't delete expired from service '${serviceId}' without one or more specified types`
     )
@@ -106,7 +106,7 @@ export default async function expire(
   )
 
   if (expiredAction.response?.status !== 'ok') {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `Could not get items from service '${serviceId}'. Reason: ${expiredAction.response?.status} ${expiredAction.response?.error}`,
       'error'
@@ -114,14 +114,14 @@ export default async function expire(
   }
   const data = expiredAction.response?.data
   if (!isTypedDataArray(data)) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `No items to expire from service '${serviceId}'`,
       'noaction'
     )
   }
 
-  const responseAction = await deleteExpired(
+  const { response } = await deleteExpired(
     data,
     serviceId,
     dispatch,
@@ -129,12 +129,5 @@ export default async function expire(
     ident
   )
 
-  return {
-    ...action,
-    response: {
-      ...action.response,
-      ...responseAction.response,
-      status: responseAction.response?.status,
-    },
-  }
+  return setResponseOnAction(action, response)
 }

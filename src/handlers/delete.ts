@@ -1,8 +1,12 @@
 import debugLib = require('debug')
 import pPipe from 'p-pipe'
-import { createErrorOnAction } from '../utils/createError.js'
+import {
+  setErrorOnAction,
+  setResponseOnAction,
+  setDataOnActionPayload,
+} from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'
-import { Action, Payload, ActionHandlerResources } from '../types.js'
+import type { Action, Payload, ActionHandlerResources } from '../types.js'
 
 const debug = debugLib('great')
 
@@ -12,11 +16,6 @@ const prepareData = ({ type, id, data }: Payload) =>
       [{ id, $type: type }]
     : // Filter away null values
       ([] as unknown[]).concat(data).filter(Boolean)
-
-const setDataOnAction = (action: Action, data?: unknown) => ({
-  ...action,
-  payload: { ...action.payload, data },
-})
 
 /**
  * Delete several items from a service, based on the given payload.
@@ -32,15 +31,14 @@ export default async function deleteFn(
     endpoint: endpointId,
   } = action.payload
 
-  const service =
-    typeof getService === 'function' ? getService(type, serviceId) : null
+  const service = getService(type, serviceId)
   if (!service) {
     return createUnknownServiceError(action, type, serviceId, 'DELETE')
   }
 
   const data = prepareData(action.payload)
   if (data.length === 0) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `No items to delete from service '${service.id}'`,
       'noaction'
@@ -52,20 +50,22 @@ export default async function deleteFn(
     : `endpoint matching ${type} and ${id}`
   debug("DELETE: Delete from service '%s' at %s.", service.id, endpointDebug)
 
-  const nextAction = setDataOnAction(action, data)
+  const nextAction = setDataOnActionPayload(action, data)
   const endpoint = service.endpointFromAction(nextAction)
   if (!endpoint) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       nextAction,
       `No endpoint matching ${nextAction.type} request to service '${serviceId}'.`,
       'badrequest'
     )
   }
 
-  return pPipe(
+  const { response } = await pPipe(
     service.authorizeAction,
     (action: Action) => service.mapRequest(action, endpoint),
     service.send,
     (action: Action) => service.mapResponse(action, endpoint)
   )(nextAction)
+
+  return setResponseOnAction(action, response)
 }

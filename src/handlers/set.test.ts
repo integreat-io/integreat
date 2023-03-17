@@ -129,6 +129,7 @@ test('should map and set items to service', async (t) => {
       ],
       targetService: 'entries',
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = (_type?: string | string[], service?: string) =>
@@ -137,6 +138,12 @@ test('should map and set items to service', async (t) => {
   const ret = await set(action, { ...handlerResources, getService })
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret.response?.headers, { 'content-type': 'application/json' })
+  t.is(ret.type, 'SET')
+  t.deepEqual(ret.payload, action.payload)
+  t.deepEqual(ret.meta, action.meta)
+  t.true(Array.isArray(ret.response?.data))
+  t.is((ret.response?.data as unknown[]).length, 2)
   t.true(scope.isDone())
 })
 

@@ -70,9 +70,13 @@ const pipelines = {
   ['cast_source']: schemas.source.mapping,
 }
 
+const ms = () => () => (date: unknown) =>
+  date instanceof Date ? date.getTime() : undefined
+
 const mapOptions = createMapOptions(schemas, pipelines, {
   ...transformers,
   ...jsonFunctions,
+  ms,
 })
 
 const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
@@ -82,16 +86,26 @@ const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
     endpoints: [
       {
         match,
-        mutation: {
-          $direction: 'from',
-          response: {
-            $modify: 'response',
-            data: [
-              'response.data',
-              { $apply: id === 'accounts' ? 'account' : 'entry' },
-            ],
+        mutation: [
+          {
+            $direction: 'to',
+            $flip: true,
+            payload: {
+              $modify: 'payload',
+              updatedAfter: ['payload.updatedAfter', { $transform: 'ms' }],
+            },
           },
-        },
+          {
+            $direction: 'from',
+            response: {
+              $modify: 'response',
+              data: [
+                'response.data',
+                { $apply: id === 'accounts' ? 'account' : 'entry' },
+              ],
+            },
+          },
+        ],
         options: { uri },
       },
       {
@@ -113,10 +127,11 @@ test.after.always(() => {
 
 // Tests
 
-test('should get all items from service', async (t) => {
+test('should get items from service', async (t) => {
   const date = new Date()
   const scope = nock('http://api1.test')
     .get('/database')
+    .query({ since: date.getTime() })
     .reply(200, [
       {
         id: 'ent1',
@@ -132,33 +147,39 @@ test('should get all items from service', async (t) => {
       type: 'entry',
       source: 'thenews',
       targetService: 'entries',
+      updatedAfter: date,
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const svc = setupService('http://api1.test/database')
+  const svc = setupService(
+    'http://api1.test/database?since={payload.updatedAfter}'
+  )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
-  const expectedResponse = {
-    status: 'ok',
-    data: [
-      {
-        $type: 'entry',
-        id: 'ent1',
-        title: 'Entry 1',
-        byline: 'Somebody',
-        createdAt: date,
-        updatedAt: date,
-        source: { id: 'thenews', $ref: 'source' },
+  const expected = {
+    ...action,
+    response: {
+      status: 'ok',
+      data: [
+        {
+          $type: 'entry',
+          id: 'ent1',
+          title: 'Entry 1',
+          byline: 'Somebody',
+          createdAt: date,
+          updatedAt: date,
+          source: { id: 'thenews', $ref: 'source' },
+        },
+      ],
+      headers: {
+        'content-type': 'application/json',
       },
-    ],
-    headers: {
-      'content-type': 'application/json',
     },
   }
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.deepEqual(ret.response, expectedResponse)
+  t.deepEqual(ret, expected)
   t.true(scope.isDone())
 })
 
@@ -442,23 +463,6 @@ test('should return error when specified service does not exist', async (t) => {
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, "Service with id 'entries' does not exist")
-})
-
-test('should return error when no getService', async (t) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getService = undefined as any
-  const action = {
-    type: 'GET',
-    payload: {
-      type: 'entry',
-      targetService: 'entries',
-    },
-  }
-
-  const ret = await get(action, { ...handlerResources, getService })
-
-  t.truthy(ret)
-  t.is(ret.response?.status, 'error')
 })
 
 test('should get only authorized items', async (t) => {

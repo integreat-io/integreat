@@ -1,8 +1,8 @@
 import debugLib = require('debug')
-import { createErrorOnAction } from '../utils/createError.js'
-import { Action, ActionHandlerResources } from '../types.js'
+import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
 import getHandler from './get.js'
 import { isDataObject } from '../utils/is.js'
+import type { Action, ActionHandlerResources } from '../types.js'
 
 const debug = debugLib('great')
 
@@ -59,7 +59,7 @@ export default async function getMeta(
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`GET_META: Service '${serviceId}' doesn't exist`)
-    return createErrorOnAction(action, `Service '${serviceId}' doesn't exist`)
+    return setErrorOnAction(action, `Service '${serviceId}' doesn't exist`)
   }
 
   const metaType = service.meta
@@ -67,7 +67,7 @@ export default async function getMeta(
   // TODO: Check if the meta service exists - find a better way?
   const metaService = getService(metaType)
   if (!metaService) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'noaction'
@@ -90,19 +90,16 @@ export default async function getMeta(
     payload: { keys, type: metaType, id: metaId, endpoint: endpointId },
     meta: { ident: ident },
   }
-  const response = await getHandler(nextAction, resources)
+  const { response } = await getHandler(nextAction, resources)
 
-  if (response.response?.status === 'ok') {
-    const { data } = response.response || {}
+  if (response?.status === 'ok') {
+    const { data } = response || {}
     const meta = extractMeta(data, keys)
-    return {
-      ...action,
-      response: {
-        ...response.response,
-        data: { service: serviceId, meta },
-      },
-    }
+    return setResponseOnAction(action, {
+      status: 'ok',
+      data: { service: serviceId, meta },
+    })
   } else {
-    return { ...action, response: response.response }
+    return setResponseOnAction(action, response)
   }
 }

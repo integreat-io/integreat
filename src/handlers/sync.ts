@@ -10,7 +10,7 @@ import {
   Params,
   ActionHandlerResources,
 } from '../types.js'
-import { createErrorOnAction } from '../utils/createError.js'
+import { setErrorOnAction, setResponseOnAction } from '../utils/action.js'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is.js'
 import { ensureArray } from '../utils/array.js'
 import { castDate } from '../transformers/builtIns/date.js'
@@ -501,8 +501,8 @@ export default async function syncHandler(
   try {
     ;[fromParams, toParams] = await extractActionParams(action, dispatch)
   } catch (error) {
-    return createErrorOnAction(
-      action,
+    return setErrorOnAction(
+      inputAction,
       `Failed to prepare params for SYNC: ${
         error instanceof Error ? error.message : String(error)
       }`
@@ -510,8 +510,8 @@ export default async function syncHandler(
   }
 
   if (fromParams.length === 0 || !toParams) {
-    return createErrorOnAction(
-      action,
+    return setErrorOnAction(
+      inputAction,
       'SYNC: `type`, `to`, and `from` parameters are required',
       'badrequest'
     )
@@ -534,8 +534,8 @@ export default async function syncHandler(
       datesFromData = extractLastSyncedAtDates(dataFromServices, retrieve)
     }
   } catch (error) {
-    return createErrorOnAction(
-      action,
+    return setErrorOnAction(
+      inputAction,
       `SYNC: Could not get data. ${(error as Error).message}`
     )
   }
@@ -545,8 +545,8 @@ export default async function syncHandler(
 
   const response = await setData(dispatch, data, toParams, doQueueSet, meta)
   if (response.status !== 'ok') {
-    return createErrorOnAction(
-      action,
+    return setErrorOnAction(
+      inputAction,
       response?.error,
       response?.status || 'error'
     )
@@ -564,5 +564,5 @@ export default async function syncHandler(
 
   setProgress(1)
 
-  return { ...action, response: { ...action.response, status: 'ok' } }
+  return setResponseOnAction(inputAction, { status: 'ok' })
 }

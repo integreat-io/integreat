@@ -1,9 +1,14 @@
 import util = require('util')
-import getField from '../utils/getField.js'
-import { createErrorOnAction } from '../utils/createError.js'
-import { getFirstIfArray } from '../utils/array.js'
-import { Action, Ident, ActionHandlerResources } from '../types.js'
 import getHandler from './get.js'
+import getField from '../utils/getField.js'
+import { setErrorOnAction } from '../utils/action.js'
+import { getFirstIfArray } from '../utils/array.js'
+import type {
+  Action,
+  Response,
+  Ident,
+  ActionHandlerResources,
+} from '../types.js'
 
 interface IdentParams extends Record<string, unknown> {
   id?: string
@@ -39,10 +44,11 @@ const wrapOk = (action: Action, data: unknown, ident: Ident) => ({
 
 const prepareResponse = (
   action: Action,
+  response: Response | undefined,
   params: IdentParams,
   propKeys: Record<string, string>
 ): Action => {
-  const data = getFirstIfArray(action.response?.data)
+  const data = getFirstIfArray(response?.data)
 
   if (data) {
     const completeIdent = {
@@ -52,7 +58,7 @@ const prepareResponse = (
     } as Ident
     return wrapOk(action, data, completeIdent)
   } else {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       `Could not find ident with params ${util.inspect(params)}, error: ${
         action.response?.error
@@ -71,7 +77,7 @@ export default async function getIdent(
 ): Promise<Action> {
   const { ident } = action.meta || {}
   if (!ident) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       'GET_IDENT: The request has no ident',
       'noaction'
@@ -82,7 +88,7 @@ export default async function getIdent(
 
   const { type } = identConfig || {}
   if (!type) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       'GET_IDENT: Integreat is not set up with authentication',
       'noaction'
@@ -92,7 +98,7 @@ export default async function getIdent(
   const propKeys = preparePropKeys(identConfig?.props)
   const params = prepareParams(ident, propKeys)
   if (!params) {
-    return createErrorOnAction(
+    return setErrorOnAction(
       action,
       'GET_IDENT: The request has no ident with id or withToken',
       'noaction'
@@ -104,7 +110,7 @@ export default async function getIdent(
     payload: { type, ...params },
     meta: { ident: { id: 'root', root: true } },
   }
-  const responseAction = await getHandler(nextAction, resources)
+  const { response } = await getHandler(nextAction, resources)
 
-  return prepareResponse(responseAction, params, propKeys)
+  return prepareResponse(action, response, params, propKeys)
 }

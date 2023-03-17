@@ -74,19 +74,17 @@ test('should get metadata for service', async (t) => {
     },
     meta: { ident },
   }
-  const expectedResponse = {
-    status: 'ok',
-    data: { service: 'store', meta: { lastSyncedAt } },
-    headers: {
-      'content-type': 'application/json',
+  const expected = {
+    ...action,
+    response: {
+      status: 'ok',
+      data: { service: 'store', meta: { lastSyncedAt } },
     },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.deepEqual(ret.response, expectedResponse)
-  t.is(ret.type, 'GET_META')
-  t.deepEqual(ret.payload, action.payload)
+  t.deepEqual(ret, expected)
 })
 
 test('should get several metadata for service', async (t) => {
@@ -172,9 +170,6 @@ test('should get metadata for service with type', async (t) => {
   const expectedResponse = {
     status: 'ok',
     data: { service: 'store', meta: { lastSyncedAt } },
-    headers: {
-      'content-type': 'application/json',
-    },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
@@ -200,17 +195,17 @@ test('should get metadata for service with several types', async (t) => {
     },
     meta: { ident },
   }
-  const expectedResponse = {
-    status: 'ok',
-    data: { service: 'store', meta: { lastSyncedAt } },
-    headers: {
-      'content-type': 'application/json',
+  const expected = {
+    ...action,
+    response: {
+      status: 'ok',
+      data: { service: 'store', meta: { lastSyncedAt } },
     },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.deepEqual(ret.response, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should get metadata for service with metaKey', async (t) => {
@@ -239,9 +234,6 @@ test('should get metadata for service with metaKey', async (t) => {
   const expectedResponse = {
     status: 'ok',
     data: { service: 'store', meta: { lastSyncedAt } },
-    headers: {
-      'content-type': 'application/json',
-    },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })

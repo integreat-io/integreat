@@ -19,7 +19,11 @@ import {
   JobWithAction,
 } from '../types.js'
 import { MapOptions } from '../service/types.js'
-import { createErrorOnAction } from '../utils/createError.js'
+import {
+  setResponseOnAction,
+  setDataOnActionPayload,
+  setErrorOnAction,
+} from '../utils/action.js'
 import {
   isJob,
   isJobStep,
@@ -105,9 +109,9 @@ const prependResponseError = (
 
 const errorMessageFromResponses = (responses: Action[], ids: string[]) =>
   responses
-    .map((response, index) =>
-      response.response?.error
-        ? `'${ids[index]}' (${response.response?.status}: ${response.response?.error})`
+    .map(({ response }, index) =>
+      response?.error
+        ? `'${ids[index]}' (${response?.status}: ${response?.error})`
         : undefined
     )
     .filter(Boolean)
@@ -115,15 +119,15 @@ const errorMessageFromResponses = (responses: Action[], ids: string[]) =>
 
 const removeError = ({ error, ...response }: Response) => response
 
-function responseFromResponses(responses: Action[], ids: string[]): Action {
-  if (responses.length === 1 && responses[0]) {
-    const response = responses[0]
-    const status = isOkResponse(response.response) ? 'ok' : 'error'
-    const message = errorMessageFromResponses(responses, ids)
+function responseFromResponses(actions: Action[], ids: string[]): Action {
+  if (actions.length === 1 && actions[0]) {
+    const action = actions[0]
+    const status = isOkResponse(action.response) ? 'ok' : 'error'
+    const message = errorMessageFromResponses(actions, ids)
     return {
-      ...response,
+      ...action,
       response: {
-        ...removeError(response.response || {}),
+        ...removeError(action.response || {}),
         status,
         ...(message
           ? status === 'ok'
@@ -132,8 +136,8 @@ function responseFromResponses(responses: Action[], ids: string[]): Action {
           : {}),
         ...(status === 'error'
           ? {
-              responses: responses
-                .map((response) => response.response)
+              responses: actions
+                .map(({ response }) => response)
                 .filter(Boolean) as Response[],
             }
           : {}),
@@ -141,10 +145,10 @@ function responseFromResponses(responses: Action[], ids: string[]): Action {
     }
   }
 
-  const errorResponses = responses.filter(
+  const errorResponses = actions.filter(
     (response) => !isOkResponse(response?.response)
   )
-  const message = errorMessageFromResponses(responses, ids)
+  const message = errorMessageFromResponses(actions, ids)
 
   if (errorResponses.length > 0) {
     return {
@@ -152,7 +156,7 @@ function responseFromResponses(responses: Action[], ids: string[]): Action {
         status: 'error',
         error: message,
         responses: errorResponses
-          .map((response) => response.response)
+          .map(({ response }) => response)
           .filter(Boolean),
       },
     } as unknown as Action
@@ -223,11 +227,6 @@ function statusFromValidationErrors(vals: ConditionFailObject[]) {
   return statuses.length === 0 ? undefined : statuses[0]
 }
 
-const setData = (action: Action, data: unknown): Action => ({
-  ...action,
-  payload: { ...action.payload, data },
-})
-
 const getIteratePipeline = (
   step: JobWithAction
 ): TransformDefinition | undefined => step.iterate || step.iteratePath
@@ -252,7 +251,7 @@ function unpackIterationSteps(
     id: step.id,
     flow: items.map((item, index) => ({
       id: `${step.id}_${index}`,
-      action: setData(step.action, item),
+      action: setDataOnActionPayload(step.action, item),
       mutation: step.mutation,
     })),
     responseMutation: step.responseMutation,
@@ -260,19 +259,15 @@ function unpackIterationSteps(
 }
 
 function generateIterateResponse(responses: Action[]) {
-  const errors = responses.filter(
-    (response) => !isOkResponse(response.response)
-  )
+  const errors = responses.filter(({ response }) => !isOkResponse(response))
   const status = errors.length === 0 ? 'ok' : 'error'
   const error = errors
-    .map((response) =>
-      response.response
-        ? `[${response.response.status}] ${response.response.error}`
-        : undefined
+    .map(({ response }) =>
+      response ? `[${response.status}] ${response.error}` : undefined
     )
     .filter(Boolean)
     .join(' | ')
-  const data = responses.flatMap((resp) => resp.response?.data)
+  const data = responses.flatMap(({ response }) => response?.data)
   return {
     response: {
       status,
@@ -493,7 +488,7 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
     } = action
     const job = typeof jobId === 'string' ? jobs[jobId] : undefined
     if (!isJob(job)) {
-      return createErrorOnAction(
+      return setErrorOnAction(
         action,
         `No valid job with id '${jobId}'`,
         'notfound'
@@ -509,10 +504,10 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
       generateSubMeta(meta || {}, jobId as string)
     )
 
-    const responseAction = {
-      ...action,
-      response: getFlowResponse(job, responses),
-    }
+    const responseAction = setResponseOnAction(
+      action,
+      getFlowResponse(job, responses)
+    )
     return isJobWithAction(job)
       ? cleanUpResponse(responseAction) // The response has alreay been mutated
       : mutateResponse(

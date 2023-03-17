@@ -56,6 +56,9 @@ test('should get all pages', async (t) => {
   t.is(dispatch.args[2][0].payload.pageSize, 2)
   t.is(ret.response?.status, 'ok')
   t.is((ret.response?.data as TypedData[]).length, 5)
+  t.is(ret.type, 'GET_ALL')
+  t.deepEqual(ret.payload, action.payload)
+  t.deepEqual(ret.meta, action.meta)
 })
 
 test('should get all pages when last is empty', async (t) => {
@@ -587,12 +590,15 @@ test('should return error', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    ...action,
+    response: { status: 'notfound', error: 'Unknown endpoint' },
+  }
 
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 1)
-  t.is(ret.response?.status, 'notfound')
-  t.is(ret.response?.error, 'Unknown endpoint')
+  t.deepEqual(ret, expected)
 })
 
 test('should treat null data as no data', async (t) => {
@@ -628,7 +634,7 @@ test('should dispatch action without pageSize', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, project: 'jetkids' },
   }
-  const expected = {
+  const expectedAction = {
     type: 'GET',
     payload: {
       type: 'event',
@@ -636,11 +642,14 @@ test('should dispatch action without pageSize', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, project: 'jetkids' },
   }
+  const expectedResponse = {
+    ...action,
+    response: { status: 'ok', data: [] },
+  }
 
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expected)
-  t.is(ret.response?.status, 'ok')
-  t.deepEqual(ret.response?.data, [])
+  t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
 })
