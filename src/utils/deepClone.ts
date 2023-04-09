@@ -1,3 +1,3 @@
-import rfdc = require('rfdc')
+import rfdc from 'rfdc'
 
 export default rfdc()

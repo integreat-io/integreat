@@ -1,4 +1,4 @@
-import mapAny = require('map-any')
+import mapAny from 'map-any'
 import type { Transformer } from 'map-transform/types.js'
 import {
   isDataObject,

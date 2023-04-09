@@ -1,5 +1,5 @@
 import test from 'ava'
-import sinon = require('sinon')
+import sinon from 'sinon'
 import { Action } from './types.js'
 
 import close from './close.js'

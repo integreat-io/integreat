@@ -1,4 +1,4 @@
-import debugLib = require('debug')
+import debugLib from 'debug'
 import pProgress, { ProgressNotifier } from 'p-progress'
 import createEndpointMappers from './endpoints/index.js'
 import {

@@ -1,5 +1,5 @@
 import test from 'ava'
-import sinon = require('sinon')
+import sinon from 'sinon'
 import createSchema from '../../schema/index.js'
 import builtInTransformers from '../../transformers/builtIns/index.js'
 import transformers from '../../transformers/index.js'

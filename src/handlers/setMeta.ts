@@ -1,4 +1,4 @@
-import debugLib = require('debug')
+import debugLib from 'debug'
 import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
 import setHandler from './set.js'
 import { generateMetaId } from './getMeta.js'

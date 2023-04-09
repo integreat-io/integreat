@@ -1,4 +1,4 @@
-import util = require('util')
+import util from 'util'
 import ajv from 'ajv'
 import mapTransform from 'map-transform'
 import type { DataMapper } from 'map-transform/types.js'

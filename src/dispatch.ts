@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid'
 import pProgress from 'p-progress'
-import debugLib = require('debug')
+import debugLib from 'debug'
 import setupGetService from './utils/getService.js'
 import { setErrorOnAction, setResponseOnAction } from './utils/action.js'
 import { isObject } from './utils/is.js'

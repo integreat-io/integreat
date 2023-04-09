@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
-import sinon = require('sinon')
+import sinon from 'sinon'
 import { jsonServiceDef } from './tests/helpers/json.js'
 import builtInMutations from './mutations/index.js'
 import user from './tests/helpers/defs/schemas/user.js'

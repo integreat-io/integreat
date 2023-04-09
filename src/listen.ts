@@ -1,4 +1,4 @@
-import debugLib = require('debug')
+import debugLib from 'debug'
 import { Dispatch, Response } from './types.js'
 import { Service } from './service/types.js'
 

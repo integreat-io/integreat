@@ -1,5 +1,5 @@
 import test from 'ava'
-import sinon = require('sinon')
+import sinon from 'sinon'
 import httpTransporter from 'integreat-transporter-http'
 import { Transporter } from '../types.js'
 

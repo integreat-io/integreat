@@ -1,5 +1,5 @@
 import test from 'ava'
-import sinon = require('sinon')
+import sinon from 'sinon'
 import { Authenticator, Authentication, AuthOptions } from './types.js'
 import { Transporter, Action } from '../types.js'
 

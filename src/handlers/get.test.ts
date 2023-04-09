@@ -1,6 +1,6 @@
 import test from 'ava'
-import sinon = require('sinon')
-import nock = require('nock')
+import sinon from 'sinon'
+import nock from 'nock'
 import createService from '../service/index.js'
 import {
   jsonServiceDef,

@@ -1,5 +1,5 @@
 import pLimit from 'p-limit'
-import ms = require('ms')
+import ms from 'ms'
 import {
   Action,
   Payload,

@@ -1,5 +1,5 @@
 import test from 'ava'
-import nock = require('nock')
+import nock from 'nock'
 import Integreat from '../index.js'
 import defs from '../tests/helpers/defs/index.js'
 import resources from '../tests/helpers/resources/index.js'

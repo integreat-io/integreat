@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
-import sinon = require('sinon')
+import sinon from 'sinon'
 import pProgress from 'p-progress'
 import jsonResources from '../tests/helpers/resources/index.js'
 import transformers from '../transformers/builtIns/index.js'

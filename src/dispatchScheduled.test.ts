@@ -1,5 +1,5 @@
 import test from 'ava'
-import sinon = require('sinon')
+import sinon from 'sinon'
 import createSchedule from './utils/createSchedule.js'
 import { Action } from './types.js'
 

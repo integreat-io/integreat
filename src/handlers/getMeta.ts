@@ -1,4 +1,4 @@
-import debugLib = require('debug')
+import debugLib from 'debug'
 import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
 import getHandler from './get.js'
 import { isDataObject } from '../utils/is.js'

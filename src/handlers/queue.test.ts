@@ -1,5 +1,5 @@
 import test from 'ava'
-import sinon = require('sinon')
+import sinon from 'sinon'
 import createService from '../service/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import { Transporter } from '../types.js'

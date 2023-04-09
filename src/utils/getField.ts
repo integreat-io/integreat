@@ -1,5 +1,5 @@
 import mapTransform from 'map-transform'
-import mapAny = require('map-any')
+import mapAny from 'map-any'
 import { isReference } from './is.js'
 
 const extractIdFromRef = (data: unknown) => (isReference(data) ? data.id : data)

@@ -1,5 +1,5 @@
 import test from 'ava'
-import nock = require('nock')
+import nock from 'nock'
 import defsBase from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import usersUserMapping from '../helpers/defs/mutations/users-user.js'

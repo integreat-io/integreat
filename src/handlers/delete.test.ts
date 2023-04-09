@@ -1,5 +1,5 @@
 import test from 'ava'
-import nock = require('nock')
+import nock from 'nock'
 import {
   jsonServiceDef,
   jsonPipelines,

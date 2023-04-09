@@ -1,4 +1,4 @@
-import debugLib = require('debug')
+import debugLib from 'debug'
 import { setErrorOnAction } from './action.js'
 import { Action } from '../types.js'
 

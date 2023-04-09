@@ -1,5 +1,5 @@
 import test from 'ava'
-import sinon = require('sinon')
+import sinon from 'sinon'
 import dispatch from './tests/helpers/dispatch.js'
 import { Action } from './types.js'
 

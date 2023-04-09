@@ -1,4 +1,4 @@
-import util = require('util')
+import util from 'util'
 import getHandler from './get.js'
 import getField from '../utils/getField.js'
 import { setErrorOnAction } from '../utils/action.js'

@@ -1,5 +1,5 @@
 import test from 'ava'
-import nock = require('nock')
+import nock from 'nock'
 import resources from '../helpers/resources/index.js'
 import defs from '../helpers/defs/index.js'
 import johnfData from '../helpers/data/userJohnf.js'

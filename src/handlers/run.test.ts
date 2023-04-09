@@ -1,5 +1,5 @@
 import test from 'ava'
-import sinon = require('sinon')
+import sinon from 'sinon'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import transformers from '../transformers/index.js'
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
-import nock = require('nock')
+import nock from 'nock'
 import type { TransformDefinition } from 'map-transform/types.js'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'

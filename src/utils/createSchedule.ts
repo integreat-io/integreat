@@ -1,4 +1,4 @@
-import later = require('later')
+import later from 'later'
 import { ScheduleObject, JobDef, Action } from '../types.js'
 import { isObject } from './is.js'
 

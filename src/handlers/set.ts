@@ -1,4 +1,4 @@
-import debugLib = require('debug')
+import debugLib from 'debug'
 import pPipe from 'p-pipe'
 import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'

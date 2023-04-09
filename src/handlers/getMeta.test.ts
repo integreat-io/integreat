@@ -1,5 +1,5 @@
 import test from 'ava'
-import nock = require('nock')
+import nock from 'nock'
 import Integreat from '../index.js'
 import { jsonServiceDef } from '../tests/helpers/json.js'
 import mutations from '../mutations/index.js'

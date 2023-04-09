@@ -1,4 +1,4 @@
-import Later = require('later')
+import Later from 'later'
 import { Dispatch, Action } from './types.js'
 
 export interface Scheduled {

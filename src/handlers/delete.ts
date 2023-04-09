@@ -1,4 +1,4 @@
-import debugLib = require('debug')
+import debugLib from 'debug'
 import pPipe from 'p-pipe'
 import {
   setErrorOnAction,
