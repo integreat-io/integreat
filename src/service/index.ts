@@ -256,16 +256,25 @@ export default ({
           meta: { ...action.meta, options: deepClone(endpoint.options) },
         }
 
-        // Authorize and map in right order
-        return isIncoming
-          ? authorizeDataToService(
-              mutateRequest(nextAction, isIncoming),
-              allowRawRequest
-            )
-          : mutateRequest(
-              authorizeDataToService(nextAction, allowRawRequest),
-              isIncoming
-            )
+        try {
+          // Authorize and map in right order
+          return isIncoming
+            ? authorizeDataToService(
+                mutateRequest(nextAction, isIncoming),
+                allowRawRequest
+              )
+            : mutateRequest(
+                authorizeDataToService(nextAction, allowRawRequest),
+                isIncoming
+              )
+        } catch (error) {
+          return setErrorOnAction(
+            action,
+            `Error while mutating request: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          )
+        }
       },
 
       /**
@@ -274,17 +283,26 @@ export default ({
        * order for a response to an incoming request.
        */
       mapResponse(action, endpoint, isIncoming = false) {
-        // Authorize and map in right order
         const { mutateResponse, allowRawResponse } = endpoint
-        return isIncoming
-          ? mutateResponse(
-              authorizeDataFromService(action, allowRawResponse),
-              isIncoming
-            )
-          : authorizeDataFromService(
-              mutateResponse(action, isIncoming),
-              allowRawResponse
-            )
+        try {
+          // Authorize and map in right order
+          return isIncoming
+            ? mutateResponse(
+                authorizeDataFromService(action, allowRawResponse),
+                isIncoming
+              )
+            : authorizeDataFromService(
+                mutateResponse(action, isIncoming),
+                allowRawResponse
+              )
+        } catch (error) {
+          return setErrorOnAction(
+            action,
+            `Error while mutating response: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          )
+        }
       },
 
       /**

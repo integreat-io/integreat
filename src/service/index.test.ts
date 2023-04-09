@@ -61,7 +61,7 @@ const schemas = {
   }),
 }
 
-const entryMapping = [
+const entryMutation = [
   'items[]',
   {
     $iterate: true,
@@ -77,7 +77,7 @@ const entryMapping = [
   { $apply: 'cast_entry' },
 ]
 
-const entry2Mapping = [
+const entry2Mutation = [
   'items[]',
   {
     $iterate: true,
@@ -87,7 +87,7 @@ const entry2Mapping = [
   { $apply: 'cast_entry' },
 ]
 
-const accountMapping = [
+const accountMutation = [
   'accounts',
   {
     $iterate: true,
@@ -97,13 +97,13 @@ const accountMapping = [
   { $apply: 'cast_account' },
 ]
 
-const pipelines = {
-  entry: entryMapping,
-  entry2: entry2Mapping,
-  account: accountMapping,
+const mutations = {
+  entry: entryMutation,
+  entry2: entry2Mutation,
+  account: accountMutation,
 }
 
-const mapOptions = createMapOptions(schemas, pipelines, transformers)
+const mapOptions = createMapOptions(schemas, mutations, transformers)
 
 const endpoints = [
   {
@@ -1234,6 +1234,56 @@ test('should authorize typed data in array to service', async (t) => {
   )
 })
 
+test('mapResponse should return error when transformer throws', async (t) => {
+  const willThrow = () => () => {
+    throw new Error('Transformer error')
+  }
+  const mapOptions = createMapOptions(schemas, mutations, { willThrow })
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+    id: 'accounts',
+    endpoints: [
+      {
+        mutation: {
+          response: 'response',
+          'response.data': [
+            'response.data.content.data',
+            { $transform: 'willThrow' },
+            { $apply: 'account' },
+          ],
+        },
+        options: { uri: 'http://some.api/1.0' },
+      },
+    ],
+    transporter: 'http',
+  })
+  const action = {
+    type: 'GET',
+    payload: { id: 'johnf', type: 'account' },
+    response: {
+      status: 'ok',
+      data: {
+        content: {
+          data: { accounts: { id: 'johnf', name: 'John F.' } },
+        },
+      },
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
+  const expected = {
+    ...action,
+    response: {
+      ...action.response,
+      status: 'error',
+      error: 'Error while mutating response: Transformer error',
+    },
+  }
+
+  const ret = service.mapResponse(action, endpoint!)
+
+  t.deepEqual(ret, expected)
+})
+
 // Tests -- mapRequest
 
 test('mapRequest should set endpoint options and cast and map request data', async (t) => {
@@ -1333,8 +1383,6 @@ test('mapRequest should deep-clone endpoint options', async (t) => {
 
   t.false((endpoint?.options.untouchable as { touched: boolean }).touched)
 })
-
-test.todo('should strip undefined from data array')
 
 test('mapRequest should authorize data array going to service', async (t) => {
   const service = setupService({ mapOptions, schemas, ...jsonResources })({
@@ -1481,6 +1529,49 @@ test('mapRequest should use mutation pipeline', async (t) => {
   const ret = service.mapRequest(action, endpoint!)
 
   t.deepEqual(ret.payload.data, expectedData)
+})
+
+test('mapRequest should return error when transformer throws', async (t) => {
+  const willThrow = () => () => {
+    throw new Error('Transformer error')
+  }
+  const mapOptions = createMapOptions(schemas, mutations, { willThrow })
+  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+    id: 'entries',
+    transporter: 'http',
+    endpoints: [
+      {
+        mutation: [
+          {
+            payload: 'payload',
+            'payload.data': [
+              'payload.data',
+              { $transform: 'willThrow' },
+              { $alt: [{ $value: {} }] },
+            ],
+          },
+        ],
+        options: { uri: 'http://soap.api/1.1' },
+      },
+    ],
+  })
+  const action = {
+    type: 'SET',
+    payload: {},
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
+  const expected = {
+    ...action,
+    response: {
+      status: 'error',
+      error: 'Error while mutating request: Transformer error',
+    },
+  }
+
+  const ret = service.mapRequest(action, endpoint!)
+
+  t.deepEqual(ret, expected)
 })
 
 // Tests -- listen
