@@ -298,6 +298,34 @@ test('should return reply from service when not ok', async (t) => {
   t.is(ret.response?.status, 'notfound', ret.response?.error)
 })
 
+test('should return empty object as meta when no data from service', async (t) => {
+  nock('http://api5.test').get('/database/meta:store').reply(200, '')
+  const endpoints = [
+    {
+      id: 'getMeta',
+      options: { uri: 'http://api5.test/database/{+payload.id}' },
+      mutation,
+    },
+  ]
+  const great = Integreat.create(defs(endpoints), resources)
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' || type === 'meta' ? great.services.store : undefined
+  const action = {
+    type: 'GET_META',
+    payload: {
+      keys: 'lastSyncedAt',
+      targetService: 'store',
+    },
+    meta: { ident },
+  }
+  const expectedData = { meta: {}, service: 'store' }
+
+  const ret = await getMeta(action, { ...handlerResources, getService })
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret.response?.data, expectedData)
+})
+
 test('should return noaction when when no meta type is set', async (t) => {
   const scope = nock('http://api6.test')
     .get('/database/meta:store')
