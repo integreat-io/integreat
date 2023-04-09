@@ -69,7 +69,7 @@ test('should pass on action when no ident', async (t) => {
   t.deepEqual(dispatch.args[0][0], action)
 })
 
-test('should pass on action when ident is not found', async (t) => {
+test('should remove ident on action when ident is not found', async (t) => {
   const dispatch = sinon.stub().resolves({
     type: 'GET',
     payload: {},
@@ -81,10 +81,16 @@ test('should pass on action when ident is not found', async (t) => {
     meta: { ident: { id: 'unknown' } },
   }
 
+  const expected = {
+    type: 'GET',
+    payload: {},
+    meta: { ident: undefined },
+  }
+
   await completeIdent(dispatch)(action)
 
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[1][0], action)
+  t.deepEqual(dispatch.args[1][0], expected)
 })
 
 test('should pass on action when no id or withToken', async (t) => {
