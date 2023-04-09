@@ -1,9 +1,9 @@
 import util from 'util'
 import ajv from 'ajv'
 import mapTransform from 'map-transform'
+import { isObject } from './is.js'
 import type { DataMapper } from 'map-transform/types.js'
 import type { Condition, ConditionFailObject } from '../types.js'
-import { isObject } from './is.js'
 
 const Ajv = ajv.default
 const validator = new Ajv()

@@ -1,12 +1,12 @@
 import test from 'ava'
 import sinon from 'sinon'
-import {
+import createService from './service/index.js'
+import type {
   Action,
   Middleware,
   ActionHandler,
   ActionHandlerResources,
 } from './types.js'
-import createService from './service/index.js'
 
 import dispatch from './dispatch.js'
 

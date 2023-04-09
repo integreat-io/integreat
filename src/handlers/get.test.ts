@@ -11,7 +11,7 @@ import schema from '../schema/index.js'
 import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import createMapOptions from '../utils/createMapOptions.js'
-import { Action, TypedData } from '../types.js'
+import type { Action, TypedData } from '../types.js'
 
 import get from './get.js'
 

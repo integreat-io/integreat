@@ -5,7 +5,7 @@ import { jsonServiceDef } from './tests/helpers/json.js'
 import builtInMutations from './mutations/index.js'
 import user from './tests/helpers/defs/schemas/user.js'
 import resources from './tests/helpers/resources/index.js'
-import { Action, HandlerDispatch } from './types.js'
+import type { Action, HandlerDispatch } from './types.js'
 
 import create, { Definitions, Resources } from './create.js'
 

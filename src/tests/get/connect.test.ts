@@ -5,7 +5,7 @@ import tokenAuth from '../../authenticators/token.js'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import entriesData from '../helpers/data/entries.js'
-import { Connection, Action } from '../../types.js'
+import type { Connection, Action } from '../../types.js'
 
 import Integreat from '../../index.js'
 

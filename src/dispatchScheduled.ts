@@ -1,5 +1,5 @@
 import Later from 'later'
-import { Dispatch, Action } from './types.js'
+import type { Dispatch, Action } from './types.js'
 
 export interface Scheduled {
   later: Later.Schedule

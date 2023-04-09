@@ -9,7 +9,7 @@ import {
 import schema from '../schema/index.js'
 import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
-import { TypedData } from '../types.js'
+import type { TypedData } from '../types.js'
 
 import set from './set.js'
 

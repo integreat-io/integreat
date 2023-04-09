@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import createSchedule from './utils/createSchedule.js'
-import { Action } from './types.js'
+import type { Action } from './types.js'
 
 import dispatchScheduled, { Scheduled } from './dispatchScheduled.js'
 

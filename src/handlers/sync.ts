@@ -1,6 +1,6 @@
 import pLimit from 'p-limit'
 import ms from 'ms'
-import {
+import type {
   Action,
   Payload,
   Response,

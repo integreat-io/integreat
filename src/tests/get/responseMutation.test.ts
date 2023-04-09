@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import nock from 'nock'
-import type { TransformDefinition } from 'map-transform/types.js'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import entriesService from '../helpers/defs/services/entries.js'
 import entry1 from '../helpers/data/entry1.js'
 import entry2 from '../helpers/data/entry2.js'
 import json from '../../transformers/json.js'
+import type { TransformDefinition } from 'map-transform/types.js'
 import type { TypedData, Response } from '../../types.js'
 
 import Integreat from '../../index.js'

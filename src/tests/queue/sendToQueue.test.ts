@@ -2,7 +2,7 @@ import test from 'ava'
 import sinon from 'sinon'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
-import { Transporter } from '../../types.js'
+import type { Transporter } from '../../types.js'
 
 import Integreat from '../../index.js'
 

@@ -7,7 +7,6 @@ import {
   setResponseOnAction,
 } from '../utils/action.js'
 import Connection from './Connection.js'
-import { Schema } from '../schema/index.js'
 import Auth from './Auth.js'
 import { lookupById } from '../utils/indexUtils.js'
 import { isObject } from '../utils/is.js'
@@ -16,6 +15,7 @@ import * as authorizeData from './authorize/data.js'
 import authorizeAction from './authorize/action.js'
 import { compose } from '../dispatch.js'
 import { setUpAuth } from '../create.js'
+import type { Schema } from '../schema/index.js'
 import type {
   Action,
   Response,

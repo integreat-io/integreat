@@ -1,6 +1,6 @@
 import debugLib from 'debug'
 import { setErrorOnAction } from './action.js'
-import { Action } from '../types.js'
+import type { Action } from '../types.js'
 
 const debug = debugLib('great')
 

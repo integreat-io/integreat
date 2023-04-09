@@ -6,7 +6,7 @@ import resources from '../tests/helpers/resources/index.js'
 import johnfData from '../tests/helpers/data/userJohnf.js'
 import ent1Data from '../tests/helpers/data/entry1.js'
 import defaultHandlerResources from '../tests/helpers/handlerResources.js'
-import { TypedData } from '../types.js'
+import type { TypedData } from '../types.js'
 
 import getIdent from './getIdent.js'
 

@@ -1,5 +1,5 @@
-import { Service } from './service/types.js'
-import { Response } from './types.js'
+import type { Service } from './service/types.js'
+import type { Response } from './types.js'
 
 type ErrorTuple = [Response, string]
 

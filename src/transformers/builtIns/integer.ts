@@ -1,6 +1,6 @@
 import mapAny from 'map-any'
-import type { Transformer } from 'map-transform/types.js'
 import { isDate } from '../../utils/is.js'
+import type { Transformer } from 'map-transform/types.js'
 
 const numberOrUndefined = (value: number) => (isNaN(value) ? undefined : value)
 

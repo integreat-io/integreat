@@ -1,5 +1,5 @@
 import test from 'ava'
-import { Action } from '../types.js'
+import type { Action } from '../types.js'
 
 import {
   prepareActionForMapping,

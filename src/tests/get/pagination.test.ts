@@ -5,7 +5,7 @@ import resources from '../helpers/resources/index.js'
 import entry1Data from '../helpers/data/entry1.js'
 import entry2Data from '../helpers/data/entry2.js'
 import entry3Data from '../helpers/data/entry3.js'
-import { TypedData, Action } from '../../types.js'
+import type { TypedData, Action } from '../../types.js'
 
 import Integreat from '../../index.js'
 

@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import handlerResources from '../tests/helpers/handlerResources.js'
-import { TypedData } from '../types.js'
+import type { TypedData } from '../types.js'
 
 import getAll from './getAll.js'
 

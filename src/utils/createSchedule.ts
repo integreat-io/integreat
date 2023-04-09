@@ -1,6 +1,6 @@
 import later from 'later'
-import { ScheduleObject, JobDef, Action } from '../types.js'
 import { isObject } from './is.js'
+import type { ScheduleObject, JobDef, Action } from '../types.js'
 
 later.date.UTC()
 

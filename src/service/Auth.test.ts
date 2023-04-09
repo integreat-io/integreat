@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
-import { Authenticator, Authentication, AuthOptions } from './types.js'
-import { Transporter, Action } from '../types.js'
+import type { Authenticator, Authentication, AuthOptions } from './types.js'
+import type { Transporter, Action } from '../types.js'
 
 import Auth from './Auth.js'
 

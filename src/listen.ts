@@ -1,6 +1,6 @@
 import debugLib from 'debug'
-import { Dispatch, Response } from './types.js'
-import { Service } from './service/types.js'
+import type { Dispatch, Response } from './types.js'
+import type { Service } from './service/types.js'
 
 const debug = debugLib('great')
 

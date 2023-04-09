@@ -1,4 +1,4 @@
-import { DataFunction } from '../types.js'
+import type { DataFunction } from '../types.js'
 
 export interface FieldDefinition {
   $cast: string

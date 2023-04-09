@@ -4,7 +4,7 @@ import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import johnfData from '../helpers/data/userJohnf.js'
 import bettyData from '../helpers/data/userBetty.js'
-import { TypedData } from '../../types.js'
+import type { TypedData } from '../../types.js'
 
 import Integreat from '../../index.js'
 

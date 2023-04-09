@@ -3,7 +3,7 @@ import nock from 'nock'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import entriesService from '../helpers/defs/services/entries.js'
-import { TypedData } from '../../types.js'
+import type { TypedData } from '../../types.js'
 
 import Integreat from '../../index.js'
 

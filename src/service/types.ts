@@ -1,6 +1,6 @@
 import type { TransformDefinition, Options } from 'map-transform/types.js'
-import { Action, Response, Dispatch, Transporter } from '../types.js'
-import { EndpointDef, Endpoint } from './endpoints/types.js'
+import type { Action, Response, Dispatch, Transporter } from '../types.js'
+import type { EndpointDef, Endpoint } from './endpoints/types.js'
 
 export type MapOptions = Options
 

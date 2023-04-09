@@ -1,7 +1,7 @@
 /* eslint-disable security/detect-object-injection */
-import type { Transformer } from 'map-transform/types.js'
 import { getFirstIfArray } from '../utils/array.js'
 import { isObject, isDataObject } from '../utils/is.js'
+import type { Transformer } from 'map-transform/types.js'
 
 const parseObject = (value: string) => {
   try {

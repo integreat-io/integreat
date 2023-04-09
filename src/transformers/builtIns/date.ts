@@ -1,6 +1,6 @@
 import mapAny from 'map-any'
-import type { Transformer } from 'map-transform/types.js'
 import { isDate } from '../../utils/is.js'
+import type { Transformer } from 'map-transform/types.js'
 
 export function castDate(value: unknown): Date | null | undefined {
   if (value === null || value === undefined) {

@@ -3,7 +3,7 @@ import mapTransform from 'map-transform'
 import transformers from '../transformers/builtIns/index.js'
 import user from '../tests/helpers/defs/schemas/user.js'
 import comment from '../tests/helpers/defs/schemas/comment.js'
-import { TypedData } from '../types.js'
+import type { TypedData } from '../types.js'
 
 import createSchema from './index.js'
 

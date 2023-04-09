@@ -1,5 +1,5 @@
 import type { TransformDefinition } from 'map-transform/types.js'
-import { Action, Condition } from '../../types.js'
+import type { Action, Condition } from '../../types.js'
 
 export type EndpointOptions = Record<string, unknown>
 

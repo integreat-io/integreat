@@ -1,5 +1,5 @@
-import type { Transformer } from 'map-transform/types.js'
 import { isObject } from '../utils/is.js'
+import type { Transformer } from 'map-transform/types.js'
 
 const isParsed = (data: unknown) => Array.isArray(data) || isObject(data)
 

@@ -1,8 +1,8 @@
 import getField from '../../utils/getField.js'
 import { arrayIncludes } from '../../utils/array.js'
 import { isTypedData, isNullOrUndefined } from '../../utils/is.js'
-import { Action, TypedData, Ident } from '../../types.js'
-import { Schema } from '../../schema/index.js'
+import type { Action, TypedData, Ident } from '../../types.js'
+import type { Schema } from '../../schema/index.js'
 
 export interface AuthorizeDataFn {
   (action: Action, allowRaw?: boolean): Action

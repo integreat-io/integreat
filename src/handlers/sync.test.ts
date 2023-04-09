@@ -2,7 +2,7 @@ import test from 'ava'
 import sinon from 'sinon'
 import { setErrorOnAction } from '../utils/action.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
-import { Action, HandlerDispatch, TypedData } from '../types.js'
+import type { Action, HandlerDispatch, TypedData } from '../types.js'
 
 import sync from './sync.js'
 

@@ -1,5 +1,5 @@
 import { ensureArray } from '../utils/array.js'
-import { AccessDef, Access } from './types.js'
+import type { AccessDef, Access } from './types.js'
 
 const allowedOrNone = (method: string) =>
   method === undefined || ['all', 'auth'].includes(method) ? method : 'none'

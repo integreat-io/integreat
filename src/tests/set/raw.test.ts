@@ -2,7 +2,7 @@ import test from 'ava'
 import nock from 'nock'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
-import { TypedData } from '../../types.js'
+import type { TypedData } from '../../types.js'
 
 import Integreat from '../../index.js'
 

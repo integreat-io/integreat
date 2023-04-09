@@ -10,7 +10,7 @@ import SYNC from './sync.js'
 import EXPIRE from './expire.js'
 import QUEUE from './queue.js'
 import SERVICE from './service.js'
-import { ActionHandler } from '../types.js'
+import type { ActionHandler } from '../types.js'
 
 const handlers: Record<string, ActionHandler> = {
   GET,

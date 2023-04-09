@@ -4,7 +4,7 @@ import sinon from 'sinon'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import ent1Data from '../helpers/data/entry1.js'
-import { Action } from '../../types.js'
+import type { Action } from '../../types.js'
 
 import Integreat from '../../index.js'
 

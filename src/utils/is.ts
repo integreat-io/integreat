@@ -1,4 +1,4 @@
-import {
+import type {
   TypedData,
   Reference,
   Action,
@@ -6,7 +6,7 @@ import {
   JobWithAction,
   JobWithFlow,
 } from '../types.js'
-import { Shape, FieldDefinition } from '../schema/types.js'
+import type { Shape, FieldDefinition } from '../schema/types.js'
 
 export const isObject = (value: unknown): value is Record<string, unknown> =>
   Object.prototype.toString.call(value) === '[object Object]'

@@ -1,7 +1,7 @@
 import type { TransformDefinition } from 'map-transform/types.js'
-import { Action } from '../../types.js'
-import { MapOptions } from '../types.js'
-import { EndpointDef, EndpointOptions, Endpoint } from './types.js'
+import type { Action } from '../../types.js'
+import type { MapOptions } from '../types.js'
+import type { EndpointDef, EndpointOptions, Endpoint } from './types.js'
 import createEndpoint, { PrepareOptions } from './create.js'
 import compareEndpoints from './compare.js'
 

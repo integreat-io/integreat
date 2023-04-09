@@ -1,12 +1,12 @@
 /* eslint-disable security/detect-object-injection */
 import mapTransform from 'map-transform'
+import pLimit from 'p-limit'
 import type {
   TransformDefinition,
   TransformObject,
   Pipeline,
 } from 'map-transform/types.js'
-import pLimit from 'p-limit'
-import {
+import type {
   Action,
   ActionHandlerResources,
   HandlerDispatch,
@@ -18,7 +18,7 @@ import {
   ConditionFailObject,
   JobWithAction,
 } from '../types.js'
-import { MapOptions } from '../service/types.js'
+import type { MapOptions } from '../service/types.js'
 import {
   setResponseOnAction,
   setDataOnActionPayload,

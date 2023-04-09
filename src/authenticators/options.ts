@@ -1,4 +1,4 @@
-import { Authenticator, Authentication } from '../service/types.js'
+import type { Authenticator, Authentication } from '../service/types.js'
 import { isObject } from '../utils/is.js'
 
 /**

@@ -1,11 +1,11 @@
 import mapAny from 'map-any'
-import type { Transformer } from 'map-transform/types.js'
 import {
   isDataObject,
   isTypedData,
   isReference,
   isDate,
 } from '../../utils/is.js'
+import type { Transformer } from 'map-transform/types.js'
 
 interface Props extends Record<string, unknown> {
   type?: string

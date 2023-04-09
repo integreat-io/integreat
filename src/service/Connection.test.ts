@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import httpTransporter from 'integreat-transporter-http'
-import { Transporter } from '../types.js'
+import type { Transporter } from '../types.js'
 
 import Connection from './Connection.js'
 

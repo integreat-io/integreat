@@ -5,7 +5,7 @@ import resources from '../helpers/resources/index.js'
 import usersUserMapping from '../helpers/defs/mutations/users-user.js'
 import entry1Data from '../helpers/data/entry1.js'
 import johnfData from '../helpers/data/userJohnf.js'
-import { TypedData } from '../../types.js'
+import type { TypedData } from '../../types.js'
 
 import Integreat from '../../index.js'
 

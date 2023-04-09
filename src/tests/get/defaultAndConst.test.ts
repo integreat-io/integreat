@@ -4,7 +4,7 @@ import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import mutations from '../../mutations/index.js'
 import entry1 from '../helpers/data/entry1.js'
-import { TypedData } from '../../types.js'
+import type { TypedData } from '../../types.js'
 
 import Integreat from '../../index.js'
 

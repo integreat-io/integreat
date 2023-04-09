@@ -5,8 +5,8 @@ import resources from '../helpers/resources/index.js'
 import tokenAuth from '../../authenticators/token.js'
 import entriesService from '../helpers/defs/services/entries.js'
 import entriesData from '../helpers/data/entries.js'
-import { TypedData } from '../../types.js'
-import { ServiceDef } from '../../service/types.js'
+import type { TypedData } from '../../types.js'
+import type { ServiceDef } from '../../service/types.js'
 
 import Integreat from '../../index.js'
 

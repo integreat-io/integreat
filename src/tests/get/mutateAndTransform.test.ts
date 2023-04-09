@@ -7,7 +7,7 @@ import mutations from '../../mutations/index.js'
 import entry1 from '../helpers/data/entry1.js'
 import entry2 from '../helpers/data/entry2.js'
 import { isDataObject } from '../../utils/is.js'
-import { TypedData } from '../../types.js'
+import type { TypedData } from '../../types.js'
 
 import Integreat from '../../index.js'
 

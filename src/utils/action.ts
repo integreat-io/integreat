@@ -1,4 +1,4 @@
-import { Action, Payload, Meta, Response } from '../types.js'
+import type { Action, Payload, Meta, Response } from '../types.js'
 
 /**
  * Create an action object.

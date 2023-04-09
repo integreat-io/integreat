@@ -1,6 +1,6 @@
 import mapAny from 'map-any'
-import type { Transformer } from 'map-transform/types.js'
 import { isObject } from '../../utils/is.js'
+import type { Transformer } from 'map-transform/types.js'
 
 const castObject = (value: unknown) => {
   if (isObject(value)) {
