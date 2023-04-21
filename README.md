@@ -40,7 +40,10 @@ schemes, etc.
 
 Your configuration is spun up as an Integreat instance. To send and retrieve
 data, you dispatch [**actions**](#actions) to your instance and get
-[**response**](#action-response) objects back.
+[**response**](#action-response) objects back. You may define [jobs](#jobs) to
+run simple actions or longer "flows" consisting of several actions with
+conditions and logic. You may also configure [queues](#queues) to have actions
+run in sequence or on a later time.
 
 ```
                    ____________________________________________________
@@ -354,9 +357,9 @@ the first one is used.
 When no match properties are set, the endpoint will match any actions, as long
 as no other endpoints match.
 
-Finally, if an action specifies the endpoint id with the `endpointId` payload
-property, this overrides all else, and the endpoint with the id is used
-regardless of how the match object would apply.
+Finally, if an action specifies the endpoint id with the `endpoint`
+[payload property](#payload-properties), this overrides all else, and the
+endpoint with the id is used regardless of how the match object would apply.
 
 Example service definition with endpoint match object:
 
@@ -383,6 +386,77 @@ Example service definition with endpoint match object:
   // ...
 }
 ```
+
+### Service authentication
+
+This definition format is used to authenticate with a service:
+
+```javascript
+{
+  id: <id>,
+  authenticator: <authenticator id>,
+  options: {
+    // ...
+  }
+}
+```
+
+- `id`: The id used to reference this authentication, especially from the
+  [service definition](#services).
+- `authenticator`: The id of an authenticator used to authenticate requests.
+  Integreat comes with a few basic ones built in, and there are others
+  available.
+- `options`: An object of values meaningful to the authenticator. See the
+  documentation of each authenticator to learn how it should be configured.
+
+Available authenticators:
+
+- `options`: Will pass on the options as authentication, so whatever you provide
+  here is the authentication. What options to provide, then, is depending on
+  what the relevant transporter requires. This is built into Integreat.
+- `token`: A simple way of authenticating with a given token. For HTTP requests,
+  the token will be provided as a `Authorization` header, and a configurable
+  prefix like `Basic` or `Bearer`. This is built into Integreat.
+- [`jwt`](https://github.com/integreat-io/integreat-authenticator-jwt): Will
+  generate and encode a JavaScript Web Token (JWT) based on the options.
+- [`oauth2`](https://github.com/integreat-io/integreat-authenticator-oauth2):
+  Will run the balett of calling different OAuth2 endpoints and receive a token
+  based on the provided options.
+
+### Configuring service metadata
+
+Integreat supports getting and setting metadata for a service. The most common
+use of this is to keep track of when data of a certain type was last synced.
+
+Some services may have support for storing their own metadata, but usually you
+set up a dedicated service for storing other services' metadata. A few different
+pieces goes into setting up a meta store:
+
+- A meta schema with the fields available as metadata
+- A service for storing metadata, with an endpoint suporting the metadata schema
+- Possible a metadata mutation for the metadata service
+
+When all of this is set up, you activate the metadata on the service the
+metadata will be stored for, by setting the `meta` property to the id of the
+schema defining the metadata fields. The `service` set on the schema will tell
+Integreat what service to get and set the metadata from/to.
+
+The schema will look something like this:
+
+```javascript
+{
+  id: 'meta', // You may give it any id you'd like and reference it on the `meta` prop on the service
+  service: <id of service handling the metadata>,
+  shape: {
+    <metadataKey>: <type string>,
+    // ...
+  }
+}
+```
+
+To get or set metadata, use [`GET_META`](#get_meta) and [`SET_META`](#set_meta)
+with the service you are getting metadata from as the `service`. Integreat will
+figure out the rest.
 
 ## Transporters
 
@@ -532,6 +606,10 @@ A double carret `^^` takes you to the top -- the root -- so after
 
 Carret notations -- parents and roots -- does not currently work in reverse, but
 they might in a future version.
+
+### Jobs
+
+> Editor's note: Write this.
 
 ## Schemas
 
@@ -742,95 +820,260 @@ only access their own user data.
 ## Actions
 
 Actions are serializable objects that are dispatched to Integreat. It is a
-important that they are serializable, as this allows them to for instance be put
-in a database persisted queue and be picked up of another Intergreat instance in
-another process. Note that Date objects are considered serializable, as they are
-converted to ISO date strings when needed.
+important that they are serializable, as this allows them to, for instance, be
+put in a database persisted queue and be picked up of another Intergreat
+instance in another process. Note that `Date` objects are considered
+serializable, as they are converted to ISO date strings when needed.
 
 An action looks like this:
 
 ```javascript
 {
   type: <action type>,
-  payload: <payload>,
-  meta: <meta properties>
+  payload: <payload object>,
+  meta: <meta object>
 }
 ```
 
-- `type`: This is the id of one [of the action handlers](#available-actions)
-  that comes with Integreat. When you dispatch an action, it is handed off to
-  this handler (after a few inital preperations). You may write your own action
-  handlers as well.
+- `type`: This is the id of one [of the action handlers](#available-action-handlers)
+  that comes with Integreat, e.g. `GET`. When you dispatch an action, it is
+  handed off to this handler (after some inital preperation). You may write
+  your own action handlers as well.
 - `payload`: Holds parameters and [data](#typed-data) for this action. There are
-  some reserved [payload properties](#payload-properties), and the rest are
-  simply made available to you in the mutation pipeline.
+  some reserved [payload properties](#payload-properties), and the rest will be
+  made available to you in the mutation pipeline.
 - `meta`: Holds information about the action that does not belong in the
-  payload. There are some reserved [meta properties](#meta-properties), but you
-  may add your own here too.
+  payload, like the ident of the user dispatching, action id, etc. There are
+  some reserved [meta properties](#meta-properties), but you may add your own
+  here too.
 
-When an action is dispatched, it returns a [response object](#action-response).
-However, in the mutation pipelines, action handlers, and middleware, the
+When an action is dispatched, it returns a [response object](#action-response)
+with status, data, error message, etc.
+
+Note that in a mutation pipeline, action handler, or middleware, the
 response object is provided as a fourth property on the action. You will most
 likely meet this at least when setting up mutations.
 
 ### Payload properties
 
-> Editor's note: Write this
+The payload is, together with the action `type`, a description to Integreat and
+the service of what to do. A design principle of Integreat has been to have as
+little specifics in these payload, so actions may be discpatched to service
+without knowing how the service works. This is not always possible, at least not
+yet, but it's a good principle to follow, also when you configure services and
+plan what props need to be sent in the action payload.
+
+You may set any properties on the payload, and they will be be available to you
+in the service endpoint match and in the service mutations. Some properties have
+special meanings, though, and you should avoid using them for anything else:
+
+- `type`: The type of the data the action sends or receives. This refers to the
+  `id` of a schema, and you will allmost allways want to set this. If you're
+  dealing with several types in one action, you may set an array of types. The
+  perpaps biggest reason to set the `type` is that it helps Integreat match the
+  action to the right [service endpoint](#endpoints). Also, Integreat will
+  validate that the data you send and receive is indeed of that type, and will
+  give you an auth error if not.
+- `id`: You provide an id when you want to address a specific data item, usually
+  when you want to fetch one data item with an action like
+  `{ type: 'GET', payload: { type: 'article', id: '12345' } }`. You may also
+  supply an array of ids to fetch several data items by id. When setting data,
+  the id will instead be specified in the `data` when appropriate.
+- `data`: The data to send to a service. This may be any data that makes sense
+  to the service, but will usually be a [typed data object](#typed-data) or an
+  array of typed data objects, where the adjustments for the service happens in
+  service mutations.
+- `service`: The `id` of the service to send this action to. If not specified,
+  Integreat will try and find the right service from the `type`.
+- `targetService`: An alias of `service`.
+- `sourceService`: When data comes from a different service and has not been
+  mutated and cast yet, the `sourceService` property will tell Integreat to run
+  the data through the source service configuration before passing the action on
+  to an action handler. An example may be data coming in through an API, where
+  the API is configured as a service in Integreat. Note that this property is
+  usually set by transporters in their `listen()` methods, but you may also set
+  it directly on the action when it makes sense.
+- `endpoint`: Set this to the `id` of a service endpoint when you want to
+  override the endpoint match rules of Integreat. This should only be used when
+  it is really necessary. Normally, you should instead design the match
+  properties to match the correct actions.
+
+For services that support pagination, i.e. fetching data in several rounds, one
+page at a time, the following properties may be supported:
+
+- `pageSize`: The number of data items to fetch in one request to the service.
+  By specifying a page size, you signal that you would like to use pagination,
+  and without it all other pagination properties will be disregarded. You will
+  get the number of data items you specify (or less, if there are not that many
+  items), and may then go on to dispatch an action for the next page. See
+  [pagination](#pagination) for more
+- `pageOffset`: The number of data items to "skip" before returning the number
+  of items specified in `pageSize`. If you ask for 500 items, the first action
+  should have `pageOffset: 0` (or not specified), the next action
+  `pageOffset: 500`, then `pageOffset: 1000`, and so on.
+- `page`: The index of the page to fetch. Unlike most other indexes, this starts
+  with `1` being the first page. The effect is the same as `pageOffset`, it's
+  just a different way of specifying it. `page: 1` is the same as
+  `pageOffset: 0`, and `page: 2` is the same as `pageOffset: 500`, given a
+  `pageSize: 500`. Integreat will actually calculate both before sending it to
+  the transporter, as different types of services support different types of
+  pagination.
+- `pageAfter`: As an alternative to specifying the number of items to skip, you
+  may ask for the items after the item with the id you provide as `pageAfter`.
+  If the last item of the first page is `'12345'`, you may set
+  `pageAfter: '12345'` to get the next page.
+- `pageBefore`: This works the same as `pageAfter`, except it is intended for
+  when your going backward and fetching a number items _before_ the id you
+  provide.
+- `pageId`: Some services and/or transporters will return an id for the next
+  page, as an alternative to the other properties mentioned above. You then
+  apply this id as `pageId` when dispatching the action for the next page. Note
+  that this id may hold internal logic from the transporter, but you should
+  never rely on this logic and simply use it as an id.
+
+> **Important note:** Pagination has to be supported by the service and your
+> service configuration, and sometimes also the transporter. Integreat prepares
+> and passes on these pagination properties, but if the service disregards them,
+> there is little Integreat can do – except limiting the number of items
+> returned. It's up to you to figure out how to configure pagination for a
+> service, but youshould use these pagination properties to support it, to make
+> this predictable. It also lets you use actions such as `GET_ALL`, that support
+> pagination.
+
+Finally, there are some properties that has no special meaning to Integreat
+itself, but that may be set on incoming actions from transporters. These should
+ideally be used in the same way or avoided:
+
+- `contentType`: A keyword for the type of content in the `data` property. E.g.
+  `application/json` or `text/plain`.
+- `headers`: An object of header information, given as key/value pairs. The
+  value may be a string or an array of strings. This may be HTTP headers or any
+  other type of header information that makes sense to a service.
+- `hostname`: The host name that incoming request was sent to. For HTTP, this
+  will be the domain name the request was sent to.
+- `method`: The method of the incoming request. The HTTP transporter will set
+  this to `GET`, `POST`, `PUT`, etc. from the incoming request.
+- `path`: The path from the incoming request. For the HTTP transporter, this
+  will be the part of the url after the domain name, like
+  `'/v1.0/articles/12345'`.
+- `port`: The port number of the incoming request.
+- `queryParams`: An object of query params from the incoming request, usually
+  key/value pairs where the value is a string or an array of strings. For HTTP,
+  this will be the part after the question mark.
 
 ### Meta properties
 
-> Editor's note: Expand on this this
+The action meta object is for information about an action that does not directly
+define the action itself. The difference may be subtle in some cases, but the
+general rule is a piece of information affects how the action is run, it should
+be in the payload. E.g. the type of items to fetch is in the payload, while the
+time the action was dispatched would go in the meta.
+
+This rule does not always hold, e.g. for information on the user dispatching the
+action in `ident` on the meta object. Different idents may result in different
+data being returned from the service, but still the action to perform is the
+same, so it makes sense to have the ident in the meta object.
+
+You may set your own meta properties, but in most cases you'll probably rather
+set payload properties.
 
 Current meta properties reserved by Integreat:
 
-- `id`: Assigning the action an id. Will be picked up when queueing.
-- `queue`: Signals that an action may be queued. May be `true` or a timestamp
-- `queuedAt`: Timestamp for when the action was pushed to the queue
-- `schedule`: A [schedule definition](#schedule-definition)
-- `ident`: The ident to authorize the action with
+- `ident`: The ident to authorize the action with. May hold an `id`, `roles`,
+  `tokens`, and a few other options. See
+  [the section on idents](#idents-and-security-rules).
+- `id`: The id of the action itself. You may set this yourself or let Integreat
+  generate a universally unique id for you. Useful for logging and may be used
+  by queues.
+- `cid`: A correlation id that may be used to group actions that belong
+  together, primarily for logging purposes. You may set this yourself or
+  Integreat will set it to the same as the `id`. Some Integreat action handlers
+  will dispatch sub actions using the `cid` from the original action.
+- `dispatchedAt`: Timestamp for when the action was dispatched (set by
+  Integreat).
+- `queue`: Signals to Integreat that an action may be queued. Set to `true` when
+  you want the action to be queued, but executed as soon as possible. Set to a
+  UNIX timestamp (number) to schedule for a later time. If no queue is set up,
+  the action will be dispatched right away. More on this under
+  [the section on queues](#queue).
+- `queuedAt`: Timestamp for when the action was pushed to the queue (set by
+  Integreat).
+- `options`: Used for passing the processed service endpoint options object to
+  a transporter. The `options` object is available through mutations, so that
+  you may modify it futher before it goes to the transporter.
+- `authorized`: An internal flag signaling that the action has been authorized.
+  Will be removed from any dispatched actions.
 
 ### Action response
 
-> Editor's note: Expand on this this
+When you dispatch an action, you will get a response object back in this format:
 
-Retrieving from a service will return an Intgreat response object of the
-following format:
-
-```
+```javascript
 {
   status: <status code>,
-  data: <object>
-  error: <string>
+  data: <data from the service, usually mutated>,
+  error: <error message>,
+  warning: <warning message>,
+  access: <ident of the user>,
+  paging: <pagination objects>,
+  params: <key/value pairs>,
+  headers: <key/value pairs>,
+  responses: <array of sub-responses when relevant>,
+  meta: <meta object>
 }
 ```
 
-The `status` will be one of the following status codes:
+- `status`: The status of the action. Will be `ok` when everything went well,
+  see [list of status codes](#status-codes) below for more.
+- `data`: Any data returned from the service, usually modified by mutation
+  pipelines from your service and endpoint configuration, to an object or array
+  of [typed data](#typed-data). However, this is controlled by your service
+  mutations, so it's all in your hands.
+- `error`: All error statuses (i.e. not `ok` or `queued`) will return an error
+  message, some may include error messages from the service.
+- `warning`: When the action was successful, but there still was something you
+  should know, the warning message is where you'll get noticed. An example is
+  when you get an array of data items, but some of them was removed due to the
+  access of the ident on the action.
+- `paging`: For services and transporters that support
+  [pagination](#pagination), this object will hold information about how to get
+  the next or previous page, in a `next` or `prev` object. These objects are
+  essentially the payloads you need to dispatch (with the same action `type` and
+  meta), to get the next or previous page. If there is no next or previous page,
+  the corresponding prop will not be set on the `paging` object. When pagination
+  is not relevant or used, the `paging` object may be missing completely.
+- `params`: Integreat never sets this, but you may set it in your mutations to
+  provide parameters from a service that does not belong in the `data`.
+- `headers`: Integreat never sets this, but you may set it in your mutations to
+  provide header key/value pairs from a service. Typically used when this is a
+  response to an incoming request that support headers, like HTTP do.
+- `responses`: In some cases, an action will run several sub-actions, like
+  `SYNC` or `RUN`. The action handlers _may_ then provide an array of all the
+  sub-response objects here.
 
-- `ok`: Everything is well, data is returned as expected
-- `queued`: The action has been queued
-- `notfound`: Tried to access a resource/endpoint that does not exist
-- `noaction`: The action did nothing
-- `timeout`: The attempt to perform the action timed out
-- `autherror`: An authentication request failed
-- `noaccess`: Authentication is required or the provided auth is not enough
-- `badrequest`: Request data is not as expected
-- `badresponse`: Response data is not as expected
-- `error`: Any other error
-
-On `ok` status, the retrieved data will be set on the `data` property. This will
-often be [typed data](#typed-data), meaning it has been cast to a schema, or an
-array of typed data. However, this is controlled by your service mutations, so
-it's all in your hands.
-
+> Editor's note: Do we return access in responses?
+> Editor's note: Do we return meta in responses?
 > Editor's note: Is it correct that queues return the id in the data?
 
 When the status is `queued`, the id of the queued action may found in
 `response.data.id`. This is the id assigned by the queue, and not necessarily
 the same as `action.meta.id`.
 
-In case of any other status than `ok` or `queued`, there will be an `error`
-property with an error message, usually returned from the adapter. Any data
-returned from the service will still be provided and mutated on the `data` prop.
+### Status codes
+
+The `status` or the action response will be one of the following status codes:
+
+- `ok`: Everything is well, data is returned as expected
+- `queued`: The action has been queued. This is regarded as a success status
+- `noaction`: The action did nothing, e.g. when a `SYNC` action has no data to
+  sync
+- `notfound`: Tried to get or modify a resource that does not exist
+- `timeout`: The attempt to perform the action timed out
+- `autherror`: An authentication request failed
+- `noaccess`: Authentication is required or the provided auth is not enough
+- `badrequest`: Request data is not as expected
+- `badresponse`: Response data is not as expected
+- `error`: Any other error
 
 ### Typed data
 
@@ -870,50 +1113,12 @@ When you cast data with a schema, the data will be in the following format:
   more data is provided, Integreat will cast it to the target schema and provide
   the entire data object, or array of objects, with the relevant `$type`.
 
---- Revised to this point. The following is outdated ---
-
-### Configuring metadata
-
-If a service may send and receive metadata, set the `meta` property to the id of
-a schema defining the metadata as its shape.
-
-```
-{
-  id: 'meta',
-  service: <id of service handling the metadata>,
-  shape: {
-    <metadataKey>: {
-      type: <string>
-    }
-  }
-}
-```
-
-The `service` property on the type defines the service that holds metadata for
-this type. In some cases the service you're defining metadata for and the
-service handling these metadata, will be the same, but it is possible to let a
-service handle other services' metadata. If you're getting data from a read-only
-service, but need to, for instance, set the `lastSyncedAt` metadata for this
-store, you'll set up a service as a store for this (the store may also hold
-other types of data). Then the read-only store will be defined with
-`meta='meta'`, and the `meta` schema will have `service='store'`.
-
-> Editor's note: This is not easy to understand, and the following is wrong. :S
-
-As with other data received and sent to services, make sure to include endpoints
-for the service that will hold the metadata, matching the `GET_META` and
-`SET_META` actions, or the schema defining the metadata. The way you set up
-these endpoints will depend on your service.
-
-Finally, if a service will not have metadata, simply set `meta` to null or skip
-it all together.
-
-## Idents and security rules
+### Idents
 
 An ident in Integreat is basically an id unique to one participant in the
-security scheme. It is represented by an object, that may also have other
-properties to describe the ident's permissions, or to make it possible to map
-identities in other systems, to an Integreat ident.
+security scheme. It is represented by an object that may also have other
+properties to describe the ident's permissions, or to make it possible to match
+to identities in other services.
 
 Example ident:
 
@@ -925,21 +1130,20 @@ Example ident:
 }
 ```
 
-The actual value of the `id` is irrelevant to Integreat, as long as it is a
-string with A-Z, a-z, 0-9, \_, and -, and it's unique within one Integreat
-configuration. This means that mapped values from services may be used as ident
-ids, but make sure the id is unique.
-
-`tokens` are other values that may identify this ident. E.g., an api that uses
-Twitter OAuth to identify it's users, may provide the `'twitter|23456'` token in
-the example above, which will be replaced with this ident when it enters
-Integreat.
-
-`roles` are an example of how idents are given permissions. The roles are
-custom defined per setup, and may be mapped to roles from other systems. When
-setting the auth rules for a service, roles may be used to require that
-the request to get data of this schema, an ident with the role `admin` must
-be provided.
+- `id`: A unique string identifying the ident. The actual value is irrelevant to
+  Integreat, as long as it is a string with A-Z, a-z, 0-9, \_, and -, and it's
+  unique within one Integreat configuration. This means that mapped values from
+  services may be used as ident ids, as long as they are unique among these
+  services.
+- `tokens`: A list of values that may identify this ident in other services. For
+  example, an api that uses Twitter OAuth to identify its users, may provide
+  the `'twitter|23456'` token in the example above, which will be replaced with
+  this ident when it enters Integreat.
+- `roles`: A list of roles or permissions given to this ident. The roles are
+  custom defined per setup, and may be mapped to roles from other systems. When
+  setting the auth rules for a schema, you specify required rules so that to get
+  data cast in this schema, an ident with e.g. the role `admin` must be
+  provided.
 
 Actions are authenticated by setting an ident on the `meta.ident` property. It's
 up to the code dispatching an action to get hold of the properties of an ident
@@ -948,118 +1152,77 @@ assume this is accurate information and uphold its part of the security
 agreement and only return data and execute actions that the ident have
 permissions for.
 
-### Persisting idents
+Note that it's possible to set up
+[the `completeIdent` middleware](#completeIdent-middleware) for combining
+information from the authenticator with user information held e.g. in a
+database.
 
-A security scheme with no way of storing the permissions given to each ident,
-is of little value. (The only case where this would suffice, is when every
-relevant service provided the same ident id, and authorization where done on the
-ident id only.)
-
-Integreat uses schemas and services to store idents. In the definition object
-passed to `Integreat.create()`, set the id of the schema to use with idents, on
-`ident.schema`.
-
-In addition, you may define what fields will match the different props on an
-ident:
-
-```javascript
-{
-  ...,
-  ident: {
-    type: 'account',
-    props: {
-      id: 'id',
-      roles: 'groups',
-      tokens: 'tokens'
-    }
-  }
-}
-```
-
-When the prop and the field has the same name, it may be omitted, though it
-doesn't hurt to specify it anyway for clarity. The service still have the
-final word, as any field that is not defined on the schema, will not survive
-casting.
-
-Note that in the example above, the `id` of the data will be used as the ident
-`id`. When the id is not suited for this, you will need another field on the
-schema that may act as the ident id. In cases where you need to transform the
-id from the data in some way, this must be set up as a separate field and the
-mutation will dictate how to transform it. In most cases, the `id` will do,
-though.
-
-The `service` specified on the schema, will be where the ident are stored,
-although that's not a precise way of putting it. The ident is never stored, but
-a data item of the specified schema is. The point is just that the ident
-system will get the relevant data item and get the relevant fields from it. In
-the same way, when storing an ident, a data item of the specified type is
-updated with props from the ident – and then sent to the service.
-
-For some setups, this requires certain endpoints to be defined on the service.
-To match a token with an ident, the service must have an endpoint that matches
-actions like this:
-
-```javascript
-{
-  type: 'GET',
-  payload: {
-    type: 'account',
-    tokens: 'twitter|23456'
-  }
-}
-```
-
-In this case, `account` is the schema mapped to idents, and the `tokens`
-property on the ident is mapped to the `tokens` field on the schema.
-
-To make Integreat complete idents on actions with the persisted data, set it up
-with the `completeIdent` middleware:
-
-```javascript
-const great = Integreat.create(defs, resources, [
-  integreat.middleware.completeIdent,
-])
-```
-
-This middleware will intercept any action with `meta.ident` and replace it with
-the ident item loaded from the designated schema. If the ident has an `id`,
-the ident with this id is loaded, otherwise a `withToken` is used to load the
-ident with the specified token. If no ident is found, the original ident is
-kept.
-
-### Available actions
+### Available action handlers
 
 #### `GET`
 
-Get data from a service. The data is set on the `data` property of the response
-object, and may be mutated any way you like. It is recomended, though, that
-data from a service is mutated and cast into schemas.
+Get data from a service. You receive the data on the `data` property, after it
+has been run through your service and endpoint mutations.
 
-Example GET action:
+Example GET action to a collection of data items:
 
 ```javascript
 {
   type: 'GET',
-  payload: {
-    type: 'entry'
-  }
+  payload: { type: 'article' }
 }
 ```
 
-In the example above, the service is inferred from the payload `type` property.
-Override this by supplying the id of a service as a `service` property.
-
 By providing an `id` property on `payload`, the item with the given id and type
-is fetched, if it exists.
+is fetched, if it exists:
 
-The endpoint will be picked according to the matching properties, unless an
-endpoint id is supplied as an `endpoint` property of `payload`.
+```javascript
+{
+  type: 'GET',
+  payload: { type: 'article', id: '12345' }
+}
+```
+
+See [the section on payload properties](#payload-properties) for more properties
+that may be used with the `GET` action.
+
+#### `GET_ALL`
+
+Will run as many `GET` actions as needed to the get all available pages of data.
+
+The action ...
+
+```javascript
+{
+  type: 'GET_ALL',
+  payload: { type: 'article', pageSize: 500 }
+}
+```
+
+... will dispatch the following action is sequence:
+
+```javascript
+{
+  type: 'GET',
+  payload: { type: 'article', pageSize: 500 }
+}
+```
+
+```javascript
+{
+  type: 'GET',
+  payload: { type: 'article', pageSize: 500, pageOffset: 500 }
+}
+```
+
+... and so on, until we get no more data.
+
+See [the section on pagination](#pagination) for more on the paging properties.
 
 #### `GET_META`
 
-Get metadata for a service.
-
-> Editor's note: Explain how to set this up.
+Get metadata for a service. See
+[the section on metadata](#configuring-service-metadata) for how to set this up.
 
 The `data` of the response from this aciton contains the `service` (the service
 id) and `meta` object with the metadata set as properties.
@@ -1095,20 +1258,16 @@ If the action has no `keys`, all metadata set on the service will be retrieved.
 The `keys` property may be an array of keys to retrieve several in one request,
 or a single key.
 
-Note that the service must be set up to handle metadata. See
-[Configuring metadata](#configuring-metadata) for more.
-
 #### `SET`
 
 Send data to a service. The data to send is provided in the payload `data`
 property. Recomended practice is to provide the data as
-[Integreat's typed data format](#the-data-format) (cast to a schema), and let
-mutations on the endpoint change it to the format the service expects.
+[typed data](#typed-data), i.e. data objects cast to a schema, and let
+mutations on the service endpoint modify it to the format the service expects.
 
-> Editor's note: Make sure this match the code:
-
-If the service responds to the action with data, it is provided on
-`response.data` and may be mutated as you like, just as for a `GET`.
+Any data coming back from the service, will be provided on `response.data` and
+may be mutated through service endpoint mutations, just as for [`GET`](#get)
+actions.
 
 Example `SET` action:
 
@@ -1116,29 +1275,24 @@ Example `SET` action:
 {
   type: 'SET',
   payload: {
-    type: 'entry',
+    type: 'article',
     data: [
-      { id: 'ent1', $type: 'entry' },
-      { id: 'ent5', $type: 'entry' }
+      { id: '12345', $type: 'article', title: 'First article' },
+      { id: '12346', $type: 'article', title: 'Second article' }
     ]
   }
 }
 ```
 
-In the example above, the `type` is used to infer the service to send the data
-to. You may also provide `service` to make this specific.
-
-The endpoint will be picked according to the matching properties, unless an
-endpoint id is supplied as an `endpointId` property of `payload`.
-
 #### `SET_META`
 
-Set metadata on a service. Returned in the `data` property is whatever the
-adapter returns. Normal endpoint matching is used, but it's common practice to
-set up an endpoint matching the `SET_META` action.
+Set metadata on a service. The payload should contain the `service` to get
+metadata for (the service id), and a `meta` object, with all metadata to set as
+properties.
 
-The payload should contain the `service` to get metadata for (the service id),
-and a `meta` object, with all metadata to set as properties.
+Any data coming back from the service, will be provided on `response.data` and
+may be mutated through service endpoint mutations, just as for [`GET`](#get)
+actions.
 
 Example `SET_META` action:
 
@@ -1155,17 +1309,18 @@ Example `SET_META` action:
 ```
 
 Note that the service must be set up to handle metadata. See
-[Configuring metadata](#configuring-metadata) for more.
+[Configuring metadata](#configuring-service-metadata) for more.
 
 #### `DELETE` / `DEL`
 
-Delete data for several items from a service. Returned in the `data` property is
-whatever the adapter returns.
+Delete one or more items from a service. Set the data for the items to delete,
+in the payload `data` property as an array of [typed data](#typed-data).
+In most cases, you only need to provide the `id` and the `$type`, but the way
+you set up the service may require more properties.
 
-The data for the items to delete, is provided in the payload `data` property,
-and must given as an array of typed data objects in
-[Integreat's data format](#the-data-format), but usually the only field you need
-will be the `id`.
+Any data coming back from the service, will be provided on `response.data` and
+may be mutated through service endpoint mutations, just as for [`GET`](#get)
+actions.
 
 Example `DELETE` action:
 
@@ -1173,19 +1328,16 @@ Example `DELETE` action:
 {
   type: 'DELETE',
   payload: {
-    type: 'entry',
+    type: 'article',
     data: [
-      { id: 'ent1', $type: 'entry' },
-      { id: 'ent5', $type: 'entry' }
+      { id: '12345', $type: 'article' },
+      { id: '12346', $type: 'article' }
     ]
   }
 }
 ```
 
-In the example above, a `type` is used to infer the service, but `service` may
-also be specified in the payload.
-
-Example `DELETE` action for one item:
+You may also `DELETE` one item like this:
 
 ```javascript
 {
@@ -1197,93 +1349,129 @@ Example `DELETE` action for one item:
 }
 ```
 
-The endpoint will be picked according to the matching properties, unless an
-endpoint id is supplied as an `endpointId` property of `payload`.
-
-The method used for the request defaults to `POST` when `data` is set, and
-`DELETE` for the `id` and `type` option, but may be overridden on the endpoint.
-
 `DEL` is a shorthand for `DELETE`.
+
+#### `RUN`
+
+The `RUN` action will run jobs provided to `Integreat.create()` in the jobs
+definitions. These jobs will then run other actions or series of action, also
+called "flows".
+
+Only one payload property is required – the `jobId`, which refers to a job in
+the jobs definitions. Any other properties on the payload will be passed on as
+input to the job.
+
+An action for running the `archiveOutdated` job:
+
+```javascript
+{
+  type: 'RUN',
+  payload: { jobId: 'archiveOutdated' }
+}
+```
+
+See [the section on jobs](#jobs) for more on how to configure jobs.
 
 #### `SYNC`
 
-> Editor's note: This sections need an update.
-
-The `SYNC` action will retrieve items from one service and set them on another.
+The `SYNC` action will `GET` items from one service and `SET` them on another.
 There are different options for how to retrieve items, ranging from a crude
 retrieval of all items on every sync, to a more fine grained approach where only
-items that have been updated since last sync, will be synced.
+items that have been updated or created since last sync, will be synced.
 
 The simplest action definition would look like this, where all items would be
 retrieved from the service and set on the target:
 
-```
+```javascript
 {
   type: 'SYNC',
   payload: {
-    from: <serviceId | params>,
-    to: <serviceId | params>,
-    type: <itemType>,
-    retrieve: 'all'
+    type: <item type>,
+    retrieve: 'all',
+    from: <service id | payload>,
+    to: <service id | payload>
   }
 }
 ```
 
-The action will dispatch a 'GET' action right away, and then immediately
+The action will dispatch a `GET` action right away, and then immediately
 dispatch a `SET_META` action to update the `lastSyncedAt` date on the service.
-The actions to update the target is added to the queue.
+The `SET` actions to update the target service is added to the queue if one is
+configured.
 
 To retrieve only new items, change the `retrieve` property to `updated`. In
-this case, the action will get the `lastSyncedAt` from the `from` service, and
-get only newer items, by passing it the `updatedAfter` param. The action will
-also filter out older items, in case the service does not support `updatedAfter`.
+this case, the action will dispatch `GET_META` to get the `lastSyncedAt` from
+the `from` service, and get only newer items, by passing it the `updatedAfter`
+param. The action will also filter out older items, in case the service does not
+support `updatedAfter`.
+
+By setting `retrieve` to `created`, you accomplish the same, but with
+`createdAfter`.
 
 If you need to include more params in the actions to get from the `from` service
 or set to the `to` service, you may provide a params object for the `from` or
-`to` props, with the service id set as a `service` param.
+`to` props, with the service id set as a `service` param. You may also provide
+different action types than `GET` and `SET`, by setting the `action` prop on
+the `from` or `to` objects respectively.
+
+> There are more options than these, and the documentation will be updated to
+> include them later.
 
 #### `EXPIRE`
 
-With an endpoint for getting expired items, the `EXPIRE` action will fetch
-these and delete them from the service. The endpoint may include param for the
-current time, either as microseconds since Januar 1, 1970 UTC with param
-`{timestamp}` or as the current time in the extended ISO 8601 format
-(`YYYY-MM-DDThh:mm:ss.sssZ`) with the `{isodate}` param. To get a time in the
-future instead, set `msFromNow` to a positive number of milliseconds to add
-to the current time, or set `msFromNow` to a negative number to a time in the
-past.
+> Note: This action will change before we reach v1.0.
 
-Here's a typical action definition:
+The `EXPIRE` action will `GET` expired data items from a service, and the then
+`DELETE` them.
 
-```
+Here's an example of an `EXPIRE` action:
+
+```javascript
 {
   type: 'EXPIRE',
   payload: {
     service: 'store',
     type: 'entry',
-    endpointId: 'getExpired',
+    endpoint: 'getExpired',
     msFromNow: 0
   }
 }
 ```
 
-This will get and map items of type `entry` from the `getExpired` endpoint on
-the service `store`, and delete them from the same service. Only an endpoint
-specified with an id is allowed, as the consequence of delete all items received
-from the wrong endpoint could be quite severe.
+The `endpoint` property is required for this action, and needs to specify a
+service endpoint used to fetch expired items. The action dispatched to this
+endpoint will have a `timestamp` property with the current time as microseconds
+since epoc (Januar 1, 1970 UTC), and `isodate` as the current time in the
+extended ISO 8601 format(`YYYY-MM-DDThh:mm:ss.sssZ`).
 
-Example endpoint uri template for `getExpired` (from a CouchDB service):
+To have `timestamp` and `isodate` be a time in the future instead, set
+`msFromNow` to a positive number of milliseconds. This will be added to the
+current time. To have a time in the past, use a negative number for `msFromNow`.
+
+#### `SERVICE`
+
+A `SERVICE` action will be sent directly to the specified service without any
+intervention by Integreat. This allows for running specialized actions on the
+service that goes beyond what Integreat supports. It's up to each transporter to
+support such actions, describe what they'll do, and define their payload
+properties.
+
+An example of an action that will tell a
+[Bull](https://github.com/integreat-io/integreat-transporter-bull) queue to
+clean out all completed jobs more than a week old:
 
 ```javascript
 {
-  uri: '/_design/fns/_view/expired?include_docs=true&endkey={timestamp}',
-  path: 'rows[].doc'
+  type: 'SERVICE',
+  payload: {
+    type: 'cleanCompleted',
+    targetService: 'bullService',
+    olderThanMs: 604800000
+  }
 }
 ```
 
-### Custom actions
-
-> Editor's note: Update.
+### Write your own action handlers
 
 You may write your own action handlers to handle dispatched actions just like
 the built-in types.
@@ -1291,171 +1479,249 @@ the built-in types.
 Action handler signature:
 
 ```javascript
-function (payload, { dispatch, services, schemas, getService }) { ... }
+async function (action, { dispatch, getService, setProgress, options }) { ... }
 ```
 
-An action handler may dispatch new actions with the `dispatch()` method. These
-will be passed through the middleware chain just like any other action, so it's
-for instance possible to queue actions from an action handler by setting
-`action.meta.queue = true`.
+- `action`: This is the dispatched action after it has been modified a bit
+  by the `dispatch()` method and possible after running an incoming mutation on
+  it. The modifications include cleaning up alias fields (e.g. `service` will be
+  set as `targetService`), removing sensitive or forbidden fields, and setting a
+  few default or internal fields (like the `dispatchedAt` meta).
+- `dispatch`: From the handler, you may dispatch your own sub actions to the
+  provided `dispatch()` method. Note that this is an "internal dispatch method",
+  so it will return an action with the `response` object on it, instead of just
+  the `response` object. It's good practice to set the `cid` meta prop for the
+  actions you dispatch, to the `cid` meta prop on the `action` you're handling.
+  You should also use the same `ident` unless you have very good reasons to do
+  otherwise, to make sure you don't create security holes.
+- `getService`: This is a convenience method that will return the relevant
+  service object when you provide it with a type and optional a service id. With
+  a service id, you'll get the service with that id, with only the type, you'll
+  get the default service for that type. E.g.: `getService('article')`.
+- `setProgress`: For long running tasks, you may want to set the progress along
+  the way. Progress is specified as a number between `0` and `1`, e.g.
+  `setProgress(.5)` to signal that you're halfway through. When the your handler
+  is finished, the progress will automatically be set to `1`. This may be used
+  by queue implementations etc., to give progress feedback to users and to know
+  the action has not gone stale.
+- `options`: This is an object with a few settings: `queueService` is the id of
+  the service set up as the default queue, and `identConfig` is the config
+  object used for mapping ident schemas to ids, roles, and tokens (see
+  [the `completeIdent` middleware](#completeIdent-middleware)).
 
-The `services` and `schemas` arguments provide all services and schemas set on
-objects with their ids as keys.
+Your action handler must return the `action` it received with a `response`
+object set on it. If your handler just relays to another action handler, it may
+reuse the `response` from that handler, but in many cases it will be more
+correct to generate your own response, possibly based on what the actions you
+dispatch returns.
 
-Finally, `getService()` is a convenience method that will return the relevant
-service object when you provide it with a type. An optional second argument may
-be set to a service id, in which case the service object with this id will be
-returned.
-
-Custom actions are supplied to an Integreat instance on setup, by providing an
-object with the key set to the action type your handler will be responsible for,
-and the handler function as the value.
+You provide your custom actions to Integreat on setup, by providing an object
+with the key set to the action type your handler will be responsible for, and
+the handler function as the value:
 
 ```javascript
 const actions = {
-  `MYACTION`: function (payload, {dispatch}) { ... }
+  `MY_ACTION`: async function myAction (action, { dispatch }) { ... }
 }
 const great = Integreat.create(defs, { schemas, services, mappings, actions })
 ```
 
-Note that if a custom action handler is added with an action type that is
-already use by one of Integreat's built-in action handlers, the custom handler
+Note that if you set up your custom action handler with an action type that is
+already used by one of Integreat's built-in action handlers, the custom handler
 will have precedence. So be careful when you choose an action type, if your
 intention is not to replace an existing action handler.
 
-## Transformers
+## Queues
 
-## Service authentication
+As everything else in Integreat, a queue is also a service. You configure a
+queue service, e.g.
+[`integreat-transporter-bull`](https://github.com/integreat-io/integreat-transporter-bull),
+and set its service id on the `queueService` property of the definition object
+you give to `Integreat.create()`:
 
-This definition format is used to authenticate with a service:
+```javascript
+import bullQueue from `integreat-transporter-bull`
 
-```
-{
-  id: <id>,
-  authenticator: <authenticator id>,
-  options: {
-    ...
+const services = [
+  {
+    id: 'queue',
+    transporter: 'bull',
+    // ...
   }
+]
+const transporters = {
+  bull: bullQueue
 }
+
+const great = Integreat.create(
+  { services, queueService: 'queue' },
+  { transporters }
+)
 ```
 
-At runtime, the specified authenticator is used to authenticate requests. The
-authenticator is given the `options` payload.
+To queue an action instead of dispatching it right away, you set `queue: true`
+on the `meta` object. If everything is set up correctly, Integreat will push the
+action to the queue. When the action is later pulled from the queue, it will be
+dispatched again, but without the `queue` property.
 
-### Schedule definition
+You may also set the meta `queue` property to a Unix timestamp, and if the queue
+transporter supports it, it will be run at this time instead of being processed
+as soon as it is next in line in the queue.
 
-> Editor's note: Update to reflect the `jobs` format.
+When a queue is not set up, a dispatched action with `queue: true` will just be
+run right away as a normal action.
 
+Note that you may also use queues directly, by dispatching to it as a server
+and getting incoming actions from its `listen()` method. In that case, it's
+just as any other service with no need for any special handling.
+
+## Middleware
+
+Integreat supports middleware, and there are two different middleware
+"pipelines":
+
+- The first one is run on dispatched actions. The action goes through the
+  middleware before the action handler takes over, but after the incoming
+  mutations have been run. Because of this, given that you have set up the
+  services with mutation and casting to schemas, you should always be dealing
+  with [typed data](#typed-data) in the middleware.
+- The action then passes through a second middleware "pipeline" just before it
+  is sent to the service. This happens _after_ all mutations have been run, so
+  you will be dealing with the data as it is sent to the service. Incoming
+  actions from a service also pass through this middleware on the way in,
+  _before_ it is mutated, giving you access to the data as it comes from the
+  service.
+
+To set up a logger of what we recieve from and send to a service, you'll use the
+second middleware "pipeline", while a logger of dispatched actions would be
+placed in the first.
+
+When actions pass through middleware, they may modifiy the actions as
+appropriate, and you will have middleware that modifies (e.g. the
+[`completeIdent` middleware](#completeident-middleware)), and others that just
+monitors what's coming through (e.g. a logger).
+
+Middelware is passed to Integreat like this:
+
+```javascript
+const great = Integreat.create(
+  defs,
+  resources,
+  [
+    // Dispatch middleware
+  ],
+  [
+    // Service middleware
+  ]
+)
 ```
-{
-  schedule: <schedule>,
-  action: <action definition>,
-}
+
+### `completeIdent` middleware
+
+If your access rules are based only on the information received from an
+authenticator, you don't need the following. You will always get an id and
+potentially some other fields, like roles.
+
+But when you need to match the ident id from the authenticator with user
+information held somewhere else, e.g. in a database, you need to configure a
+user schema and set up a service to fetch this information.
+
+Integreat uses schemas and services to store idents. In the definition object
+passed to `Integreat.create()`, you may provide an `identConfig` property with
+a definition object looking something like this:
+
+```javascript
+const great = Integreat.create(
+  {
+    // ...,
+    identConfig: {
+      type: 'user',
+      props: {
+        id: 'id',
+        roles: 'groups',
+        tokens: 'tokens',
+      },
+    },
+  },
+  {
+    // ...
+  }
+)
 ```
 
-The `schedule` format is directly borrowed from
-[Later](http://bunkat.github.io/later/schedules.html) (also accepts the basic or
-composite schedule formats on the `schedule` property, as well as the [text
-format](http://bunkat.github.io/later/parsers.html#text)).
+- `type`: This is the id of the schema used for getting ident data. This schema
+  needs to have a `service` specified.
+- `props`: You may provide alternative field names for the `id`, `roles`, and
+  `tokens` for an ident in the schema specified on `type`. When the prop and the
+  field has the same name, it may be omitted, though it doesn't hurt to specif
+  it anyway for clarity.
 
-The following time periods are supported:
+Note that in the example above, the `id` of the data will be used as the ident
+`id`. When the id is not suited for this, you will need another field on the
+schema that may act as the ident id. In cases where you need to transform the
+id from the data in some way, this must be set up as a separate field and the
+mutation will dictate how to transform it. In most cases, the `id` will do,
+though.
 
-- `s`: Seconds in a minute (0-59)
-- `m`: Minutes in an hour (0-59)
-- `h`: Hours in a day (0-23)
-- `t`: Time of the day, as seconds since midnight (0-86399)
-- `D`: Days of the month (1-maximum number of days in the month, 0 to specifies
-  last day of month)
-- `d`: Days of the week (1-7, starting with Sunday)
-- `dc`: Days of week count, (1-maximum weeks of the month, 0 specifies last in
-  the month). Use together with `d` to get first Wednesday every month, etc.
-- `dy`: Days of year (1 to maximum number of days in the year, 0
-  specifies last day of year).
-- `wm`: Weeks of the month (1-maximum number of weeks in the month, 0 for last
-  week of the month.). First week of the month is the week containing the 1st, and
-  weeks start on Sunday.
-- `wy`: [ISO weeks of the year](http://en.wikipedia.org/wiki/ISO_week_date)
-  (1-maximum number of ISO weeks in the year, 0 is the last ISO week of the year).
-- `M`: Months of the year (1-12)
-- `Y`: Years (1970-2099)
-
-See Later's documentation on
-[time periods](http://bunkat.github.io/later/time-periods.html) for more.
-
-Example schedule running an action at 2 am every weekday:
+For some setups, this requires certain endpoints to be defined on the service.
+To match a token with an ident, the service must have an endpoint that matches
+actions like this:
 
 ```javascript
 {
-  schedule: {d: [2,3,4,5,6], h: [2]},
-  action: {
-    type: 'SYNC',
-    payload: {
-      from: 'src1',
-      to: 'src2',
-      type: 'entry'
-    }
+  type: 'GET',
+  payload: {
+    type: 'user',
+    tokens: 'twitter|23456'
   }
 }
 ```
 
-To run an action every hour, use `{m: [0]}` or simply `'every hour'`.
+In this case, `user` is the schema mapped to idents, and the `tokens`
+property on the ident is mapped to the `tokens` field on the schema.
+
+To make Integreat complete idents on actions with the persisted data, set it up
+with the `completeIdent` middleware:
+
+```javascript
+const great = Integreat.create(defs, resources, [
+  Integreat.middleware.completeIdent,
+])
+```
+
+This middleware will intercept any action with `meta.ident` and replace it with
+the ident item loaded from the designated schema. If the ident has an `id`,
+the ident with this id is loaded, otherwise a `withToken` is used to load the
+ident with the specified token. If no ident is found, the original ident is
+kept.
 
 ## Writing middleware
 
 You may write middleware to intercept dispatched actions. This may be useful
-for logging, debugging, and features like action replay. Also, Integreat's
-queue feature is written as a middleware.
+for logging, debugging, and situations where you need to make adjustments to
+certain actions.
 
 A middleware is a function that accepts a `next()` function as only argument,
 and returns an async function that will be called with the action on dispatch.
 The returned function is expected to call `next()` with the action, and return
 the result from the `next()` function, but is not required to do so. The only
-requirement is that the functions returns a valid Integreat response object.
+requirement is that the functions returns a valid Integreat action object,
+most likely with a `response` object on it.
 
 Example implementation of a very simple logger middleware:
 
 ```javascript
 const logger = (next) => async (action) => {
   console.log('Dispatch was called with action', action)
-  const response = await next(action)
-  console.log('Dispatch completed with response', response)
-  return response
+  const responseAction = await next(action)
+  console.log('Dispatch completed with response', responseAction.response)
+  return responseAction
 }
 ```
-
-> Editor's note: Update to describe how one gets a dispatch action, and the
-> handler action format.
-
-## Queue
-
-> Editor's note: Rewrite.
-
-Integreat comes with a generic queue interface at `integreat.queue`, that must
-be setup with a specific queue implementation, for instance
-[`integreat-queue-redis`](https://github.com/integreat-io/integreat-queue-redis).
-
-The queue interface is a middleware, that will intercept any dispatched action
-with `action.meta.queue` set to `true` or a timestamp, and direct it to the
-queue. When the action is later pulled from the queue, it will be dispatched
-again, but without the `action.meta.queue` property.
-
-If a dispatched action has a schedule definition at `action.meta.schedule`, it
-will be queued for the next timestamp defined by the schedule.
-
-To setup Integreat with a queue:
-
-```javascript
-const queue = Integreat.queue(redisQueue(options))
-const great = Integreat.create(defs, resources, [queue.middleware])
-queue.setDispatch(great.dispatch)
-```
-
-`queue.middleware` is the middleware, while `queue.setDispatch` must be called
-to tell the queue interface where to dispatch actions pulled from the queue.
 
 ## Debugging
 
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.
 
-Some sub modules sends debug messages with the `great:` prefix, so use
-`DEBUG=great,great:*` to catch these as well.
+Some sub modules sends debug messages with the `integreat:` prefix, so use
+`DEBUG=great,integreat:*` to catch these as well.
