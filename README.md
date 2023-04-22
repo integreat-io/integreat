@@ -1591,9 +1591,12 @@ as soon as it is next in line in the queue.
 When a queue is not set up, a dispatched action with `queue: true` will just be
 run right away as a normal action.
 
-Note that you may also use queues directly, by dispatching to it as a server
-and getting incoming actions from its `listen()` method. In that case, it's
-just as any other service with no need for any special handling.
+You may also use queues directly, by dispatching to it as a server and getting
+incoming actions from its `listen()` method. In that case, it's just as any
+other service with no need for any special handling.
+
+> Queueing actions are actually done through an action handler, but this handler
+> is not available from outside Integreat.
 
 ## Middleware
 

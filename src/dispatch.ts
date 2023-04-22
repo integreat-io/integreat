@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import pProgress from 'p-progress'
 import debugLib from 'debug'
+import { QUEUE_SYMBOL } from './handlers/index.js'
 import setupGetService from './utils/getService.js'
 import { setErrorOnAction, setResponseOnAction } from './utils/action.js'
 import type {
@@ -31,8 +32,8 @@ const shouldQueue = (action: Action, options: HandlerOptions) =>
   action.meta?.queue === true && !!options.queueService
 
 function getActionHandlerFromType(
-  type: string | undefined,
-  handlers: Record<string, ActionHandler>
+  type: string | symbol | undefined,
+  handlers: Record<string | symbol, ActionHandler>
 ) {
   if (type) {
     // eslint-disable-next-line security/detect-object-injection
@@ -151,7 +152,7 @@ const prepareAction = ({
 })
 
 async function handleAction(
-  handlerType: string,
+  handlerType: string | symbol,
   action: Action,
   resources: ActionHandlerResources,
   handlers: Record<string, ActionHandler>
@@ -161,7 +162,7 @@ async function handleAction(
   if (!handler) {
     return setErrorOnAction(
       action,
-      `No handler for ${handlerType} action`,
+      `No handler for ${String(handlerType)} action`,
       'badrequest'
     )
   }
@@ -194,12 +195,6 @@ export default function createDispatch({
     pProgress<Action>(async (setProgress) => {
       debug('Dispatch: %o', action)
 
-      // Refuse attempt to dispatch a QUEUE action, as it would never stop being
-      // sent to queue.
-      if (action.type === 'QUEUE') {
-        return setErrorOnAction(action, 'No handler for QUEUE action')
-      }
-
       const nextAction = prepareAction(action)
       const resources: ActionHandlerResources = {
         dispatch: internalDispatch,
@@ -213,7 +208,7 @@ export default function createDispatch({
           // Use queue handler if queue flag is set and there is a queue
           // service. Bypass middleware
           const response = await handleAction(
-            'QUEUE',
+            QUEUE_SYMBOL,
             nextAction,
             resources,
             handlers

@@ -1,6 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import createService from './service/index.js'
+import { QUEUE_SYMBOL } from './handlers/index.js'
 import type {
   Action,
   Middleware,
@@ -40,7 +41,7 @@ test('should route to relevant action handler', async (t) => {
   t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
 })
 
-test('should route action with queue flag to QUEUE handler', async (t) => {
+test('should route action with queue flag to queue handler', async (t) => {
   const options = { queueService: 'queue' }
   const action = {
     type: 'SET',
@@ -51,27 +52,29 @@ test('should route action with queue flag to QUEUE handler', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, queue: true },
   }
+  const setHandler = sinon.stub().resolves({
+    ...action,
+    response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+  })
+  const queueHandler = sinon.stub().resolves({
+    ...action,
+    response: { status: 'queued' },
+  })
   const handlers = {
-    SET: sinon.stub().resolves({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
-    }),
-    QUEUE: sinon.stub().resolves({
-      ...action,
-      response: { status: 'queued' },
-    }),
+    SET: setHandler,
+    [QUEUE_SYMBOL]: queueHandler,
   }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
 
   t.is(ret.status, 'queued')
-  t.is(handlers.SET.callCount, 0)
-  t.is(handlers.QUEUE.callCount, 1)
-  const handlerAction = handlers.QUEUE.args[0][0]
+  t.is(setHandler.callCount, 0)
+  t.is(queueHandler.callCount, 1)
+  const handlerAction = queueHandler.args[0][0]
   t.falsy(handlerAction.meta?.queue)
 })
 
-test('should not route to QUEUE handler when no queue service', async (t) => {
+test('should not route to queue handler when no queue service', async (t) => {
   const options = { queueService: undefined }
   const action = {
     type: 'SET',
@@ -82,48 +85,26 @@ test('should not route to QUEUE handler when no queue service', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, queue: true },
   }
+  const setHandler = sinon.stub().resolves({
+    ...action,
+    response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+  })
+  const queueHandler = sinon.stub().resolves({
+    ...action,
+    response: { status: 'queued' },
+  })
   const handlers = {
-    SET: sinon.stub().resolves({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
-    }),
-    QUEUE: sinon.stub().resolves({
-      ...action,
-      response: { status: 'queued' },
-    }),
+    SET: setHandler,
+    [QUEUE_SYMBOL]: queueHandler,
   }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
 
   t.is(ret.status, 'ok')
-  t.is(handlers.QUEUE.callCount, 0)
-  t.is(handlers.SET.callCount, 1)
-  const handlerAction = handlers.SET.args[0][0]
+  t.is(queueHandler.callCount, 0)
+  t.is(setHandler.callCount, 1)
+  const handlerAction = setHandler.args[0][0]
   t.falsy(handlerAction.meta?.queue)
-})
-
-test('should not allow QUEUE when set as an action type', async (t) => {
-  const options = { queueService: 'queue' }
-  const action = {
-    type: 'QUEUE',
-    payload: {
-      id: 'ent1',
-      type: 'entry',
-      targetService: 'entries',
-    },
-    meta: { ident: { id: 'johnf' }, queue: true },
-  }
-  const handlers = {
-    QUEUE: sinon.stub().resolves({
-      ...action,
-      response: { status: 'queued' },
-    }),
-  }
-
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
-
-  t.is(ret.status, 'error')
-  t.is(handlers.QUEUE.callCount, 0)
 })
 
 test('should set dispatchedAt meta', async (t) => {

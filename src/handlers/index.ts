@@ -12,7 +12,9 @@ import QUEUE from './queue.js'
 import SERVICE from './service.js'
 import type { ActionHandler } from '../types.js'
 
-const handlers: Record<string, ActionHandler> = {
+export const QUEUE_SYMBOL = Symbol('<internal queue>')
+
+const handlers: Record<string | symbol, ActionHandler> = {
   GET,
   GET_ALL,
   GET_META,
@@ -24,7 +26,7 @@ const handlers: Record<string, ActionHandler> = {
   DEL: DELETE,
   SYNC,
   EXPIRE,
-  QUEUE,
+  [QUEUE_SYMBOL]: QUEUE,
   SERVICE,
 }
 
