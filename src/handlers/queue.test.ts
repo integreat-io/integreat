@@ -50,16 +50,54 @@ test('should send action to queue', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
   const expected = { ...action, response: { status: 'queued' } }
-  const expectedQueuedData = {
-    ...action,
-    meta: { ident: { id: 'johnf' }, authorized: true },
-  }
 
+  const before = Date.now()
   const ret = await queue(action, { ...handlerResources, getService, options })
+  const after = Date.now()
 
   t.deepEqual(ret, expected)
   t.is(send.callCount, 1)
-  t.deepEqual(send.args[0][0], expectedQueuedData)
+  const queuedAction = send.args[0][0]
+  t.is(queuedAction.type, 'SET')
+  t.deepEqual(queuedAction.payload, action.payload)
+  t.deepEqual(queuedAction.meta.ident, { id: 'johnf' })
+  t.true(queuedAction.meta.authorized)
+  t.is(typeof queuedAction.meta?.queuedAt, 'number')
+  t.true((queuedAction.meta?.queuedAt as number) >= before)
+  t.true((queuedAction.meta?.queuedAt as number) <= after)
+})
+
+test('should override present queuedAt', async (t) => {
+  const send = sinon.stub().resolves({ status: 'ok' })
+  const options = { queueService: 'queue' }
+  const queueTransporter = { ...baseTransporter, send }
+  const queueService = createService({ schemas, mapOptions })({
+    ...queueDefs,
+    transporter: queueTransporter,
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'queue' ? queueService : undefined
+  const actionWithQueuedAt = {
+    ...action,
+    meta: {
+      ...action.meta,
+      queuedAt: new Date('2022-12-01T18:43:11Z').getTime(),
+    },
+  }
+
+  const before = Date.now()
+  await queue(actionWithQueuedAt, {
+    ...handlerResources,
+    getService,
+    options,
+  })
+  const after = Date.now()
+
+  t.is(send.callCount, 1)
+  const queuedAction = send.args[0][0]
+  t.is(typeof queuedAction.meta?.queuedAt, 'number')
+  t.true((queuedAction.meta?.queuedAt as number) >= before)
+  t.true((queuedAction.meta?.queuedAt as number) <= after)
 })
 
 test('should return error from queue', async (t) => {

@@ -56,22 +56,24 @@ test('should send action to queue', async (t) => {
       },
     },
   }
-  const queuedAction = {
-    ...action,
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-      id: '11004',
-      cid: '11004',
-    },
-  }
 
   const great = Integreat.create(defsWithQueue, resourcesWithQueue)
+  const before = Date.now()
   const ret = await great.dispatch(action)
+  const after = Date.now()
 
   t.is(ret.status, 'queued', ret.error)
   t.is(send.callCount, 1)
-  t.deepEqual(send.args[0][0], queuedAction)
+  const queuedAction = send.args[0][0]
+  t.is(queuedAction.type, 'SET')
+  t.deepEqual(queuedAction.payload, action.payload)
+  t.deepEqual(queuedAction.meta.ident, { id: 'johnf' })
+  t.true(queuedAction.meta.authorized)
+  t.is(queuedAction.meta.id, '11004')
+  t.is(queuedAction.meta.cid, '11004')
+  t.is(typeof queuedAction.meta?.queuedAt, 'number')
+  t.true((queuedAction.meta?.queuedAt as number) >= before)
+  t.true((queuedAction.meta?.queuedAt as number) <= after)
 })
 
 test('should dispatch action as normal when queue service is unknown', async (t) => {

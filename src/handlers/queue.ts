@@ -1,9 +1,9 @@
 import { setResponseOnAction } from '../utils/action.js'
 import type { Action, ActionHandlerResources } from '../types.js'
 
-const authorizeAction = ({ meta, ...action }: Action) => ({
+const prepareQueuedAction = ({ meta, ...action }: Action) => ({
   ...action,
-  meta: { ...meta, authorized: true },
+  meta: { ...meta, queuedAt: Date.now(), authorized: true },
 })
 
 /**
@@ -22,8 +22,8 @@ export default async function queue(
     return dispatch(action)
   }
 
-  const nextAction = authorizeAction(action)
-  const { response } = await service.send(nextAction) // TODO: Map data back and forth?
+  const nextAction = prepareQueuedAction(action)
+  const { response } = await service.send(nextAction)
   const status = response?.status === 'ok' ? 'queued' : response?.status
 
   return setResponseOnAction(action, {

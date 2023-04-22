@@ -3,7 +3,6 @@ import pProgress from 'p-progress'
 import debugLib from 'debug'
 import setupGetService from './utils/getService.js'
 import { setErrorOnAction, setResponseOnAction } from './utils/action.js'
-import { isObject } from './utils/is.js'
 import type {
   Dispatch,
   InternalDispatch,
@@ -44,17 +43,6 @@ function getActionHandlerFromType(
   }
   return undefined
 }
-
-const exploadParams = ({
-  payload: { params, ...payload } = {},
-  ...action
-}: Action) => ({
-  ...action,
-  payload: {
-    ...(isObject(params) ? params : {}),
-    ...payload,
-  },
-})
 
 function mapIncomingAction(
   action: Action,
@@ -125,7 +113,7 @@ const wrapDispatch =
         action: mappedAction,
         service,
         endpoint,
-      } = mapIncomingAction(exploadParams(actionWithIds), getService)
+      } = mapIncomingAction(actionWithIds, getService)
       // Return any error from mapIncomingRequest()
       if (mappedAction.response?.status) {
         return responseFromAction(
@@ -159,7 +147,7 @@ const prepareAction = ({
 }: Action) => ({
   ...action,
   payload: { ...(service && { targetService: service }), ...payload },
-  meta,
+  meta: { ...meta, dispatchedAt: Date.now() },
 })
 
 async function handleAction(

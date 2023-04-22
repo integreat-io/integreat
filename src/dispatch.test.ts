@@ -126,6 +126,65 @@ test('should not allow QUEUE when set as an action type', async (t) => {
   t.is(handlers.QUEUE.callCount, 0)
 })
 
+test('should set dispatchedAt meta', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+  }
+  const handlers = {
+    GET: async (action: Action) => ({
+      ...action,
+      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    }),
+  }
+  const getSpy = sinon.spy(handlers, 'GET')
+
+  const before = Date.now()
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const after = Date.now()
+
+  t.is(ret.status, 'ok')
+  t.is(getSpy.callCount, 1)
+  const calledAction = getSpy.args[0][0] as Action
+  t.is(typeof calledAction.meta?.dispatchedAt, 'number')
+  t.true((calledAction.meta?.dispatchedAt as number) >= before)
+  t.true((calledAction.meta?.dispatchedAt as number) <= after)
+})
+
+test('should override any present dispatchedAt meta', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+    meta: { dispatchedAt: new Date('2022-12-01T18:43:11Z').getTime() },
+  }
+  const handlers = {
+    GET: async (action: Action) => ({
+      ...action,
+      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    }),
+  }
+  const getSpy = sinon.spy(handlers, 'GET')
+
+  const before = Date.now()
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const after = Date.now()
+
+  t.is(ret.status, 'ok')
+  t.is(getSpy.callCount, 1)
+  const calledAction = getSpy.args[0][0] as Action
+  t.is(typeof calledAction.meta?.dispatchedAt, 'number')
+  t.true((calledAction.meta?.dispatchedAt as number) >= before)
+  t.true((calledAction.meta?.dispatchedAt as number) <= after)
+})
+
 test('should set id and cid in meta when not already set', async (t) => {
   const action = {
     type: 'GET',
@@ -231,32 +290,6 @@ test('should map payload property service to targetService', async (t) => {
   t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
 })
 
-test('should set set params props on payload', async (t) => {
-  const action = {
-    type: 'GET',
-    payload: {
-      id: 'ent1',
-      type: 'entry',
-      targetService: 'entries',
-      params: {
-        getArchived: true,
-      },
-    },
-  }
-  const handlers = {
-    GET: async (action: Action) => ({
-      ...action,
-      response: action.payload.getArchived
-        ? { status: 'ok', data: [] }
-        : { status: 'error', error: 'getArchived is not true' },
-    }),
-  }
-
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
-
-  t.is(ret.status, 'ok', ret.error)
-})
-
 test('should return status noaction when no action', async (t) => {
   const action = null
   const handlers = {}
@@ -292,12 +325,16 @@ test('should call action handler with action, dispatch, getService, and options'
     payload: {},
     meta: { ident, id: '11004', cid: '11004' },
   }
-  const expected = action
 
   await dispatch({ handlers, services, schemas, options })(action)
 
   t.is(getHandler.callCount, 1)
-  t.deepEqual(getHandler.args[0][0], expected)
+  const dispatchedAction = getHandler.args[0][0]
+  t.is(dispatchedAction.type, 'GET')
+  t.deepEqual(dispatchedAction.payload, {})
+  t.deepEqual(dispatchedAction.meta.ident, ident)
+  t.is(dispatchedAction.meta.id, '11004')
+  t.is(dispatchedAction.meta.cid, '11004')
   const resources = getHandler.args[0][1]
   t.is(typeof resources.dispatch, 'function')
   t.is(typeof resources.getService, 'function')

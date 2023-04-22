@@ -130,6 +130,7 @@ export interface Meta extends Record<string, unknown> {
   id?: string
   cid?: string
   ident?: Ident
+  dispatchedAt?: number
   queue?: boolean | number
   queuedAt?: number
   auth?: Record<string, unknown> | null

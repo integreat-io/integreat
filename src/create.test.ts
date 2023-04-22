@@ -291,11 +291,6 @@ test('should set up RUN handler with jobs', async (t) => {
     payload: { jobId: 'theJob' },
     meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
   }
-  const expected = {
-    type: 'TEST',
-    payload: { timestamp: nowDate },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'theJob' },
-  }
 
   const great = create(
     { services, schemas, mutations, jobs },
@@ -304,7 +299,12 @@ test('should set up RUN handler with jobs', async (t) => {
   await great.dispatch(action)
 
   t.is(handler.callCount, 1)
-  t.deepEqual(handler.args[0][0], expected)
+  const dispatchedAction = handler.args[0][0]
+  t.is(dispatchedAction.type, 'TEST')
+  t.deepEqual(dispatchedAction.payload, { timestamp: nowDate })
+  t.deepEqual(dispatchedAction.meta.ident, { id: 'johnf' })
+  t.is(dispatchedAction.meta.cid, '23456')
+  t.is(dispatchedAction.meta.jobId, 'theJob')
 })
 
 test('should use auth', async (t) => {
