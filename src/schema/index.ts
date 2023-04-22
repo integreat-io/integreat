@@ -13,7 +13,7 @@ import { nanoid } from 'nanoid'
 
 const expandField = (val: Shape | FieldDefinition | string | undefined) =>
   typeof val === 'string'
-    ? { $cast: val }
+    ? { $type: val }
     : isShape(val)
     ? expandFields(val)
     : val
@@ -53,9 +53,9 @@ export default function createSchema({
 }: SchemaDef): Schema {
   const shape = {
     ...expandFields(rawShape || {}),
-    id: { $cast: 'string', $default: generateId ? defaultId : null },
-    ...(rawShape?.createdAt ? { createdAt: { $cast: 'date' } } : {}),
-    ...(rawShape?.updatedAt ? { updatedAt: { $cast: 'date' } } : {}),
+    id: { $type: 'string', $default: generateId ? defaultId : null },
+    ...(rawShape?.createdAt ? { createdAt: { $type: 'date' } } : {}),
+    ...(rawShape?.updatedAt ? { updatedAt: { $type: 'date' } } : {}),
   }
   const mapping = createCastMapping(shape, id)
 

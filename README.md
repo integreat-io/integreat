@@ -639,7 +639,7 @@ that shape.
   shape: {
     <fieldId>: <field type>,
     <fieldId>: {
-      $cast: <field type>,
+      $type: <field type>,
       $default: <default value>
       $const: <value that will override any other value>
     },
@@ -649,7 +649,7 @@ that shape.
 ```
 
 - `id`: The id of the schema, used to reference it in actions (the payload
-  `type`), when casting to the schema with `{ $cast: '<schema id>' }`, and to
+  `type`), when casting to the schema with `{ $type: '<schema id>' }`, and to
   signal what schema a data object is cast to (the `$type` prop on typed data
   items). The convention is to use singular mode for the `id`, e.g. if your
   defining a schema for articles, you would give it the id `'article'`.
@@ -685,16 +685,16 @@ optional features:
 
 ```javascript
 {
-  $cast: <field type>,
+  $type: <field type>,
   $default: <default value>
   $const: <value that will override any other value>
 }
 ```
 
-The `$cast` prop sets the type of the field (what it will be "cast" to). The
-available primitive types, are `string`, `integer`, `float` (or `number`),
-`boolean`, and `date`. A field may also have another schema as its type, in
-which case the id of the schema is set in `$cast`. An example can be an
+The `$type` prop sets the type of the field. The available primitive types, are
+`string`, `integer`, `float` (or `number`), `boolean`, and `date`. A field may
+also have another schema as its type, in which case the id of the schema is set
+in `$type`. An example can be an
 `article` schema with an `author` field of type `user`, referring to a schema
 with id `user`. When casting the `article`, data on the `author` prop will be
 cast with the `user` schema.

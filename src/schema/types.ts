@@ -1,7 +1,7 @@
 import type { DataFunction } from '../types.js'
 
 export interface FieldDefinition {
-  $cast: string
+  $type: string
   $default?: unknown | DataFunction
   $const?: unknown | DataFunction
 }

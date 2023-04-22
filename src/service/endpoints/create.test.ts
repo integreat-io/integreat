@@ -18,7 +18,7 @@ const schemas = {
     plural: 'entries',
     shape: {
       title: 'string',
-      published: { $cast: 'boolean', $default: false },
+      published: { $type: 'boolean', $default: false },
       createdAt: 'date',
       updatedAt: 'date',
     },

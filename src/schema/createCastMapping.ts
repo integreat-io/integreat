@@ -33,7 +33,7 @@ const primitiveTypes = [
 ]
 
 const typeFromDef = (prop?: string | FieldDefinition) =>
-  isFieldDefinition(prop) ? prop.$cast : prop
+  isFieldDefinition(prop) ? prop.$type : prop
 
 const defaultFromProp = (prop?: string | FieldDefinition) => {
   if (isFieldDefinition(prop)) {

@@ -17,24 +17,24 @@ test('should set up schema', (t) => {
     shape: {
       attributes: {
         title: 'string',
-        text: { $cast: 'string' },
+        text: { $type: 'string' },
         age: 'integer',
       },
       relationships: {
         author: 'user',
-        comments: { $cast: 'comment' },
+        comments: { $type: 'comment' },
       },
     },
     access: 'auth',
   }
   const expectedAttributes = {
-    title: { $cast: 'string' },
-    text: { $cast: 'string' },
-    age: { $cast: 'integer' },
+    title: { $type: 'string' },
+    text: { $type: 'string' },
+    age: { $type: 'integer' },
   }
   const expectedRelationships = {
-    author: { $cast: 'user' },
-    comments: { $cast: 'comment' },
+    author: { $type: 'user' },
+    comments: { $type: 'comment' },
   }
 
   const ret = createSchema(def)
@@ -97,7 +97,7 @@ test('should always include id in schema', (t) => {
     shape: {},
   }
   const expected = {
-    id: { $cast: 'string', $default: null },
+    id: { $type: 'string', $default: null },
   }
 
   const ret = createSchema(schema)
@@ -116,9 +116,9 @@ test('should override base fields in definition', (t) => {
     },
   }
   const expected = {
-    id: { $cast: 'string', $default: null },
-    createdAt: { $cast: 'date' },
-    updatedAt: { $cast: 'date' },
+    id: { $type: 'string', $default: null },
+    createdAt: { $type: 'date' },
+    updatedAt: { $type: 'date' },
   }
 
   const ret = createSchema(type)
@@ -135,9 +135,9 @@ test('should provide cast mutation', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $cast: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', $default: 'Entry with no name' },
       text: 'string',
-      age: { $cast: 'integer' },
+      age: { $type: 'integer' },
       createdAt: 'date',
       updatedAt: 'date',
     },
@@ -189,7 +189,7 @@ test('should not include dates by default', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $cast: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', $default: 'Entry with no name' },
     },
     access: 'auth',
   }
@@ -219,11 +219,11 @@ test('should provide cast mutation with sub schemas', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $cast: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', $default: 'Entry with no name' },
       text: 'string',
-      age: { $cast: 'integer' },
+      age: { $type: 'integer' },
       author: 'user',
-      comments: { $cast: 'comment[]' },
+      comments: { $type: 'comment[]' },
     },
     access: 'auth',
   }
@@ -357,7 +357,7 @@ test('should not cast undefined', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $cast: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', $default: 'Entry with no name' },
     },
     access: 'auth',
   }
@@ -376,7 +376,7 @@ test('should not cast null', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $cast: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', $default: 'Entry with no name' },
     },
     access: 'auth',
   }
@@ -395,7 +395,7 @@ test('should not cast undefined in array', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $cast: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', $default: 'Entry with no name' },
     },
     access: 'auth',
   }

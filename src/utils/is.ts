@@ -29,10 +29,10 @@ export const isReference = (value: unknown): value is Reference =>
   isDataObject(value) && value.hasOwnProperty('$ref')
 
 export const isShape = (value: unknown): value is Shape =>
-  isDataObject(value) && !value.hasOwnProperty('$cast')
+  isDataObject(value) && !value.hasOwnProperty('$type')
 
 export const isFieldDefinition = (value: unknown): value is FieldDefinition =>
-  isDataObject(value) && value.hasOwnProperty('$cast')
+  isDataObject(value) && value.hasOwnProperty('$type')
 
 export const isNullOrUndefined = (value: unknown): value is null | undefined =>
   value === null || value === undefined
