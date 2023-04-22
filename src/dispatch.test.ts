@@ -185,6 +185,32 @@ test('should override any present dispatchedAt meta', async (t) => {
   t.true((calledAction.meta?.dispatchedAt as number) <= after)
 })
 
+test('should remove authorized meta if set', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+    meta: { authorized: true },
+  }
+  const handlers = {
+    GET: async (action: Action) => ({
+      ...action,
+      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    }),
+  }
+  const getSpy = sinon.spy(handlers, 'GET')
+
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+
+  t.is(ret.status, 'ok')
+  t.is(getSpy.callCount, 1)
+  const calledAction = getSpy.args[0][0] as Action
+  t.is(calledAction.meta?.authorized, undefined)
+})
+
 test('should set id and cid in meta when not already set', async (t) => {
   const action = {
     type: 'GET',

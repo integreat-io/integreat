@@ -142,7 +142,7 @@ export interface Resources {
 
 const prepareAction = ({
   payload: { service, ...payload },
-  meta: { queue, ...meta } = {},
+  meta: { queue, authorized, ...meta } = {},
   ...action
 }: Action) => ({
   ...action,
