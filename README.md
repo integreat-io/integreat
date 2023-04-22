@@ -666,6 +666,9 @@ that shape.
   always override this by specifying a `service` on the action payload.
 - `shape`: This is where you define all the fields, see
   [the section below](#the-shape-of-a-schema).
+- `generateId`: Set this to `true` to generate a unique id for the `id` field
+  when the data being cast does not provide an `id`. Default is `false`, which
+  will just set `id: null`
 - `access`: Integreat lets you define authorization schemes per schema. All use
   of data cast to a schema will then be controlled by the rules you set here.
   See [Access rules](#access-rules) below for details on these rules. Note that
@@ -699,11 +702,17 @@ in `$type`. An example can be an
 with id `user`. When casting the `article`, data on the `author` prop will be
 cast with the `user` schema.
 
-The `default` value will be used when the data object being cast to this schema,
-has not got any value for this field. Default is `undefined`.
+The `default` value will be used when the field is `undefined`, `null`, or not
+preset in data object being cast to this schema. If `default` is set to a
+function, the function will be run with no argument, and the returned value is
+used as the default value. When no `default` is given, `undefined` is used.
 
 The `const` value override any value you provide to the field. It may be useful
-if you want a field to always have a fixed value.
+if you want a field to always have a fixed value. Just as for `default`, you may
+set it to a function, in which case the function will be run without arguments
+and the returned value will be used.
+
+If both `const` and `default` are set, `const` will be used.
 
 When only setting the field type, you don't need to provide the entire object,
 you can just provide the type string.
@@ -714,7 +723,14 @@ Example schema:
 {
   id: 'article',
   shape: {
-
+    id: 'string', // Not needed, as it is always provided, but it's good to include for clarity
+    title: { $type: 'string', default: 'Unnamed article' },
+    text: 'string',
+    readCount: 'integer',
+    archived: { $type: 'boolean', default: false },
+    rating: 'float',
+    createdAt: 'date',
+    updatedAt: 'date'
   },
   access: 'all'
 }
