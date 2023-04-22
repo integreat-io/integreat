@@ -44,7 +44,7 @@ const schemas = {
     plural: 'entries',
     shape: {
       title: 'string',
-      one: { $type: 'integer', $default: 1 },
+      one: { $type: 'integer', default: 1 },
       two: 'integer',
       source: 'source',
       createdAt: 'date',

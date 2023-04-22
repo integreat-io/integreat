@@ -640,8 +640,8 @@ that shape.
     <fieldId>: <field type>,
     <fieldId>: {
       $type: <field type>,
-      $default: <default value>
-      $const: <value that will override any other value>
+      default: <default value>
+      const: <value that will override any other value>
     },
   },
   access: <access def>
@@ -686,8 +686,8 @@ optional features:
 ```javascript
 {
   $type: <field type>,
-  $default: <default value>
-  $const: <value that will override any other value>
+  default: <default value>
+  const: <value that will override any other value>
 }
 ```
 
@@ -699,10 +699,10 @@ in `$type`. An example can be an
 with id `user`. When casting the `article`, data on the `author` prop will be
 cast with the `user` schema.
 
-The `$default` value will be used when the data object being cast to this schema,
+The `default` value will be used when the data object being cast to this schema,
 has not got any value for this field. Default is `undefined`.
 
-The `$const` value override any value you provide to the field. It may be useful
+The `const` value override any value you provide to the field. It may be useful
 if you want a field to always have a fixed value.
 
 When only setting the field type, you don't need to provide the entire object,

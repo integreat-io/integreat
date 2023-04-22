@@ -19,7 +19,7 @@ const schemas = {
   entry: schema({
     id: 'entry',
     shape: {
-      title: { $type: 'string', $default: 'A title' },
+      title: { $type: 'string', default: 'A title' },
       one: 'integer',
     },
   }),

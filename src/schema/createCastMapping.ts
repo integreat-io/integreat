@@ -37,10 +37,10 @@ const typeFromDef = (prop?: string | FieldDefinition) =>
 
 const defaultFromProp = (prop?: string | FieldDefinition) => {
   if (isFieldDefinition(prop)) {
-    if (prop.hasOwnProperty('$const')) {
-      return [{ $transform: 'fixed', value: prop.$const }]
-    } else if (prop.hasOwnProperty('$default')) {
-      return [{ $alt: [{ $value: prop.$default }] }]
+    if (prop.hasOwnProperty('const')) {
+      return [{ $transform: 'fixed', value: prop.const }]
+    } else if (prop.hasOwnProperty('default')) {
+      return [{ $alt: [{ $value: prop.default }] }]
     }
   }
   return []

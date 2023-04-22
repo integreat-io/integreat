@@ -53,7 +53,7 @@ export default function createSchema({
 }: SchemaDef): Schema {
   const shape = {
     ...expandFields(rawShape || {}),
-    id: { $type: 'string', $default: generateId ? defaultId : null },
+    id: { $type: 'string', default: generateId ? defaultId : null },
     ...(rawShape?.createdAt ? { createdAt: { $type: 'date' } } : {}),
     ...(rawShape?.updatedAt ? { updatedAt: { $type: 'date' } } : {}),
   }

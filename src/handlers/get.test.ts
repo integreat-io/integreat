@@ -22,7 +22,7 @@ const schemas = {
     id: 'entry',
     shape: {
       title: 'string',
-      byline: { $type: 'string', $default: 'Somebody' },
+      byline: { $type: 'string', default: 'Somebody' },
       source: 'source',
       createdAt: 'date',
       updatedAt: 'date',

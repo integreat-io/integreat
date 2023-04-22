@@ -97,7 +97,7 @@ test('should always include id in schema', (t) => {
     shape: {},
   }
   const expected = {
-    id: { $type: 'string', $default: null },
+    id: { $type: 'string', default: null },
   }
 
   const ret = createSchema(schema)
@@ -116,7 +116,7 @@ test('should override base fields in definition', (t) => {
     },
   }
   const expected = {
-    id: { $type: 'string', $default: null },
+    id: { $type: 'string', default: null },
     createdAt: { $type: 'date' },
     updatedAt: { $type: 'date' },
   }
@@ -135,7 +135,7 @@ test('should provide cast mutation', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $type: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', default: 'Entry with no name' },
       text: 'string',
       age: { $type: 'integer' },
       createdAt: 'date',
@@ -189,7 +189,7 @@ test('should not include dates by default', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $type: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', default: 'Entry with no name' },
     },
     access: 'auth',
   }
@@ -219,7 +219,7 @@ test('should provide cast mutation with sub schemas', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $type: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', default: 'Entry with no name' },
       text: 'string',
       age: { $type: 'integer' },
       author: 'user',
@@ -357,7 +357,7 @@ test('should not cast undefined', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $type: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', default: 'Entry with no name' },
     },
     access: 'auth',
   }
@@ -376,7 +376,7 @@ test('should not cast null', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $type: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', default: 'Entry with no name' },
     },
     access: 'auth',
   }
@@ -395,7 +395,7 @@ test('should not cast undefined in array', (t) => {
     plural: 'entries',
     service: 'entries',
     shape: {
-      title: { $type: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', default: 'Entry with no name' },
     },
     access: 'auth',
   }

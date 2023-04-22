@@ -19,7 +19,7 @@ const schemas = {
   entry: createSchema({
     id: 'entry',
     shape: {
-      title: { $type: 'string', $default: 'A title' },
+      title: { $type: 'string', default: 'A title' },
     },
   }),
   account: createSchema({

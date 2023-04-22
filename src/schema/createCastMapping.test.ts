@@ -20,8 +20,8 @@ const pipelines = {
 test('should create mapping definition from schema', (t) => {
   const schema = {
     id: 'string',
-    type: { $type: 'string', $const: 'entry' },
-    title: { $type: 'string', $default: 'Entry with no name' },
+    type: { $type: 'string', const: 'entry' },
+    title: { $type: 'string', default: 'Entry with no name' },
     abstract: { $type: 'string' },
     age: 'integer',
     long: 'float',
@@ -119,8 +119,8 @@ test('should create mapping definition from schema', (t) => {
 test('should reverse transform with mapping definition from schema', (t) => {
   const schema = {
     id: 'string',
-    type: { $type: 'string', $const: 'entry' },
-    title: { $type: 'string', $default: 'Entry with no name' },
+    type: { $type: 'string', const: 'entry' },
+    title: { $type: 'string', default: 'Entry with no name' },
     abstract: { $type: 'string' },
     age: 'integer',
     long: 'float',
@@ -272,9 +272,9 @@ test('should not cast null', (t) => {
 test('should cast non-primitive fields with schema', (t) => {
   const entrySchema = {
     id: 'string',
-    type: { $type: 'string', $const: 'entry' },
+    type: { $type: 'string', const: 'entry' },
     attributes: {
-      title: { $type: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', default: 'Entry with no name' },
       age: 'integer',
     },
     relationships: {
@@ -374,9 +374,9 @@ test('should cast non-primitive fields with schema', (t) => {
 test('should cast non-primitive fields with schema in reverse', (t) => {
   const entrySchema = {
     id: 'string',
-    type: { $type: 'string', $const: 'entry' },
+    type: { $type: 'string', const: 'entry' },
     attributes: {
-      title: { $type: 'string', $default: 'Entry with no name' },
+      title: { $type: 'string', default: 'Entry with no name' },
       age: 'integer',
     },
     relationships: {
@@ -464,7 +464,7 @@ test('should cast non-primitive fields with schema in reverse', (t) => {
 test('should handle casting with array of non-primitive types within an iteration', (t) => {
   const entrySchema = {
     id: 'string',
-    title: { $type: 'string', $default: 'Entry with no name' },
+    title: { $type: 'string', default: 'Entry with no name' },
     age: 'integer',
     comments: 'comment[]',
     author: 'user',
@@ -948,7 +948,7 @@ test('should remove isNew and isDeleted when false in reverse', (t) => {
 test('should not cast null or undefined', (t) => {
   const schema = {
     id: 'string',
-    title: { $type: 'string', $default: 'Entry with no name' },
+    title: { $type: 'string', default: 'Entry with no name' },
   }
   const data = [null, undefined, { id: 'ent1' }]
   const expected = [
@@ -969,7 +969,7 @@ test('should not cast null or undefined', (t) => {
 test('should not cast null or undefined in reverse', (t) => {
   const schema = {
     id: 'string',
-    title: { $type: 'string', $default: 'Entry with no name' },
+    title: { $type: 'string', default: 'Entry with no name' },
   }
   const data = [null, undefined, { id: 'ent1' }]
   const expected = [

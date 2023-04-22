@@ -2,8 +2,8 @@ import type { DataFunction } from '../types.js'
 
 export interface FieldDefinition {
   $type: string
-  $default?: unknown | DataFunction
-  $const?: unknown | DataFunction
+  default?: unknown | DataFunction
+  const?: unknown | DataFunction
 }
 
 export interface Shape {
