@@ -736,6 +736,48 @@ Example schema:
 }
 ```
 
+Note that if you provide the `id` field, it should be set to type `'string'` or
+Integreat will throw. The same happens if you set `createdAt` or `updatedAt` to
+anything else than the type `'date'`. If you don't include these fields,
+Integreat will include the `id` for you, but not `createdAt` or `updatedAt`.
+
+### Typed data
+
+When you cast data with a schema, the data will be in the following format:
+
+```
+{
+  id: <string>,
+  $type: <schema>,
+  createdAt: <date>,
+  updatedAt: <date>,
+  <key>: <value>,
+  <key>: { id: <string>, $ref: <schema> },
+  <key: [{ id: <string>, $type: <schema>, ... }],
+  ...
+}
+```
+
+- `id`: The id is mandatory and created by Integreat when it is not included in
+  the schema. If you don't map anything to the id prop, it will be set to
+  `null`, unless the schema is set up with `generateId: true`, in which case a
+  universally unique id will be generated for you.
+- `$type`: Set to the id of the schema by Integreat. This is a signal that the
+  data has been cast.
+- `createdAt`: This is not mandatory, but has special meaning. When a schema has
+  a `createdAt` field, but the date is not set in the data, it will be set to
+  the same as `updatedAt` (if provided) or to the current date/time.
+- `updatedAt`: Just as `createdAt`, this is not mandatory. When a schema has
+  an `updatedAt` field, and the date is not set in the data, it will be set to
+  the same as `createdAt` (if provided) or the current date/time.
+- `<key>`: Then follows the values of all the fields specified in the schema.
+  Any value not provided in the data will be set to their default value or
+  `undefined`. Fields with other schemas as their type, will be an object. If
+  only the id is provided in the data, the `{ id: <string>, $ref: <schema id> }`
+  format will be used, with `$ref` being the id of the field type schema. When
+  more data is provided, Integreat will cast it to the target schema and provide
+  the entire data object, or array of objects, with the relevant `$type`.
+
 ### Access rules
 
 Set the `access` property on a schema to enforce permission checking. This
@@ -1090,44 +1132,6 @@ The `status` or the action response will be one of the following status codes:
 - `badrequest`: Request data is not as expected
 - `badresponse`: Response data is not as expected
 - `error`: Any other error
-
-### Typed data
-
-When you cast data with a schema, the data will be in the following format:
-
-```
-{
-  id: <string>,
-  $type: <schema>,
-  createdAt: <date>,
-  updatedAt: <date>,
-  <key>: <value>,
-  <key>: { id: <string>, $ref: <schema> },
-  <key: [{ id: <string>, $type: <schema>, ... }],
-  ...
-}
-```
-
-- `id`: The id is mandatory and created by Integreat even when it is not
-  included in the schema. If you try to set it to any other type than string,
-  Integreat will still force it to be a string. If you don't map anything to the
-  id prop, a universally unique id will be generated for you.
-- `$type`: Set to the id of the schema by Integreat. This is a signal that the
-  data has been cast.
-- `createdAt`: This is not mandatory, but has special meaning and will be forced
-  to a date when it's included in a schema, regardless of what type you give it.
-  When this date is not set in the data, it will be set to the same as
-  `updatedAt` (if provided) or to the current date/time.
-- `updatedAt`: Just as `createdAt`, this is not mandatory, but will be forced
-  to date type. If it is not set, it will be set to the same as `createdAt` (if
-  provided) or the current date/time.
-- `<key>`: Then follows the values of all the fields specified in the schema.
-  Any value not provided in the data will be set to their default value or
-  `undefined`. Fields with other schemas as their type, will be an object. If
-  only the id is provided in the data, the `{ id: <string>, $ref: <schema id> }`
-  format will be used, with `$ref` being the id of the field type schema. When
-  more data is provided, Integreat will cast it to the target schema and provide
-  the entire data object, or array of objects, with the relevant `$type`.
 
 ### Idents
 

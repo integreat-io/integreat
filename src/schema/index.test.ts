@@ -105,7 +105,7 @@ test('should always include id in schema', (t) => {
   t.deepEqual(ret.shape, expected)
 })
 
-test('should override base fields in definition', (t) => {
+test('should throw when base fields are provided with the wrong type', (t) => {
   const type = {
     id: 'entry',
     service: 'entries',
@@ -115,15 +115,14 @@ test('should override base fields in definition', (t) => {
       updatedAt: 'boolean',
     },
   }
-  const expected = {
-    id: { $type: 'string', default: null },
-    createdAt: { $type: 'date' },
-    updatedAt: { $type: 'date' },
-  }
 
-  const ret = createSchema(type)
+  const error = t.throws(() => createSchema(type))
 
-  t.deepEqual(ret.shape, expected)
+  t.true(error instanceof Error)
+  t.is(
+    error?.message,
+    "'id' must be a string. 'createdAt' must be a date. 'updatedAt' must be a date."
+  )
 })
 
 // Tests -- cast mutation

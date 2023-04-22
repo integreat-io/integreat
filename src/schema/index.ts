@@ -18,7 +18,9 @@ const expandField = (val: Shape | FieldDefinition | string | undefined) =>
     ? expandFields(val)
     : val
 
-const expandFields = (vals: Shape): Shape =>
+const expandFields = (
+  vals: Shape
+): Record<string, FieldDefinition | Shape | undefined> =>
   Object.entries(vals).reduce(
     (newVals, [key, def]) => ({ ...newVals, [key]: expandField(def) }),
     {}
@@ -37,6 +39,11 @@ export interface Schema {
   accessForAction: (actionType?: string) => Access
 }
 
+const verifyFieldType = (
+  field: FieldDefinition | Shape | undefined,
+  type: string
+) => !field || field.$type === type
+
 /**
  * Create a schema with the given id and service.
  * @param def - Object with id, plural, service, and shape
@@ -47,15 +54,29 @@ export default function createSchema({
   plural,
   service,
   generateId = false,
-  shape: rawShape,
+  shape: rawShape = {},
   access,
   internal = false,
 }: SchemaDef): Schema {
+  const { id: idField, ...fields } = expandFields(rawShape)
+
+  const fieldErrors = [
+    verifyFieldType(idField, 'string') ? undefined : "'id' must be a string.",
+    verifyFieldType(fields.createdAt, 'date')
+      ? undefined
+      : "'createdAt' must be a date.",
+    verifyFieldType(fields.updatedAt, 'date')
+      ? undefined
+      : "'updatedAt' must be a date.",
+  ].filter(Boolean)
+
+  if (fieldErrors.length > 0) {
+    throw new Error(fieldErrors.join(' '))
+  }
+
   const shape = {
-    ...expandFields(rawShape || {}),
     id: { $type: 'string', default: generateId ? defaultId : null },
-    ...(rawShape?.createdAt ? { createdAt: { $type: 'date' } } : {}),
-    ...(rawShape?.updatedAt ? { updatedAt: { $type: 'date' } } : {}),
+    ...fields,
   }
   const mapping = createCastMapping(shape, id)
 
