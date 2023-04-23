@@ -1,9 +1,22 @@
 import type { TransformDefinition } from 'map-transform/types.js'
 import type { Action } from '../../types.js'
 import type { MapOptions } from '../types.js'
-import type { EndpointDef, EndpointOptions, Endpoint } from './types.js'
+import type {
+  EndpointDef,
+  MatchObject,
+  EndpointOptions,
+  Endpoint,
+} from './types.js'
 import createEndpoint, { PrepareOptions } from './create.js'
 import compareEndpoints from './compare.js'
+
+const prepareMatch = ({ scope, ...match }: MatchObject) =>
+  scope === 'all' ? match : { scope, ...match }
+
+const prepareEndpoint = ({ match, ...endpoint }: EndpointDef) => ({
+  match: prepareMatch(match || {}),
+  ...endpoint,
+})
 
 export default function createEndpointMappers(
   serviceId: string,
@@ -14,6 +27,7 @@ export default function createEndpointMappers(
   prepareOptions?: PrepareOptions
 ): (action: Action, isIncoming?: boolean) => Endpoint | undefined {
   const endpoints = endpointDefs
+    .map(prepareEndpoint)
     .sort(compareEndpoints)
     .map(
       createEndpoint(

@@ -114,4 +114,69 @@ test('should match by id', (t) => {
   t.is((mapping as Endpoint).id, 'endpoint2')
 })
 
+test('should match scope all', (t) => {
+  const endpointDefs = [
+    {
+      id: 'endpoint1',
+      match: { type: 'entry', scope: 'all' },
+      options: { uri: 'http://test.api/1' },
+    },
+    {
+      id: 'endpoint2',
+      match: { type: 'entry', scope: 'member' },
+      options: { uri: 'http://test.api/2' },
+    },
+  ]
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+    },
+  }
+
+  const matchFn = createEndpointMappers(
+    serviceId,
+    endpointDefs,
+    serviceOptions,
+    mapOptions
+  )
+  const mapping = matchFn(action)
+
+  t.truthy(mapping)
+  t.is((mapping as Endpoint).id, 'endpoint1')
+})
+
+test('should treat scope all as no scope', (t) => {
+  const endpointDefs = [
+    {
+      id: 'endpoint1',
+      match: { type: 'entry', scope: 'all' },
+      options: { uri: 'http://test.api/1' },
+    },
+    {
+      id: 'endpoint2',
+      match: { type: 'entry', scope: 'member' },
+      options: { uri: 'http://test.api/2' },
+    },
+  ]
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      id: 'ent1',
+    },
+  }
+
+  const matchFn = createEndpointMappers(
+    serviceId,
+    endpointDefs,
+    serviceOptions,
+    mapOptions
+  )
+  const mapping = matchFn(action)
+
+  t.truthy(mapping)
+  t.is((mapping as Endpoint).id, 'endpoint2')
+})
+
 test.todo('should merge options')
