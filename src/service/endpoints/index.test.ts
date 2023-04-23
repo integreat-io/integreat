@@ -80,4 +80,38 @@ test('should return match function', (t) => {
   t.is((mapping as Endpoint).id, 'endpoint2')
 })
 
+test('should match by id', (t) => {
+  const endpointDefs = [
+    {
+      id: 'endpoint1',
+      match: { type: 'entry' },
+      options: { uri: 'http://test.api/1' },
+    },
+    {
+      id: 'endpoint2',
+      match: { type: 'entry' },
+      options: { uri: 'http://test.api/2' },
+    },
+  ]
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      id: 'ent1',
+      endpoint: 'endpoint2',
+    },
+  }
+
+  const matchFn = createEndpointMappers(
+    serviceId,
+    endpointDefs,
+    serviceOptions,
+    mapOptions
+  )
+  const mapping = matchFn(action)
+
+  t.truthy(mapping)
+  t.is((mapping as Endpoint).id, 'endpoint2')
+})
+
 test.todo('should merge options')
