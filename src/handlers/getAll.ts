@@ -89,7 +89,7 @@ export default async function getAll(
     }
 
     // Extract paging for next action
-    const prevPaging = paging
+    const usePageId = !!paging || response?.paging?.next !== undefined
     paging = createNextPaging(action.payload, response?.paging?.next)
 
     // Extract data
@@ -111,7 +111,7 @@ export default async function getAll(
     }
 
     // If no data array or no new page token -- end this
-    if (!Array.isArray(responseData) || (prevPaging && !paging)) {
+    if (!Array.isArray(responseData) || (usePageId && !paging)) {
       lastSize = 0
     }
   } while (lastSize === pageSize)

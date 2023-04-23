@@ -92,6 +92,32 @@ test('should get all pages when last is empty', async (t) => {
   t.is((ret.response?.data as TypedData[]).length, 4)
 })
 
+test('should get one page with max number of items', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .onFirstCall()
+    .resolves({
+      type: 'GET',
+      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
+    })
+  const action = {
+    type: 'GET_ALL',
+    payload: {
+      type: 'event',
+      page: 1,
+      pageSize: 2,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await getAll(action, { ...handlerResources, dispatch })
+
+  t.is(dispatch.callCount, 2)
+  t.is(ret.response?.status, 'ok')
+  t.is((ret.response?.data as TypedData[]).length, 2)
+})
+
 test('should get all pages using offset', async (t) => {
   const dispatch = sinon
     .stub()
@@ -475,9 +501,33 @@ test('should require at least one non-undefined prop for next paging', async (t)
   t.is(ret.response?.status, 'ok')
 })
 
-test.todo(
-  'should handle one page with max number of items in a paging approach'
-)
+test('should handle one complete page with next null', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [] })
+    .onFirstCall()
+    .resolves({
+      type: 'GET',
+      response: {
+        status: 'ok',
+        data: [event('ev0'), event('ev1')],
+        paging: { next: null },
+      },
+    })
+  const action = {
+    type: 'GET_ALL',
+    payload: {
+      type: 'event',
+      pageSize: 2,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await getAll(action, { ...handlerResources, dispatch })
+
+  t.is(dispatch.callCount, 1)
+  t.is(ret.response?.status, 'ok')
+})
 
 test('should use original cid for all sub actions, but remove id', async (t) => {
   const dispatch = sinon
