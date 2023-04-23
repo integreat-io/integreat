@@ -55,7 +55,7 @@ test('should set data with endpoint mutation', async (t) => {
       $direction: 'rev',
       $flip: true,
       payload: {
-        id: 'payload.id', // TODO: Works, but not as expected
+        id: 'payload.id',
         data: {
           content: {
             'items[]': ['payload.data', { $apply: 'entries-entry' }],
@@ -107,8 +107,12 @@ test('should set data with service and endpoint mutation', async (t) => {
     meta: { ident: { root: true } },
   }
   const serviceMutation = {
-    'payload.id': 'payload.id', // TODO: Find a better way
-    'payload.data': 'payload.data.content',
+    $direction: 'to',
+    $flip: true,
+    payload: {
+      $modify: 'payload',
+      'data.content': 'payload.data',
+    },
   }
   const mutation = [
     {
