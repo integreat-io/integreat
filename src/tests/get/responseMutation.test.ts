@@ -157,8 +157,7 @@ test('should transform at paths within the data', async (t) => {
     $modify: '.',
     response: {
       $modify: 'response',
-      data: [
-        // TODO map-transform: Putting 'data[]' here results in an empty array
+      'data[]': [
         'response.data.responseContent',
         { $transform: 'json' },
         'articles[]',
