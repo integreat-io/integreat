@@ -1,4 +1,5 @@
 import EventEmitter from 'node:events'
+import mapTransform from 'map-transform'
 import type {
   Dictionaries,
   Transformer,
@@ -122,6 +123,14 @@ export default function create(
     dictionaries
   )
 
+  // Prepare cast functions
+  const castFns = Object.fromEntries(
+    Object.entries(schemas).map(([type, schema]) => [
+      type,
+      mapTransform(schema.mapping, mapOptions),
+    ])
+  )
+
   // Setup auths object from auth defs
   const auths = Array.isArray(authDefs)
     ? authDefs
@@ -137,6 +146,7 @@ export default function create(
         authenticators,
         auths,
         schemas,
+        castFns,
         mapOptions,
         middleware: middlewareForService,
         emit: emitter.emit.bind(emitter),

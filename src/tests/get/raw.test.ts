@@ -68,7 +68,7 @@ test('should return error when user tries to get raw response', async (t) => {
     .reply(200, { data: { ...ent2Data, createdAt, updatedAt } })
   const action = {
     type: 'GET',
-    payload: { id: 'ent3', type: 'entry', rawForRoot: true }, // Flag to trigger raw endpoint
+    payload: { id: 'ent3', service: 'entries', rawForRoot: true }, // Flag to trigger raw endpoint
     meta: { ident: { id: 'johnf' } },
   }
 

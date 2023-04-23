@@ -118,6 +118,7 @@ const services = [
     },
     endpoints: [
       {
+        match: { action: 'GET', type: 'fact' }, // Match to a GET action for type 'fact'
         mutation: {
           $direction: 'from', // We're mutating data _from_ the service
           // Here we're mutating `response.data` and "setting it back" where we found it ...
@@ -129,7 +130,6 @@ const services = [
               text: 'text', // text is called `text`
               createdAt: 'createdAt', // Creation date is called `createdAt`
             },
-            { $cast: 'fact' }, // Cast the data in the `fact` schema
           ],
         },
       },
@@ -310,6 +310,12 @@ specify a few things:
   `options` object. Endpoint properties will override equally named service
   properties, but this is done through deep merging, so child objects will be
   merged as well.
+- `allowRawRequest`: When set to `true`, payload `data` sent to this endpoint
+  will not by cast automatically nor will an error be returned if the data is
+  not typed.
+- `allowRawResponse`: When set to `true`, response `data` coming from this
+  endpoint will not by cast automatically nor will an error be returned if the
+  data is not typed.
 
 #### Match properties
 
@@ -629,7 +635,8 @@ of this flexibility and maintainability.
 
 A schema describe the data you expected to get out of Integreat, or send through
 it. You basically define the fields and their types, and may then cast data to
-that shape.
+that shape. Note that data on an action for a specified type, will be
+automatically cast to that type.
 
 ```javascript
 {
@@ -743,7 +750,7 @@ Integreat will include the `id` for you, but not `createdAt` or `updatedAt`.
 
 ### Typed data
 
-When you cast data with a schema, the data will be in the following format:
+When data is cast to a schema, the data will be in the following format:
 
 ```
 {
@@ -925,13 +932,15 @@ You may set any properties on the payload, and they will be be available to you
 in the service endpoint match and in the service mutations. Some properties have
 special meanings, though, and you should avoid using them for anything else:
 
-- `type`: The type of the data the action sends or receives. This refers to the
-  `id` of a schema, and you will allmost allways want to set this. If you're
-  dealing with several types in one action, you may set an array of types. The
-  perpaps biggest reason to set the `type` is that it helps Integreat match the
-  action to the right [service endpoint](#endpoints). Also, Integreat will
+- `type`: The type of the data the action sends and/or receives. This refers to
+  the `id` of a schema, and you will usually want to set this. Data provided
+  in the payload `data` and response `data` will be cast to this schema. If
+  you're dealing with several types in one action, you may set an array of
+  types, but will have to cast the data in the mutation yourself. Integreat will
   validate that the data you send and receive is indeed of that type, and will
-  give you an auth error if not.
+  give you an auth error if not. (See
+  [`allowRawRequest` and `allowRawResponse` on endpoints](#endpoints) for an
+  exception.)
 - `id`: You provide an id when you want to address a specific data item, usually
   when you want to fetch one data item with an action like
   `{ type: 'GET', payload: { type: 'article', id: '12345' } }`. You may also
@@ -1083,10 +1092,11 @@ When you dispatch an action, you will get a response object back in this format:
 
 - `status`: The status of the action. Will be `ok` when everything went well,
   see [list of status codes](#status-codes) below for more.
-- `data`: Any data returned from the service, usually modified by mutation
-  pipelines from your service and endpoint configuration, to an object or array
-  of [typed data](#typed-data). However, this is controlled by your service
-  mutations, so it's all in your hands.
+- `data`: Any data returned from the service, after being modified by the
+  mutation pipelines from your service and endpoint configuration. It will be
+  cast to [typed data](#typed-data) through the schema specified by the payload
+  `type`, if it is set to a single type and the endpoint `allowRawResponse` is
+  not set to `true`.
 - `error`: All error statuses (i.e. not `ok` or `queued`) will return an error
   message, some may include error messages from the service.
 - `warning`: When the action was successful, but there still was something you

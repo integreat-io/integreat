@@ -2,6 +2,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import pProgress from 'p-progress'
+import mapTransform from 'map-transform'
 import jsonResources from '../tests/helpers/resources/index.js'
 import transformers from '../transformers/builtIns/index.js'
 import createSchema from '../schema/index.js'
@@ -74,7 +75,7 @@ const entryMutation = [
     createdAt: 'created',
     updatedAt: 'updated',
   },
-  { $apply: 'cast_entry' },
+  // { $apply: 'cast_entry' },
 ]
 
 const entry2Mutation = [
@@ -84,7 +85,7 @@ const entry2Mutation = [
     id: 'key',
     title: 'subheader',
   },
-  { $apply: 'cast_entry' },
+  // { $apply: 'cast_entry' },
 ]
 
 const accountMutation = [
@@ -94,7 +95,7 @@ const accountMutation = [
     id: 'id',
     name: 'name',
   },
-  { $apply: 'cast_account' },
+  // { $apply: 'cast_account' },
 ]
 
 const mutations = {
@@ -104,6 +105,13 @@ const mutations = {
 }
 
 const mapOptions = createMapOptions(schemas, mutations, transformers)
+
+const castFns = Object.fromEntries(
+  Object.entries(schemas).map(([type, schema]) => [
+    type,
+    mapTransform(schema.mapping, mapOptions),
+  ])
+)
 
 const endpoints = [
   {
@@ -236,6 +244,7 @@ const mockResources = (
   },
   mapOptions,
   schemas,
+  castFns,
   auths,
 })
 
@@ -251,6 +260,7 @@ test('should return service object with id and meta', (t) => {
     ...jsonResources,
     mapOptions,
     schemas,
+    castFns,
   })(def)
 
   t.is(service.id, 'entries')
@@ -263,6 +273,7 @@ test('should throw when no id', (t) => {
       ...jsonResources,
       mapOptions,
       schemas,
+      castFns,
     })({ transporter: 'http' } as unknown as ServiceDef)
   })
 })
@@ -289,7 +300,12 @@ test('should throw when auth object references unknown authenticator', async (t)
 // Tests -- endpointFromAction
 
 test('endpointFromAction should return an endpoint for the action', (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'entries',
     transporter: 'http',
     endpoints,
@@ -310,7 +326,12 @@ test('endpointFromAction should return an endpoint for the action', (t) => {
 })
 
 test('endpointFromAction should return undefined when no match', (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'entries',
     transporter: 'http',
     endpoints,
@@ -340,7 +361,12 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
       options: { uri: 'http://test.api/2', correct: true },
     },
   ]
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'entries',
     endpoints,
     transporter: 'http',
@@ -359,7 +385,12 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
 // Tests -- authorizeAction
 
 test('authorizeAction should set authorized flag', (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     transporter: 'http',
     auth: 'granting',
@@ -384,7 +415,12 @@ test('authorizeAction should set authorized flag', (t) => {
 })
 
 test('authorizeAction should authorize action without type', (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     transporter: 'http',
     auth: 'granting',
@@ -409,7 +445,12 @@ test('authorizeAction should authorize action without type', (t) => {
 })
 
 test('authorizeAction should refuse based on schema', (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     transporter: 'http',
     auth: 'granting',
@@ -488,6 +529,7 @@ test('send should use service middleware', async (t) => {
     ...jsonResources,
     mapOptions,
     schemas,
+    castFns,
     auths,
     middleware: [failMiddleware],
   }
@@ -702,6 +744,7 @@ test('send should fail when not authorized', async (t) => {
   const service = setupService({
     mapOptions,
     schemas,
+    castFns,
     ...jsonResources,
     auths,
   })({
@@ -751,6 +794,7 @@ test('send should connect before sending request', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const service = setupService(resources)({
@@ -789,6 +833,7 @@ test('send should store connection', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
   }
   const service = setupService(resources)({
     id: 'entries',
@@ -828,6 +873,7 @@ test('send should return error when connection fails', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
   }
   const service = setupService(resources)({
     id: 'entries',
@@ -870,6 +916,7 @@ test('send should retrieve error response from service', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
   }
   const service = setupService(resources)({
     id: 'entries',
@@ -908,6 +955,7 @@ test('send should return with error when transport throws', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
   }
   const service = setupService(resources)({
     id: 'entries',
@@ -950,6 +998,7 @@ test('send should do nothing when action has a response', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
   }
   const service = setupService(resources)({
     id: 'entries',
@@ -974,9 +1023,14 @@ test('send should do nothing when action has a response', async (t) => {
 
 // Tests -- mapResponse
 
-test.serial('mapResponse should map data array from service', async (t) => {
+test('mapResponse should mutate data array from service', async (t) => {
   const theDate = new Date()
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'entries',
     endpoints: [
       {
@@ -1040,8 +1094,13 @@ test.serial('mapResponse should map data array from service', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('mapResponse should map data object from service', async (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+test('mapResponse should mutate data object from service', async (t) => {
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     endpoints: [
       {
@@ -1080,8 +1139,85 @@ test('mapResponse should map data object from service', async (t) => {
   t.is(data.$type, 'account')
 })
 
+test('mapResponse should not cast mutate data array from service when allowRawResponse is true', async (t) => {
+  const theDate = new Date()
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
+    id: 'entries',
+    endpoints: [
+      {
+        mutation: {
+          $direction: 'from',
+          response: {
+            $modify: 'response',
+            data: ['response.data.content.data', { $apply: 'entry' }],
+          },
+        },
+        allowRawResponse: true,
+        options: { uri: 'http://some.api/1.0' },
+      },
+    ],
+    transporter: 'http',
+  })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    response: {
+      status: 'ok',
+      data: {
+        content: {
+          data: {
+            items: [
+              {
+                key: 'ent1',
+                header: 'Entry 1',
+                two: 2,
+                created: theDate,
+                updated: theDate,
+              },
+            ],
+          },
+        },
+      },
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
+  const expected = {
+    ...action,
+    response: {
+      status: 'ok',
+      data: [
+        {
+          id: 'ent1',
+          title: 'Entry 1',
+          one: undefined,
+          two: 2,
+          author: undefined,
+          source: 'thenews',
+          createdAt: theDate,
+          updatedAt: theDate,
+        },
+      ],
+    },
+  }
+
+  const ret = service.mapResponse(action, endpoint!)
+
+  t.deepEqual(ret, expected)
+})
+
 test('mapResponse should map null to undefined', async (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     endpoints: [
       {
@@ -1118,7 +1254,12 @@ test('mapResponse should map null to undefined', async (t) => {
 })
 
 test('should authorize typed data in array from service', async (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     endpoints: [
       {
@@ -1160,7 +1301,12 @@ test('should authorize typed data in array from service', async (t) => {
 })
 
 test('should authorize typed data object from service', async (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     endpoints: [
       {
@@ -1194,7 +1340,12 @@ test('should authorize typed data object from service', async (t) => {
 })
 
 test('should authorize typed data in array to service', async (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     endpoints: [
       {
@@ -1239,7 +1390,12 @@ test('mapResponse should return error when transformer throws', async (t) => {
     throw new Error('Transformer error')
   }
   const mapOptions = createMapOptions(schemas, mutations, { willThrow })
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     endpoints: [
       {
@@ -1288,7 +1444,12 @@ test('mapResponse should return error when transformer throws', async (t) => {
 
 test('mapRequest should set endpoint options and cast and map request data', async (t) => {
   const theDate = new Date()
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'entries',
     transporter: 'http',
     endpoints: [
@@ -1359,7 +1520,12 @@ test('mapRequest should set endpoint options and cast and map request data', asy
 })
 
 test('mapRequest should deep-clone endpoint options', async (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'entries',
     transporter: 'http',
     endpoints: [
@@ -1385,7 +1551,12 @@ test('mapRequest should deep-clone endpoint options', async (t) => {
 })
 
 test('mapRequest should authorize data array going to service', async (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     transporter: 'http',
     auth: 'granting',
@@ -1425,7 +1596,12 @@ test('mapRequest should authorize data array going to service', async (t) => {
 })
 
 test('mapRequest should authorize data object going to service', async (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     transporter: 'http',
     auth: 'granting',
@@ -1458,7 +1634,12 @@ test('mapRequest should authorize data object going to service', async (t) => {
 
 test('mapRequest should authorize data array coming from service', async (t) => {
   const isIncoming = true
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'accounts',
     transporter: 'http',
     auth: 'granting',
@@ -1497,7 +1678,12 @@ test('mapRequest should authorize data array coming from service', async (t) => 
 })
 
 test('mapRequest should use mutation pipeline', async (t) => {
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'entries',
     transporter: 'http',
     endpoints: [
@@ -1536,7 +1722,12 @@ test('mapRequest should return error when transformer throws', async (t) => {
     throw new Error('Transformer error')
   }
   const mapOptions = createMapOptions(schemas, mutations, { willThrow })
-  const service = setupService({ mapOptions, schemas, ...jsonResources })({
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
     id: 'entries',
     transporter: 'http',
     endpoints: [
@@ -1589,6 +1780,7 @@ test('listen should call transporter.listen', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const service = setupService(resources)({
@@ -1624,6 +1816,7 @@ test('listen should not call transporter.listen when transport.shouldListen retu
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const service = setupService(resources)({
@@ -1717,6 +1910,7 @@ test('should support progress reporting', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const action = {
@@ -1932,6 +2126,7 @@ test('listen should return error when connection fails', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const service = setupService(resources)({
@@ -1981,6 +2176,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const service = setupService(resources)({
@@ -2013,6 +2209,7 @@ test('listen should return error when no transporter', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const service = setupService(resources)({
@@ -2056,6 +2253,7 @@ test('listen should use service middleware', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
     middleware: [failMiddleware],
   }
@@ -2089,6 +2287,7 @@ test('listen should return noaction when incoming action is null', async (t) => 
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const service = setupService(resources)({
@@ -2121,6 +2320,7 @@ test('close should disconnect transporter', async (t) => {
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const service = setupService(resources)({
@@ -2155,6 +2355,7 @@ test('close should probihit closed connection from behind used again', async (t)
     },
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const service = setupService(resources)({
@@ -2180,6 +2381,7 @@ test('close should do nothing when no transporter', async (t) => {
     ...jsonResources,
     mapOptions,
     schemas,
+    castFns,
     auths,
   }
   const service = setupService(resources)({

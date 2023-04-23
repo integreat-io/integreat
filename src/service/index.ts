@@ -15,6 +15,7 @@ import * as authorizeData from './authorize/data.js'
 import authorizeAction from './authorize/action.js'
 import { compose } from '../dispatch.js'
 import { setUpAuth } from '../create.js'
+import type { DataMapperEntry } from 'map-transform/types.js'
 import type { Schema } from '../schema/index.js'
 import type {
   Action,
@@ -41,6 +42,7 @@ interface Resources {
   authenticators?: Record<string, Authenticator>
   auths?: Record<string, Auth>
   schemas: Record<string, Schema>
+  castFns?: Record<string, DataMapperEntry>
   mapOptions?: MapOptions
   middleware?: Middleware[]
   emit?: (eventType: string, ...args: unknown[]) => void
@@ -176,6 +178,38 @@ function resolveIncomingAuth(
   }
 }
 
+const getCastFn = (castFns: Record<string, DataMapperEntry>, action: Action) =>
+  typeof action.payload.type === 'string'
+    ? castFns[action.payload.type]
+    : undefined
+
+const castByType = (castFns: Record<string, DataMapperEntry>) =>
+  function castAction(action: Action, allowRaw: boolean, isRequest = false) {
+    if (!allowRaw) {
+      const castFn = getCastFn(castFns, action)
+      if (castFn) {
+        if (isRequest && action.payload) {
+          return {
+            ...action,
+            payload: {
+              ...action.payload,
+              data: castFn(action.payload.data),
+            },
+          }
+        } else if (!isRequest && action.response) {
+          return {
+            ...action,
+            response: {
+              ...action.response,
+              data: castFn(action.response.data),
+            },
+          }
+        }
+      }
+    }
+    return action
+  }
+
 /**
  * Create a service with the given id and transporter.
  */
@@ -184,6 +218,7 @@ export default ({
     authenticators = {},
     auths,
     schemas,
+    castFns = {},
     mapOptions = {},
     middleware = [],
     emit = () => undefined, // Provide a fallback for tests
@@ -219,6 +254,8 @@ export default ({
       isTransporter(transporter) ? transporter.prepareOptions : undefined
     )
 
+    const castAction = castByType(castFns)
+
     const runThroughMiddleware: Middleware =
       middleware.length > 0 ? compose(...middleware) : (fn) => fn
 
@@ -248,7 +285,7 @@ export default ({
        * request.
        */
       mapRequest(action, endpoint, isIncoming = false) {
-        const { mutateRequest, allowRawRequest } = endpoint
+        const { mutateRequest, allowRawRequest = false } = endpoint
 
         // Set endpoint options on action
         const nextAction = {
@@ -260,11 +297,22 @@ export default ({
           // Authorize and map in right order
           return isIncoming
             ? authorizeDataToService(
-                mutateRequest(nextAction, isIncoming),
+                castAction(
+                  mutateRequest(nextAction, isIncoming),
+                  allowRawRequest,
+                  true // isRequest
+                ),
                 allowRawRequest
               )
             : mutateRequest(
-                authorizeDataToService(nextAction, allowRawRequest),
+                authorizeDataToService(
+                  castAction(
+                    nextAction,
+                    allowRawRequest,
+                    true // isRequest
+                  ),
+                  allowRawRequest
+                ),
                 isIncoming
               )
         } catch (error) {
@@ -283,16 +331,22 @@ export default ({
        * order for a response to an incoming request.
        */
       mapResponse(action, endpoint, isIncoming = false) {
-        const { mutateResponse, allowRawResponse } = endpoint
+        const { mutateResponse, allowRawResponse = false } = endpoint
         try {
-          // Authorize and map in right order
+          // Authorize and mutate in right order
           return isIncoming
             ? mutateResponse(
-                authorizeDataFromService(action, allowRawResponse),
+                authorizeDataFromService(
+                  castAction(action, allowRawResponse),
+                  allowRawResponse
+                ),
                 isIncoming
               )
             : authorizeDataFromService(
-                mutateResponse(action, isIncoming),
+                castAction(
+                  mutateResponse(action, isIncoming),
+                  allowRawResponse
+                ),
                 allowRawResponse
               )
         } catch (error) {
