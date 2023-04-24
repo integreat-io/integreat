@@ -45,10 +45,10 @@ function getActionHandlerFromType(
   return undefined
 }
 
-function mapIncomingAction(
+async function mapIncomingAction(
   action: Action,
   getService: GetService
-): { action: Action; service?: Service; endpoint?: Endpoint } {
+): Promise<{ action: Action; service?: Service; endpoint?: Endpoint }> {
   const { sourceService } = action.payload
   if (sourceService) {
     const service = getService(undefined, sourceService)
@@ -72,7 +72,7 @@ function mapIncomingAction(
       }
     }
     return {
-      action: service.mapRequest(action, endpoint, true),
+      action: await service.mapRequest(action, endpoint, true),
       service,
       endpoint,
     }
@@ -80,12 +80,14 @@ function mapIncomingAction(
   return { action }
 }
 
-const mapIncomingResponse = (
+const mapIncomingResponse = async (
   action: Action,
   service?: Service,
   endpoint?: Endpoint
 ) =>
-  service && endpoint ? service.mapResponse(action, endpoint, true) : action
+  service && endpoint
+    ? await service.mapResponse(action, endpoint, true)
+    : action
 
 const responseFromAction = ({
   response: { status, ...response } = {},
@@ -114,11 +116,11 @@ const wrapDispatch =
         action: mappedAction,
         service,
         endpoint,
-      } = mapIncomingAction(actionWithIds, getService)
+      } = await mapIncomingAction(actionWithIds, getService)
       // Return any error from mapIncomingRequest()
       if (mappedAction.response?.status) {
         return responseFromAction(
-          mapIncomingResponse(mappedAction, service, endpoint)
+          await mapIncomingResponse(mappedAction, service, endpoint)
         )
       }
 
@@ -129,7 +131,7 @@ const wrapDispatch =
 
       // Map respons data when needed
       return responseFromAction(
-        mapIncomingResponse(responseAction, service, endpoint)
+        await mapIncomingResponse(responseAction, service, endpoint)
       )
     })
 

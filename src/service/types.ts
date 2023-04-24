@@ -22,7 +22,7 @@ export interface IdentConfig {
 }
 
 export interface ActionMapperWithEndpoint {
-  (action: Action, endpoint: Endpoint, isIncoming?: boolean): Action
+  (action: Action, endpoint: Endpoint, isIncoming?: boolean): Promise<Action>
 }
 
 export interface ActionMapper {

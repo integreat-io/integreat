@@ -10,8 +10,8 @@ import listen from './listen.js'
 const serviceMethods = {
   endpointFromAction: () => undefined,
   authorizeAction: (action: Action) => action,
-  mapRequest: (action: Action, _endpoint: unknown) => action,
-  mapResponse: (action: Action, _endpoint: unknown) => action,
+  mapRequest: async (action: Action, _endpoint: unknown) => action,
+  mapResponse: async (action: Action, _endpoint: unknown) => action,
   send: async (action: Action) => action,
   close: async () => ({ status: 'ok' }),
 }

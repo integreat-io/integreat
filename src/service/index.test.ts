@@ -1086,7 +1086,7 @@ test('mapResponse should mutate data array from service', async (t) => {
     },
   }
 
-  const ret = service.mapResponse(action, endpoint!)
+  const ret = await service.mapResponse(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1128,7 +1128,7 @@ test('mapResponse should mutate data object from service', async (t) => {
   }
   const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapResponse(action, endpoint!)
+  const ret = await service.mapResponse(action, endpoint!)
 
   const data = ret.response?.data as TypedData
   t.false(Array.isArray(data))
@@ -1203,7 +1203,7 @@ test.failing('mapResponse should use service adapters', async (t) => {
     },
   }
 
-  const ret = service.mapResponse(action, endpoint!)
+  const ret = await service.mapResponse(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1275,7 +1275,7 @@ test('mapResponse should not cast data array from service when allowRawResponse 
     },
   }
 
-  const ret = service.mapResponse(action, endpoint!)
+  const ret = await service.mapResponse(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1317,7 +1317,7 @@ test('mapResponse should map null to undefined', async (t) => {
     },
   }
 
-  const ret = service.mapResponse(action, endpoint!)
+  const ret = await service.mapResponse(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1357,7 +1357,7 @@ test('should authorize typed data in array from service', async (t) => {
   }
   const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapResponse(action, endpoint!)
+  const ret = await service.mapResponse(action, endpoint!)
 
   t.is(ret.response?.status, 'ok')
   const data = ret.response?.data as TypedData[]
@@ -1401,7 +1401,7 @@ test('should authorize typed data object from service', async (t) => {
   }
   const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapResponse(action, endpoint!)
+  const ret = await service.mapResponse(action, endpoint!)
 
   t.is(ret.response?.status, 'noaccess')
   t.is(ret.response?.data, undefined)
@@ -1442,7 +1442,7 @@ test('should authorize typed data in array to service', async (t) => {
   const endpoint = service.endpointFromAction(action)
   const isIncoming = true
 
-  const ret = service.mapResponse(action, endpoint!, isIncoming)
+  const ret = await service.mapResponse(action, endpoint!, isIncoming)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   const accounts = (ret.response?.data as TypedData).accounts as TypedData[]
@@ -1504,7 +1504,7 @@ test('mapResponse should return error when transformer throws', async (t) => {
     },
   }
 
-  const ret = service.mapResponse(action, endpoint!)
+  const ret = await service.mapResponse(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1583,7 +1583,7 @@ test('mapRequest should set endpoint options and cast and map request data', asy
     },
   }
 
-  const ret = service.mapRequest(action, endpoint!)
+  const ret = await service.mapRequest(action, endpoint!)
 
   t.deepEqual(ret, expectedAction)
 })
@@ -1612,7 +1612,7 @@ test('mapRequest should deep-clone endpoint options', async (t) => {
   }
   const endpoint = service.endpointFromAction(action)
 
-  const ret = service.mapRequest(action, endpoint!)
+  const ret = await service.mapRequest(action, endpoint!)
   const options = ret.meta?.options as { untouchable: { touched: boolean } }
   options.untouchable.touched = true
 
@@ -1656,7 +1656,7 @@ test('mapRequest should authorize data array going to service', async (t) => {
     warning: '1 item was removed from request data due to lack of access',
   }
 
-  const ret = service.mapRequest(action, endpoint!)
+  const ret = await service.mapRequest(action, endpoint!)
 
   const accounts = (ret.payload.data as TypedData).accounts as TypedData[]
   t.is(accounts.length, 1)
@@ -1695,7 +1695,7 @@ test('mapRequest should authorize data object going to service', async (t) => {
     reason: 'WRONG_IDENT',
   }
 
-  const ret = service.mapRequest(action, endpoint!)
+  const ret = await service.mapRequest(action, endpoint!)
 
   t.is((ret.payload.data as TypedData).accounts, undefined)
   t.deepEqual(ret.response, expectedResponse)
@@ -1736,7 +1736,7 @@ test('mapRequest should authorize data array coming from service', async (t) => 
     warning: '1 item was removed from request data due to lack of access',
   }
 
-  const ret = service.mapRequest(action, endpoint!, isIncoming)
+  const ret = await service.mapRequest(action, endpoint!, isIncoming)
 
   t.is(ret.response?.status, undefined, ret.response?.error)
   const data = ret.payload.data as TypedData[]
@@ -1781,7 +1781,7 @@ test('mapRequest should use mutation pipeline', async (t) => {
     StupidSoapOperator: { StupidSoapEmptyArgs: {} },
   }
 
-  const ret = service.mapRequest(action, endpoint!)
+  const ret = await service.mapRequest(action, endpoint!)
 
   t.deepEqual(ret.payload.data, expectedData)
 })
@@ -1829,7 +1829,7 @@ test('mapRequest should return error when transformer throws', async (t) => {
     },
   }
 
-  const ret = service.mapRequest(action, endpoint!)
+  const ret = await service.mapRequest(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })

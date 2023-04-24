@@ -287,7 +287,7 @@ export default ({
        * this is an outgoing request, and will do it in reverse for an incoming
        * request.
        */
-      mapRequest(action, endpoint, isIncoming = false) {
+      async mapRequest(action, endpoint, isIncoming = false) {
         const { mutateRequest, allowRawRequest = false } = endpoint
 
         // Set endpoint options on action
@@ -333,7 +333,7 @@ export default ({
        * this is the response from an outgoing request. Will do it in the reverse
        * order for a response to an incoming request.
        */
-      mapResponse(action, endpoint, isIncoming = false) {
+      async mapResponse(action, endpoint, isIncoming = false) {
         const { mutateResponse, allowRawResponse = false } = endpoint
         try {
           // Authorize and mutate in right order
