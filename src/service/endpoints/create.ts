@@ -1,10 +1,11 @@
 import mapTransform from 'map-transform'
+// import pPipe from 'p-pipe'
 import type {
   TransformDefinition,
   DataMapperEntry,
   Pipeline,
 } from 'map-transform/types.js'
-import type { Action } from '../../types.js'
+import type { Action, Adapter } from '../../types.js'
 import type { MapOptions } from '../types.js'
 import type { EndpointDef, Endpoint, EndpointOptions } from './types.js'
 import isMatch from './match.js'
@@ -20,7 +21,11 @@ export interface PrepareOptions {
   (options: EndpointOptions, serviceId: string): EndpointOptions
 }
 
-function mutateAction(mutator: DataMapperEntry | null, isRev: boolean) {
+function mutateAction(
+  mutator: DataMapperEntry | null,
+  isRev: boolean,
+  _adapterFn: (action: Action) => Action
+) {
   if (!mutator) {
     return (action: Action) => action
   }
@@ -48,7 +53,8 @@ export default function createEndpoint(
   serviceOptions: EndpointOptions,
   mapOptions: MapOptions,
   serviceMutation?: TransformDefinition,
-  prepareOptions: PrepareOptions = (options) => options
+  prepareOptions: PrepareOptions = (options) => options,
+  _serviceAdapters: Adapter[] = []
 ) {
   return function (endpointDef: EndpointDef): Endpoint {
     const mutation = flattenIfOneOrNone(
@@ -58,13 +64,8 @@ export default function createEndpoint(
     ) as Pipeline | TransformDefinition
     const mutator = mutation ? mapTransform(mutation, mapOptions) : null
 
-    const options = prepareOptions(
-      {
-        ...serviceOptions,
-        ...endpointDef.options,
-      },
-      serviceId
-    )
+    const options = { ...serviceOptions, ...endpointDef.options }
+    const preparedOptions = prepareOptions(options, serviceId)
 
     const {
       id,
@@ -73,14 +74,22 @@ export default function createEndpoint(
       match,
     } = endpointDef
 
+    // const adapters = serviceAdapters
+    // const responseAdapterFn = pPipe(
+    //   ...adapters.map((adapter) => {
+    //     const preparedOptions = adapter.prepareOptions(options, serviceId)
+    //     return (action: Action) => adapter.normalize(action, preparedOptions)
+    //   })
+    // )
+
     return {
       id,
       allowRawRequest,
       allowRawResponse,
       match,
-      options,
-      mutateRequest: mutateAction(mutator, true),
-      mutateResponse: mutateAction(mutator, false),
+      options: preparedOptions,
+      mutateRequest: mutateAction(mutator, true, (data) => data),
+      mutateResponse: mutateAction(mutator, false, (data) => data),
       isMatch: isMatch(endpointDef),
     }
   }

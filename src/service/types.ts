@@ -1,5 +1,11 @@
 import type { TransformDefinition, Options } from 'map-transform/types.js'
-import type { Action, Response, Dispatch, Transporter } from '../types.js'
+import type {
+  Action,
+  Response,
+  Dispatch,
+  Transporter,
+  Adapter,
+} from '../types.js'
 import type { EndpointDef, Endpoint } from './endpoints/types.js'
 
 export type MapOptions = Options
@@ -66,6 +72,7 @@ export interface AuthObject {
 export interface ServiceDef {
   id: string
   transporter?: string | Transporter
+  adapters?: (string | Adapter)[]
   auth?: AuthObject | AuthProp
   meta?: string
   options?: Record<string, unknown>

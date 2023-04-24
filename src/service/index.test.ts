@@ -75,7 +75,6 @@ const entryMutation = [
     createdAt: 'created',
     updatedAt: 'updated',
   },
-  // { $apply: 'cast_entry' },
 ]
 
 const entry2Mutation = [
@@ -85,7 +84,6 @@ const entry2Mutation = [
     id: 'key',
     title: 'subheader',
   },
-  // { $apply: 'cast_entry' },
 ]
 
 const accountMutation = [
@@ -95,7 +93,6 @@ const accountMutation = [
     id: 'id',
     name: 'name',
   },
-  // { $apply: 'cast_account' },
 ]
 
 const mutations = {
@@ -1139,7 +1136,79 @@ test('mapResponse should mutate data object from service', async (t) => {
   t.is(data.$type, 'account')
 })
 
-test('mapResponse should not cast mutate data array from service when allowRawResponse is true', async (t) => {
+test.failing('mapResponse should use service adapters', async (t) => {
+  const theDate = new Date()
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
+    id: 'entries',
+    transporter: 'http',
+    adapters: ['json'],
+    endpoints: [
+      {
+        mutation: {
+          $direction: 'from',
+          response: {
+            $modify: 'response',
+            data: ['response.data.content.data', { $apply: 'entry' }],
+          },
+        },
+        options: { uri: 'http://some.api/1.0' },
+      },
+    ],
+  })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    response: {
+      status: 'ok',
+      data: JSON.stringify({
+        content: {
+          data: {
+            items: [
+              {
+                key: 'ent1',
+                header: 'Entry 1',
+                two: 2,
+                created: theDate,
+                updated: theDate,
+              },
+            ],
+          },
+        },
+      }),
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
+  const expected = {
+    ...action,
+    response: {
+      status: 'ok',
+      data: [
+        {
+          $type: 'entry',
+          id: 'ent1',
+          title: 'Entry 1',
+          one: 1,
+          two: 2,
+          source: { id: 'thenews', $ref: 'source' },
+          createdAt: theDate,
+          updatedAt: theDate,
+        },
+      ],
+    },
+  }
+
+  const ret = service.mapResponse(action, endpoint!)
+
+  t.deepEqual(ret, expected)
+})
+
+test('mapResponse should not cast data array from service when allowRawResponse is true', async (t) => {
   const theDate = new Date()
   const service = setupService({
     mapOptions,

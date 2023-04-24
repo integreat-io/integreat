@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon from 'sinon'
+import jsonAdapter from './adapters/json.js'
 import { jsonServiceDef } from './tests/helpers/json.js'
 import builtInMutations from './mutations/index.js'
 import user from './tests/helpers/defs/schemas/user.js'
 import resources from './tests/helpers/resources/index.js'
-import type { Action, HandlerDispatch } from './types.js'
+import type { Action, HandlerDispatch, TypedData } from './types.js'
 
 import create, { Definitions, Resources } from './create.js'
 
@@ -134,11 +135,7 @@ test('should dispatch with resources', async (t) => {
 })
 
 test('should dispatch with builtin action handler', async (t) => {
-  const send = sinon.stub().resolves({
-    type: 'GET',
-    payload: {},
-    response: { status: 'ok', data: '[]' },
-  })
+  const send = sinon.stub().resolves({ status: 'ok', data: '[]' })
   const resourcesWithTransAndSend = {
     ...resourcesWithTransformer,
     transporters: {
@@ -158,6 +155,45 @@ test('should dispatch with builtin action handler', async (t) => {
   await great.dispatch(action)
 
   t.is(send.callCount, 1) // If the send method was called, the GET action was dispatched
+})
+
+test.failing('should use adapters', async (t) => {
+  const send = sinon
+    .stub()
+    .resolves({ status: 'ok', data: '[{"id":"ent1","title":"Entry 1"}]' })
+  const servicesWithJson = [
+    {
+      ...services[0],
+      adapters: ['json'],
+    },
+  ]
+  const resourcesWithTransSendAndAdapters = {
+    ...resourcesWithTransformer,
+    transporters: {
+      ...resourcesWithTransformer.transporters,
+      http: {
+        ...resourcesWithTransformer.transporters!.http,
+        send,
+      },
+    },
+    adapters: {
+      json: jsonAdapter,
+    },
+  }
+  const action = { type: 'GET', payload: { type: 'entry' } }
+
+  const great = create(
+    { services: servicesWithJson, schemas, mutations },
+    resourcesWithTransSendAndAdapters
+  )
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  const data = ret.data as TypedData[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'ent1')
+  t.is(data[0].title, 'ent1')
+  t.is(data[0].$type, 'entry')
 })
 
 test('should call middleware', async (t) => {

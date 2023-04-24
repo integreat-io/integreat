@@ -1,11 +1,12 @@
 import test from 'ava'
 import sinon from 'sinon'
+import jsonAdapter from '../../adapters/json.js'
 import createSchema from '../../schema/index.js'
 import builtInTransformers from '../../transformers/builtIns/index.js'
 import transformers from '../../transformers/index.js'
 import type { TypedData } from '../../types.js'
 import type { MapOptions } from '../types.js'
-import { isAction } from '../../utils/is.js'
+import { isAction, isObject } from '../../utils/is.js'
 import createMapOptions from '../../utils/createMapOptions.js'
 
 import createEndpoint from './create.js'
@@ -411,6 +412,43 @@ test('should map response from service with service mutation only', (t) => {
   const data = ret.response?.data as TypedData[]
   t.is(data.length, 1)
   t.is(data[0].id, 'ent1')
+})
+
+test.failing('should map response from service with service adapter', (t) => {
+  const endpointDef = {
+    mutation: {
+      response: {
+        $modify: 'response',
+        data: ['response.data.content.data', { $apply: 'entry' }],
+      },
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const actionWithJSON = {
+    ...actionWithResponse,
+    response: {
+      ...actionWithResponse.response,
+      data: JSON.stringify(actionWithResponse.response.data),
+    },
+  }
+  const serviceAdapters = [jsonAdapter]
+  const endpoint = createEndpoint(
+    serviceId,
+    serviceOptions,
+    mapOptions,
+    undefined,
+    undefined,
+    serviceAdapters
+  )(endpointDef)
+
+  const ret = endpoint.mutateResponse(actionWithJSON)
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.true(Array.isArray(ret.response?.data), 'Should be an array')
+  t.true(
+    isObject((ret.response?.data as TypedData[])[0]),
+    'Should be an object'
+  )
 })
 
 test('should keep action props not mapped from response', (t) => {

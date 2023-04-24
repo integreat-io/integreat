@@ -24,6 +24,7 @@ import type {
   Dispatch,
   Middleware,
   Transporter,
+  Adapter,
 } from '../types.js'
 import type {
   Service,
@@ -39,6 +40,7 @@ const debug = debugLib('great')
 
 interface Resources {
   transporters?: Record<string, Transporter>
+  adapters?: Record<string, Adapter>
   authenticators?: Record<string, Authenticator>
   auths?: Record<string, Auth>
   schemas: Record<string, Schema>
@@ -215,6 +217,7 @@ const castByType = (castFns: Record<string, DataMapperEntry>) =>
  */
 export default ({
     transporters,
+    // adapters = {},
     authenticators = {},
     auths,
     schemas,
@@ -483,10 +486,3 @@ export default ({
       },
     }
   }
-
-// const knownActions = ['GET', 'SET', 'DELETE']
-//
-// export const respondToUnknownAction = _options => args =>
-//   args.request && knownActions.includes(args.request.action)
-//     ? args
-//     : { ...args, response: { status: 'noaction' } }

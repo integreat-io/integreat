@@ -200,6 +200,21 @@ export interface Transporter {
   disconnect: (connection: Connection | null) => Promise<void>
 }
 
+export interface Adapter {
+  prepareOptions: (
+    options: Record<string, unknown>,
+    serviceId: string
+  ) => Record<string, unknown>
+  normalize: (
+    action: Action,
+    options: Record<string, unknown>
+  ) => Promise<Action>
+  serialize: (
+    action: Action,
+    options: Record<string, unknown>
+  ) => Promise<Action>
+}
+
 export interface GetService {
   (type?: string | string[], serviceId?: string): Service | undefined
 }

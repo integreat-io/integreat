@@ -13,6 +13,7 @@ import type {
   Action,
   Response,
   ActionHandler,
+  Adapter,
 } from './types.js'
 import type {
   ServiceDef,
@@ -51,6 +52,7 @@ export interface Definitions {
 
 export interface Resources {
   transporters?: Record<string, Transporter>
+  adapters?: Record<string, Adapter>
   handlers?: Record<string, ActionHandler>
   authenticators?: Record<string, Authenticator>
   transformers?: Record<string, Transformer>
@@ -97,7 +99,7 @@ export default function create(
     dictionaries,
     jobs: jobsDefs = [],
   }: Definitions,
-  { transporters, transformers, handlers, authenticators }: Resources,
+  { transporters, adapters, transformers, handlers, authenticators }: Resources,
   middlewareForDispatch: Middleware[] = [],
   middlewareForService: Middleware[] = []
 ): Instance {
@@ -143,6 +145,7 @@ export default function create(
     .map(
       createService({
         transporters,
+        adapters,
         authenticators,
         auths,
         schemas,

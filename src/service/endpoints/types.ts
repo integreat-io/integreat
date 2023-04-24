@@ -1,5 +1,5 @@
 import type { TransformDefinition } from 'map-transform/types.js'
-import type { Action, Condition } from '../../types.js'
+import type { Action, Condition, Adapter } from '../../types.js'
 
 export type EndpointOptions = Record<string, unknown>
 
@@ -17,6 +17,7 @@ export interface EndpointDef {
   match?: MatchObject
   options?: EndpointOptions
   mutation?: TransformDefinition
+  adapters?: (string | Adapter)[]
   allowRawRequest?: boolean
   allowRawResponse?: boolean
 }
