@@ -566,7 +566,7 @@ Each step may be one of the following:
 - **A cast object**, e.g. `{ $cast: 'author' }` that casts the data into a
   schema, removing all properties that is not part of the shape of the schema,
   and transforming all values to the expected types or `undefined` if not
-  possible.
+  possible. (Not available until v1.0)
 
 ### Dot notation paths
 
