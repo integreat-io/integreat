@@ -26,8 +26,8 @@ export interface Endpoint {
   id?: string
   match?: MatchObject
   options: EndpointOptions
-  mutateRequest: (action: Action, isIncoming?: boolean) => Action
-  mutateResponse: (action: Action, isIncoming?: boolean) => Action
+  mutateRequest: (action: Action, isIncoming?: boolean) => Promise<Action>
+  mutateResponse: (action: Action, isIncoming?: boolean) => Promise<Action>
   isMatch: (action: Action, isIncoming?: boolean) => boolean
   allowRawRequest?: boolean
   allowRawResponse?: boolean

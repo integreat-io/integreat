@@ -157,14 +157,14 @@ test('should dispatch with builtin action handler', async (t) => {
   t.is(send.callCount, 1) // If the send method was called, the GET action was dispatched
 })
 
-test.failing('should use adapters', async (t) => {
+test('should use adapters', async (t) => {
   const send = sinon
     .stub()
-    .resolves({ status: 'ok', data: '[{"id":"ent1","title":"Entry 1"}]' })
+    .resolves({ status: 'ok', data: '[{"key":"ent1","headline":"Entry 1"}]' })
   const servicesWithJson = [
     {
       ...services[0],
-      adapters: ['json'],
+      adapters: ['json'], // Lookup with id
     },
   ]
   const resourcesWithTransSendAndAdapters = {
@@ -192,7 +192,7 @@ test.failing('should use adapters', async (t) => {
   const data = ret.data as TypedData[]
   t.is(data.length, 1)
   t.is(data[0].id, 'ent1')
-  t.is(data[0].title, 'ent1')
+  t.is(data[0].title, 'Entry 1!')
   t.is(data[0].$type, 'entry')
 })
 

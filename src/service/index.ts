@@ -9,7 +9,7 @@ import {
 import Connection from './Connection.js'
 import Auth from './Auth.js'
 import { lookupById } from '../utils/indexUtils.js'
-import { isObject } from '../utils/is.js'
+import { isObject, isNotNullOrUndefined } from '../utils/is.js'
 import deepClone from '../utils/deepClone.js'
 import * as authorizeData from './authorize/data.js'
 import authorizeAction from './authorize/action.js'
@@ -212,12 +212,20 @@ const castByType = (castFns: Record<string, DataMapperEntry>) =>
     return action
   }
 
+const lookupAdapters = (
+  defs: (string | Adapter)[] = [],
+  adapters: Record<string, Adapter>
+) =>
+  defs
+    .map((adapterId) => lookupById(adapterId, adapters))
+    .filter(isNotNullOrUndefined)
+
 /**
  * Create a service with the given id and transporter.
  */
 export default ({
     transporters,
-    // adapters = {},
+    adapters = {},
     authenticators = {},
     auths,
     schemas,
@@ -229,6 +237,7 @@ export default ({
   ({
     id: serviceId,
     transporter: transporterId,
+    adapters: adapterDefs = [],
     auth,
     meta,
     options = {},
@@ -240,6 +249,7 @@ export default ({
     }
 
     const transporter = lookupById(transporterId, transporters)
+    const serviceAdapters = lookupAdapters(adapterDefs, adapters)
 
     const authorization = retrieveAuthorization(authenticators, auths, auth)
     const incomingAuth = resolveIncomingAuth(authenticators, auths, auth)
@@ -250,11 +260,15 @@ export default ({
 
     const getEndpointMapper = createEndpointMappers(
       serviceId,
-      endpointDefs,
+      endpointDefs.map((endpoint) => ({
+        ...endpoint,
+        adapters: lookupAdapters(endpoint.adapters, adapters),
+      })),
       options,
       mapOptions,
       mutation,
-      isTransporter(transporter) ? transporter.prepareOptions : undefined
+      isTransporter(transporter) ? transporter.prepareOptions : undefined,
+      serviceAdapters
     )
 
     const castAction = castByType(castFns)
@@ -301,13 +315,13 @@ export default ({
           return isIncoming
             ? authorizeDataToService(
                 castAction(
-                  mutateRequest(nextAction, isIncoming),
+                  await mutateRequest(nextAction, isIncoming),
                   allowRawRequest,
                   true // isRequest
                 ),
                 allowRawRequest
               )
-            : mutateRequest(
+            : await mutateRequest(
                 authorizeDataToService(
                   castAction(
                     nextAction,
@@ -338,7 +352,7 @@ export default ({
         try {
           // Authorize and mutate in right order
           return isIncoming
-            ? mutateResponse(
+            ? await mutateResponse(
                 authorizeDataFromService(
                   castAction(action, allowRawResponse),
                   allowRawResponse
@@ -347,7 +361,7 @@ export default ({
               )
             : authorizeDataFromService(
                 castAction(
-                  mutateResponse(action, isIncoming),
+                  await mutateResponse(action, isIncoming),
                   allowRawResponse
                 ),
                 allowRawResponse

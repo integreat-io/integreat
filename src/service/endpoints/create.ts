@@ -1,5 +1,5 @@
 import mapTransform from 'map-transform'
-// import pPipe from 'p-pipe'
+import pPipe from 'p-pipe'
 import type {
   TransformDefinition,
   DataMapperEntry,
@@ -17,6 +17,10 @@ import { ensureArray } from '../../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../../utils/is.js'
 import xor from '../../utils/xor.js'
 
+interface MutateAction {
+  (action: Action): Promise<Action>
+}
+
 export interface PrepareOptions {
   (options: EndpointOptions, serviceId: string): EndpointOptions
 }
@@ -24,19 +28,29 @@ export interface PrepareOptions {
 function mutateAction(
   mutator: DataMapperEntry | null,
   isRev: boolean,
-  _adapterFn: (action: Action) => Action
+  normalize: MutateAction = async (action) => action,
+  serialize: MutateAction = async (action) => action
 ) {
-  if (!mutator) {
-    return (action: Action) => action
-  }
+  return async function doMutateAction(action: Action, isIncoming = false) {
+    // Correct rev based on if this is an incoming action or not
+    const rev = xor(isRev, isIncoming)
 
-  return (action: Action, isIncoming = false) =>
-    populateActionAfterMapping(
-      action,
-      mutator(prepareActionForMapping(action, isRev), {
-        rev: xor(isRev, isIncoming),
-      }) as Partial<Action>
-    )
+    // Normalize action if we're coming _from_ a service
+    const normalizedAction = rev ? action : await normalize(action)
+
+    // Mutate action
+    const mutatedAction = mutator
+      ? populateActionAfterMapping(
+          action,
+          mutator(prepareActionForMapping(normalizedAction, isRev), {
+            rev,
+          }) as Action
+        )
+      : normalizedAction
+
+    // Serialize action if we're going _to_ a service
+    return rev ? await serialize(mutatedAction) : mutatedAction
+  }
 }
 
 const flattenIfOneOrNone = <T>(arr: T[]): T | T[] =>
@@ -44,6 +58,23 @@ const flattenIfOneOrNone = <T>(arr: T[]): T | T[] =>
 
 const setModifyFlag = (def?: TransformDefinition) =>
   isObject(def) ? { ...def, $modify: true } : def
+
+const prepareAdapter = (
+  options: EndpointOptions,
+  serviceId: string,
+  doSerialize = false
+) =>
+  function prepareAdapter(adapter: Adapter) {
+    const preparedOptions = adapter.prepareOptions(options, serviceId)
+    return doSerialize
+      ? async (action: Action): Promise<Action> =>
+          await adapter.serialize(action, preparedOptions)
+      : async (action: Action): Promise<Action> =>
+          await adapter.normalize(action, preparedOptions)
+  }
+
+const pipeAdapters = (adapters: MutateAction[]) =>
+  adapters.length > 0 ? (pPipe(...adapters) as MutateAction) : undefined
 
 /**
  * Create endpoint from definition.
@@ -54,7 +85,7 @@ export default function createEndpoint(
   mapOptions: MapOptions,
   serviceMutation?: TransformDefinition,
   prepareOptions: PrepareOptions = (options) => options,
-  _serviceAdapters: Adapter[] = []
+  serviceAdapters: Adapter[] = []
 ) {
   return function (endpointDef: EndpointDef): Endpoint {
     const mutation = flattenIfOneOrNone(
@@ -72,15 +103,17 @@ export default function createEndpoint(
       allowRawRequest = false,
       allowRawResponse = false,
       match,
+      adapters = [],
     } = endpointDef
 
-    // const adapters = serviceAdapters
-    // const responseAdapterFn = pPipe(
-    //   ...adapters.map((adapter) => {
-    //     const preparedOptions = adapter.prepareOptions(options, serviceId)
-    //     return (action: Action) => adapter.normalize(action, preparedOptions)
-    //   })
-    // )
+    const allAdapters = [...serviceAdapters, ...(adapters as Adapter[])] // We know we're getting only adapters here
+    const normalize = pipeAdapters(
+      allAdapters.map(prepareAdapter(options, serviceId, false))
+    )
+    allAdapters.reverse() // Reverse adapter order before creating the serializer
+    const serialize = pipeAdapters(
+      allAdapters.map(prepareAdapter(options, serviceId, true))
+    )
 
     return {
       id,
@@ -88,8 +121,8 @@ export default function createEndpoint(
       allowRawResponse,
       match,
       options: preparedOptions,
-      mutateRequest: mutateAction(mutator, true, (data) => data),
-      mutateResponse: mutateAction(mutator, false, (data) => data),
+      mutateRequest: mutateAction(mutator, true, normalize, serialize),
+      mutateResponse: mutateAction(mutator, false, normalize, serialize),
       isMatch: isMatch(endpointDef),
     }
   }

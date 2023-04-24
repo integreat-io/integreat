@@ -1136,7 +1136,7 @@ test('mutateResponse should mutate data object from service', async (t) => {
   t.is(data.$type, 'account')
 })
 
-test.failing('mutateResponse should use service adapters', async (t) => {
+test('mutateResponse should use service adapters', async (t) => {
   const theDate = new Date()
   const service = setupService({
     mapOptions,
@@ -1149,6 +1149,78 @@ test.failing('mutateResponse should use service adapters', async (t) => {
     adapters: ['json'],
     endpoints: [
       {
+        mutation: {
+          $direction: 'from',
+          response: {
+            $modify: 'response',
+            data: ['response.data.content.data', { $apply: 'entry' }],
+          },
+        },
+        options: { uri: 'http://some.api/1.0' },
+      },
+    ],
+  })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    response: {
+      status: 'ok',
+      data: JSON.stringify({
+        content: {
+          data: {
+            items: [
+              {
+                key: 'ent1',
+                header: 'Entry 1',
+                two: 2,
+                created: theDate,
+                updated: theDate,
+              },
+            ],
+          },
+        },
+      }),
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
+  const expected = {
+    ...action,
+    response: {
+      status: 'ok',
+      data: [
+        {
+          $type: 'entry',
+          id: 'ent1',
+          title: 'Entry 1',
+          one: 1,
+          two: 2,
+          source: { id: 'thenews', $ref: 'source' },
+          createdAt: theDate,
+          updatedAt: theDate,
+        },
+      ],
+    },
+  }
+
+  const ret = await service.mutateResponse(action, endpoint!)
+
+  t.deepEqual(ret, expected)
+})
+
+test('mutateResponse should use endpoint adapters', async (t) => {
+  const theDate = new Date()
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
+    id: 'entries',
+    transporter: 'http',
+    endpoints: [
+      {
+        adapters: ['json'],
         mutation: {
           $direction: 'from',
           response: {

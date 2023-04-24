@@ -1,4 +1,5 @@
 import httpTransporter from 'integreat-transporter-http'
+import jsonAdapter from '../../adapters/json.js'
 import type { Transformer } from 'map-transform/types.js'
 import type { ServiceDef } from '../../service/types.js'
 import mutations from '../../mutations/index.js'
@@ -10,7 +11,10 @@ export const jsonPipelines = {
 
 export const jsonServiceDef: Partial<ServiceDef> = {
   transporter: httpTransporter,
-  mutation: [{ $apply: 'exchange:json' }, { $apply: 'exchange:uri' }],
+  adapters: [jsonAdapter],
+  mutation: [{ $apply: 'exchange:uri' }],
 }
 
-export const jsonFunctions: Record<string, Transformer> = transformers
+export const jsonFunctions: Record<string, Transformer> = {
+  generateUri: transformers.generateUri,
+}

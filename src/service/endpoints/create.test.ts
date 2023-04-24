@@ -4,7 +4,7 @@ import jsonAdapter from '../../adapters/json.js'
 import createSchema from '../../schema/index.js'
 import builtInTransformers from '../../transformers/builtIns/index.js'
 import transformers from '../../transformers/index.js'
-import type { TypedData } from '../../types.js'
+import type { TypedData, Adapter } from '../../types.js'
 import type { MapOptions } from '../types.js'
 import { isAction, isObject } from '../../utils/is.js'
 import createMapOptions from '../../utils/createMapOptions.js'
@@ -121,6 +121,51 @@ const actionWithResponse = {
 
 const serviceId = 'accountStore'
 const serviceOptions = {}
+
+const mockAdapter: Adapter = {
+  prepareOptions: (options, _serviceId) => options,
+  async normalize(action, _options) {
+    const data = action.response?.data
+    return isObject(data)
+      ? {
+          ...action,
+          response: {
+            ...action.response,
+            data: {
+              content: {
+                data: {
+                  items: [
+                    (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
+                    (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
+                  ],
+                },
+              },
+            },
+          },
+        }
+      : action
+  },
+  async serialize(action, _options) {
+    const data = action.payload?.data
+    return isObject(data)
+      ? {
+          ...action,
+          payload: {
+            ...action.payload,
+            data: {
+              content: {
+                data: {
+                  items: [
+                    (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
+                  ],
+                },
+              },
+            },
+          },
+        }
+      : action
+  },
+}
 
 // Tests -- props
 
@@ -243,7 +288,7 @@ test('should return false when no match to action', (t) => {
 
 // Tests -- mutateResponse
 
-test('should mutate response from service with endpoint mutation', (t) => {
+test('should mutate response from service with endpoint mutation', async (t) => {
   const endpointDef = {
     mutation: {
       response: {
@@ -277,13 +322,13 @@ test('should mutate response from service with endpoint mutation', (t) => {
     mapOptions
   )(endpointDef)
 
-  const ret = endpoint.mutateResponse(actionWithResponse)
+  const ret = await endpoint.mutateResponse(actionWithResponse)
 
   clock.restore()
   t.deepEqual(ret, expected)
 })
 
-test('should mutate action props from response', (t) => {
+test('should mutate action props from response', async (t) => {
   const endpointDef = {
     mutation: {
       response: [
@@ -323,7 +368,7 @@ test('should mutate action props from response', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateResponse(actionWithProps)
+  const ret = await endpoint.mutateResponse(actionWithProps)
 
   t.is(ret.response?.status, 'badrequest')
   t.is(ret.response?.error, 'Not valid')
@@ -332,7 +377,7 @@ test('should mutate action props from response', (t) => {
   t.is(ret.response?.params?.id, '7839')
 })
 
-test('should mutate response from service with service and endpoint mutations', (t) => {
+test('should mutate response from service with service and endpoint mutations', async (t) => {
   const serviceMutation = [
     {
       response: {
@@ -373,7 +418,7 @@ test('should mutate response from service with service and endpoint mutations', 
     mapOptions,
     serviceMutation
   )(endpointDef)
-  const ret = endpoint.mutateResponse(actionWithProps)
+  const ret = await endpoint.mutateResponse(actionWithProps)
 
   const data = ret.response?.data as TypedData[]
   t.is(data.length, 1)
@@ -382,7 +427,7 @@ test('should mutate response from service with service and endpoint mutations', 
   t.is(ret.response?.error, 'Too much')
 })
 
-test('should mutate response from service with service mutation only', (t) => {
+test('should mutate response from service with service mutation only', async (t) => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
@@ -406,7 +451,7 @@ test('should mutate response from service with service mutation only', (t) => {
     mapOptions,
     serviceMutation
   )(endpointDef)
-  const ret = endpoint.mutateResponse(actionWithProps)
+  const ret = await endpoint.mutateResponse(actionWithProps)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   const data = ret.response?.data as TypedData[]
@@ -414,47 +459,145 @@ test('should mutate response from service with service mutation only', (t) => {
   t.is(data[0].id, 'ent1')
 })
 
-test.failing(
-  'should mutate response from service with service adapter',
-  (t) => {
-    const endpointDef = {
-      mutation: {
-        response: {
-          $modify: 'response',
-          data: ['response.data.content.data', { $apply: 'entry' }],
-        },
-      },
-      options: { uri: 'http://some.api/1.0' },
-    }
-    const actionWithJSON = {
-      ...actionWithResponse,
+test('should mutate response from service with service adapter', async (t) => {
+  const endpointDef = {
+    mutation: {
       response: {
-        ...actionWithResponse.response,
-        data: JSON.stringify(actionWithResponse.response.data),
+        $modify: 'response',
+        data: ['response.data.content.data', { $apply: 'entry' }],
       },
-    }
-    const serviceAdapters = [jsonAdapter]
-    const endpoint = createEndpoint(
-      serviceId,
-      serviceOptions,
-      mapOptions,
-      undefined,
-      undefined,
-      serviceAdapters
-    )(endpointDef)
-
-    const ret = endpoint.mutateResponse(actionWithJSON)
-
-    t.is(ret.response?.status, 'ok', ret.response?.error)
-    t.true(Array.isArray(ret.response?.data), 'Should be an array')
-    t.true(
-      isObject((ret.response?.data as TypedData[])[0]),
-      'Should be an object'
-    )
+    },
+    options: { uri: 'http://some.api/1.0' },
   }
-)
+  const actionWithJSON = {
+    ...actionWithResponse,
+    response: {
+      ...actionWithResponse.response,
+      data: JSON.stringify(actionWithResponse.response.data),
+    },
+  }
+  const serviceAdapters = [jsonAdapter]
+  const endpoint = createEndpoint(
+    serviceId,
+    serviceOptions,
+    mapOptions,
+    undefined,
+    undefined,
+    serviceAdapters
+  )(endpointDef)
 
-test('should keep action props not mapped from response', (t) => {
+  const ret = await endpoint.mutateResponse(actionWithJSON)
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.true(Array.isArray(ret.response?.data), 'Should be an array')
+  t.true(
+    isObject((ret.response?.data as TypedData[])[0]),
+    'Should be an object'
+  )
+})
+
+test('should mutate response from service with endpoint adapter', async (t) => {
+  const endpointAdapters = [mockAdapter]
+  const endpointDef = {
+    mutation: {
+      response: {
+        $modify: 'response',
+        data: ['response.data.content.data', { $apply: 'entry' }],
+      },
+    },
+    adapters: endpointAdapters,
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const actionWithJSON = {
+    ...actionWithResponse,
+    response: {
+      ...actionWithResponse.response,
+      data: JSON.stringify(actionWithResponse.response.data),
+    },
+  }
+  const serviceAdapters = [jsonAdapter]
+  const endpoint = createEndpoint(
+    serviceId,
+    serviceOptions,
+    mapOptions,
+    undefined,
+    undefined,
+    serviceAdapters
+  )(endpointDef)
+
+  const ret = await endpoint.mutateResponse(actionWithJSON)
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.true(Array.isArray(ret.response?.data), 'Should be an array')
+  t.is((ret.response?.data as TypedData[]).length, 2) // Mock adapter duplicates the array
+})
+
+test('should mutate response from service with service adapter and no mutation pipeline', async (t) => {
+  const endpointDef = {
+    allowRawResponse: true,
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const actionWithJSON = {
+    ...actionWithResponse,
+    response: {
+      ...actionWithResponse.response,
+      data: JSON.stringify(actionWithResponse.response.data),
+    },
+  }
+  const serviceAdapters = [jsonAdapter]
+  const endpoint = createEndpoint(
+    serviceId,
+    serviceOptions,
+    mapOptions,
+    undefined,
+    undefined,
+    serviceAdapters
+  )(endpointDef)
+  const expectedData = {
+    content: {
+      data: {
+        items: [{ key: 'ent1', header: 'Entry 1', title: 'The long title' }],
+      },
+    },
+  }
+
+  const ret = await endpoint.mutateResponse(actionWithJSON)
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret.response?.data, expectedData)
+})
+
+test('should mutate response to service (incoming) with service adapter', async (t) => {
+  const endpointDef = {
+    mutation: {
+      response: {
+        $modify: 'response',
+        data: ['response.data.content.data', { $apply: 'entry' }],
+      },
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+
+  const serviceAdapters = [jsonAdapter]
+  const endpoint = createEndpoint(
+    serviceId,
+    serviceOptions,
+    mapOptions,
+    undefined,
+    undefined,
+    serviceAdapters
+  )(endpointDef)
+  const isIncoming = true
+  const expectedData =
+    '{"content":{"data":{"items":[{"key":null,"activated":false}]}}}'
+
+  const ret = await endpoint.mutateResponse(actionWithResponse, isIncoming)
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.response?.data, expectedData)
+})
+
+test('should keep action props not mapped from response', async (t) => {
   const endpointDef = {
     mutation: {
       response: [
@@ -486,14 +629,14 @@ test('should keep action props not mapped from response', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateResponse(actionWithProps)
+  const ret = await endpoint.mutateResponse(actionWithProps)
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, 'Not valid')
   t.is((ret.response?.data as TypedData[]).length, 1)
 })
 
-test('should set status to error for response with an error', (t) => {
+test('should set status to error for response with an error', async (t) => {
   const endpointDef = {
     mutation: {
       response: [
@@ -522,13 +665,13 @@ test('should set status to error for response with an error', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateResponse(actionWithProps)
+  const ret = await endpoint.mutateResponse(actionWithProps)
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, 'Not valid')
 })
 
-test('should mutate to undefined from response when unknown path', (t) => {
+test('should mutate to undefined from response when unknown path', async (t) => {
   const endpointDef = {
     mutation: {
       response: 'response',
@@ -549,12 +692,12 @@ test('should mutate to undefined from response when unknown path', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateResponse(actionWithResponse)
+  const ret = await endpoint.mutateResponse(actionWithResponse)
 
   t.deepEqual(ret, expected)
 })
 
-test('should mutate to empty array from service when unknown path and expecting array', (t) => {
+test('should mutate to empty array from service when unknown path and expecting array', async (t) => {
   const endpointDef = {
     mutation: {
       response: 'response',
@@ -575,12 +718,12 @@ test('should mutate to empty array from service when unknown path and expecting 
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateResponse(actionWithResponse)
+  const ret = await endpoint.mutateResponse(actionWithResponse)
 
   t.deepEqual(ret, expected)
 })
 
-test('should not mutate from service when no mutation pipeline', (t) => {
+test('should not mutate from service when no mutation pipeline', async (t) => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
@@ -591,12 +734,12 @@ test('should not mutate from service when no mutation pipeline', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateResponse(actionWithResponse)
+  const ret = await endpoint.mutateResponse(actionWithResponse)
 
   t.deepEqual(ret, expected)
 })
 
-test('should not mutate response from service when direction is rev', (t) => {
+test('should not mutate response from service when direction is rev', async (t) => {
   const endpointDef = {
     mutation: {
       $direction: 'rev',
@@ -612,14 +755,14 @@ test('should not mutate response from service when direction is rev', (t) => {
     mapOptions
   )(endpointDef)
 
-  const ret = endpoint.mutateResponse(actionWithResponse)
+  const ret = await endpoint.mutateResponse(actionWithResponse)
 
   t.deepEqual(ret, expected)
 })
 
 // Tests -- mutateRequest
 
-test('should mutate request with endpoint mutation', (t) => {
+test('should mutate request with endpoint mutation', async (t) => {
   const endpointDef = {
     mutation: {
       payload: 'payload',
@@ -649,12 +792,12 @@ test('should mutate request with endpoint mutation', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateRequest(action)
+  const ret = await endpoint.mutateRequest(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should mutate request with service mutation', (t) => {
+test('should mutate request with service mutation', async (t) => {
   const serviceMutation = [
     {
       $direction: 'rev',
@@ -737,12 +880,12 @@ test('should mutate request with service mutation', (t) => {
     mapOptions,
     serviceMutation
   )(endpointDef)
-  const ret = endpoint.mutateRequest(actionWithOptions)
+  const ret = await endpoint.mutateRequest(actionWithOptions)
 
   t.deepEqual(ret, expected)
 })
 
-test('should mutate request with root array path', (t) => {
+test('should mutate request with root array path', async (t) => {
   const endpointDef = {
     mutation: {
       $flip: true,
@@ -769,12 +912,12 @@ test('should mutate request with root array path', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateRequest(action)
+  const ret = await endpoint.mutateRequest(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should not mutate to service when no mutation pipeline', (t) => {
+test('should not mutate to service when no mutation pipeline', async (t) => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
@@ -785,12 +928,12 @@ test('should not mutate to service when no mutation pipeline', (t) => {
     serviceOptions,
     mapOptions
   )(endpointDef)
-  const ret = endpoint.mutateRequest(action)
+  const ret = await endpoint.mutateRequest(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should not mutate request with mutation when direction is set to fwd', (t) => {
+test('should not mutate request with mutation when direction is set to fwd', async (t) => {
   const endpointDef = {
     mutation: {
       $direction: 'fwd',
@@ -812,12 +955,12 @@ test('should not mutate request with mutation when direction is set to fwd', (t)
     mapOptions
   )(endpointDef)
 
-  const ret = endpoint.mutateRequest(actionWithoutRequestData)
+  const ret = await endpoint.mutateRequest(actionWithoutRequestData)
 
   t.is(ret.payload.data, undefined)
 })
 
-test('should mutate request from service (incoming)', (t) => {
+test('should mutate request from service (incoming)', async (t) => {
   const endpointDef = {
     mutation: {
       payload: 'payload',
@@ -842,7 +985,124 @@ test('should mutate request from service (incoming)', (t) => {
   )(endpointDef)
   const isIncoming = true
 
-  const ret = endpoint.mutateRequest(incomingAction, isIncoming)
+  const ret = await endpoint.mutateRequest(incomingAction, isIncoming)
+
+  const data = ret.payload.data as TypedData[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'ent1')
+  t.is(data[0].$type, 'entry')
+  t.is(data[0].title, 'Entry 1')
+})
+
+test('should mutate request with adapter', async (t) => {
+  const endpointDef = {
+    mutation: {
+      payload: 'payload',
+      'payload.data': ['payload.data.content.data', { $apply: 'entry' }],
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const expected = {
+    ...action,
+    payload: {
+      type: 'entry',
+      data: JSON.stringify({
+        content: {
+          data: {
+            items: [
+              { key: 'ent1', header: 'Entry 1', activated: false },
+              { key: 'ent2', header: 'Entry 2', activated: true },
+            ],
+          },
+        },
+      }),
+    },
+  }
+  const serviceAdapters = [jsonAdapter]
+  const endpoint = createEndpoint(
+    serviceId,
+    serviceOptions,
+    mapOptions,
+    undefined,
+    undefined,
+    serviceAdapters
+  )(endpointDef)
+
+  const ret = await endpoint.mutateRequest(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should mutate request with endpoint adapter', async (t) => {
+  const endpointAdapters = [mockAdapter]
+  const endpointDef = {
+    mutation: {
+      payload: 'payload',
+      'payload.data': ['payload.data.content.data', { $apply: 'entry' }],
+    },
+    adapters: endpointAdapters,
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const expected = {
+    ...action,
+    payload: {
+      type: 'entry',
+      data: JSON.stringify({
+        content: {
+          data: {
+            items: [
+              { key: 'ent1', header: 'Entry 1', activated: false }, // Mock adapter keeps only the first item
+            ],
+          },
+        },
+      }),
+    },
+  }
+  const serviceAdapters = [jsonAdapter]
+  const endpoint = createEndpoint(
+    serviceId,
+    serviceOptions,
+    mapOptions,
+    undefined,
+    undefined,
+    serviceAdapters
+  )(endpointDef)
+
+  const ret = await endpoint.mutateRequest(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should mutate request from service (incoming) with adapter', async (t) => {
+  const endpointDef = {
+    mutation: {
+      payload: 'payload',
+      'payload.data': ['payload.data.content.data', { $apply: 'entry' }],
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const incomingAction = {
+    ...action,
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: JSON.stringify({
+        content: { data: { items: [{ key: 'ent1', header: 'Entry 1' }] } },
+      }),
+    },
+  }
+  const serviceAdapters = [jsonAdapter]
+  const endpoint = createEndpoint(
+    serviceId,
+    serviceOptions,
+    mapOptions,
+    undefined,
+    undefined,
+    serviceAdapters
+  )(endpointDef)
+  const isIncoming = true
+
+  const ret = await endpoint.mutateRequest(incomingAction, isIncoming)
 
   const data = ret.payload.data as TypedData[]
   t.is(data.length, 1)

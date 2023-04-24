@@ -205,7 +205,7 @@ for transporters, adapters, etc.
 {
   id: <service id>,
   transporter: <transporter id>,
-  adatpers: [<adapter id>, <adapter id>, ...],
+  adapters: [<adapter id>, <adapter id>, ...],
   auth: <auth id>,
   meta: <type id>,
   options: {...},
@@ -826,10 +826,8 @@ The following access rule props are available:
 - `allow`: Set to `all`, `auth`, or `none`, to give access to everybody, only
   the authenticated, or no one at all. This is what we describe in short form
   above, where we provided this string instead of a access rule object.
-- `role`: Authorize only idents with this `role`. May also be an array of
-  strings (not implemented yet).
-- `ident`: Authorize only idents with this precise `id`. May also be an array
-  (not implemented yet).
+- `role`: Authorize only idents with this `role`. May also be an array.
+- `ident`: Authorize only idents with this precise `id`. May also be an array.
 - `roleFromField`: Same as `role`, except the role is gotten from a field in the
   schema. When authorizing data cast to this schema, the value of the role field
   needs to be identical to (one of) the role(s) of the ident.
