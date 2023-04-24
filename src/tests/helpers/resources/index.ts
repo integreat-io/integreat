@@ -1,5 +1,5 @@
 import httpTransporter from 'integreat-transporter-http'
-import jsonAdapter from '../../../adapters/json.js'
+import jsonAdapter from 'integreat-adapter-json'
 import transformers from '../../../transformers/index.js'
 import { Resources } from '../../../create.js'
 import { TypedData, Action } from '../../../types.js'

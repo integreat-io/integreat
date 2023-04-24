@@ -1,5 +1,5 @@
 import httpTransporter from 'integreat-transporter-http'
-import jsonAdapter from '../../adapters/json.js'
+import jsonAdapter from 'integreat-adapter-json'
 import type { Transformer } from 'map-transform/types.js'
 import type { ServiceDef } from '../../service/types.js'
 import mutations from '../../mutations/index.js'

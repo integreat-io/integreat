@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import jsonAdapter from '../../adapters/json.js'
+import jsonAdapter from 'integreat-adapter-json'
 import createSchema from '../../schema/index.js'
 import builtInTransformers from '../../transformers/builtIns/index.js'
 import transformers from '../../transformers/index.js'
