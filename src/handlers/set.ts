@@ -58,9 +58,9 @@ export default async function set(
 
   const { response } = await pPipe(
     service.authorizeAction,
-    (action: Action) => service.mapRequest(action, endpoint),
+    (action: Action) => service.mutateRequest(action, endpoint),
     service.send,
-    (action: Action) => service.mapResponse(action, endpoint)
+    (action: Action) => service.mutateResponse(action, endpoint)
   )(nextAction)
   return setResponseOnAction(action, response)
 }

@@ -110,7 +110,7 @@ test.after(() => {
 
 // Tests
 
-test('should map and set items to service', async (t) => {
+test('should mutate and set items to service', async (t) => {
   const scope = nock('http://api1.test')
     .post('/database/_bulk_docs', {
       docs: [
@@ -147,7 +147,7 @@ test('should map and set items to service', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should map and set one item to service', async (t) => {
+test('should mutate and set one item to service', async (t) => {
   const scope = nock('http://api4.test')
     .post('/database/_bulk_docs', {
       docs: [{ id: 'ent1', header: 'A title' }],
@@ -171,7 +171,7 @@ test('should map and set one item to service', async (t) => {
   t.true(scope.isDone())
 })
 
-test('should map and set with id to service', async (t) => {
+test('should mutate and set with id to service', async (t) => {
   const scope = nock('http://api11.test')
     .post('/database/entry:ent1')
     .reply(201, [{ ok: true }])
@@ -378,7 +378,7 @@ test('should return empty response from service', async (t) => {
   t.is(ret.response?.data, undefined)
 })
 
-test('should map response data', async (t) => {
+test('should mutate response data', async (t) => {
   nock('http://api9.test')
     .post('/database/_bulk_docs')
     .reply(201, [
@@ -412,7 +412,7 @@ test('should map response data', async (t) => {
   t.is(data[0].name, 'John Fjon')
 })
 
-test('should map non-array response data', async (t) => {
+test('should mutate non-array response data', async (t) => {
   nock('http://api10.test').post('/database/_bulk_docs').reply(201, {
     id: 'johnf',
     type: 'account',

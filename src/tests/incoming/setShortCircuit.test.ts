@@ -15,7 +15,7 @@ const updatedAt = '2017-11-24T07:11:43.000Z'
 
 // Tests
 
-test('should map incoming action data to error status and map response', async (t) => {
+test('should mutate incoming action data to error status and mutate response', async (t) => {
   const send = sinon
     .stub(resources.transporters!.http, 'send')
     .callsFake(async (_action: Action) => ({

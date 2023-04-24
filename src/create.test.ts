@@ -224,7 +224,7 @@ test('should call middleware', async (t) => {
   t.is(otherAction.callCount, 1) // If other action handler was called, middleware changed action
 })
 
-test('should map data', async (t) => {
+test('should mutate data', async (t) => {
   const data0 = {
     key: 'ent1',
     headline: 'Entry 1',

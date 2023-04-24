@@ -88,8 +88,8 @@ export interface Service {
     isIncoming?: boolean
   ) => Endpoint | undefined
   authorizeAction: ActionMapper
-  mapRequest: ActionMapperWithEndpoint
-  mapResponse: ActionMapperWithEndpoint
+  mutateRequest: ActionMapperWithEndpoint
+  mutateResponse: ActionMapperWithEndpoint
   send: AsyncActionMapper
   listen: (dispatch: Dispatch) => Promise<Response>
   close: () => Promise<Response>

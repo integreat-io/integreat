@@ -283,11 +283,11 @@ export default ({
       authorizeAction: authorizeAction(schemas, requireAuth),
 
       /**
-       * Map request. Will authorize data and map action – in that order – when
-       * this is an outgoing request, and will do it in reverse for an incoming
-       * request.
+       * Map request. Will authorize data and mutate action – in that order –
+       * when this is an outgoing request, and will do it in reverse for an
+       * incoming request.
        */
-      async mapRequest(action, endpoint, isIncoming = false) {
+      async mutateRequest(action, endpoint, isIncoming = false) {
         const { mutateRequest, allowRawRequest = false } = endpoint
 
         // Set endpoint options on action
@@ -297,7 +297,7 @@ export default ({
         }
 
         try {
-          // Authorize and map in right order
+          // Authorize and mutate in right order
           return isIncoming
             ? authorizeDataToService(
                 castAction(
@@ -329,11 +329,11 @@ export default ({
       },
 
       /**
-       * Map response. Will map action and authorize data – in the order – when
-       * this is the response from an outgoing request. Will do it in the reverse
-       * order for a response to an incoming request.
+       * Map response. Will mutate action and authorize data – in that order –
+       * when this is the response from an outgoing request. Will do it in the
+       * reverse order for a response to an incoming request.
        */
-      async mapResponse(action, endpoint, isIncoming = false) {
+      async mutateResponse(action, endpoint, isIncoming = false) {
         const { mutateResponse, allowRawResponse = false } = endpoint
         try {
           // Authorize and mutate in right order

@@ -126,9 +126,9 @@ export default async function get(
 
   const mapPerId = (endpoint: Endpoint) =>
     pPipe(
-      (action: Action) => service.mapRequest(action, endpoint),
+      (action: Action) => service.mutateRequest(action, endpoint),
       service.send,
-      (action: Action) => service.mapResponse(action, endpoint)
+      (action: Action) => service.mutateResponse(action, endpoint)
     )
 
   const { response } = await mapOneOrMany(

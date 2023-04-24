@@ -62,7 +62,7 @@ test.after.always(() => {
 
 // Tests
 
-test('should map with endpoint mutation', async (t) => {
+test('should mutate with endpoint mutation', async (t) => {
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {
@@ -87,7 +87,7 @@ test('should map with endpoint mutation', async (t) => {
   t.is(item.title, 'Entry 1')
 })
 
-test('should map with service mutation', async (t) => {
+test('should mutate with service mutation', async (t) => {
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {

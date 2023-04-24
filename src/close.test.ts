@@ -9,8 +9,8 @@ import close from './close.js'
 const serviceMethods = {
   endpointFromAction: () => undefined,
   authorizeAction: (action: Action) => action,
-  mapRequest: async (action: Action, _endpoint: unknown) => action,
-  mapResponse: async (action: Action, _endpoint: unknown) => action,
+  mutateRequest: async (action: Action, _endpoint: unknown) => action,
+  mutateResponse: async (action: Action, _endpoint: unknown) => action,
   send: async (action: Action) => action,
   listen: async () => ({ status: 'ok' }),
 }

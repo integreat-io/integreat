@@ -72,7 +72,7 @@ async function mapIncomingAction(
       }
     }
     return {
-      action: await service.mapRequest(action, endpoint, true),
+      action: await service.mutateRequest(action, endpoint, true),
       service,
       endpoint,
     }
@@ -86,7 +86,7 @@ const mapIncomingResponse = async (
   endpoint?: Endpoint
 ) =>
   service && endpoint
-    ? await service.mapResponse(action, endpoint, true)
+    ? await service.mutateResponse(action, endpoint, true)
     : action
 
 const responseFromAction = ({

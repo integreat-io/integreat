@@ -27,7 +27,7 @@ test.after.always(() => {
 
 // Tests
 
-test('should map response and merge with request data', async (t) => {
+test('should mutate response and merge with request data', async (t) => {
   nock('http://some.api')
     .put('/entries/ent1')
     .reply(201, { ok: true, content: { items: entry1FromService } })
