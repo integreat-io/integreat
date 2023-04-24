@@ -1,41 +1,11 @@
 import test from 'ava'
 import type { Action } from '../types.js'
 
-import {
-  prepareActionForMapping,
-  populateActionAfterMapping,
-} from './mappingHelpers.js'
+import { populateActionAfterMutation } from './mutationHelpers.js'
 
-// Tests -- prepareActionForMapping
+// Tests -- populateActionAfterMutation
 
-test('should simply return action as mapping object', (t) => {
-  const data = [{ $type: 'user', id: 'johnf', name: 'John F.' }]
-  const action = {
-    type: 'SET',
-    payload: {
-      id: 'johnf',
-      type: 'user',
-      searchDeleted: true,
-      data,
-    },
-    response: { status: 'badrequest', error: 'No user by that name' },
-    meta: {
-      options: { uri: 'http://some.api.com/1.0' },
-      ident: { id: 'johnf' },
-      id: '12345',
-      cid: '880432',
-    },
-  }
-  const expected = action
-
-  const ret = prepareActionForMapping(action)
-
-  t.deepEqual(ret, expected)
-})
-
-// Tests -- populateActionAfterMapping
-
-test('should return mapped action when all parts are replaced', (t) => {
+test('should return mutated action when all parts are replaced', (t) => {
   const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
   const action = {
     type: 'GET',
@@ -78,7 +48,7 @@ test('should return mapped action when all parts are replaced', (t) => {
   }
   const expected = mappedAction
 
-  const ret = populateActionAfterMapping(action, mappedAction)
+  const ret = populateActionAfterMutation(action, mappedAction)
 
   t.deepEqual(ret, expected)
 })
@@ -119,12 +89,12 @@ test('should keep the untouched parts from the original action', (t) => {
     },
   }
 
-  const ret = populateActionAfterMapping(action, mappedAction)
+  const ret = populateActionAfterMutation(action, mappedAction)
 
   t.deepEqual(ret, expected)
 })
 
-test('should set status to original status when not set in mapped action', (t) => {
+test('should set status to original status when not set in mutated action', (t) => {
   const action = {
     type: 'SET',
     payload: {
@@ -158,7 +128,7 @@ test('should set status to original status when not set in mapped action', (t) =
     },
   }
 
-  const ret = populateActionAfterMapping(action, mappedAction)
+  const ret = populateActionAfterMutation(action, mappedAction)
 
   t.deepEqual(ret, expected)
 })
@@ -196,7 +166,7 @@ test('should set status to null on response when not set and no original status'
     },
   }
 
-  const ret = populateActionAfterMapping(action, mappedAction)
+  const ret = populateActionAfterMutation(action, mappedAction)
 
   t.deepEqual(ret, expected)
 })
@@ -239,7 +209,7 @@ test('should join array of error strings to one string', (t) => {
     },
   }
 
-  const ret = populateActionAfterMapping(
+  const ret = populateActionAfterMutation(
     action,
     mappedAction as unknown as Action
   )
@@ -281,7 +251,7 @@ test('should set status to error when error string is present', (t) => {
     },
   }
 
-  const ret = populateActionAfterMapping(action, mappedAction)
+  const ret = populateActionAfterMutation(action, mappedAction)
 
   t.deepEqual(ret, expected)
 })
@@ -320,7 +290,7 @@ test('should use original error status when error string is present', (t) => {
     },
   }
 
-  const ret = populateActionAfterMapping(action, mappedAction)
+  const ret = populateActionAfterMutation(action, mappedAction)
 
   t.deepEqual(ret, expected)
 })
@@ -359,7 +329,7 @@ test('should not set response when not present', (t) => {
     },
   }
 
-  const ret = populateActionAfterMapping(action, mappedAction)
+  const ret = populateActionAfterMutation(action, mappedAction)
 
   t.deepEqual(ret, expected)
 })
@@ -390,12 +360,12 @@ test('should not set empty response object', (t) => {
     },
   }
 
-  const ret = populateActionAfterMapping(action, mappedAction)
+  const ret = populateActionAfterMutation(action, mappedAction)
 
   t.deepEqual(ret, expected)
 })
 
-test('should return action when no mapped action', (t) => {
+test('should return action when no mutated action', (t) => {
   const action = {
     type: 'SET',
     payload: {
@@ -409,7 +379,7 @@ test('should return action when no mapped action', (t) => {
   const mappedAction = undefined
   const expected = action
 
-  const ret = populateActionAfterMapping(action, mappedAction)
+  const ret = populateActionAfterMutation(action, mappedAction)
 
   t.deepEqual(ret, expected)
 })

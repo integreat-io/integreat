@@ -1,13 +1,6 @@
 import { isObject } from './is.js'
 import type { Action, Response } from '../types.js'
 
-export function prepareActionForMapping(
-  action: Action,
-  _isRequest = false
-): Action {
-  return action
-}
-
 const isResponseObject = (response: unknown): response is Response =>
   isObject(response) && Object.keys(response).length > 0
 
@@ -31,7 +24,7 @@ const setStatusAndError = (
     : {}),
 })
 
-export function populateActionAfterMapping(
+export function populateActionAfterMutation(
   action: Action,
   mappedAction?: Partial<Action>
 ): Action {

@@ -9,10 +9,7 @@ import type { Action, Adapter } from '../../types.js'
 import type { MapOptions } from '../types.js'
 import type { EndpointDef, Endpoint, EndpointOptions } from './types.js'
 import isMatch from './match.js'
-import {
-  prepareActionForMapping,
-  populateActionAfterMapping,
-} from '../../utils/mappingHelpers.js'
+import { populateActionAfterMutation } from '../../utils/mutationHelpers.js'
 import { ensureArray } from '../../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../../utils/is.js'
 import xor from '../../utils/xor.js'
@@ -40,9 +37,9 @@ function mutateAction(
 
     // Mutate action
     const mutatedAction = mutator
-      ? populateActionAfterMapping(
+      ? populateActionAfterMutation(
           action,
-          mutator(prepareActionForMapping(normalizedAction, isRev), {
+          mutator(normalizedAction, {
             rev,
           }) as Action
         )
