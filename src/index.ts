@@ -14,6 +14,7 @@ export type {
   TypedData,
   Reference,
   Transporter,
+  Adapter,
   Connection,
   Middleware,
   ActionHandler,
@@ -33,7 +34,7 @@ export { default as middleware } from './middleware/index.js'
 export { createAction } from './utils/action.js'
 
 export default {
-  version: '0.8.0-rc.0',
+  version: '0.8.0-rc.1',
   create,
   mergeDefinitions,
   mergeResources,
