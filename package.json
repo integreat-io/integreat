@@ -1,6 +1,6 @@
 {
   "name": "integreat",
-  "version": "0.8.0-rc.1",
+  "version": "0.8.0-rc.2",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <kjellmorten@integreat.io> (https://integreat.io/)",
   "license": "ISC",
@@ -23,7 +23,7 @@
     "test:watch": "npm run dev",
     "dev": "ava --watch",
     "build": "tsc",
-    "prepublish": "npm run build",
+    "prepare": "npm run build",
     "coverage": "c8 report",
     "lint": "eslint --ext .ts src"
   },
