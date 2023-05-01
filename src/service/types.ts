@@ -35,24 +35,19 @@ export interface AsyncActionMapper {
 
 export type AuthOptions = Record<string, unknown>
 
-export interface Authentication extends AuthOptions {
+export interface Authentication extends Record<string, unknown> {
   status: string
   error?: string
 }
 
-export interface Authenticator {
+export interface Authenticator<T extends Authentication = Authentication> {
   authenticate: (
     options: AuthOptions | null,
     action: Action | null
-  ) => Promise<Authentication>
-  isAuthenticated: (
-    authentication: Authentication | null,
-    action: Action | null
-  ) => boolean
+  ) => Promise<T>
+  isAuthenticated: (authentication: T | null, action: Action | null) => boolean
   authentication: {
-    [asFunction: string]: (
-      authentication: Authentication | null
-    ) => Record<string, unknown>
+    [asFunction: string]: (authentication: T | null) => Record<string, unknown>
   }
 }
 

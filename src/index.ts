@@ -24,7 +24,13 @@ export type {
   JobDef,
   Job,
 } from './types.js'
-export type { Authenticator, AuthDef, ServiceDef } from './service/types.js'
+export type {
+  Authenticator,
+  Authentication,
+  AuthOptions,
+  AuthDef,
+  ServiceDef,
+} from './service/types.js'
 export type { Instance, Definitions, Resources } from './create.js'
 
 export { default as authenticators } from './authenticators/index.js'
