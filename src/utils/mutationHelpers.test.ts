@@ -295,6 +295,85 @@ test('should use original error status when error string is present', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should set error status when error string is present and original status was ok', (t) => {
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: { status: 'ok' },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappedAction = {
+    response: {
+      error: 'Something failed big time',
+    },
+  } as Action // To allow the missing `status`
+  const expected = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: {
+      status: 'error',
+      error: 'Something failed big time',
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = populateActionAfterMutation(action, mappedAction)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should set error status when error string is present and mutated status is ok', (t) => {
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: { status: 'ok' },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappedAction = {
+    response: {
+      status: 'ok',
+      error: 'Something failed big time',
+    },
+  } as Action // To allow the missing `status`
+  const expected = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: {
+      status: 'error',
+      error: 'Something failed big time',
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = populateActionAfterMutation(action, mappedAction)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should not set response when not present', (t) => {
   const action = {
     type: 'SET',
