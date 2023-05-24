@@ -3,8 +3,6 @@
 An integration layer for node.js.
 
 [![npm Version](https://img.shields.io/npm/v/integreat.svg)](https://www.npmjs.com/package/integreat)
-[![Build Status](https://travis-ci.org/integreat-io/integreat.svg?branch=master)](https://travis-ci.org/integreat-io/integreat)
-[![Coverage Status](https://coveralls.io/repos/github/integreat-io/integreat/badge.svg?branch=master)](https://coveralls.io/github/integreat-io/integreat?branch=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a5bd9841a47ff9f74577/maintainability)](https://codeclimate.com/github/integreat-io/integreat/maintainability)
 
 **Note:** We're closing in on a more stable version, but there might still be
