@@ -1016,6 +1016,7 @@ test('should mutate request with adapter', async (t) => {
           },
         },
       }),
+      headers: { 'Content-Type': 'application/json' },
     },
   }
   const serviceAdapters = [jsonAdapter]
@@ -1056,6 +1057,7 @@ test('should mutate request with endpoint adapter', async (t) => {
           },
         },
       }),
+      headers: { 'Content-Type': 'application/json' },
     },
   }
   const serviceAdapters = [jsonAdapter]
