@@ -1,2 +1,2 @@
-export * as options from './options.js'
-export * as token from './token.js'
+export { default as options } from './options.js'
+export { default as token } from './token.js'

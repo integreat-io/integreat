@@ -1,1 +1,1 @@
-export * as uri from './uri.js'
+export { default as uri } from './uri.js'

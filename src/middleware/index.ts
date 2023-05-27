@@ -1,1 +1,1 @@
-export * as completeIdent from './completeIdent.js'
+export { default as completeIdent } from './completeIdent.js'
