@@ -40,6 +40,7 @@ import createSchedule from './utils/createSchedule.js'
 import createDispatchScheduled from './dispatchScheduled.js'
 
 export interface Definitions {
+  id?: string
   schemas: SchemaDef[]
   services: ServiceDef[]
   mutations?: Record<string, TransformDefinition>
@@ -59,6 +60,7 @@ export interface Resources {
 }
 
 export interface Instance<ResponseData = unknown> {
+  id?: string
   services: Record<string, Service>
   schemas: Record<string, Schema>
   identType?: string
@@ -90,6 +92,7 @@ export const setUpAuth = (authenticators?: Record<string, Authenticator>) =>
  */
 export default function create(
   {
+    id,
     services: serviceDefs,
     schemas: schemaDefs,
     mutations,
@@ -179,6 +182,7 @@ export default function create(
 
   // Return instance
   return {
+    id,
     services,
     schemas,
     identType: identConfig?.type,

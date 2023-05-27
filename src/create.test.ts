@@ -85,13 +85,21 @@ const resourcesWithTransformer = {
 
 // Tests
 
-test('should return object with dispatch, on, schemas, services, identType, and queueService', (t) => {
+test('should return object with id, dispatch, on, schemas, services, identType, and queueService', (t) => {
   const identConfig = { type: 'account' }
   const great = create(
-    { services, schemas, mutations, identConfig, queueService: 'queue' },
+    {
+      id: 'great1',
+      services,
+      schemas,
+      mutations,
+      identConfig,
+      queueService: 'queue',
+    },
     resourcesWithTransformer
   )
 
+  t.is(great.id, 'great1')
   t.is(typeof great.dispatch, 'function')
   t.is(typeof great.on, 'function')
   t.truthy(great.schemas)
