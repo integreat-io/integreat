@@ -10,7 +10,7 @@ import type {
   Params,
   ActionHandlerResources,
 } from '../types.js'
-import { setErrorOnAction, setResponseOnAction } from '../utils/action.js'
+import { createErrorResponse } from '../utils/action.js'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is.js'
 import { ensureArray } from '../utils/array.js'
 import { castDate } from '../transformers/builtIns/date.js'
@@ -112,7 +112,7 @@ async function setData(
   const maxCount = castNumber(maxPerSet) || Number.MAX_SAFE_INTEGER
 
   while (index < data.length) {
-    const { response } = await dispatch(
+    const response = await dispatch(
       createSetAction(
         data.slice(index, index + maxCount),
         params,
@@ -146,20 +146,19 @@ async function getLastSyncedAt(
   metaKey?: string,
   meta?: Meta
 ) {
-  const metaResponse = await dispatch(
+  const response = await dispatch(
     createGetMetaAction(service, type, metaKey, meta)
   )
 
-  if (metaResponse.response?.status !== 'ok') {
+  if (response.status !== 'ok') {
     throw new Error(
-      `Could not fetch last synced date for service '${service}': [${metaResponse.response?.status}] ${metaResponse.response?.error}`
+      `Could not fetch last synced date for service '${service}': [${response.status}] ${response.error}`
     )
   }
 
   return (
-    castDate(
-      (metaResponse.response?.data as MetaData | undefined)?.meta.lastSyncedAt
-    ) || undefined
+    castDate((response.data as MetaData | undefined)?.meta.lastSyncedAt) ||
+    undefined
   )
 }
 
@@ -388,15 +387,15 @@ async function retrieveDataFromOneService(
   const { updatedAfter, updatedUntil } = params
 
   // Fetch data from service
-  const responseAction = await dispatch(createGetAction(params, meta))
+  const response = await dispatch(createGetAction(params, meta))
 
   // Throw is not successfull
-  if (responseAction.response?.status !== 'ok') {
-    throw new Error(responseAction.response?.error)
+  if (response.status !== 'ok') {
+    throw new Error(response.error)
   }
 
   // Return array of data filtered with updatedAt within date range
-  const data = ensureArray(responseAction.response.data).filter(isTypedData)
+  const data = ensureArray(response.data).filter(isTypedData)
   return doFilterData && (updatedAfter || updatedUntil)
     ? data.filter(withinDateRange(updatedAfter, updatedUntil))
     : data
@@ -483,7 +482,7 @@ const extractLastSyncedAtDates = (
 export default async function syncHandler(
   inputAction: Action,
   { dispatch, setProgress }: ActionHandlerResources
-): Promise<Action> {
+): Promise<Response> {
   setProgress(0)
 
   const action = prepareInputParams(inputAction)
@@ -501,8 +500,7 @@ export default async function syncHandler(
   try {
     ;[fromParams, toParams] = await extractActionParams(action, dispatch)
   } catch (error) {
-    return setErrorOnAction(
-      inputAction,
+    return createErrorResponse(
       `Failed to prepare params for SYNC: ${
         error instanceof Error ? error.message : String(error)
       }`
@@ -510,8 +508,7 @@ export default async function syncHandler(
   }
 
   if (fromParams.length === 0 || !toParams) {
-    return setErrorOnAction(
-      inputAction,
+    return createErrorResponse(
       'SYNC: `type`, `to`, and `from` parameters are required',
       'badrequest'
     )
@@ -534,8 +531,7 @@ export default async function syncHandler(
       datesFromData = extractLastSyncedAtDates(dataFromServices, retrieve)
     }
   } catch (error) {
-    return setErrorOnAction(
-      inputAction,
+    return createErrorResponse(
       `SYNC: Could not get data. ${(error as Error).message}`
     )
   }
@@ -545,11 +541,7 @@ export default async function syncHandler(
 
   const response = await setData(dispatch, data, toParams, doQueueSet, meta)
   if (response.status !== 'ok') {
-    return setErrorOnAction(
-      inputAction,
-      response?.error,
-      response?.status || 'error'
-    )
+    return createErrorResponse(response?.error, response?.status || 'error')
   }
 
   setProgress(0.9)
@@ -564,5 +556,5 @@ export default async function syncHandler(
 
   setProgress(1)
 
-  return setResponseOnAction(inputAction, { status: 'ok' })
+  return { status: 'ok' }
 }

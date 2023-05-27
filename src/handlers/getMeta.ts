@@ -1,8 +1,8 @@
 import debugLib from 'debug'
-import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
+import { createErrorResponse } from '../utils/action.js'
 import getHandler from './get.js'
 import { isDataObject } from '../utils/is.js'
-import type { Action, ActionHandlerResources } from '../types.js'
+import type { Action, Response, ActionHandlerResources } from '../types.js'
 
 const debug = debugLib('great')
 
@@ -40,7 +40,7 @@ export const generateMetaId = (
 export default async function getMeta(
   action: Action,
   resources: ActionHandlerResources
-): Promise<Action> {
+): Promise<Response> {
   debug('Action: GET_META')
 
   const {
@@ -59,7 +59,7 @@ export default async function getMeta(
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`GET_META: Service '${serviceId}' doesn't exist`)
-    return setErrorOnAction(action, `Service '${serviceId}' doesn't exist`)
+    return createErrorResponse(`Service '${serviceId}' doesn't exist`)
   }
 
   const metaType = service.meta
@@ -67,8 +67,7 @@ export default async function getMeta(
   // TODO: Check if the meta service exists - find a better way?
   const metaService = getService(metaType)
   if (!metaService) {
-    return setErrorOnAction(
-      action,
+    return createErrorResponse(
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'noaction'
     )
@@ -90,16 +89,16 @@ export default async function getMeta(
     payload: { keys, type: metaType, id: metaId, endpoint: endpointId },
     meta: { ident: ident },
   }
-  const { response } = await getHandler(nextAction, resources)
+  const response = await getHandler(nextAction, resources)
 
   if (response?.status === 'ok') {
     const { data } = response || {}
     const meta = extractMeta(data, keys)
-    return setResponseOnAction(action, {
+    return {
       status: 'ok',
       data: { service: serviceId, meta },
-    })
+    }
   } else {
-    return setResponseOnAction(action, response)
+    return response
   }
 }

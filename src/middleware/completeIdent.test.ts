@@ -7,9 +7,7 @@ import completeIdent from './completeIdent.js'
 
 test('should complete ident with id', async (t) => {
   const dispatch = sinon.stub().resolves({
-    type: 'GET',
-    payload: {},
-    response: { status: 'ok' },
+    status: 'ok',
     meta: { ident: { id: 'johnf', roles: ['editor'] } },
   })
   const action = {
@@ -33,9 +31,7 @@ test('should complete ident with id', async (t) => {
 
 test('should complete ident with token', async (t) => {
   const dispatch = sinon.stub().resolves({
-    type: 'GET',
-    payload: {},
-    response: { status: 'ok' },
+    status: 'ok',
     meta: { ident: { id: 'johnf', roles: ['editor'] } },
   })
   const action = {
@@ -57,10 +53,30 @@ test('should complete ident with token', async (t) => {
   t.deepEqual(action1.meta?.ident, expectedIdent1)
 })
 
+test('should complete ident with ident from action when ok response has no ident', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+  })
+  const action = {
+    type: 'GET',
+    payload: {},
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedIdent = { id: 'johnf' }
+
+  await completeIdent(dispatch)(action)
+
+  t.is(dispatch.callCount, 2)
+  const action0 = dispatch.args[0][0]
+  t.is(action0.type, 'GET_IDENT')
+  t.deepEqual(action0.meta?.ident, expectedIdent)
+  const action1 = dispatch.args[1][0]
+  t.is(action1.type, 'GET')
+  t.deepEqual(action1.meta?.ident, expectedIdent)
+})
+
 test('should pass on action when no ident', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
   const action = { type: 'GET', payload: { type: 'entry' } }
 
   await completeIdent(dispatch)(action)
@@ -70,11 +86,9 @@ test('should pass on action when no ident', async (t) => {
 })
 
 test('should remove ident on action when ident is not found', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    type: 'GET',
-    payload: {},
-    response: { status: 'notfound', error: 'Not found' },
-  })
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'notfound', error: 'Not found' })
   const action = {
     type: 'GET',
     payload: {},
@@ -94,9 +108,7 @@ test('should remove ident on action when ident is not found', async (t) => {
 })
 
 test('should pass on action when no id or withToken', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
   const action = { type: 'GET', payload: {}, meta: { ident: {} } }
 
   await completeIdent(dispatch)(action)

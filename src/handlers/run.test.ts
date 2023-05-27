@@ -19,7 +19,8 @@ const mapOptions = { transformers }
 
 test('should run a simple action', async (t) => {
   const dispatch = sinon.stub().resolves({
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
   })
   const jobs = {
     action1: {
@@ -49,9 +50,9 @@ test('should run a simple action', async (t) => {
       jobId: 'action1',
     },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+  const expected = {
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -59,15 +60,16 @@ test('should run a simple action', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should run a simple flow with one action', async (t) => {
   const dispatch = sinon.stub().resolves({
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
   })
   const jobs = {
     action1: {
@@ -92,9 +94,9 @@ test('should run a simple flow with one action', async (t) => {
     payload: { type: 'entry', id: 'ent1' },
     meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action1' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+  const expected = {
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -102,16 +104,14 @@ test('should run a simple flow with one action', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should run two actions in sequence', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    response: { status: 'ok' },
-  })
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobs = {
     action2: {
       id: 'action2',
@@ -164,31 +164,26 @@ test('should run two actions in sequence', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action2' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok' }, // Won't return data unless specified
-  }
+  const expected = { status: 'ok' } // Won't return data unless specified
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expectedAction1)
   t.deepEqual(dispatch.args[1][0], expectedAction2)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should not run second action when first in sequence fails', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({ response: { status: 'timeout', error: 'Too slow' } })
+    .resolves({ status: 'timeout', error: 'Too slow' })
   const jobs = {
     action2: {
       id: 'action2',
@@ -231,22 +226,20 @@ test('should not run second action when first in sequence fails', async (t) => {
   const expectedErrorResponses = [{ status: 'timeout', error: 'Too slow' }]
 
   t.is(dispatch.callCount, 1) // Should break after first step
-  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(ret.status, 'error', ret.error)
   t.is(
-    ret.response?.error,
+    ret.error,
     "Could not finish job 'action2', the following steps failed: 'setEntry' (timeout: Too slow)"
   )
-  t.deepEqual(ret.response?.responses, expectedErrorResponses)
+  t.deepEqual(ret.responses, expectedErrorResponses)
 })
 
 test('should continue when action is queued', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({ response: { status: 'queued' } })
+    .resolves({ status: 'queued' })
   const jobs = {
     action2: {
       id: 'action2',
@@ -288,18 +281,16 @@ test('should continue when action is queued', async (t) => {
   })
 
   t.is(dispatch.callCount, 2)
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is(ret.response?.error, undefined)
+  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.error, undefined)
 })
 
 test('should not treat noaction as error', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({ response: { status: 'noaction', error: 'Nothing to set' } })
+    .resolves({ status: 'noaction', error: 'Nothing to set' })
   const jobs = {
     action2: {
       id: 'action2',
@@ -341,13 +332,11 @@ test('should not treat noaction as error', async (t) => {
   })
 
   t.is(dispatch.callCount, 2) // Both actions should run
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
 })
 
 test('should run two actions in parallel', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    response: { status: 'ok' },
-  })
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobs = {
     action3: {
       id: 'action3',
@@ -402,31 +391,26 @@ test('should run two actions in parallel', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok' }, // Won't return data unless specified
-  }
+  const expected = { status: 'ok' } // Won't return data unless specified
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expectedAction1)
   t.deepEqual(dispatch.args[1][0], expectedAction2)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should run all actions in parallel even if one of them fails', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({ response: { status: 'timeout', error: 'Too slow' } })
+    .resolves({ status: 'timeout', error: 'Too slow' })
   const jobs = {
     action3: {
       id: 'action3',
@@ -470,9 +454,9 @@ test('should run all actions in parallel even if one of them fails', async (t) =
     dispatch,
   })
 
-  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(ret.status, 'error', ret.error)
   t.is(
-    ret.response?.error,
+    ret.error,
     "Could not finish job 'action3', the following steps failed: 'setEntry' (timeout: Too slow)"
   )
   t.is(dispatch.callCount, 2)
@@ -481,9 +465,9 @@ test('should run all actions in parallel even if one of them fails', async (t) =
 test('should not run next step after any parallel steps failed', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onCall(0)
-    .resolves({ response: { status: 'timeout', error: 'Too slow' } })
+    .resolves({ status: 'timeout', error: 'Too slow' })
   const jobs = {
     action6: {
       id: 'action6',
@@ -528,13 +512,13 @@ test('should not run next step after any parallel steps failed', async (t) => {
   })
 
   t.is(dispatch.callCount, 2) // Only the two parallel steps should run
-  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(ret.status, 'error', ret.error)
 })
 
 test('should return error from all parallel actions', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ response: { status: 'timeout', error: 'Too slow' } })
+    .resolves({ status: 'timeout', error: 'Too slow' })
   const jobs = {
     action3: {
       id: 'action3',
@@ -578,9 +562,9 @@ test('should return error from all parallel actions', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(ret.status, 'error', ret.error)
   t.is(
-    ret.response?.error,
+    ret.error,
     "Could not finish job 'action3', the following steps failed: 'setEntry' (timeout: Too slow), 'setDate' (timeout: Too slow)"
   )
   t.is(dispatch.callCount, 2)
@@ -589,7 +573,7 @@ test('should return error from all parallel actions', async (t) => {
 test('should not treat noaction as error in parallel actions', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ response: { status: 'noaction', error: 'Nothing to set' } })
+    .resolves({ status: 'noaction', error: 'Nothing to set' })
   const jobs = {
     action3: {
       id: 'action3',
@@ -630,14 +614,14 @@ test('should not treat noaction as error in parallel actions', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
 })
 
 test('should handle rejections in parallel steps', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onCall(0)
     .rejects(new Error('Failure!'))
   const jobs = {
@@ -680,9 +664,9 @@ test('should handle rejections in parallel steps', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(ret.status, 'error', ret.error)
   t.is(
-    ret.response?.error,
+    ret.error,
     "Could not finish job 'action3', the following steps failed: 'setEntry' (rejected: Failure!)"
   )
   t.is(dispatch.callCount, 2)
@@ -691,11 +675,9 @@ test('should handle rejections in parallel steps', async (t) => {
 test('should not run second action when its conditions fail', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({ response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
   const jobs = {
     action6: {
       id: 'action6',
@@ -733,18 +715,16 @@ test('should not run second action when its conditions fail', async (t) => {
   })
 
   t.is(dispatch.callCount, 1) // Only the first step should run
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is(ret.response?.error, undefined)
+  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.error, undefined)
 })
 
 test('should use fail message and status from failed condition', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({ response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
   const jobs = {
     action6: {
       id: 'action6',
@@ -793,9 +773,9 @@ test('should use fail message and status from failed condition', async (t) => {
   })
 
   t.is(dispatch.callCount, 1) // Only the first step should run
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(
-    ret.response?.warning,
+    ret.warning,
     "Message from steps: 'setEntries' (noaction: No data to set)"
   )
 })
@@ -803,11 +783,9 @@ test('should use fail message and status from failed condition', async (t) => {
 test('should not continue flow when condition marked with break fails', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({ response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
   const jobs = {
     action6: {
       id: 'action6',
@@ -860,9 +838,9 @@ test('should not continue flow when condition marked with break fails', async (t
   })
 
   t.is(dispatch.callCount, 0) // No steps should be run
-  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(ret.status, 'error', ret.error)
   t.is(
-    ret.response?.error,
+    ret.error,
     "Could not finish job 'action6', the following steps failed: 'getEntries' (badrequest: Must be called with an id)"
   )
 })
@@ -870,13 +848,9 @@ test('should not continue flow when condition marked with break fails', async (t
 test('should run second action when its conditions are fulfilled', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({
-      response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-    })
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
   const jobs = {
     action6: {
       id: 'action6',
@@ -914,17 +888,15 @@ test('should run second action when its conditions are fulfilled', async (t) => 
   })
 
   t.is(dispatch.callCount, 2) // Both steps run
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
 })
 
 test('should validate conditions in parallel actions', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({ response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
   const jobs = {
     action3: {
       id: 'action3',
@@ -972,9 +944,9 @@ test('should validate conditions in parallel actions', async (t) => {
   })
 
   t.is(dispatch.callCount, 1) // Only the first step should run
-  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(ret.status, 'error', ret.error)
   t.is(
-    ret.response?.error,
+    ret.error,
     "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' })"
   )
 })
@@ -982,11 +954,9 @@ test('should validate conditions in parallel actions', async (t) => {
 test('should return error from conditions in parallel actions even though others give noaction', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({ response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
   const jobs = {
     action3: {
       id: 'action3',
@@ -1037,15 +1007,15 @@ test('should return error from conditions in parallel actions even though others
   })
 
   t.is(dispatch.callCount, 0) // None should run
-  t.is(ret.response?.status, 'error', ret.response?.error)
+  t.is(ret.status, 'error', ret.error)
   t.is(
-    ret.response?.error,
+    ret.error,
     "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' }), 'setDate' (noaction: 'action.payload.id' did not pass { type: 'string' })"
   )
 })
 
 test('should return noaction when job has an empty flow', async (t) => {
-  const dispatch = sinon.stub().resolves({ response: { status: 'ok' } })
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobs = {
     action1: {
       id: 'action1',
@@ -1065,12 +1035,12 @@ test('should return noaction when job has an empty flow', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'noaction', ret.response?.error)
+  t.is(ret.status, 'noaction', ret.error)
   t.is(dispatch.callCount, 0)
 })
 
 test('should return notfound for unknown job', async (t) => {
-  const dispatch = sinon.stub().resolves({ response: { status: 'ok' } })
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobs = {
     action1: {
       id: 'action1',
@@ -1090,15 +1060,15 @@ test('should return notfound for unknown job', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'notfound', ret.response?.error)
-  t.is(ret.response?.error, "No valid job with id 'action0'")
+  t.is(ret.status, 'notfound', ret.error)
+  t.is(ret.error, "No valid job with id 'action0'")
   t.is(dispatch.callCount, 0)
 })
 
 test('should mutate simple action', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-  })
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
   const jobs = {
     action1: {
       id: 'action1',
@@ -1122,37 +1092,30 @@ test('should mutate simple action', async (t) => {
     payload: { type: 'entry', id: 'ent1', flag: true },
     meta: { ident: { id: 'johnf' }, jobId: 'action1', queue: true },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-  }
+  const expected = { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should mutate action with result from previous action', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
     .resolves({
-      response: {
-        status: 'ok',
-        data: [
-          { id: 'ent1', $type: 'entry', section: 'news' },
-          { id: 'ent2', $type: 'entry', section: 'sports' },
-        ],
-      },
+      status: 'ok',
+      data: [
+        { id: 'ent1', $type: 'entry', section: 'news' },
+        { id: 'ent2', $type: 'entry', section: 'sports' },
+      ],
     })
   const jobs = {
     action3: {
@@ -1198,26 +1161,21 @@ test('should mutate action with result from previous action', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, jobId: 'action3' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok' }, // Won't return data unless specified
-  }
+  const expected = { status: 'ok' } // Won't return data unless specified
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[1][0], expectedAction2)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should mutate action with payload from original action', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    response: { status: 'ok' },
-  })
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobs = {
     action3: {
       id: 'action3',
@@ -1269,53 +1227,42 @@ test('should mutate action with payload from original action', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, jobId: 'action3' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok' }, // Won't return data unless specified
-  }
+  const expected = { status: 'ok' } // Won't return data unless specified
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should mutate action with result from previous and parallel actions', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok' },
-    })
+    .resolves({ status: 'ok' })
     .onCall(0)
     .resolves({
-      response: {
-        status: 'ok',
-        data: {
-          id: 'date1',
-          $type: 'date',
-          date: new Date('2022-06-14T18:43:11Z'),
-        },
+      status: 'ok',
+      data: {
+        id: 'date1',
+        $type: 'date',
+        date: new Date('2022-06-14T18:43:11Z'),
       },
     })
     .onCall(1)
     .resolves({
-      response: {
-        status: 'ok',
-        data: [
-          { id: 'ent1', $type: 'entry', section: 'news' },
-          { id: 'ent2', $type: 'entry', section: 'sports' },
-        ],
-      },
+      status: 'ok',
+      data: [
+        { id: 'ent1', $type: 'entry', section: 'news' },
+        { id: 'ent2', $type: 'entry', section: 'sports' },
+      ],
     })
     .onCall(2)
-    .resolves({
-      response: { status: 'ok', data: { id: 'johnf', name: 'John F.' } },
-    })
+    .resolves({ status: 'ok', data: { id: 'johnf', name: 'John F.' } })
   const jobs = {
     action3: {
       id: 'action3',
@@ -1391,27 +1338,22 @@ test('should mutate action with result from previous and parallel actions', asyn
     },
     meta: { ident: { id: 'johnf' }, jobId: 'action3' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok' }, // Won't return data unless specified
-  }
+  const expected = { status: 'ok' } // Won't return data unless specified
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 4)
   t.deepEqual(dispatch.args[1][0], expectedAction2)
   t.deepEqual(dispatch.args[3][0], expectedAction4)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should mutate action with data from the original action', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    response: { status: 'ok' },
-  })
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobs = {
     action5: {
       id: 'action5',
@@ -1460,15 +1402,15 @@ test('should mutate action with data from the original action', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
 })
 
 test('should mutate with transformers and pipelines', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-  })
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
   const nowDate = new Date()
   const mapOptions = {
     transformers: {
@@ -1505,26 +1447,23 @@ test('should mutate with transformers and pipelines', async (t) => {
     payload: { type: 'entry', until: nowDate, user: 'johnf' },
     meta: { ident: { id: 'johnf' }, jobId: 'action1' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-  }
+  const expected = { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should mutate simple action with pipeline', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-  })
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
   const jobs = {
     action1: {
       id: 'action1',
@@ -1546,32 +1485,25 @@ test('should mutate simple action with pipeline', async (t) => {
     payload: { type: 'entry', id: 'ent1', flag: true },
     meta: { ident: { id: 'johnf' }, jobId: 'action1' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-  }
+  const expected = { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should mutate action into several actions based on iterate pipeline', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok', data: [] },
-    })
+    .resolves({ status: 'ok', data: [] })
     .onCall(1)
-    .resolves({
-      response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-    })
+    .resolves({ status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] })
   const jobs = {
     action11: {
       id: 'action11',
@@ -1624,10 +1556,7 @@ test('should mutate action into several actions based on iterate pipeline', asyn
     },
     meta: { ident: { id: 'johnf' }, jobId: 'action11' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-  }
+  const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
@@ -1637,20 +1566,16 @@ test('should mutate action into several actions based on iterate pipeline', asyn
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expectedAction0)
   t.deepEqual(dispatch.args[1][0], expectedAction1)
-  t.deepEqual(ret, expectedResponse)
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret, expected)
+  t.is(ret.status, 'ok', ret.error)
 })
 
 test('should mutate action into several actions based on iterate path', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok', data: [] },
-    })
+    .resolves({ status: 'ok', data: [] })
     .onCall(2)
-    .resolves({
-      response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-    })
+    .resolves({ status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] })
   const jobs = {
     action11: {
       id: 'action11',
@@ -1691,10 +1616,7 @@ test('should mutate action into several actions based on iterate path', async (t
     payload: { type: 'entry', data: { id: 'ent3' }, key: 'ent3' },
     meta: { ident: { id: 'johnf' }, jobId: 'action11' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-  }
+  const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
@@ -1705,20 +1627,16 @@ test('should mutate action into several actions based on iterate path', async (t
   t.deepEqual(dispatch.args[0][0], expectedAction0)
   t.deepEqual(dispatch.args[1][0], expectedAction1)
   t.deepEqual(dispatch.args[2][0], expectedAction2)
-  t.deepEqual(ret, expectedResponse)
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret, expected)
+  t.is(ret.status, 'ok', ret.error)
 })
 
 test('should mutate top level action into several actions based on iterate path', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok', data: [] },
-    })
+    .resolves({ status: 'ok', data: [] })
     .onCall(2)
-    .resolves({
-      response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-    })
+    .resolves({ status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] })
   const jobs = {
     action13: {
       id: 'action13',
@@ -1748,10 +1666,7 @@ test('should mutate top level action into several actions based on iterate path'
     payload: { type: 'entry', data: { id: 'ent3' }, key: 'ent3' },
     meta: { ident: { id: 'johnf' }, jobId: 'action13' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-  }
+  const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
@@ -1762,20 +1677,20 @@ test('should mutate top level action into several actions based on iterate path'
   t.deepEqual(dispatch.args[0][0], expectedAction0)
   t.deepEqual(dispatch.args[1][0], expectedAction1)
   t.deepEqual(dispatch.args[2][0], expectedAction2)
-  t.deepEqual(ret, expectedResponse)
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.deepEqual(ret, expected)
+  t.is(ret.status, 'ok', ret.error)
 })
 
 test('should combine response data from several actions based on iterate path', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ response: { status: 'ok', data: ['ent1', 'ent2', 'ent3'] } })
+    .resolves({ rstatus: 'ok', data: ['ent1', 'ent2', 'ent3'] })
     .onCall(1)
-    .resolves({ response: { status: 'ok', data: { id: 'ent1' } } })
+    .resolves({ status: 'ok', data: { id: 'ent1' } })
     .onCall(2)
-    .resolves({ response: { status: 'ok', data: { id: 'ent2' } } })
+    .resolves({ status: 'ok', data: { id: 'ent2' } })
     .onCall(3)
-    .resolves({ response: { status: 'ok', data: { id: 'ent3' } } })
+    .resolves({ status: 'ok', data: { id: 'ent3' } })
   const jobs = {
     action12: {
       id: 'action12',
@@ -1826,12 +1741,9 @@ test('should combine response data from several actions based on iterate path', 
     payload: { type: 'entry', id: 'ent3' },
     meta: { ident: { id: 'johnf' }, jobId: 'action12' },
   }
-  const expectedResponse = {
-    ...action,
-    response: {
-      status: 'ok',
-      data: [{ id: 'ent1' }, { id: 'ent2' }, { id: 'ent3' }],
-    },
+  const expected = {
+    status: 'ok',
+    data: [{ id: 'ent1' }, { id: 'ent2' }, { id: 'ent3' }],
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -1839,25 +1751,21 @@ test('should combine response data from several actions based on iterate path', 
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 4)
   t.deepEqual(dispatch.args[0][0], expectedAction0)
   t.deepEqual(dispatch.args[1][0], expectedAction1)
   t.deepEqual(dispatch.args[2][0], expectedAction2)
   t.deepEqual(dispatch.args[3][0], expectedAction3)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should mutate action into several actions based on iterate path in parallell steps', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok', data: [] },
-    })
+    .resolves({ status: 'ok', data: [] })
     .onCall(2)
-    .resolves({
-      response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-    })
+    .resolves({ status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] })
   const jobs = {
     action11: {
       id: 'action11',
@@ -1890,38 +1798,29 @@ test('should mutate action into several actions based on iterate path in paralle
     payload: { type: 'entry', data: { id: 'ent1' }, flag: true },
     meta: { ident: { id: 'johnf' }, jobId: 'action11' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-  }
+  const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 3)
   t.deepEqual(dispatch.args[0][0], expectedAction0)
   t.deepEqual(dispatch.args[1][0].payload.data.id, 'ent2')
   t.deepEqual(dispatch.args[2][0].payload.data.id, 'ent3')
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should fail step if an iteration step fails', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      response: { status: 'ok', data: [] },
-    })
+    .resolves({ status: 'ok', data: [] })
     .onCall(0)
-    .resolves({
-      response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-    })
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
     .onCall(1)
-    .resolves({
-      response: { status: 'badrequest', error: 'Too cool' },
-    })
+    .resolves({ status: 'badrequest', error: 'Too cool' })
   const jobs = {
     action11: {
       id: 'action11',
@@ -1941,21 +1840,18 @@ test('should fail step if an iteration step fails', async (t) => {
     payload: { jobId: 'action11', data },
     meta: { ident: { id: 'johnf' } },
   }
-  const expectedResponse = {
-    ...action,
-    response: {
-      status: 'error',
-      error:
-        "Could not finish job 'action11', the following steps failed: 'setItem' (error: [badrequest] Too cool)",
-      data: [{ id: 'ent1', $type: 'entry' }, undefined],
-      responses: [
-        {
-          status: 'error',
-          error: '[badrequest] Too cool',
-          data: [{ id: 'ent1', $type: 'entry' }, undefined],
-        },
-      ],
-    },
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action11', the following steps failed: 'setItem' (error: [badrequest] Too cool)",
+    data: [{ id: 'ent1', $type: 'entry' }, undefined],
+    responses: [
+      {
+        status: 'error',
+        error: '[badrequest] Too cool',
+        data: [{ id: 'ent1', $type: 'entry' }, undefined],
+      },
+    ],
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -1964,13 +1860,13 @@ test('should fail step if an iteration step fails', async (t) => {
   })
 
   t.is(dispatch.callCount, 2)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should return data from simple action based on response mutation', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-  })
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
   const jobs = {
     action1: {
       id: 'action1',
@@ -1994,23 +1890,19 @@ test('should return data from simple action based on response mutation', async (
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.response?.data, expected)
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, expected)
   t.is(dispatch.callCount, 1)
 })
 
 test('should return data from flow based on mutation', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onCall(0)
-    .resolves({
-      response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-    })
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
     .onCall(1)
-    .resolves({
-      response: { status: 'ok', data: [{ id: 'johnf', $type: 'user' }] },
-    })
+    .resolves({ status: 'ok', data: [{ id: 'johnf', $type: 'user' }] })
   const jobs = {
     action6: {
       id: 'action6',
@@ -2058,15 +1950,13 @@ test('should return data from flow based on mutation', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.response?.data, expected)
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, expected)
   t.is(dispatch.callCount, 3)
 })
 
 test('should return data based on mutation from original action', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ response: { status: 'ok', data: [] } })
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const jobs = {
     action7: {
       id: 'action7',
@@ -2099,14 +1989,14 @@ test('should return data based on mutation from original action', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.response?.data, expected)
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, expected)
 })
 
 test('should return response with error message', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ response: { status: 'ok', data: { errorMessage: 'No data' } } })
+    .resolves({ status: 'ok', data: { errorMessage: 'No data' } })
   const jobs = {
     action7: {
       id: 'action7',
@@ -2138,16 +2028,14 @@ test('should return response with error message', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'error', ret.response?.error)
-  t.deepEqual(ret.response?.error, 'No data')
+  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret.error, 'No data')
 })
 
 test('should join array of error messsages', async (t) => {
   const dispatch = sinon.stub().resolves({
-    response: {
-      status: 'ok',
-      data: { errorMessages: ['No data', 'And no fun either'] },
-    },
+    status: 'ok',
+    data: { errorMessages: ['No data', 'And no fun either'] },
   })
   const jobs = {
     action7: {
@@ -2180,8 +2068,8 @@ test('should join array of error messsages', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'error', ret.response?.error)
-  t.deepEqual(ret.response?.error, 'No data | And no fun either')
+  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret.error, 'No data | And no fun either')
 })
 
 test('should return response with responseMutation pipeline', async (t) => {
@@ -2189,22 +2077,18 @@ test('should return response with responseMutation pipeline', async (t) => {
     .stub()
     .onCall(0)
     .resolves({
-      response: {
-        status: 'ok',
-        data: [{ id: 'ent1', $type: 'entry' }],
-      },
+      status: 'ok',
+      data: [{ id: 'ent1', $type: 'entry' }],
     })
     .onCall(1)
     .resolves({
-      response: {
-        status: 'ok',
-        data: {
-          id: 'date1',
-          $type: 'date',
-          date: new Date('2022-09-14T00:43:44Z'),
-        },
-        params: { queue: true },
+      status: 'ok',
+      data: {
+        id: 'date1',
+        $type: 'date',
+        date: new Date('2022-09-14T00:43:44Z'),
       },
+      params: { queue: true },
     })
   const jobs = {
     action8: {
@@ -2241,13 +2125,11 @@ test('should return response with responseMutation pipeline', async (t) => {
     dispatch,
   })
 
-  t.deepEqual(ret.response, expected)
+  t.deepEqual(ret, expected)
 })
 
 test('should run responseMutation pipeline on response from step', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ response: { status: 'ok', data: [] } })
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const jobs = {
     action8: {
       id: 'action8',
@@ -2291,10 +2173,10 @@ test('should run responseMutation pipeline on response from step', async (t) => 
     dispatch,
   })
 
-  t.deepEqual(ret.response, expected)
+  t.deepEqual(ret, expected)
 })
 
-test('should return error from a sub-flow started with RUN and make it available on action.response', async (t) => {
+test('should return error from a sub-flow started with RUN and make it available in mutations on action.response', async (t) => {
   const jobs = {
     action9: {
       id: 'action9',
@@ -2351,7 +2233,7 @@ test('should return error from a sub-flow started with RUN and make it available
   const dispatch = sinon
     .stub()
     .onCall(0)
-    .resolves({ response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onCall(1)
     .callsFake((action) => runFn(action, { ...defaultResources, dispatch }))
   const action = {
@@ -2380,16 +2262,13 @@ test('should return error from a sub-flow started with RUN and make it available
 
   const ret = await runFn(action, { ...handlerResources, dispatch })
 
-  t.deepEqual(ret.response, expected)
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
   // t.deepEqual(dispatch.args[1][0], {})
 })
 
 test('should have the original action available on each step in a flow', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .onCall(0)
-    .resolves({ response: { status: 'ok', data: [] } })
+  const dispatch = sinon.stub().onCall(0).resolves({ status: 'ok', data: [] })
   const jobs = {
     action9: {
       id: 'action9',
@@ -2447,7 +2326,7 @@ test('should have the original action available on each step in a flow', async (
 
   const ret = await runFn(action, { ...handlerResources, dispatch })
 
-  t.deepEqual(ret.response, expected)
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[1][0], expectedAction)
 })
@@ -2455,7 +2334,7 @@ test('should have the original action available on each step in a flow', async (
 test('should return response with error from data', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ response: { status: 'ok', data: { errorMessage: 'No data' } } })
+    .resolves({ status: 'ok', data: { errorMessage: 'No data' } })
   const jobs = {
     action7: {
       id: 'action7',
@@ -2489,14 +2368,14 @@ test('should return response with error from data', async (t) => {
     dispatch,
   })
 
-  t.is(ret.response?.status, 'error', ret.response?.error)
-  t.deepEqual(ret.response?.error, 'No data')
+  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret.error, 'No data')
 })
 
 test('should return error when job has no action or flow', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-  })
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
   const jobs = {
     action0: {
       id: 'action0',
@@ -2509,12 +2388,9 @@ test('should return error when job has no action or flow', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, id: '12345', project: 'test' },
   }
-  const expectedResponse = {
-    ...action,
-    response: {
-      status: 'notfound',
-      error: "No valid job with id 'action0'",
-    },
+  const expected = {
+    status: 'notfound',
+    error: "No valid job with id 'action0'",
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -2522,7 +2398,7 @@ test('should return error when job has no action or flow', async (t) => {
     dispatch,
   })
 
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 0)
 })
 

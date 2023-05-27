@@ -1,35 +1,31 @@
 import debugLib from 'debug'
-import pPipe from 'p-pipe'
 import pLimit from 'p-limit'
-import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
+import { createErrorResponse, setResponseOnAction } from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'
-import type { Action, ActionHandlerResources } from '../types.js'
+import type { Action, Response, ActionHandlerResources } from '../types.js'
 import type { Service } from '../service/types.js'
 import type { Endpoint } from '../service/endpoints/types.js'
 
 const debug = debugLib('great')
 
-const isErrorAction = (action: Action) =>
-  action.response?.status !== 'ok' && action.response?.status !== 'notfound'
+const isErrorResponse = (response: Response) =>
+  response.status !== 'ok' && response.status !== 'notfound'
 
 const getIdFromAction = ({ payload: { id } }: Action) =>
   Array.isArray(id) && id.length === 1 ? id[0] : id
 
-const combineActions = (action: Action, actions: Action[]) =>
-  actions.some(isErrorAction)
-    ? setErrorOnAction(
-        action,
+const combineResponses = (action: Action, responses: Response[]): Response =>
+  responses.some(isErrorResponse)
+    ? createErrorResponse(
         `One or more of the requests for ids ${getIdFromAction(action)} failed.`
       )
-    : setResponseOnAction(action, {
+    : {
         ...action.response,
         status: 'ok',
-        data: actions.map((action) =>
-          Array.isArray(action.response?.data)
-            ? action.response?.data[0]
-            : action.response?.data
+        data: responses.map((response) =>
+          Array.isArray(response.data) ? response.data[0] : response.data
         ),
-      })
+      }
 
 const isMembersScope = (endpoint?: Endpoint) =>
   endpoint?.match?.scope === 'members'
@@ -43,8 +39,7 @@ const setIdOnActionPayload = (
 })
 
 const createNoEndpointError = (action: Action, serviceId: string) =>
-  setErrorOnAction(
-    action,
+  createErrorResponse(
     `No endpoint matching ${action.type} request to service '${serviceId}'.`,
     'badrequest'
   )
@@ -52,7 +47,7 @@ const createNoEndpointError = (action: Action, serviceId: string) =>
 async function runAsIndividualActions(
   action: Action,
   service: Service,
-  mapPerId: (endpoint: Endpoint) => (action: Action) => Promise<Action>
+  mapPerId: (endpoint: Endpoint) => (action: Action) => Promise<Response>
 ) {
   const actions = (action.payload.id as string[]).map((oneId) =>
     setIdOnActionPayload(action, oneId)
@@ -61,7 +56,7 @@ async function runAsIndividualActions(
   if (!endpoint) {
     return createNoEndpointError(action, service.id)
   }
-  return combineActions(
+  return combineResponses(
     action,
     await Promise.all(
       actions.map((action) => pLimit(1)(() => mapPerId(endpoint)(action)))
@@ -74,11 +69,11 @@ const doRunIndividualIds = (action: Action, endpoint?: Endpoint) =>
   action.meta?.authorized &&
   !isMembersScope(endpoint)
 
-async function mapOneOrMany(
+async function runOneOrMany(
   action: Action,
   service: Service,
-  mapPerId: (endpoint: Endpoint) => (action: Action) => Promise<Action>
-): Promise<Action> {
+  mapPerId: (endpoint: Endpoint) => (action: Action) => Promise<Response>
+): Promise<Response> {
   const endpoint = service.endpointFromAction(action)
   if (doRunIndividualIds(action, endpoint)) {
     return runAsIndividualActions(action, service, mapPerId)
@@ -90,13 +85,24 @@ async function mapOneOrMany(
   return mapPerId(endpoint)(action)
 }
 
+const runOne = (service: Service) => (endpoint: Endpoint) =>
+  async function (action: Action) {
+    const requestAction = await service.mutateRequest(action, endpoint)
+    const response = await service.send(requestAction)
+    const responseAction = await service.mutateResponse(
+      setResponseOnAction(action, response),
+      endpoint
+    )
+    return responseAction.response || { status: 'ok' } // TODO: Simplify?
+  }
+
 /**
  * Get several items from a service, based on the given action object.
  */
 export default async function get(
   action: Action,
   { getService }: ActionHandlerResources
-): Promise<Action> {
+): Promise<Response> {
   const {
     type,
     targetService: serviceId,
@@ -105,8 +111,7 @@ export default async function get(
 
   const id = getIdFromAction(action)
   if (Array.isArray(id) && id.length === 0) {
-    return setErrorOnAction(
-      action,
+    return createErrorResponse(
       'GET action was dispatched with empty array of ids',
       'noaction'
     )
@@ -114,7 +119,7 @@ export default async function get(
 
   const service = getService(type, serviceId)
   if (!service) {
-    return createUnknownServiceError(action, type, serviceId, 'GET')
+    return createUnknownServiceError(type, serviceId, 'GET')
   }
 
   const endpointDebug = endpointId
@@ -124,18 +129,9 @@ export default async function get(
 
   const nextAction = setIdOnActionPayload(action, id)
 
-  const mapPerId = (endpoint: Endpoint) =>
-    pPipe(
-      (action: Action) => service.mutateRequest(action, endpoint),
-      service.send,
-      (action: Action) => service.mutateResponse(action, endpoint)
-    )
-
-  const { response } = await mapOneOrMany(
+  return await runOneOrMany(
     service.authorizeAction(nextAction),
     service,
-    mapPerId
+    runOne(service)
   )
-
-  return setResponseOnAction(action, response)
 }

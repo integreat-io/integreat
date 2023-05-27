@@ -86,9 +86,7 @@ test('should set metadata on service', async (t) => {
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is(ret.type, 'SET_META')
-  t.deepEqual(ret.payload, action.payload)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -118,7 +116,7 @@ test('should set metadata on service with type', async (t) => {
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -148,7 +146,7 @@ test('should set metadata on service with several types', async (t) => {
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -179,7 +177,7 @@ test('should set metadata on service with metaKey', async (t) => {
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -204,7 +202,7 @@ test('should not set metadata on service when no meta type', async (t) => {
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaction')
+  t.is(ret.status, 'noaction', ret.error)
   t.false(scope.isDone())
 })
 
@@ -241,7 +239,7 @@ test('should set metadata on other service', async (t) => {
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -261,8 +259,8 @@ test('should return status noaction when meta is set to an unknown schema', asyn
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaction')
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'noaction', ret.error)
+  t.is(typeof ret.error, 'string')
 })
 
 test('should refuse setting metadata on service when not authorized', async (t) => {
@@ -285,7 +283,7 @@ test('should refuse setting metadata on service when not authorized', async (t) 
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaccess', ret.response?.error)
+  t.is(ret.status, 'noaccess', ret.error)
   t.false(scope.isDone())
 })
 
@@ -302,5 +300,5 @@ test('should return error for unknown service', async (t) => {
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'error')
+  t.is(ret.status, 'error', ret.error)
 })

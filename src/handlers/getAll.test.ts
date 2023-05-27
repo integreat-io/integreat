@@ -19,19 +19,13 @@ const event = (id: string, externalId?: string) => ({
 test('should get all pages', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onFirstCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
     .onSecondCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev2'), event('ev3')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev2'), event('ev3')] })
     .onThirdCall()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [event('ev4')] } })
+    .resolves({ status: 'ok', data: [event('ev4')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -54,27 +48,18 @@ test('should get all pages', async (t) => {
   t.is(dispatch.args[1][0].payload.pageSize, 2)
   t.is(dispatch.args[2][0].payload.page, 3)
   t.is(dispatch.args[2][0].payload.pageSize, 2)
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 5)
-  t.is(ret.type, 'GET_ALL')
-  t.deepEqual(ret.payload, action.payload)
-  t.deepEqual(ret.meta, action.meta)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 5)
 })
 
 test('should get all pages when last is empty', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onFirstCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
     .onSecondCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev2'), event('ev3')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev2'), event('ev3')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -88,19 +73,16 @@ test('should get all pages when last is empty', async (t) => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 3)
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 4)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 4)
 })
 
 test('should get one page with max number of items', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onFirstCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -114,26 +96,20 @@ test('should get one page with max number of items', async (t) => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 2)
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 2)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 2)
 })
 
 test('should get all pages using offset', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onFirstCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
     .onSecondCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev2'), event('ev3')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev2'), event('ev3')] })
     .onThirdCall()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [event('ev4')] } })
+    .resolves({ status: 'ok', data: [event('ev4')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -158,19 +134,16 @@ test('should get all pages using offset', async (t) => {
   t.is(dispatch.args[2][0].payload.pageOffset, 4)
   t.is(dispatch.args[2][0].payload.page, 3)
   t.is(dispatch.args[2][0].payload.pageSize, 2)
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 5)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 5)
 })
 
 test('should get all pages starting from an offset', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
     .onSecondCall()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [event('ev2')] } })
+    .resolves({ status: 'ok', data: [event('ev2')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -192,24 +165,18 @@ test('should get all pages starting from an offset', async (t) => {
   t.is(dispatch.args[1][0].payload.pageOffset, 4)
   t.is(dispatch.args[1][0].payload.page, 3)
   t.is(dispatch.args[1][0].payload.pageSize, 2)
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 3)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 3)
 })
 
 test('should get all pages starting from an uneven offset', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onFirstCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
     .onSecondCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev2'), event('ev3')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev2'), event('ev3')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -230,26 +197,20 @@ test('should get all pages starting from an uneven offset', async (t) => {
   t.is(dispatch.args[0][0].payload.pageSize, 2)
   t.is(dispatch.args[1][0].payload.page, 3)
   t.is(dispatch.args[1][0].payload.pageOffset, 5)
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 4)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 4)
 })
 
 test('should get all pages using pageAfter', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onFirstCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
     .onSecondCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev2'), event('ev3')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev2'), event('ev3')] })
     .onThirdCall()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [event('ev4')] } })
+    .resolves({ status: 'ok', data: [event('ev4')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -266,35 +227,26 @@ test('should get all pages using pageAfter', async (t) => {
   t.is(dispatch.args[0][0].payload.pageAfter, undefined)
   t.is(dispatch.args[1][0].payload.pageAfter, 'ev1')
   t.is(dispatch.args[2][0].payload.pageAfter, 'ev3')
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 5)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 5)
 })
 
 test('should get all pages using pageAfter with id from another field', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onFirstCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('id0', 'ev0'), event('id1', 'ev1')],
-      },
+      status: 'ok',
+      data: [event('id0', 'ev0'), event('id1', 'ev1')],
     })
     .onSecondCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('id2', 'ev2'), event('id3', 'ev3')],
-      },
+      status: 'ok',
+      data: [event('id2', 'ev2'), event('id3', 'ev3')],
     })
     .onThirdCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('id4', 'ev4')] },
-    })
+    .resolves({ status: 'ok', data: [event('id4', 'ev4')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -312,8 +264,8 @@ test('should get all pages using pageAfter with id from another field', async (t
   t.is(dispatch.args[0][0].payload.pageAfter, undefined)
   t.is(dispatch.args[1][0].payload.pageAfter, 'ev1')
   t.is(dispatch.args[2][0].payload.pageAfter, 'ev3')
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 5)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 5)
 })
 
 test('should get all pages using paging in response', async (t) => {
@@ -322,30 +274,21 @@ test('should get all pages using paging in response', async (t) => {
     .resolves({ status: 'ok', data: [] })
     .onFirstCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('ev0'), event('ev1')],
-        paging: { next: { type: 'event', pageSize: 2, pageId: 't0k3n1' } },
-      },
+      status: 'ok',
+      data: [event('ev0'), event('ev1')],
+      paging: { next: { type: 'event', pageSize: 2, pageId: 't0k3n1' } },
     })
     .onSecondCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('ev2'), event('ev3')],
-        paging: { next: { type: 'event', pageSize: 2, pageId: 't0k3n2' } },
-      },
+      status: 'ok',
+      data: [event('ev2'), event('ev3')],
+      paging: { next: { type: 'event', pageSize: 2, pageId: 't0k3n2' } },
     })
     .onThirdCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('ev4')],
-        paging: { next: { type: 'event', pageSize: 2, pageId: undefined } },
-      },
+      status: 'ok',
+      data: [event('ev4')],
+      paging: { next: { type: 'event', pageSize: 2, pageId: undefined } },
     })
   const action = {
     type: 'GET_ALL',
@@ -372,8 +315,8 @@ test('should get all pages using paging in response', async (t) => {
     pageSize: 2,
     pageId: 't0k3n2',
   })
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 5)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 5)
 })
 
 test('should get all pages using paging when last page is full', async (t) => {
@@ -382,21 +325,15 @@ test('should get all pages using paging when last page is full', async (t) => {
     .resolves({ status: 'ok', data: [] })
     .onFirstCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('ev0'), event('ev1')],
-        paging: { next: { type: 'event', pageSize: 2, pageId: 't0k3n1' } },
-      },
+      status: 'ok',
+      data: [event('ev0'), event('ev1')],
+      paging: { next: { type: 'event', pageSize: 2, pageId: 't0k3n1' } },
     })
     .onSecondCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('ev2'), event('ev3')],
-        paging: { next: null },
-      },
+      status: 'ok',
+      data: [event('ev2'), event('ev3')],
+      paging: { next: null },
     })
   const action = {
     type: 'GET_ALL',
@@ -418,8 +355,8 @@ test('should get all pages using paging when last page is full', async (t) => {
     pageSize: 2,
     pageId: 't0k3n1',
   })
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 4)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 4)
 })
 
 test('should get all pages using partial paging', async (t) => {
@@ -428,21 +365,15 @@ test('should get all pages using partial paging', async (t) => {
     .resolves({ status: 'ok', data: [] })
     .onFirstCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('ev0'), event('ev1')],
-        paging: { next: { pageId: 't0k3n1' } },
-      },
+      status: 'ok',
+      data: [event('ev0'), event('ev1')],
+      paging: { next: { pageId: 't0k3n1' } },
     })
     .onSecondCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('ev2')],
-        paging: { next: null },
-      },
+      status: 'ok',
+      data: [event('ev2')],
+      paging: { next: null },
     })
   const action = {
     type: 'GET_ALL',
@@ -461,7 +392,7 @@ test('should get all pages using partial paging', async (t) => {
     pageSize: 2,
     pageId: 't0k3n1',
   })
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
 })
 
 test('should require at least one non-undefined prop for next paging', async (t) => {
@@ -470,21 +401,15 @@ test('should require at least one non-undefined prop for next paging', async (t)
     .resolves({ status: 'ok', data: [] })
     .onFirstCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('ev0'), event('ev1')],
-        paging: { next: { pageId: 't0k3n1' } },
-      },
+      status: 'ok',
+      data: [event('ev0'), event('ev1')],
+      paging: { next: { pageId: 't0k3n1' } },
     })
     .onSecondCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('ev2'), event('ev3')],
-        paging: { next: { pageId: undefined } },
-      },
+      status: 'ok',
+      data: [event('ev2'), event('ev3')],
+      paging: { next: { pageId: undefined } },
     })
   const action = {
     type: 'GET_ALL',
@@ -498,7 +423,7 @@ test('should require at least one non-undefined prop for next paging', async (t)
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 2)
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
 })
 
 test('should handle one complete page with next null', async (t) => {
@@ -507,12 +432,9 @@ test('should handle one complete page with next null', async (t) => {
     .resolves({ status: 'ok', data: [] })
     .onFirstCall()
     .resolves({
-      type: 'GET',
-      response: {
-        status: 'ok',
-        data: [event('ev0'), event('ev1')],
-        paging: { next: null },
-      },
+      status: 'ok',
+      data: [event('ev0'), event('ev1')],
+      paging: { next: null },
     })
   const action = {
     type: 'GET_ALL',
@@ -526,25 +448,19 @@ test('should handle one complete page with next null', async (t) => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 1)
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
 })
 
 test('should use original cid for all sub actions, but remove id', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onFirstCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
     .onSecondCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev2'), event('ev3')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev2'), event('ev3')] })
     .onThirdCall()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [event('ev4')] } })
+    .resolves({ status: 'ok', data: [event('ev4')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -564,15 +480,14 @@ test('should use original cid for all sub actions, but remove id', async (t) => 
   t.is(dispatch.args[1][0].meta?.cid, '23456')
   t.is(dispatch.args[2][0].meta?.id, undefined)
   t.is(dispatch.args[2][0].meta?.cid, '23456')
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 5)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 5)
 })
 
 test('should recognize loop and return error', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    type: 'GET',
-    response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-  })
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -586,25 +501,19 @@ test('should recognize loop and return error', async (t) => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 2)
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, 'GET_ALL detected a possible infinite loop')
-  t.falsy(ret.response?.data)
+  t.is(ret.status, 'error', ret.error)
+  t.is(ret.error, 'GET_ALL detected a possible infinite loop')
+  t.falsy(ret.data)
 })
 
 test('should not look for loop when noLoopCheck is true', async (t) => {
   const dispatch = sinon
     .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+    .resolves({ status: 'ok', data: [] })
     .onFirstCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
     .onSecondCall()
-    .resolves({
-      type: 'GET',
-      response: { status: 'ok', data: [event('ev0'), event('ev1')] },
-    })
+    .resolves({ status: 'ok', data: [event('ev0'), event('ev1')] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -619,17 +528,14 @@ test('should not look for loop when noLoopCheck is true', async (t) => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 3)
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[]).length, 4)
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 4)
 })
 
 test('should return error', async (t) => {
   const dispatch = sinon.stub().resolves({
-    type: 'GET',
-    response: {
-      status: 'notfound',
-      error: 'Unknown endpoint',
-    },
+    status: 'notfound',
+    error: 'Unknown endpoint',
   })
   const action = {
     type: 'GET_ALL',
@@ -640,10 +546,7 @@ test('should return error', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const expected = {
-    ...action,
-    response: { status: 'notfound', error: 'Unknown endpoint' },
-  }
+  const expected = { status: 'notfound', error: 'Unknown endpoint' }
 
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
@@ -652,9 +555,7 @@ test('should return error', async (t) => {
 })
 
 test('should treat null data as no data', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: null } })
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: null })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -668,14 +569,12 @@ test('should treat null data as no data', async (t) => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 1)
-  t.is(ret.response?.status, 'ok')
-  t.deepEqual(ret.response?.data, [])
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, [])
 })
 
 test('should dispatch action without pageSize', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ type: 'GET', response: { status: 'ok', data: [] } })
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const action = {
     type: 'GET_ALL',
     payload: {
@@ -692,14 +591,11 @@ test('should dispatch action without pageSize', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, project: 'jetkids' },
   }
-  const expectedResponse = {
-    ...action,
-    response: { status: 'ok', data: [] },
-  }
+  const expected = { status: 'ok', data: [] }
 
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })

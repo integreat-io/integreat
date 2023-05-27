@@ -75,11 +75,8 @@ test('should get metadata for service', async (t) => {
     meta: { ident },
   }
   const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data: { service: 'store', meta: { lastSyncedAt } },
-    },
+    status: 'ok',
+    data: { service: 'store', meta: { lastSyncedAt } },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
@@ -114,8 +111,8 @@ test('should get several metadata for service', async (t) => {
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.response?.data, expected)
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, expected)
 })
 
 test('should get all metadata for service', async (t) => {
@@ -145,8 +142,8 @@ test('should get all metadata for service', async (t) => {
   const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.truthy(ret)
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.response?.data, expected)
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, expected)
 })
 
 test('should get metadata for service with type', async (t) => {
@@ -167,14 +164,14 @@ test('should get metadata for service with type', async (t) => {
     },
     meta: { ident },
   }
-  const expectedResponse = {
+  const expected = {
     status: 'ok',
     data: { service: 'store', meta: { lastSyncedAt } },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.deepEqual(ret.response, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should get metadata for service with several types', async (t) => {
@@ -196,11 +193,8 @@ test('should get metadata for service with several types', async (t) => {
     meta: { ident },
   }
   const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data: { service: 'store', meta: { lastSyncedAt } },
-    },
+    status: 'ok',
+    data: { service: 'store', meta: { lastSyncedAt } },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
@@ -231,14 +225,14 @@ test('should get metadata for service with metaKey', async (t) => {
     },
     meta: { ident },
   }
-  const expectedResponse = {
+  const expected = {
     status: 'ok',
     data: { service: 'store', meta: { lastSyncedAt } },
   }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.deepEqual(ret.response, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('should return null for metadata when not set on service', async (t) => {
@@ -268,8 +262,8 @@ test('should return null for metadata when not set on service', async (t) => {
   const ret = await getMeta(action, { ...handlerResources, getService })
 
   t.truthy(ret)
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.response?.data, expected)
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, expected)
 })
 
 test('should return reply from service when not ok', async (t) => {
@@ -295,7 +289,7 @@ test('should return reply from service when not ok', async (t) => {
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'notfound', ret.response?.error)
+  t.is(ret.status, 'notfound', ret.error)
 })
 
 test('should return empty object as meta when no data from service', async (t) => {
@@ -322,8 +316,8 @@ test('should return empty object as meta when no data from service', async (t) =
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.response?.data, expectedData)
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, expectedData)
 })
 
 test('should return noaction when when no meta type is set', async (t) => {
@@ -351,8 +345,8 @@ test('should return noaction when when no meta type is set', async (t) => {
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaction')
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'noaction', ret.error)
+  t.is(typeof ret.error, 'string')
   t.false(scope.isDone())
 })
 
@@ -386,8 +380,8 @@ test('should get metadata from other service', async (t) => {
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.response?.data, expected)
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, expected)
 })
 
 test('should return noaction when meta is set to an unknown type', async (t) => {
@@ -406,8 +400,8 @@ test('should return noaction when meta is set to an unknown type', async (t) => 
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaction')
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'noaction', ret.error)
+  t.is(typeof ret.error, 'string')
 })
 
 test('should return error for unknown service', async (t) => {
@@ -423,7 +417,7 @@ test('should return error for unknown service', async (t) => {
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'error')
+  t.is(ret.status, 'error', ret.error)
 })
 
 test('should respond with noaccess when not authorized', async (t) => {
@@ -446,8 +440,8 @@ test('should respond with noaccess when not authorized', async (t) => {
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaccess', ret.response?.error)
-  t.is(typeof ret.response?.error, 'string')
-  t.is(ret.response?.reason, 'NO_IDENT')
-  t.falsy(ret.response?.data)
+  t.is(ret.status, 'noaccess', ret.error)
+  t.is(typeof ret.error, 'string')
+  t.is(ret.reason, 'NO_IDENT')
+  t.falsy(ret.data)
 })

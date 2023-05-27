@@ -22,7 +22,7 @@ import type { MapOptions } from '../service/types.js'
 import {
   setResponseOnAction,
   setDataOnActionPayload,
-  setErrorOnAction,
+  createErrorResponse,
 } from '../utils/action.js'
 import {
   isJob,
@@ -70,14 +70,17 @@ const addModify = (mutation: ArrayElement<Pipeline>) =>
 function mutateAction(
   action: Action,
   mutation: TransformObject | Pipeline | undefined,
-  responses: Record<string, Action>,
+  actionsWithResponses: Record<string, Action>,
   mapOptions: MapOptions
 ): Action {
   if (mutation) {
     const mutationIncludingAction = Array.isArray(mutation)
       ? ['$action', ...mutation.map(addModify)]
       : ['$action', { '.': '.', ...mutation }] // $action is the action we're mutating to
-    const responsesIncludingAction = { ...responses, $action: action }
+    const responsesIncludingAction = {
+      ...actionsWithResponses,
+      $action: action,
+    }
     return mapTransform(
       mutationIncludingAction,
       mapOptions
@@ -95,7 +98,7 @@ async function runAction(
   if (action) {
     return await dispatch(prepareAction(action, meta))
   } else {
-    return { response: { status: 'noaction' } } as Action
+    return { status: 'noaction' }
   }
 }
 
@@ -107,8 +110,11 @@ const prependResponseError = (
     ? { ...response, error: `${message}${response.error}` }
     : response
 
-const errorMessageFromResponses = (responses: Action[], ids: string[]) =>
-  responses
+const errorMessageFromResponses = (
+  actionsWithResponses: Action[],
+  ids: string[]
+) =>
+  actionsWithResponses
     .map(({ response }, index) =>
       response?.error
         ? `'${ids[index]}' (${response?.status}: ${response?.error})`
@@ -119,67 +125,61 @@ const errorMessageFromResponses = (responses: Action[], ids: string[]) =>
 
 const removeError = ({ error, ...response }: Response) => response
 
-function responseFromResponses(actions: Action[], ids: string[]): Action {
+function responseFromActionWithResponses(
+  actions: Action[],
+  ids: string[]
+): Response {
   if (actions.length === 1 && actions[0]) {
     const action = actions[0]
     const status = isOkResponse(action.response) ? 'ok' : 'error'
     const message = errorMessageFromResponses(actions, ids)
     return {
-      ...action,
-      response: {
-        ...removeError(action.response || {}),
-        status,
-        ...(message
-          ? status === 'ok'
-            ? { warning: `Message from steps: ${message}` }
-            : { error: message }
-          : {}),
-        ...(status === 'error'
-          ? {
-              responses: actions
-                .map(({ response }) => response)
-                .filter(Boolean) as Response[],
-            }
-          : {}),
-      },
+      ...removeError(action.response || {}),
+      status,
+      ...(message
+        ? status === 'ok'
+          ? { warning: `Message from steps: ${message}` }
+          : { error: message }
+        : {}),
+      ...(status === 'error'
+        ? {
+            responses: actions
+              .map(({ response }) => response)
+              .filter(Boolean) as Response[],
+          }
+        : {}),
     }
   }
 
-  const errorResponses = actions.filter(
-    (response) => !isOkResponse(response?.response)
-  )
+  const errorResponses = actions
+    .map(({ response }) => response)
+    .filter((response) => response && !isOkResponse(response)) as Response[]
   const message = errorMessageFromResponses(actions, ids)
 
   if (errorResponses.length > 0) {
     return {
-      response: {
-        status: 'error',
-        error: message,
-        responses: errorResponses
-          .map(({ response }) => response)
-          .filter(Boolean),
-      },
-    } as unknown as Action
+      status: 'error',
+      error: message,
+      responses: errorResponses,
+    }
   } else {
     return {
-      response: {
-        status: 'ok',
-        ...(message ? { warning: `Message from steps: ${message}` } : {}),
-      },
-    } as Action // Ok to have an Action with a response only here
+      status: 'ok',
+      ...(message ? { warning: `Message from steps: ${message}` } : {}),
+    }
   }
 }
 
 function getLastJobWithResponse(
   flow: (Job | Job[])[],
-  responses: Record<string, Action>
+  actionsWithResponses: Record<string, Action>
 ) {
   for (let i = flow.length - 1; i > -1; i--) {
     const step = flow[i]
     const ids = Array.isArray(step) ? step.map((f) => f.id) : [step.id]
-    if (ids.some((id) => responses[id])) {
-      return responseFromResponses(
-        ids.map((id) => responses[id]),
+    if (ids.some((id) => actionsWithResponses[id])) {
+      return responseFromActionWithResponses(
+        ids.map((id) => actionsWithResponses[id]),
         ids
       )
     }
@@ -233,7 +233,7 @@ const getIteratePipeline = (
 
 function unpackIterationSteps(
   step: Job,
-  responses: Record<string, Action>,
+  actionsWithResponses: Record<string, Action>,
   mapOptions: MapOptions
 ): Job {
   if (!isJobWithAction(step)) {
@@ -245,7 +245,7 @@ function unpackIterationSteps(
   }
 
   const getter = mapTransform(iteratePipeline, mapOptions)
-  const items = ensureArray(getter(responses))
+  const items = ensureArray(getter(actionsWithResponses))
 
   return {
     id: step.id,
@@ -258,16 +258,18 @@ function unpackIterationSteps(
   }
 }
 
-function generateIterateResponse(responses: Action[]) {
-  const errors = responses.filter(({ response }) => !isOkResponse(response))
-  const status = errors.length === 0 ? 'ok' : 'error'
-  const error = errors
-    .map(({ response }) =>
+function generateIterateResponse(actionsWithResponses: Action[]) {
+  const errorResponses = actionsWithResponses
+    .map(({ response }) => response)
+    .filter((response) => response && !isOkResponse(response))
+  const status = errorResponses.length === 0 ? 'ok' : 'error'
+  const error = errorResponses
+    .map((response) =>
       response ? `[${response.status}] ${response.error}` : undefined
     )
     .filter(Boolean)
     .join(' | ')
-  const data = responses.flatMap(({ response }) => response?.data)
+  const data = actionsWithResponses.flatMap(({ response }) => response?.data)
   return {
     response: {
       status,
@@ -320,14 +322,11 @@ async function runStep(
         mapOptions
       )
       const response = await runAction(action, dispatch, meta)
-      const actionWithResponse = { ...action, response: response?.response }
       setResponses(
         {
-          [job.id]: mutateResponse(
-            actionWithResponse,
-            job,
-            allResponses,
-            mapOptions
+          [job.id]: setResponseOnAction(
+            action,
+            mutateResponse(action, response, job, allResponses, mapOptions)
           ),
         },
         ourResponses
@@ -364,52 +363,54 @@ async function runStep(
   return false
 }
 
-function getFlowResponse(job: Job, responses: Record<string, Action>) {
+function getFlowResponse(
+  job: Job,
+  actionsWithResponses: Record<string, Action>
+): Response {
   if (isJobWithFlow(job)) {
-    const lastResponse = getLastJobWithResponse(job.flow, responses)
+    const lastResponse = getLastJobWithResponse(job.flow, actionsWithResponses)
     return (
       prependResponseError(
-        lastResponse?.response,
+        lastResponse,
         `Could not finish job '${job.id}', the following steps failed: `
       ) || { status: 'noaction' }
     )
   } else {
-    const response = responses[job.id]
-    return response?.response
+    const response = actionsWithResponses[job.id]
+    return response?.response || { status: 'noaction' }
   }
 }
 
-const cleanUpResponse = (action: Action) => ({
-  ...action,
-  response: {
-    ...action.response,
-    status:
-      (action.response?.status === 'ok' || !action.response?.status) &&
-      action.response?.error
-        ? 'error'
-        : action.response?.status || 'ok',
-    ...(action.response?.error && {
-      error: Array.isArray(action.response.error)
-        ? action.response.error.join(' | ')
-        : action.response.error,
-    }),
-  },
-})
+const cleanUpResponse = (response?: Response): Response =>
+  response
+    ? {
+        ...response,
+        status:
+          (response.status === 'ok' || !response.status) && response.error
+            ? 'error'
+            : response.status || 'ok',
+        ...(response.error && {
+          error: Array.isArray(response.error)
+            ? response.error.join(' | ')
+            : response.error,
+        }),
+      }
+    : { status: 'ok' }
 
 function mutateResponse(
   action: Action,
+  response: Response,
   job: Job,
   responses: Record<string, Action>,
   mapOptions: MapOptions
-) {
-  return cleanUpResponse(
-    mutateAction(
-      action,
-      (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
-      responses,
-      mapOptions
-    )
+): Response {
+  const { response: mutatedResponse } = mutateAction(
+    setResponseOnAction(action, response),
+    (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
+    responses,
+    mapOptions
   )
+  return cleanUpResponse(mutatedResponse)
 }
 
 async function runFlow(
@@ -481,18 +482,14 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
   async function run(
     action: Action<Payload>,
     { dispatch }: ActionHandlerResources
-  ): Promise<Action> {
+  ): Promise<Response> {
     const {
       payload: { jobId },
       meta,
     } = action
     const job = typeof jobId === 'string' ? jobs[jobId] : undefined
     if (!isJob(job)) {
-      return setErrorOnAction(
-        action,
-        `No valid job with id '${jobId}'`,
-        'notfound'
-      )
+      return createErrorResponse(`No valid job with id '${jobId}'`, 'notfound')
     }
 
     const prevResponses = { action } // Include the incoming action in previous responses, to allow mutating from it
@@ -504,16 +501,18 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
       generateSubMeta(meta || {}, jobId as string)
     )
 
-    const responseAction = setResponseOnAction(
-      action,
-      getFlowResponse(job, responses)
-    )
-    return isJobWithAction(job)
-      ? cleanUpResponse(responseAction) // The response has alreay been mutated
-      : mutateResponse(
-          responseAction,
-          job,
-          { ...responses, action: responseAction },
-          mapOptions
-        ) // Mutate response
+    const response = getFlowResponse(job, responses)
+
+    if (isJobWithAction(job)) {
+      return cleanUpResponse(response) // The response has alreay been mutated
+    } else {
+      const mutatedResponse = mutateResponse(
+        action,
+        response,
+        job,
+        { ...responses, action: setResponseOnAction(action, response) }, // TODO: Is this necessary?
+        mapOptions
+      ) // Mutate response
+      return mutatedResponse || { status: 'ok' } // TODO: Necessary?
+    }
   }

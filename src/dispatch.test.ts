@@ -29,10 +29,7 @@ test('should route to relevant action handler', async (t) => {
     },
   }
   const handlers = {
-    GET: async () => ({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
-    }),
+    GET: async () => ({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }),
   }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
@@ -52,14 +49,10 @@ test('should route action with queue flag to queue handler', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, queue: true },
   }
-  const setHandler = sinon.stub().resolves({
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
-  })
-  const queueHandler = sinon.stub().resolves({
-    ...action,
-    response: { status: 'queued' },
-  })
+  const setHandler = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] })
+  const queueHandler = sinon.stub().resolves({ status: 'queued' })
   const handlers = {
     SET: setHandler,
     [QUEUE_SYMBOL]: queueHandler,
@@ -85,14 +78,10 @@ test('should not route to queue handler when no queue service', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, queue: true },
   }
-  const setHandler = sinon.stub().resolves({
-    ...action,
-    response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
-  })
-  const queueHandler = sinon.stub().resolves({
-    ...action,
-    response: { status: 'queued' },
-  })
+  const setHandler = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] })
+  const queueHandler = sinon.stub().resolves({ status: 'queued' })
   const handlers = {
     SET: setHandler,
     [QUEUE_SYMBOL]: queueHandler,
@@ -117,9 +106,9 @@ test('should set dispatchedAt meta', async (t) => {
     },
   }
   const handlers = {
-    GET: async (action: Action) => ({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    GET: async (_action: Action) => ({
+      status: 'ok',
+      data: [{ id: 'ent1', type: 'entry' }],
     }),
   }
   const getSpy = sinon.spy(handlers, 'GET')
@@ -147,9 +136,9 @@ test('should override any present dispatchedAt meta', async (t) => {
     meta: { dispatchedAt: new Date('2022-12-01T18:43:11Z').getTime() },
   }
   const handlers = {
-    GET: async (action: Action) => ({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    GET: async (_action: Action) => ({
+      status: 'ok',
+      data: [{ id: 'ent1', type: 'entry' }],
     }),
   }
   const getSpy = sinon.spy(handlers, 'GET')
@@ -177,9 +166,9 @@ test('should remove authorized meta if set', async (t) => {
     meta: { authorized: true },
   }
   const handlers = {
-    GET: async (action: Action) => ({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    GET: async (_action: Action) => ({
+      status: 'ok',
+      data: [{ id: 'ent1', type: 'entry' }],
     }),
   }
   const getSpy = sinon.spy(handlers, 'GET')
@@ -202,9 +191,9 @@ test('should set id and cid in meta when not already set', async (t) => {
     },
   }
   const handlers = {
-    GET: async (action: Action) => ({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    GET: async (_action: Action) => ({
+      status: 'ok',
+      data: [{ id: 'ent1', type: 'entry' }],
     }),
   }
   const getSpy = sinon.spy(handlers, 'GET')
@@ -229,9 +218,9 @@ test('should not touch id and cid from action', async (t) => {
     meta: { id: '11004', cid: '11005' },
   }
   const handlers = {
-    GET: async (action: Action) => ({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    GET: async (_action: Action) => ({
+      status: 'ok',
+      data: [{ id: 'ent1', type: 'entry' }],
     }),
   }
   const getSpy = sinon.spy(handlers, 'GET')
@@ -256,9 +245,9 @@ test('should set cid to same value as id when not already set', async (t) => {
     meta: { id: '11004' },
   }
   const handlers = {
-    GET: async (action: Action) => ({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
+    GET: async (_action: Action) => ({
+      status: 'ok',
+      data: [{ id: 'ent1', type: 'entry' }],
     }),
   }
   const getSpy = sinon.spy(handlers, 'GET')
@@ -282,13 +271,10 @@ test('should map payload property service to targetService', async (t) => {
     },
   }
   const handlers = {
-    GET: async (action: Action) => ({
-      ...action,
-      response:
-        action.payload.targetService === 'entries'
-          ? { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }
-          : { status: 'error', error: 'Service not set' },
-    }),
+    GET: async (action: Action) =>
+      action.payload.targetService === 'entries'
+        ? { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }
+        : { status: 'error', error: 'Service not set' },
   }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
@@ -319,9 +305,7 @@ test('should return badrequest when unknown action', async (t) => {
 })
 
 test('should call action handler with action, dispatch, getService, and options', async (t) => {
-  const getHandler = sinon
-    .stub()
-    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const getHandler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { GET: getHandler }
   const services = {}
   const schemas = {}
@@ -351,26 +335,16 @@ test('should call action handler with action, dispatch, getService, and options'
 test('should call middleware', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const handlers = {
-    TEST: async () => ({
-      ...action,
-      response: { status: 'fromAction' },
-    }),
+    TEST: async () => ({ status: 'fromAction' }),
   }
   const middleware: Middleware[] = [
     (next) => async (action) => ({
-      ...action,
-      response: {
-        ...action.response,
-        status: `<${(await next(action)).response?.status}>`,
-      },
+      ...action.response,
+      status: `<${(await next(action)).status}>`,
     }),
     (next) => async (action) => ({
-      ...action,
-      response: {
-        ...action.response,
-
-        status: `(${(await next(action)).response?.status})`,
-      },
+      ...action.response,
+      status: `(${(await next(action)).status})`,
     }),
   ]
   const ret = await dispatch({
@@ -386,12 +360,10 @@ test('should call middleware', async (t) => {
 
 test('should allow middleware to abort middleware chain', async (t) => {
   const action = { type: 'TEST', payload: {} }
-  const handler = sinon
-    .stub()
-    .resolves({ ...action, response: { status: 'ok' } })
+  const handler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { TEST: handler }
   const middleware: Middleware[] = [
-    (_next) => async (action) => ({ ...action, response: { status: 'error' } }),
+    (_next) => async (_action) => ({ status: 'error' }),
   ]
 
   const ret = await dispatch({
@@ -409,21 +381,14 @@ test('should allow middleware to abort middleware chain', async (t) => {
 test('should dispatch to middleware from action handlers', async (t) => {
   const action = { type: 'DISPATCHER', payload: {}, meta: {} }
   const handlers: Record<string, ActionHandler> = {
-    TEST: async () => ({
-      type: 'TEST',
-      payload: {},
-      response: { status: 'fromAction' },
-    }),
+    TEST: async () => ({ status: 'fromAction' }),
     DISPATCHER: async (_action: Action, { dispatch }: ActionHandlerResources) =>
       dispatch({ type: 'TEST', payload: {} }),
   }
   const middleware: Middleware[] = [
     (next) => async (action) => ({
-      ...action,
-      response: {
-        ...action.response,
-        status: `<${(await next(action)).response?.status}>`,
-      },
+      ...action.response,
+      status: `<${(await next(action)).status}>`,
     }),
   ]
 
@@ -449,9 +414,9 @@ test('should support progress reporting', async (t) => {
     },
   }
   const handlers = {
-    async GET(action: Action, { setProgress }: ActionHandlerResources) {
+    async GET(_action: Action, { setProgress }: ActionHandlerResources) {
       setProgress(0.5)
-      return { ...action, response: { status: 'ok', data: [] } }
+      return { status: 'ok', data: [] }
     },
   }
 
@@ -478,10 +443,7 @@ test('should return error when source service is not found', async (t) => {
     },
   }
   const handlers = {
-    GET: async () => ({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
-    }),
+    GET: async () => ({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }),
   }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
@@ -507,10 +469,7 @@ test('should return error when no endoint on source service matches', async (t) 
     },
   }
   const handlers = {
-    GET: async () => ({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] },
-    }),
+    GET: async () => ({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }),
   }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
@@ -522,10 +481,7 @@ test('should return error when no endoint on source service matches', async (t) 
 test('should return error instead of throwing', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const handlers = {
-    TEST: async () => ({
-      ...action,
-      response: { status: 'fromAction' },
-    }),
+    TEST: async () => ({ status: 'fromAction' }),
   }
   const middleware: Middleware[] = [
     (_next) => async (_action) => {

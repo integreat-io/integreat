@@ -30,7 +30,7 @@ export interface ActionMapper {
 }
 
 export interface AsyncActionMapper {
-  (action: Action): Promise<Action>
+  (action: Action): Promise<Response>
 }
 
 export type AuthOptions = Record<string, unknown>

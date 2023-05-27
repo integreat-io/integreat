@@ -159,23 +159,20 @@ test('should get items from service', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
   const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data: [
-        {
-          $type: 'entry',
-          id: 'ent1',
-          title: 'Entry 1',
-          byline: 'Somebody',
-          createdAt: date,
-          updatedAt: date,
-          source: { id: 'thenews', $ref: 'source' },
-        },
-      ],
-      headers: {
-        'content-type': 'application/json',
+    status: 'ok',
+    data: [
+      {
+        $type: 'entry',
+        id: 'ent1',
+        title: 'Entry 1',
+        byline: 'Somebody',
+        createdAt: date,
+        updatedAt: date,
+        source: { id: 'thenews', $ref: 'source' },
       },
+    ],
+    headers: {
+      'content-type': 'application/json',
     },
   }
 
@@ -205,8 +202,8 @@ test('should get item by id from service', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is((ret.response?.data as TypedData).id, 'ent1')
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData).id, 'ent1')
 })
 
 test('should get items by id array from service from member_s_ endpoint', async (t) => {
@@ -233,9 +230,9 @@ test('should get items by id array from service from member_s_ endpoint', async 
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.true(Array.isArray(ret.response?.data))
-  const data = ret.response?.data as TypedData[]
+  t.is(ret.status, 'ok', ret.error)
+  t.true(Array.isArray(ret.data))
+  const data = ret.data as TypedData[]
   t.is(data.length, 2)
   t.is(data[0].id, 'ent1')
   t.is(data[1].id, 'ent2')
@@ -265,9 +262,9 @@ test('should get items by id array from member endpoints', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.true(Array.isArray(ret.response?.data))
-  const data = ret.response?.data as (TypedData | undefined)[]
+  t.is(ret.status, 'ok', ret.error)
+  t.true(Array.isArray(ret.data))
+  const data = ret.data as (TypedData | undefined)[]
   t.is(data.length, 3)
   t.is(data[0]?.id, 'ent1')
   t.is(data[1]?.id, 'ent2')
@@ -290,9 +287,9 @@ test('should pass on ident when getting from id array', async (t) => {
   })
   const sendStub = sinon
     .stub(svc, 'send')
-    .callsFake(async (action: Action) => ({
-      ...action,
-      response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+    .callsFake(async (_action: Action) => ({
+      status: 'ok',
+      data: [{ id: 'ent1', $type: 'entry' }],
     }))
   const getService = () => svc
 
@@ -321,9 +318,9 @@ test('should return noaction when members action has empty id array', async (t) 
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaction', ret.response?.error)
-  t.is(ret.response?.error, 'GET action was dispatched with empty array of ids')
-  t.is(ret.response?.data, undefined)
+  t.is(ret.status, 'noaction', ret.error)
+  t.is(ret.error, 'GET action was dispatched with empty array of ids')
+  t.is(ret.data, undefined)
 })
 
 test('should return error when one or more requests for individual ids fails', async (t) => {
@@ -345,7 +342,7 @@ test('should return error when one or more requests for individual ids fails', a
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'error')
+  t.is(ret.status, 'error')
 })
 
 test('should get item by id from service when id is array of one', async (t) => {
@@ -367,8 +364,8 @@ test('should get item by id from service when id is array of one', async (t) => 
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is((ret.response?.data as TypedData).id, 'ent1')
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData).id, 'ent1')
 })
 
 test('should get default values from type', async (t) => {
@@ -387,7 +384,7 @@ test('should get default values from type', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is((ret.response?.data as TypedData[])[0].byline, 'Somebody')
+  t.is((ret.data as TypedData[])[0].byline, 'Somebody')
 })
 
 test('should infer service id from type', async (t) => {
@@ -401,8 +398,8 @@ test('should infer service id from type', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok')
-  t.is((ret.response?.data as TypedData[])[0].id, 'ent1')
+  t.is(ret.status, 'ok')
+  t.is((ret.data as TypedData[])[0].id, 'ent1')
 })
 
 test('should get from other endpoint', async (t) => {
@@ -421,8 +418,8 @@ test('should get from other endpoint', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is((ret.response?.data as TypedData[])[0].id, 'ent1')
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[])[0].id, 'ent1')
 })
 
 test('should return error on not found', async (t) => {
@@ -439,9 +436,9 @@ test('should return error on not found', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'notfound')
-  t.is(ret.response?.data, undefined)
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'notfound')
+  t.is(ret.data, undefined)
+  t.is(typeof ret.error, 'string')
 })
 
 test('should return error when no service exists for type', async (t) => {
@@ -450,8 +447,8 @@ test('should return error when no service exists for type', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, "No service exists for type 'entry'")
+  t.is(ret.status, 'error')
+  t.is(ret.error, "No service exists for type 'entry'")
 })
 
 test('should return error when specified service does not exist', async (t) => {
@@ -463,8 +460,8 @@ test('should return error when specified service does not exist', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, "Service with id 'entries' does not exist")
+  t.is(ret.status, 'error')
+  t.is(ret.error, "Service with id 'entries' does not exist")
 })
 
 test('should get only authorized items', async (t) => {
@@ -503,8 +500,8 @@ test('should get only authorized items', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  const data = ret.response?.data
+  t.is(ret.status, 'ok', ret.error)
+  const data = ret.data
   t.deepEqual(data, expectedData)
 })
 
@@ -525,6 +522,6 @@ test('should return badrequest when no endpoint matches', async (t) => {
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'badrequest', ret.response?.error)
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'badrequest', ret.error)
+  t.is(typeof ret.error, 'string')
 })

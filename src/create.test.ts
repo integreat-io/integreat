@@ -116,9 +116,7 @@ test('should throw when no schemas', (t) => {
 
 test('should dispatch with resources', async (t) => {
   const action = { type: 'TEST', payload: {} }
-  const handler = sinon
-    .stub()
-    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const handler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { TEST: handler }
   const identConfig = { type: 'account' }
   const expectedOptions = { identConfig, queueService: 'queue' }
@@ -198,14 +196,12 @@ test('should use adapters', async (t) => {
 
 test('should call middleware', async (t) => {
   const action = { type: 'TEST', payload: {} }
-  const otherAction = sinon
-    .stub()
-    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const otherAction = sinon.stub().resolves({ status: 'ok' })
   const handlers = {
     OTHER: otherAction,
     TEST: async (action: Action) => ({
-      ...action,
-      response: { ...action.response, status: 'noaction' },
+      ...action.response,
+      status: 'noaction',
     }),
   }
   const middleware = [
@@ -271,9 +267,7 @@ test('should mutate data', async (t) => {
 })
 
 test('should dispatch scheduled', async (t) => {
-  const handler = sinon
-    .stub()
-    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const handler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { TEST: handler }
   const jobs = [
     { schedules: [{ m: [45] }], action: { type: 'TEST', payload: {} } },
@@ -291,9 +285,7 @@ test('should dispatch scheduled', async (t) => {
 })
 
 test('should skip jobs without schedule', async (t) => {
-  const handler = sinon
-    .stub()
-    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const handler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { TEST: handler }
   const jobs = [{ id: 'someAction', action: { type: 'TEST', payload: {} } }]
   const fromDate = new Date('2021-05-11T14:32Z')
@@ -309,9 +301,7 @@ test('should skip jobs without schedule', async (t) => {
 })
 
 test('should set up RUN handler with jobs', async (t) => {
-  const handler = sinon
-    .stub()
-    .resolves({ type: 'GET', payload: {}, response: { status: 'ok' } })
+  const handler = sinon.stub().resolves({ status: 'ok' })
   const jobs = [
     {
       id: 'theJob',

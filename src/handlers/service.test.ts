@@ -2,7 +2,7 @@ import test from 'ava'
 import sinon from 'sinon'
 import createService from '../service/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
-import type { Transporter } from '../types.js'
+import type { Transporter, Response } from '../types.js'
 
 import service from './service.js'
 
@@ -45,7 +45,7 @@ test('should send action straight to service', async (t) => {
   }
   const getService = (_type?: string | string[], service?: string) =>
     service === 'someService' ? someService : undefined
-  const expected = { ...action, response: { status: 'ok' } }
+  const expected = { status: 'ok' }
   const sentAction = { ...action, meta: { ...action.meta, authorized: true } }
 
   const ret = await service(action, { ...handlerResources, getService })
@@ -56,7 +56,7 @@ test('should send action straight to service', async (t) => {
 })
 
 test('should return error when service does not return a status', async (t) => {
-  const send = async () => ({})
+  const send = async () => ({} as Response) // We intentionally don't wan't a status here
   const transporter = { ...baseTransporter, send }
   const someService = createService({ schemas, mapOptions })({
     ...serviceDefs,
@@ -73,12 +73,8 @@ test('should return error when service does not return a status', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'someService' ? someService : undefined
   const expected = {
-    ...action,
-    response: {
-      status: 'badresponse',
-      error:
-        "Service 'someService' did not respond correctly to SERVICE action",
-    },
+    status: 'badresponse',
+    error: "Service 'someService' did not respond correctly to SERVICE action",
   }
 
   const ret = await service(action, { ...handlerResources, getService })
@@ -97,11 +93,8 @@ test('should return error when service is unknown', async (t) => {
   }
   const getService = (_type?: string | string[], _service?: string) => undefined
   const expected = {
-    ...action,
-    response: {
-      status: 'error',
-      error: "Service with id 'unknown' does not exist",
-    },
+    status: 'error',
+    error: "Service with id 'unknown' does not exist",
   }
 
   const ret = await service(action, { ...handlerResources, getService })

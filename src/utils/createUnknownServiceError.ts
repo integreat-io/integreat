@@ -1,18 +1,17 @@
 import debugLib from 'debug'
-import { setErrorOnAction } from './action.js'
-import type { Action } from '../types.js'
+import { createErrorResponse } from './action.js'
+import type { Response } from '../types.js'
 
 const debug = debugLib('great')
 
 export default function createUnknownServiceError(
-  action: Action,
   type: string | string[] | undefined,
   serviceId: string | undefined,
   actionType: string
-): Action {
+): Response {
   const error = serviceId
     ? `Service with id '${serviceId || '<not set>'}' does not exist`
     : `No service exists for type '${type || '<not set>'}'`
   debug(`${actionType}: ${error}`)
-  return setErrorOnAction(action, error)
+  return createErrorResponse(error)
 }

@@ -1,7 +1,8 @@
-import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
+import { createErrorResponse } from '../utils/action.js'
 import { isTypedData } from '../utils/is.js'
 import type {
   Action,
+  Response,
   HandlerDispatch,
   Ident,
   TypedData,
@@ -19,7 +20,7 @@ const getExpired = async (
   dispatch: HandlerDispatch,
   cid?: string,
   ident?: Ident
-): Promise<Action> => {
+): Promise<Response> => {
   const timestamp = Date.now() + msFromNow
   const isodate = new Date(timestamp).toISOString()
   return dispatch({
@@ -41,9 +42,8 @@ const deleteExpired = async (
   dispatch: HandlerDispatch,
   cid?: string,
   ident?: Ident
-): Promise<Action> => {
+): Promise<Response> => {
   const deleteData = data.map((item) => ({ id: item.id, $type: item.$type }))
-
   const deleteAction = {
     type: 'DELETE',
     payload: { data: deleteData, targetService },
@@ -69,7 +69,7 @@ const deleteExpired = async (
 export default async function expire(
   action: Action,
   { dispatch }: ActionHandlerResources
-): Promise<Action> {
+): Promise<Response> {
   const {
     payload: { type, endpoint: endpointId, targetService: serviceId },
     meta: { ident, cid } = {},
@@ -77,25 +77,22 @@ export default async function expire(
   const msFromNow = (action.payload.msFromNow as number) || 0
 
   if (!serviceId) {
-    return setErrorOnAction(
-      action,
+    return createErrorResponse(
       `Can't delete expired without a specified service`
     )
   }
   if (!endpointId) {
-    return setErrorOnAction(
-      action,
+    return createErrorResponse(
       `Can't delete expired from service '${serviceId}' without an endpoint`
     )
   }
   if (!type) {
-    return setErrorOnAction(
-      action,
+    return createErrorResponse(
       `Can't delete expired from service '${serviceId}' without one or more specified types`
     )
   }
 
-  const expiredAction = await getExpired(
+  const expiredResponse = await getExpired(
     serviceId,
     type,
     endpointId,
@@ -105,29 +102,19 @@ export default async function expire(
     ident
   )
 
-  if (expiredAction.response?.status !== 'ok') {
-    return setErrorOnAction(
-      action,
-      `Could not get items from service '${serviceId}'. Reason: ${expiredAction.response?.status} ${expiredAction.response?.error}`,
+  if (expiredResponse.status !== 'ok') {
+    return createErrorResponse(
+      `Could not get items from service '${serviceId}'. Reason: ${expiredResponse.status} ${expiredResponse.error}`,
       'error'
     )
   }
-  const data = expiredAction.response?.data
+  const data = expiredResponse.data
   if (!isTypedDataArray(data)) {
-    return setErrorOnAction(
-      action,
+    return createErrorResponse(
       `No items to expire from service '${serviceId}'`,
       'noaction'
     )
   }
 
-  const { response } = await deleteExpired(
-    data,
-    serviceId,
-    dispatch,
-    cid,
-    ident
-  )
-
-  return setResponseOnAction(action, response)
+  return await deleteExpired(data, serviceId, dispatch, cid, ident)
 }

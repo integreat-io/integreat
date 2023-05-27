@@ -1,11 +1,7 @@
 import debugLib from 'debug'
 import pProgress, { ProgressNotifier } from 'p-progress'
 import createEndpointMappers from './endpoints/index.js'
-import {
-  setErrorOnAction,
-  createErrorResponse,
-  setResponseOnAction,
-} from '../utils/action.js'
+import { setErrorOnAction, createErrorResponse } from '../utils/action.js'
 import Connection from './Connection.js'
 import Auth from './Auth.js'
 import { lookupById } from '../utils/indexUtils.js'
@@ -84,15 +80,14 @@ async function authorizeIncoming(action: Action, auth?: Auth | boolean) {
 }
 
 const dispatchIncoming = (dispatch: Dispatch, setProgress: ProgressNotifier) =>
-  async function (action: Action) {
+  async function (action: Action): Promise<Response> {
     if (typeof action.response?.status === 'string') {
-      return action
+      return action.response
     }
 
     const p = dispatch(action)
     p.onProgress(setProgress)
-    const response = await p
-    return { ...action, response }
+    return await p
   }
 
 // TODO: Consider if there is an easier way to pass the `setProgress` method
@@ -102,7 +97,7 @@ const dispatchIncomingWithMiddleware =
   (action: Action | null) =>
     pProgress<Response>(async (setProgress) => {
       if (action) {
-        const { response } = await middleware(
+        const response = await middleware(
           dispatchIncoming(dispatch, setProgress)
         )(await authorizeIncoming(action, auth))
 
@@ -120,22 +115,19 @@ const sendToTransporter = (
   connection: Connection,
   serviceId: string
 ) =>
-  async function send(action: Action) {
+  async function send(action: Action): Promise<Response> {
     try {
       if (await connection.connect(action.meta?.auth)) {
-        const response = await transporter.send(action, connection.object)
-        return setResponseOnAction(action, response)
+        return await transporter.send(action, connection.object)
       } else {
-        return setErrorOnAction(
-          action,
+        return createErrorResponse(
           `Could not connect to service '${serviceId}'. [${
             connection.status
           }] ${connection.error || ''}`.trim()
         )
       }
     } catch (error) {
-      return setErrorOnAction(
-        action,
+      return createErrorResponse(
         `Error retrieving from service '${serviceId}': ${
           (error as Error).message
         }`
@@ -378,28 +370,24 @@ export default ({
 
       /**
        * The given action is sent to the service via the relevant transporter,
-       * and the action is updated with the response from the service.
+       * and the response from the service is returned.
        */
       async send(action) {
         if (action.response?.status) {
-          return action
+          return action.response
         }
 
         if (!isTransporter(transporter)) {
-          return setErrorOnAction(
-            action,
+          return createErrorResponse(
             `Service '${serviceId}' has no transporter`
           )
         }
         if (!connection) {
-          return setErrorOnAction(
-            action,
-            `Service '${serviceId}' has no connection`
-          )
+          return createErrorResponse(`Service '${serviceId}' has no connection`)
         }
 
         if (!action.meta?.authorized) {
-          return setErrorOnAction(action, 'Not authorized')
+          return createErrorResponse('Not authorized')
         }
 
         // When an authenticator is set: Authenticate and apply result to action
@@ -407,7 +395,7 @@ export default ({
           await authorization.authenticate(action)
           action = authorization.applyToAction(action, transporter)
           if (action.response?.status) {
-            return action
+            return action.response
           }
         }
 

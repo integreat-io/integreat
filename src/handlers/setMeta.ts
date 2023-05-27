@@ -1,8 +1,8 @@
 import debugLib from 'debug'
-import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
+import { createErrorResponse } from '../utils/action.js'
 import setHandler from './set.js'
 import { generateMetaId } from './getMeta.js'
-import type { Action, ActionHandlerResources } from '../types.js'
+import type { Action, Response, ActionHandlerResources } from '../types.js'
 
 const debug = debugLib('great')
 
@@ -12,7 +12,7 @@ const debug = debugLib('great')
 export default async function setMeta(
   action: Action,
   resources: ActionHandlerResources
-): Promise<Action> {
+): Promise<Response> {
   const {
     payload: {
       type,
@@ -29,7 +29,7 @@ export default async function setMeta(
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`SET_META: Service '${serviceId}' doesn't exist`)
-    return setErrorOnAction(action, `Service '${serviceId}' doesn't exist`)
+    return createErrorResponse(`Service '${serviceId}' doesn't exist`)
   }
 
   const metaType = service.meta
@@ -40,8 +40,7 @@ export default async function setMeta(
     debug(
       `SET_META: Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`
     )
-    return setErrorOnAction(
-      action,
+    return createErrorResponse(
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'noaction'
     )
@@ -73,7 +72,5 @@ export default async function setMeta(
     },
     meta: { ident },
   }
-  const { response } = await setHandler(setAction, resources)
-
-  return setResponseOnAction(action, response)
+  return await setHandler(setAction, resources)
 }

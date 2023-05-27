@@ -112,11 +112,8 @@ test('should set new entries', async (t) => {
 
 test('should use outgoing middleware', async (t) => {
   const failMiddleware = () => async (action: Action) => ({
-    ...action,
-    response: {
-      ...action.response,
-      status: 'badresponse',
-    },
+    ...action.response,
+    status: 'badresponse',
   })
   const outgoingMiddleware = [failMiddleware]
   const action = {

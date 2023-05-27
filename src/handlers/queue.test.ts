@@ -49,7 +49,7 @@ test('should send action to queue', async (t) => {
   })
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
-  const expected = { ...action, response: { status: 'queued' } }
+  const expected = { status: 'queued' }
 
   const before = Date.now()
   const ret = await queue(action, { ...handlerResources, getService, options })
@@ -110,10 +110,7 @@ test('should return error from queue', async (t) => {
   })
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
-  const expected = {
-    ...action,
-    response: { status: 'timeout', error: 'Queue busy' },
-  }
+  const expected = { status: 'timeout', error: 'Queue busy' }
 
   const ret = await queue(action, { ...handlerResources, getService, options })
 
@@ -121,7 +118,7 @@ test('should return error from queue', async (t) => {
 })
 
 test('should return error when queue does not respond status', async (t) => {
-  const send = async () => ({ status: undefined })
+  const send = async () => ({}) // Intentionally no status
   const options = { queueService: 'queue' }
   const queueTransporter = { ...baseTransporter, send }
   const queueService = createService({ schemas, mapOptions })({
@@ -131,11 +128,8 @@ test('should return error when queue does not respond status', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
   const expected = {
-    ...action,
-    response: {
-      status: 'badresponse',
-      error: 'Queue did not respond correctly',
-    },
+    status: 'badresponse',
+    error: 'Queue did not respond correctly',
   }
 
   const ret = await queue(action, { ...handlerResources, getService, options })
@@ -144,12 +138,10 @@ test('should return error when queue does not respond status', async (t) => {
 })
 
 test('should dispatch action when queue service is unknown', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ ...action, response: { status: 'ok' } })
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
   const options = { queueService: 'unknown' }
   const getService = (_type?: string | string[], _service?: string) => undefined
-  const expected = { ...action, response: { status: 'ok' } }
+  const expected = { status: 'ok' }
 
   const ret = await queue(action, {
     ...handlerResources,

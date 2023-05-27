@@ -96,10 +96,7 @@ test('should delete items from service', async (t) => {
       targetService: 'entries',
     },
   }
-  const expected = {
-    ...action,
-    response: { status: 'ok', data: null },
-  }
+  const expected = { status: 'ok', data: null }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
@@ -141,7 +138,7 @@ test('should delete one item from service', async (t) => {
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
   t.truthy(ret)
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -185,7 +182,7 @@ test('should infer service id from type', async (t) => {
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
   t.truthy(ret)
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -222,9 +219,9 @@ test('should return error from response', async (t) => {
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
   t.truthy(ret)
-  t.is(ret.response?.status, 'notfound', ret.response?.error)
-  t.is(typeof ret.response?.error, 'string')
-  t.falsy(ret.response?.data)
+  t.is(ret.status, 'notfound', ret.error)
+  t.is(typeof ret.error, 'string')
+  t.falsy(ret.data)
   t.true(scope.isDone())
 })
 
@@ -248,7 +245,7 @@ test('should return noaction when nothing to delete', async (t) => {
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaction')
+  t.is(ret.status, 'noaction', ret.error)
 })
 
 test('should skip null values in data array', async (t) => {
@@ -271,7 +268,7 @@ test('should skip null values in data array', async (t) => {
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'noaction')
+  t.is(ret.status, 'noaction', ret.error)
 })
 
 test('should only delete items the ident is authorized to', async (t) => {
@@ -314,7 +311,7 @@ test('should only delete items the ident is authorized to', async (t) => {
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -328,8 +325,8 @@ test('should return error when no service exists for a type', async (t) => {
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
   t.truthy(ret)
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, "No service exists for type 'entry'")
+  t.is(ret.status, 'error', ret.error)
+  t.is(ret.error, "No service exists for type 'entry'")
 })
 
 test('should return error when specified service does not exist', async (t) => {
@@ -342,8 +339,8 @@ test('should return error when specified service does not exist', async (t) => {
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
   t.truthy(ret)
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, "Service with id 'entries' does not exist")
+  t.is(ret.status, 'error', ret.error)
+  t.is(ret.error, "Service with id 'entries' does not exist")
 })
 
 test('should return badrequest when no endpoint matches', async (t) => {
@@ -367,6 +364,6 @@ test('should return badrequest when no endpoint matches', async (t) => {
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'badrequest', ret.response?.error)
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'badrequest', ret.error)
+  t.is(typeof ret.error, 'string')
 })

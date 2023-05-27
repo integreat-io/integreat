@@ -137,13 +137,10 @@ test('should mutate and set items to service', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.response?.headers, { 'content-type': 'application/json' })
-  t.is(ret.type, 'SET')
-  t.deepEqual(ret.payload, action.payload)
-  t.deepEqual(ret.meta, action.meta)
-  t.true(Array.isArray(ret.response?.data))
-  t.is((ret.response?.data as unknown[]).length, 2)
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.headers, { 'content-type': 'application/json' })
+  t.true(Array.isArray(ret.data))
+  t.is((ret.data as unknown[]).length, 2)
   t.true(scope.isDone())
 })
 
@@ -167,7 +164,7 @@ test('should mutate and set one item to service', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -191,7 +188,7 @@ test('should mutate and set with id to service', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -215,7 +212,7 @@ test('should infer service id from type', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -236,7 +233,7 @@ test('should set to specified endpoint', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -257,7 +254,7 @@ test('should set to uri with payload params', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -275,9 +272,9 @@ test('should return error when service fails', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'notfound', ret.response?.error)
-  t.is(typeof ret.response?.error, 'string')
-  t.falsy(ret.response?.data)
+  t.is(ret.status, 'notfound', ret.error)
+  t.is(typeof ret.error, 'string')
+  t.falsy(ret.data)
 })
 
 test('should return error when no service exists for a type', async (t) => {
@@ -292,8 +289,8 @@ test('should return error when no service exists for a type', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, "No service exists for type 'entry'")
+  t.is(ret.status, 'error', ret.error)
+  t.is(ret.error, "No service exists for type 'entry'")
 })
 
 test('should get type from data $type', async (t) => {
@@ -307,8 +304,8 @@ test('should get type from data $type', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, "No service exists for type 'entry'")
+  t.is(ret.status, 'error', ret.error)
+  t.is(ret.error, "No service exists for type 'entry'")
 })
 
 test('should return error when specified service does not exist', async (t) => {
@@ -323,8 +320,8 @@ test('should return error when specified service does not exist', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, "Service with id 'entries' does not exist")
+  t.is(ret.status, 'error', ret.error)
+  t.is(ret.error, "Service with id 'entries' does not exist")
 })
 
 test('should authenticate items', async (t) => {
@@ -351,7 +348,7 @@ test('should authenticate items', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -374,8 +371,8 @@ test('should return empty response from service', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is(ret.response?.data, undefined)
+  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.data, undefined)
 })
 
 test('should mutate response data', async (t) => {
@@ -403,8 +400,8 @@ test('should mutate response data', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  const data = ret.response?.data as TypedData[]
+  t.is(ret.status, 'ok', ret.error)
+  const data = ret.data as TypedData[]
   t.true(Array.isArray(data))
   t.is(data.length, 1)
   t.is(data[0].$type, 'account')
@@ -432,8 +429,8 @@ test('should mutate non-array response data', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  const data = ret.response?.data as TypedData
+  t.is(ret.status, 'ok', ret.error)
+  const data = ret.data as TypedData
   t.false(Array.isArray(data))
   t.is(data.$type, 'account')
   t.is(data.id, 'johnf')
@@ -456,7 +453,7 @@ test('should allow null as request data', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.true(scope.isDone())
 })
 
@@ -479,6 +476,6 @@ test('should return badrequest when no endpoint matches', async (t) => {
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'badrequest', ret.response?.error)
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'badrequest', ret.error)
+  t.is(typeof ret.error, 'string')
 })

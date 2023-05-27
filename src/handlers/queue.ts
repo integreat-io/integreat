@@ -1,5 +1,4 @@
-import { setResponseOnAction } from '../utils/action.js'
-import type { Action, ActionHandlerResources } from '../types.js'
+import type { Action, ActionHandlerResources, Response } from '../types.js'
 
 const prepareQueuedAction = ({ meta, ...action }: Action) => ({
   ...action,
@@ -16,20 +15,20 @@ const prepareQueuedAction = ({ meta, ...action }: Action) => ({
 export default async function queue(
   action: Action,
   { dispatch, getService, options: { queueService } }: ActionHandlerResources
-): Promise<Action> {
+): Promise<Response> {
   const service = getService(undefined, queueService)
   if (!service) {
     return dispatch(action)
   }
 
   const nextAction = prepareQueuedAction(action)
-  const { response } = await service.send(nextAction)
+  const response = await service.send(nextAction)
   const status = response?.status === 'ok' ? 'queued' : response?.status
 
-  return setResponseOnAction(action, {
+  return {
     ...action.response,
     ...response,
     status: status || 'badresponse',
     ...(status ? {} : { error: 'Queue did not respond correctly' }),
-  })
+  }
 }

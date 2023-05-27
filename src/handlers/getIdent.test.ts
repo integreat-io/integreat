@@ -46,10 +46,9 @@ test('should complete ident with token', async (t) => {
 
   const ret = await getIdent(action, handlerResources)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.meta, expectedMeta)
-  t.is((ret.response?.data as TypedData).id, 'johnf')
-  t.deepEqual(ret.type, 'GET_IDENT')
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.meta, expectedMeta) // TODO: Is this the best way of doing this?
+  t.is((ret.data as TypedData).id, 'johnf')
   t.true(scope.isDone())
 })
 
@@ -65,9 +64,9 @@ test('should complete ident with id', async (t) => {
 
   const ret = await getIdent(action, handlerResources)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.meta?.ident, johnfIdent)
-  t.is((ret.response?.data as TypedData).id, 'johnf')
+  t.is((ret.data as TypedData).id, 'johnf')
 })
 
 test('should complete ident with id when more props are present', async (t) => {
@@ -82,9 +81,9 @@ test('should complete ident with id when more props are present', async (t) => {
 
   const ret = await getIdent(action, handlerResources)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.meta?.ident, johnfIdent)
-  t.is((ret.response?.data as TypedData).id, 'johnf')
+  t.is((ret.data as TypedData).id, 'johnf')
 })
 
 test('should return noaction when no props', async (t) => {
@@ -96,8 +95,8 @@ test('should return noaction when no props', async (t) => {
 
   const ret = await getIdent(action, handlerResources)
 
-  t.is(ret.response?.status, 'noaction')
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'noaction', ret.error)
+  t.is(typeof ret.error, 'string')
 })
 
 test('should return noaction when null', async (t) => {
@@ -109,8 +108,8 @@ test('should return noaction when null', async (t) => {
 
   const ret = await getIdent(action, handlerResources)
 
-  t.is(ret.response?.status, 'noaction')
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'noaction', ret.error)
+  t.is(typeof ret.error, 'string')
 })
 
 test('should return noaction when no ident options', async (t) => {
@@ -123,8 +122,8 @@ test('should return noaction when no ident options', async (t) => {
 
   const ret = await getIdent(action, { ...handlerResources, options })
 
-  t.is(ret.response?.status, 'noaction')
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'noaction', ret.error)
+  t.is(typeof ret.error, 'string')
 })
 
 test('should return notfound when ident not found', async (t) => {
@@ -137,8 +136,8 @@ test('should return notfound when ident not found', async (t) => {
   const ret = await getIdent(action, handlerResources)
 
   t.truthy(ret)
-  t.is(ret.response?.status, 'notfound')
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'notfound', ret.error)
+  t.is(typeof ret.error, 'string')
 })
 
 test('should complete ident with other prop keys', async (t) => {
@@ -173,7 +172,7 @@ test('should complete ident with other prop keys', async (t) => {
     options,
   })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.meta?.ident, expectedIdent)
 })
 
@@ -192,6 +191,6 @@ test('should return notfound when unknown service', async (t) => {
 
   const ret = await getIdent(action, { ...handlerResources, getService })
 
-  t.is(ret.response?.status, 'notfound')
-  t.is(typeof ret.response?.error, 'string')
+  t.is(ret.status, 'notfound')
+  t.is(typeof ret.error, 'string')
 })

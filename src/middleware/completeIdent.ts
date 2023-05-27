@@ -1,15 +1,13 @@
 import type { HandlerDispatch, Middleware, Ident } from '../types.js'
 
 const getIdent = async (ident: Ident, dispatch: HandlerDispatch) => {
-  const responseAction = await dispatch({
+  const response = await dispatch({
     type: 'GET_IDENT',
     payload: {},
     meta: { ident },
   })
 
-  return responseAction.response?.status === 'ok'
-    ? responseAction?.meta?.ident
-    : undefined
+  return response.status === 'ok' ? response?.meta?.ident || ident : undefined
 }
 
 const isIdentGetable = (ident?: Ident): ident is Ident =>

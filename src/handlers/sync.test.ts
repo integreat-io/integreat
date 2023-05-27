@@ -1,50 +1,26 @@
 import test from 'ava'
 import sinon from 'sinon'
-import { setErrorOnAction } from '../utils/action.js'
+import { createErrorResponse } from '../utils/action.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
-import type { Action, HandlerDispatch, TypedData } from '../types.js'
+import type { Response, HandlerDispatch, TypedData } from '../types.js'
 
 import sync from './sync.js'
 
 // Setup
 
-interface Handler {
-  (action: Action): Action
-}
-
 interface Meta {
   lastSyncedAt?: Date
 }
 
-const setResponseOnAction =
-  (status: string, response: Record<string, unknown> = {}) =>
-  (action: Action): Action => ({
-    ...action,
-    response: {
-      ...action.response,
-      ...response,
-      status,
-    },
-  })
-
-function responseFromArray(handlers: Handler[] | Handler, action: Action) {
-  const handler = Array.isArray(handlers) ? handlers.shift() : handlers
-  return handler ? handler(action) : action
+function responseFromArray(responses: Response[] | Response) {
+  return Array.isArray(responses) ? responses.shift() : responses
 }
 
 const setupDispatch =
-  (handlers: Record<string, Handler[] | Handler> = {}): HandlerDispatch =>
+  (handlers: Record<string, Response[] | Response> = {}): HandlerDispatch =>
   async (action) => {
-    const response = action
-      ? responseFromArray(handlers[action.type], action)
-      : null
-    return (
-      response || {
-        type: 'GET',
-        payload: {},
-        response: { status: 'ok', data: [] },
-      }
-    )
+    const response = action ? responseFromArray(handlers[action.type]) : null
+    return response || { status: 'ok', data: [] }
   }
 
 const data = [
@@ -86,8 +62,8 @@ test('should get from source service and set on target service', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expectedAction0 = {
@@ -100,10 +76,7 @@ test('should get from source service and set on target service', async (t) => {
     payload: { type: 'entry', data, targetService: 'store' },
     meta: { ident, project: 'project1', cid: '12345', queue: true },
   }
-  const expected = {
-    ...action,
-    response: { status: 'ok' },
-  }
+  const expected = { status: 'ok' }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
@@ -121,14 +94,14 @@ test('should not SET with no data', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data: [] }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data: [] },
+      SET: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'noaction', ret.response?.error)
+  t.is(ret.status, 'noaction', ret.error)
   t.is(dispatch.callCount, 1)
   t.is(dispatch.args[0][0].type, 'GET')
 })
@@ -146,8 +119,8 @@ test('should SET with no data when alwaysSet is true', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data: [] }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data: [] },
+      SET: { status: 'ok' },
     })
   )
   const expected2 = {
@@ -158,7 +131,7 @@ test('should SET with no data when alwaysSet is true', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.is(dispatch.args[0][0].type, 'GET')
   t.deepEqual(dispatch.args[1][0], expected2)
@@ -177,8 +150,8 @@ test('should split in several SET actions when item count is higher than maxPerS
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data: [...data, ...data2] }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data: [...data, ...data2] },
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -202,7 +175,7 @@ test('should split in several SET actions when item count is higher than maxPerS
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 3)
   t.deepEqual(dispatch.args[1][0], expected1)
   t.deepEqual(dispatch.args[2][0], expected2)
@@ -220,8 +193,8 @@ test('should use params from from and to', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -246,7 +219,7 @@ test('should use params from from and to', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0], expected2)
@@ -264,8 +237,8 @@ test('should override action types', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET_ALL: setResponseOnAction('ok', { data }),
-      SET_SOME: setResponseOnAction('ok'),
+      GET_ALL: { status: 'ok', data },
+      SET_SOME: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -281,7 +254,7 @@ test('should override action types', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0], expected2)
@@ -308,8 +281,8 @@ test('should set page params on payload', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expected = {
@@ -330,7 +303,7 @@ test('should set page params on payload', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.deepEqual(dispatch.args[0][0], expected)
   t.is(dispatch.callCount, 2)
 })
@@ -348,8 +321,8 @@ test('should not queue SET when doQueueSet is false', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expected2 = {
@@ -360,7 +333,7 @@ test('should not queue SET when doQueueSet is false', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[1][0], expected2)
 })
@@ -379,10 +352,10 @@ test('should get from several source services', async (t) => {
   const dispatch = sinon.spy(
     setupDispatch({
       GET: [
-        setResponseOnAction('ok', { data }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -407,7 +380,7 @@ test('should get from several source services', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 3)
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0], expected2)
@@ -422,10 +395,8 @@ test('should remove untyped data', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', {
-        data: [undefined, ...data, { id: 'ent0' }],
-      }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data: [undefined, ...data, { id: 'ent0' }] },
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -441,7 +412,7 @@ test('should remove untyped data', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0], expected2)
@@ -456,14 +427,14 @@ test('should report progress', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch, setProgress })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(setProgress.callCount, 5)
   t.is(setProgress.args[0][0], 0)
   t.is(setProgress.args[1][0], 0.1)
@@ -492,8 +463,8 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -524,7 +495,7 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0], expected2)
@@ -548,8 +519,8 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -580,7 +551,7 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0], expected2)
@@ -604,8 +575,8 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -636,7 +607,7 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0], expected2)
@@ -660,8 +631,8 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -692,7 +663,7 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0], expected2)
@@ -712,9 +683,9 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET_META: setResponseOnAction('ok', { data: { meta: { lastSyncedAt } } }),
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -732,7 +703,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 4)
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0].payload.updatedAfter, expectedUpdatedAfter)
@@ -756,9 +727,9 @@ test('should use metaKey when fetching lastSyncedAt', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET_META: setResponseOnAction('ok', { data: { meta: { lastSyncedAt } } }),
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -774,7 +745,7 @@ test('should use metaKey when fetching lastSyncedAt', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.deepEqual(dispatch.args[0][0], expected1)
 })
 
@@ -793,9 +764,9 @@ test('should not use lastSyncedAt meta when updatedAfter is provided', async (t)
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET_META: setResponseOnAction('ok', { data: { meta: { lastSyncedAt } } }),
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expectedUpdatedAfter = new Date('2021-01-02T01:00:11Z')
@@ -803,7 +774,7 @@ test('should not use lastSyncedAt meta when updatedAfter is provided', async (t)
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 3)
   t.is(dispatch.args[0][0].type, 'GET')
   t.deepEqual(dispatch.args[0][0].payload.updatedAfter, expectedUpdatedAfter)
@@ -827,21 +798,17 @@ test('should use lastSyncedAt meta from several services', async (t) => {
   const dispatch = sinon.spy(
     setupDispatch({
       GET_META: [
-        setResponseOnAction('ok', {
-          data: { meta: { lastSyncedAt: lastSyncedAt1 } },
-        }),
-        setResponseOnAction('ok', {
-          data: { meta: { lastSyncedAt: lastSyncedAt2 } },
-        }),
+        { status: 'ok', data: { meta: { lastSyncedAt: lastSyncedAt1 } } },
+        { status: 'ok', data: { meta: { lastSyncedAt: lastSyncedAt2 } } },
       ],
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
   t.deepEqual(dispatch.args[0][0].type, 'GET_META')
   t.deepEqual(dispatch.args[0][0].payload.type, 'entry')
@@ -881,17 +848,17 @@ test('should return error when lastSyncedAt could not be fetched', async (t) => 
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET_META: setResponseOnAction('timeout', { error: 'Too slow' }),
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET_META: { status: 'timeout', error: 'Too slow' },
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'error')
+  t.is(ret.status, 'error', ret.error)
   t.is(
-    ret.response?.error,
+    ret.error,
     "Failed to prepare params for SYNC: Could not fetch last synced date for service 'entries': [timeout] Too slow"
   )
 })
@@ -912,16 +879,17 @@ test('should filter away data updated before updatedAfter or after updatedUntil'
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', {
+      GET: {
+        status: 'ok',
         data: [...data, { id: 'ent4', $type: 'entry' }, ...data2, 'invalid'],
-      }),
-      SET: setResponseOnAction('ok'),
+      },
+      SET: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.true(Array.isArray(dispatch.args[1][0].payload.data))
   const setData = dispatch.args[1][0].payload.data as TypedData[]
@@ -945,24 +913,20 @@ test('should filter away data with different lastSyncedAt for each service', asy
   const dispatch = sinon.spy(
     setupDispatch({
       GET_META: [
-        setResponseOnAction('ok', {
-          data: { meta: { lastSyncedAt: lastSyncedAt1 } },
-        }),
-        setResponseOnAction('ok', {
-          data: { meta: { lastSyncedAt: lastSyncedAt2 } },
-        }),
+        { status: 'ok', data: { meta: { lastSyncedAt: lastSyncedAt1 } } },
+        { status: 'ok', data: { meta: { lastSyncedAt: lastSyncedAt2 } } },
       ],
       GET: [
-        setResponseOnAction('ok', { data }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
   t.true(Array.isArray(dispatch.args[4][0].payload.data))
   const setData = dispatch.args[4][0].payload.data as TypedData[]
@@ -988,24 +952,20 @@ test('should not filter away data when filterData is false', async (t) => {
   const dispatch = sinon.spy(
     setupDispatch({
       GET_META: [
-        setResponseOnAction('ok', {
-          data: { meta: { lastSyncedAt: lastSyncedAt1 } },
-        }),
-        setResponseOnAction('ok', {
-          data: { meta: { lastSyncedAt: lastSyncedAt2 } },
-        }),
+        { status: 'ok', data: { meta: { lastSyncedAt: lastSyncedAt1 } } },
+        { status: 'ok', data: { meta: { lastSyncedAt: lastSyncedAt2 } } },
       ],
       GET: [
-        setResponseOnAction('ok', { data }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
   t.true(Array.isArray(dispatch.args[4][0].payload.data))
   const setData = dispatch.args[4][0].payload.data as TypedData[]
@@ -1026,7 +986,8 @@ test('should treat no updatedAfter as open-ended', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', {
+      GET: {
+        status: 'ok',
         data: [
           ...data,
           {
@@ -1035,14 +996,14 @@ test('should treat no updatedAfter as open-ended', async (t) => {
             updatedAt: new Date(Date.now() + 3600000),
           }, // Future data should not be filtered away with no updatedUntil
         ],
-      }),
-      SET: setResponseOnAction('ok'),
+      },
+      SET: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.is((dispatch.args[1][0].payload.data as unknown[]).length, 3)
 })
@@ -1062,7 +1023,8 @@ test('should set updatedUntil to now', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', {
+      GET: {
+        status: 'ok',
         data: [
           ...data,
           {
@@ -1071,8 +1033,8 @@ test('should set updatedUntil to now', async (t) => {
             updatedAt: new Date(Date.now() + 3600000),
           }, // Will be filtered away, as it is in the
         ],
-      }),
-      SET: setResponseOnAction('ok'),
+      },
+      SET: { status: 'ok' },
     })
   )
   const before = Date.now()
@@ -1080,7 +1042,7 @@ test('should set updatedUntil to now', async (t) => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   const setUpdatedUntil = dispatch.args[1][0].payload.updatedUntil
   t.true(setUpdatedUntil instanceof Date)
@@ -1104,8 +1066,8 @@ test('should set updatedUntil with positive delta', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const before = Date.now()
@@ -1113,7 +1075,7 @@ test('should set updatedUntil with positive delta', async (t) => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   const setUpdatedUntil = dispatch.args[1][0].payload.updatedUntil
   t.true(setUpdatedUntil instanceof Date)
@@ -1136,8 +1098,8 @@ test('should set updatedUntil with negative delta', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const before = Date.now()
@@ -1145,7 +1107,7 @@ test('should set updatedUntil with negative delta', async (t) => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   const setUpdatedUntil = dispatch.args[1][0].payload.updatedUntil
   t.true(setUpdatedUntil instanceof Date)
@@ -1167,13 +1129,13 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET_META: setResponseOnAction('ok'),
+      GET_META: { status: 'ok' },
       GET: [
-        setResponseOnAction('ok', { data }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
-      SET_META: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
+      SET_META: { status: 'ok' },
     })
   )
   const expected6 = {
@@ -1199,7 +1161,7 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
   t.deepEqual(dispatch.args[5][0], expected6)
   t.deepEqual(dispatch.args[6][0], expected7)
@@ -1218,13 +1180,13 @@ test('should set lastSyncedAt meta to now when no updatedUntil', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET_META: setResponseOnAction('ok'),
+      GET_META: { status: 'ok' },
       GET: [
-        setResponseOnAction('ok', { data }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
-      SET_META: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
+      SET_META: { status: 'ok' },
     })
   )
   const before = Date.now()
@@ -1232,7 +1194,7 @@ test('should set lastSyncedAt meta to now when no updatedUntil', async (t) => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
   const lastSyncedAt1 = (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt
   t.true(lastSyncedAt1 && lastSyncedAt1.getTime() >= before)
@@ -1257,25 +1219,27 @@ test('should set lastSyncedAt meta to last updatedAt from data of each service',
   const dispatch = sinon.spy(
     setupDispatch({
       GET_META: [
-        setResponseOnAction('ok', {
+        {
+          status: 'ok',
           data: { meta: { lastSyncedAt: new Date('2021-01-03T04:48:18Z') } },
-        }),
-        setResponseOnAction('ok', {
+        },
+        {
+          status: 'ok',
           data: { meta: { lastSyncedAt: new Date('2021-01-03T02:30:11Z') } },
-        }),
+        },
       ],
       GET: [
-        setResponseOnAction('ok', { data }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
-      SET_META: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
+      SET_META: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
   t.deepEqual(
     (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt,
@@ -1309,19 +1273,21 @@ test('should set lastSyncedAt to now when date is in the future', async (t) => {
   const dispatch = sinon.spy(
     setupDispatch({
       GET_META: [
-        setResponseOnAction('ok', {
+        {
+          status: 'ok',
           data: { meta: { lastSyncedAt: new Date('2021-01-03T04:48:18Z') } },
-        }),
-        setResponseOnAction('ok', {
+        },
+        {
+          status: 'ok',
           data: { meta: { lastSyncedAt: new Date('2021-01-03T02:30:11Z') } },
-        }),
+        },
       ],
       GET: [
-        setResponseOnAction('ok', { data: dataWithFutureUpdate }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data: dataWithFutureUpdate },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
-      SET_META: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
+      SET_META: { status: 'ok' },
     })
   )
   const before = Date.now()
@@ -1329,7 +1295,7 @@ test('should set lastSyncedAt to now when date is in the future', async (t) => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
   const updatedAt = (dispatch.args[5][0].payload.meta as Meta)
     .lastSyncedAt as Date
@@ -1352,13 +1318,13 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET_META: setResponseOnAction('ok'),
+      GET_META: { status: 'ok' },
       GET: [
-        setResponseOnAction('ok', { data }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
-      SET_META: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
+      SET_META: { status: 'ok' },
     })
   )
   const expected6 = {
@@ -1384,7 +1350,7 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
   t.deepEqual(dispatch.args[5][0], expected6)
   t.deepEqual(dispatch.args[6][0], expected7)
@@ -1406,17 +1372,17 @@ test('should not get or set lastSyncedAt meta when service id is missing', async
     setupDispatch({
       GET_META: [],
       GET: [
-        setResponseOnAction('ok', { data }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
-      SET_META: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
+      SET_META: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
 })
 
@@ -1434,9 +1400,9 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = created', asy
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET_META: setResponseOnAction('ok', { data: { meta: { lastSyncedAt } } }),
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const expected1 = {
@@ -1454,7 +1420,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = created', asy
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 4)
   t.deepEqual(dispatch.args[0][0], expected1)
   t.deepEqual(dispatch.args[1][0].payload.createdAfter, expectedCreatedAfter)
@@ -1478,13 +1444,13 @@ test('should set lastSyncedAt for created', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET_META: setResponseOnAction('ok'),
+      GET_META: { status: 'ok' },
       GET: [
-        setResponseOnAction('ok', { data }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
-      SET_META: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
+      SET_META: { status: 'ok' },
     })
   )
   const expected5 = {
@@ -1521,7 +1487,7 @@ test('should set lastSyncedAt for created', async (t) => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
   t.deepEqual(dispatch.args[4][0], expected5)
   t.deepEqual(dispatch.args[5][0], expected6)
@@ -1543,8 +1509,8 @@ test('should set createdUntil with delta', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
   const before = Date.now()
@@ -1552,7 +1518,7 @@ test('should set createdUntil with delta', async (t) => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   const setCreatedUntil = dispatch.args[1][0].payload.createdUntil
   t.true(setCreatedUntil instanceof Date)
@@ -1575,25 +1541,27 @@ test('should set lastSyncedAt meta to last createdAt from data of each service',
   const dispatch = sinon.spy(
     setupDispatch({
       GET_META: [
-        setResponseOnAction('ok', {
+        {
+          status: 'ok',
           data: { meta: { lastSyncedAt: new Date('2021-01-03T04:48:18Z') } },
-        }),
-        setResponseOnAction('ok', {
+        },
+        {
+          status: 'ok',
           data: { meta: { lastSyncedAt: new Date('2021-01-03T02:30:11Z') } },
-        }),
+        },
       ],
       GET: [
-        setResponseOnAction('ok', { data }),
-        setResponseOnAction('ok', { data: data2 }),
+        { status: 'ok', data },
+        { status: 'ok', data: data2 },
       ],
-      SET: setResponseOnAction('ok'),
-      SET_META: setResponseOnAction('ok'),
+      SET: { status: 'ok' },
+      SET_META: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
   t.deepEqual(
     (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt,
@@ -1613,15 +1581,15 @@ test('should return error when get action fails', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: (action: Action) => setErrorOnAction(action, 'Fetching failed'),
-      SET: setResponseOnAction('ok'),
+      GET: createErrorResponse('Fetching failed'),
+      SET: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, 'SYNC: Could not get data. Fetching failed')
+  t.is(ret.status, 'error', ret.error)
+  t.is(ret.error, 'SYNC: Could not get data. Fetching failed')
   t.is(dispatch.callCount, 1)
 })
 
@@ -1633,16 +1601,16 @@ test('should return error when set action fails', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: (action: Action) => setErrorOnAction(action, 'Service is sleeping'),
+      GET: { status: 'ok', data },
+      SET: createErrorResponse('Service is sleeping'),
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'error')
+  t.is(ret.status, 'error', ret.error)
   t.is(
-    ret.response?.error,
+    ret.error,
     'SYNC: Could not set data. Set 0 of 2 items. Service is sleeping'
   )
   t.is(dispatch.callCount, 2)
@@ -1661,15 +1629,15 @@ test('should return error from first SET action with maxPerSet', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data: [...data, ...data2] }),
-      SET: [setResponseOnAction('timeout'), setResponseOnAction('ok')],
+      GET: { status: 'ok', data: [...data, ...data2] },
+      SET: [{ status: 'timeout' }, { status: 'ok' }],
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'timeout')
-  t.is(ret.response?.error, 'SYNC: Could not set data. Set 0 of 3 items.')
+  t.is(ret.status, 'timeout', ret.error)
+  t.is(ret.error, 'SYNC: Could not set data. Set 0 of 3 items.')
   t.is(dispatch.callCount, 2)
 })
 
@@ -1686,15 +1654,15 @@ test('should return error from second SET action with maxPerSet', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data: [...data, ...data2] }),
-      SET: [setResponseOnAction('ok'), setResponseOnAction('timeout')],
+      GET: { status: 'ok', data: [...data, ...data2] },
+      SET: [{ status: 'ok' }, { status: 'timeout' }],
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'timeout')
-  t.is(ret.response?.error, 'SYNC: Could not set data. Set 2 of 3 items.')
+  t.is(ret.status, 'timeout', ret.error)
+  t.is(ret.error, 'SYNC: Could not set data. Set 2 of 3 items.')
   t.is(dispatch.callCount, 3)
 })
 
@@ -1706,17 +1674,14 @@ test('should return badrequest when missing from and to', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: setResponseOnAction('ok', { data }),
-      SET: setResponseOnAction('ok'),
+      GET: { status: 'ok', data },
+      SET: { status: 'ok' },
     })
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'badrequest')
-  t.is(
-    ret.response?.error,
-    'SYNC: `type`, `to`, and `from` parameters are required'
-  )
+  t.is(ret.status, 'badrequest', ret.error)
+  t.is(ret.error, 'SYNC: `type`, `to`, and `from` parameters are required')
   t.is(dispatch.callCount, 0)
 })

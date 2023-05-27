@@ -498,19 +498,7 @@ test('send should retrieve data from service', async (t) => {
       authorized: true,
     },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data,
-    },
-    meta: {
-      ...action.meta,
-      auth: {
-        Authorization: 'Bearer t0k3n',
-      },
-    },
-  }
+  const expected = { status: 'ok', data }
 
   const ret = await service.send(action)
 
@@ -518,9 +506,8 @@ test('send should retrieve data from service', async (t) => {
 })
 
 test('send should use service middleware', async (t) => {
-  const failMiddleware = () => async (action: Action) => ({
-    ...action,
-    response: { status: 'badresponse' },
+  const failMiddleware = () => async (_action: Action) => ({
+    status: 'badresponse',
   })
   const resources = {
     ...jsonResources,
@@ -548,7 +535,7 @@ test('send should use service middleware', async (t) => {
 
   const ret = await service.send(action)
 
-  t.is(ret.response?.status, 'badresponse', ret.response?.error)
+  t.is(ret.status, 'badresponse', ret.error)
 })
 
 test('send should return error when no transport', async (t) => {
@@ -571,11 +558,8 @@ test('send should return error when no transport', async (t) => {
     },
   }
   const expected = {
-    ...action,
-    response: {
-      status: 'error',
-      error: "Service 'entries' has no transporter",
-    },
+    status: 'error',
+    error: "Service 'entries' has no transporter",
   }
 
   const ret = await service.send(action)
@@ -604,15 +588,8 @@ test('send should try to authenticate and return with error when it fails', asyn
     },
   }
   const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication attempt for 'refusing' was refused.",
-    },
-    meta: {
-      ...action.meta,
-      auth: null,
-    },
+    status: 'noaccess',
+    error: "Authentication attempt for 'refusing' was refused.",
   }
 
   const ret = await service.send(action)
@@ -640,19 +617,7 @@ test('send should authenticate with auth id on `outgoing` prop', async (t) => {
       authorized: true,
     },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data,
-    },
-    meta: {
-      ...action.meta,
-      auth: {
-        Authorization: 'Bearer t0k3n',
-      },
-    },
-  }
+  const expected = { status: 'ok', data }
 
   const ret = await service.send(action)
 
@@ -679,19 +644,7 @@ test('send should authenticate with auth def', async (t) => {
       authorized: true,
     },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data,
-    },
-    meta: {
-      ...action.meta,
-      auth: {
-        Authorization: 'Bearer t0k3n',
-      },
-    },
-  }
+  const expected = { status: 'ok', data }
 
   const ret = await service.send(action)
 
@@ -718,19 +671,7 @@ test('send should authenticate with auth def on `outgoing` prop', async (t) => {
       authorized: true,
     },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data,
-    },
-    meta: {
-      ...action.meta,
-      auth: {
-        Authorization: 'Bearer t0k3n',
-      },
-    },
-  }
+  const expected = { status: 'ok', data }
 
   const ret = await service.send(action)
 
@@ -758,10 +699,7 @@ test('send should fail when not authorized', async (t) => {
       authorized: false,
     },
   }
-  const expected = {
-    ...action,
-    response: { status: 'error', error: 'Not authorized' },
-  }
+  const expected = { status: 'error', error: 'Not authorized' }
 
   const ret = await service.send(action)
 
@@ -811,7 +749,7 @@ test('send should connect before sending request', async (t) => {
 
   const ret = await service.send(action)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)
   t.deepEqual(send.args[0][1], expected)
 })
@@ -891,9 +829,9 @@ test('send should return error when connection fails', async (t) => {
 
   const ret = await service.send(action)
 
-  t.is(ret.response?.status, 'error')
+  t.is(ret.status, 'error')
   t.is(
-    ret.response?.error,
+    ret.error,
     "Could not connect to service 'entries'. [notfound] Not found"
   )
 })
@@ -928,10 +866,7 @@ test('send should retrieve error response from service', async (t) => {
       authorized: true,
     },
   }
-  const expected = {
-    ...action,
-    response: { status: 'badrequest', error: 'Real bad request' },
-  }
+  const expected = { status: 'badrequest', error: 'Real bad request' }
 
   const ret = await service.send(action)
 
@@ -968,11 +903,8 @@ test('send should return with error when transport throws', async (t) => {
     },
   }
   const expected = {
-    ...action,
-    response: {
-      status: 'error',
-      error: "Error retrieving from service 'entries': We did not expect this",
-    },
+    status: 'error',
+    error: "Error retrieving from service 'entries': We did not expect this",
   }
 
   const ret = await service.send(action)
@@ -1011,7 +943,7 @@ test('send should do nothing when action has a response', async (t) => {
       authorized: true,
     },
   }
-  const expected = action
+  const expected = action.response
 
   const ret = await service.send(action)
 
@@ -2371,9 +2303,8 @@ test('listen should return error when no transporter', async (t) => {
 })
 
 test('listen should use service middleware', async (t) => {
-  const failMiddleware = () => async (action: Action) => ({
-    ...action,
-    response: { status: 'badresponse' },
+  const failMiddleware = () => async (_action: Action) => ({
+    status: 'badresponse',
   })
   const action = {
     type: 'SET',
@@ -2471,12 +2402,12 @@ test('close should disconnect transporter', async (t) => {
     options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
-  const expectedResponse = { status: 'ok' }
+  const expected = { status: 'ok' }
 
   await service.listen(dispatch)
   const ret = await service.close()
 
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
   t.is(disconnectStub.callCount, 1)
   const connection = disconnectStub.args[0][0]
   t.truthy(connection)
@@ -2505,7 +2436,7 @@ test('close should probihit closed connection from behind used again', async (t)
     transporter: 'http',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
-  const expectedResponse = {
+  const expected = {
     status: 'error',
     error: "Service 'entries' has no connection",
   }
@@ -2514,7 +2445,7 @@ test('close should probihit closed connection from behind used again', async (t)
   await service.close()
   const ret = await service.listen(dispatch)
 
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test('close should do nothing when no transporter', async (t) => {
@@ -2531,14 +2462,14 @@ test('close should do nothing when no transporter', async (t) => {
     transporter: 'unknown',
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
-  const expectedResponse = {
+  const expected = {
     status: 'noaction',
     error: 'No transporter to disconnect',
   }
 
   const ret = await service.close()
 
-  t.deepEqual(ret, expectedResponse)
+  t.deepEqual(ret, expected)
 })
 
 test.todo('should not allow unauthorized access when auth is true')

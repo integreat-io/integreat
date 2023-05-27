@@ -163,12 +163,14 @@ export interface Dispatch<T = unknown> {
   (action: Action | null): PProgress<Response<T>>
 }
 
-export interface InternalDispatch {
-  (action: Action): PProgress<Action>
+// Dispatch with garantied action
+export interface InternalDispatch<T = unknown> {
+  (action: Action): PProgress<Response<T>>
 }
 
-export interface HandlerDispatch {
-  (action: Action): Promise<Action>
+// Dispatch without PProgress
+export interface HandlerDispatch<T = unknown> {
+  (action: Action): Promise<Response<T>>
 }
 
 export interface Middleware {
@@ -235,6 +237,6 @@ export interface ActionHandlerResources {
   options: HandlerOptions
 }
 
-export interface ActionHandler {
-  (action: Action, resources: ActionHandlerResources): Promise<Action>
+export interface ActionHandler<T = unknown> {
+  (action: Action, resources: ActionHandlerResources): Promise<Response<T>>
 }

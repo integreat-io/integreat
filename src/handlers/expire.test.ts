@@ -17,18 +17,12 @@ test.after.always(() => {
   clock?.restore()
 })
 
-const responseAction = {
-  type: 'GET',
-  payload: { type: 'entry' },
-  response: { status: 'ok', data: [] },
-}
-
 const ident = { id: 'johnf' }
 
 // Tests
 
 test('should dispatch GET to expired endpoint', async (t) => {
-  const dispatch = sinon.stub().resolves(responseAction)
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const action = {
     type: 'EXPIRE',
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
@@ -52,7 +46,7 @@ test('should dispatch GET to expired endpoint', async (t) => {
 })
 
 test('should add msFromNow to current timestamp', async (t) => {
-  const dispatch = sinon.stub().resolves(responseAction)
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const action = {
     type: 'EXPIRE',
     payload: {
@@ -79,14 +73,10 @@ test('should queue DELETE for expired entries', async (t) => {
     { id: 'ent1', $type: 'entry' },
     { id: 'ent2', $type: 'entry' },
   ]
-  const dispatch = sinon.stub().resolves({
-    type: 'GET',
-    payload: { type: 'entry' },
-    response: { status: 'ok', data },
-  })
+  const dispatch = sinon.stub().resolves({ status: 'ok', data })
   dispatch
     .withArgs(sinon.match({ type: 'DELETE' }))
-    .resolves({ type: 'DELETE', payload: {}, response: { status: 'queued' } })
+    .resolves({ status: 'queued' })
   const action = {
     type: 'EXPIRE',
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
@@ -97,14 +87,11 @@ test('should queue DELETE for expired entries', async (t) => {
     payload: { data, targetService: 'store' },
     meta: { ident, cid: '11005' },
   }
-  const expectedResponseAction = {
-    ...action,
-    response: { status: 'queued' },
-  }
+  const expected = { status: 'queued' }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
-  t.deepEqual(ret, expectedResponseAction)
+  t.deepEqual(ret, expected)
   t.true(dispatch.calledWithMatch(expectedDeleteAction))
 })
 
@@ -117,14 +104,10 @@ test('should queue DELETE with id and type only', async (t) => {
       author: { id: 'johnf', $type: 'user' },
     },
   ]
-  const dispatch = sinon.stub().resolves({
-    type: 'GET',
-    payload: { type: 'entry' },
-    response: { status: 'ok', data },
-  })
+  const dispatch = sinon.stub().resolves({ status: 'ok', data })
   dispatch
     .withArgs(sinon.match({ type: 'DELETE' }))
-    .resolves({ type: 'DELETE', payload: {}, response: { status: 'queued' } })
+    .resolves({ status: 'queued' })
   const action = {
     type: 'EXPIRE',
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
@@ -133,12 +116,12 @@ test('should queue DELETE with id and type only', async (t) => {
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'queued', ret.response?.error)
+  t.is(ret.status, 'queued', ret.error)
   t.true(dispatch.calledWithMatch(expected))
 })
 
 test('should not queue when no expired entries', async (t) => {
-  const dispatch = sinon.stub().resolves(responseAction)
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   dispatch
     .withArgs(sinon.match({ type: 'DELETE' }))
     .resolves({ status: 'queued' })
@@ -151,15 +134,11 @@ test('should not queue when no expired entries', async (t) => {
 
   t.false(dispatch.calledWithMatch({ type: 'DELETE' }))
   t.truthy(ret)
-  t.is(ret.response?.status, 'noaction')
+  t.is(ret.status, 'noaction', ret.error)
 })
 
 test('should not queue when GET returns error', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    type: 'GET',
-    payload: { type: 'entry' },
-    response: { status: 'notfound' },
-  })
+  const dispatch = sinon.stub().resolves({ status: 'notfound' })
   dispatch
     .withArgs(sinon.match({ type: 'DELETE' }))
     .resolves({ status: 'queued' })
@@ -172,11 +151,11 @@ test('should not queue when GET returns error', async (t) => {
 
   t.false(dispatch.calledWithMatch({ type: 'DELETE' }))
   t.truthy(ret)
-  t.is(ret.response?.status, 'error')
+  t.is(ret.status, 'error', ret.error)
 })
 
 test('should return error when no service', async (t) => {
-  const dispatch = sinon.stub().resolves(responseAction)
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const action = {
     type: 'EXPIRE',
     payload: { type: 'entry', endpoint: 'getExpired' },
@@ -184,11 +163,11 @@ test('should return error when no service', async (t) => {
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'error')
+  t.is(ret.status, 'error', ret.error)
 })
 
 test('should return error when no endpoint', async (t) => {
-  const dispatch = sinon.stub().resolves(responseAction)
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const action = {
     type: 'EXPIRE',
     payload: { type: 'entry', targetService: 'store' },
@@ -196,11 +175,11 @@ test('should return error when no endpoint', async (t) => {
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'error')
+  t.is(ret.status, 'error', ret.error)
 })
 
 test('should return error when no type', async (t) => {
-  const dispatch = sinon.stub().resolves(responseAction)
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const action = {
     type: 'EXPIRE',
     payload: { targetService: 'store', endpoint: 'getExpired' },
@@ -208,5 +187,5 @@ test('should return error when no type', async (t) => {
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
-  t.is(ret.response?.status, 'error')
+  t.is(ret.status, 'error', ret.error)
 })

@@ -1,12 +1,13 @@
 import debugLib from 'debug'
-import pPipe from 'p-pipe'
-import {
-  setErrorOnAction,
-  setResponseOnAction,
-  setDataOnActionPayload,
-} from '../utils/action.js'
+import mutateAndSend from '../utils/mutateAndSend.js'
+import { setDataOnActionPayload, createErrorResponse } from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'
-import type { Action, Payload, ActionHandlerResources } from '../types.js'
+import type {
+  Action,
+  Response,
+  Payload,
+  ActionHandlerResources,
+} from '../types.js'
 
 const debug = debugLib('great')
 
@@ -23,7 +24,7 @@ const prepareData = ({ type, id, data }: Payload) =>
 export default async function deleteFn(
   action: Action,
   { getService }: ActionHandlerResources
-): Promise<Action> {
+): Promise<Response> {
   const {
     type,
     id,
@@ -33,13 +34,12 @@ export default async function deleteFn(
 
   const service = getService(type, serviceId)
   if (!service) {
-    return createUnknownServiceError(action, type, serviceId, 'DELETE')
+    return createUnknownServiceError(type, serviceId, 'DELETE')
   }
 
   const data = prepareData(action.payload)
   if (data.length === 0) {
-    return setErrorOnAction(
-      action,
+    return createErrorResponse(
       `No items to delete from service '${service.id}'`,
       'noaction'
     )
@@ -53,19 +53,11 @@ export default async function deleteFn(
   const nextAction = setDataOnActionPayload(action, data)
   const endpoint = service.endpointFromAction(nextAction)
   if (!endpoint) {
-    return setErrorOnAction(
-      nextAction,
+    return createErrorResponse(
       `No endpoint matching ${nextAction.type} request to service '${serviceId}'.`,
       'badrequest'
     )
   }
 
-  const { response } = await pPipe(
-    service.authorizeAction,
-    (action: Action) => service.mutateRequest(action, endpoint),
-    service.send,
-    (action: Action) => service.mutateResponse(action, endpoint)
-  )(nextAction)
-
-  return setResponseOnAction(action, response)
+  return await mutateAndSend(service, endpoint, nextAction)
 }

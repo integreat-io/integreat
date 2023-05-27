@@ -1,6 +1,12 @@
-import { setErrorOnAction, setResponseOnAction } from '../utils/action.js'
+import { createErrorResponse } from '../utils/action.js'
 import { isObject, isTypedData } from '../utils/is.js'
-import type { Action, Payload, Meta, ActionHandlerResources } from '../types.js'
+import type {
+  Action,
+  Response,
+  Payload,
+  Meta,
+  ActionHandlerResources,
+} from '../types.js'
 
 const extractLastId = (data: unknown, field = 'id') =>
   Array.isArray(data) && isObject(data[data.length - 1])
@@ -62,16 +68,15 @@ const createNextPaging = (payload: Payload, paging?: Payload) =>
 export default async function getAll(
   action: Action,
   { dispatch }: ActionHandlerResources
-): Promise<Action> {
+): Promise<Response> {
   const { pageSize, noLoopCheck = false } = action.payload
 
   if (typeof pageSize !== 'number') {
-    const { response } = await dispatch({
+    return await dispatch({
       type: 'GET',
       payload: action.payload,
       meta: action.meta,
     })
-    return setResponseOnAction(action, response)
   }
 
   const data: unknown[] = []
@@ -80,12 +85,12 @@ export default async function getAll(
   let lastSize = -1
   let prevFirstId: string | null | undefined = null
   do {
-    const { response }: Action = await dispatch(
+    const response = await dispatch(
       createAction(page++, action.payload, paging, data, cleanMeta(action.meta))
     )
     if (response?.status !== 'ok') {
       // Stop and return errors right away
-      return setResponseOnAction(action, response)
+      return response
     }
 
     // Extract paging for next action
@@ -98,8 +103,7 @@ export default async function getAll(
       if (!noLoopCheck) {
         const firstId = getFirstId(responseData)
         if (typeof firstId === 'string' && firstId === prevFirstId) {
-          return setErrorOnAction(
-            action,
+          return createErrorResponse(
             'GET_ALL detected a possible infinite loop'
           )
         }
@@ -116,5 +120,5 @@ export default async function getAll(
     }
   } while (lastSize === pageSize)
 
-  return setResponseOnAction(action, { status: 'ok', data })
+  return { status: 'ok', data }
 }

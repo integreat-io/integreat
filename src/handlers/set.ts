@@ -1,9 +1,9 @@
 import debugLib from 'debug'
-import pPipe from 'p-pipe'
-import { setResponseOnAction, setErrorOnAction } from '../utils/action.js'
+import mutateAndSend from '../utils/mutateAndSend.js'
+import { createErrorResponse } from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'
 import { isTypedData } from '../utils/is.js'
-import type { Action, ActionHandlerResources } from '../types.js'
+import type { Action, Response, ActionHandlerResources } from '../types.js'
 
 const debug = debugLib('great')
 
@@ -28,7 +28,7 @@ const setIdAndTypeOnAction = (
 export default async function set(
   action: Action,
   { getService }: ActionHandlerResources
-): Promise<Action> {
+): Promise<Response> {
   const {
     data,
     targetService: serviceId,
@@ -40,7 +40,7 @@ export default async function set(
 
   const service = getService(type, serviceId)
   if (!service) {
-    return createUnknownServiceError(action, type, serviceId, 'SET')
+    return createUnknownServiceError(type, serviceId, 'SET')
   }
 
   const endpointDebug = endpointId ? `at endpoint '${endpointId}'` : ''
@@ -49,18 +49,11 @@ export default async function set(
   const nextAction = setIdAndTypeOnAction(action, id, type)
   const endpoint = service.endpointFromAction(nextAction)
   if (!endpoint) {
-    return setErrorOnAction(
-      action,
+    return createErrorResponse(
       `No endpoint matching ${action.type} request to service '${serviceId}'.`,
       'badrequest'
     )
   }
 
-  const { response } = await pPipe(
-    service.authorizeAction,
-    (action: Action) => service.mutateRequest(action, endpoint),
-    service.send,
-    (action: Action) => service.mutateResponse(action, endpoint)
-  )(nextAction)
-  return setResponseOnAction(action, response)
+  return await mutateAndSend(service, endpoint, nextAction)
 }

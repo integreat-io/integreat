@@ -3,13 +3,18 @@ import pProgress from 'p-progress'
 import debugLib from 'debug'
 import { QUEUE_SYMBOL } from './handlers/index.js'
 import setupGetService from './utils/getService.js'
-import { setErrorOnAction, setResponseOnAction } from './utils/action.js'
+import {
+  setErrorOnAction,
+  createErrorResponse,
+  setResponseOnAction,
+} from './utils/action.js'
 import type {
   Dispatch,
   InternalDispatch,
   HandlerDispatch,
   Middleware,
   Action,
+  Response,
   ActionHandler,
   ActionHandlerResources,
   GetService,
@@ -84,7 +89,7 @@ const mapIncomingResponse = async (
   action: Action,
   service?: Service,
   endpoint?: Endpoint
-) =>
+): Promise<Action> =>
   service && endpoint
     ? await service.mutateResponse(action, endpoint, true)
     : action
@@ -120,18 +125,22 @@ const wrapDispatch =
       // Return any error from mapIncomingRequest()
       if (mappedAction.response?.status) {
         return responseFromAction(
-          await mapIncomingResponse(mappedAction, service, endpoint)
+          await mapIncomingResponse(mappedAction, service, endpoint) // TODO: Use original action here?
         )
       }
 
       // Dispatch
       const p = internalDispatch(mappedAction)
       p.onProgress(setProgress)
-      const responseAction = await p
+      const response = await p
 
       // Map respons data when needed
       return responseFromAction(
-        await mapIncomingResponse(responseAction, service, endpoint)
+        await mapIncomingResponse(
+          setResponseOnAction(action, response),
+          service,
+          endpoint
+        )
       )
     })
 
@@ -158,12 +167,11 @@ async function handleAction(
   action: Action,
   resources: ActionHandlerResources,
   handlers: Record<string, ActionHandler>
-) {
+): Promise<Response> {
   // Find handler ...
   const handler = getActionHandlerFromType(handlerType, handlers)
   if (!handler) {
-    return setErrorOnAction(
-      action,
+    return createErrorResponse(
       `No handler for ${String(handlerType)} action`,
       'badrequest'
     )
@@ -194,7 +202,7 @@ export default function createDispatch({
       : (next: HandlerDispatch) => async (action: Action) => next(action)
 
   const internalDispatch = (action: Action) =>
-    pProgress<Action>(async (setProgress) => {
+    pProgress<Response>(async (setProgress) => {
       debug('Dispatch: %o', action)
 
       const nextAction = prepareAction(action)
@@ -209,23 +217,21 @@ export default function createDispatch({
         if (shouldQueue(action, options)) {
           // Use queue handler if queue flag is set and there is a queue
           // service. Bypass middleware
-          const response = await handleAction(
+          return await handleAction(
             QUEUE_SYMBOL,
             nextAction,
             resources,
             handlers
           )
-          return response
         } else {
           // Send action through middleware before sending to the relevant
           // handler
           const next = async (action: Action) =>
             handleAction(action.type, action, resources, handlers)
-          const { response } = await middlewareFn(next)(nextAction)
-          return setResponseOnAction(nextAction, response)
+          return await middlewareFn(next)(nextAction)
         }
       } catch (err) {
-        return setErrorOnAction(action, `Error thrown in dispatch: ${err}`)
+        return createErrorResponse(`Error thrown in dispatch: ${err}`)
       }
     })
 
