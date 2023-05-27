@@ -299,7 +299,7 @@ specify a few things:
   More one this in the [Match properties](#match-properties) section.
 - `mutation`: A mutation pipeline for the endpoint. The pipeline is run for both
   actions going to a service and the response coming back, so keep this in mind
-  when you set up this pipeline. See [Mutation pipelines](#mutation-pipelines)
+  when you set up this pipeline. See [Mutation pipelines](#mutations)
   for more on how to define the mutation.
 - `options`: This object will be passed on to the transporter and may contain
   any properties that are meaningful to the transporter. You may also add other
@@ -522,7 +522,7 @@ Both on the service and on endpoints, you define mutation pipelines. The service
 mutation is run before the endpoint mutation for data coming from a service, and
 in the oposite order when going to a service.
 
-A nice, but sometimes complicated, thing about mutations, is that they are run
+A nice - but sometimes complicated - thing about mutations, is that they are run
 in both directions. They are by default defined for mutating data coming _from_
 a service, and will be run in reverse for data going _to_ a service. In some
 cases this reversing of the pipeline will work as expected without modifications
@@ -549,7 +549,12 @@ Each step may be one of the following:
   want as a result, where the keys are dot notation paths and the values are
   mutation pipelines. Each pipeline on the mutation object will be run on the
   data, and then set on the path, resulting in an object that will be passed on
-  to the next step.
+  to the next step. Setting `$iterate: true` on the object will cause it to
+  iterate over items in an array, otherwise it will be applied to the array.
+  Setting `$modify: true` will cause any properties on an object in the pipeline
+  not set in the mutation, to be included, much like the spread in JavaScript.
+  Setting `$modify` to a path works the same, but you will spread from the
+  object at the path (`$modify: true` is equal to `$modify: '.'`).
 - **A transform object** letting you run a transformer function on the data,
   e.g. `{ $transform: 'number' }` to transform the value into a number, or
   `undefined` if not possible.
