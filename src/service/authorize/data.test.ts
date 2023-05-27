@@ -161,7 +161,7 @@ test('should authorized one item', (t) => {
 test('should return undefined when one item is unauthorized by ident', (t) => {
   const action = {
     type: 'GET',
-    payload: { type: 'account' },
+    payload: { type: 'account', targetService: 'entries' },
     response: { status: 'ok', data: account1 },
     meta: { ident: { id: 'johnf' } },
   }
@@ -170,7 +170,8 @@ test('should return undefined when one item is unauthorized by ident', (t) => {
     response: {
       status: 'noaccess',
       data: undefined,
-      error: "Authentication was refused for type 'account'",
+      error:
+        "Authentication was refused for type 'account' on service 'entries'",
       reason: 'WRONG_IDENT',
     },
   }
@@ -252,7 +253,7 @@ test('should override ok status', (t) => {
 test('should not authorize non-typed data for regular user', (t) => {
   const action = {
     type: 'GET',
-    payload: { type: 'account' },
+    payload: { type: 'account', targetService: 'accounts' },
     response: { status: 'ok', data: { something: 'here' } },
     meta: { ident: { id: 'johnf' } },
   }
@@ -261,7 +262,8 @@ test('should not authorize non-typed data for regular user', (t) => {
     response: {
       status: 'noaccess',
       data: undefined,
-      error: 'Authentication was refused for raw response data',
+      error:
+        "Authentication was refused for raw response data from service 'accounts'",
       reason: 'RAW_DATA',
     },
   }
@@ -356,15 +358,20 @@ test('should remove unauthorized items in request data', (t) => {
 test('should not authorize non-typed request data for regular user', (t) => {
   const action = {
     type: 'GET',
-    payload: { type: 'account', data: { something: 'here' } },
+    payload: {
+      type: 'account',
+      data: { something: 'here' },
+      targetService: 'accounts',
+    },
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     ...action,
-    payload: { type: 'account', data: undefined },
+    payload: { type: 'account', data: undefined, targetService: 'accounts' },
     response: {
       status: 'noaccess',
-      error: 'Authentication was refused for raw request data',
+      error:
+        "Authentication was refused for raw request data to service 'accounts'",
       reason: 'RAW_DATA',
     },
   }

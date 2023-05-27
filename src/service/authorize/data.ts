@@ -76,18 +76,24 @@ const generateWarning = (removedCount: number, isToService: boolean) =>
 const generateErrorAndReason = (
   reason: string,
   data: unknown,
-  isToService: boolean
+  isToService: boolean,
+  service?: string
 ) =>
   reason === 'RAW_DATA'
     ? `Authentication was refused for raw ${
         isToService ? 'request' : 'response'
-      } data`
-    : `Authentication was refused for type '${(data as TypedData).$type}'`
+      } data${
+        service ? ` ${isToService ? 'to' : 'from'} service '${service}'` : ''
+      }`
+    : `Authentication was refused for type '${(data as TypedData).$type}'${
+        service ? ` on service '${service}'` : ''
+      }`
 
 function getAuthedWithResponse(
   data: unknown,
   authFn: (item: unknown) => string | undefined,
-  isToService: boolean
+  isToService: boolean,
+  service?: string
 ) {
   if (isNullOrUndefined(data)) {
     return { data }
@@ -99,7 +105,7 @@ function getAuthedWithResponse(
 
   const reason = authFn(data)
   if (typeof reason === 'string') {
-    const error = generateErrorAndReason(reason, data, isToService)
+    const error = generateErrorAndReason(reason, data, isToService, service)
     return {
       data: undefined,
       status: 'noaccess',
@@ -123,7 +129,11 @@ const authorizeDataBase = (
       return action
     }
 
-    const { type: actionType, meta: { ident } = {} } = action
+    const {
+      type: actionType,
+      payload: { targetService },
+      meta: { ident } = {},
+    } = action
     const {
       data,
       status: authedStatus,
@@ -133,7 +143,8 @@ const authorizeDataBase = (
     } = getAuthedWithResponse(
       isToService ? action.payload.data : action.response?.data,
       authorizeItem(schemas, actionType, allowRaw, ident),
-      isToService
+      isToService,
+      targetService
     )
     const status =
       isError(action.response?.status) || !authedStatus
