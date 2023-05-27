@@ -46,7 +46,30 @@ test('should return mutated action when all parts are replaced', (t) => {
       ident: { id: 'johnf' },
     },
   }
-  const expected = mappedAction
+  const expected = {
+    type: 'GET',
+    payload: {
+      id: 'johnf',
+      type: 'user',
+      searchDeleted: true,
+    },
+    response: {
+      status: 'ok',
+      data,
+      paging: { next: { offset: 'page2', type: 'entry' } },
+      headers: {
+        'content-type': 'application/json',
+      },
+      params: { archived: true },
+    },
+    meta: {
+      options: {
+        uri: 'http://some.api.com/1.0/users/johnf',
+        queryParams: { order: 'desc' },
+      },
+      ident: { id: 'johnf' },
+    },
+  }
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
@@ -362,6 +385,44 @@ test('should set error status when error string is present and mutated status is
     response: {
       status: 'error',
       error: 'Something failed big time',
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+
+  const ret = populateActionAfterMutation(action, mappedAction)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should disregard mutated error when it is an empty string', (t) => {
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    meta: {
+      options: { uri: 'http://some.api.com/1.0' },
+      ident: { id: 'johnf' },
+    },
+  }
+  const mappedAction = {
+    response: {
+      status: 'ok',
+      error: '',
+    },
+  }
+  const expected = {
+    type: 'SET',
+    payload: {
+      id: 'johnf',
+      data: [{ id: 'johnf' }],
+    },
+    response: {
+      status: 'ok',
     },
     meta: {
       options: { uri: 'http://some.api.com/1.0' },
