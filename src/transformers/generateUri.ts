@@ -55,14 +55,20 @@ function* split(template: string) {
   }
 }
 
-const prepareTemplate = (template: unknown) =>
-  typeof template === 'string' ? [...split(template)] : undefined
+export const prepareTemplate = (template: string) => [...split(template)]
+
+export const replaceTemplate = (
+  parts: (string | ((value: unknown) => string))[],
+  data: unknown
+) =>
+  parts.map((part) => (typeof part === 'function' ? part(data) : part)).join('')
 
 const transformer: Transformer = function generateUri({
   template,
   templatePath,
 }: Props) {
-  let parts = prepareTemplate(template)
+  let parts =
+    typeof template === 'string' ? prepareTemplate(template) : undefined
   return () => (data: unknown) => {
     if (templatePath) {
       const templateFromPath = mapTransform(templatePath)(data)
@@ -71,11 +77,7 @@ const transformer: Transformer = function generateUri({
       }
     }
 
-    return parts
-      ? parts
-          .map((part) => (typeof part === 'function' ? part(data) : part))
-          .join('')
-      : undefined
+    return parts ? replaceTemplate(parts, data) : undefined
   }
 }
 

@@ -1,5 +1,1 @@
-import completeIdent from './completeIdent.js'
-
-export default {
-  completeIdent,
-}
+export * as completeIdent from './completeIdent.js'

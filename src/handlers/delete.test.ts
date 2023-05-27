@@ -1,10 +1,6 @@
 import test from 'ava'
 import nock from 'nock'
-import {
-  jsonServiceDef,
-  jsonPipelines,
-  jsonFunctions,
-} from '../tests/helpers/json.js'
+import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import createService from '../service/index.js'
 import createSchema from '../schema/index.js'
 import transformers from '../transformers/builtIns/index.js'
@@ -32,7 +28,6 @@ const schemas = {
 }
 
 const pipelines = {
-  ...jsonPipelines,
   entry: [
     { $iterate: true, id: 'id', title: 'header' },
     { $apply: 'cast_entry' },
@@ -43,8 +38,7 @@ const pipelines = {
   ],
 }
 
-const allTransformers = { ...transformers, ...jsonFunctions }
-const mapOptions = createMapOptions(schemas, pipelines, allTransformers)
+const mapOptions = createMapOptions(schemas, pipelines, transformers)
 const setupService = createService({ schemas, mapOptions })
 
 test.after.always(() => {

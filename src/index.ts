@@ -33,10 +33,11 @@ export type {
 } from './service/types.js'
 export type { Instance, Definitions, Resources } from './create.js'
 
-export { default as authenticators } from './authenticators/index.js'
+export * as authenticators from './authenticators/index.js'
 export { default as mutations } from './mutations/index.js'
 export { default as transformers } from './transformers/index.js'
-export { default as middleware } from './middleware/index.js'
+export * as middleware from './middleware/index.js'
+export * as adapters from './adapters/index.js'
 export { createAction } from './utils/action.js'
 
 export default {

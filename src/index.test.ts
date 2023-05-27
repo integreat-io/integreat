@@ -1,6 +1,11 @@
 import test from 'ava'
 
-import Integreat, { authenticators, mutations, transformers } from './index.js'
+import Integreat, {
+  authenticators,
+  mutations,
+  transformers,
+  adapters,
+} from './index.js'
 
 // Tests
 
@@ -20,4 +25,6 @@ test('should export resources', (t) => {
   t.truthy(mutations['exchange:json'])
   t.truthy(transformers)
   t.truthy(transformers.json)
+  t.truthy(adapters)
+  t.truthy(adapters.uri)
 })

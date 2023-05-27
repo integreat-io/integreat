@@ -1,7 +1,7 @@
 import test from 'ava'
 import nock from 'nock'
 import Integreat from '../index.js'
-import { jsonServiceDef } from '../tests/helpers/json.js'
+import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import mutations from '../mutations/index.js'
 import resources from '../tests/helpers/resources/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'

@@ -2,7 +2,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import jsonAdapter from 'integreat-adapter-json'
-import { jsonServiceDef } from './tests/helpers/json.js'
+import jsonServiceDef from './tests/helpers/jsonServiceDef.js'
 import builtInMutations from './mutations/index.js'
 import user from './tests/helpers/defs/schemas/user.js'
 import resources from './tests/helpers/resources/index.js'

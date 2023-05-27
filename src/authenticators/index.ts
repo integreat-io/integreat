@@ -1,7 +1,2 @@
-import options from './options.js'
-import token from './token.js'
-
-export default {
-  options,
-  token,
-}
+export * as options from './options.js'
+export * as token from './token.js'
