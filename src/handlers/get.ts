@@ -89,11 +89,10 @@ const runOne = (service: Service) => (endpoint: Endpoint) =>
   async function (action: Action) {
     const requestAction = await service.mutateRequest(action, endpoint)
     const response = await service.send(requestAction)
-    const responseAction = await service.mutateResponse(
+    return await service.mutateResponse(
       setResponseOnAction(action, response),
       endpoint
     )
-    return responseAction.response || { status: 'ok' } // TODO: Simplify?
   }
 
 /**

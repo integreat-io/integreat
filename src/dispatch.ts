@@ -85,19 +85,20 @@ async function mapIncomingAction(
   return { action }
 }
 
-const mapIncomingResponse = async (
+async function mapIncomingResponse(
   action: Action,
   service?: Service,
   endpoint?: Endpoint
-): Promise<Action> =>
-  service && endpoint
-    ? await service.mutateResponse(action, endpoint, true)
-    : action
-
-const responseFromAction = ({
-  response: { status, ...response } = {},
-  meta: { ident } = {},
-}: Action) => ({ ...response, status, access: { ident } })
+): Promise<Response> {
+  const response =
+    service && endpoint
+      ? await service.mutateResponse(action, endpoint, true)
+      : action.response || {}
+  return {
+    ...response,
+    access: { ident: action.meta?.ident, ...response.access }, // TODO: Should be moved to service.mutateResponse
+  }
+}
 
 function setIds(action: Action): Action {
   const id = action.meta?.id || nanoid()
@@ -124,9 +125,7 @@ const wrapDispatch =
       } = await mapIncomingAction(actionWithIds, getService)
       // Return any error from mapIncomingRequest()
       if (mappedAction.response?.status) {
-        return responseFromAction(
-          await mapIncomingResponse(mappedAction, service, endpoint) // TODO: Use original action here?
-        )
+        return await mapIncomingResponse(mappedAction, service, endpoint) // TODO: Use original action here?
       }
 
       // Dispatch
@@ -135,12 +134,10 @@ const wrapDispatch =
       const response = await p
 
       // Map respons data when needed
-      return responseFromAction(
-        await mapIncomingResponse(
-          setResponseOnAction(action, response),
-          service,
-          endpoint
-        )
+      return await mapIncomingResponse(
+        setResponseOnAction(action, response),
+        service,
+        endpoint
       )
     })
 

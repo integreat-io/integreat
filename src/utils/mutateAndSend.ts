@@ -11,9 +11,8 @@ export default async function mutateAndSend(
   const authorizedAction = service.authorizeAction(action)
   const requestAction = await service.mutateRequest(authorizedAction, endpoint)
   const response = await service.send(requestAction)
-  const responseAction = await service.mutateResponse(
+  return await service.mutateResponse(
     setResponseOnAction(action, response),
     endpoint
   )
-  return responseAction.response || { status: 'ok' } // TODO: Simplify?
 }

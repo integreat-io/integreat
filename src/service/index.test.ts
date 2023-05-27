@@ -1000,22 +1000,19 @@ test('mutateResponse should mutate data array from service', async (t) => {
   }
   const endpoint = service.endpointFromAction(action)
   const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data: [
-        {
-          $type: 'entry',
-          id: 'ent1',
-          title: 'Entry 1',
-          one: 1,
-          two: 2,
-          source: { id: 'thenews', $ref: 'source' },
-          createdAt: theDate,
-          updatedAt: theDate,
-        },
-      ],
-    },
+    status: 'ok',
+    data: [
+      {
+        $type: 'entry',
+        id: 'ent1',
+        title: 'Entry 1',
+        one: 1,
+        two: 2,
+        source: { id: 'thenews', $ref: 'source' },
+        createdAt: theDate,
+        updatedAt: theDate,
+      },
+    ],
   }
 
   const ret = await service.mutateResponse(action, endpoint!)
@@ -1062,7 +1059,7 @@ test('mutateResponse should mutate data object from service', async (t) => {
 
   const ret = await service.mutateResponse(action, endpoint!)
 
-  const data = ret.response?.data as TypedData
+  const data = ret.data as TypedData
   t.false(Array.isArray(data))
   t.is(data.id, 'johnf')
   t.is(data.$type, 'account')
@@ -1117,22 +1114,19 @@ test('mutateResponse should use service adapters', async (t) => {
   }
   const endpoint = service.endpointFromAction(action)
   const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data: [
-        {
-          $type: 'entry',
-          id: 'ent1',
-          title: 'Entry 1',
-          one: 1,
-          two: 2,
-          source: { id: 'thenews', $ref: 'source' },
-          createdAt: theDate,
-          updatedAt: theDate,
-        },
-      ],
-    },
+    status: 'ok',
+    data: [
+      {
+        $type: 'entry',
+        id: 'ent1',
+        title: 'Entry 1',
+        one: 1,
+        two: 2,
+        source: { id: 'thenews', $ref: 'source' },
+        createdAt: theDate,
+        updatedAt: theDate,
+      },
+    ],
   }
 
   const ret = await service.mutateResponse(action, endpoint!)
@@ -1189,22 +1183,19 @@ test('mutateResponse should use endpoint adapters', async (t) => {
   }
   const endpoint = service.endpointFromAction(action)
   const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data: [
-        {
-          $type: 'entry',
-          id: 'ent1',
-          title: 'Entry 1',
-          one: 1,
-          two: 2,
-          source: { id: 'thenews', $ref: 'source' },
-          createdAt: theDate,
-          updatedAt: theDate,
-        },
-      ],
-    },
+    status: 'ok',
+    data: [
+      {
+        $type: 'entry',
+        id: 'ent1',
+        title: 'Entry 1',
+        one: 1,
+        two: 2,
+        source: { id: 'thenews', $ref: 'source' },
+        createdAt: theDate,
+        updatedAt: theDate,
+      },
+    ],
   }
 
   const ret = await service.mutateResponse(action, endpoint!)
@@ -1261,22 +1252,19 @@ test('mutateResponse should not cast data array from service when allowRawRespon
   }
   const endpoint = service.endpointFromAction(action)
   const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data: [
-        {
-          id: 'ent1',
-          title: 'Entry 1',
-          one: undefined,
-          two: 2,
-          author: undefined,
-          source: 'thenews',
-          createdAt: theDate,
-          updatedAt: theDate,
-        },
-      ],
-    },
+    status: 'ok',
+    data: [
+      {
+        id: 'ent1',
+        title: 'Entry 1',
+        one: undefined,
+        two: 2,
+        author: undefined,
+        source: 'thenews',
+        createdAt: theDate,
+        updatedAt: theDate,
+      },
+    ],
   }
 
   const ret = await service.mutateResponse(action, endpoint!)
@@ -1314,11 +1302,8 @@ test('mutateResponse should map null to undefined', async (t) => {
   }
   const endpoint = service.endpointFromAction(action)
   const expected = {
-    ...action,
-    response: {
-      status: 'ok',
-      data: undefined,
-    },
+    status: 'ok',
+    data: undefined,
   }
 
   const ret = await service.mutateResponse(action, endpoint!)
@@ -1363,12 +1348,12 @@ test('should authorize typed data in array from service', async (t) => {
 
   const ret = await service.mutateResponse(action, endpoint!)
 
-  t.is(ret.response?.status, 'ok')
-  const data = ret.response?.data as TypedData[]
+  t.is(ret.status, 'ok')
+  const data = ret.data as TypedData[]
   t.is(data.length, 1)
   t.is(data[0].id, 'johnf')
   t.is(
-    ret.response?.warning,
+    ret.warning,
     '1 item was removed from response data due to lack of access'
   )
 })
@@ -1407,9 +1392,9 @@ test('should authorize typed data object from service', async (t) => {
 
   const ret = await service.mutateResponse(action, endpoint!)
 
-  t.is(ret.response?.status, 'noaccess')
-  t.is(ret.response?.data, undefined)
-  t.is(ret.response?.error, "Authentication was refused for type 'account'")
+  t.is(ret.status, 'noaccess')
+  t.is(ret.data, undefined)
+  t.is(ret.error, "Authentication was refused for type 'account'")
 })
 
 test('should authorize typed data in array to service', async (t) => {
@@ -1448,12 +1433,12 @@ test('should authorize typed data in array to service', async (t) => {
 
   const ret = await service.mutateResponse(action, endpoint!, isIncoming)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  const accounts = (ret.response?.data as TypedData).accounts as TypedData[]
+  t.is(ret.status, 'ok', ret.error)
+  const accounts = (ret.data as TypedData).accounts as TypedData[]
   t.is(accounts.length, 1)
   t.is(accounts[0].id, 'johnf')
   t.is(
-    ret.response?.warning,
+    ret.warning,
     '1 item was removed from response data due to lack of access'
   )
 })
@@ -1500,12 +1485,9 @@ test('mutateResponse should return error when transformer throws', async (t) => 
   }
   const endpoint = service.endpointFromAction(action)
   const expected = {
-    ...action,
-    response: {
-      ...action.response,
-      status: 'error',
-      error: 'Error while mutating response: Transformer error',
-    },
+    ...action.response,
+    status: 'error',
+    error: 'Error while mutating response: Transformer error',
   }
 
   const ret = await service.mutateResponse(action, endpoint!)

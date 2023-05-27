@@ -21,10 +21,6 @@ export interface IdentConfig {
   }
 }
 
-export interface ActionMapperWithEndpoint {
-  (action: Action, endpoint: Endpoint, isIncoming?: boolean): Promise<Action>
-}
-
 export interface ActionMapper {
   (action: Action): Action
 }
@@ -83,8 +79,16 @@ export interface Service {
     isIncoming?: boolean
   ) => Endpoint | undefined
   authorizeAction: ActionMapper
-  mutateRequest: ActionMapperWithEndpoint
-  mutateResponse: ActionMapperWithEndpoint
+  mutateRequest: (
+    action: Action,
+    endpoint: Endpoint,
+    isIncoming?: boolean
+  ) => Promise<Action>
+  mutateResponse: (
+    action: Action,
+    endpoint: Endpoint,
+    isIncoming?: boolean
+  ) => Promise<Response>
   send: AsyncActionMapper
   listen: (dispatch: Dispatch) => Promise<Response>
   close: () => Promise<Response>

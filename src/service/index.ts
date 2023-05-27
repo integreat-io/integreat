@@ -172,15 +172,18 @@ function resolveIncomingAuth(
   }
 }
 
-const getCastFn = (castFns: Record<string, DataMapperEntry>, action: Action) =>
-  typeof action.payload.type === 'string'
-    ? castFns[action.payload.type]
+const getCastFn = (
+  castFns: Record<string, DataMapperEntry>,
+  type?: string | string[]
+) =>
+  typeof type === 'string'
+    ? castFns[type] // eslint-disable-line security/detect-object-injection
     : undefined
 
 const castByType = (castFns: Record<string, DataMapperEntry>) =>
   function castAction(action: Action, allowRaw: boolean, isRequest = false) {
     if (!allowRaw) {
-      const castFn = getCastFn(castFns, action)
+      const castFn = getCastFn(castFns, action.payload.type)
       if (castFn) {
         if (isRequest && action.payload) {
           return {
@@ -343,7 +346,7 @@ export default ({
         const { mutateResponse, allowRawResponse = false } = endpoint
         try {
           // Authorize and mutate in right order
-          return isIncoming
+          const mutated = isIncoming
             ? await mutateResponse(
                 authorizeDataFromService(
                   castAction(action, allowRawResponse),
@@ -358,13 +361,16 @@ export default ({
                 ),
                 allowRawResponse
               )
+          return mutated.response || { status: undefined }
         } catch (error) {
-          return setErrorOnAction(
-            action,
-            `Error while mutating response: ${
-              error instanceof Error ? error.message : String(error)
-            }`
-          )
+          return {
+            ...action.response,
+            ...createErrorResponse(
+              `Error while mutating response: ${
+                error instanceof Error ? error.message : String(error)
+              }`
+            ),
+          }
         }
       },
 
