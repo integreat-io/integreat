@@ -1535,11 +1535,10 @@ async function (action, { dispatch, getService, setProgress, options }) { ... }
   object used for mapping ident schemas to ids, roles, and tokens (see
   [the `completeIdent` middleware](#completeIdent-middleware)).
 
-Your action handler must return the `action` it received with a `response`
-object set on it. If your handler just relays to another action handler, it may
-reuse the `response` from that handler, but in many cases it will be more
-correct to generate your own response, possibly based on what the actions you
-dispatch returns.
+Your action handler must return a [response object](#action-response). If your
+handler just relays to another action handler, it may pass on the response
+returned from that handler, but in many cases it will be more correct to
+generate your own response.
 
 You provide your custom actions to Integreat on setup, by providing an object
 with the key set to the action type your handler will be responsible for, and
@@ -1734,17 +1733,17 @@ A middleware is a function that accepts a `next()` function as only argument,
 and returns an async function that will be called with the action on dispatch.
 The returned function is expected to call `next()` with the action, and return
 the result from the `next()` function, but is not required to do so. The only
-requirement is that the functions returns a valid Integreat action object,
-most likely with a `response` object on it.
+requirement is that the functions returns a valid
+[response object](#action-response).
 
 Example implementation of a very simple logger middleware:
 
 ```javascript
 const logger = (next) => async (action) => {
   console.log('Dispatch was called with action', action)
-  const responseAction = await next(action)
-  console.log('Dispatch completed with response', responseAction.response)
-  return responseAction
+  const response = await next(action)
+  console.log('Dispatch completed with response', response)
+  return respons
 }
 ```
 
