@@ -36,11 +36,11 @@ const prepareParams = (
     ? { [keys.tokens]: ident.withToken }
     : null
 
-const wrapOk = (action: Action, data: unknown, ident: Ident) => ({
+const wrapOk = (action: Action, data: unknown, ident: Ident): Response => ({
   ...action.response,
   status: 'ok',
   data,
-  meta: { ident },
+  access: { ident },
 })
 
 const prepareResponse = (

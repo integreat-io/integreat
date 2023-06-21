@@ -8,7 +8,7 @@ import completeIdent from './completeIdent.js'
 test('should complete ident with id', async (t) => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
-    meta: { ident: { id: 'johnf', roles: ['editor'] } },
+    access: { ident: { id: 'johnf', roles: ['editor'] } },
   })
   const action = {
     type: 'GET',
@@ -32,7 +32,7 @@ test('should complete ident with id', async (t) => {
 test('should complete ident with token', async (t) => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
-    meta: { ident: { id: 'johnf', roles: ['editor'] } },
+    access: { ident: { id: 'johnf', roles: ['editor'] } },
   })
   const action = {
     type: 'GET',

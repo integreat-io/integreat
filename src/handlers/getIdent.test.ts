@@ -39,15 +39,14 @@ test('should complete ident with token', async (t) => {
     payload: {},
     meta: { ident: { withToken: 'twitter|23456' } },
   }
-  const expectedMeta = {
-    ...action.meta,
+  const expected = {
     ident: johnfIdent,
   }
 
   const ret = await getIdent(action, handlerResources)
 
   t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.meta, expectedMeta) // TODO: Is this the best way of doing this?
+  t.deepEqual(ret.access, expected)
   t.is((ret.data as TypedData).id, 'johnf')
   t.true(scope.isDone())
 })
@@ -65,7 +64,7 @@ test('should complete ident with id', async (t) => {
   const ret = await getIdent(action, handlerResources)
 
   t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.meta?.ident, johnfIdent)
+  t.deepEqual(ret.access?.ident, johnfIdent)
   t.is((ret.data as TypedData).id, 'johnf')
 })
 
@@ -82,7 +81,7 @@ test('should complete ident with id when more props are present', async (t) => {
   const ret = await getIdent(action, handlerResources)
 
   t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.meta?.ident, johnfIdent)
+  t.deepEqual(ret.access?.ident, johnfIdent)
   t.is((ret.data as TypedData).id, 'johnf')
 })
 
@@ -173,7 +172,7 @@ test('should complete ident with other prop keys', async (t) => {
   })
 
   t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.meta?.ident, expectedIdent)
+  t.deepEqual(ret.access?.ident, expectedIdent)
 })
 
 // TODO: Best way to treat missing user?

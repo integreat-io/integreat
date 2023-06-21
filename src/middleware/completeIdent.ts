@@ -7,7 +7,7 @@ const getIdent = async (ident: Ident, dispatch: HandlerDispatch) => {
     meta: { ident },
   })
 
-  return response.status === 'ok' ? response?.meta?.ident || ident : undefined
+  return response.status === 'ok' ? response?.access?.ident || ident : undefined
 }
 
 const isIdentGetable = (ident?: Ident): ident is Ident =>

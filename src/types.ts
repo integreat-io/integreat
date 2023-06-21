@@ -149,7 +149,6 @@ export interface Response<T = unknown> {
   headers?: Headers
   responses?: Response[]
   access?: Record<string, unknown>
-  meta?: Meta
 }
 
 export interface Action<P extends Payload = Payload, ResponseData = unknown> {
