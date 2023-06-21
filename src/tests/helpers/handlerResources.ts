@@ -2,10 +2,7 @@ import pProgress from 'p-progress'
 import { GetService, HandlerDispatch, SetProgress } from '../../types.js'
 
 const dispatch: HandlerDispatch = (action) =>
-  pProgress(() => ({
-    ...action,
-    response: { ...action.response, status: 'ok' },
-  }))
+  pProgress(() => ({ ...action.response, status: 'ok' }))
 
 const getService: GetService = (_type, _service) => undefined
 

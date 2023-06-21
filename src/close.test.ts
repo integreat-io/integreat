@@ -10,8 +10,10 @@ const serviceMethods = {
   endpointFromAction: () => undefined,
   authorizeAction: (action: Action) => action,
   mutateRequest: async (action: Action, _endpoint: unknown) => action,
-  mutateResponse: async (action: Action, _endpoint: unknown) => action,
-  send: async (action: Action) => action,
+  mutateResponse: async (_action: Action, _endpoint: unknown) => ({
+    status: 'ok',
+  }),
+  send: async (_action: Action) => ({ status: 'ok' }),
   listen: async () => ({ status: 'ok' }),
 }
 
