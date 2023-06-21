@@ -20,24 +20,9 @@ const schemas = {
   }),
 }
 
-const entryMapping = [
-  'items[]',
-  {
-    $iterate: true,
-    id: 'key',
-    title: 'header',
-    one: 'one',
-    two: 'two',
-    source: '^params.source',
-    author: '^access.ident.id',
-  },
-  { $apply: 'cast_entry' },
-]
-
 const mapOptions = {
   pipelines: {
     ['cast_entry']: schemas.entry.mapping,
-    entry: entryMapping,
   },
   transformers: {},
 }
