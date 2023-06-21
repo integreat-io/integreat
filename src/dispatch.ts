@@ -7,6 +7,7 @@ import {
   setErrorOnAction,
   createErrorResponse,
   setResponseOnAction,
+  setOrigin,
 } from './utils/action.js'
 import type {
   Dispatch,
@@ -62,6 +63,7 @@ async function mapIncomingAction(
         action: setErrorOnAction(
           action,
           `Source service '${sourceService}' not found`,
+          'dispatch',
           'badrequest'
         ),
       }
@@ -72,6 +74,7 @@ async function mapIncomingAction(
         action: setErrorOnAction(
           action,
           `No matching endpoint for incoming mapping on service '${sourceService}'`,
+          'dispatch',
           'badrequest'
         ),
       }
@@ -97,6 +100,9 @@ async function mapIncomingResponse(
   return {
     ...response,
     access: { ident: action.meta?.ident, ...response.access }, // TODO: Should be moved to service.mutateResponse
+    ...(response.status !== 'ok'
+      ? { origin: response.origin || 'dispatch' }
+      : {}),
   }
 }
 
@@ -112,7 +118,11 @@ const wrapDispatch =
   (action: Action | null) =>
     pProgress(async (setProgress) => {
       if (!action) {
-        return { status: 'noaction', error: 'Dispatched no action' }
+        return {
+          status: 'noaction',
+          error: 'Dispatched no action',
+          origin: 'dispatch',
+        }
       }
 
       const actionWithIds = setIds(action)
@@ -170,12 +180,16 @@ async function handleAction(
   if (!handler) {
     return createErrorResponse(
       `No handler for ${String(handlerType)} action`,
+      'dispatch',
       'badrequest'
     )
   }
 
   // ... and pass it the action
-  return await handler(action, resources)
+  return setOrigin(
+    await handler(action, resources),
+    typeof handlerType === 'string' ? `handler:${handlerType}` : 'handler:queue'
+  )
 }
 
 /**
@@ -225,10 +239,16 @@ export default function createDispatch({
           // handler
           const next = async (action: Action) =>
             handleAction(action.type, action, resources, handlers)
-          return await middlewareFn(next)(nextAction)
+          return setOrigin(
+            await middlewareFn(next)(nextAction),
+            'middleware:dispatch'
+          )
         }
       } catch (err) {
-        return createErrorResponse(`Error thrown in dispatch: ${err}`)
+        return createErrorResponse(
+          `Error thrown in dispatch: ${err}`,
+          'dispatch'
+        )
       }
     })
 

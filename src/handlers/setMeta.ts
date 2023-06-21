@@ -29,7 +29,10 @@ export default async function setMeta(
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`SET_META: Service '${serviceId}' doesn't exist`)
-    return createErrorResponse(`Service '${serviceId}' doesn't exist`)
+    return createErrorResponse(
+      `Service '${serviceId}' doesn't exist`,
+      'handler:SET_META'
+    )
   }
 
   const metaType = service.meta
@@ -42,6 +45,7 @@ export default async function setMeta(
     )
     return createErrorResponse(
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
+      'handler:SET_META',
       'noaction'
     )
   }

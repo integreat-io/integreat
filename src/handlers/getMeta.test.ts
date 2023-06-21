@@ -286,10 +286,16 @@ test('should return reply from service when not ok', async (t) => {
     },
     meta: { ident },
   }
+  const expected = {
+    status: 'notfound',
+    error: 'Could not find the url http://api5.test/database/meta:store',
+    origin: 'service:store',
+    data: undefined,
+  }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'notfound', ret.error)
+  t.deepEqual(ret, expected)
 })
 
 test('should return empty object as meta when no data from service', async (t) => {
@@ -342,11 +348,15 @@ test('should return noaction when when no meta type is set', async (t) => {
     },
     meta: { ident },
   }
+  const expected = {
+    status: 'noaction',
+    error: "Service 'store' doesn't support metadata (setting was 'undefined')",
+    origin: 'handler:GET_META',
+  }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'noaction', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
   t.false(scope.isDone())
 })
 
@@ -397,11 +407,15 @@ test('should return noaction when meta is set to an unknown type', async (t) => 
     },
     meta: { ident },
   }
+  const expected = {
+    status: 'noaction',
+    error: "Service 'store' doesn't support metadata (setting was 'unknown')",
+    origin: 'handler:GET_META',
+  }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'noaction', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
 })
 
 test('should return error for unknown service', async (t) => {
@@ -414,10 +428,15 @@ test('should return error for unknown service', async (t) => {
     },
     meta: { ident },
   }
+  const expected = {
+    status: 'error',
+    error: "Service 'unknown' doesn't exist",
+    origin: 'handler:GET_META',
+  }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret, expected)
 })
 
 test('should respond with noaccess when not authorized', async (t) => {
@@ -437,11 +456,15 @@ test('should respond with noaccess when not authorized', async (t) => {
       targetService: 'store',
     },
   }
+  const expected = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'meta'",
+    reason: 'NO_IDENT',
+    origin: 'auth:action',
+    data: undefined,
+  }
 
   const ret = await getMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'noaccess', ret.error)
-  t.is(typeof ret.error, 'string')
-  t.is(ret.reason, 'NO_IDENT')
-  t.falsy(ret.data)
+  t.deepEqual(ret, expected)
 })

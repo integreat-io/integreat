@@ -51,6 +51,7 @@ export default async function set(
   if (!endpoint) {
     return createErrorResponse(
       `No endpoint matching ${action.type} request to service '${serviceId}'.`,
+      'handler:SET',
       'badrequest'
     )
   }

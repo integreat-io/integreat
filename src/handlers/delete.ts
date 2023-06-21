@@ -41,6 +41,7 @@ export default async function deleteFn(
   if (data.length === 0) {
     return createErrorResponse(
       `No items to delete from service '${service.id}'`,
+      'handler:DELETE',
       'noaction'
     )
   }
@@ -55,6 +56,7 @@ export default async function deleteFn(
   if (!endpoint) {
     return createErrorResponse(
       `No endpoint matching ${nextAction.type} request to service '${serviceId}'.`,
+      'handler:DELETE',
       'badrequest'
     )
   }

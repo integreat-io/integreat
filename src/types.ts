@@ -144,6 +144,7 @@ export interface Response<T = unknown> {
   reason?: string
   error?: string
   warning?: string
+  origin?: string
   paging?: Paging
   params?: Params
   headers?: Headers

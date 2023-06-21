@@ -1,5 +1,5 @@
 import debugLib from 'debug'
-import { createErrorResponse } from '../utils/action.js'
+import { createErrorResponse, setOrigin } from '../utils/action.js'
 import getHandler from './get.js'
 import { isDataObject } from '../utils/is.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'
@@ -59,7 +59,10 @@ export default async function getMeta(
   const service = getService(undefined, serviceId)
   if (!service) {
     debug(`GET_META: Service '${serviceId}' doesn't exist`)
-    return createErrorResponse(`Service '${serviceId}' doesn't exist`)
+    return createErrorResponse(
+      `Service '${serviceId}' doesn't exist`,
+      'handler:GET_META'
+    )
   }
 
   const metaType = service.meta
@@ -69,6 +72,7 @@ export default async function getMeta(
   if (!metaService) {
     return createErrorResponse(
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
+      'handler:GET_META',
       'noaction'
     )
   }
@@ -99,6 +103,6 @@ export default async function getMeta(
       data: { service: serviceId, meta },
     }
   } else {
-    return response
+    return setOrigin(response, 'handler:GET_META')
   }
 }

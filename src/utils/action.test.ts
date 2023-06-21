@@ -142,9 +142,13 @@ test('should set response on action when no response is given', (t) => {
 
 test('should create an error response', (t) => {
   const message = 'An ugly error'
-  const expected = { status: 'error', error: 'An ugly error' }
+  const expected = {
+    status: 'error',
+    error: 'An ugly error',
+    origin: 'somewhere',
+  }
 
-  const ret = createErrorResponse(message)
+  const ret = createErrorResponse(message, 'somewhere')
 
   t.deepEqual(ret, expected)
 })
@@ -152,18 +156,26 @@ test('should create an error response', (t) => {
 test('should create an error response with a specified status', (t) => {
   const message = 'An ugly error'
   const status = 'notfound'
-  const expected = { status: 'notfound', error: 'An ugly error' }
+  const expected = {
+    status: 'notfound',
+    error: 'An ugly error',
+    origin: 'somewhere',
+  }
 
-  const ret = createErrorResponse(message, status)
+  const ret = createErrorResponse(message, 'somewhere', status)
 
   t.deepEqual(ret, expected)
 })
 
 test('should extract error message from Error', (t) => {
   const message = new Error('An ugly error')
-  const expected = { status: 'error', error: 'An ugly error' }
+  const expected = {
+    status: 'error',
+    error: 'An ugly error',
+    origin: 'somewhere',
+  }
 
-  const ret = createErrorResponse(message)
+  const ret = createErrorResponse(message, 'somewhere')
 
   t.deepEqual(ret, expected)
 })
@@ -184,11 +196,12 @@ test('should set error response on action object', (t) => {
     response: {
       status: 'timeout',
       error: 'Too long',
+      origin: 'somewhere',
     },
     meta: { ident: { id: 'johnf' }, queue: true },
   }
 
-  const ret = setErrorOnAction(action, message, status)
+  const ret = setErrorOnAction(action, message, 'somewhere', status)
 
   t.deepEqual(ret, expected)
 })
@@ -210,12 +223,13 @@ test('should set error response on action object that already has a response', (
     response: {
       status: 'error',
       error: 'An ugly error',
+      origin: 'somewhere',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
     meta: { ident: { id: 'johnf' }, queue: true },
   }
 
-  const ret = setErrorOnAction(action, message)
+  const ret = setErrorOnAction(action, message, 'somewhere')
 
   t.deepEqual(ret, expected)
 })

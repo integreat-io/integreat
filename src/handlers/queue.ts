@@ -1,3 +1,4 @@
+import { setOrigin } from '../utils/action.js'
 import type { Action, ActionHandlerResources, Response } from '../types.js'
 
 const prepareQueuedAction = ({ meta, ...action }: Action) => ({
@@ -25,10 +26,13 @@ export default async function queue(
   const response = await service.send(nextAction)
   const status = response?.status === 'ok' ? 'queued' : response?.status
 
-  return {
-    ...action.response,
-    ...response,
-    status: status || 'badresponse',
-    ...(status ? {} : { error: 'Queue did not respond correctly' }),
-  }
+  return setOrigin(
+    {
+      ...action.response,
+      ...response,
+      status: status || 'badresponse',
+      ...(status ? {} : { error: 'Queue did not respond correctly' }),
+    },
+    'handler:QUEUE'
+  )
 }

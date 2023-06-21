@@ -27,15 +27,20 @@ test('should route to relevant action handler', async (t) => {
       type: 'entry',
       targetService: 'entries',
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const handlers = {
     GET: async () => ({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }),
   }
+  const expected = {
+    status: 'ok',
+    data: [{ id: 'ent1', type: 'entry' }],
+    access: { ident: { id: 'johnf' } },
+  }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
 
-  t.is(ret.status, 'ok')
-  t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
+  t.deepEqual(ret, expected)
 })
 
 test('should route action with queue flag to queue handler', async (t) => {
@@ -274,7 +279,7 @@ test('should map payload property service to targetService', async (t) => {
     GET: async (action: Action) =>
       action.payload.targetService === 'entries'
         ? { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }
-        : { status: 'error', error: 'Service not set' },
+        : { status: 'error', error: 'Service not set' }, // Will be triggered when no `targetService`
   }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
@@ -283,25 +288,58 @@ test('should map payload property service to targetService', async (t) => {
   t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
 })
 
-test('should return status noaction when no action', async (t) => {
-  const action = null
-  const handlers = {}
+test('should set origin when handler return error response with no origin', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const handlers = {
+    GET: async () => ({ status: 'error', error: 'Where did this come from?' }),
+  }
+  const expected = {
+    status: 'error',
+    error: 'Where did this come from?',
+    access: { ident: { id: 'johnf' } },
+    origin: 'handler:GET',
+  }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
 
-  t.is(ret.status, 'noaction')
-  t.is(ret.error, 'Dispatched no action')
+  t.deepEqual(ret, expected)
+})
+
+test('should return status noaction when no action', async (t) => {
+  const action = null
+  const handlers = {}
+  const expected = {
+    status: 'noaction',
+    error: 'Dispatched no action',
+    origin: 'dispatch',
+  }
+
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+
+  t.deepEqual(ret, expected)
 })
 
 test('should return badrequest when unknown action', async (t) => {
   const action = { type: 'UNKNOWN', payload: {} }
   const services = {}
   const handlers = {}
-
+  const expected = {
+    status: 'badrequest',
+    error: 'No handler for UNKNOWN action',
+    origin: 'dispatch',
+    access: { ident: undefined },
+  }
   const ret = await dispatch({ handlers, services, schemas, options })(action)
 
-  t.is(ret.status, 'badrequest')
-  t.is(ret.error, 'No handler for UNKNOWN action')
+  t.deepEqual(ret, expected)
 })
 
 test('should call action handler with action, dispatch, getService, and options', async (t) => {
@@ -365,6 +403,11 @@ test('should allow middleware to abort middleware chain', async (t) => {
   const middleware: Middleware[] = [
     (_next) => async (_action) => ({ status: 'error' }),
   ]
+  const expected = {
+    status: 'error',
+    origin: 'middleware:dispatch',
+    access: { ident: undefined },
+  }
 
   const ret = await dispatch({
     handlers,
@@ -374,7 +417,7 @@ test('should allow middleware to abort middleware chain', async (t) => {
     options,
   })(action)
 
-  t.is(ret.status, 'error')
+  t.deepEqual(ret, expected)
   t.is(handler.callCount, 0)
 })
 
@@ -445,11 +488,16 @@ test('should return error when source service is not found', async (t) => {
   const handlers = {
     GET: async () => ({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }),
   }
+  const expected = {
+    status: 'badrequest',
+    error: "Source service 'unknown' not found",
+    origin: 'dispatch',
+    access: { ident: undefined },
+  }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
 
-  t.is(ret.status, 'badrequest', ret.error)
-  t.is(ret.error, "Source service 'unknown' not found")
+  t.deepEqual(ret, expected)
 })
 
 test('should return error when no endoint on source service matches', async (t) => {
@@ -471,11 +519,16 @@ test('should return error when no endoint on source service matches', async (t) 
   const handlers = {
     GET: async () => ({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }),
   }
+  const expected = {
+    status: 'badrequest',
+    error: "No matching endpoint for incoming mapping on service 'api'",
+    origin: 'dispatch',
+    access: { ident: undefined },
+  }
 
   const ret = await dispatch({ handlers, services, schemas, options })(action)
 
-  t.is(ret.status, 'badrequest', ret.error)
-  t.is(ret.error, "No matching endpoint for incoming mapping on service 'api'")
+  t.deepEqual(ret, expected)
 })
 
 test('should return error instead of throwing', async (t) => {
@@ -488,6 +541,13 @@ test('should return error instead of throwing', async (t) => {
       throw new Error("Too little memory. It's tiny")
     },
   ]
+  const expected = {
+    status: 'error',
+    error: "Error thrown in dispatch: Error: Too little memory. It's tiny",
+    origin: 'dispatch',
+    access: { ident: undefined },
+  }
+
   const ret = await dispatch({
     handlers,
     services,
@@ -496,9 +556,5 @@ test('should return error instead of throwing', async (t) => {
     options,
   })(action)
 
-  t.is(ret.status, 'error')
-  t.is(
-    ret.error,
-    "Error thrown in dispatch: Error: Too little memory. It's tiny"
-  )
+  t.deepEqual(ret, expected)
 })

@@ -1,7 +1,12 @@
 import debugLib from 'debug'
 import pProgress, { ProgressNotifier } from 'p-progress'
 import createEndpointMappers from './endpoints/index.js'
-import { setErrorOnAction, createErrorResponse } from '../utils/action.js'
+import {
+  setErrorOnAction,
+  createErrorResponse,
+  setOrigin,
+  setOriginOnAction,
+} from '../utils/action.js'
 import Connection from './Connection.js'
 import Auth from './Auth.js'
 import { lookupById } from '../utils/indexUtils.js'
@@ -60,7 +65,11 @@ const setServiceIdAsSourceServiceOnAction =
 
 const isIdent = (ident: unknown): ident is Ident => isObject(ident)
 
-async function authorizeIncoming(action: Action, auth?: Auth | boolean) {
+async function authorizeIncoming(
+  action: Action,
+  serviceId: string,
+  auth?: Auth | boolean
+) {
   if (auth) {
     if (typeof auth === 'boolean') {
       return action
@@ -72,14 +81,18 @@ async function authorizeIncoming(action: Action, auth?: Auth | boolean) {
         return { ...action, meta: { ...action.meta, ident } }
       }
     } catch (err) {
-      return setErrorOnAction(action, err, 'autherror')
+      return setErrorOnAction(action, err, `service:${serviceId}`, 'autherror')
     }
   }
 
   return { ...action, meta: { ...action.meta, ident: undefined } }
 }
 
-const dispatchIncoming = (dispatch: Dispatch, setProgress: ProgressNotifier) =>
+const dispatchIncoming = (
+  dispatch: Dispatch,
+  setProgress: ProgressNotifier,
+  serviceId: string
+) =>
   async function (action: Action): Promise<Response> {
     if (typeof action.response?.status === 'string') {
       return action.response
@@ -87,23 +100,37 @@ const dispatchIncoming = (dispatch: Dispatch, setProgress: ProgressNotifier) =>
 
     const p = dispatch(action)
     p.onProgress(setProgress)
-    return await p
+    return setOrigin(await p, `service:${serviceId}`)
   }
 
 // TODO: Consider if there is an easier way to pass the `setProgress` method
 // through to the caller, i.e. to preserve the PProgress
 const dispatchIncomingWithMiddleware =
-  (dispatch: Dispatch, middleware: Middleware, auth?: Auth | boolean) =>
+  (
+    dispatch: Dispatch,
+    middleware: Middleware,
+    serviceId: string,
+    auth?: Auth | boolean
+  ) =>
   (action: Action | null) =>
     pProgress<Response>(async (setProgress) => {
       if (action) {
         const response = await middleware(
-          dispatchIncoming(dispatch, setProgress)
-        )(await authorizeIncoming(action, auth))
+          dispatchIncoming(dispatch, setProgress, serviceId)
+        )(await authorizeIncoming(action, serviceId, auth))
 
-        return response || { status: 'error' }
+        return (
+          setOrigin(response, `middleware:service:${serviceId}`) || {
+            status: 'error',
+            origin: `service:${serviceId}`,
+          }
+        )
       } else {
-        return { status: 'noaction', error: 'No action was dispatched' }
+        return {
+          status: 'noaction',
+          error: 'No action was dispatched',
+          origin: `service:${serviceId}`,
+        }
       }
     })
 
@@ -118,19 +145,25 @@ const sendToTransporter = (
   async function send(action: Action): Promise<Response> {
     try {
       if (await connection.connect(action.meta?.auth)) {
-        return await transporter.send(action, connection.object)
+        return setOrigin(
+          await transporter.send(action, connection.object),
+          `service:${serviceId}`,
+          true
+        )
       } else {
         return createErrorResponse(
           `Could not connect to service '${serviceId}'. [${
             connection.status
-          }] ${connection.error || ''}`.trim()
+          }] ${connection.error || ''}`.trim(),
+          `service:${serviceId}`
         )
       }
     } catch (error) {
       return createErrorResponse(
         `Error retrieving from service '${serviceId}': ${
           (error as Error).message
-        }`
+        }`,
+        `service:${serviceId}`
       )
     }
   }
@@ -307,32 +340,37 @@ export default ({
 
         try {
           // Authorize and mutate in right order
-          return isIncoming
-            ? authorizeDataToService(
-                castAction(
-                  await mutateRequest(nextAction, isIncoming),
-                  allowRawRequest,
-                  true // isRequest
-                ),
-                allowRawRequest
-              )
-            : await mutateRequest(
-                authorizeDataToService(
+          return setOriginOnAction(
+            isIncoming
+              ? authorizeDataToService(
                   castAction(
-                    nextAction,
+                    await mutateRequest(nextAction, isIncoming),
                     allowRawRequest,
                     true // isRequest
                   ),
                   allowRawRequest
+                )
+              : await mutateRequest(
+                  authorizeDataToService(
+                    castAction(
+                      nextAction,
+                      allowRawRequest,
+                      true // isRequest
+                    ),
+                    allowRawRequest
+                  ),
+                  isIncoming
                 ),
-                isIncoming
-              )
+            'mutate:request',
+            false
+          )
         } catch (error) {
           return setErrorOnAction(
             action,
             `Error while mutating request: ${
               error instanceof Error ? error.message : String(error)
-            }`
+            }`,
+            'mutate:request'
           )
         }
       },
@@ -347,17 +385,25 @@ export default ({
         try {
           // Authorize and mutate in right order
           const mutated = isIncoming
-            ? await mutateResponse(
-                authorizeDataFromService(
-                  castAction(action, allowRawResponse),
-                  allowRawResponse
+            ? setOriginOnAction(
+                await mutateResponse(
+                  authorizeDataFromService(
+                    castAction(action, allowRawResponse),
+                    allowRawResponse
+                  ),
+                  isIncoming
                 ),
-                isIncoming
+                'mutate:response',
+                false
               )
             : authorizeDataFromService(
-                castAction(
-                  await mutateResponse(action, isIncoming),
-                  allowRawResponse
+                setOriginOnAction(
+                  castAction(
+                    await mutateResponse(action, isIncoming),
+                    allowRawResponse
+                  ),
+                  'mutate:response',
+                  false
                 ),
                 allowRawResponse
               )
@@ -368,7 +414,8 @@ export default ({
             ...createErrorResponse(
               `Error while mutating response: ${
                 error instanceof Error ? error.message : String(error)
-              }`
+              }`,
+              'mutate:response'
             ),
           }
         }
@@ -379,21 +426,26 @@ export default ({
        * and the response from the service is returned.
        */
       async send(action) {
+        // Do nothing if the action response already has a status
         if (action.response?.status) {
           return action.response
         }
 
-        if (!isTransporter(transporter)) {
+        // Fail if we have no transporter or connection. The second is because
+        // of the first, so it's really the same error.
+        if (!isTransporter(transporter) || !connection) {
           return createErrorResponse(
-            `Service '${serviceId}' has no transporter`
+            `Service '${serviceId}' has no transporter`,
+            `internal:service:${serviceId}`
           )
-        }
-        if (!connection) {
-          return createErrorResponse(`Service '${serviceId}' has no connection`)
         }
 
         if (!action.meta?.authorized) {
-          return createErrorResponse('Not authorized')
+          return createErrorResponse(
+            'Not authorized',
+            `internal:service:${serviceId}`,
+            'autherror'
+          )
         }
 
         // When an authenticator is set: Authenticate and apply result to action
@@ -401,13 +453,16 @@ export default ({
           await authorization.authenticate(action)
           action = authorization.applyToAction(action, transporter)
           if (action.response?.status) {
-            return action.response
+            return setOrigin(action.response, `service:${serviceId}`, true)
           }
         }
 
-        return runThroughMiddleware(
-          sendToTransporter(transporter, connection, serviceId)
-        )(action)
+        return setOrigin(
+          await runThroughMiddleware(
+            sendToTransporter(transporter, connection, serviceId)
+          )(action),
+          `middleware:service:${serviceId}`
+        )
       },
 
       /**
@@ -417,21 +472,27 @@ export default ({
        */
       async listen(dispatch) {
         debug('Set up service listening ...')
+
         if (!isTransporter(transporter)) {
           debug(`Service '${serviceId}' has no transporter`)
           return createErrorResponse(
-            `Service '${serviceId}' has no transporter`
+            `Service '${serviceId}' has no transporter`,
+            `internal:service:${serviceId}`
           )
         }
         if (!connection) {
-          debug(`Service '${serviceId}' has no connection`)
-          return createErrorResponse(`Service '${serviceId}' has no connection`)
+          debug(`Service '${serviceId}' has no open connection`)
+          return createErrorResponse(
+            `Service '${serviceId}' has no open connection`,
+            `service:${serviceId}`
+          )
         }
 
         if (typeof transporter.listen !== 'function') {
           debug('Transporter has no listen method')
           return createErrorResponse(
             'Transporter has no listen method',
+            `service:${serviceId}`,
             'noaction'
           )
         }
@@ -443,13 +504,18 @@ export default ({
           debug('Transporter is not configured to listen')
           return createErrorResponse(
             'Transporter is not configured to listen',
+            `service:${serviceId}`,
             'noaction'
           )
         }
 
         if (authorization && !(await authorization.authenticate(null))) {
           debug('Could not authenticate')
-          return authorization.getStatusObject()
+          return setOrigin(
+            authorization.getStatusObject(),
+            `service:${serviceId}`,
+            true
+          )
         }
 
         if (
@@ -457,7 +523,8 @@ export default ({
         ) {
           debug(`Could not listen to '${serviceId}' service. Failed to connect`)
           return createErrorResponse(
-            `Could not listen to '${serviceId}' service. Failed to connect`
+            `Could not listen to '${serviceId}' service. Failed to connect`,
+            `service:${serviceId}`
           )
         }
 
@@ -471,6 +538,7 @@ export default ({
           dispatchIncomingWithMiddleware(
             dispatch,
             incomingMiddleware,
+            serviceId,
             incomingAuth
           ),
           connection.object
@@ -484,7 +552,11 @@ export default ({
         debug(`Close service '${serviceId}'`)
         if (!isTransporter(transporter) || !connection) {
           debug('No transporter to disconnect')
-          return createErrorResponse('No transporter to disconnect', 'noaction')
+          return createErrorResponse(
+            'No transporter to disconnect',
+            `internal:service:${serviceId}`,
+            'noaction'
+          )
         }
 
         await transporter.disconnect(connection.object)

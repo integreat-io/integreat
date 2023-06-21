@@ -36,6 +36,7 @@ export function setResponseOnAction(action: Action, response?: Response) {
  */
 export function createErrorResponse(
   error: unknown,
+  origin: string,
   status = 'error'
 ): Response {
   return {
@@ -46,6 +47,7 @@ export function createErrorResponse(
         : typeof error === 'string'
         ? error
         : 'Unknown error',
+    ...(origin ? { origin } : {}),
   }
 }
 
@@ -55,10 +57,39 @@ export function createErrorResponse(
 export function setErrorOnAction(
   action: Action,
   error: unknown,
+  origin: string,
   status = 'error'
 ): Action {
   return setResponseOnAction(action, {
     ...action.response,
-    ...createErrorResponse(error, status),
+    ...createErrorResponse(error, origin, status),
   })
 }
+
+// Set origin on response if status is not ok.
+export const setOrigin = (
+  response: Response,
+  origin: string,
+  doPrefix = false
+) =>
+  response.status === 'ok' || response.status === 'queued'
+    ? response
+    : {
+        ...response,
+        origin: response.origin
+          ? doPrefix
+            ? `${origin}:${response.origin}` // Prefix existing origin
+            : response.origin // Keep existing origin as-is
+          : origin,
+      }
+
+// Set on response of action if status is not ok.
+export const setOriginOnAction = (
+  action: Action,
+  origin: string,
+  doPrefix = false
+) =>
+  typeof action.response?.status === 'string' &&
+  action.response?.status !== 'ok'
+    ? { ...action, response: setOrigin(action.response, origin, doPrefix) }
+    : action

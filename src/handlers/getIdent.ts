@@ -63,6 +63,7 @@ const prepareResponse = (
       `Could not find ident with params ${util.inspect(params)}, error: ${
         response.error
       }`,
+      'handler:GET_IDENT',
       'notfound'
     )
   }
@@ -79,6 +80,7 @@ export default async function getIdent(
   if (!ident) {
     return createErrorResponse(
       'GET_IDENT: The request has no ident',
+      'handler:GET_IDENT',
       'noaction'
     )
   }
@@ -89,6 +91,7 @@ export default async function getIdent(
   if (!type) {
     return createErrorResponse(
       'GET_IDENT: Integreat is not set up with authentication',
+      'handler:GET_IDENT',
       'noaction'
     )
   }
@@ -98,6 +101,7 @@ export default async function getIdent(
   if (!params) {
     return createErrorResponse(
       'GET_IDENT: The request has no ident with id or withToken',
+      'handler:GET_IDENT',
       'noaction'
     )
   }

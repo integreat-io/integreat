@@ -1082,6 +1082,7 @@ When you dispatch an action, you will get a response object back in this format:
   data: <data from the service, usually mutated>,
   error: <error message>,
   warning: <warning message>,
+  origin: <code telling where an error originated>
   access: <holds the ident actually being used>,
   paging: <pagination objects>,
   params: <key/value pairs>,
@@ -1103,6 +1104,10 @@ When you dispatch an action, you will get a response object back in this format:
   should know, the warning message is where you'll get noticed. An example is
   when you get an array of data items, but some of them was removed due to the
   access of the ident on the action.
+- `origin`: When the response is an error (status is not `'ok'` or `'queue'`),
+  this property will hold a code for where the error originated. The goal is to
+  set it as close to the actual origin as possible. See
+  [list of origin codes](#origin-codes) below.
 - `access`: An object holding the `ident` that was actually being used. This may
   be different than the `meta.ident` on the action, as the ident may also be
   mutated or completed with roles etc. along the way.
@@ -1130,7 +1135,8 @@ the same as `action.meta.id`.
 
 ### Status codes
 
-The `status` or the action response will be one of the following status codes:
+The `status` property on the action response will be one of the following status
+codes:
 
 - `ok`: Everything is well, data is returned as expected
 - `queued`: The action has been queued. This is regarded as a success status
@@ -1143,6 +1149,32 @@ The `status` or the action response will be one of the following status codes:
 - `badrequest`: Request data is not as expected
 - `badresponse`: Response data is not as expected
 - `error`: Any other error
+
+### Origin codes
+
+The `origin` property is not exclusively defined, but these are some of the more
+common codes:
+
+- `service:<service id>`: The error originated in service. There may also be
+  third level of detail here, if the service sets an origin code of its own.
+  E.g. `'service:entries:handshake`.
+- `middleware:service:<service id>`: The error happened in the middleware chain
+  on the service side.
+- `internal:service:<service id>`: Used for errors in the service class, that
+  has nothing to do with the actual service, e.g. if the service class is not
+  configured correctly.
+- `mutate:request`: The error was set in a request mutation pipeline.
+- `mutate:response`: The error was set in a response mutation pipeline.
+- `auth:action`: The error occured while attempting to authorize the action.
+- `auth:data`: The error occured while attempting to authorize data in an
+  action payload or a response.
+- `handler:<handler id>`: The error occurred with the handler with the given id,
+  e.g. `'handler:GET'`. This means the error did happen in the service or the
+  mutation pipelines, but in the internal workings of then handler.
+- `middleware:dispatch`: The error happened within the middleware chain, on the
+  `dispatch()` end (not on the service end).
+- `dispatch`: This is the lowest level of origin, as the error happened within
+  the `dispatch()` method.
 
 ### Idents
 

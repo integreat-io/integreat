@@ -29,6 +29,7 @@ export default async function service(
     ? response
     : createErrorResponse(
         `Service '${serviceId}' did not respond correctly to SERVICE action`,
+        'handler:SERVICE',
         'badresponse'
       )
 }

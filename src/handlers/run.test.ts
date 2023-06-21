@@ -223,7 +223,9 @@ test('should not run second action when first in sequence fails', async (t) => {
     ...handlerResources,
     dispatch,
   })
-  const expectedErrorResponses = [{ status: 'timeout', error: 'Too slow' }]
+  const expectedErrorResponses = [
+    { status: 'timeout', error: 'Too slow', origin: 'handler:RUN' },
+  ]
 
   t.is(dispatch.callCount, 1) // Should break after first step
   t.is(ret.status, 'error', ret.error)
@@ -448,17 +450,22 @@ test('should run all actions in parallel even if one of them fails', async (t) =
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action3', the following steps failed: 'setEntry' (timeout: Too slow)",
+    responses: [
+      { status: 'timeout', error: 'Too slow', origin: 'handler:RUN' },
+    ],
+    origin: 'handler:RUN',
+  }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.status, 'error', ret.error)
-  t.is(
-    ret.error,
-    "Could not finish job 'action3', the following steps failed: 'setEntry' (timeout: Too slow)"
-  )
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
 })
 
@@ -505,6 +512,15 @@ test('should not run next step after any parallel steps failed', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action6', the following steps failed: 'getEntries' (timeout: Too slow)",
+    responses: [
+      { status: 'timeout', error: 'Too slow', origin: 'handler:RUN' },
+    ],
+    origin: 'handler:RUN',
+  }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
@@ -512,7 +528,7 @@ test('should not run next step after any parallel steps failed', async (t) => {
   })
 
   t.is(dispatch.callCount, 2) // Only the two parallel steps should run
-  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret, expected)
 })
 
 test('should return error from all parallel actions', async (t) => {
@@ -556,17 +572,24 @@ test('should return error from all parallel actions', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action3', the following steps failed: 'setEntry' (timeout: Too slow), 'setDate' (timeout: Too slow)",
+    responses: [
+      { status: 'timeout', error: 'Too slow', origin: 'handler:RUN' },
+      { status: 'timeout', error: 'Too slow', origin: 'handler:RUN' },
+    ],
+
+    origin: 'handler:RUN',
+  }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.status, 'error', ret.error)
-  t.is(
-    ret.error,
-    "Could not finish job 'action3', the following steps failed: 'setEntry' (timeout: Too slow), 'setDate' (timeout: Too slow)"
-  )
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
 })
 
@@ -658,17 +681,20 @@ test('should handle rejections in parallel steps', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action3', the following steps failed: 'setEntry' (rejected: Failure!)",
+    responses: [{ status: 'rejected', error: 'Failure!' }],
+    origin: 'handler:RUN',
+  }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.status, 'error', ret.error)
-  t.is(
-    ret.error,
-    "Could not finish job 'action3', the following steps failed: 'setEntry' (rejected: Failure!)"
-  )
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
 })
 
@@ -832,17 +858,21 @@ test('should not continue flow when condition marked with break fails', async (t
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action6', the following steps failed: 'getEntries' (badrequest: Must be called with an id)",
+    responses: [{ status: 'badrequest', error: 'Must be called with an id' }],
+    origin: 'handler:RUN',
+  }
+
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
   t.is(dispatch.callCount, 0) // No steps should be run
-  t.is(ret.status, 'error', ret.error)
-  t.is(
-    ret.error,
-    "Could not finish job 'action6', the following steps failed: 'getEntries' (badrequest: Must be called with an id)"
-  )
+  t.deepEqual(ret, expected)
 })
 
 test('should run second action when its conditions are fulfilled', async (t) => {
@@ -942,13 +972,21 @@ test('should validate conditions in parallel actions', async (t) => {
     ...handlerResources,
     dispatch,
   })
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' })",
+    responses: [
+      {
+        status: 'error',
+        error: "'action.payload.id' did not pass { type: 'string' }",
+      },
+    ],
+    origin: 'handler:RUN',
+  }
 
   t.is(dispatch.callCount, 1) // Only the first step should run
-  t.is(ret.status, 'error', ret.error)
-  t.is(
-    ret.error,
-    "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' })"
-  )
+  t.deepEqual(ret, expected)
 })
 
 test('should return error from conditions in parallel actions even though others give noaction', async (t) => {
@@ -1001,17 +1039,26 @@ test('should return error from conditions in parallel actions even though others
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' }), 'setDate' (noaction: 'action.payload.id' did not pass { type: 'string' })",
+    responses: [
+      {
+        status: 'error',
+        error: "'action.payload.id' did not pass { type: 'string' }",
+      },
+    ],
+    origin: 'handler:RUN',
+  }
+
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
   t.is(dispatch.callCount, 0) // None should run
-  t.is(ret.status, 'error', ret.error)
-  t.is(
-    ret.error,
-    "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' }), 'setDate' (noaction: 'action.payload.id' did not pass { type: 'string' })"
-  )
+  t.deepEqual(ret, expected)
 })
 
 test('should return noaction when job has an empty flow', async (t) => {
@@ -1029,13 +1076,17 @@ test('should return noaction when job has an empty flow', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'noaction',
+    origin: 'handler:RUN',
+  }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.status, 'noaction', ret.error)
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 0)
 })
 
@@ -1054,14 +1105,18 @@ test('should return notfound for unknown job', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'notfound',
+    error: "No valid job with id 'action0'",
+    origin: 'handler:RUN',
+  }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.status, 'notfound', ret.error)
-  t.is(ret.error, "No valid job with id 'action0'")
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 0)
 })
 
@@ -1852,6 +1907,7 @@ test('should fail step if an iteration step fails', async (t) => {
         data: [{ id: 'ent1', $type: 'entry' }, undefined],
       },
     ],
+    origin: 'handler:RUN',
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -2022,14 +2078,19 @@ test('should return response with error message', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'error',
+    error: 'No data',
+    data: { errorMessage: 'No data' },
+    origin: 'handler:RUN',
+  }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.status, 'error', ret.error)
-  t.deepEqual(ret.error, 'No data')
+  t.deepEqual(ret, expected)
 })
 
 test('should join array of error messsages', async (t) => {
@@ -2062,14 +2123,19 @@ test('should join array of error messsages', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'error',
+    error: 'No data | And no fun either',
+    data: { errorMessages: ['No data', 'And no fun either'] },
+    origin: 'handler:RUN',
+  }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.status, 'error', ret.error)
-  t.deepEqual(ret.error, 'No data | And no fun either')
+  t.deepEqual(ret, expected)
 })
 
 test('should return response with responseMutation pipeline', async (t) => {
@@ -2165,7 +2231,8 @@ test('should run responseMutation pipeline on response from step', async (t) => 
   }
   const expected = {
     status: 'error',
-    responses: [{ status: 'error' }],
+    responses: [{ status: 'error', origin: 'handler:RUN' }],
+    origin: 'handler:RUN',
   }
 
   const ret = await run(jobs, mapOptions)(action, {
@@ -2256,8 +2323,10 @@ test('should return error from a sub-flow started with RUN and make it available
             error: 'Need at least one data item',
           },
         ],
+        origin: 'handler:RUN',
       },
     ],
+    origin: 'handler:RUN',
   }
 
   const ret = await runFn(action, { ...handlerResources, dispatch })
@@ -2362,14 +2431,18 @@ test('should return response with error from data', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'error',
+    error: 'No data',
+    origin: 'handler:RUN',
+  }
 
   const ret = await run(jobs, mapOptions)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(ret.status, 'error', ret.error)
-  t.deepEqual(ret.error, 'No data')
+  t.deepEqual(ret, expected)
 })
 
 test('should return error when job has no action or flow', async (t) => {
@@ -2391,6 +2464,7 @@ test('should return error when job has no action or flow', async (t) => {
   const expected = {
     status: 'notfound',
     error: "No valid job with id 'action0'",
+    origin: 'handler:RUN',
   }
 
   const ret = await run(jobs, mapOptions)(action, {

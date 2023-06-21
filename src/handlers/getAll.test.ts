@@ -497,13 +497,16 @@ test('should recognize loop and return error', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
+  const expected = {
+    status: 'error',
+    error: 'GET_ALL detected a possible infinite loop',
+    origin: 'handler:GET_ALL',
+  }
 
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   t.is(dispatch.callCount, 2)
-  t.is(ret.status, 'error', ret.error)
-  t.is(ret.error, 'GET_ALL detected a possible infinite loop')
-  t.falsy(ret.data)
+  t.deepEqual(ret, expected)
 })
 
 test('should not look for loop when noLoopCheck is true', async (t) => {
@@ -546,7 +549,11 @@ test('should return error', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const expected = { status: 'notfound', error: 'Unknown endpoint' }
+  const expected = {
+    status: 'notfound',
+    error: 'Unknown endpoint',
+    origin: 'handler:GET_ALL',
+  }
 
   const ret = await getAll(action, { ...handlerResources, dispatch })
 

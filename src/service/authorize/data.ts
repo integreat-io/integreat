@@ -111,6 +111,7 @@ function getAuthedWithResponse(
       status: 'noaccess',
       error,
       reason,
+      origin: 'auth:data',
     }
   } else {
     return { data }
@@ -159,6 +160,9 @@ const authorizeDataBase = (
             ...(!action.response?.error && error && { error }),
             ...(!action.response?.error && reason && { reason }),
             ...(warning && { warning }),
+            ...(isError(status)
+              ? { origin: action.response?.origin || 'auth:data' }
+              : {}),
             status,
           }
         : undefined

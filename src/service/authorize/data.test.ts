@@ -173,6 +173,7 @@ test('should return undefined when one item is unauthorized by ident', (t) => {
       error:
         "Authentication was refused for type 'account' on service 'entries'",
       reason: 'WRONG_IDENT',
+      origin: 'auth:data',
     },
   }
 
@@ -195,6 +196,7 @@ test('should return undefined when one item is unauthorized by role', (t) => {
       data: undefined,
       error: "Authentication was refused for type 'account'",
       reason: 'MISSING_ROLE',
+      origin: 'auth:data',
     },
   }
 
@@ -211,6 +213,7 @@ test('should not override existing error', (t) => {
       status: 'error',
       data: account1,
       error: 'Wrongdoing in service',
+      origin: 'service:entries',
     },
     meta: { ident: { id: 'johnf' } },
   }
@@ -220,6 +223,7 @@ test('should not override existing error', (t) => {
       ...action.response,
       data: undefined,
       error: 'Wrongdoing in service',
+      origin: 'service:entries',
     },
   }
 
@@ -242,6 +246,7 @@ test('should override ok status', (t) => {
       data: undefined,
       error: "Authentication was refused for type 'account'",
       reason: 'WRONG_IDENT',
+      origin: 'auth:data',
     },
   }
 
@@ -265,6 +270,7 @@ test('should not authorize non-typed data for regular user', (t) => {
       error:
         "Authentication was refused for raw response data from service 'accounts'",
       reason: 'RAW_DATA',
+      origin: 'auth:data',
     },
   }
 
@@ -373,6 +379,7 @@ test('should not authorize non-typed request data for regular user', (t) => {
       error:
         "Authentication was refused for raw request data to service 'accounts'",
       reason: 'RAW_DATA',
+      origin: 'auth:data',
     },
   }
 

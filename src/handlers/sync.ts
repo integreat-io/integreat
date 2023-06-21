@@ -503,13 +503,15 @@ export default async function syncHandler(
     return createErrorResponse(
       `Failed to prepare params for SYNC: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
+      'handler:SYNC'
     )
   }
 
   if (fromParams.length === 0 || !toParams) {
     return createErrorResponse(
       'SYNC: `type`, `to`, and `from` parameters are required',
+      'handler:SYNC',
       'badrequest'
     )
   }
@@ -532,7 +534,8 @@ export default async function syncHandler(
     }
   } catch (error) {
     return createErrorResponse(
-      `SYNC: Could not get data. ${(error as Error).message}`
+      `SYNC: Could not get data. ${(error as Error).message}`,
+      'handler:SYNC'
     )
   }
   const gottenDataDate = new Date()
@@ -541,7 +544,11 @@ export default async function syncHandler(
 
   const response = await setData(dispatch, data, toParams, doQueueSet, meta)
   if (response.status !== 'ok') {
-    return createErrorResponse(response?.error, response?.status || 'error')
+    return createErrorResponse(
+      response?.error,
+      'handler:SYNC',
+      response?.status || 'error'
+    )
   }
 
   setProgress(0.9)

@@ -1,6 +1,21 @@
 /* eslint-disable security/detect-object-injection */
 import mapTransform from 'map-transform'
 import pLimit from 'p-limit'
+import { ensureArray } from '../utils/array.js'
+import validateFilters from '../utils/validateFilters.js'
+import {
+  setResponseOnAction,
+  setDataOnActionPayload,
+  createErrorResponse,
+  setOrigin,
+} from '../utils/action.js'
+import {
+  isJob,
+  isJobStep,
+  isJobWithAction,
+  isJobWithFlow,
+  isObject,
+} from '../utils/is.js'
 import type {
   TransformDefinition,
   TransformObject,
@@ -19,20 +34,6 @@ import type {
   JobWithAction,
 } from '../types.js'
 import type { MapOptions } from '../service/types.js'
-import {
-  setResponseOnAction,
-  setDataOnActionPayload,
-  createErrorResponse,
-} from '../utils/action.js'
-import {
-  isJob,
-  isJobStep,
-  isJobWithAction,
-  isJobWithFlow,
-  isObject,
-} from '../utils/is.js'
-import { ensureArray } from '../utils/array.js'
-import validateFilters from '../utils/validateFilters.js'
 
 type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType[number]
 
@@ -383,18 +384,21 @@ function getFlowResponse(
 
 const cleanUpResponse = (response?: Response): Response =>
   response
-    ? {
-        ...response,
-        status:
-          (response.status === 'ok' || !response.status) && response.error
-            ? 'error'
-            : response.status || 'ok',
-        ...(response.error && {
-          error: Array.isArray(response.error)
-            ? response.error.join(' | ')
-            : response.error,
-        }),
-      }
+    ? setOrigin(
+        {
+          ...response,
+          status:
+            (response.status === 'ok' || !response.status) && response.error
+              ? 'error'
+              : response.status || 'ok',
+          ...(response.error && {
+            error: Array.isArray(response.error)
+              ? response.error.join(' | ')
+              : response.error,
+          }),
+        },
+        'handler:RUN'
+      )
     : { status: 'ok' }
 
 function mutateResponse(
@@ -489,7 +493,11 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
     } = action
     const job = typeof jobId === 'string' ? jobs[jobId] : undefined
     if (!isJob(job)) {
-      return createErrorResponse(`No valid job with id '${jobId}'`, 'notfound')
+      return createErrorResponse(
+        `No valid job with id '${jobId}'`,
+        'handler:RUN',
+        'notfound'
+      )
     }
 
     const prevResponses = { action } // Include the incoming action in previous responses, to allow mutating from it
@@ -506,13 +514,12 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
     if (isJobWithAction(job)) {
       return cleanUpResponse(response) // The response has alreay been mutated
     } else {
-      const mutatedResponse = mutateResponse(
+      return mutateResponse(
         action,
         response,
         job,
         { ...responses, action: setResponseOnAction(action, response) }, // TODO: Is this necessary?
         mapOptions
       ) // Mutate response
-      return mutatedResponse || { status: 'ok' } // TODO: Necessary?
     }
   }

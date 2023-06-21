@@ -75,6 +75,7 @@ test('should return error when service does not return a status', async (t) => {
   const expected = {
     status: 'badresponse',
     error: "Service 'someService' did not respond correctly to SERVICE action",
+    origin: 'handler:SERVICE',
   }
 
   const ret = await service(action, { ...handlerResources, getService })
@@ -95,6 +96,7 @@ test('should return error when service is unknown', async (t) => {
   const expected = {
     status: 'error',
     error: "Service with id 'unknown' does not exist",
+    origin: 'handler:SERVICE',
   }
 
   const ret = await service(action, { ...handlerResources, getService })

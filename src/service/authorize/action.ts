@@ -149,7 +149,13 @@ export default (schemas: Record<string, Schema>, requireAuth: boolean) =>
         if (reason || error) {
           return {
             ...action,
-            response: { ...action.response, status: 'noaccess', error, reason },
+            response: {
+              ...action.response,
+              status: 'noaccess',
+              error,
+              reason,
+              origin: 'auth:action',
+            },
             meta: { ...action.meta, authorized: false },
           }
         }

@@ -78,17 +78,21 @@ export default async function expire(
 
   if (!serviceId) {
     return createErrorResponse(
-      `Can't delete expired without a specified service`
+      `Can't delete expired without a specified service`,
+      'handler:EXPIRE'
     )
   }
   if (!endpointId) {
     return createErrorResponse(
-      `Can't delete expired from service '${serviceId}' without an endpoint`
+      `Can't delete expired from service '${serviceId}' without an endpoint`,
+      'handler:EXPIRE'
     )
   }
   if (!type) {
     return createErrorResponse(
-      `Can't delete expired from service '${serviceId}' without one or more specified types`
+      `Can't delete expired from service '${serviceId}' without one or more specified types`,
+      'handler:EXPIRE',
+      'badrequest'
     )
   }
 
@@ -105,13 +109,14 @@ export default async function expire(
   if (expiredResponse.status !== 'ok') {
     return createErrorResponse(
       `Could not get items from service '${serviceId}'. Reason: ${expiredResponse.status} ${expiredResponse.error}`,
-      'error'
+      'handler:EXPIRE'
     )
   }
   const data = expiredResponse.data
   if (!isTypedDataArray(data)) {
     return createErrorResponse(
       `No items to expire from service '${serviceId}'`,
+      'handler:EXPIRE',
       'noaction'
     )
   }

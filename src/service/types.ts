@@ -25,10 +25,6 @@ export interface ActionMapper {
   (action: Action): Action
 }
 
-export interface AsyncActionMapper {
-  (action: Action): Promise<Response>
-}
-
 export type AuthOptions = Record<string, unknown>
 
 export interface Authentication extends Record<string, unknown> {
@@ -89,7 +85,7 @@ export interface Service {
     endpoint: Endpoint,
     isIncoming?: boolean
   ) => Promise<Response>
-  send: AsyncActionMapper
+  send: (action: Action) => Promise<Response>
   listen: (dispatch: Dispatch) => Promise<Response>
   close: () => Promise<Response>
 }

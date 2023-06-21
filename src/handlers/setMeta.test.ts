@@ -199,10 +199,15 @@ test('should not set metadata on service when no meta type', async (t) => {
     },
     meta: { ident },
   }
+  const expected = {
+    status: 'noaction',
+    error: "Service 'store' doesn't support metadata (setting was 'undefined')",
+    origin: 'handler:SET_META',
+  }
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'noaction', ret.error)
+  t.deepEqual(ret, expected)
   t.false(scope.isDone())
 })
 
@@ -256,10 +261,15 @@ test('should return status noaction when meta is set to an unknown schema', asyn
     },
     meta: { ident },
   }
+  const expected = {
+    status: 'noaction',
+    error: "Service 'store' doesn't support metadata (setting was 'unknown')",
+    origin: 'handler:SET_META',
+  }
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'noaction', ret.error)
+  t.deepEqual(ret, expected)
   t.is(typeof ret.error, 'string')
 })
 
@@ -280,10 +290,17 @@ test('should refuse setting metadata on service when not authorized', async (t) 
       targetService: 'store',
     },
   }
+  const expected = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'meta'",
+    reason: 'NO_IDENT',
+    origin: 'auth:action',
+    data: undefined,
+  }
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'noaccess', ret.error)
+  t.deepEqual(ret, expected)
   t.false(scope.isDone())
 })
 
@@ -297,8 +314,13 @@ test('should return error for unknown service', async (t) => {
     },
     meta: { ident },
   }
+  const expected = {
+    status: 'error',
+    error: "Service 'unknown' doesn't exist",
+    origin: 'handler:SET_META',
+  }
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret, expected)
 })

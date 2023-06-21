@@ -98,10 +98,15 @@ test('should not SET with no data', async (t) => {
       SET: { status: 'ok' },
     })
   )
+  const expected = {
+    status: 'noaction',
+    error: 'SYNC: No data to set',
+    origin: 'handler:SYNC',
+  }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.status, 'noaction', ret.error)
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
   t.is(dispatch.args[0][0].type, 'GET')
 })
@@ -853,14 +858,16 @@ test('should return error when lastSyncedAt could not be fetched', async (t) => 
       SET: { status: 'ok' },
     })
   )
+  const expected = {
+    status: 'error',
+    error:
+      "Failed to prepare params for SYNC: Could not fetch last synced date for service 'entries': [timeout] Too slow",
+    origin: 'handler:SYNC',
+  }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.status, 'error', ret.error)
-  t.is(
-    ret.error,
-    "Failed to prepare params for SYNC: Could not fetch last synced date for service 'entries': [timeout] Too slow"
-  )
+  t.deepEqual(ret, expected)
 })
 
 test('should filter away data updated before updatedAfter or after updatedUntil', async (t) => {
@@ -1581,15 +1588,19 @@ test('should return error when get action fails', async (t) => {
   }
   const dispatch = sinon.spy(
     setupDispatch({
-      GET: createErrorResponse('Fetching failed'),
+      GET: createErrorResponse('Fetching failed', 'handler:GET'),
       SET: { status: 'ok' },
     })
   )
+  const expected = {
+    status: 'error',
+    error: 'SYNC: Could not get data. Fetching failed',
+    origin: 'handler:SYNC',
+  }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.status, 'error', ret.error)
-  t.is(ret.error, 'SYNC: Could not get data. Fetching failed')
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
 })
 
@@ -1602,17 +1613,18 @@ test('should return error when set action fails', async (t) => {
   const dispatch = sinon.spy(
     setupDispatch({
       GET: { status: 'ok', data },
-      SET: createErrorResponse('Service is sleeping'),
+      SET: createErrorResponse('Service is sleeping', 'handler:SET'),
     })
   )
+  const expected = {
+    status: 'error',
+    error: 'SYNC: Could not set data. Set 0 of 2 items. Service is sleeping',
+    origin: 'handler:SYNC',
+  }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.status, 'error', ret.error)
-  t.is(
-    ret.error,
-    'SYNC: Could not set data. Set 0 of 2 items. Service is sleeping'
-  )
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
 })
 
@@ -1633,11 +1645,15 @@ test('should return error from first SET action with maxPerSet', async (t) => {
       SET: [{ status: 'timeout' }, { status: 'ok' }],
     })
   )
+  const expected = {
+    status: 'timeout',
+    error: 'SYNC: Could not set data. Set 0 of 3 items.',
+    origin: 'handler:SYNC',
+  }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.status, 'timeout', ret.error)
-  t.is(ret.error, 'SYNC: Could not set data. Set 0 of 3 items.')
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
 })
 
@@ -1658,11 +1674,15 @@ test('should return error from second SET action with maxPerSet', async (t) => {
       SET: [{ status: 'ok' }, { status: 'timeout' }],
     })
   )
+  const expected = {
+    status: 'timeout',
+    error: 'SYNC: Could not set data. Set 2 of 3 items.',
+    origin: 'handler:SYNC',
+  }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.status, 'timeout', ret.error)
-  t.is(ret.error, 'SYNC: Could not set data. Set 2 of 3 items.')
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 3)
 })
 
@@ -1678,10 +1698,14 @@ test('should return badrequest when missing from and to', async (t) => {
       SET: { status: 'ok' },
     })
   )
+  const expected = {
+    status: 'badrequest',
+    error: 'SYNC: `type`, `to`, and `from` parameters are required',
+    origin: 'handler:SYNC',
+  }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  t.is(ret.status, 'badrequest', ret.error)
-  t.is(ret.error, 'SYNC: `type`, `to`, and `from` parameters are required')
+  t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 0)
 })

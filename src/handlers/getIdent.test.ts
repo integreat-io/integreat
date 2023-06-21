@@ -91,11 +91,15 @@ test('should return noaction when no props', async (t) => {
     payload: {},
     meta: { ident: {} },
   }
+  const expected = {
+    status: 'noaction',
+    error: 'GET_IDENT: The request has no ident with id or withToken',
+    origin: 'handler:GET_IDENT',
+  }
 
   const ret = await getIdent(action, handlerResources)
 
-  t.is(ret.status, 'noaction', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
 })
 
 test('should return noaction when null', async (t) => {
@@ -104,11 +108,15 @@ test('should return noaction when null', async (t) => {
     payload: {},
     meta: { ident: undefined },
   }
+  const expected = {
+    status: 'noaction',
+    error: 'GET_IDENT: The request has no ident',
+    origin: 'handler:GET_IDENT',
+  }
 
   const ret = await getIdent(action, handlerResources)
 
-  t.is(ret.status, 'noaction', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
 })
 
 test('should return noaction when no ident options', async (t) => {
@@ -118,25 +126,34 @@ test('should return noaction when no ident options', async (t) => {
     meta: { ident: { withToken: 'twitter|23456' } },
   }
   const options = {}
+  const expected = {
+    status: 'noaction',
+    error: 'GET_IDENT: Integreat is not set up with authentication',
+    origin: 'handler:GET_IDENT',
+  }
 
   const ret = await getIdent(action, { ...handlerResources, options })
 
-  t.is(ret.status, 'noaction', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
 })
 
 test('should return notfound when ident not found', async (t) => {
+  nock('http://some.api').get('/users/unknown').reply(404)
   const action = {
     type: 'GET_IDENT',
     payload: {},
     meta: { ident: { id: 'unknown' } },
   }
+  const expected = {
+    status: 'notfound',
+    error:
+      "Could not find ident with params { id: 'unknown' }, error: Could not find the url users/unknown",
+    origin: 'handler:GET_IDENT',
+  }
 
   const ret = await getIdent(action, handlerResources)
 
-  t.truthy(ret)
-  t.is(ret.status, 'notfound', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
 })
 
 test('should complete ident with other prop keys', async (t) => {
@@ -187,9 +204,14 @@ test('should return notfound when unknown service', async (t) => {
     payload: {},
     meta: { ident: { withToken: 'twitter|23456' } },
   }
+  const expected = {
+    status: 'notfound',
+    error:
+      "Could not find ident with params { tokens: 'twitter|23456' }, error: No service exists for type 'user'",
+    origin: 'handler:GET_IDENT',
+  }
 
   const ret = await getIdent(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'notfound')
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
 })

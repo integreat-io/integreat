@@ -129,12 +129,16 @@ test('should not queue when no expired entries', async (t) => {
     type: 'EXPIRE',
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
   }
+  const expected = {
+    status: 'noaction',
+    error: "No items to expire from service 'store'",
+    origin: 'handler:EXPIRE',
+  }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
   t.false(dispatch.calledWithMatch({ type: 'DELETE' }))
-  t.truthy(ret)
-  t.is(ret.status, 'noaction', ret.error)
+  t.deepEqual(ret, expected)
 })
 
 test('should not queue when GET returns error', async (t) => {
@@ -146,12 +150,17 @@ test('should not queue when GET returns error', async (t) => {
     type: 'EXPIRE',
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
   }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not get items from service 'store'. Reason: notfound undefined",
+    origin: 'handler:EXPIRE',
+  }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
   t.false(dispatch.calledWithMatch({ type: 'DELETE' }))
-  t.truthy(ret)
-  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret, expected)
 })
 
 test('should return error when no service', async (t) => {
@@ -160,10 +169,15 @@ test('should return error when no service', async (t) => {
     type: 'EXPIRE',
     payload: { type: 'entry', endpoint: 'getExpired' },
   }
+  const expected = {
+    status: 'error',
+    error: "Can't delete expired without a specified service",
+    origin: 'handler:EXPIRE',
+  }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
-  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret, expected)
 })
 
 test('should return error when no endpoint', async (t) => {
@@ -172,10 +186,15 @@ test('should return error when no endpoint', async (t) => {
     type: 'EXPIRE',
     payload: { type: 'entry', targetService: 'store' },
   }
+  const expected = {
+    status: 'error',
+    error: "Can't delete expired from service 'store' without an endpoint",
+    origin: 'handler:EXPIRE',
+  }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
-  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret, expected)
 })
 
 test('should return error when no type', async (t) => {
@@ -184,8 +203,14 @@ test('should return error when no type', async (t) => {
     type: 'EXPIRE',
     payload: { targetService: 'store', endpoint: 'getExpired' },
   }
+  const expected = {
+    status: 'badrequest',
+    error:
+      "Can't delete expired from service 'store' without one or more specified types",
+    origin: 'handler:EXPIRE',
+  }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
-  t.is(ret.status, 'error', ret.error)
+  t.deepEqual(ret, expected)
 })

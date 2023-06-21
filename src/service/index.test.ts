@@ -467,6 +467,7 @@ test('authorizeAction should refuse based on schema', (t) => {
       status: 'noaccess',
       error: "Authentication was refused, role required: 'admin'",
       reason: 'MISSING_ROLE',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -532,13 +533,17 @@ test('send should use service middleware', async (t) => {
       authorized: true,
     },
   }
+  const expected = {
+    status: 'badresponse',
+    origin: 'middleware:service:entries',
+  }
 
   const ret = await service.send(action)
 
-  t.is(ret.status, 'badresponse', ret.error)
+  t.deepEqual(ret, expected)
 })
 
-test('send should return error when no transport', async (t) => {
+test('send should return error when no transporter', async (t) => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -546,6 +551,7 @@ test('send should return error when no transport', async (t) => {
   }
   const service = setupService(mockResources(data))({
     id: 'entries',
+    // No transporter
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     auth: 'granting',
   })
@@ -560,6 +566,7 @@ test('send should return error when no transport', async (t) => {
   const expected = {
     status: 'error',
     error: "Service 'entries' has no transporter",
+    origin: 'internal:service:entries',
   }
 
   const ret = await service.send(action)
@@ -590,6 +597,7 @@ test('send should try to authenticate and return with error when it fails', asyn
   const expected = {
     status: 'noaccess',
     error: "Authentication attempt for 'refusing' was refused.",
+    origin: 'service:entries',
   }
 
   const ret = await service.send(action)
@@ -699,7 +707,11 @@ test('send should fail when not authorized', async (t) => {
       authorized: false,
     },
   }
-  const expected = { status: 'error', error: 'Not authorized' }
+  const expected = {
+    status: 'autherror',
+    error: 'Not authorized',
+    origin: 'internal:service:entries',
+  }
 
   const ret = await service.send(action)
 
@@ -826,17 +838,18 @@ test('send should return error when connection fails', async (t) => {
       authorized: true,
     },
   }
+  const expected = {
+    status: 'error',
+    error: "Could not connect to service 'entries'. [notfound] Not found",
+    origin: 'service:entries',
+  }
 
   const ret = await service.send(action)
 
-  t.is(ret.status, 'error')
-  t.is(
-    ret.error,
-    "Could not connect to service 'entries'. [notfound] Not found"
-  )
+  t.deepEqual(ret, expected)
 })
 
-test('send should retrieve error response from service', async (t) => {
+test('send should pass on error response from service', async (t) => {
   const resources = {
     ...jsonResources,
     transporters: {
@@ -866,7 +879,53 @@ test('send should retrieve error response from service', async (t) => {
       authorized: true,
     },
   }
-  const expected = { status: 'badrequest', error: 'Real bad request' }
+  const expected = {
+    status: 'badrequest',
+    error: 'Real bad request',
+    origin: 'service:entries',
+  }
+
+  const ret = await service.send(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('send should pass on error response from service and prefix origin', async (t) => {
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters!.http,
+        send: async (_action: Action) => ({
+          status: 'badrequest',
+          error: 'Real bad request',
+          origin: 'somewhere',
+        }),
+      },
+    },
+    mapOptions,
+    schemas,
+    castFns,
+  }
+  const service = setupService(resources)({
+    id: 'entries',
+    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    transporter: 'http',
+  })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    meta: {
+      ident: { id: 'johnf' },
+      authorized: true,
+    },
+  }
+  const expected = {
+    status: 'badrequest',
+    error: 'Real bad request',
+    origin: 'service:entries:somewhere',
+  }
 
   const ret = await service.send(action)
 
@@ -905,6 +964,7 @@ test('send should return with error when transport throws', async (t) => {
   const expected = {
     status: 'error',
     error: "Error retrieving from service 'entries': We did not expect this",
+    origin: 'service:entries',
   }
 
   const ret = await service.send(action)
@@ -937,7 +997,11 @@ test('send should do nothing when action has a response', async (t) => {
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    response: { status: 'badrequest', error: 'Bad request catched early' },
+    response: {
+      status: 'badrequest',
+      error: 'Bad request catched early',
+      origin: 'mutate:request',
+    },
     meta: {
       ident: { id: 'johnf' },
       authorized: true,
@@ -1063,6 +1127,51 @@ test('mutateResponse should mutate data object from service', async (t) => {
   t.false(Array.isArray(data))
   t.is(data.id, 'johnf')
   t.is(data.$type, 'account')
+})
+
+test('mutateResponse should set origin when mutation results in an error response', async (t) => {
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
+    id: 'accounts',
+    endpoints: [
+      {
+        mutation: {
+          response: {
+            status: { $value: 'error' },
+          },
+        },
+        options: { uri: 'http://some.api/1.0' },
+      },
+    ],
+    transporter: 'http',
+  })
+  const action = {
+    type: 'GET',
+    payload: { id: 'johnf', type: 'account' },
+    response: {
+      status: 'ok',
+      data: {
+        content: {
+          data: { accounts: { id: 'johnf', name: 'John F.' } },
+        },
+      },
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
+  const expected = {
+    status: 'error',
+    data: undefined,
+    origin: 'mutate:response',
+  }
+
+  const ret = await service.mutateResponse(action, endpoint!)
+
+  t.deepEqual(ret, expected)
 })
 
 test('mutateResponse should use service adapters', async (t) => {
@@ -1272,7 +1381,7 @@ test('mutateResponse should not cast data array from service when allowRawRespon
   t.deepEqual(ret, expected)
 })
 
-test('mutateResponse should map null to undefined', async (t) => {
+test('mutateResponse should mutate null to undefined', async (t) => {
   const service = setupService({
     mapOptions,
     schemas,
@@ -1389,12 +1498,17 @@ test('should authorize typed data object from service', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const endpoint = service.endpointFromAction(action)
+  const expected = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'account'",
+    origin: 'auth:data',
+    reason: 'WRONG_IDENT',
+    data: undefined,
+  }
 
   const ret = await service.mutateResponse(action, endpoint!)
 
-  t.is(ret.status, 'noaccess')
-  t.is(ret.data, undefined)
-  t.is(ret.error, "Authentication was refused for type 'account'")
+  t.deepEqual(ret, expected)
 })
 
 test('should authorize typed data in array to service', async (t) => {
@@ -1488,6 +1602,7 @@ test('mutateResponse should return error when transformer throws', async (t) => 
     ...action.response,
     status: 'error',
     error: 'Error while mutating response: Transformer error',
+    origin: 'mutate:response',
   }
 
   const ret = await service.mutateResponse(action, endpoint!)
@@ -1679,6 +1794,7 @@ test('mutateRequest should authorize data object going to service', async (t) =>
     status: 'noaccess',
     error: "Authentication was refused for type 'account'",
     reason: 'WRONG_IDENT',
+    origin: 'auth:data',
   }
 
   const ret = await service.mutateRequest(action, endpoint!)
@@ -1772,6 +1888,45 @@ test('mutateRequest should use mutation pipeline', async (t) => {
   t.deepEqual(ret.payload.data, expectedData)
 })
 
+test('mutateRequest set origin when mutation results in an error response', async (t) => {
+  const service = setupService({
+    mapOptions,
+    schemas,
+    castFns,
+    ...jsonResources,
+  })({
+    id: 'entries',
+    transporter: 'http',
+    endpoints: [
+      {
+        mutation: [
+          {
+            $flip: true,
+            response: {
+              status: { $value: 'error' },
+            },
+          },
+        ],
+        options: { uri: 'http://soap.api/1.1' },
+      },
+    ],
+  })
+  const action = {
+    type: 'SET',
+    payload: {},
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
+  const expectedResponse = {
+    status: 'error',
+    origin: 'mutate:request',
+  }
+
+  const ret = await service.mutateRequest(action, endpoint!)
+
+  t.deepEqual(ret.response, expectedResponse)
+})
+
 test('mutateRequest should return error when transformer throws', async (t) => {
   const willThrow = () => () => {
     throw new Error('Transformer error')
@@ -1812,6 +1967,7 @@ test('mutateRequest should return error when transformer throws', async (t) => {
     response: {
       status: 'error',
       error: 'Error while mutating request: Transformer error',
+      origin: 'mutate:request',
     },
   }
 
@@ -1884,6 +2040,7 @@ test('listen should not call transporter.listen when transport.shouldListen retu
   const expectedResponse = {
     status: 'noaction',
     error: 'Transporter is not configured to listen',
+    origin: 'service:entries',
   }
 
   const ret = await service.listen(dispatch)
@@ -2039,6 +2196,7 @@ test('listen should respond with error when authentication fails', async (t) => 
   const expectedResponse = {
     status: 'autherror',
     error: 'Missing API-TOKEN header',
+    origin: 'service:entries',
   }
 
   const ret = await service.listen(dispatchStub)
@@ -2194,6 +2352,7 @@ test('listen should return error when connection fails', async (t) => {
   const expectedResponse = {
     status: 'error',
     error: "Could not listen to 'entries' service. Failed to connect",
+    origin: 'service:entries',
   }
 
   const ret = await service.listen(dispatch)
@@ -2212,6 +2371,7 @@ test('listen should return error when authentication fails', async (t) => {
   const expectedResponse = {
     status: 'noaccess',
     error: "Authentication attempt for 'refusing' was refused.",
+    origin: 'service:entries',
   }
 
   const ret = await service.listen(dispatch)
@@ -2244,6 +2404,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
   const expectedResponse = {
     status: 'noaction',
     error: 'Transporter has no listen method',
+    origin: 'service:entries',
   }
 
   const ret = await service.listen(dispatch)
@@ -2277,6 +2438,7 @@ test('listen should return error when no transporter', async (t) => {
   const expectedResponse = {
     status: 'error',
     error: "Service 'entries' has no transporter",
+    origin: 'internal:service:entries',
   }
 
   const ret = await service.listen(dispatch)
@@ -2318,11 +2480,15 @@ test('listen should use service middleware', async (t) => {
     options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
+  const expected = {
+    status: 'badresponse',
+    origin: 'middleware:service:entries',
+  }
 
   await service.listen(dispatch)
   const ret = await listenDispatch!(action)
 
-  t.is(ret.status, 'badresponse', ret.error)
+  t.deepEqual(ret, expected)
 })
 
 test('listen should return noaction when incoming action is null', async (t) => {
@@ -2351,11 +2517,16 @@ test('listen should return noaction when incoming action is null', async (t) => 
     options: { incoming: { port: 8080 } },
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   })
+  const expected = {
+    status: 'noaction',
+    error: 'No action was dispatched',
+    origin: 'service:entries',
+  }
 
   await service.listen(dispatch)
   const ret = await listenDispatch!(null)
 
-  t.is(ret.status, 'noaction', ret.error)
+  t.deepEqual(ret, expected)
 })
 
 // Tests -- close
@@ -2420,7 +2591,8 @@ test('close should probihit closed connection from behind used again', async (t)
   })
   const expected = {
     status: 'error',
-    error: "Service 'entries' has no connection",
+    error: "Service 'entries' has no open connection",
+    origin: 'service:entries',
   }
 
   await service.listen(dispatch)
@@ -2447,6 +2619,7 @@ test('close should do nothing when no transporter', async (t) => {
   const expected = {
     status: 'noaction',
     error: 'No transporter to disconnect',
+    origin: 'internal:service:entries',
   }
 
   const ret = await service.close()

@@ -209,13 +209,16 @@ test('should return error from response', async (t) => {
       data: [{ id: 'ent1', $type: 'entry' }],
     },
   }
+  const expected = {
+    status: 'notfound',
+    data: undefined,
+    error: 'Could not find the url http://api5.test/database/bulk_delete',
+    origin: 'service:entries',
+  }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
-  t.truthy(ret)
-  t.is(ret.status, 'notfound', ret.error)
-  t.is(typeof ret.error, 'string')
-  t.falsy(ret.data)
+  t.deepEqual(ret, expected)
   t.true(scope.isDone())
 })
 
@@ -236,10 +239,15 @@ test('should return noaction when nothing to delete', async (t) => {
     type: 'DELETE',
     payload: { data: [], targetService: 'entries' },
   }
+  const expected = {
+    status: 'noaction',
+    error: "No items to delete from service 'entries'",
+    origin: 'handler:DELETE',
+  }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'noaction', ret.error)
+  t.deepEqual(ret, expected)
 })
 
 test('should skip null values in data array', async (t) => {
@@ -315,12 +323,15 @@ test('should return error when no service exists for a type', async (t) => {
     type: 'DELETE',
     payload: { id: 'ent1', type: 'entry' },
   }
+  const expected = {
+    status: 'error',
+    error: "No service exists for type 'entry'",
+    origin: 'handler:DELETE',
+  }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
-  t.truthy(ret)
-  t.is(ret.status, 'error', ret.error)
-  t.is(ret.error, "No service exists for type 'entry'")
+  t.deepEqual(ret, expected)
 })
 
 test('should return error when specified service does not exist', async (t) => {
@@ -329,12 +340,15 @@ test('should return error when specified service does not exist', async (t) => {
     type: 'DELETE',
     payload: { id: 'ent1', type: 'entry', targetService: 'entries' },
   }
+  const expected = {
+    status: 'error',
+    error: "Service with id 'entries' does not exist",
+    origin: 'handler:DELETE',
+  }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
-  t.truthy(ret)
-  t.is(ret.status, 'error', ret.error)
-  t.is(ret.error, "Service with id 'entries' does not exist")
+  t.deepEqual(ret, expected)
 })
 
 test('should return badrequest when no endpoint matches', async (t) => {
@@ -355,9 +369,13 @@ test('should return badrequest when no endpoint matches', async (t) => {
       targetService: 'entries',
     },
   }
+  const expected = {
+    status: 'badrequest',
+    error: "No endpoint matching DELETE request to service 'entries'.",
+    origin: 'handler:DELETE',
+  }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'badrequest', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
 })

@@ -264,11 +264,16 @@ test('should return error when service fails', async (t) => {
   }
   const src = setupService('http://api7.test/database/_bulk_docs')
   const getService = () => src
+  const expected = {
+    status: 'notfound',
+    error: 'Could not find the url http://api7.test/database/_bulk_docs',
+    origin: 'service:entries',
+    data: undefined,
+  }
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'notfound', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
   t.falsy(ret.data)
 })
 
@@ -281,11 +286,15 @@ test('should return error when no service exists for a type', async (t) => {
       data: { id: 'ent1', $type: 'entry' },
     },
   }
+  const expected = {
+    status: 'error',
+    error: "No service exists for type 'entry'",
+    origin: 'handler:SET',
+  }
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'error', ret.error)
-  t.is(ret.error, "No service exists for type 'entry'")
+  t.deepEqual(ret, expected)
 })
 
 test('should get type from data $type', async (t) => {
@@ -296,11 +305,15 @@ test('should get type from data $type', async (t) => {
       data: { id: 'ent1', $type: 'entry' },
     },
   }
+  const expected = {
+    status: 'error',
+    error: "No service exists for type 'entry'",
+    origin: 'handler:SET',
+  }
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'error', ret.error)
-  t.is(ret.error, "No service exists for type 'entry'")
+  t.deepEqual(ret, expected)
 })
 
 test('should return error when specified service does not exist', async (t) => {
@@ -312,11 +325,15 @@ test('should return error when specified service does not exist', async (t) => {
       targetService: 'entries',
     },
   }
+  const expected = {
+    status: 'error',
+    error: "Service with id 'entries' does not exist",
+    origin: 'handler:SET',
+  }
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'error', ret.error)
-  t.is(ret.error, "Service with id 'entries' does not exist")
+  t.deepEqual(ret, expected)
 })
 
 test('should authenticate items', async (t) => {
@@ -468,9 +485,13 @@ test('should return badrequest when no endpoint matches', async (t) => {
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
+  const expected = {
+    status: 'badrequest',
+    error: "No endpoint matching SET request to service 'entries'.",
+    origin: 'handler:SET',
+  }
 
   const ret = await set(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'badrequest', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
 })

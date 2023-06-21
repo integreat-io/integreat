@@ -59,6 +59,7 @@ test('should refuse request when schema allows none', (t) => {
       status: 'noaccess',
       error: "Authentication was refused for type 'entry'",
       reason: 'ALLOW_NONE',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -81,6 +82,7 @@ test('should refuse request when schema has no access method', (t) => {
       status: 'noaccess',
       error: "Authentication was refused for type 'entry'",
       reason: 'ACCESS_METHOD_REQUIRED',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -124,6 +126,7 @@ test('should refuse request when schema has an identFromField method but no iden
       status: 'noaccess',
       error: "Authentication was refused for type 'entry'",
       reason: 'NO_IDENT',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -167,6 +170,7 @@ test('should refuse request when schema has an roleFromField method but no ident
       status: 'noaccess',
       error: "Authentication was refused for type 'entry'",
       reason: 'NO_IDENT',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -181,7 +185,11 @@ test('should not override existing error', (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
-    response: { status: 'error', error: 'Service messed up' },
+    response: {
+      status: 'error',
+      error: 'Service messed up',
+      origin: 'service:entries',
+    },
     meta: { ident: { id: 'ident1' } },
   }
   const expected = {
@@ -189,6 +197,7 @@ test('should not override existing error', (t) => {
     response: {
       status: 'error',
       error: 'Service messed up',
+      origin: 'service:entries',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -212,6 +221,7 @@ test('should override ok status', (t) => {
       status: 'noaccess',
       error: "Authentication was refused for type 'entry'",
       reason: 'ALLOW_NONE',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -250,6 +260,7 @@ test('should refuse request for specified auth even when auth is not required', 
       status: 'noaccess',
       error: "Authentication was refused for type 'entry'",
       reason: 'NO_IDENT',
+      origin: 'auth:action',
     },
     meta: { authorized: false },
   }
@@ -286,6 +297,7 @@ test('should refuse request without ident when schema requires authentication', 
       status: 'noaccess',
       error: "Authentication was refused for type 'entry'",
       reason: 'NO_IDENT',
+      origin: 'auth:action',
     },
     meta: { authorized: false },
   }
@@ -308,6 +320,7 @@ test('should refuse request when type does not match a schema', (t) => {
       status: 'noaccess',
       error: "Authentication was refused for type 'unknown'",
       reason: 'NO_SCHEMA',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -332,6 +345,7 @@ test('should refuse with allow prop on access object', (t) => {
       status: 'noaccess',
       error: "Authentication was refused for type 'entry'",
       reason: 'ALLOW_NONE',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -356,6 +370,7 @@ test('should refuse for unknown allow prop', (t) => {
       status: 'noaccess',
       error: "Authentication was refused for type 'entry'",
       reason: 'ALLOW_NONE',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -399,6 +414,7 @@ test('should refuse by role', (t) => {
       status: 'noaccess',
       error: "Authentication was refused, role required: 'admin'",
       reason: 'MISSING_ROLE',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -448,6 +464,7 @@ test('should refuse by role array', (t) => {
       status: 'noaccess',
       error: "Authentication was refused, roles required: 'admin', 'superuser'",
       reason: 'MISSING_ROLE',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -491,6 +508,7 @@ test('should refuse by ident', (t) => {
       status: 'noaccess',
       error: "Authentication was refused, ident required: 'ident1'",
       reason: 'WRONG_IDENT',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -518,6 +536,7 @@ test('should refuse by ident array', (t) => {
       status: 'noaccess',
       error: "Authentication was refused, idents required: 'ident1', 'ident3'",
       reason: 'WRONG_IDENT',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -545,6 +564,7 @@ test('should refuse for unknown access prop', (t) => {
       status: 'noaccess',
       error: "Authentication was refused for type 'entry'",
       reason: 'ACCESS_METHOD_REQUIRED',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -616,6 +636,7 @@ test('should refuse by action access', (t) => {
       status: 'noaccess',
       error: "Authentication was refused, role required: 'admin'",
       reason: 'MISSING_ROLE',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }
@@ -653,6 +674,7 @@ test('should refuse with several types', (t) => {
       status: 'noaccess',
       error: "Authentication was refused, role required: 'admin'",
       reason: 'MISSING_ROLE',
+      origin: 'auth:action',
     },
     meta: { ...action.meta, authorized: false },
   }

@@ -1,4 +1,4 @@
-import { createErrorResponse } from '../utils/action.js'
+import { createErrorResponse, setOrigin } from '../utils/action.js'
 import { isObject, isTypedData } from '../utils/is.js'
 import type {
   Action,
@@ -90,7 +90,7 @@ export default async function getAll(
     )
     if (response?.status !== 'ok') {
       // Stop and return errors right away
-      return response
+      return setOrigin(response, 'handler:GET_ALL')
     }
 
     // Extract paging for next action
@@ -104,7 +104,8 @@ export default async function getAll(
         const firstId = getFirstId(responseData)
         if (typeof firstId === 'string' && firstId === prevFirstId) {
           return createErrorResponse(
-            'GET_ALL detected a possible infinite loop'
+            'GET_ALL detected a possible infinite loop',
+            'handler:GET_ALL'
           )
         }
         prevFirstId = firstId

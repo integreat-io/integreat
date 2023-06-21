@@ -13,5 +13,5 @@ export default function createUnknownServiceError(
     ? `Service with id '${serviceId || '<not set>'}' does not exist`
     : `No service exists for type '${type || '<not set>'}'`
   debug(`${actionType}: ${error}`)
-  return createErrorResponse(error)
+  return createErrorResponse(error, `handler:${actionType}`)
 }

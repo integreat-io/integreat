@@ -110,7 +110,11 @@ test('should return error from queue', async (t) => {
   })
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
-  const expected = { status: 'timeout', error: 'Queue busy' }
+  const expected = {
+    status: 'timeout',
+    error: 'Queue busy',
+    origin: 'service:queue',
+  }
 
   const ret = await queue(action, { ...handlerResources, getService, options })
 
@@ -120,16 +124,16 @@ test('should return error from queue', async (t) => {
 test('should return error when queue does not respond status', async (t) => {
   const send = async () => ({}) // Intentionally no status
   const options = { queueService: 'queue' }
-  const queueTransporter = { ...baseTransporter, send }
-  const queueService = createService({ schemas, mapOptions })({
-    ...queueDefs,
-    transporter: queueTransporter,
-  })
+  const queueService = {
+    ...createService({ schemas, mapOptions })(queueDefs),
+    send,
+  }
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
   const expected = {
     status: 'badresponse',
     error: 'Queue did not respond correctly',
+    origin: 'handler:QUEUE',
   }
 
   const ret = await queue(action, { ...handlerResources, getService, options })

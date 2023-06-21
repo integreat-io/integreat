@@ -17,7 +17,10 @@ const getIdFromAction = ({ payload: { id } }: Action) =>
 const combineResponses = (action: Action, responses: Response[]): Response =>
   responses.some(isErrorResponse)
     ? createErrorResponse(
-        `One or more of the requests for ids ${getIdFromAction(action)} failed.`
+        `One or more of the requests for ids ${getIdFromAction(
+          action
+        )} failed.`,
+        'handler:GET'
       )
     : {
         ...action.response,
@@ -41,6 +44,7 @@ const setIdOnActionPayload = (
 const createNoEndpointError = (action: Action, serviceId: string) =>
   createErrorResponse(
     `No endpoint matching ${action.type} request to service '${serviceId}'.`,
+    'handler:GET',
     'badrequest'
   )
 
@@ -112,6 +116,7 @@ export default async function get(
   if (Array.isArray(id) && id.length === 0) {
     return createErrorResponse(
       'GET action was dispatched with empty array of ids',
+      'handler:GET',
       'noaction'
     )
   }

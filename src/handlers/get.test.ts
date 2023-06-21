@@ -309,12 +309,15 @@ test('should return noaction when members action has empty id array', async (t) 
     id: 'membersEndpoint',
   })
   const getService = () => svc
+  const expected = {
+    status: 'noaction',
+    error: 'GET action was dispatched with empty array of ids',
+    origin: 'handler:GET',
+  }
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'noaction', ret.error)
-  t.is(ret.error, 'GET action was dispatched with empty array of ids')
-  t.is(ret.data, undefined)
+  t.deepEqual(ret, expected)
 })
 
 test('should return error when one or more requests for individual ids fails', async (t) => {
@@ -333,10 +336,15 @@ test('should return error when one or more requests for individual ids fails', a
   }
   const svc = setupService('http://api8.test/entries/{id}', { scope: 'member' })
   const getService = () => svc
+  const expected = {
+    status: 'error',
+    error: 'One or more of the requests for ids ent1,ent2 failed.',
+    origin: 'handler:GET',
+  }
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'error')
+  t.deepEqual(ret, expected)
 })
 
 test('should get item by id from service when id is array of one', async (t) => {
@@ -427,22 +435,30 @@ test('should return error on not found', async (t) => {
   }
   const svc = setupService('http://api3.test/unknown')
   const getService = () => svc
+  const expected = {
+    status: 'notfound',
+    error: 'Could not find the url http://api3.test/unknown',
+    origin: 'service:entries',
+    data: undefined,
+  }
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'notfound')
-  t.is(ret.data, undefined)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
 })
 
 test('should return error when no service exists for type', async (t) => {
   const action = { type: 'GET', payload: { type: 'entry' } }
   const getService = () => undefined
+  const expected = {
+    status: 'error',
+    error: "No service exists for type 'entry'",
+    origin: 'handler:GET',
+  }
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'error')
-  t.is(ret.error, "No service exists for type 'entry'")
+  t.deepEqual(ret, expected)
 })
 
 test('should return error when specified service does not exist', async (t) => {
@@ -451,11 +467,15 @@ test('should return error when specified service does not exist', async (t) => {
     payload: { type: 'entry', targetService: 'entries' },
   }
   const getService = () => undefined
+  const expected = {
+    status: 'error',
+    error: "Service with id 'entries' does not exist",
+    origin: 'handler:GET',
+  }
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'error')
-  t.is(ret.error, "Service with id 'entries' does not exist")
+  t.deepEqual(ret, expected)
 })
 
 test('should get only authorized items', async (t) => {
@@ -513,9 +533,13 @@ test('should return badrequest when no endpoint matches', async (t) => {
   const svc = setupService('http://api1.test/database')
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
+  const expected = {
+    status: 'badrequest',
+    error: "No endpoint matching GET request to service 'entries'.",
+    origin: 'handler:GET',
+  }
 
   const ret = await get(action, { ...handlerResources, getService })
 
-  t.is(ret.status, 'badrequest', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.deepEqual(ret, expected)
 })
