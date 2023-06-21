@@ -1082,12 +1082,11 @@ When you dispatch an action, you will get a response object back in this format:
   data: <data from the service, usually mutated>,
   error: <error message>,
   warning: <warning message>,
-  access: <ident of the user>,
+  access: <holds the ident actually being used>,
   paging: <pagination objects>,
   params: <key/value pairs>,
   headers: <key/value pairs>,
   responses: <array of sub-responses when relevant>,
-  meta: <meta object>
 }
 ```
 
@@ -1104,6 +1103,9 @@ When you dispatch an action, you will get a response object back in this format:
   should know, the warning message is where you'll get noticed. An example is
   when you get an array of data items, but some of them was removed due to the
   access of the ident on the action.
+- `access`: An object holding the `ident` that was actually being used. This may
+  be different than the `meta.ident` on the action, as the ident may also be
+  mutated or completed with roles etc. along the way.
 - `paging`: For services and transporters that support
   [pagination](#pagination), this object will hold information about how to get
   the next or previous page, in a `next` or `prev` object. These objects are
@@ -1120,8 +1122,6 @@ When you dispatch an action, you will get a response object back in this format:
   `SYNC` or `RUN`. The action handlers _may_ then provide an array of all the
   sub-response objects here.
 
-> Editor's note: Do we return access in responses?
-> Editor's note: Do we return meta in responses?
 > Editor's note: Is it correct that queues return the id in the data?
 
 When the status is `queued`, the id of the queued action may found in
