@@ -1,6 +1,6 @@
 import test from 'ava'
 import createSchema from '../../schema/index.js'
-import type { Endpoint } from './types.js'
+import type Endpoint from './Endpoint.js'
 
 import createEndpoints, { endpointForAction } from './index.js'
 

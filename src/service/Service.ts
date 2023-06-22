@@ -35,7 +35,7 @@ import type {
   Authenticator,
   AuthDef,
 } from './types.js'
-import type { Endpoint } from './endpoints/types.js'
+import type Endpoint from './endpoints/Endpoint.js'
 
 const debug = debugLib('great')
 
@@ -213,7 +213,7 @@ const getCastFn = (
 function castAction(
   action: Action,
   castFns: Record<string, DataMapperEntry>,
-  allowRaw: boolean,
+  allowRaw = false,
   isRequest = false
 ) {
   if (!allowRaw) {
@@ -360,8 +360,6 @@ export default class Service {
     endpoint: Endpoint,
     isIncoming = false
   ): Promise<Action> {
-    const { mutateRequest, allowRawRequest = false } = endpoint
-
     // Set endpoint options on action
     const nextAction = {
       ...action,
@@ -373,22 +371,22 @@ export default class Service {
         isIncoming
           ? this.#authorizeDataToService(
               castAction(
-                await mutateRequest(nextAction, isIncoming),
+                await endpoint.mutateRequest(nextAction, isIncoming),
                 this.#castFns,
-                allowRawRequest,
+                endpoint.allowRawRequest,
                 true // isRequest
               ),
-              allowRawRequest
+              endpoint.allowRawRequest
             )
-          : await mutateRequest(
+          : await endpoint.mutateRequest(
               this.#authorizeDataToService(
                 castAction(
                   nextAction,
                   this.#castFns,
-                  allowRawRequest,
+                  endpoint.allowRawRequest,
                   true // isRequest
                 ),
-                allowRawRequest
+                endpoint.allowRawRequest
               ),
               isIncoming
             ),
@@ -416,15 +414,14 @@ export default class Service {
     endpoint: Endpoint,
     isIncoming = false
   ): Promise<Response> {
-    const { mutateResponse, allowRawResponse = false } = endpoint
     try {
       // Authorize and mutate in right order
       const mutated = isIncoming
         ? setOriginOnAction(
-            await mutateResponse(
+            await endpoint.mutateResponse(
               this.#authorizeDataFromService(
-                castAction(action, this.#castFns, allowRawResponse),
-                allowRawResponse
+                castAction(action, this.#castFns, endpoint.allowRawResponse),
+                endpoint.allowRawResponse
               ),
               isIncoming
             ),
@@ -434,14 +431,14 @@ export default class Service {
         : this.#authorizeDataFromService(
             setOriginOnAction(
               castAction(
-                await mutateResponse(action, isIncoming),
+                await endpoint.mutateResponse(action, isIncoming),
                 this.#castFns,
-                allowRawResponse
+                endpoint.allowRawResponse
               ),
               'mutate:response',
               false
             ),
-            allowRawResponse
+            endpoint.allowRawResponse
           )
       return mutated.response || { status: undefined }
     } catch (error) {

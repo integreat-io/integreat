@@ -1,13 +1,8 @@
 import type { TransformDefinition } from 'map-transform/types.js'
 import type { Action, Adapter } from '../../types.js'
 import type { MapOptions } from '../types.js'
-import type {
-  EndpointDef,
-  MatchObject,
-  EndpointOptions,
-  Endpoint,
-} from './types.js'
-import createEndpoint, { PrepareOptions } from './create.js'
+import type { EndpointDef, MatchObject, EndpointOptions } from './types.js'
+import Endpoint, { PrepareOptions } from './Endpoint.js'
 import compareEndpoints from './compare.js'
 
 const prepareMatch = ({ scope, ...match }: MatchObject) =>
@@ -39,13 +34,15 @@ export default function createEndpoints(
     .map(prepareEndpoint)
     .sort(compareEndpoints)
     .map(
-      createEndpoint(
-        serviceId,
-        serviceOptions,
-        mapOptions,
-        serviceMutation,
-        prepareOptions,
-        serviceAdapters
-      )
+      (def) =>
+        new Endpoint(
+          def,
+          serviceId,
+          serviceOptions,
+          mapOptions,
+          serviceMutation,
+          prepareOptions,
+          serviceAdapters
+        )
     )
 }

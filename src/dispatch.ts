@@ -23,7 +23,7 @@ import type {
 } from './types.js'
 import type Service from './service/Service.js'
 import type { Schema } from './schema/index.js'
-import type { Endpoint } from './service/endpoints/types.js'
+import type Endpoint from './service/endpoints/Endpoint.js'
 
 const debug = debugLib('great')
 
