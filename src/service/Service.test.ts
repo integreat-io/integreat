@@ -9,7 +9,7 @@ import createSchema from '../schema/index.js'
 import dispatch from '../tests/helpers/dispatch.js'
 import { isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
-import type { Authenticator, ServiceDef } from './types.js'
+import type { Authenticator, ServiceDef, EndpointOptions } from './types.js'
 import type {
   Connection,
   Action,
@@ -17,7 +17,6 @@ import type {
   TypedData,
   Dispatch,
 } from '../types.js'
-import type { EndpointOptions } from './endpoints/types.js'
 import Auth from './Auth.js'
 import tokenAuth from '../authenticators/token.js'
 import optionsAuth from '../authenticators/options.js'

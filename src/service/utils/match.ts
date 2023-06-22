@@ -1,5 +1,5 @@
 import type { Action, Params } from '../../types.js'
-import type { EndpointDef } from './types.js'
+import type { EndpointDef } from '../types.js'
 import validateFilters from '../../utils/validateFilters.js'
 import { arrayIncludes } from '../../utils/array.js'
 

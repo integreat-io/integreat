@@ -1,5 +1,5 @@
 import type { Transporter } from '../types.js'
-import type { EndpointOptions } from './endpoints/types.js'
+import type { EndpointOptions } from './types.js'
 
 export interface ConnectionObject extends Record<string, unknown> {
   status: string

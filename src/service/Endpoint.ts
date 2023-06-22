@@ -5,13 +5,18 @@ import type {
   DataMapperEntry,
   Pipeline,
 } from 'map-transform/types.js'
-import type { Action, Adapter } from '../../types.js'
-import type { MapOptions } from '../types.js'
-import type { EndpointDef, EndpointOptions, MatchObject } from './types.js'
-import isMatch from './match.js'
-import { populateActionAfterMutation } from '../../utils/mutationHelpers.js'
-import { ensureArray } from '../../utils/array.js'
-import { isNotNullOrUndefined, isObject } from '../../utils/is.js'
+import compareEndpoints from './utils/compare.js'
+import type { Action, Adapter } from '../types.js'
+import type {
+  MapOptions,
+  EndpointDef,
+  EndpointOptions,
+  MatchObject,
+} from './types.js'
+import isMatch from './utils/match.js'
+import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
+import { ensureArray } from '../utils/array.js'
+import { isNotNullOrUndefined, isObject } from '../utils/is.js'
 
 interface MutateAction {
   (action: Action): Promise<Action>
@@ -20,6 +25,14 @@ interface MutateAction {
 export interface PrepareOptions {
   (options: EndpointOptions, serviceId: string): EndpointOptions
 }
+
+const prepareMatch = ({ scope, ...match }: MatchObject) =>
+  scope === 'all' || !scope ? match : { scope, ...match }
+
+const prepareEndpoint = ({ match, ...endpoint }: EndpointDef) => ({
+  match: prepareMatch(match || {}),
+  ...endpoint,
+})
 
 async function mutateAction(
   action: Action,
@@ -131,5 +144,17 @@ export default class Endpoint {
 
   isMatch(action: Action, isIncoming?: boolean): boolean {
     return this.#checkIfMatch(action, isIncoming)
+  }
+
+  static sortAndPrepare(endpointDefs: EndpointDef[]): EndpointDef[] {
+    return endpointDefs.map(prepareEndpoint).sort(compareEndpoints)
+  }
+
+  static findMatchingEndpoint(
+    endpoints: Endpoint[],
+    action: Action,
+    isIncoming = false
+  ): Endpoint | undefined {
+    return endpoints.find((endpoint) => endpoint.isMatch(action, isIncoming))
   }
 }

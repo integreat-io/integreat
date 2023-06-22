@@ -1,6 +1,6 @@
 import debugLib from 'debug'
 import pProgress, { ProgressNotifier } from 'p-progress'
-import createEndpoints, { endpointForAction } from './endpoints/index.js'
+import Endpoint from './Endpoint.js'
 import {
   setErrorOnAction,
   createErrorResponse,
@@ -35,7 +35,6 @@ import type {
   Authenticator,
   AuthDef,
 } from './types.js'
-import type Endpoint from './endpoints/Endpoint.js'
 
 const debug = debugLib('great')
 
@@ -313,17 +312,20 @@ export default class Service {
     this.#authorizeDataToService = authorizeData.toService(schemas)
 
     const serviceAdapters = lookupAdapters(adapterDefs, adapters)
-    this.#endpoints = createEndpoints(
-      serviceId,
-      endpointDefs.map((endpoint) => ({
-        ...endpoint,
-        adapters: lookupAdapters(endpoint.adapters, adapters),
-      })),
-      options,
-      mapOptions,
-      mutation,
-      this.#transporter?.prepareOptions,
-      serviceAdapters
+    this.#endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
+      (endpoint) =>
+        new Endpoint(
+          {
+            ...endpoint,
+            adapters: lookupAdapters(endpoint.adapters, adapters),
+          },
+          serviceId,
+          options,
+          mapOptions,
+          mutation,
+          this.#transporter?.prepareOptions,
+          serviceAdapters
+        )
     )
 
     this.#middleware =
@@ -338,7 +340,7 @@ export default class Service {
    * Return the endpoint mapper that best matches the given action.
    */
   endpointFromAction(action: Action, isIncoming = false): Endpoint | undefined {
-    return endpointForAction(action, this.#endpoints, isIncoming)
+    return Endpoint.findMatchingEndpoint(this.#endpoints, action, isIncoming)
   }
 
   /**

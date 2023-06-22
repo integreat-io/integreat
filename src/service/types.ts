@@ -1,6 +1,5 @@
 import type { TransformDefinition, Options } from 'map-transform/types.js'
-import type { Action, Transporter, Adapter } from '../types.js'
-import type { EndpointDef } from './endpoints/types.js'
+import type { Action, Transporter, Adapter, Condition } from '../types.js'
 
 export type MapOptions = Options
 
@@ -48,6 +47,27 @@ export type AuthProp = AuthDef | string | boolean | null
 export interface AuthObject {
   incoming?: AuthProp
   outgoing?: AuthProp
+}
+
+export type EndpointOptions = Record<string, unknown>
+
+export interface MatchObject {
+  action?: string | string[]
+  type?: string | string[]
+  scope?: string | string[]
+  params?: Record<string, boolean | undefined>
+  filters?: Record<string, Condition | boolean | undefined>
+  incoming?: boolean
+}
+
+export interface EndpointDef {
+  id?: string
+  match?: MatchObject
+  options?: EndpointOptions
+  mutation?: TransformDefinition
+  adapters?: (string | Adapter)[]
+  allowRawRequest?: boolean
+  allowRawResponse?: boolean
 }
 
 export interface ServiceDef {

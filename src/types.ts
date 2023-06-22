@@ -4,8 +4,7 @@ import type {
   TransformObject,
   Pipeline,
 } from 'map-transform/types.js'
-import type { EndpointOptions } from './service/endpoints/types.js'
-import type { IdentConfig } from './service/types.js'
+import type { IdentConfig, EndpointOptions } from './service/types.js'
 import type Service from './service/Service.js'
 
 export interface Reference {

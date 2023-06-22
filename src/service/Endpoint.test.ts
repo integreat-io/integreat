@@ -1,13 +1,13 @@
 import test from 'ava'
 import sinon from 'sinon'
 import jsonAdapter from 'integreat-adapter-json'
-import createSchema from '../../schema/index.js'
-import builtInTransformers from '../../transformers/builtIns/index.js'
-import transformers from '../../transformers/index.js'
-import type { TypedData, Adapter } from '../../types.js'
-import type { MapOptions } from '../types.js'
-import { isAction, isObject } from '../../utils/is.js'
-import createMapOptions from '../../utils/createMapOptions.js'
+import createSchema from '../schema/index.js'
+import builtInTransformers from '../transformers/builtIns/index.js'
+import transformers from '../transformers/index.js'
+import type { TypedData, Adapter } from '../types.js'
+import type { MapOptions } from './types.js'
+import { isAction, isObject } from '../utils/is.js'
+import createMapOptions from '../utils/createMapOptions.js'
 
 import Endpoint from './Endpoint.js'
 
@@ -1137,4 +1137,175 @@ test('should mutate request from service (incoming) with adapter', async (t) => 
   t.is(data[0].id, 'ent1')
   t.is(data[0].$type, 'entry')
   t.is(data[0].title, 'Entry 1')
+})
+
+// Tests -- sortAndPrepare
+
+test('should return endpoints defs in right order', (t) => {
+  const endpointDefs = [
+    {
+      id: 'endpoint1',
+      match: { type: 'entry' },
+      options: { uri: 'http://test.api/1' },
+    },
+    {
+      id: 'endpoint2',
+      match: { type: 'entry', scope: 'member' },
+      options: { uri: 'http://test.api/2' },
+    },
+  ]
+  const expected = [endpointDefs[1], endpointDefs[0]]
+
+  const endpoints = Endpoint.sortAndPrepare(endpointDefs)
+
+  t.deepEqual(endpoints, expected)
+})
+
+test('should treat scope: all as no scope', (t) => {
+  const endpointDefs = [
+    {
+      id: 'endpoint1',
+      match: { type: 'entry', scope: 'all' },
+      options: { uri: 'http://test.api/1' },
+    },
+    {
+      id: 'endpoint2',
+      match: { type: 'entry', scope: 'member' },
+      options: { uri: 'http://test.api/2' },
+    },
+  ]
+  const expected = [
+    endpointDefs[1],
+    {
+      id: 'endpoint1',
+      match: { type: 'entry' }, // No scope
+      options: { uri: 'http://test.api/1' },
+    },
+  ]
+
+  const endpoints = Endpoint.sortAndPrepare(endpointDefs)
+
+  t.deepEqual(endpoints, expected)
+})
+
+// Tests -- findMatchingEndpoint
+
+test('should find matching endpoint', (t) => {
+  const endpointDefs = [
+    {
+      id: 'endpoint1',
+      match: { type: 'entry' },
+      options: { uri: 'http://test.api/1' },
+    },
+    {
+      id: 'endpoint2',
+      match: { type: 'entry', scope: 'member' },
+      options: { uri: 'http://test.api/2' },
+    },
+  ]
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      id: 'ent1',
+    },
+  }
+
+  const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
+    (defs) => new Endpoint(defs, serviceId, serviceOptions, mapOptions)
+  )
+  const mapping = Endpoint.findMatchingEndpoint(endpoints, action)
+
+  t.truthy(mapping)
+  t.is((mapping as Endpoint).id, 'endpoint2')
+})
+
+test('should match by id', (t) => {
+  const endpointDefs = [
+    {
+      id: 'endpoint1',
+      match: { type: 'entry' },
+      options: { uri: 'http://test.api/1' },
+    },
+    {
+      id: 'endpoint2',
+      match: { type: 'entry' },
+      options: { uri: 'http://test.api/2' },
+    },
+  ]
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      id: 'ent1',
+      endpoint: 'endpoint2',
+    },
+  }
+
+  const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
+    (defs) => new Endpoint(defs, serviceId, serviceOptions, mapOptions)
+  )
+  const mapping = Endpoint.findMatchingEndpoint(endpoints, action)
+
+  t.truthy(mapping)
+  t.is((mapping as Endpoint).id, 'endpoint2')
+})
+
+test('should match scope all', (t) => {
+  const endpointDefs = [
+    {
+      id: 'endpoint1',
+      match: { type: 'entry', scope: 'all' },
+      options: { uri: 'http://test.api/1' },
+    },
+    {
+      id: 'endpoint2',
+      match: { type: 'entry', scope: 'member' },
+      options: { uri: 'http://test.api/2' },
+    },
+  ]
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+    },
+  }
+
+  const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
+    (defs) => new Endpoint(defs, serviceId, serviceOptions, mapOptions)
+  )
+  const mapping = Endpoint.findMatchingEndpoint(endpoints, action)
+
+  t.truthy(mapping)
+  t.is((mapping as Endpoint).id, 'endpoint1')
+})
+
+test('should treat scope all as no scope', (t) => {
+  const endpointDefs = [
+    {
+      id: 'endpoint1',
+      match: { type: 'entry', scope: 'all' },
+      options: { uri: 'http://test.api/1' },
+    },
+    {
+      id: 'endpoint2',
+      match: { type: 'entry', scope: 'member' },
+      options: { uri: 'http://test.api/2' },
+    },
+  ]
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      id: 'ent1',
+    },
+  }
+
+  const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
+    (defs) => new Endpoint(defs, serviceId, serviceOptions, mapOptions)
+  )
+  const mapping = Endpoint.findMatchingEndpoint(endpoints, action)
+
+  t.truthy(mapping)
+  t.is((mapping as Endpoint).id, 'endpoint2')
 })

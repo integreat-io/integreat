@@ -5,7 +5,7 @@ import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import mutations from '../mutations/index.js'
 import resources from '../tests/helpers/resources/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
-import type { EndpointDef } from '../service/endpoints/types.js'
+import type { EndpointDef } from '../service/types.js'
 
 import setMeta from './setMeta.js'
 
