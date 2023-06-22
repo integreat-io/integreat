@@ -12,7 +12,6 @@ import isMatch from './match.js'
 import { populateActionAfterMutation } from '../../utils/mutationHelpers.js'
 import { ensureArray } from '../../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../../utils/is.js'
-import xor from '../../utils/xor.js'
 
 interface MutateAction {
   (action: Action): Promise<Action>
@@ -24,30 +23,24 @@ export interface PrepareOptions {
 
 async function mutateAction(
   action: Action,
-  isIncoming = false,
-  mutator: DataMapperEntry | null,
   isRev: boolean,
+  mutator: DataMapperEntry | null,
   normalize: MutateAction = async (action) => action,
   serialize: MutateAction = async (action) => action
 ) {
-  // Correct rev based on if this is an incoming action or not
-  const rev = xor(isRev, isIncoming)
-
   // Normalize action if we're coming _from_ a service
-  const normalizedAction = rev ? action : await normalize(action)
+  const normalizedAction = isRev ? action : await normalize(action)
 
   // Mutate action
   const mutatedAction = mutator
     ? populateActionAfterMutation(
         action,
-        mutator(normalizedAction, {
-          rev,
-        }) as Action
+        mutator(normalizedAction, { rev: isRev }) as Action
       )
     : normalizedAction
 
   // Serialize action if we're going _to_ a service
-  return rev ? await serialize(mutatedAction) : mutatedAction
+  return isRev ? await serialize(mutatedAction) : mutatedAction
 }
 
 const flattenIfOneOrNone = <T>(arr: T[]): T | T[] =>
@@ -126,23 +119,11 @@ export default class Endpoint {
     )
   }
 
-  mutateRequest(action: Action, isIncoming = false) {
+  mutate(action: Action, isRev: boolean) {
     return mutateAction(
       action,
-      isIncoming,
+      isRev,
       this.#mutator,
-      true,
-      this.#normalize,
-      this.#serialize
-    )
-  }
-
-  mutateResponse(action: Action, isIncoming = false) {
-    return mutateAction(
-      action,
-      isIncoming,
-      this.#mutator,
-      false,
       this.#normalize,
       this.#serialize
     )

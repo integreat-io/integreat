@@ -289,7 +289,7 @@ test('should return false when no match to action', (t) => {
   t.false(endpoint.isMatch(action))
 })
 
-// Tests -- mutateResponse
+// Tests -- mutate response
 
 test('should mutate response from service with endpoint mutation', async (t) => {
   const endpointDef = {
@@ -326,7 +326,7 @@ test('should mutate response from service with endpoint mutation', async (t) => 
     mapOptions
   )
 
-  const ret = await endpoint.mutateResponse(actionWithResponse)
+  const ret = await endpoint.mutate(actionWithResponse, false)
 
   clock.restore()
   t.deepEqual(ret, expected)
@@ -373,7 +373,7 @@ test('should mutate action props from response', async (t) => {
     serviceOptions,
     mapOptions
   )
-  const ret = await endpoint.mutateResponse(actionWithProps)
+  const ret = await endpoint.mutate(actionWithProps, false)
 
   t.is(ret.response?.status, 'badrequest')
   t.is(ret.response?.error, 'Not valid')
@@ -424,7 +424,7 @@ test('should mutate response from service with service and endpoint mutations', 
     mapOptions,
     serviceMutation
   )
-  const ret = await endpoint.mutateResponse(actionWithProps)
+  const ret = await endpoint.mutate(actionWithProps, false)
 
   const data = ret.response?.data as TypedData[]
   t.is(data.length, 1)
@@ -458,7 +458,7 @@ test('should mutate response from service with service mutation only', async (t)
     mapOptions,
     serviceMutation
   )
-  const ret = await endpoint.mutateResponse(actionWithProps)
+  const ret = await endpoint.mutate(actionWithProps, false)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   const data = ret.response?.data as TypedData[]
@@ -494,7 +494,7 @@ test('should mutate response from service with service adapter', async (t) => {
     serviceAdapters
   )
 
-  const ret = await endpoint.mutateResponse(actionWithJSON)
+  const ret = await endpoint.mutate(actionWithJSON, false)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(Array.isArray(ret.response?.data), 'Should be an array')
@@ -534,7 +534,7 @@ test('should mutate response from service with endpoint adapter', async (t) => {
     serviceAdapters
   )
 
-  const ret = await endpoint.mutateResponse(actionWithJSON)
+  const ret = await endpoint.mutate(actionWithJSON, false)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(Array.isArray(ret.response?.data), 'Should be an array')
@@ -571,7 +571,7 @@ test('should mutate response from service with service adapter and no mutation p
     },
   }
 
-  const ret = await endpoint.mutateResponse(actionWithJSON)
+  const ret = await endpoint.mutate(actionWithJSON, false)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.deepEqual(ret.response?.data, expectedData)
@@ -598,11 +598,11 @@ test('should mutate response to service (incoming) with service adapter', async 
     undefined,
     serviceAdapters
   )
-  const isIncoming = true
+  const isRev = true
   const expectedData =
     '{"content":{"data":{"items":[{"key":null,"activated":false}]}}}'
 
-  const ret = await endpoint.mutateResponse(actionWithResponse, isIncoming)
+  const ret = await endpoint.mutate(actionWithResponse, isRev)
 
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.is(ret.response?.data, expectedData)
@@ -641,7 +641,7 @@ test('should keep action props not mapped from response', async (t) => {
     serviceOptions,
     mapOptions
   )
-  const ret = await endpoint.mutateResponse(actionWithProps)
+  const ret = await endpoint.mutate(actionWithProps, false)
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, 'Not valid')
@@ -678,7 +678,7 @@ test('should set status to error for response with an error', async (t) => {
     serviceOptions,
     mapOptions
   )
-  const ret = await endpoint.mutateResponse(actionWithProps)
+  const ret = await endpoint.mutate(actionWithProps, false)
 
   t.is(ret.response?.status, 'error')
   t.is(ret.response?.error, 'Not valid')
@@ -706,7 +706,7 @@ test('should mutate to undefined from response when unknown path', async (t) => 
     serviceOptions,
     mapOptions
   )
-  const ret = await endpoint.mutateResponse(actionWithResponse)
+  const ret = await endpoint.mutate(actionWithResponse, false)
 
   t.deepEqual(ret, expected)
 })
@@ -733,7 +733,7 @@ test('should mutate to empty array from service when unknown path and expecting 
     serviceOptions,
     mapOptions
   )
-  const ret = await endpoint.mutateResponse(actionWithResponse)
+  const ret = await endpoint.mutate(actionWithResponse, false)
 
   t.deepEqual(ret, expected)
 })
@@ -750,7 +750,7 @@ test('should not mutate from service when no mutation pipeline', async (t) => {
     serviceOptions,
     mapOptions
   )
-  const ret = await endpoint.mutateResponse(actionWithResponse)
+  const ret = await endpoint.mutate(actionWithResponse, false)
 
   t.deepEqual(ret, expected)
 })
@@ -772,12 +772,12 @@ test('should not mutate response from service when direction is rev', async (t) 
     mapOptions
   )
 
-  const ret = await endpoint.mutateResponse(actionWithResponse)
+  const ret = await endpoint.mutate(actionWithResponse, false)
 
   t.deepEqual(ret, expected)
 })
 
-// Tests -- mutateRequest
+// Tests -- mutate request
 
 test('should mutate request with endpoint mutation', async (t) => {
   const endpointDef = {
@@ -810,7 +810,7 @@ test('should mutate request with endpoint mutation', async (t) => {
     serviceOptions,
     mapOptions
   )
-  const ret = await endpoint.mutateRequest(action)
+  const ret = await endpoint.mutate(action, true)
 
   t.deepEqual(ret, expected)
 })
@@ -899,7 +899,7 @@ test('should mutate request with service mutation', async (t) => {
     mapOptions,
     serviceMutation
   )
-  const ret = await endpoint.mutateRequest(actionWithOptions)
+  const ret = await endpoint.mutate(actionWithOptions, true)
 
   t.deepEqual(ret, expected)
 })
@@ -932,7 +932,7 @@ test('should mutate request with root array path', async (t) => {
     serviceOptions,
     mapOptions
   )
-  const ret = await endpoint.mutateRequest(action)
+  const ret = await endpoint.mutate(action, true)
 
   t.deepEqual(ret, expected)
 })
@@ -949,7 +949,7 @@ test('should not mutate to service when no mutation pipeline', async (t) => {
     serviceOptions,
     mapOptions
   )
-  const ret = await endpoint.mutateRequest(action)
+  const ret = await endpoint.mutate(action, true)
 
   t.deepEqual(ret, expected)
 })
@@ -977,7 +977,7 @@ test('should not mutate request with mutation when direction is set to fwd', asy
     mapOptions
   )
 
-  const ret = await endpoint.mutateRequest(actionWithoutRequestData)
+  const ret = await endpoint.mutate(actionWithoutRequestData, true)
 
   t.is(ret.payload.data, undefined)
 })
@@ -1006,9 +1006,9 @@ test('should mutate request from service (incoming)', async (t) => {
     serviceOptions,
     mapOptions
   )
-  const isIncoming = true
+  const isRev = false
 
-  const ret = await endpoint.mutateRequest(incomingAction, isIncoming)
+  const ret = await endpoint.mutate(incomingAction, isRev)
 
   const data = ret.payload.data as TypedData[]
   t.is(data.length, 1)
@@ -1053,7 +1053,7 @@ test('should mutate request with adapter', async (t) => {
     serviceAdapters
   )
 
-  const ret = await endpoint.mutateRequest(action)
+  const ret = await endpoint.mutate(action, true)
 
   t.deepEqual(ret, expected)
 })
@@ -1095,7 +1095,7 @@ test('should mutate request with endpoint adapter', async (t) => {
     serviceAdapters
   )
 
-  const ret = await endpoint.mutateRequest(action)
+  const ret = await endpoint.mutate(action, true)
 
   t.deepEqual(ret, expected)
 })
@@ -1128,9 +1128,9 @@ test('should mutate request from service (incoming) with adapter', async (t) => 
     undefined,
     serviceAdapters
   )
-  const isIncoming = true
+  const isRev = false
 
-  const ret = await endpoint.mutateRequest(incomingAction, isIncoming)
+  const ret = await endpoint.mutate(incomingAction, isRev)
 
   const data = ret.payload.data as TypedData[]
   t.is(data.length, 1)

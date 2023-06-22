@@ -210,36 +210,35 @@ const getCastFn = (
     ? castFns[type] // eslint-disable-line security/detect-object-injection
     : undefined
 
-function castAction(
+const castPayload = (
   action: Action,
-  castFns: Record<string, DataMapperEntry>,
-  allowRaw = false,
-  isRequest = false
-) {
-  if (!allowRaw) {
-    const castFn = getCastFn(castFns, action.payload.type)
-    if (castFn) {
-      if (isRequest && action.payload) {
-        return {
-          ...action,
-          payload: {
-            ...action.payload,
-            data: castFn(action.payload.data),
-          },
-        }
-      } else if (!isRequest && action.response) {
-        return {
-          ...action,
-          response: {
-            ...action.response,
-            data: castFn(action.response.data),
-          },
-        }
+  castFn?: DataMapperEntry,
+  allowRaw = false
+): Action =>
+  !allowRaw && castFn
+    ? {
+        ...action,
+        payload: {
+          ...action.payload,
+          data: castFn(action.payload.data),
+        },
       }
-    }
-  }
-  return action
-}
+    : action
+
+const castResponse = (
+  action: Action,
+  castFn?: DataMapperEntry,
+  allowRaw = false
+): Action =>
+  !allowRaw && castFn
+    ? {
+        ...action,
+        response: {
+          ...action.response,
+          data: castFn(action.response?.data),
+        },
+      }
+    : action
 
 const lookupAdapters = (
   defs: (string | Adapter)[] = [],
@@ -365,30 +364,26 @@ export default class Service {
       ...action,
       meta: { ...action.meta, options: deepClone(endpoint.options) },
     }
+    const castFn = getCastFn(this.#castFns, action.payload.type)
+
     try {
       // Authorize and mutate in right order
       return setOriginOnAction(
         isIncoming
           ? this.#authorizeDataToService(
-              castAction(
-                await endpoint.mutateRequest(nextAction, isIncoming),
-                this.#castFns,
-                endpoint.allowRawRequest,
-                true // isRequest
+              castPayload(
+                await endpoint.mutate(nextAction, false /* isRev */),
+                castFn,
+                endpoint.allowRawRequest
               ),
               endpoint.allowRawRequest
             )
-          : await endpoint.mutateRequest(
+          : await endpoint.mutate(
               this.#authorizeDataToService(
-                castAction(
-                  nextAction,
-                  this.#castFns,
-                  endpoint.allowRawRequest,
-                  true // isRequest
-                ),
+                castPayload(nextAction, castFn, endpoint.allowRawRequest),
                 endpoint.allowRawRequest
               ),
-              isIncoming
+              true // isRev
             ),
         'mutate:request',
         false
@@ -414,25 +409,27 @@ export default class Service {
     endpoint: Endpoint,
     isIncoming = false
   ): Promise<Response> {
+    const castFn = getCastFn(this.#castFns, action.payload.type)
+
     try {
       // Authorize and mutate in right order
       const mutated = isIncoming
         ? setOriginOnAction(
-            await endpoint.mutateResponse(
+            await endpoint.mutate(
               this.#authorizeDataFromService(
-                castAction(action, this.#castFns, endpoint.allowRawResponse),
+                castResponse(action, castFn, endpoint.allowRawResponse),
                 endpoint.allowRawResponse
               ),
-              isIncoming
+              true // isRev
             ),
             'mutate:response',
             false
           )
         : this.#authorizeDataFromService(
             setOriginOnAction(
-              castAction(
-                await endpoint.mutateResponse(action, isIncoming),
-                this.#castFns,
+              castResponse(
+                await endpoint.mutate(action, false /* isRev */),
+                castFn,
                 endpoint.allowRawResponse
               ),
               'mutate:response',
