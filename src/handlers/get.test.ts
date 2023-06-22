@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import nock from 'nock'
-import createService from '../service/index.js'
+import Service from '../service/index.js'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import schema from '../schema/index.js'
 import transformers from '../transformers/builtIns/index.js'
@@ -76,46 +76,49 @@ const mapOptions = createMapOptions(schemas, pipelines, {
 })
 
 const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
-  createService({ schemas, mapOptions })({
-    id,
-    ...jsonServiceDef,
-    endpoints: [
-      {
-        match,
-        mutation: [
-          {
-            $direction: 'to',
-            $flip: true,
-            payload: {
-              $modify: 'payload',
-              updatedAfter: ['payload.updatedAfter', { $transform: 'ms' }],
+  new Service(
+    {
+      id,
+      ...jsonServiceDef,
+      endpoints: [
+        {
+          match,
+          mutation: [
+            {
+              $direction: 'to',
+              $flip: true,
+              payload: {
+                $modify: 'payload',
+                updatedAfter: ['payload.updatedAfter', { $transform: 'ms' }],
+              },
             },
-          },
-          {
-            $direction: 'from',
+            {
+              $direction: 'from',
+              response: {
+                $modify: 'response',
+                data: [
+                  'response.data',
+                  { $apply: id === 'accounts' ? 'account' : 'entry' },
+                ],
+              },
+            },
+          ],
+          options: { uri },
+        },
+        {
+          id: 'other',
+          mutation: {
             response: {
               $modify: 'response',
-              data: [
-                'response.data',
-                { $apply: id === 'accounts' ? 'account' : 'entry' },
-              ],
+              data: ['response.data', { $apply: 'entry' }],
             },
           },
-        ],
-        options: { uri },
-      },
-      {
-        id: 'other',
-        mutation: {
-          response: {
-            $modify: 'response',
-            data: ['response.data', { $apply: 'entry' }],
-          },
+          options: { uri: 'http://api5.test/other' },
         },
-        options: { uri: 'http://api5.test/other' },
-      },
-    ],
-  })
+      ],
+    },
+    { schemas, mapOptions }
+  )
 
 test.after.always(() => {
   nock.restore()

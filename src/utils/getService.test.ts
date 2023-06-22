@@ -1,6 +1,6 @@
 import test from 'ava'
 import createSchema from '../schema/index.js'
-import createService from '../service/index.js'
+import Service from '../service/index.js'
 import type { Transporter } from '../types.js'
 
 import getService from './getService.js'
@@ -15,11 +15,14 @@ const transporters = {
   http: {} as Transporter,
 }
 
-const entries = createService({ schemas, transporters })({
-  id: 'entries',
-  transporter: 'http',
-  endpoints: [],
-})
+const entries = new Service(
+  {
+    id: 'entries',
+    transporter: 'http',
+    endpoints: [],
+  },
+  { schemas, transporters }
+)
 
 // Tests
 

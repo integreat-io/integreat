@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import createService from './service/index.js'
+import Service from './service/index.js'
 import { QUEUE_SYMBOL } from './handlers/index.js'
 import type {
   Action,
@@ -502,10 +502,13 @@ test('should return error when source service is not found', async (t) => {
 
 test('should return error when no endoint on source service matches', async (t) => {
   const services = {
-    api: createService({ schemas: {} })({
-      id: 'api',
-      endpoints: [],
-    }),
+    api: new Service(
+      {
+        id: 'api',
+        endpoints: [],
+      },
+      { schemas: {} }
+    ),
   }
   const action = {
     type: 'GET',

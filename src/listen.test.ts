@@ -1,12 +1,14 @@
 import test from 'ava'
 import sinon from 'sinon'
 import dispatch from './tests/helpers/dispatch.js'
+import type Service from './service/index.js'
 import type { Action } from './types.js'
 
 import listen from './listen.js'
 
 // Setup
 
+// TODO: Use actual Service class rather than this mock?
 const serviceMethods = {
   endpointFromAction: () => undefined,
   authorizeAction: (action: Action) => action,
@@ -28,12 +30,12 @@ test('should run listen method on all services', async (t) => {
       id: 'service1',
       ...serviceMethods,
       listen: listenStub1,
-    },
+    } as unknown as Service,
     {
       id: 'service2',
       ...serviceMethods,
       listen: listenStub2,
-    },
+    } as unknown as Service,
   ]
   const expected = { status: 'ok' }
 
@@ -55,12 +57,12 @@ test('should stop and return error when listen fails', async (t) => {
       id: 'service1',
       ...serviceMethods,
       listen: listenStub1,
-    },
+    } as unknown as Service,
     {
       id: 'service2',
       ...serviceMethods,
       listen: listenStub2,
-    },
+    } as unknown as Service,
   ]
   const expected = {
     status: 'error',
@@ -84,12 +86,12 @@ test('should not treat noaction as error', async (t) => {
       id: 'service1',
       ...serviceMethods,
       listen: listenStub1,
-    },
+    } as unknown as Service,
     {
       id: 'service2',
       ...serviceMethods,
       listen: listenStub2,
-    },
+    } as unknown as Service,
   ]
   const expected = { status: 'ok' }
 

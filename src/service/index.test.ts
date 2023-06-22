@@ -22,7 +22,7 @@ import Auth from './Auth.js'
 import tokenAuth from '../authenticators/token.js'
 import optionsAuth from '../authenticators/options.js'
 
-import setupService from './index.js'
+import Service from './index.js'
 
 // Setup
 
@@ -253,12 +253,12 @@ test('should return service object with id and meta', (t) => {
   ]
   const def = { id: 'entries', transporter: 'http', endpoints, meta: 'meta' }
 
-  const service = setupService({
+  const service = new Service(def, {
     ...jsonResources,
     mapOptions,
     schemas,
     castFns,
-  })(def)
+  })
 
   t.is(service.id, 'entries')
   t.is(service.meta, 'meta')
@@ -266,12 +266,12 @@ test('should return service object with id and meta', (t) => {
 
 test('should throw when no id', (t) => {
   t.throws(() => {
-    setupService({
+    new Service({ transporter: 'http' } as unknown as ServiceDef, {
       ...jsonResources,
       mapOptions,
       schemas,
       castFns,
-    })({ transporter: 'http' } as unknown as ServiceDef)
+    })
   })
 })
 
@@ -289,7 +289,7 @@ test('should throw when auth object references unknown authenticator', async (t)
   }
   const resources = mockResources({})
 
-  const error = t.throws(() => setupService(resources)(defs))
+  const error = t.throws(() => new Service(defs, resources))
 
   t.true(error instanceof Error)
 })
@@ -297,16 +297,19 @@ test('should throw when auth object references unknown authenticator', async (t)
 // Tests -- endpointFromAction
 
 test('endpointFromAction should return an endpoint for the action', (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    transporter: 'http',
-    endpoints,
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: {
@@ -323,16 +326,19 @@ test('endpointFromAction should return an endpoint for the action', (t) => {
 })
 
 test('endpointFromAction should return undefined when no match', (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    transporter: 'http',
-    endpoints,
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: {
@@ -358,16 +364,19 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
       options: { uri: 'http://test.api/2', correct: true },
     },
   ]
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    endpoints,
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints,
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -382,17 +391,20 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
 // Tests -- authorizeAction
 
 test('authorizeAction should set authorized flag', (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    transporter: 'http',
-    auth: 'granting',
-    endpoints,
-  })
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { type: 'account' },
@@ -412,17 +424,20 @@ test('authorizeAction should set authorized flag', (t) => {
 })
 
 test('authorizeAction should authorize action without type', (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    transporter: 'http',
-    auth: 'granting',
-    endpoints,
-  })
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: { what: 'somethingelse' },
@@ -442,17 +457,20 @@ test('authorizeAction should authorize action without type', (t) => {
 })
 
 test('authorizeAction should refuse based on schema', (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    transporter: 'http',
-    auth: 'granting',
-    endpoints,
-  })
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { type: 'account' },
@@ -485,12 +503,15 @@ test('send should retrieve data from service', async (t) => {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const service = setupService(mockResources(data))({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    auth: 'granting',
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      auth: 'granting',
+      transporter: 'http',
+    },
+    mockResources(data)
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -518,12 +539,15 @@ test('send should use service middleware', async (t) => {
     auths,
     middleware: [failMiddleware],
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    auth: true,
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      auth: true,
+      transporter: 'http',
+    },
+    resources
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -549,12 +573,15 @@ test('send should return error when no transporter', async (t) => {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const service = setupService(mockResources(data))({
-    id: 'entries',
-    // No transporter
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    auth: 'granting',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      // No transporter
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      auth: 'granting',
+    },
+    mockResources(data)
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -580,12 +607,15 @@ test('send should try to authenticate and return with error when it fails', asyn
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const service = setupService(mockResources(data))({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    auth: 'refusing',
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      auth: 'refusing',
+      transporter: 'http',
+    },
+    mockResources(data)
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -611,12 +641,15 @@ test('send should authenticate with auth id on `outgoing` prop', async (t) => {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const service = setupService(mockResources(data))({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    auth: { outgoing: 'granting' },
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      auth: { outgoing: 'granting' },
+      transporter: 'http',
+    },
+    mockResources(data)
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -638,12 +671,15 @@ test('send should authenticate with auth def', async (t) => {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const service = setupService(mockResources(data))({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    auth: grantingAuth,
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      auth: grantingAuth,
+      transporter: 'http',
+    },
+    mockResources(data)
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -665,12 +701,15 @@ test('send should authenticate with auth def on `outgoing` prop', async (t) => {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
     },
   }
-  const service = setupService(mockResources(data))({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    auth: { outgoing: grantingAuth },
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      auth: { outgoing: grantingAuth },
+      transporter: 'http',
+    },
+    mockResources(data)
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -687,18 +726,21 @@ test('send should authenticate with auth def on `outgoing` prop', async (t) => {
 })
 
 test('send should fail when not authorized', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-    auths,
-  })({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    auth: 'granting',
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      auth: 'granting',
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+      auths,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -744,15 +786,20 @@ test('send should connect before sending request', async (t) => {
     castFns,
     auths,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    endpoints: [
-      { options: { uri: 'http://some.api/1.0', value: 'Value from endpoint' } },
-    ],
-    options: { value: 'Value from service' },
-    transporter: 'http',
-    auth: 'granting',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [
+        {
+          options: { uri: 'http://some.api/1.0', value: 'Value from endpoint' },
+        },
+      ],
+      options: { value: 'Value from service' },
+      transporter: 'http',
+      auth: 'granting',
+    },
+    resources
+  )
   const expected = {
     status: 'ok',
     value: 'Value from service',
@@ -782,13 +829,18 @@ test('send should store connection', async (t) => {
     schemas,
     castFns,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    endpoints: [
-      { options: { uri: 'http://some.api/1.0', value: 'Value from options' } },
-    ],
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [
+        {
+          options: { uri: 'http://some.api/1.0', value: 'Value from options' },
+        },
+      ],
+      transporter: 'http',
+    },
+    resources
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -822,13 +874,18 @@ test('send should return error when connection fails', async (t) => {
     schemas,
     castFns,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    endpoints: [
-      { options: { uri: 'http://some.api/1.0', value: 'Value from options' } },
-    ],
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [
+        {
+          options: { uri: 'http://some.api/1.0', value: 'Value from options' },
+        },
+      ],
+      transporter: 'http',
+    },
+    resources
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -866,11 +923,14 @@ test('send should pass on error response from service', async (t) => {
     schemas,
     castFns,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      transporter: 'http',
+    },
+    resources
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -908,11 +968,14 @@ test('send should pass on error response from service and prefix origin', async 
     schemas,
     castFns,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      transporter: 'http',
+    },
+    resources
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -948,11 +1011,14 @@ test('send should return with error when transport throws', async (t) => {
     schemas,
     castFns,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      transporter: 'http',
+    },
+    resources
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -989,11 +1055,14 @@ test('send should do nothing when action has a response', async (t) => {
     schemas,
     castFns,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    transporter: 'http',
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      transporter: 'http',
+    },
+    resources
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -1018,27 +1087,30 @@ test('send should do nothing when action has a response', async (t) => {
 
 test('mutateResponse should mutate data array from service', async (t) => {
   const theDate = new Date()
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    endpoints: [
-      {
-        mutation: {
-          $direction: 'from',
-          response: {
-            $modify: 'response',
-            data: ['response.data.content.data', { $apply: 'entry' }],
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [
+        {
+          mutation: {
+            $direction: 'from',
+            response: {
+              $modify: 'response',
+              data: ['response.data.content.data', { $apply: 'entry' }],
+            },
           },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-    transporter: 'http',
-  })
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -1085,27 +1157,30 @@ test('mutateResponse should mutate data array from service', async (t) => {
 })
 
 test('mutateResponse should mutate data object from service', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    endpoints: [
-      {
-        mutation: {
-          response: 'response',
-          'response.data': [
-            'response.data.content.data',
-            { $apply: 'account' },
-          ],
+  const service = new Service(
+    {
+      id: 'accounts',
+      endpoints: [
+        {
+          mutation: {
+            response: 'response',
+            'response.data': [
+              'response.data.content.data',
+              { $apply: 'account' },
+            ],
+          },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-    transporter: 'http',
-  })
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { id: 'johnf', type: 'account' },
@@ -1130,25 +1205,28 @@ test('mutateResponse should mutate data object from service', async (t) => {
 })
 
 test('mutateResponse should set origin when mutation results in an error response', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    endpoints: [
-      {
-        mutation: {
-          response: {
-            status: { $value: 'error' },
+  const service = new Service(
+    {
+      id: 'accounts',
+      endpoints: [
+        {
+          mutation: {
+            response: {
+              status: { $value: 'error' },
+            },
           },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-    transporter: 'http',
-  })
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { id: 'johnf', type: 'account' },
@@ -1176,28 +1254,31 @@ test('mutateResponse should set origin when mutation results in an error respons
 
 test('mutateResponse should use service adapters', async (t) => {
   const theDate = new Date()
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    transporter: 'http',
-    adapters: ['json'],
-    endpoints: [
-      {
-        mutation: {
-          $direction: 'from',
-          response: {
-            $modify: 'response',
-            data: ['response.data.content.data', { $apply: 'entry' }],
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      adapters: ['json'],
+      endpoints: [
+        {
+          mutation: {
+            $direction: 'from',
+            response: {
+              $modify: 'response',
+              data: ['response.data.content.data', { $apply: 'entry' }],
+            },
           },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-  })
+      ],
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -1245,28 +1326,31 @@ test('mutateResponse should use service adapters', async (t) => {
 
 test('mutateResponse should use endpoint adapters', async (t) => {
   const theDate = new Date()
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    transporter: 'http',
-    endpoints: [
-      {
-        adapters: ['json'],
-        mutation: {
-          $direction: 'from',
-          response: {
-            $modify: 'response',
-            data: ['response.data.content.data', { $apply: 'entry' }],
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      endpoints: [
+        {
+          adapters: ['json'],
+          mutation: {
+            $direction: 'from',
+            response: {
+              $modify: 'response',
+              data: ['response.data.content.data', { $apply: 'entry' }],
+            },
           },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-  })
+      ],
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -1314,28 +1398,31 @@ test('mutateResponse should use endpoint adapters', async (t) => {
 
 test('mutateResponse should not cast data array from service when allowRawResponse is true', async (t) => {
   const theDate = new Date()
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    endpoints: [
-      {
-        mutation: {
-          $direction: 'from',
-          response: {
-            $modify: 'response',
-            data: ['response.data.content.data', { $apply: 'entry' }],
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [
+        {
+          mutation: {
+            $direction: 'from',
+            response: {
+              $modify: 'response',
+              data: ['response.data.content.data', { $apply: 'entry' }],
+            },
           },
+          allowRawResponse: true,
+          options: { uri: 'http://some.api/1.0' },
         },
-        allowRawResponse: true,
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-    transporter: 'http',
-  })
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
@@ -1382,24 +1469,27 @@ test('mutateResponse should not cast data array from service when allowRawRespon
 })
 
 test('mutateResponse should mutate null to undefined', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    endpoints: [
-      {
-        mutation: {
-          response: 'response',
-          'response.data': ['response.data', { $apply: 'account' }],
+  const service = new Service(
+    {
+      id: 'accounts',
+      endpoints: [
+        {
+          mutation: {
+            response: 'response',
+            'response.data': ['response.data', { $apply: 'account' }],
+          },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-    transporter: 'http',
-  })
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { id: 'johnf', type: 'account' },
@@ -1421,24 +1511,27 @@ test('mutateResponse should mutate null to undefined', async (t) => {
 })
 
 test('should authorize typed data in array from service', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    endpoints: [
-      {
-        mutation: {
-          response: 'response',
-          'response.data': ['response.data', { $apply: 'account' }],
+  const service = new Service(
+    {
+      id: 'accounts',
+      endpoints: [
+        {
+          mutation: {
+            response: 'response',
+            'response.data': ['response.data', { $apply: 'account' }],
+          },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-    transporter: 'http',
-  })
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: { type: 'account' },
@@ -1468,24 +1561,27 @@ test('should authorize typed data in array from service', async (t) => {
 })
 
 test('should authorize typed data object from service', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    endpoints: [
-      {
-        mutation: {
-          response: 'response',
-          'response.data': ['response.data', { $apply: 'account' }],
+  const service = new Service(
+    {
+      id: 'accounts',
+      endpoints: [
+        {
+          mutation: {
+            response: 'response',
+            'response.data': ['response.data', { $apply: 'account' }],
+          },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-    transporter: 'http',
-  })
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: { type: 'account' },
@@ -1512,24 +1608,27 @@ test('should authorize typed data object from service', async (t) => {
 })
 
 test('should authorize typed data in array to service', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    endpoints: [
-      {
-        mutation: {
-          response: 'response',
-          'response.data': ['response.data', { $apply: 'account' }],
+  const service = new Service(
+    {
+      id: 'accounts',
+      endpoints: [
+        {
+          mutation: {
+            response: 'response',
+            'response.data': ['response.data', { $apply: 'account' }],
+          },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-    transporter: 'http',
-  })
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: { type: 'account' },
@@ -1562,28 +1661,31 @@ test('mutateResponse should return error when transformer throws', async (t) => 
     throw new Error('Transformer error')
   }
   const mapOptions = createMapOptions(schemas, mutations, { willThrow })
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    endpoints: [
-      {
-        mutation: {
-          response: 'response',
-          'response.data': [
-            'response.data.content.data',
-            { $transform: 'willThrow' },
-            { $apply: 'account' },
-          ],
+  const service = new Service(
+    {
+      id: 'accounts',
+      endpoints: [
+        {
+          mutation: {
+            response: 'response',
+            'response.data': [
+              'response.data.content.data',
+              { $transform: 'willThrow' },
+              { $apply: 'account' },
+            ],
+          },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-    transporter: 'http',
-  })
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: { id: 'johnf', type: 'account' },
@@ -1614,27 +1716,30 @@ test('mutateResponse should return error when transformer throws', async (t) => 
 
 test('mutateRequest should set endpoint options and cast and mutate request data', async (t) => {
   const theDate = new Date()
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    transporter: 'http',
-    endpoints: [
-      {
-        mutation: {
-          payload: 'payload',
-          'payload.data': [
-            'payload.data.content.data[].createOrMutate',
-            { $apply: 'entry' },
-          ],
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      endpoints: [
+        {
+          mutation: {
+            payload: 'payload',
+            'payload.data': [
+              'payload.data.content.data[].createOrMutate',
+              { $apply: 'entry' },
+            ],
+          },
+          options: { uri: 'http://some.api/1.0' },
         },
-        options: { uri: 'http://some.api/1.0' },
-      },
-    ],
-  })
+      ],
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: {
@@ -1690,20 +1795,23 @@ test('mutateRequest should set endpoint options and cast and mutate request data
 })
 
 test('mutateRequest should deep-clone endpoint options', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    transporter: 'http',
-    endpoints: [
-      {
-        options: { untouchable: { touched: false } },
-      },
-    ],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      endpoints: [
+        {
+          options: { untouchable: { touched: false } },
+        },
+      ],
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'GET',
     payload: {
@@ -1721,17 +1829,20 @@ test('mutateRequest should deep-clone endpoint options', async (t) => {
 })
 
 test('mutateRequest should authorize data array going to service', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    transporter: 'http',
-    auth: 'granting',
-    endpoints,
-  })
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: {
@@ -1766,17 +1877,20 @@ test('mutateRequest should authorize data array going to service', async (t) => 
 })
 
 test('mutateRequest should authorize data object going to service', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    transporter: 'http',
-    auth: 'granting',
-    endpoints,
-  })
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: {
@@ -1805,17 +1919,20 @@ test('mutateRequest should authorize data object going to service', async (t) =>
 
 test('mutateRequest should authorize data array coming from service', async (t) => {
   const isIncoming = true
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'accounts',
-    transporter: 'http',
-    auth: 'granting',
-    endpoints,
-  })
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: {
@@ -1849,30 +1966,33 @@ test('mutateRequest should authorize data array coming from service', async (t) 
 })
 
 test('mutateRequest should use mutation pipeline', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    transporter: 'http',
-    endpoints: [
-      {
-        mutation: [
-          {
-            payload: 'payload',
-            'payload.data': [
-              'payload.data',
-              'StupidSoapOperator.StupidSoapEmptyArgs',
-              { $alt: [{ $value: {} }] },
-            ],
-          },
-        ],
-        options: { uri: 'http://soap.api/1.1' },
-      },
-    ],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      endpoints: [
+        {
+          mutation: [
+            {
+              payload: 'payload',
+              'payload.data': [
+                'payload.data',
+                'StupidSoapOperator.StupidSoapEmptyArgs',
+                { $alt: [{ $value: {} }] },
+              ],
+            },
+          ],
+          options: { uri: 'http://soap.api/1.1' },
+        },
+      ],
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: {},
@@ -1889,28 +2009,31 @@ test('mutateRequest should use mutation pipeline', async (t) => {
 })
 
 test('mutateRequest set origin when mutation results in an error response', async (t) => {
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    transporter: 'http',
-    endpoints: [
-      {
-        mutation: [
-          {
-            $flip: true,
-            response: {
-              status: { $value: 'error' },
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      endpoints: [
+        {
+          mutation: [
+            {
+              $flip: true,
+              response: {
+                status: { $value: 'error' },
+              },
             },
-          },
-        ],
-        options: { uri: 'http://soap.api/1.1' },
-      },
-    ],
-  })
+          ],
+          options: { uri: 'http://soap.api/1.1' },
+        },
+      ],
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: {},
@@ -1932,30 +2055,33 @@ test('mutateRequest should return error when transformer throws', async (t) => {
     throw new Error('Transformer error')
   }
   const mapOptions = createMapOptions(schemas, mutations, { willThrow })
-  const service = setupService({
-    mapOptions,
-    schemas,
-    castFns,
-    ...jsonResources,
-  })({
-    id: 'entries',
-    transporter: 'http',
-    endpoints: [
-      {
-        mutation: [
-          {
-            payload: 'payload',
-            'payload.data': [
-              'payload.data',
-              { $transform: 'willThrow' },
-              { $alt: [{ $value: {} }] },
-            ],
-          },
-        ],
-        options: { uri: 'http://soap.api/1.1' },
-      },
-    ],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      endpoints: [
+        {
+          mutation: [
+            {
+              payload: 'payload',
+              'payload.data': [
+                'payload.data',
+                { $transform: 'willThrow' },
+                { $alt: [{ $value: {} }] },
+              ],
+            },
+          ],
+          options: { uri: 'http://soap.api/1.1' },
+        },
+      ],
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
   const action = {
     type: 'SET',
     payload: {},
@@ -1994,13 +2120,16 @@ test('listen should call transporter.listen', async (t) => {
     castFns,
     auths,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
   const expectedResponse = { status: 'ok' }
 
   const ret = await service.listen(dispatch)
@@ -2030,13 +2159,16 @@ test('listen should not call transporter.listen when transport.shouldListen retu
     castFns,
     auths,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'http',
-    options: {},
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: {},
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
   const expectedResponse = {
     status: 'noaction',
     error: 'Transporter is not configured to listen',
@@ -2055,13 +2187,16 @@ test('listen should set sourceService', async (t) => {
     type: 'SET',
     payload: { data: [] },
   }
-  const service = setupService(mockResources({}, action))({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action)
+  )
   const expectedAction = {
     type: 'SET',
     payload: { data: [], sourceService: 'entries' },
@@ -2082,13 +2217,16 @@ test('listen should not set sourceService when already set', async (t) => {
     type: 'SET',
     payload: { data: [], sourceService: 'other' },
   }
-  const service = setupService(mockResources({}, action))({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action)
+  )
   const expectedAction = {
     type: 'SET',
     payload: { data: [], sourceService: 'other' },
@@ -2133,13 +2271,16 @@ test('should support progress reporting', async (t) => {
       targetService: 'entries',
     },
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
 
   await service.listen(dispatch)
   const listenerDispatch = listenStub.args[0][0]
@@ -2159,13 +2300,16 @@ test('listen should authorize incoming action', async (t) => {
     type: 'SET',
     payload: { data: [], headers: { 'API-TOKEN': 't0k3n' } },
   }
-  const service = setupService(mockResources({}, action))({
-    id: 'entries',
-    auth: { outgoing: 'granting', incoming: 'apiToken' },
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: 'apiToken' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action)
+  )
   const expectedAction = {
     ...action,
     payload: { ...action.payload, sourceService: 'entries' },
@@ -2186,13 +2330,16 @@ test('listen should respond with error when authentication fails', async (t) => 
     type: 'SET',
     payload: { data: [], headers: {} }, // No API-TOKEN header will cause the auth to fail
   }
-  const service = setupService(mockResources({}, action))({
-    id: 'entries',
-    auth: { outgoing: 'granting', incoming: 'apiToken' },
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: 'apiToken' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action)
+  )
   const expectedResponse = {
     status: 'autherror',
     error: 'Missing API-TOKEN header',
@@ -2211,20 +2358,23 @@ test('listen should set ident on dispatched actions from options authenticator',
     type: 'SET',
     payload: { data: [] },
   }
-  const service = setupService(mockResources({}, action))({
-    id: 'entries',
-    auth: {
-      outgoing: 'granting',
-      incoming: {
-        id: 'staticAuth',
-        authenticator: 'options',
-        options: { id: 'reidar' },
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: {
+        outgoing: 'granting',
+        incoming: {
+          id: 'staticAuth',
+          authenticator: 'options',
+          options: { id: 'reidar' },
+        },
       },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+    mockResources({}, action)
+  )
   const expectedAction = {
     type: 'SET',
     payload: { data: [], sourceService: 'entries' },
@@ -2246,13 +2396,16 @@ test('listen should remove ident when no incoming auth is provided', async (t) =
     payload: { data: [] },
     meta: { ident: { id: 'anonymous' } }, // Should be removed
   }
-  const service = setupService(mockResources({}, action))({
-    id: 'entries',
-    auth: { outgoing: 'granting' }, // No incoming
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting' }, // No incoming
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action)
+  )
   const expectedAction = {
     ...action,
     payload: { ...action.payload, sourceService: 'entries' },
@@ -2274,13 +2427,16 @@ test('listen should not remove ident when auth incoming is true', async (t) => {
     payload: { data: [] },
     meta: { ident: { id: 'anonymous' } }, // Should be removed
   }
-  const service = setupService(mockResources({}, action))({
-    id: 'entries',
-    auth: { incoming: true },
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { incoming: true },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action)
+  )
   const expectedAction = {
     ...action,
     payload: { ...action.payload, sourceService: 'entries' },
@@ -2302,13 +2458,16 @@ test('listen should not remove ident when auth is true', async (t) => {
     payload: { data: [] },
     meta: { ident: { id: 'anonymous' } }, // Should be removed
   }
-  const service = setupService(mockResources({}, action))({
-    id: 'entries',
-    auth: true,
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: true,
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action)
+  )
   const expectedAction = {
     ...action,
     payload: { ...action.payload, sourceService: 'entries' },
@@ -2342,13 +2501,16 @@ test('listen should return error when connection fails', async (t) => {
     castFns,
     auths,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
   const expectedResponse = {
     status: 'error',
     error: "Could not listen to 'entries' service. Failed to connect",
@@ -2361,13 +2523,16 @@ test('listen should return error when connection fails', async (t) => {
 })
 
 test('listen should return error when authentication fails', async (t) => {
-  const service = setupService(mockResources({}))({
-    id: 'entries',
-    auth: 'refusing',
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'refusing',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({})
+  )
   const expectedResponse = {
     status: 'noaccess',
     error: "Authentication attempt for 'refusing' was refused.",
@@ -2394,13 +2559,16 @@ test('listen should do nothing when transporter has no listen method', async (t)
     castFns,
     auths,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    auth: 'granting',
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+    },
+    resources
+  )
   const expectedResponse = {
     status: 'noaction',
     error: 'Transporter has no listen method',
@@ -2428,13 +2596,16 @@ test('listen should return error when no transporter', async (t) => {
     castFns,
     auths,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'unknown',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'unknown',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
   const expectedResponse = {
     status: 'error',
     error: "Service 'entries' has no transporter",
@@ -2473,13 +2644,16 @@ test('listen should use service middleware', async (t) => {
     auths,
     middleware: [failMiddleware],
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
   const expected = {
     status: 'badresponse',
     origin: 'middleware:service:entries',
@@ -2510,13 +2684,16 @@ test('listen should return noaction when incoming action is null', async (t) => 
     castFns,
     auths,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
   const expected = {
     status: 'noaction',
     error: 'No action was dispatched',
@@ -2548,13 +2725,16 @@ test('close should disconnect transporter', async (t) => {
     castFns,
     auths,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'http',
-    options: { incoming: { port: 8080 } },
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
   const expected = { status: 'ok' }
 
   await service.listen(dispatch)
@@ -2583,12 +2763,15 @@ test('close should probihit closed connection from behind used again', async (t)
     castFns,
     auths,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'http',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
   const expected = {
     status: 'error',
     error: "Service 'entries' has no open connection",
@@ -2610,12 +2793,15 @@ test('close should do nothing when no transporter', async (t) => {
     castFns,
     auths,
   }
-  const service = setupService(resources)({
-    id: 'entries',
-    auth: 'granting',
-    transporter: 'unknown',
-    endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-  })
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'unknown',
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
   const expected = {
     status: 'noaction',
     error: 'No transporter to disconnect',

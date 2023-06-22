@@ -1,11 +1,12 @@
 import test from 'ava'
 import nock from 'nock'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
-import createService from '../service/index.js'
+import Service from '../service/index.js'
 import createSchema from '../schema/index.js'
 import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import createMapOptions from '../utils/createMapOptions.js'
+import type { ServiceDef } from '../service/types.js'
 
 import deleteFn from './delete.js'
 
@@ -39,7 +40,8 @@ const pipelines = {
 }
 
 const mapOptions = createMapOptions(schemas, pipelines, transformers)
-const setupService = createService({ schemas, mapOptions })
+const setupService = (defs: ServiceDef) =>
+  new Service(defs, { schemas, mapOptions })
 
 test.after.always(() => {
   nock.restore()

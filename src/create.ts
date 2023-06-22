@@ -20,7 +20,6 @@ import type {
   IdentConfig,
   AuthDef,
   Authenticator,
-  Service,
 } from './service/types.js'
 import type { SchemaDef } from './schema/types.js'
 import Auth from './service/Auth.js'
@@ -28,7 +27,7 @@ import builtinHandlers from './handlers/index.js'
 import runFn from './handlers/run.js'
 import builtinTransformers from './transformers/builtIns/index.js'
 import createSchema, { Schema } from './schema/index.js'
-import createService from './service/index.js'
+import Service from './service/index.js'
 import { isObject } from './utils/is.js'
 import createMapOptions from './utils/createMapOptions.js'
 import { lookupById } from './utils/indexUtils.js'
@@ -146,17 +145,18 @@ export default function create(
   // Prepare services
   const services = serviceDefs
     .map(
-      createService({
-        transporters,
-        adapters,
-        authenticators,
-        auths,
-        schemas,
-        castFns,
-        mapOptions,
-        middleware: middlewareForService,
-        emit: emitter.emit.bind(emitter),
-      })
+      (def) =>
+        new Service(def, {
+          transporters,
+          adapters,
+          authenticators,
+          auths,
+          schemas,
+          castFns,
+          mapOptions,
+          middleware: middlewareForService,
+          emit: emitter.emit.bind(emitter),
+        })
     )
     .reduce(indexById, {} as Record<string, Service>)
 

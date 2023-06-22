@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import createService from '../service/index.js'
+import Service from '../service/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import type { Transporter } from '../types.js'
 
@@ -43,10 +43,13 @@ test('should send action to queue', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok' })
   const options = { queueService: 'queue' }
   const queueTransporter = { ...baseTransporter, send }
-  const queueService = createService({ schemas, mapOptions })({
-    ...queueDefs,
-    transporter: queueTransporter,
-  })
+  const queueService = new Service(
+    {
+      ...queueDefs,
+      transporter: queueTransporter,
+    },
+    { schemas, mapOptions }
+  )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
   const expected = { status: 'queued' }
@@ -71,10 +74,13 @@ test('should override present queuedAt', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok' })
   const options = { queueService: 'queue' }
   const queueTransporter = { ...baseTransporter, send }
-  const queueService = createService({ schemas, mapOptions })({
-    ...queueDefs,
-    transporter: queueTransporter,
-  })
+  const queueService = new Service(
+    {
+      ...queueDefs,
+      transporter: queueTransporter,
+    },
+    { schemas, mapOptions }
+  )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
   const actionWithQueuedAt = {
@@ -104,10 +110,13 @@ test('should return error from queue', async (t) => {
   const send = async () => ({ status: 'timeout', error: 'Queue busy' })
   const options = { queueService: 'queue' }
   const queueTransporter = { ...baseTransporter, send }
-  const queueService = createService({ schemas, mapOptions })({
-    ...queueDefs,
-    transporter: queueTransporter,
-  })
+  const queueService = new Service(
+    {
+      ...queueDefs,
+      transporter: queueTransporter,
+    },
+    { schemas, mapOptions }
+  )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
   const expected = {
@@ -122,12 +131,9 @@ test('should return error from queue', async (t) => {
 })
 
 test('should return error when queue does not respond status', async (t) => {
-  const send = async () => ({}) // Intentionally no status
   const options = { queueService: 'queue' }
-  const queueService = {
-    ...createService({ schemas, mapOptions })(queueDefs),
-    send,
-  }
+  const queueService = new Service(queueDefs, { schemas, mapOptions })
+  sinon.stub(queueService, 'send').resolves({}) // Intentionally no status
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
   const expected = {

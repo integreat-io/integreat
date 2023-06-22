@@ -1,6 +1,6 @@
 import test from 'ava'
 import nock from 'nock'
-import createService from '../service/index.js'
+import Service from '../service/index.js'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import schema from '../schema/index.js'
 import transformers from '../transformers/builtIns/index.js'
@@ -58,45 +58,48 @@ const typeMappingFromServiceId = (serviceId: string) =>
   serviceId === 'accounts' ? 'account' : 'entry'
 
 const setupService = (uri: string, id = 'entries', method = 'POST') => {
-  return createService({
-    schemas,
-    mapOptions,
-  })({
-    id,
-    ...jsonServiceDef,
-    endpoints: [
-      {
-        mutation: [
-          {
-            $direction: 'rev',
-            payload: {
-              id: 'payload.id',
-              type: 'payload.type',
-              typefolder: 'payload.typefolder',
-              data: [
-                'payload.data.docs[]',
+  return new Service(
+    {
+      id,
+      ...jsonServiceDef,
+      endpoints: [
+        {
+          mutation: [
+            {
+              $direction: 'rev',
+              payload: {
+                id: 'payload.id',
+                type: 'payload.type',
+                typefolder: 'payload.typefolder',
+                data: [
+                  'payload.data.docs[]',
+                  { $apply: typeMappingFromServiceId(id) },
+                ],
+              },
+            },
+            {
+              $direction: 'fwd',
+              response: 'response',
+              'response.data': [
+                'response.data',
                 { $apply: typeMappingFromServiceId(id) },
               ],
             },
-          },
-          {
-            $direction: 'fwd',
-            response: 'response',
-            'response.data': [
-              'response.data',
-              { $apply: typeMappingFromServiceId(id) },
-            ],
-          },
-        ],
-        options: { uri, method },
-      },
-      {
-        id: 'other',
-        options: { uri: 'http://api1.test/other/_bulk_docs' },
-        mutation: { data: ['data', { $apply: 'entry' }] },
-      },
-    ],
-  })
+          ],
+          options: { uri, method },
+        },
+        {
+          id: 'other',
+          options: { uri: 'http://api1.test/other/_bulk_docs' },
+          mutation: { data: ['data', { $apply: 'entry' }] },
+        },
+      ],
+    },
+    {
+      schemas,
+      mapOptions,
+    }
+  )
 }
 
 test.after(() => {

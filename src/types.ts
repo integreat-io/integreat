@@ -6,7 +6,7 @@ import type {
 } from 'map-transform/types.js'
 import type { EndpointOptions } from './service/endpoints/types.js'
 import type { IdentConfig } from './service/types.js'
-import type { Service } from './service/types.js'
+import type Service from './service/index.js'
 
 export interface Reference {
   id: string | null

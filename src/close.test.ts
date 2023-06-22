@@ -1,11 +1,13 @@
 import test from 'ava'
 import sinon from 'sinon'
+import type Service from './service/index.js'
 import type { Action } from './types.js'
 
 import close from './close.js'
 
 // Setup
 
+// TODO: Use actual Service class rather than this mock?
 const serviceMethods = {
   endpointFromAction: () => undefined,
   authorizeAction: (action: Action) => action,
@@ -27,12 +29,12 @@ test('should close all services', async (t) => {
       id: 'service1',
       ...serviceMethods,
       close: closeStub1,
-    },
+    } as unknown as Service,
     {
       id: 'service2',
       ...serviceMethods,
       close: closeStub2,
-    },
+    } as unknown as Service,
   ]
   const expected = { status: 'ok' }
 
@@ -56,17 +58,17 @@ test('should return error when services failed to close', async (t) => {
       id: 'service1',
       ...serviceMethods,
       close: closeStub1,
-    },
+    } as unknown as Service,
     {
       id: 'service2',
       ...serviceMethods,
       close: closeStub2,
-    },
+    } as unknown as Service,
     {
       id: 'service3',
       ...serviceMethods,
       close: closeStub3,
-    },
+    } as unknown as Service,
   ]
   const expected = {
     status: 'error',

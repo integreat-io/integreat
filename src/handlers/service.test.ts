@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import createService from '../service/index.js'
+import Service from '../service/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import type { Transporter, Response } from '../types.js'
 
@@ -31,10 +31,13 @@ const baseTransporter: Transporter = {
 test('should send action straight to service', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok' })
   const transporter = { ...baseTransporter, send }
-  const someService = createService({ schemas, mapOptions })({
-    ...serviceDefs,
-    transporter,
-  })
+  const someService = new Service(
+    {
+      ...serviceDefs,
+      transporter,
+    },
+    { schemas, mapOptions }
+  )
   const action = {
     type: 'SERVICE',
     payload: {
@@ -58,10 +61,13 @@ test('should send action straight to service', async (t) => {
 test('should return error when service does not return a status', async (t) => {
   const send = async () => ({} as Response) // We intentionally don't wan't a status here
   const transporter = { ...baseTransporter, send }
-  const someService = createService({ schemas, mapOptions })({
-    ...serviceDefs,
-    transporter,
-  })
+  const someService = new Service(
+    {
+      ...serviceDefs,
+      transporter,
+    },
+    { schemas, mapOptions }
+  )
   const action = {
     type: 'SERVICE',
     payload: {

@@ -1,12 +1,6 @@
 import type { TransformDefinition, Options } from 'map-transform/types.js'
-import type {
-  Action,
-  Response,
-  Dispatch,
-  Transporter,
-  Adapter,
-} from '../types.js'
-import type { EndpointDef, Endpoint } from './endpoints/types.js'
+import type { Action, Transporter, Adapter } from '../types.js'
+import type { EndpointDef } from './endpoints/types.js'
 
 export type MapOptions = Options
 
@@ -65,27 +59,4 @@ export interface ServiceDef {
   options?: Record<string, unknown>
   mutation?: TransformDefinition
   endpoints: EndpointDef[]
-}
-
-export interface Service {
-  id: string
-  meta?: string
-  endpointFromAction: (
-    action: Action,
-    isIncoming?: boolean
-  ) => Endpoint | undefined
-  authorizeAction: ActionMapper
-  mutateRequest: (
-    action: Action,
-    endpoint: Endpoint,
-    isIncoming?: boolean
-  ) => Promise<Action>
-  mutateResponse: (
-    action: Action,
-    endpoint: Endpoint,
-    isIncoming?: boolean
-  ) => Promise<Response>
-  send: (action: Action) => Promise<Response>
-  listen: (dispatch: Dispatch) => Promise<Response>
-  close: () => Promise<Response>
 }
