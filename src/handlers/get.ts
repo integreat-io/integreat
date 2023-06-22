@@ -3,7 +3,7 @@ import pLimit from 'p-limit'
 import { createErrorResponse, setResponseOnAction } from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'
-import type Service from '../service/index.js'
+import type Service from '../service/Service.js'
 import type { Endpoint } from '../service/endpoints/types.js'
 
 const debug = debugLib('great')

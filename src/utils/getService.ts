@@ -1,6 +1,6 @@
 /* eslint-disable security/detect-object-injection */
 import type { Schema } from '../schema/index.js'
-import type Service from '../service/index.js'
+import type Service from '../service/Service.js'
 
 function serviceIdFromSchema(schemas: Record<string, Schema>, type?: string) {
   const schema = type ? schemas[type] : undefined

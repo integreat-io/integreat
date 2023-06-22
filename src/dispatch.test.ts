@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import Service from './service/index.js'
+import Service from './service/Service.js'
 import { QUEUE_SYMBOL } from './handlers/index.js'
 import type {
   Action,

@@ -17,12 +17,12 @@ import type {
   TypedData,
   Dispatch,
 } from '../types.js'
-import type { EndpointOptions } from '../service/endpoints/types.js'
+import type { EndpointOptions } from './endpoints/types.js'
 import Auth from './Auth.js'
 import tokenAuth from '../authenticators/token.js'
 import optionsAuth from '../authenticators/options.js'
 
-import Service from './index.js'
+import Service from './Service.js'
 
 // Setup
 

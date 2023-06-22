@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import type Service from './service/index.js'
+import type Service from './service/Service.js'
 import type { Action } from './types.js'
 
 import close from './close.js'

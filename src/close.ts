@@ -1,4 +1,4 @@
-import type Service from './service/index.js'
+import type Service from './service/Service.js'
 import type { Response } from './types.js'
 
 type ErrorTuple = [Response, string]

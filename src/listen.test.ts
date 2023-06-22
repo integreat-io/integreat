@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import dispatch from './tests/helpers/dispatch.js'
-import type Service from './service/index.js'
+import type Service from './service/Service.js'
 import type { Action } from './types.js'
 
 import listen from './listen.js'

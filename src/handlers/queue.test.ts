@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import Service from '../service/index.js'
+import Service from '../service/Service.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import type { Transporter } from '../types.js'
 

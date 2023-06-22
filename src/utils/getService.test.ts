@@ -1,6 +1,6 @@
 import test from 'ava'
 import createSchema from '../schema/index.js'
-import Service from '../service/index.js'
+import Service from '../service/Service.js'
 import type { Transporter } from '../types.js'
 
 import getService from './getService.js'

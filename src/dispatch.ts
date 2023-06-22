@@ -21,7 +21,7 @@ import type {
   GetService,
   HandlerOptions,
 } from './types.js'
-import type Service from './service/index.js'
+import type Service from './service/Service.js'
 import type { Schema } from './schema/index.js'
 import type { Endpoint } from './service/endpoints/types.js'
 

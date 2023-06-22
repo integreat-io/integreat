@@ -1,6 +1,6 @@
 import { setResponseOnAction } from '../utils/action.js'
 import type { Action, Response } from '../types.js'
-import type Service from '../service/index.js'
+import type Service from '../service/Service.js'
 import type { Endpoint } from '../service/endpoints/types.js'
 
 export default async function mutateAndSend(
