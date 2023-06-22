@@ -80,7 +80,7 @@ async function mapIncomingAction(
       }
     }
     return {
-      action: await service.mutateRequest(action, endpoint, true),
+      action: await service.mutateIncomingRequest(action, endpoint),
       service,
       endpoint,
     }
@@ -95,7 +95,7 @@ async function mapIncomingResponse(
 ): Promise<Response> {
   const response =
     service && endpoint
-      ? await service.mutateResponse(action, endpoint, true)
+      ? await service.mutateIncomingResponse(action, endpoint)
       : action.response || {}
   return {
     ...response,

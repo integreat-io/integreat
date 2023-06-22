@@ -1606,55 +1606,6 @@ test('should authorize typed data object from service', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should authorize typed data in array to service', async (t) => {
-  const service = new Service(
-    {
-      id: 'accounts',
-      endpoints: [
-        {
-          mutation: {
-            response: 'response',
-            'response.data': ['response.data', { $apply: 'account' }],
-          },
-          options: { uri: 'http://some.api/1.0' },
-        },
-      ],
-      transporter: 'http',
-    },
-    {
-      mapOptions,
-      schemas,
-      castFns,
-      ...jsonResources,
-    }
-  )
-  const action = {
-    type: 'SET',
-    payload: { type: 'account' },
-    response: {
-      status: 'ok',
-      data: [
-        { id: 'johnf', $type: 'account', name: 'John F.' },
-        { id: 'maryk', $type: 'account', name: 'Mary K.' },
-      ],
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const endpoint = service.endpointFromAction(action)
-  const isIncoming = true
-
-  const ret = await service.mutateResponse(action, endpoint!, isIncoming)
-
-  t.is(ret.status, 'ok', ret.error)
-  const accounts = (ret.data as TypedData).accounts as TypedData[]
-  t.is(accounts.length, 1)
-  t.is(accounts[0].id, 'johnf')
-  t.is(
-    ret.warning,
-    '1 item was removed from response data due to lack of access'
-  )
-})
-
 test('mutateResponse should return error when transformer throws', async (t) => {
   const willThrow = () => () => {
     throw new Error('Transformer error')
@@ -1707,6 +1658,104 @@ test('mutateResponse should return error when transformer throws', async (t) => 
   }
 
   const ret = await service.mutateResponse(action, endpoint!)
+
+  t.deepEqual(ret, expected)
+})
+
+// Tests -- mutateIncomingResponse
+
+test('mutateIncomingResponse should mutate and authorize data in response to incoming request', async (t) => {
+  const service = new Service(
+    {
+      id: 'accounts',
+      endpoints: [
+        {
+          mutation: {
+            response: 'response',
+            'response.data': ['response.data', { $apply: 'account' }],
+          },
+          options: { uri: 'http://some.api/1.0' },
+        },
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
+  const action = {
+    type: 'SET',
+    payload: { type: 'account' },
+    response: {
+      status: 'ok',
+      data: [
+        { id: 'johnf', $type: 'account', name: 'John F.' },
+        { id: 'maryk', $type: 'account', name: 'Mary K.' },
+      ],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
+
+  const ret = await service.mutateIncomingResponse(action, endpoint!)
+
+  t.is(ret.status, 'ok', ret.error)
+  const accounts = (ret.data as TypedData).accounts as TypedData[]
+  t.is(accounts.length, 1)
+  t.is(accounts[0].id, 'johnf')
+  t.is(
+    ret.warning,
+    '1 item was removed from response data due to lack of access'
+  )
+})
+
+test('mutateIncomingResponse should set origin when mutation results in an error response', async (t) => {
+  const service = new Service(
+    {
+      id: 'accounts',
+      endpoints: [
+        {
+          mutation: {
+            $flip: true,
+            response: {
+              status: { $value: 'error' },
+            },
+          },
+          options: { uri: 'http://some.api/1.0' },
+        },
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
+  const action = {
+    type: 'GET',
+    payload: { id: 'johnf', type: 'account' },
+    response: {
+      status: 'ok',
+      data: {
+        content: {
+          data: { accounts: { id: 'johnf', name: 'John F.' } },
+        },
+      },
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action)
+  const expected = {
+    status: 'error',
+    origin: 'mutate:response:incoming',
+  }
+
+  const ret = await service.mutateIncomingResponse(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1916,54 +1965,6 @@ test('mutateRequest should authorize data object going to service', async (t) =>
   t.deepEqual(ret.response, expectedResponse)
 })
 
-test('mutateRequest should authorize data array coming from service', async (t) => {
-  const isIncoming = true
-  const service = new Service(
-    {
-      id: 'accounts',
-      transporter: 'http',
-      auth: 'granting',
-      endpoints,
-    },
-    {
-      mapOptions,
-      schemas,
-      castFns,
-      ...jsonResources,
-    }
-  )
-  const action = {
-    type: 'SET',
-    payload: {
-      type: 'account',
-      data: {
-        accounts: [
-          { id: 'johnf', name: 'John F.' },
-          { id: 'lucyk', name: 'Lucy K.' },
-        ],
-      },
-    },
-    meta: {
-      ident: { id: 'johnf', roles: ['admin'] },
-      authorized: true,
-    },
-  }
-  const endpoint = service.endpointFromAction(action, isIncoming)
-  const expectedResponse = {
-    status: undefined,
-    warning: '1 item was removed from request data due to lack of access',
-  }
-
-  const ret = await service.mutateRequest(action, endpoint!, isIncoming)
-
-  t.is(ret.response?.status, undefined, ret.response?.error)
-  const data = ret.payload.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'johnf')
-  t.is(data[0].$type, 'account')
-  t.deepEqual(ret.response, expectedResponse)
-})
-
 test('mutateRequest should use mutation pipeline', async (t) => {
   const service = new Service(
     {
@@ -2099,6 +2100,96 @@ test('mutateRequest should return error when transformer throws', async (t) => {
   const ret = await service.mutateRequest(action, endpoint!)
 
   t.deepEqual(ret, expected)
+})
+
+// Tests -- mutateIncomingRequest
+
+test('mutateIncomingRequest should mutate and authorize data coming from service', async (t) => {
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
+  const action = {
+    type: 'SET',
+    payload: {
+      type: 'account',
+      data: {
+        accounts: [
+          { id: 'johnf', name: 'John F.' },
+          { id: 'lucyk', name: 'Lucy K.' },
+        ],
+      },
+    },
+    meta: {
+      ident: { id: 'johnf', roles: ['admin'] },
+      authorized: true,
+    },
+  }
+  const endpoint = service.endpointFromAction(action, true /* isIncoming */)
+  const expectedResponse = {
+    status: undefined,
+    warning: '1 item was removed from request data due to lack of access',
+  }
+
+  const ret = await service.mutateIncomingRequest(action, endpoint!)
+
+  t.is(ret.response?.status, undefined, ret.response?.error)
+  const data = ret.payload.data as TypedData[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'johnf')
+  t.is(data[0].$type, 'account')
+  t.deepEqual(ret.response, expectedResponse)
+})
+
+test('mutateIncomingRequest should set origin when mutation results in an error response', async (t) => {
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      endpoints: [
+        {
+          mutation: [
+            {
+              response: {
+                status: { $value: 'error' },
+              },
+            },
+          ],
+          options: { uri: 'http://soap.api/1.1' },
+        },
+      ],
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
+  const action = {
+    type: 'SET',
+    payload: {},
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = service.endpointFromAction(action, true /* isIncoming */)
+  const expectedResponse = {
+    status: 'error',
+    origin: 'mutate:request:incoming',
+  }
+
+  const ret = await service.mutateIncomingRequest(action, endpoint!)
+
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 // Tests -- listen

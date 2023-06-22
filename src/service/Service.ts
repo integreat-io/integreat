@@ -352,44 +352,24 @@ export default class Service {
   }
 
   /**
-   * Map request. Will authorize data and mutate action – in that order –
-   * when this is an outgoing request, and will do it in reverse for an
-   * incoming request.
+   * Mutate request. Will authorize data and mutate action – in that order.
    */
-  async mutateRequest(
-    action: Action,
-    endpoint: Endpoint,
-    isIncoming = false
-  ): Promise<Action> {
+  async mutateRequest(action: Action, endpoint: Endpoint): Promise<Action> {
     // Set endpoint options on action
     const nextAction = {
       ...action,
       meta: { ...action.meta, options: deepClone(endpoint.options) },
     }
     const castFn = getCastFn(this.#castFns, action.payload.type)
+    const casted = castPayload(nextAction, castFn, endpoint.allowRawRequest)
+    const authorized = this.#authorizeDataToService(
+      casted,
+      endpoint.allowRawRequest
+    )
 
+    let mutated: Action
     try {
-      // Authorize and mutate in right order
-      return setOriginOnAction(
-        isIncoming
-          ? this.#authorizeDataToService(
-              castPayload(
-                await endpoint.mutate(nextAction, false /* isRev */),
-                castFn,
-                endpoint.allowRawRequest
-              ),
-              endpoint.allowRawRequest
-            )
-          : await endpoint.mutate(
-              this.#authorizeDataToService(
-                castPayload(nextAction, castFn, endpoint.allowRawRequest),
-                endpoint.allowRawRequest
-              ),
-              true // isRev
-            ),
-        'mutate:request',
-        false
-      )
+      mutated = await endpoint.mutate(authorized, true /* isRev */)
     } catch (error) {
       return setErrorOnAction(
         action,
@@ -399,47 +379,50 @@ export default class Service {
         'mutate:request'
       )
     }
+
+    return setOriginOnAction(mutated, 'mutate:request', false)
   }
 
   /**
-   * Map response. Will mutate action and authorize data – in that order –
-   * when this is the response from an outgoing request. Will do it in the
-   * reverse order for a response to an incoming request.
+   * Mutate incoming request. Will mutate action and authorize data – in that
+   * order.
    */
-  async mutateResponse(
+  async mutateIncomingRequest(
     action: Action,
-    endpoint: Endpoint,
-    isIncoming = false
-  ): Promise<Response> {
-    const castFn = getCastFn(this.#castFns, action.payload.type)
+    endpoint: Endpoint
+  ): Promise<Action> {
+    // Set endpoint options on action
+    const nextAction = {
+      ...action,
+      meta: { ...action.meta, options: deepClone(endpoint.options) },
+    }
 
+    let mutated: Action
     try {
-      // Authorize and mutate in right order
-      const mutated = isIncoming
-        ? setOriginOnAction(
-            await endpoint.mutate(
-              this.#authorizeDataFromService(
-                castResponse(action, castFn, endpoint.allowRawResponse),
-                endpoint.allowRawResponse
-              ),
-              true // isRev
-            ),
-            'mutate:response',
-            false
-          )
-        : this.#authorizeDataFromService(
-            setOriginOnAction(
-              castResponse(
-                await endpoint.mutate(action, false /* isRev */),
-                castFn,
-                endpoint.allowRawResponse
-              ),
-              'mutate:response',
-              false
-            ),
-            endpoint.allowRawResponse
-          )
-      return mutated.response || { status: undefined }
+      mutated = await endpoint.mutate(nextAction, false /* isRev */)
+    } catch (error) {
+      return setErrorOnAction(
+        action,
+        `Error while mutating incoming request: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        'mutate:request:incoming'
+      )
+    }
+
+    const castFn = getCastFn(this.#castFns, action.payload.type)
+    const casted = castPayload(mutated, castFn, endpoint.allowRawRequest)
+    const withOrigin = setOriginOnAction(casted, 'mutate:request:incoming')
+    return this.#authorizeDataToService(withOrigin, endpoint.allowRawRequest)
+  }
+
+  /**
+   * Mutate response. Will mutate action and authorize data – in that order.
+   */
+  async mutateResponse(action: Action, endpoint: Endpoint): Promise<Response> {
+    let mutated
+    try {
+      mutated = await endpoint.mutate(action, false /* isRev */)
     } catch (error) {
       return {
         ...action.response,
@@ -451,6 +434,58 @@ export default class Service {
         ),
       }
     }
+
+    const castFn = getCastFn(this.#castFns, action.payload.type)
+    const casted = castResponse(mutated, castFn, endpoint.allowRawResponse)
+    const withOrigin = setOriginOnAction(casted, 'mutate:response', false)
+    const { response } = this.#authorizeDataFromService(
+      withOrigin,
+      endpoint.allowRawResponse
+    )
+
+    return response || { status: undefined }
+  }
+
+  /**
+   * Mutate response to incoming request. Will authorize data and mutate action
+   * – in that order.
+   */
+  async mutateIncomingResponse(
+    action: Action,
+    endpoint: Endpoint
+  ): Promise<Response> {
+    const castFn = getCastFn(this.#castFns, action.payload.type)
+    const casted = castResponse(action, castFn, endpoint.allowRawResponse)
+    const authorized = this.#authorizeDataFromService(
+      casted,
+      endpoint.allowRawResponse
+    )
+
+    let mutated
+    try {
+      // Authorize and mutate in right order
+      mutated = await endpoint.mutate(
+        authorized,
+        true // isRev
+      )
+    } catch (error) {
+      return {
+        ...action.response,
+        ...createErrorResponse(
+          `Error while mutating response: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+          'mutate:response:incoming'
+        ),
+      }
+    }
+
+    const { response } = setOriginOnAction(
+      mutated,
+      'mutate:response:incoming',
+      false
+    )
+    return response || { status: undefined }
   }
 
   /**
