@@ -18,7 +18,15 @@ const prepareEndpoint = ({ match, ...endpoint }: EndpointDef) => ({
   ...endpoint,
 })
 
-export default function createEndpointMappers(
+export function endpointForAction(
+  action: Action,
+  endpoints: Endpoint[],
+  isIncoming?: boolean
+): Endpoint | undefined {
+  return endpoints.find((endpoint) => endpoint.isMatch(action, isIncoming))
+}
+
+export default function createEndpoints(
   serviceId: string,
   endpointDefs: EndpointDef[],
   serviceOptions: EndpointOptions,
@@ -26,8 +34,8 @@ export default function createEndpointMappers(
   serviceMutation?: TransformDefinition,
   prepareOptions?: PrepareOptions,
   serviceAdapters?: Adapter[]
-): (action: Action, isIncoming?: boolean) => Endpoint | undefined {
-  const endpoints = endpointDefs
+): Endpoint[] {
+  return endpointDefs
     .map(prepareEndpoint)
     .sort(compareEndpoints)
     .map(
@@ -40,7 +48,4 @@ export default function createEndpointMappers(
         serviceAdapters
       )
     )
-
-  return (action, isIncoming) =>
-    endpoints.find((endpoint) => endpoint.isMatch(action, isIncoming))
 }

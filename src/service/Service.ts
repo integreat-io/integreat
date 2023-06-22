@@ -1,6 +1,6 @@
 import debugLib from 'debug'
 import pProgress, { ProgressNotifier } from 'p-progress'
-import createEndpointMappers from './endpoints/index.js'
+import createEndpoints, { endpointForAction } from './endpoints/index.js'
 import {
   setErrorOnAction,
   createErrorResponse,
@@ -258,6 +258,7 @@ export default class Service {
 
   #schemas: Record<string, Schema>
   #options: Record<string, unknown>
+  #endpoints: Endpoint[]
   #transporter?: Transporter
   #castFns: Record<string, DataMapperEntry>
 
@@ -268,7 +269,6 @@ export default class Service {
 
   #authorizeDataFromService
   #authorizeDataToService
-  #getEndpointMapper
   #middleware: Middleware
 
   constructor(
@@ -294,6 +294,10 @@ export default class Service {
       emit = () => undefined, // Provide a fallback for tests
     }: Resources
   ) {
+    if (typeof serviceId !== 'string' || serviceId === '') {
+      throw new TypeError(`Can't create service without an id.`)
+    }
+
     this.id = serviceId
     this.meta = meta
 
@@ -301,13 +305,7 @@ export default class Service {
     this.#options = options
     this.#castFns = castFns
 
-    if (typeof serviceId !== 'string' || serviceId === '') {
-      throw new TypeError(`Can't create service without an id.`)
-    }
-
     this.#transporter = lookupById(transporterId, transporters)
-    const serviceAdapters = lookupAdapters(adapterDefs, adapters)
-
     this.#authorization = retrieveAuthorization(authenticators, auths, auth)
     this.#incomingAuth = resolveIncomingAuth(authenticators, auths, auth)
     this.#requireAuth = !!auth
@@ -315,7 +313,8 @@ export default class Service {
     this.#authorizeDataFromService = authorizeData.fromService(schemas)
     this.#authorizeDataToService = authorizeData.toService(schemas)
 
-    this.#getEndpointMapper = createEndpointMappers(
+    const serviceAdapters = lookupAdapters(adapterDefs, adapters)
+    this.#endpoints = createEndpoints(
       serviceId,
       endpointDefs.map((endpoint) => ({
         ...endpoint,
@@ -324,7 +323,7 @@ export default class Service {
       options,
       mapOptions,
       mutation,
-      this.#transporter ? this.#transporter.prepareOptions : undefined,
+      this.#transporter?.prepareOptions,
       serviceAdapters
     )
 
@@ -339,9 +338,8 @@ export default class Service {
   /**
    * Return the endpoint mapper that best matches the given action.
    */
-  // TODO: Make this static?
   endpointFromAction(action: Action, isIncoming = false): Endpoint | undefined {
-    return this.#getEndpointMapper(action, isIncoming)
+    return endpointForAction(action, this.#endpoints, isIncoming)
   }
 
   /**

@@ -2,7 +2,7 @@ import test from 'ava'
 import createSchema from '../../schema/index.js'
 import type { Endpoint } from './types.js'
 
-import createEndpointMappers from './index.js'
+import createEndpoints, { endpointForAction } from './index.js'
 
 // Setup
 
@@ -32,7 +32,33 @@ const serviceOptions = {}
 
 // Tests
 
-test('should return match function', (t) => {
+test('should return endpoints', (t) => {
+  const endpointDefs = [
+    {
+      id: 'endpoint1',
+      match: { type: 'entry' },
+      options: { uri: 'http://test.api/1' },
+    },
+    {
+      id: 'endpoint2',
+      match: { type: 'entry', scope: 'member' },
+      options: { uri: 'http://test.api/2' },
+    },
+  ]
+
+  const endpoints = createEndpoints(
+    serviceId,
+    endpointDefs,
+    serviceOptions,
+    mapOptions
+  )
+
+  t.is(endpoints.length, 2)
+  t.is(endpoints[0].id, 'endpoint2')
+  t.is(endpoints[1].id, 'endpoint1')
+})
+
+test('should find matching endpoint', (t) => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -53,13 +79,13 @@ test('should return match function', (t) => {
     },
   }
 
-  const matchFn = createEndpointMappers(
+  const endpoints = createEndpoints(
     serviceId,
     endpointDefs,
     serviceOptions,
     mapOptions
   )
-  const mapping = matchFn(action)
+  const mapping = endpointForAction(action, endpoints)
 
   t.truthy(mapping)
   t.is((mapping as Endpoint).id, 'endpoint2')
@@ -87,13 +113,13 @@ test('should match by id', (t) => {
     },
   }
 
-  const matchFn = createEndpointMappers(
+  const endpoints = createEndpoints(
     serviceId,
     endpointDefs,
     serviceOptions,
     mapOptions
   )
-  const mapping = matchFn(action)
+  const mapping = endpointForAction(action, endpoints)
 
   t.truthy(mapping)
   t.is((mapping as Endpoint).id, 'endpoint2')
@@ -119,13 +145,13 @@ test('should match scope all', (t) => {
     },
   }
 
-  const matchFn = createEndpointMappers(
+  const endpoints = createEndpoints(
     serviceId,
     endpointDefs,
     serviceOptions,
     mapOptions
   )
-  const mapping = matchFn(action)
+  const mapping = endpointForAction(action, endpoints)
 
   t.truthy(mapping)
   t.is((mapping as Endpoint).id, 'endpoint1')
@@ -152,13 +178,13 @@ test('should treat scope all as no scope', (t) => {
     },
   }
 
-  const matchFn = createEndpointMappers(
+  const endpoints = createEndpoints(
     serviceId,
     endpointDefs,
     serviceOptions,
     mapOptions
   )
-  const mapping = matchFn(action)
+  const mapping = endpointForAction(action, endpoints)
 
   t.truthy(mapping)
   t.is((mapping as Endpoint).id, 'endpoint2')
