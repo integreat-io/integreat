@@ -134,9 +134,6 @@ const dispatchIncomingWithMiddleware =
       }
     })
 
-const isTransporter = (transporter: unknown): transporter is Transporter =>
-  isObject(transporter)
-
 const sendToTransporter = (
   transporter: Transporter,
   connection: Connection,
@@ -213,32 +210,36 @@ const getCastFn = (
     ? castFns[type] // eslint-disable-line security/detect-object-injection
     : undefined
 
-const castByType = (castFns: Record<string, DataMapperEntry>) =>
-  function castAction(action: Action, allowRaw: boolean, isRequest = false) {
-    if (!allowRaw) {
-      const castFn = getCastFn(castFns, action.payload.type)
-      if (castFn) {
-        if (isRequest && action.payload) {
-          return {
-            ...action,
-            payload: {
-              ...action.payload,
-              data: castFn(action.payload.data),
-            },
-          }
-        } else if (!isRequest && action.response) {
-          return {
-            ...action,
-            response: {
-              ...action.response,
-              data: castFn(action.response.data),
-            },
-          }
+function castAction(
+  action: Action,
+  castFns: Record<string, DataMapperEntry>,
+  allowRaw: boolean,
+  isRequest = false
+) {
+  if (!allowRaw) {
+    const castFn = getCastFn(castFns, action.payload.type)
+    if (castFn) {
+      if (isRequest && action.payload) {
+        return {
+          ...action,
+          payload: {
+            ...action.payload,
+            data: castFn(action.payload.data),
+          },
+        }
+      } else if (!isRequest && action.response) {
+        return {
+          ...action,
+          response: {
+            ...action.response,
+            data: castFn(action.response.data),
+          },
         }
       }
     }
-    return action
   }
+  return action
+}
 
 const lookupAdapters = (
   defs: (string | Adapter)[] = [],
@@ -258,6 +259,7 @@ export default class Service {
   #schemas: Record<string, Schema>
   #options: Record<string, unknown>
   #transporter?: Transporter
+  #castFns: Record<string, DataMapperEntry>
 
   #authorization?: Auth
   #incomingAuth?: Auth | true
@@ -267,8 +269,7 @@ export default class Service {
   #authorizeDataFromService
   #authorizeDataToService
   #getEndpointMapper
-  #castAction
-  #runThroughMiddleware: Middleware
+  #middleware: Middleware
 
   constructor(
     {
@@ -298,6 +299,7 @@ export default class Service {
 
     this.#schemas = schemas
     this.#options = options
+    this.#castFns = castFns
 
     if (typeof serviceId !== 'string' || serviceId === '') {
       throw new TypeError(`Can't create service without an id.`)
@@ -322,18 +324,14 @@ export default class Service {
       options,
       mapOptions,
       mutation,
-      isTransporter(this.#transporter)
-        ? this.#transporter.prepareOptions
-        : undefined,
+      this.#transporter ? this.#transporter.prepareOptions : undefined,
       serviceAdapters
     )
 
-    this.#castAction = castByType(castFns)
-
-    this.#runThroughMiddleware =
+    this.#middleware =
       middleware.length > 0 ? compose(...middleware) : (fn) => fn
 
-    this.#connection = isTransporter(this.#transporter)
+    this.#connection = this.#transporter
       ? new Connection(this.#transporter, options, emit)
       : null
   }
@@ -341,7 +339,7 @@ export default class Service {
   /**
    * Return the endpoint mapper that best matches the given action.
    */
-  // TODO: Can be static
+  // TODO: Make this static?
   endpointFromAction(action: Action, isIncoming = false): Endpoint | undefined {
     return this.#getEndpointMapper(action, isIncoming)
   }
@@ -371,14 +369,14 @@ export default class Service {
       ...action,
       meta: { ...action.meta, options: deepClone(endpoint.options) },
     }
-
     try {
       // Authorize and mutate in right order
       return setOriginOnAction(
         isIncoming
           ? this.#authorizeDataToService(
-              this.#castAction(
+              castAction(
                 await mutateRequest(nextAction, isIncoming),
+                this.#castFns,
                 allowRawRequest,
                 true // isRequest
               ),
@@ -386,8 +384,9 @@ export default class Service {
             )
           : await mutateRequest(
               this.#authorizeDataToService(
-                this.#castAction(
+                castAction(
                   nextAction,
+                  this.#castFns,
                   allowRawRequest,
                   true // isRequest
                 ),
@@ -426,7 +425,7 @@ export default class Service {
         ? setOriginOnAction(
             await mutateResponse(
               this.#authorizeDataFromService(
-                this.#castAction(action, allowRawResponse),
+                castAction(action, this.#castFns, allowRawResponse),
                 allowRawResponse
               ),
               isIncoming
@@ -436,8 +435,9 @@ export default class Service {
           )
         : this.#authorizeDataFromService(
             setOriginOnAction(
-              this.#castAction(
+              castAction(
                 await mutateResponse(action, isIncoming),
+                this.#castFns,
                 allowRawResponse
               ),
               'mutate:response',
@@ -471,7 +471,7 @@ export default class Service {
 
     // Fail if we have no transporter or connection. The second is because
     // of the first, so it's really the same error.
-    if (!isTransporter(this.#transporter) || !this.#connection) {
+    if (!this.#transporter || !this.#connection) {
       return createErrorResponse(
         `Service '${this.id}' has no transporter`,
         `internal:service:${this.id}`
@@ -496,7 +496,7 @@ export default class Service {
     }
 
     return setOrigin(
-      await this.#runThroughMiddleware(
+      await this.#middleware(
         sendToTransporter(this.#transporter, this.#connection, this.id)
       )(action),
       `middleware:service:${this.id}`
@@ -511,7 +511,7 @@ export default class Service {
   async listen(dispatch: Dispatch): Promise<Response> {
     debug('Set up service listening ...')
 
-    if (!isTransporter(this.#transporter)) {
+    if (!this.#transporter) {
       debug(`Service '${this.id}' has no transporter`)
       return createErrorResponse(
         `Service '${this.id}' has no transporter`,
@@ -572,7 +572,7 @@ export default class Service {
     }
 
     const incomingMiddleware = compose(
-      this.#runThroughMiddleware,
+      this.#middleware,
       setServiceIdAsSourceServiceOnAction(this.id)
     )
 
@@ -593,7 +593,7 @@ export default class Service {
    */
   async close(): Promise<Response> {
     debug(`Close service '${this.id}'`)
-    if (!isTransporter(this.#transporter) || !this.#connection) {
+    if (!this.#transporter || !this.#connection) {
       debug('No transporter to disconnect')
       return createErrorResponse(
         'No transporter to disconnect',
