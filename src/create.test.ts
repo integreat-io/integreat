@@ -202,6 +202,57 @@ test('should use adapters', async (t) => {
   t.is(data[0].$type, 'entry')
 })
 
+test('should set adapter id', async (t) => {
+  const send = sinon
+    .stub()
+    .resolves({ status: 'ok', data: '[{"key":"ent1","headline":"Entry 1"}]' })
+  const servicesWithJson = [
+    {
+      ...services[0],
+      adapters: ['json'], // Lookup with id
+      options: { adapters: { json: {} } },
+    },
+  ]
+  const resourcesWithTransSendAndAdapters = {
+    ...resourcesWithTransformer,
+    transporters: {
+      ...resourcesWithTransformer.transporters,
+      http: {
+        ...resourcesWithTransformer.transporters!.http,
+        send,
+      },
+    },
+    adapters: {
+      json: {
+        ...jsonAdapter,
+        id: undefined, // Just to make sure there's no preset id
+        prepareOptions: (options: Record<string, unknown>) => ({
+          ...options,
+          setByPrepare: true, // This is only invoked when the adapter has an id
+        }),
+        normalize: (action: Action, options: Record<string, unknown>) => ({
+          ...action,
+          response: { ...action.response, params: options }, // Pass on options as params
+        }),
+      },
+    },
+  }
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { options: {} },
+  }
+
+  const great = create(
+    { services: servicesWithJson, schemas, mutations },
+    resourcesWithTransSendAndAdapters
+  )
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.true(ret.params?.setByPrepare)
+})
+
 test('should call middleware', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const otherAction = sinon.stub().resolves({ status: 'ok' })

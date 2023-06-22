@@ -111,8 +111,10 @@ const services = [
     transporter: 'http', // Use the http transporter
     adapters: ['json'], // Run the request and the response through the json adapter
     options: {
-      // Options for the transporter
-      uri: 'https://cat-fact.herokuapp.com/facts', // Only the uri is needed here
+      transporter: {
+        // Options for the transporter
+        uri: 'https://cat-fact.herokuapp.com/facts', // Only the uri is needed here
+      },
     },
     endpoints: [
       {
@@ -228,6 +230,10 @@ authentication. In cases where the service is authenticated by other means, e.g.
 by including username and password in the uri, set the `auth` property to `true`
 to signal that this is an authenticated service.
 
+In `options`, you may provide options for transporters and adapters. It is
+merged with the `options` object on the endpoint. See
+[the `options` object](#options-object) for more on this.
+
 ### Endpoints
 
 A service will have at least one endpoint, but often there will be several. An
@@ -301,13 +307,9 @@ specify a few things:
   actions going to a service and the response coming back, so keep this in mind
   when you set up this pipeline. See [Mutation pipelines](#mutations)
   for more on how to define the mutation.
-- `options`: This object will be passed on to the transporter and may contain
-  any properties that are meaningful to the transporter. You may also add other
-  properties for use in your mutations, but keep in mind that they will be sent
-  to the transporter. The endpoint `options` object is merged with the service
-  `options` object. Endpoint properties will override equally named service
-  properties, but this is done through deep merging, so child objects will be
-  merged as well.
+- `options`: This object is merged with the `options` object on the service
+  definition, and provide options for transporters and adapters. See
+  [the `options` object](#options-object) for more on this.
 - `allowRawRequest`: When set to `true`, payload `data` sent to this endpoint
   will not by cast automatically nor will an error be returned if the data is
   not typed.
@@ -383,13 +385,106 @@ Example service definition with endpoint match object:
         }
       },
       options: {
-        uri: 'https://example.api.com/1.0/{author}/{type}_log?archive={archive}'
+        transporter: {
+          uri: 'https://example.api.com/1.0/{author}/{type}_log?archive={archive}'
+        }
       }
     }
   ],
   // ...
 }
 ```
+
+### Options object
+
+A service defintion may have `options` object in two places: Direction on the
+service definition and on any of the endpoints. When an action is sent to an
+endpoint, the combination of the two `options` are used. Also, there may be
+different options for the transporter and for the adapters.
+
+Example of an `options` object set on the service definition:
+
+```javascript
+{
+  id: 'entries',
+  options: {
+    uri: 'https://ourapi.com/v1',
+    transporter: {
+      method: 'POST',
+      incoming: { port: 3000 }
+    },
+    adapters: {
+      xml: { namespaces: { ... } },
+      // ...
+    }
+  }
+}
+```
+
+Any properties set directly on the `options` object or on a `transporter`
+property, are treated as options for the transporter. If there are properties on
+both the `options` and a `transporter` object, they will be merged, with the
+`transporter` object having priority if conflicts. This is a shallow merge, so
+objects used in the options will not be merged.
+
+In the example above, the options passed to the transporter will include `uri`,
+`method`, and `incoming`.
+
+The `incoming` object on the transporter options is a bit special, as it holds
+separate options for transporters that support incoming requests trough the
+`listen()` method. If there are `incoming` objects on both the `options` and
+`transporter` objects, they will be merged, again with priority to the one on
+the `transporter` object.
+
+Note that we recommend setting transporter options on the `transporter` object
+for clarity, but both will work.
+
+Adapter options may be given in an `adapters` object, where each adapter may
+have its own options, set with the id of the adapter as a key. In the example
+above, the `xml` adapter will be given the `namespaces` object. A requirement
+for this, is that the adapter actually have an id. Adapters provided directly on
+service definition may not have an id, but all adapters that are referenced by
+an id, will also be given options set on that id, which is the common behavior.
+
+Finally, when all this sorting have been done on options from both the service
+definition and an endpoint, the two options structures are merged before being
+used. Here, the endpoint options take priority, so that you may set a general
+option on the service, and override it on the endpoint.
+
+Example of endpoint options overriding service options:
+
+```javascript
+{
+  id: 'entries',
+  options: {
+    transporter: {
+      uri: 'https://ourapi.com/v1',
+      method: 'GET',
+    }
+  },
+  endpoints: [
+    {
+      match: { ... }
+    },
+    {
+      match: { ... },
+      options: {
+        transporter: {
+          method: 'POST'
+        }
+      }
+    }
+  ]
+}
+```
+
+Here, the first enpoint will be given `method: 'GET'`, while the next will get
+`method: 'POST'`.
+
+Before actions are passed through mutations and finally passed to the
+transporter, the merged transporter options is set on an `options` property in
+the `meta` object of the action. This way, you may also mutate these options
+before they reach the transporter.
 
 ### Service authentication
 
@@ -1068,7 +1163,8 @@ Current meta properties reserved by Integreat:
   Integreat).
 - `options`: Used for passing the processed service endpoint options object to
   a transporter. The `options` object is available through mutations, so that
-  you may modify it futher before it goes to the transporter.
+  you may modify it futher before it goes to the transporter. Note that only the
+  transporter options are provided here, not the adapter options.
 - `authorized`: An internal flag signaling that the action has been authorized.
   Will be removed from any dispatched actions.
 

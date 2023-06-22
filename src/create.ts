@@ -86,6 +86,16 @@ export const setUpAuth = (authenticators?: Record<string, Authenticator>) =>
     return new Auth(def.id, authenticator, def.options)
   }
 
+const setAdapterIds = (adapters?: Record<string, Adapter>) =>
+  adapters
+    ? Object.fromEntries(
+        Object.entries(adapters).map(([id, adapter]) => [
+          id,
+          { ...adapter, id },
+        ])
+      )
+    : {}
+
 /*
  * Create an Integreat instance.
  */
@@ -148,7 +158,7 @@ export default function create(
       (def) =>
         new Service(def, {
           transporters,
-          adapters,
+          adapters: setAdapterIds(adapters),
           authenticators,
           auths,
           schemas,

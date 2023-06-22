@@ -4,7 +4,7 @@ import type {
   TransformObject,
   Pipeline,
 } from 'map-transform/types.js'
-import type { IdentConfig, EndpointOptions } from './service/types.js'
+import type { IdentConfig, TransporterOptions } from './service/types.js'
 import type Service from './service/Service.js'
 
 export interface Reference {
@@ -133,7 +133,7 @@ export interface Meta extends Record<string, unknown> {
   queue?: boolean | number
   queuedAt?: number
   auth?: Record<string, unknown> | null
-  options?: EndpointOptions
+  options?: TransporterOptions
   authorized?: boolean
 }
 
@@ -183,17 +183,17 @@ export interface Connection extends Record<string, unknown> {
 export interface Transporter {
   authentication: string | null
   prepareOptions: (
-    options: Record<string, unknown>,
+    options: TransporterOptions,
     serviceId: string
   ) => Record<string, unknown>
   connect: (
-    options: Record<string, unknown>,
+    options: TransporterOptions,
     authentication: Record<string, unknown> | null,
     connection: Connection | null,
     emit: (eventType: string, ...args: unknown[]) => void
   ) => Promise<Connection | null>
   send: (action: Action, connection: Connection | null) => Promise<Response>
-  shouldListen?: (options: EndpointOptions) => boolean
+  shouldListen?: (options: TransporterOptions) => boolean
   listen?: (
     dispatch: Dispatch,
     connection: Connection | null
@@ -202,6 +202,7 @@ export interface Transporter {
 }
 
 export interface Adapter {
+  id?: string
   prepareOptions: (
     options: Record<string, unknown>,
     serviceId: string

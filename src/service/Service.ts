@@ -7,11 +7,11 @@ import {
   setOrigin,
   setOriginOnAction,
 } from '../utils/action.js'
+import { prepareOptions, mergeOptions } from './utils/options.js'
 import Connection from './Connection.js'
 import Auth from './Auth.js'
 import { lookupById } from '../utils/indexUtils.js'
 import { isObject, isNotNullOrUndefined } from '../utils/is.js'
-import deepClone from '../utils/deepClone.js'
 import * as authorizeData from './authorize/data.js'
 import authorizeAction from './authorize/action.js'
 import { compose } from '../dispatch.js'
@@ -34,6 +34,7 @@ import type {
   AuthProp,
   Authenticator,
   AuthDef,
+  TransporterOptions,
 } from './types.js'
 
 const debug = debugLib('great')
@@ -211,25 +212,26 @@ const getCastFn = (
 
 const castPayload = (
   action: Action,
-  castFn?: DataMapperEntry,
-  allowRaw = false
-): Action =>
-  !allowRaw && castFn
-    ? {
-        ...action,
-        payload: {
+  endpoint: Endpoint,
+  castFn?: DataMapperEntry
+): Action => ({
+  ...action,
+  payload:
+    !endpoint.allowRawRequest && castFn
+      ? {
           ...action.payload,
           data: castFn(action.payload.data),
-        },
-      }
-    : action
+        }
+      : action.payload,
+  meta: { ...action.meta, options: endpoint.options.transporter || {} },
+})
 
 const castResponse = (
   action: Action,
-  castFn?: DataMapperEntry,
-  allowRaw = false
+  endpoint: Endpoint,
+  castFn?: DataMapperEntry
 ): Action =>
-  !allowRaw && castFn
+  !endpoint.allowRawResponse && castFn
     ? {
         ...action,
         response: {
@@ -255,7 +257,7 @@ export default class Service {
   meta?: string
 
   #schemas: Record<string, Schema>
-  #options: Record<string, unknown>
+  #options: TransporterOptions
   #endpoints: Endpoint[]
   #transporter?: Transporter
   #castFns: Record<string, DataMapperEntry>
@@ -300,7 +302,6 @@ export default class Service {
     this.meta = meta
 
     this.#schemas = schemas
-    this.#options = options
     this.#castFns = castFns
 
     this.#transporter = lookupById(transporterId, transporters)
@@ -312,19 +313,20 @@ export default class Service {
     this.#authorizeDataToService = authorizeData.toService(schemas)
 
     const serviceAdapters = lookupAdapters(adapterDefs, adapters)
+    const serviceOptions = prepareOptions(options)
+    this.#options = serviceOptions.transporter
+
     this.#endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
       (endpoint) =>
         new Endpoint(
-          {
-            ...endpoint,
-            adapters: lookupAdapters(endpoint.adapters, adapters),
-          },
+          endpoint,
           serviceId,
-          options,
+          endpoint.options
+            ? mergeOptions(serviceOptions, prepareOptions(endpoint.options))
+            : serviceOptions,
           mapOptions,
           mutation,
-          this.#transporter?.prepareOptions,
-          serviceAdapters
+          [...serviceAdapters, ...lookupAdapters(endpoint.adapters, adapters)]
         )
     )
 
@@ -332,7 +334,7 @@ export default class Service {
       middleware.length > 0 ? compose(...middleware) : (fn) => fn
 
     this.#connection = this.#transporter
-      ? new Connection(this.#transporter, options, emit)
+      ? new Connection(this.#transporter, serviceOptions.transporter, emit)
       : null
   }
 
@@ -355,13 +357,8 @@ export default class Service {
    * Mutate request. Will authorize data and mutate action – in that order.
    */
   async mutateRequest(action: Action, endpoint: Endpoint): Promise<Action> {
-    // Set endpoint options on action
-    const nextAction = {
-      ...action,
-      meta: { ...action.meta, options: deepClone(endpoint.options) },
-    }
     const castFn = getCastFn(this.#castFns, action.payload.type)
-    const casted = castPayload(nextAction, castFn, endpoint.allowRawRequest)
+    const casted = castPayload(action, endpoint, castFn)
     const authorized = this.#authorizeDataToService(
       casted,
       endpoint.allowRawRequest
@@ -391,15 +388,9 @@ export default class Service {
     action: Action,
     endpoint: Endpoint
   ): Promise<Action> {
-    // Set endpoint options on action
-    const nextAction = {
-      ...action,
-      meta: { ...action.meta, options: deepClone(endpoint.options) },
-    }
-
     let mutated: Action
     try {
-      mutated = await endpoint.mutate(nextAction, false /* isRev */)
+      mutated = await endpoint.mutate(action, false /* isRev */)
     } catch (error) {
       return setErrorOnAction(
         action,
@@ -411,7 +402,7 @@ export default class Service {
     }
 
     const castFn = getCastFn(this.#castFns, action.payload.type)
-    const casted = castPayload(mutated, castFn, endpoint.allowRawRequest)
+    const casted = castPayload(mutated, endpoint, castFn)
     const withOrigin = setOriginOnAction(casted, 'mutate:request:incoming')
     return this.#authorizeDataToService(withOrigin, endpoint.allowRawRequest)
   }
@@ -436,7 +427,7 @@ export default class Service {
     }
 
     const castFn = getCastFn(this.#castFns, action.payload.type)
-    const casted = castResponse(mutated, castFn, endpoint.allowRawResponse)
+    const casted = castResponse(mutated, endpoint, castFn)
     const withOrigin = setOriginOnAction(casted, 'mutate:response', false)
     const { response } = this.#authorizeDataFromService(
       withOrigin,
@@ -455,7 +446,7 @@ export default class Service {
     endpoint: Endpoint
   ): Promise<Response> {
     const castFn = getCastFn(this.#castFns, action.payload.type)
-    const casted = castResponse(action, castFn, endpoint.allowRawResponse)
+    const casted = castResponse(action, endpoint, castFn)
     const authorized = this.#authorizeDataFromService(
       casted,
       endpoint.allowRawResponse

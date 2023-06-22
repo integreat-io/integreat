@@ -9,7 +9,7 @@ import createSchema from '../schema/index.js'
 import dispatch from '../tests/helpers/dispatch.js'
 import { isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
-import type { Authenticator, ServiceDef, EndpointOptions } from './types.js'
+import type { Authenticator, ServiceDef, ServiceOptions } from './types.js'
 import type {
   Connection,
   Action,
@@ -354,13 +354,15 @@ test('endpointFromAction should return undefined when no match', (t) => {
 test('endpointFromAction should pick the most specified endpoint', async (t) => {
   const endpoints = [
     {
+      id: 'endpoint1',
       match: { type: 'entry' },
       options: { uri: 'http://test.api/1' },
       correct: false,
     },
     {
+      id: 'endpoint2',
       match: { type: 'entry', scope: 'member' },
-      options: { uri: 'http://test.api/2', correct: true },
+      options: { uri: 'http://test.api/2' },
     },
   ]
   const service = new Service(
@@ -384,7 +386,7 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
 
   const ret = service.endpointFromAction(action)
 
-  t.true(ret?.options.correct)
+  t.is(ret?.id, 'endpoint2')
 })
 
 // Tests -- authorizeAction
@@ -769,7 +771,7 @@ test('send should connect before sending request', async (t) => {
     },
   }
   const connect = async (
-    { value }: EndpointOptions,
+    { value }: ServiceOptions,
     authentication: Record<string, unknown> | null | undefined,
     _connection: Connection | null
   ) => ({ status: 'ok', value, token: authentication?.Authorization })
@@ -1840,40 +1842,6 @@ test('mutateRequest should set endpoint options and cast and mutate request data
   const ret = await service.mutateRequest(action, endpoint!)
 
   t.deepEqual(ret, expectedAction)
-})
-
-test('mutateRequest should deep-clone endpoint options', async (t) => {
-  const service = new Service(
-    {
-      id: 'entries',
-      transporter: 'http',
-      endpoints: [
-        {
-          options: { untouchable: { touched: false } },
-        },
-      ],
-    },
-    {
-      mapOptions,
-      schemas,
-      castFns,
-      ...jsonResources,
-    }
-  )
-  const action = {
-    type: 'GET',
-    payload: {
-      type: 'entry',
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const endpoint = service.endpointFromAction(action)
-
-  const ret = await service.mutateRequest(action, endpoint!)
-  const options = ret.meta?.options as { untouchable: { touched: boolean } }
-  options.untouchable.touched = true
-
-  t.false((endpoint?.options.untouchable as { touched: boolean }).touched)
 })
 
 test('mutateRequest should authorize data array going to service', async (t) => {

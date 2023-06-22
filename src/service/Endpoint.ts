@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-object-injection */
 import mapTransform from 'map-transform'
 import pPipe from 'p-pipe'
 import type {
@@ -10,8 +11,9 @@ import type { Action, Adapter } from '../types.js'
 import type {
   MapOptions,
   EndpointDef,
-  EndpointOptions,
+  ServiceOptions,
   MatchObject,
+  PreparedOptions,
 } from './types.js'
 import isMatch from './utils/match.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
@@ -23,7 +25,7 @@ interface MutateAction {
 }
 
 export interface PrepareOptions {
-  (options: EndpointOptions, serviceId: string): EndpointOptions
+  (options: ServiceOptions, serviceId: string): ServiceOptions
 }
 
 const prepareMatch = ({ scope, ...match }: MatchObject) =>
@@ -63,12 +65,16 @@ const setModifyFlag = (def?: TransformDefinition) =>
   isObject(def) ? { ...def, $modify: true } : def
 
 const prepareAdapter = (
-  options: EndpointOptions,
   serviceId: string,
+  options: Record<string, Record<string, unknown>> = {},
   doSerialize = false
 ) =>
   function prepareAdapter(adapter: Adapter) {
-    const preparedOptions = adapter.prepareOptions(options, serviceId)
+    const adapterId = adapter.id
+    const preparedOptions =
+      typeof adapterId === 'string'
+        ? adapter.prepareOptions(options[adapterId] || {}, serviceId)
+        : {}
     return doSerialize
       ? async (action: Action): Promise<Action> =>
           await adapter.serialize(action, preparedOptions)
@@ -85,7 +91,7 @@ const pipeAdapters = (adapters: MutateAction[]) =>
 export default class Endpoint {
   id?: string
   match?: MatchObject
-  options: EndpointOptions
+  options: PreparedOptions
   mutation?: TransformDefinition
   adapters?: (string | Adapter)[]
   allowRawRequest?: boolean
@@ -99,17 +105,17 @@ export default class Endpoint {
   constructor(
     endpointDef: EndpointDef,
     serviceId: string,
-    serviceOptions: EndpointOptions,
+    options: PreparedOptions,
     mapOptions: MapOptions,
     serviceMutation?: TransformDefinition,
-    prepareOptions: PrepareOptions = (options) => options,
-    serviceAdapters: Adapter[] = []
+    adapters: Adapter[] = []
   ) {
     this.id = endpointDef.id
     this.allowRawRequest = endpointDef.allowRawRequest ?? false
     this.allowRawResponse = endpointDef.allowRawResponse ?? false
     this.match = endpointDef.match
     this.#checkIfMatch = isMatch(endpointDef)
+    this.options = options
 
     const mutation = flattenIfOneOrNone(
       [...ensureArray(serviceMutation), ...ensureArray(endpointDef.mutation)]
@@ -118,17 +124,12 @@ export default class Endpoint {
     ) as Pipeline | TransformDefinition
     this.#mutator = mutation ? mapTransform(mutation, mapOptions) : null
 
-    const options = { ...serviceOptions, ...endpointDef.options }
-    this.options = prepareOptions(options, serviceId)
-
-    const { adapters = [] } = endpointDef
-    const allAdapters = [...serviceAdapters, ...(adapters as Adapter[])] // We know we're getting only adapters here
     this.#normalize = pipeAdapters(
-      allAdapters.map(prepareAdapter(options, serviceId, false))
+      adapters.map(prepareAdapter(serviceId, options.adapters, false))
     )
-    allAdapters.reverse() // Reverse adapter order before creating the serializer
+    adapters.reverse() // Reverse adapter order before creating the serializer
     this.#serialize = pipeAdapters(
-      allAdapters.map(prepareAdapter(options, serviceId, true))
+      adapters.map(prepareAdapter(serviceId, options.adapters, true))
     )
   }
 

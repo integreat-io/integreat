@@ -49,7 +49,19 @@ export interface AuthObject {
   outgoing?: AuthProp
 }
 
-export type EndpointOptions = Record<string, unknown>
+export interface TransporterOptions extends Record<string, unknown> {
+  incoming?: Record<string, unknown>
+}
+
+export interface ServiceOptions extends TransporterOptions {
+  transporter?: TransporterOptions
+  adapters?: Record<string, Record<string, unknown>>
+}
+
+export interface PreparedOptions {
+  transporter: TransporterOptions
+  adapters?: Record<string, Record<string, unknown>>
+}
 
 export interface MatchObject {
   action?: string | string[]
@@ -63,7 +75,7 @@ export interface MatchObject {
 export interface EndpointDef {
   id?: string
   match?: MatchObject
-  options?: EndpointOptions
+  options?: ServiceOptions
   mutation?: TransformDefinition
   adapters?: (string | Adapter)[]
   allowRawRequest?: boolean
@@ -76,7 +88,7 @@ export interface ServiceDef {
   adapters?: (string | Adapter)[]
   auth?: AuthObject | AuthProp
   meta?: string
-  options?: Record<string, unknown>
+  options?: ServiceOptions
   mutation?: TransformDefinition
   endpoints: EndpointDef[]
 }
