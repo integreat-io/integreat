@@ -63,7 +63,7 @@ const isIdent = (ident: unknown): ident is Ident => isObject(ident)
 async function authorizeIncoming(action: Action, auth?: Auth | boolean) {
   if (auth) {
     if (typeof auth === 'boolean') {
-      // TODO: Accept both `true` and `false`?
+      // We know that this is `true`, due the the check for truthty right above :)
       return action
     }
 
@@ -463,8 +463,8 @@ export default ({
         }
 
         const incomingMiddleware = compose(
-          runThroughMiddleware,
-          setServiceIdAsSourceServiceOnAction(serviceId)
+          setServiceIdAsSourceServiceOnAction(serviceId),
+          runThroughMiddleware
         )
 
         debug('Calling transporter listen() ...')
