@@ -41,7 +41,10 @@ export interface Authenticator<
   T extends Authentication = Authentication,
   U extends AuthOptions = AuthOptions
 > {
-  extractAuthKey?: (options: U | null, action: Action | null) => string
+  extractAuthKey?: (
+    options: U | null,
+    action: Action | null
+  ) => string | undefined
   authenticate: (options: U | null, action: Action | null) => Promise<T>
   isAuthenticated: (
     authentication: T | null,
