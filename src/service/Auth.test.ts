@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import type { Authenticator, Authentication, AuthOptions } from './types.js'
+import type { Authenticator, AuthOptions } from './types.js'
 import type { Transporter, Action } from '../types.js'
 
 import Auth from './Auth.js'
@@ -8,26 +8,19 @@ import Auth from './Auth.js'
 // Setup
 
 const authenticator: Authenticator = {
-  authenticate: async (
-    options: AuthOptions | null,
-    _action: Action | null
-  ) => ({
+  authenticate: async (options, _action) => ({
     status: options?.token === 't0k3n' ? 'granted' : 'refused',
     expired: options?.expired,
     token: options?.token,
     ...(options?.token === 't0k3n' ? {} : { error: 'Wrong token' }),
   }),
 
-  isAuthenticated: (
-    authentication: Authentication | null,
-    _action: Action | null
-  ) => !!authentication && !authentication.expired,
+  isAuthenticated: (authentication, _options, _action) =>
+    !!authentication && !authentication.expired,
 
   authentication: {
-    asHttpHeaders: (auth: Authentication | null) =>
-      auth?.token ? { Authorization: auth.token } : {},
-    asObject: (auth: Authentication | null) =>
-      auth?.token ? { token: auth.token } : {},
+    asHttpHeaders: (auth) => (auth?.token ? { Authorization: auth.token } : {}),
+    asObject: (auth) => (auth?.token ? { token: auth.token } : {}),
   },
 }
 
@@ -95,7 +88,8 @@ test('should reauthenticate for different keys', async (t) => {
   let keyCount = 1
   const reauthenticator = {
     ...authenticator,
-    extractAuthKey: (_action: Action | null) => `key${keyCount++}`, // To get a new key for every call
+    extractAuthKey: (_options: AuthOptions | null, _action: Action | null) =>
+      `key${keyCount++}`, // To get a new key for every call
   }
   const authSpy = sinon.spy(reauthenticator, 'authenticate')
   const auth = new Auth(id, reauthenticator, options)
@@ -110,7 +104,8 @@ test('should reauthenticate for different keys', async (t) => {
 test('should not reauthenticate for same key', async (t) => {
   const reauthenticator = {
     ...authenticator,
-    extractAuthKey: (_action: Action | null) => 'key1', // Use same key for every call
+    extractAuthKey: (_options: AuthOptions | null, _action: Action | null) =>
+      'key1', // Use same key for every call
   }
   const authSpy = sinon.spy(reauthenticator, 'authenticate')
   const auth = new Auth(id, reauthenticator, options)
@@ -120,6 +115,18 @@ test('should not reauthenticate for same key', async (t) => {
 
   t.is(authSpy.callCount, 1)
   t.true(ret)
+})
+
+test('should pass options and action to extractAuthKey', async (t) => {
+  const extractAuthKey = sinon.stub().returns('key')
+  const reauthenticator = { ...authenticator, extractAuthKey }
+  const auth = new Auth(id, reauthenticator, options)
+
+  await auth.authenticate(action)
+
+  t.is(extractAuthKey.callCount, 1)
+  t.deepEqual(extractAuthKey.args[0][0], options)
+  t.deepEqual(extractAuthKey.args[0][1], action)
 })
 
 test('should ask the authenticator if the authentication is still valid and reauthenticate', async (t) => {
@@ -138,7 +145,7 @@ test('should ask the authenticator if the authentication is still valid and reau
   t.true(ret2)
 })
 
-test("should pass on action to authenticator's isAuthenticated", async (t) => {
+test("should pass on options and action to authenticator's isAuthenticated", async (t) => {
   const stubbedAuthenticator = {
     ...authenticator,
     isAuthenticated: sinon.stub().callsFake(authenticator.isAuthenticated),
@@ -149,7 +156,8 @@ test("should pass on action to authenticator's isAuthenticated", async (t) => {
   await auth.authenticate(action)
 
   t.is(stubbedAuthenticator.isAuthenticated.callCount, 1)
-  t.deepEqual(stubbedAuthenticator.isAuthenticated.args[0][1], action)
+  t.deepEqual(stubbedAuthenticator.isAuthenticated.args[0][1], options)
+  t.deepEqual(stubbedAuthenticator.isAuthenticated.args[0][2], action)
 })
 
 test("should pass on action to authenticator's authenticate", async (t) => {

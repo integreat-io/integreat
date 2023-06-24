@@ -10,10 +10,11 @@ const action = {
   meta: { ident: { id: 'johnf' } },
 }
 
+const options = { username: 'bill', password: 'secret' }
+
 // Tests
 
 test('authenticate should always grant and return options', async (t) => {
-  const options = { username: 'bill', password: 'secret' }
   const expected = { status: 'granted', username: 'bill', password: 'secret' }
 
   const ret = await authenticator.authenticate(options, action)
@@ -28,7 +29,7 @@ test('isAuthenticated should return true when granted', (t) => {
     password: 'secret',
   }
 
-  const ret = authenticator.isAuthenticated(authentication, action)
+  const ret = authenticator.isAuthenticated(authentication, options, action)
 
   t.true(ret)
 })
@@ -40,7 +41,7 @@ test('isAuthenticated should return false when not granted', (t) => {
     password: 'secret',
   }
 
-  const ret = authenticator.isAuthenticated(authentication, action)
+  const ret = authenticator.isAuthenticated(authentication, options, action)
 
   t.false(ret)
 })
@@ -48,7 +49,7 @@ test('isAuthenticated should return false when not granted', (t) => {
 test('isAuthenticated should return false when no authentication', (t) => {
   const authentication = null
 
-  const ret = authenticator.isAuthenticated(authentication, action)
+  const ret = authenticator.isAuthenticated(authentication, options, action)
 
   t.false(ret)
 })

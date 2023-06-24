@@ -14,9 +14,13 @@ export interface StatusObject {
   error?: string
 }
 
-const getKey = (authenticator: Authenticator, action: Action | null) =>
+const getKey = (
+  authenticator: Authenticator,
+  options: AuthOptions | null,
+  action: Action | null
+) =>
   typeof authenticator.extractAuthKey === 'function'
-    ? authenticator.extractAuthKey(action) || ''
+    ? authenticator.extractAuthKey(options, action) || ''
     : ''
 
 export default class Auth {
@@ -32,11 +36,11 @@ export default class Auth {
   }
 
   async authenticate(action: Action | null): Promise<boolean> {
-    const key = getKey(this.#authenticator, action)
+    const key = getKey(this.#authenticator, this.#options, action)
     let authentication = this.#authentications.get(key)
     if (
       authentication?.status === 'granted' &&
-      this.#authenticator.isAuthenticated(authentication, action)
+      this.#authenticator.isAuthenticated(authentication, this.#options, action)
     ) {
       return true
     }
@@ -106,7 +110,7 @@ export default class Auth {
   }
 
   applyToAction(action: Action, transporter: Transporter): Action {
-    const key = getKey(this.#authenticator, action)
+    const key = getKey(this.#authenticator, this.#options, action)
     const auth = this.#authentications.get(key)
     if (auth?.status === 'granted') {
       return {

@@ -34,15 +34,20 @@ export type AuthOptions = Record<string, unknown>
 export interface Authentication extends Record<string, unknown> {
   status: string
   error?: string
+  authKey?: string
 }
 
-export interface Authenticator<T extends Authentication = Authentication> {
-  extractAuthKey?: (action: Action | null) => string
-  authenticate: (
-    options: AuthOptions | null,
+export interface Authenticator<
+  T extends Authentication = Authentication,
+  U extends AuthOptions = AuthOptions
+> {
+  extractAuthKey?: (options: U | null, action: Action | null) => string
+  authenticate: (options: U | null, action: Action | null) => Promise<T>
+  isAuthenticated: (
+    authentication: T | null,
+    options: U | null,
     action: Action | null
-  ) => Promise<T>
-  isAuthenticated: (authentication: T | null, action: Action | null) => boolean
+  ) => boolean
   authentication: {
     [asFunction: string]: (authentication: T | null) => Record<string, unknown>
   }

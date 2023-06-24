@@ -10,10 +10,11 @@ const action = {
   meta: { ident: { id: 'johnf' } },
 }
 
+const options = { token: 'someToken' }
+
 // Tests
 
 test('authenticate should return granted when token is set', async (t) => {
-  const options = { token: 'someToken' }
   const expected = {
     status: 'granted',
     token: 'someToken',
@@ -38,13 +39,13 @@ test('authenticate should return refused when token is not set', async (t) => {
 test('isAuthenticated should return false when no authentication', (t) => {
   const authentication = null
 
-  t.false(authenticator.isAuthenticated(authentication, action))
+  t.false(authenticator.isAuthenticated(authentication, options, action))
 })
 
 test('isAuthenticated should return true when authentication is granted and token is set', (t) => {
   const authentication = { status: 'granted', token: 'someToken' }
 
-  t.true(authenticator.isAuthenticated(authentication, action))
+  t.true(authenticator.isAuthenticated(authentication, options, action))
 })
 
 test('asHttpHeaders should return auth header with token', (t) => {
