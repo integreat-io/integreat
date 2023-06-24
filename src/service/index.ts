@@ -63,6 +63,7 @@ const isIdent = (ident: unknown): ident is Ident => isObject(ident)
 async function authorizeIncoming(action: Action, auth?: Auth | boolean) {
   if (auth) {
     if (typeof auth === 'boolean') {
+      // TODO: Accept both `true` and `false`?
       return action
     }
 
