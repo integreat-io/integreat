@@ -14,36 +14,43 @@ export interface StatusObject {
   error?: string
 }
 
+const getKey = (authenticator: Authenticator, action: Action | null) =>
+  typeof authenticator.extractAuthKey === 'function'
+    ? authenticator.extractAuthKey(action) || ''
+    : ''
+
 export default class Auth {
   readonly id: string
   #authenticator: Authenticator
   #options: AuthOptions
-  #authentication: Authentication | null
+  #authentications = new Map<string, Authentication>()
 
   constructor(id: string, authenticator: Authenticator, options?: AuthOptions) {
     this.id = id
     this.#authenticator = authenticator
     this.#options = options || {}
-    this.#authentication = null
   }
 
   async authenticate(action: Action | null): Promise<boolean> {
+    const key = getKey(this.#authenticator, action)
+    let authentication = this.#authentications.get(key)
     if (
-      this.#authentication?.status === 'granted' &&
-      this.#authenticator.isAuthenticated(this.#authentication, action)
+      authentication?.status === 'granted' &&
+      this.#authenticator.isAuthenticated(authentication, action)
     ) {
       return true
     }
 
     let attempt = 0
     do {
-      this.#authentication = await this.#authenticator.authenticate(
+      authentication = await this.#authenticator.authenticate(
         this.#options,
         action
       )
-    } while (shouldRetry(this.#authentication, attempt++))
+    } while (shouldRetry(authentication, attempt++))
 
-    return this.#authentication?.status === 'granted'
+    this.#authentications.set(key, authentication)
+    return authentication?.status === 'granted'
   }
 
   async authenticateAndGetAuthObject(
@@ -66,7 +73,7 @@ export default class Auth {
   }
 
   getAuthObject(transporter: Transporter): Record<string, unknown> | null {
-    const auth = this.#authentication
+    const auth = this.#authentications.get('') // Only applies to `listen()` which doesn't support multi-user auth for now
     if (!auth || auth.status !== 'granted') {
       return null
     }
@@ -80,7 +87,7 @@ export default class Auth {
   }
 
   getStatusObject(): StatusObject {
-    const auth = this.#authentication
+    const auth = this.#authentications.get('') // Only applies to `listen()` which doesn't support multi-user auth for now
     if (!auth) {
       return { status: 'noaccess' }
     }
@@ -96,7 +103,8 @@ export default class Auth {
   }
 
   applyToAction(action: Action, transporter: Transporter): Action {
-    const auth = this.#authentication
+    const key = getKey(this.#authenticator, action)
+    const auth = this.#authentications.get(key)
     if (auth?.status === 'granted') {
       return {
         ...action,

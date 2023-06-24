@@ -91,6 +91,37 @@ test('should not reauthenticated when already authenticated', async (t) => {
   t.true(ret)
 })
 
+test('should reauthenticate for different keys', async (t) => {
+  let keyCount = 1
+  const reauthenticator = {
+    ...authenticator,
+    extractAuthKey: (_action: Action | null) => `key${keyCount++}`, // To get a new key for every call
+  }
+  const authSpy = sinon.spy(reauthenticator, 'authenticate')
+  const auth = new Auth(id, reauthenticator, options)
+
+  await auth.authenticate(action)
+  const ret = await auth.authenticate(action)
+
+  t.is(authSpy.callCount, 2)
+  t.true(ret)
+})
+
+test('should not reauthenticate for same key', async (t) => {
+  const reauthenticator = {
+    ...authenticator,
+    extractAuthKey: (_action: Action | null) => 'key1', // Use same key for every call
+  }
+  const authSpy = sinon.spy(reauthenticator, 'authenticate')
+  const auth = new Auth(id, reauthenticator, options)
+
+  await auth.authenticate(action)
+  const ret = await auth.authenticate(action)
+
+  t.is(authSpy.callCount, 1)
+  t.true(ret)
+})
+
 test('should ask the authenticator if the authentication is still valid and reauthenticate', async (t) => {
   const reauthenticator = { ...authenticator }
   const authSpy = sinon.spy(reauthenticator, 'authenticate')

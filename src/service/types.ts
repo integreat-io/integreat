@@ -37,6 +37,7 @@ export interface Authentication extends Record<string, unknown> {
 }
 
 export interface Authenticator<T extends Authentication = Authentication> {
+  extractAuthKey?: (action: Action | null) => string
   authenticate: (
     options: AuthOptions | null,
     action: Action | null
