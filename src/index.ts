@@ -41,7 +41,7 @@ export * as adapters from './adapters/index.js'
 export { createAction } from './utils/action.js'
 
 export default {
-  version: '0.8.3',
+  version: '0.8.4',
   create,
   mergeDefinitions,
   mergeResources,
