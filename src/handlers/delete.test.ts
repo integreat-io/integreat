@@ -99,6 +99,48 @@ test('should delete items from service', async (t) => {
 })
 
 test('should delete one item from service', async (t) => {
+  const scope = nock('http://api2.test')
+    .post('/database/bulk_delete', {
+      doc: { id: 'ent1', header: 'A title' },
+    })
+    .reply(200, { ok: true, id: 'ent1', rev: '2-000001' })
+  const src = setupService({
+    id: 'entries',
+    ...jsonServiceDef,
+    endpoints: [
+      {
+        match: { action: 'DELETE' },
+        mutation: [
+          {
+            'payload.data': ['payload.data.doc', { $apply: 'entry' }],
+            'response.data': { $value: null }, // Just remove response data now, so we don't have to expect it all
+          },
+        ],
+        options: {
+          uri: 'http://api2.test/database/bulk_delete',
+          method: 'POST',
+        },
+      },
+    ],
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+  const action = {
+    type: 'DELETE',
+    payload: {
+      data: { id: 'ent1', $type: 'entry' },
+      targetService: 'entries',
+    },
+  }
+  const expected = { status: 'ok', data: null }
+
+  const ret = await deleteFn(action, { ...handlerResources, getService })
+
+  t.deepEqual(ret, expected)
+  t.true(scope.isDone())
+})
+
+test('should delete item from service given by id', async (t) => {
   const scope = nock('http://api1.test')
     .delete('/database/ent1')
     .reply(200, { ok: true, id: 'ent1', rev: '000001' })
@@ -137,7 +179,7 @@ test('should delete one item from service', async (t) => {
 })
 
 test('should infer service id from type', async (t) => {
-  const scope = nock('http://api2.test')
+  const scope = nock('http://api3.test')
     .post('/database/bulk_delete')
     .reply(200, [
       { ok: true, id: 'ent1', rev: '2-000001' },
@@ -151,10 +193,10 @@ test('should infer service id from type', async (t) => {
         match: { action: 'DELETE' },
         mutation: {
           $direction: 'rev',
-          'payload.data': ['payload.data.docs[', { $apply: 'entry' }],
+          'payload.data': ['payload.data.docs[]', { $apply: 'entry' }],
         },
         options: {
-          uri: 'http://api2.test/database/bulk_delete',
+          uri: 'http://api3.test/database/bulk_delete',
           method: 'POST',
         },
       },
