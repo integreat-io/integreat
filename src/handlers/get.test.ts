@@ -82,6 +82,12 @@ const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
     endpoints: [
       {
         match,
+        validate: [
+          {
+            condition: 'payload.source',
+            failResponse: { status: 'badrequest', error: 'We need a source!' },
+          },
+        ],
         mutation: [
           {
             $direction: 'to',
@@ -185,6 +191,7 @@ test('should get item by id from service', async (t) => {
     payload: {
       id: 'ent1',
       type: 'entry',
+      source: 'thenews',
       targetService: 'entries',
     },
   }
@@ -213,6 +220,7 @@ test('should get items by id array from service from member_s_ endpoint', async 
     payload: {
       id: ['ent1', 'ent2'],
       type: 'entry',
+      source: 'thenews',
       targetService: 'entries',
     },
   }
@@ -245,6 +253,7 @@ test('should get items by id array from member endpoints', async (t) => {
     payload: {
       id: ['ent1', 'ent2', 'ent3'],
       type: 'entry',
+      source: 'thenews',
       targetService: 'entries',
     },
   }
@@ -272,6 +281,7 @@ test('should pass on ident when getting from id array', async (t) => {
     payload: {
       id: ['ent1', 'ent2'],
       type: 'entry',
+      source: 'thenews',
       targetService: 'entries',
     },
     meta: { ident: { id: 'johnf' } },
@@ -301,6 +311,7 @@ test('should return noaction when members action has empty id array', async (t) 
     payload: {
       id: [],
       type: 'entry',
+      source: 'thenews',
       targetService: 'entries',
     },
   }
@@ -328,6 +339,7 @@ test('should return error when one or more requests for individual ids fails', a
     payload: {
       id: ['ent1', 'ent2'],
       type: 'entry',
+      source: 'thenews',
       targetService: 'entries',
     },
   }
@@ -348,6 +360,7 @@ test('should get item by id from service when id is array of one', async (t) => 
     payload: {
       id: ['ent1'],
       type: 'entry',
+      source: 'thenews',
       targetService: 'entries',
     },
   }
@@ -370,6 +383,7 @@ test('should get default values from type', async (t) => {
     type: 'GET',
     payload: {
       type: 'entry',
+      source: 'thenews',
       targetService: 'entries',
     },
   }
@@ -385,7 +399,7 @@ test('should infer service id from type', async (t) => {
   nock('http://api1.test')
     .get('/database')
     .reply(200, [{ id: 'ent1', type: 'entry' }])
-  const action = { type: 'GET', payload: { type: 'entry' } }
+  const action = { type: 'GET', payload: { type: 'entry', source: 'thenews' } }
   const svc = setupService('http://api1.test/database')
   const getService = (type?: string | string[], _service?: string) =>
     type === 'entry' ? svc : undefined
@@ -423,6 +437,7 @@ test('should return error on not found', async (t) => {
     payload: {
       type: 'entry',
       targetService: 'entries',
+      source: 'thenews',
     },
   }
   const svc = setupService('http://api3.test/unknown')
@@ -433,6 +448,112 @@ test('should return error on not found', async (t) => {
   t.is(ret.status, 'notfound')
   t.is(ret.data, undefined)
   t.is(typeof ret.error, 'string')
+})
+
+test('should return failResponse when validation fails', async (t) => {
+  const date = new Date()
+  const scope = nock('http://api10.test')
+    .get('/database')
+    .query({ since: date.getTime() })
+    .reply(200, [
+      {
+        id: 'ent1',
+        type: 'entry',
+        headline: 'Entry 1',
+        createdAt: date.toISOString(),
+        updatedAt: date.toISOString(),
+      },
+    ])
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      // No source
+      targetService: 'entries',
+      updatedAfter: date,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const svc = setupService(
+    'http://api10.test/database?since={payload.updatedAfter}'
+  )
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? svc : undefined
+  const expected = {
+    status: 'badrequest',
+    error: 'We need a source!',
+  }
+
+  const ret = await get(action, { ...handlerResources, getService })
+
+  t.deepEqual(ret, expected)
+  t.false(scope.isDone())
+})
+
+test('should return failResponse when validation fails for member_s_ endpoint', async (t) => {
+  const scope = nock('http://api14.test')
+    .get('/entries')
+    .query({ id: 'ent1,ent2' })
+    .reply(200, [
+      { id: 'ent1', type: 'entry' },
+      { id: 'ent2', type: 'entry' },
+    ])
+  const action = {
+    type: 'GET',
+    payload: {
+      id: ['ent1', 'ent2'],
+      type: 'entry',
+      // No source
+      targetService: 'entries',
+    },
+  }
+  const svc = setupService('http://api14.test/entries?id={payload.id}', {
+    scope: 'members',
+    id: 'membersEndpoint',
+  })
+  const getService = () => svc
+  const expected = {
+    status: 'badrequest',
+    error: 'We need a source!',
+  }
+
+  const ret = await get(action, { ...handlerResources, getService })
+
+  t.deepEqual(ret, expected)
+  t.false(scope.isDone())
+})
+
+test('should return failResponse when validation fails for individual member endpoints', async (t) => {
+  const scope = nock('http://api15.test')
+    .get('/entries/ent1')
+    .reply(200, { id: 'ent1', type: 'entry' })
+    .get('/entries/ent2')
+    .reply(200, { id: 'ent2', type: 'entry' })
+    .get('/entries/ent3')
+    .reply(404, undefined)
+  const action = {
+    type: 'GET',
+    payload: {
+      id: ['ent1', 'ent2', 'ent3'],
+      type: 'entry',
+      // No source
+      targetService: 'entries',
+    },
+  }
+  const svc = setupService('http://api15.test/entries/{payload.id}', {
+    scope: 'member',
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? svc : undefined
+  const expected = {
+    status: 'badrequest',
+    error: 'We need a source!',
+  }
+
+  const ret = await get(action, { ...handlerResources, getService })
+
+  t.deepEqual(ret, expected)
+  t.false(scope.isDone())
 })
 
 test('should return error when no service exists for type', async (t) => {
@@ -477,6 +598,7 @@ test('should get only authorized items', async (t) => {
     type: 'GET',
     payload: {
       type: 'account',
+      source: 'thenews',
       targetService: 'accounts',
     },
     meta: { ident: { id: 'johnf' } },

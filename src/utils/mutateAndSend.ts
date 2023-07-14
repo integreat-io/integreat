@@ -8,6 +8,11 @@ export default async function mutateAndSend(
   endpoint: Endpoint,
   action: Action
 ): Promise<Response> {
+  const validateResponse = await endpoint.validateAction(action)
+  if (validateResponse) {
+    return validateResponse
+  }
+
   const authorizedAction = service.authorizeAction(action)
   const requestAction = await service.mutateRequest(authorizedAction, endpoint)
   const response = await service.send(requestAction)

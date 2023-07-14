@@ -56,6 +56,11 @@ async function runAsIndividualActions(
   if (!endpoint) {
     return createNoEndpointError(action, service.id)
   }
+  const validateResponse = await endpoint.validateAction(action)
+  if (validateResponse) {
+    return validateResponse
+  }
+
   return combineResponses(
     action,
     await Promise.all(
@@ -80,6 +85,10 @@ async function runOneOrMany(
   }
   if (!endpoint) {
     return createNoEndpointError(action, service.id)
+  }
+  const validateResponse = await endpoint.validateAction(action)
+  if (validateResponse) {
+    return validateResponse
   }
 
   return mapPerId(endpoint)(action)

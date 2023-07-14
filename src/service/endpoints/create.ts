@@ -7,7 +7,12 @@ import type {
 } from 'map-transform/types.js'
 import type { Action, Adapter } from '../../types.js'
 import type { MapOptions } from '../types.js'
-import type { EndpointDef, Endpoint, EndpointOptions } from './types.js'
+import type {
+  EndpointDef,
+  Endpoint,
+  EndpointOptions,
+  ValidateObject,
+} from './types.js'
 import isMatch from './match.js'
 import { populateActionAfterMutation } from '../../utils/mutationHelpers.js'
 import { ensureArray } from '../../utils/array.js'
@@ -50,6 +55,36 @@ function mutateAction(
   }
 }
 
+function prepareValidator(
+  validate: ValidateObject[] | undefined,
+  mapOptions: MapOptions
+) {
+  // Always return null when no validation
+  if (!Array.isArray(validate) || validate.length === 0) {
+    return async () => null
+  }
+
+  // Prepare validators
+  const validators = validate.map(({ condition, failResponse }) => ({
+    validate: mapTransform(condition, mapOptions),
+    failResponse,
+  }))
+
+  return async function validateAction(action: Action) {
+    for (const { validate, failResponse } of validators) {
+      const result = validate(action)
+      if (!result)
+        return (
+          failResponse || {
+            status: 'badrequest',
+            error: 'Did not satisfy endpoint validation',
+          }
+        )
+    }
+    return null
+  }
+}
+
 const flattenIfOneOrNone = <T>(arr: T[]): T | T[] =>
   arr.length <= 1 ? arr[0] : arr
 
@@ -85,23 +120,25 @@ export default function createEndpoint(
   serviceAdapters: Adapter[] = []
 ) {
   return function (endpointDef: EndpointDef): Endpoint {
+    const {
+      id,
+      validate,
+      allowRawRequest = false,
+      allowRawResponse = false,
+      match,
+      adapters = [],
+    } = endpointDef
+
     const mutation = flattenIfOneOrNone(
       [...ensureArray(serviceMutation), ...ensureArray(endpointDef.mutation)]
         .map(setModifyFlag)
         .filter(isNotNullOrUndefined)
     ) as Pipeline | TransformDefinition
     const mutator = mutation ? mapTransform(mutation, mapOptions) : null
+    const validator = prepareValidator(validate, mapOptions)
 
     const options = { ...serviceOptions, ...endpointDef.options }
     const preparedOptions = prepareOptions(options, serviceId)
-
-    const {
-      id,
-      allowRawRequest = false,
-      allowRawResponse = false,
-      match,
-      adapters = [],
-    } = endpointDef
 
     const allAdapters = [...serviceAdapters, ...(adapters as Adapter[])] // We know we're getting only adapters here
     const normalize = pipeAdapters(
@@ -118,6 +155,7 @@ export default function createEndpoint(
       allowRawResponse,
       match,
       options: preparedOptions,
+      validateAction: validator,
       mutateRequest: mutateAction(mutator, true, normalize, serialize),
       mutateResponse: mutateAction(mutator, false, normalize, serialize),
       isMatch: isMatch(endpointDef),

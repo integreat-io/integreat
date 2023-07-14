@@ -6,6 +6,7 @@ import schema from '../schema/index.js'
 import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import type { TypedData } from '../types.js'
+import type { ValidateObject } from '../service/endpoints/types.js'
 
 import set from './set.js'
 
@@ -57,7 +58,12 @@ const mapOptions = {
 const typeMappingFromServiceId = (serviceId: string) =>
   serviceId === 'accounts' ? 'account' : 'entry'
 
-const setupService = (uri: string, id = 'entries', method = 'POST') => {
+const setupService = (
+  uri: string,
+  id = 'entries',
+  method = 'POST',
+  validate?: ValidateObject[]
+) => {
   return createService({
     schemas,
     mapOptions,
@@ -66,6 +72,7 @@ const setupService = (uri: string, id = 'entries', method = 'POST') => {
     ...jsonServiceDef,
     endpoints: [
       {
+        validate,
         mutation: [
           {
             $direction: 'rev',
@@ -270,6 +277,48 @@ test('should return error when service fails', async (t) => {
   t.is(ret.status, 'notfound', ret.error)
   t.is(typeof ret.error, 'string')
   t.falsy(ret.data)
+})
+
+test('should return failResponse when validation fails', async (t) => {
+  const scope = nock('http://api5.test')
+    .post('/database/_bulk_docs', {
+      docs: [
+        { id: 'ent1', header: 'Entry 1' },
+        { id: 'ent2', header: 'Entry 2' },
+      ],
+    })
+    .reply(201, [{ ok: true }, { ok: true }])
+  const action = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      // No data
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const src = setupService(
+    'http://api5.test/database/_bulk_docs',
+    undefined,
+    undefined,
+    [
+      {
+        condition: 'payload.data',
+        failResponse: { status: 'error', error: 'We need data!' },
+      },
+    ]
+  )
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+  const expected = {
+    status: 'error',
+    error: 'We need data!',
+  }
+
+  const ret = await set(action, { ...handlerResources, getService })
+
+  t.deepEqual(ret, expected)
+  t.false(scope.isDone())
 })
 
 test('should return error when no service exists for a type', async (t) => {

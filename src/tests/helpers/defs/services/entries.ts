@@ -212,6 +212,12 @@ export default {
     // },
     {
       match: { action: 'SET', scope: 'member', params: { doValidate: true } },
+      validate: [
+        {
+          condition: { $transform: 'shouldHaveAuthor' }, // We use a transformer here to make sure it works, not because it's the most elegant
+          failResponse: { status: 'badrequest', error: 'Error from validator' },
+        },
+      ],
       mutation: [
         {
           $direction: 'to',
@@ -228,7 +234,6 @@ export default {
             data: ['response.data.data', { $apply: 'entries-entry' }],
           },
         },
-        { $transform: 'shouldHaveAuthor', $direction: 'to' },
       ],
       options: { uri: '/entries/{payload.id}', method: 'PUT' },
     },

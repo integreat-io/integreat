@@ -351,6 +351,63 @@ test('should only delete items the ident is authorized to', async (t) => {
   t.true(scope.isDone())
 })
 
+test('should return failResponse when validation fails', async (t) => {
+  const scope = nock('http://api6.test')
+    .post('/database/bulk_delete', {
+      docs: [
+        { id: 'ent1', header: 'A title' }, // Default values are included and must be handled in mutation
+        { id: 'ent2', header: 'A title' },
+      ],
+    })
+    .reply(200, [
+      { ok: true, id: 'ent1', rev: '2-000001' },
+      { ok: true, id: 'ent2', rev: '2-000001' },
+    ])
+  const src = setupService({
+    id: 'entries',
+    ...jsonServiceDef,
+    endpoints: [
+      {
+        match: { action: 'DELETE' },
+        validate: [
+          {
+            condition: 'payload.source',
+            failResponse: { status: 'badrequest', error: 'We need a source!' },
+          },
+        ],
+        mutation: [
+          { 'payload.data': ['payload.data.docs[]', { $apply: 'entry' }] },
+        ],
+        options: {
+          uri: 'http://api6.test/database/bulk_delete',
+          method: 'POST',
+        },
+      },
+    ],
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+  const action = {
+    type: 'DELETE',
+    payload: {
+      data: [
+        { id: 'ent1', $type: 'entry' },
+        { id: 'ent2', $type: 'entry' },
+      ],
+      targetService: 'entries',
+    },
+  }
+  const expected = {
+    status: 'badrequest',
+    error: 'We need a source!',
+  }
+
+  const ret = await deleteFn(action, { ...handlerResources, getService })
+
+  t.deepEqual(ret, expected)
+  t.false(scope.isDone())
+})
+
 test('should return error when no service exists for a type', async (t) => {
   const getService = () => undefined
   const action = {
