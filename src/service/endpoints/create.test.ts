@@ -1018,6 +1018,7 @@ test('should mutate request with adapter', async (t) => {
       }),
       headers: { 'Content-Type': 'application/json' },
     },
+    response: undefined, // JSON adapter sets this
   }
   const serviceAdapters = [jsonAdapter]
   const endpoint = createEndpoint(
@@ -1059,6 +1060,7 @@ test('should mutate request with endpoint adapter', async (t) => {
       }),
       headers: { 'Content-Type': 'application/json' },
     },
+    response: undefined, // JSON adapter sets this
   }
   const serviceAdapters = [jsonAdapter]
   const endpoint = createEndpoint(
