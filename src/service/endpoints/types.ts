@@ -14,7 +14,7 @@ export interface MatchObject {
 
 export interface ValidateObject {
   condition: TransformDefinition
-  failResponse?: Response
+  failResponse?: Response | string
 }
 
 export interface EndpointDef {

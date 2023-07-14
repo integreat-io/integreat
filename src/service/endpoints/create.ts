@@ -67,7 +67,10 @@ function prepareValidator(
   // Prepare validators
   const validators = validate.map(({ condition, failResponse }) => ({
     validate: mapTransform(condition, mapOptions),
-    failResponse,
+    failResponse:
+      typeof failResponse === 'string'
+        ? { status: 'badrequest', error: failResponse }
+        : failResponse,
   }))
 
   return async function validateAction(action: Action) {

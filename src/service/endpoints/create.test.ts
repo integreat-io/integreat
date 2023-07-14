@@ -460,6 +460,35 @@ test('should return failResponse when provided', async (t) => {
   t.deepEqual(ret, expectedResponse)
 })
 
+test('should return failResponse when provided as error message', async (t) => {
+  const endpointDef = {
+    validate: [
+      {
+        condition: 'payload.id',
+        failResponse: 'This is no good',
+      },
+    ],
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      // No id
+    },
+  }
+  const endpoint = createEndpoint(
+    serviceId,
+    serviceOptions,
+    mapOptions
+  )(endpointDef)
+  const expectedResponse = { status: 'badrequest', error: 'This is no good' }
+
+  const ret = await endpoint.validateAction(action)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
 // Tests -- mutateResponse
 
 test('should mutate response from service with endpoint mutation', async (t) => {
