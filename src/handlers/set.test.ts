@@ -19,6 +19,7 @@ const schemas = {
       title: { $type: 'string', default: 'A title' },
       one: 'integer',
     },
+    access: { allow: 'auth' },
   }),
   account: schema({
     id: 'account',
@@ -207,6 +208,7 @@ test('should infer service id from type', async (t) => {
         { id: 'ent2', $type: 'entry' },
       ],
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const src = setupService('http://api2.test/database/_bulk_docs')
   const getService = (type?: string | string[], _service?: string) =>
@@ -313,12 +315,42 @@ test('should return failResponse when validation fails', async (t) => {
   const expected = {
     status: 'error',
     error: 'We need data!',
+    data: undefined,
   }
 
   const ret = await set(action, { ...handlerResources, getService })
 
   t.deepEqual(ret, expected)
   t.false(scope.isDone())
+})
+
+test('should authorize before running validation', async (t) => {
+  const action = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      // No data
+      targetService: 'entries',
+    },
+    meta: {}, // No identity
+  }
+  const src = setupService(
+    'http://api5.test/database/_bulk_docs',
+    undefined,
+    undefined,
+    [
+      {
+        condition: 'payload.data',
+        failResponse: { status: 'error', error: 'We need data!' },
+      },
+    ]
+  )
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+
+  const ret = await set(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'noaccess', ret.error) // We'll get this status when authorization is run before validation
 })
 
 test('should return error when no service exists for a type', async (t) => {

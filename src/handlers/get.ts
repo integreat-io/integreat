@@ -80,18 +80,27 @@ async function runOneOrMany(
   mapPerId: (endpoint: Endpoint) => (action: Action) => Promise<Response>
 ): Promise<Response> {
   const endpoint = service.endpointFromAction(action)
-  if (doRunIndividualIds(action, endpoint)) {
-    return runAsIndividualActions(action, service, mapPerId)
-  }
   if (!endpoint) {
     return createNoEndpointError(action, service.id)
   }
-  const validateResponse = await endpoint.validateAction(action)
-  if (validateResponse) {
-    return validateResponse
+
+  const authorizedAction = service.authorizeAction(action)
+  if (authorizedAction.response?.status) {
+    return await service.mutateResponse(authorizedAction, endpoint) // Return right away if there's already a status
   }
 
-  return mapPerId(endpoint)(action)
+  if (doRunIndividualIds(authorizedAction, endpoint)) {
+    return runAsIndividualActions(authorizedAction, service, mapPerId)
+  }
+  const validateResponse = await endpoint.validateAction(authorizedAction)
+  if (validateResponse) {
+    return service.mutateResponse(
+      setResponseOnAction(authorizedAction, validateResponse),
+      endpoint
+    )
+  }
+
+  return mapPerId(endpoint)(authorizedAction)
 }
 
 const runOne = (service: Service) => (endpoint: Endpoint) =>
@@ -137,9 +146,5 @@ export default async function get(
 
   const nextAction = setIdOnActionPayload(action, id)
 
-  return await runOneOrMany(
-    service.authorizeAction(nextAction),
-    service,
-    runOne(service)
-  )
+  return await runOneOrMany(nextAction, service, runOne(service))
 }
