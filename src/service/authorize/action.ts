@@ -59,7 +59,7 @@ function authorizeByOneSchema(
     }
   }
 
-  const allowReason = authorizeByAllow(access.allow, !!ident)
+  const allowReason = authorizeByAllow(access.allow, !!ident?.id)
   if (allowReason) {
     return {
       reason: allowReason,

@@ -295,6 +295,27 @@ test('should refuse request without ident when schema requires authentication', 
   t.deepEqual(ret, expected)
 })
 
+test('should refuse request with ident with empty id when schema requires authentication', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: '' } },
+  }
+  const expected = {
+    ...action,
+    response: {
+      status: 'noaccess',
+      error: "Authentication was refused for type 'entry'",
+      reason: 'NO_IDENT',
+    },
+    meta: { ident: { id: '' }, authorized: false },
+  }
+
+  const ret = authorizeAction(schemas, requireAuth)(action)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should refuse request when type does not match a schema', (t) => {
   const schemas = { entry: createSchema({ id: 'entry' }) }
   const action = {
