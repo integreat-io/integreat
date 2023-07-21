@@ -984,6 +984,7 @@ test('should mutate request with adapter', async (t) => {
       }),
       headers: { 'Content-Type': 'application/json' },
     },
+    response: undefined,
   }
   const adapters = [jsonAdapter]
   const endpoint = new Endpoint(
@@ -1023,6 +1024,7 @@ test('should mutate request with several adapters', async (t) => {
       }),
       headers: { 'Content-Type': 'application/json' },
     },
+    response: undefined,
   }
   const adapters = [jsonAdapter, mockAdapter]
   const endpoint = new Endpoint(
