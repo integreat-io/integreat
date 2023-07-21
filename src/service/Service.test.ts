@@ -22,7 +22,7 @@ import Auth from './Auth.js'
 import tokenAuth from '../authenticators/token.js'
 import optionsAuth from '../authenticators/options.js'
 
-import Service from './Service.js'
+import Service, { Resources } from './Service.js'
 
 // Setup
 
@@ -205,37 +205,67 @@ const testAuth: Authenticator = {
       : { status: 'rejected', error: 'Missing API-TOKEN header' }
   },
   isAuthenticated: (_authentication, _action) => false,
+  validate: async (_authentication, _options, _action) => ({ id: 'anonymous' }),
   authentication: {
     asObject: (authentication) =>
       isObject(authentication?.ident) ? authentication!.ident : {},
   },
 }
 
-// payload: { data: [], headers: { 'API-TOKEN': 'wr0ng' } },
+const validateAuth: Authenticator = {
+  ...tokenAuth,
+  validate: async (_authentication, options, _action) => {
+    if (options?.invalid) {
+      throw new Error('Validated by authenticator')
+    } else {
+      return { id: 'johnf' }
+    }
+  },
+}
 
 const auths = {
-  granting: new Auth('granting', tokenAuth, grantingAuth.options),
-  refusing: new Auth('refusing', tokenAuth, {}),
+  granting: new Auth('granting', validateAuth, grantingAuth.options),
+  refusing: new Auth('refusing', validateAuth, { refuse: true }),
   apiToken: new Auth('apiToken', testAuth, {}),
+  validating: new Auth('validating', validateAuth, grantingAuth.options),
+  invalidating: new Auth('invalidating', validateAuth, {
+    ...grantingAuth.options,
+    invalid: true,
+  }),
 }
 
 const mockResources = (
   data: unknown,
-  action = { type: 'GET', payload: {} }
-) => ({
+  action: Action = { type: 'GET', payload: {}, meta: {} },
+  doValidate = true
+): Resources => ({
   ...jsonResources,
   authenticators: {
     options: optionsAuth,
-    token: tokenAuth,
+    token: validateAuth,
   },
   transporters: {
     ...jsonResources.transporters,
     http: {
       ...jsonResources.transporters!.http,
-      send: async (_action: Action) => ({ status: 'ok', data }),
-      listen: async (dispatch: Dispatch) => {
-        const response = await dispatch(action)
-        return response || { status: 'ok' }
+      send: async (_action) => ({ status: 'ok', data }),
+      listen: async (dispatch, _connection, authenticate) => {
+        // This mock implementation of listen() will immediately dispatch the
+        // given action. If doValidate is true, it will first authenticate, and
+        // set the ident on the response if authentication was successful.
+        if (doValidate) {
+          const authResponse = await authenticate({ status: 'granted' }, null)
+          if (authResponse.status !== 'ok') {
+            return authResponse
+          }
+          const ident = authResponse.access?.ident
+          return await dispatch({
+            ...action,
+            meta: { ...action.meta, ident },
+          })
+        } else {
+          return await dispatch(action)
+        }
       },
     },
   },
@@ -2182,7 +2212,7 @@ test('listen should call transporter.listen', async (t) => {
   const service = new Service(
     {
       id: 'entries',
-      auth: 'granting',
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -2221,7 +2251,7 @@ test('listen should not call transporter.listen when transport.shouldListen retu
   const service = new Service(
     {
       id: 'entries',
-      auth: 'granting',
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: {},
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -2249,7 +2279,7 @@ test('listen should set sourceService', async (t) => {
   const service = new Service(
     {
       id: 'entries',
-      auth: 'granting',
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -2259,9 +2289,9 @@ test('listen should set sourceService', async (t) => {
   const expectedAction = {
     type: 'SET',
     payload: { data: [], sourceService: 'entries' },
-    meta: { ident: undefined },
+    meta: { ident: { id: 'johnf' } },
   }
-  const expectedResponse = { status: 'ok' }
+  const expectedResponse = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
   const ret = await service.listen(dispatchStub)
 
@@ -2279,7 +2309,7 @@ test('listen should not set sourceService when already set', async (t) => {
   const service = new Service(
     {
       id: 'entries',
-      auth: 'granting',
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -2289,9 +2319,9 @@ test('listen should not set sourceService when already set', async (t) => {
   const expectedAction = {
     type: 'SET',
     payload: { data: [], sourceService: 'other' },
-    meta: { ident: undefined },
+    meta: { ident: { id: 'johnf' } },
   }
-  const expectedResponse = { status: 'ok' }
+  const expectedResponse = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
   const ret = await service.listen(dispatchStub)
 
@@ -2333,7 +2363,7 @@ test('should support progress reporting', async (t) => {
   const service = new Service(
     {
       id: 'entries',
-      auth: 'granting',
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -2343,56 +2373,117 @@ test('should support progress reporting', async (t) => {
 
   await service.listen(dispatch)
   const listenerDispatch = listenStub.args[0][0]
-  const p = listenerDispatch(action)
+  const listenerAuthenticate = listenStub.args[0][2]
+  const authResponse = await listenerAuthenticate({ status: 'granted' }, action)
+  const p = listenerDispatch({
+    ...action,
+    meta: { ident: authResponse.access?.ident },
+  })
   p.onProgress(progressStub)
   const ret = await p
 
-  t.is(ret.status, 'ok')
+  t.is(ret.status, 'ok', ret.error)
   t.is(progressStub.callCount, 2)
   t.is(progressStub.args[0][0], 0.5)
   t.is(progressStub.args[1][0], 1)
 })
 
-test('listen should authorize incoming action', async (t) => {
+test('listen should authenticate action when called back from service', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
-    payload: { data: [], headers: { 'API-TOKEN': 't0k3n' } },
+    payload: { data: [], sourceService: 'entries' },
   }
   const service = new Service(
     {
       id: 'entries',
-      auth: { outgoing: 'granting', incoming: 'apiToken' },
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action)
+    mockResources({}, action, true)
   )
-  const expectedAction = {
-    ...action,
-    payload: { ...action.payload, sourceService: 'entries' },
-    meta: { ident: { id: 't0k3n' } },
+  const expectedResponse = {
+    status: 'ok',
+    access: { ident: { id: 'johnf' } },
   }
-  const expectedResponse = { status: 'ok' }
+  const expectedPayload = { ...action.payload, sourceService: 'entries' }
 
   const ret = await service.listen(dispatchStub)
 
-  t.is(dispatchStub.callCount, 1)
-  t.deepEqual(dispatchStub.args[0][0], expectedAction)
   t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 1)
+  const dispatchedAction = dispatchStub.args[0][0]
+  t.deepEqual(dispatchedAction.payload, expectedPayload)
+  t.is(dispatchedAction.meta?.ident?.id, 'johnf')
 })
 
-test('listen should respond with error when authentication fails', async (t) => {
+test('listen should reject authentication when validate() returns an error', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
-    payload: { data: [], headers: {} }, // No API-TOKEN header will cause the auth to fail
+    payload: { data: [], sourceService: 'entries' },
   }
   const service = new Service(
     {
       id: 'entries',
-      auth: { outgoing: 'granting', incoming: 'apiToken' },
+      auth: { outgoing: 'granting', incoming: 'invalidating' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action, true)
+  )
+  const expectedResponse = {
+    status: 'noaccess',
+    error: 'Authentication was refused. Validated by authenticator',
+    origin: 'auth:service:entries:invalidating',
+  }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 0)
+})
+
+test('listen should authenticate with anonymous when auth is true', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'other' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: true },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action, true)
+  )
+  const expectedResponse = {
+    status: 'ok',
+    access: { ident: { id: 'anonymous' } },
+  }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 1)
+})
+
+test('listen should refuse authentication when no incoming auth', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'other' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: true }, // Only outgoing auth is specified
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -2400,145 +2491,44 @@ test('listen should respond with error when authentication fails', async (t) => 
     mockResources({}, action)
   )
   const expectedResponse = {
-    status: 'autherror',
-    error: 'Missing API-TOKEN header',
-    origin: 'service:entries',
+    status: 'noaccess',
+    error: 'Authentication was refused. No incoming auth',
+    origin: 'auth:service:entries',
   }
 
   const ret = await service.listen(dispatchStub)
 
-  t.is(dispatchStub.callCount, 0)
   t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 0)
 })
 
-test('listen should set ident on dispatched actions from options authenticator', async (t) => {
+test('listen should not accept action with ident not given by us', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
-    type: 'SET',
-    payload: { data: [] },
-  }
-  const service = new Service(
-    {
-      id: 'entries',
-      auth: {
-        outgoing: 'granting',
-        incoming: {
-          id: 'staticAuth',
-          authenticator: 'options',
-          options: { id: 'reidar' },
-        },
-      },
-      transporter: 'http',
-      options: { incoming: { port: 8080 } },
-      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    },
-    mockResources({}, action)
-  )
-  const expectedAction = {
     type: 'SET',
     payload: { data: [], sourceService: 'entries' },
-    meta: { ident: { id: 'reidar' } },
-  }
-  const expectedResponse = { status: 'ok' }
-
-  const ret = await service.listen(dispatchStub)
-
-  t.is(dispatchStub.callCount, 1)
-  t.deepEqual(dispatchStub.args[0][0], expectedAction)
-  t.deepEqual(ret, expectedResponse)
-})
-
-test('listen should remove ident when no incoming auth is provided', async (t) => {
-  const dispatchStub = sinon.stub().callsFake(dispatch)
-  const action = {
-    type: 'SET',
-    payload: { data: [] },
-    meta: { ident: { id: 'anonymous' } }, // Should be removed
+    meta: { ident: { id: 'conman' } },
   }
   const service = new Service(
     {
       id: 'entries',
-      auth: { outgoing: 'granting' }, // No incoming
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action)
+    mockResources({}, action, false)
   )
-  const expectedAction = {
-    ...action,
-    payload: { ...action.payload, sourceService: 'entries' },
-    meta: { ident: undefined },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: 'Authentication was refused. Unauthorized ident provided',
+    origin: 'auth:service:entries',
   }
-  const expectedResponse = { status: 'ok' }
 
   const ret = await service.listen(dispatchStub)
 
-  t.is(dispatchStub.callCount, 1)
-  t.deepEqual(dispatchStub.args[0][0], expectedAction)
   t.deepEqual(ret, expectedResponse)
-})
-
-test('listen should not remove ident when auth incoming is true', async (t) => {
-  const dispatchStub = sinon.stub().callsFake(dispatch)
-  const action = {
-    type: 'SET',
-    payload: { data: [] },
-    meta: { ident: { id: 'anonymous' } }, // Should be removed
-  }
-  const service = new Service(
-    {
-      id: 'entries',
-      auth: { incoming: true },
-      transporter: 'http',
-      options: { incoming: { port: 8080 } },
-      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    },
-    mockResources({}, action)
-  )
-  const expectedAction = {
-    ...action,
-    payload: { ...action.payload, sourceService: 'entries' },
-    meta: { ident: { id: 'anonymous' } },
-  }
-  const expectedResponse = { status: 'ok' }
-
-  const ret = await service.listen(dispatchStub)
-
-  t.is(dispatchStub.callCount, 1)
-  t.deepEqual(dispatchStub.args[0][0], expectedAction)
-  t.deepEqual(ret, expectedResponse)
-})
-
-test('listen should not remove ident when auth is true', async (t) => {
-  const dispatchStub = sinon.stub().callsFake(dispatch)
-  const action = {
-    type: 'SET',
-    payload: { data: [] },
-    meta: { ident: { id: 'anonymous' } }, // Should be removed
-  }
-  const service = new Service(
-    {
-      id: 'entries',
-      auth: true,
-      transporter: 'http',
-      options: { incoming: { port: 8080 } },
-      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    },
-    mockResources({}, action)
-  )
-  const expectedAction = {
-    ...action,
-    payload: { ...action.payload, sourceService: 'entries' },
-    meta: { ident: { id: 'anonymous' } },
-  }
-  const expectedResponse = { status: 'ok' }
-
-  const ret = await service.listen(dispatchStub)
-
-  t.is(dispatchStub.callCount, 1)
-  t.deepEqual(dispatchStub.args[0][0], expectedAction)
-  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 0)
 })
 
 test('listen should return error when connection fails', async (t) => {
@@ -2563,7 +2553,7 @@ test('listen should return error when connection fails', async (t) => {
   const service = new Service(
     {
       id: 'entries',
-      auth: 'granting',
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -2585,7 +2575,7 @@ test('listen should return error when authentication fails', async (t) => {
   const service = new Service(
     {
       id: 'entries',
-      auth: 'refusing',
+      auth: { outgoing: 'refusing', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -2622,7 +2612,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
     {
       id: 'entries',
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-      auth: 'granting',
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
     },
@@ -2658,7 +2648,7 @@ test('listen should return error when no transporter', async (t) => {
   const service = new Service(
     {
       id: 'entries',
-      auth: 'granting',
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'unknown',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -2706,7 +2696,7 @@ test('listen should use service middleware', async (t) => {
   const service = new Service(
     {
       id: 'entries',
-      auth: 'granting',
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
@@ -2746,7 +2736,7 @@ test('listen should return noaction when incoming action is null', async (t) => 
   const service = new Service(
     {
       id: 'entries',
-      auth: 'granting',
+      auth: { outgoing: 'granting', incoming: 'validating' },
       transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],

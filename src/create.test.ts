@@ -441,6 +441,62 @@ test('should use auth', async (t) => {
   t.is(ret.status, 'noaccess', ret.error)
 })
 
+test('should set id on authenticators', async (t) => {
+  const dispatchMock = sinon.stub().resolves({ status: 'ok' })
+  const authenticators = {
+    mock: {
+      // No id
+      authenticate: async (options: Record<string, unknown> | null) => ({
+        status: options?.status as string,
+      }),
+      isAuthenticated: () => false,
+      authentication: {},
+    },
+  }
+  const action = { type: 'GET', payload: { type: 'entry' } }
+  const resourcesWithTransSendAndAuth: Resources = {
+    ...resourcesWithTransformer,
+    authenticators,
+    transporters: {
+      ...resourcesWithTransformer.transporters,
+      http: {
+        ...resourcesWithTransformer.transporters!.http,
+        send: async () => ({ status: 'ok', data: '[]' }),
+        shouldListen: () => true,
+        listen: async (_dispatch, _connect, authenticate) => {
+          return await authenticate({ status: 'granted' }, action)
+          // We return auth response right away, as we know it will fail
+        },
+      },
+    },
+  }
+  const authServices = [
+    {
+      ...services[0],
+      auth: { outgoing: true, incoming: 'mauth' },
+    },
+  ]
+  const auths = [
+    {
+      id: 'mauth',
+      authenticator: 'mock',
+      options: { status: 'refused' },
+    },
+  ]
+
+  const great = create(
+    { services: authServices, schemas, mutations, auths },
+    resourcesWithTransSendAndAuth
+  )
+  const ret = await great.services.entries.listen(dispatchMock)
+
+  t.is(ret.status, 'autherror', ret.error)
+  t.is(
+    ret.error,
+    "Could not authenticate. Authenticator 'mock' doesn't support validation" // The fact that we get `'mock'` here means that the authenticator id was set
+  )
+})
+
 test('should throw when trying to use an unknown authenticator', async (t) => {
   const authServices = [
     {

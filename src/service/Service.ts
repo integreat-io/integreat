@@ -1,5 +1,5 @@
 import debugLib from 'debug'
-import dispatchIncoming from './utils/dispatchIncoming.js'
+import { dispatchIncoming, authenticateCallback } from './utils/incoming.js'
 import Endpoint from './Endpoint.js'
 import {
   setErrorOnAction,
@@ -38,7 +38,7 @@ import type {
 
 const debug = debugLib('great')
 
-interface Resources {
+export interface Resources {
   transporters?: Record<string, Transporter>
   adapters?: Record<string, Adapter>
   authenticators?: Record<string, Authenticator>
@@ -114,7 +114,7 @@ function resolveIncomingAuth(
       ? true
       : retrieveAuthorization(authenticators, auths, auth.incoming)
   } else {
-    return auth === true ? true : undefined
+    return undefined
   }
 }
 
@@ -509,8 +509,9 @@ export default class Service {
 
     debug('Calling transporter listen() ...')
     return this.#transporter.listen(
-      dispatchIncoming(dispatch, this.#middleware, this.id, this.#incomingAuth),
-      this.#connection.object
+      dispatchIncoming(dispatch, this.#middleware, this.id),
+      this.#connection.object,
+      authenticateCallback(this.#incomingAuth, this.id)
     )
   }
 

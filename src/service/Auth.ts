@@ -1,6 +1,7 @@
 import type { AuthOptions, Authentication } from './types.js'
-import type { Authenticator, Action, Transporter } from '../types.js'
+import type { Authenticator, Action, Response, Transporter } from '../types.js'
 import { isObject } from '../utils/is.js'
+import { createErrorResponse } from '../utils/action.js'
 
 const MAX_RETRIES = 1
 
@@ -56,6 +57,52 @@ export default class Auth {
 
     this.#authentications.set(key, authentication)
     return authentication?.status === 'granted'
+  }
+
+  async validate(
+    authentication: Authentication,
+    action: Action | null
+  ): Promise<Response> {
+    if (typeof this.#authenticator.validate !== 'function') {
+      // Authenticator doesn't support validation, so return error
+      return createErrorResponse(
+        `Could not authenticate. Authenticator '${
+          this.#authenticator.id
+        }' doesn't support validation`,
+        this.id,
+        'autherror'
+      )
+    }
+
+    if (authentication.status !== 'granted') {
+      // Authentication has already been refused, so return error
+      return createErrorResponse(
+        'Authentication was refused',
+        this.id,
+        'noaccess'
+      )
+    }
+
+    try {
+      // Validate authentication
+      const ident = await this.#authenticator.validate(
+        authentication,
+        this.#options,
+        action
+      )
+
+      // We got an ident back, so authentication was successful
+      return { status: 'ok', access: { ident } }
+    } catch (err) {
+      // Validation failed, so return error
+      return createErrorResponse(
+        `Authentication was refused. ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+        this.id,
+        'noaccess'
+      )
+    }
   }
 
   async authenticateAndGetAuthObject(

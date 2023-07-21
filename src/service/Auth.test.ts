@@ -8,6 +8,8 @@ import Auth from './Auth.js'
 // Setup
 
 const authenticator: Authenticator = {
+  id: 'mockauth',
+
   authenticate: async (options, _action) => ({
     status: options?.token === 't0k3n' ? 'granted' : 'refused',
     expired: options?.expired,
@@ -17,6 +19,13 @@ const authenticator: Authenticator = {
 
   isAuthenticated: (authentication, _options, _action) =>
     !!authentication && !authentication.expired,
+
+  validate: async (authentication, options, _action) => {
+    if (authentication?.token === options?.token) {
+      return { id: 'johnf' }
+    }
+    throw new Error('Wrong token')
+  },
 
   authentication: {
     asHttpHeaders: (auth) => (auth?.token ? { Authorization: auth.token } : {}),
@@ -45,6 +54,8 @@ test('should create Auth instance', (t) => {
   t.truthy(auth)
   t.is(auth.id, 'auth1')
 })
+
+// Tests -- authenticate
 
 test('should authenticate and return true on success', async (t) => {
   const auth = new Auth(id, authenticator, options)
@@ -202,6 +213,68 @@ test('should return autherror status on second timeout', async (t) => {
   t.is(authSpy.callCount, 2)
 })
 
+// Tests -- validate
+
+test('should return response with ident when authentication is valid', async (t) => {
+  const options = { token: 't0k3n' }
+  const auth = new Auth(id, authenticator, options)
+  const authentication = { status: 'granted', token: 't0k3n' }
+  const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
+
+  const ret = await auth.validate(authentication, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return noaccess when authentication is invalid', async (t) => {
+  const options = { token: 't0k3n' }
+  const auth = new Auth(id, authenticator, options)
+  const authentication = { status: 'granted', token: 'wr0ng' }
+  const expected = {
+    status: 'noaccess',
+    error: 'Authentication was refused. Wrong token',
+    origin: 'auth1',
+  }
+
+  const ret = await auth.validate(authentication, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return noaccess when authentication is already refused', async (t) => {
+  const options = { token: 't0k3n' }
+  const auth = new Auth(id, authenticator, options)
+  const authentication = { status: 'refused', token: 't0k3n' }
+  const expected = {
+    status: 'noaccess',
+    error: 'Authentication was refused',
+    origin: 'auth1',
+  }
+
+  const ret = await auth.validate(authentication, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return autherror when authenticator does not have the validate() method', async (t) => {
+  const authenticatorWithoutValidate = { ...authenticator, validate: undefined }
+  const options = { token: 't0k3n' }
+  const auth = new Auth(id, authenticatorWithoutValidate, options)
+  const authentication = { status: 'granted', token: 't0k3n' }
+  const expected = {
+    status: 'autherror',
+    error:
+      "Could not authenticate. Authenticator 'mockauth' doesn't support validation",
+    origin: 'auth1',
+  }
+
+  const ret = await auth.validate(authentication, action)
+
+  t.deepEqual(ret, expected)
+})
+
+// Tests -- getAuthObject
+
 test('should return auth object when granted', async (t) => {
   const auth = new Auth(id, authenticator, options)
   const expected = { Authorization: 't0k3n' }
@@ -248,6 +321,8 @@ test('should return null when authentication was refused', async (t) => {
 
   t.is(ret, expected)
 })
+
+// Tests -- getStatusObject
 
 test('should return status ok when granted', async (t) => {
   const auth = new Auth(id, authenticator, options)
@@ -307,6 +382,8 @@ test('should return status autherror on auth error', async (t) => {
 
   t.deepEqual(ret, expected)
 })
+
+// Tests -- applyToAction
 
 test('should set auth object to action', async (t) => {
   const auth = new Auth(id, authenticator, options)
@@ -396,7 +473,7 @@ test('should set status autherror and auth object to null on auth error', async 
   t.deepEqual(ret, expected)
 })
 
-// Tests --
+// Tests -- authenticateAndGetAuthObject
 
 test('should authenticate and return as object', async (t) => {
   const auth = new Auth(id, authenticator, options)

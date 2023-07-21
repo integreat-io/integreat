@@ -142,6 +142,10 @@ export interface Meta extends Record<string, unknown> {
   authorized?: boolean
 }
 
+export interface Access {
+  ident?: Ident
+}
+
 export interface Response<T = unknown> {
   status?: string
   data?: T
@@ -153,7 +157,7 @@ export interface Response<T = unknown> {
   params?: Params
   headers?: Headers
   responses?: Response[]
-  access?: Record<string, unknown>
+  access?: Access
 }
 
 export interface Action<P extends Payload = Payload, ResponseData = unknown> {
@@ -184,6 +188,7 @@ export interface Authenticator<
   T extends Authentication = Authentication,
   U extends AuthOptions = AuthOptions
 > {
+  id?: string
   extractAuthKey?: (
     options: U | null,
     action: Action | null
@@ -197,6 +202,11 @@ export interface Authenticator<
     options: U | null,
     action: Action | null
   ) => boolean
+  validate?: (
+    authentication: T | null,
+    options: AuthOptions | null,
+    action: Action | null
+  ) => Promise<Ident>
   authentication: {
     [asFunction: string]: (authentication: T | null) => Record<string, unknown>
   }
@@ -219,7 +229,10 @@ export interface Transporter {
   listen?: (
     dispatch: Dispatch,
     connection: Connection | null,
-    authenticate: (options: Record<string, unknown>) => Promise<Ident>
+    authenticate: (
+      authentication: Authentication,
+      action?: Action | null
+    ) => Promise<Response>
   ) => Promise<Response>
   disconnect: (connection: Connection | null) => Promise<void>
 }

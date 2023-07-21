@@ -206,7 +206,7 @@ for transporters, adapters, etc.
   id: <service id>,
   transporter: <transporter id>,
   adapters: [<adapter id>, <adapter id>, ...],
-  auth: <auth id>,
+  auth: <auth config>,
   meta: <type id>,
   options: {...},
   mutation: <mutation pipeline>,
@@ -228,7 +228,13 @@ The `auth` property should normally be set to the id of an
 [auth definition](#service-authentication), if the service requires
 authentication. In cases where the service is authenticated by other means, e.g.
 by including username and password in the uri, set the `auth` property to `true`
-to signal that this is an authenticated service.
+to signal that this is an authenticated service. For services accepting incoming
+actions, `auth` should be set to an object with
+`{ outgoing: <auth id | true>, incoming: <auth id | true>}`.
+
+**Note:** When connecting to a service for listening, the `outgoing` auth is
+used. `incoming` is only used for validating the actions being dispatched "back"
+from the service.
 
 In `options`, you may provide options for transporters and adapters. It is
 merged with the `options` object on the endpoint. See
@@ -1264,6 +1270,11 @@ common codes:
 - `auth:action`: The error occured while attempting to authorize the action.
 - `auth:data`: The error occured while attempting to authorize data in an
   action payload or a response.
+- `auth:service:<service id>`: The error occured while attempting to authorize
+  the service with the given id.
+- `auth:service:<service id>:<authenticator id>`: The error occured while
+  attempting to authorize the service with the given id, through the given
+  authenticator.
 - `handler:<handler id>`: The error occurred with the handler with the given id,
   e.g. `'handler:GET'`. This means the error did happen in the service or the
   mutation pipelines, but in the internal workings of then handler.

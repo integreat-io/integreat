@@ -107,7 +107,13 @@ export default function create(
     dictionaries,
     jobs: jobsDefs = [],
   }: Definitions,
-  { transporters, adapters, transformers, handlers, authenticators }: Resources,
+  {
+    transporters,
+    adapters,
+    transformers,
+    handlers,
+    authenticators = {},
+  }: Resources,
   middlewareForDispatch: Middleware[] = [],
   middlewareForService: Middleware[] = []
 ): Instance {
@@ -141,10 +147,15 @@ export default function create(
     ])
   )
 
+  // Set id on all authenticators
+  const authenticatorsWithId = Object.fromEntries(
+    Object.entries(authenticators).map(([id, auth]) => [id, { ...auth, id }])
+  )
+
   // Setup auths object from auth defs
   const auths = Array.isArray(authDefs)
     ? authDefs
-        .map(setUpAuth(authenticators))
+        .map(setUpAuth(authenticatorsWithId))
         .reduce(indexById, {} as Record<string, Auth>)
     : undefined
 
@@ -155,7 +166,7 @@ export default function create(
         new Service(def, {
           transporters,
           adapters: setAdapterIds(adapters),
-          authenticators,
+          authenticators: authenticatorsWithId,
           auths,
           schemas,
           castFns,
