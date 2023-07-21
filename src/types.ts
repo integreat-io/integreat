@@ -184,6 +184,10 @@ export interface Authenticator<
   T extends Authentication = Authentication,
   U extends AuthOptions = AuthOptions
 > {
+  extractAuthKey?: (
+    options: U | null,
+    action: Action | null
+  ) => string | undefined
   authenticate: (
     options: AuthOptions | null,
     action: Action | null
