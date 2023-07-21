@@ -162,11 +162,6 @@ export interface Dispatch<T = unknown> {
   (action: Action | null): PProgress<Response<T>>
 }
 
-// Dispatch with garantied action
-export interface InternalDispatch<T = unknown> {
-  (action: Action): PProgress<Response<T>>
-}
-
 // Dispatch without PProgress
 export interface HandlerDispatch<T = unknown> {
   (action: Action): Promise<Response<T>>

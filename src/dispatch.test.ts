@@ -535,7 +535,7 @@ test('should return error when no endoint on source service matches', async (t) 
 })
 
 test('should return error instead of throwing', async (t) => {
-  const action = { type: 'TEST', payload: {} }
+  const action = { type: 'TEST', payload: {}, meta: { ident: { id: 'johnf' } } }
   const handlers = {
     TEST: async () => ({ status: 'fromAction' }),
   }
@@ -548,7 +548,7 @@ test('should return error instead of throwing', async (t) => {
     status: 'error',
     error: "Error thrown in dispatch: Error: Too little memory. It's tiny",
     origin: 'dispatch',
-    access: { ident: undefined },
+    access: { ident: { id: 'johnf' } },
   }
 
   const ret = await dispatch({
