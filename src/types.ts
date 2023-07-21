@@ -4,7 +4,12 @@ import type {
   TransformObject,
   Pipeline,
 } from 'map-transform/types.js'
-import type { IdentConfig, TransporterOptions } from './service/types.js'
+import type {
+  IdentConfig,
+  TransporterOptions,
+  Authentication,
+  AuthOptions,
+} from './service/types.js'
 import type Service from './service/Service.js'
 
 export interface Reference {
@@ -175,6 +180,24 @@ export interface Connection extends Record<string, unknown> {
   status: string
 }
 
+export interface Authenticator<
+  T extends Authentication = Authentication,
+  U extends AuthOptions = AuthOptions
+> {
+  authenticate: (
+    options: AuthOptions | null,
+    action: Action | null
+  ) => Promise<T>
+  isAuthenticated: (
+    authentication: T | null,
+    options: U | null,
+    action: Action | null
+  ) => boolean
+  authentication: {
+    [asFunction: string]: (authentication: T | null) => Record<string, unknown>
+  }
+}
+
 export interface Transporter {
   authentication: string | null
   prepareOptions: (
@@ -191,7 +214,8 @@ export interface Transporter {
   shouldListen?: (options: TransporterOptions) => boolean
   listen?: (
     dispatch: Dispatch,
-    connection: Connection | null
+    connection: Connection | null,
+    authenticate: (options: Record<string, unknown>) => Promise<Ident>
   ) => Promise<Response>
   disconnect: (connection: Connection | null) => Promise<void>
 }

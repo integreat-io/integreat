@@ -14,13 +14,9 @@ import type {
   Response,
   ActionHandler,
   Adapter,
-} from './types.js'
-import type {
-  ServiceDef,
-  IdentConfig,
-  AuthDef,
   Authenticator,
-} from './service/types.js'
+} from './types.js'
+import type { ServiceDef, IdentConfig, AuthDef } from './service/types.js'
 import type { SchemaDef } from './schema/types.js'
 import Auth from './service/Auth.js'
 import builtinHandlers from './handlers/index.js'

@@ -1,33 +1,26 @@
 import test from 'ava'
 import sinon from 'sinon'
-import type { Authenticator, Authentication, AuthOptions } from './types.js'
-import type { Transporter, Action } from '../types.js'
+import type { AuthOptions } from './types.js'
+import type { Authenticator, Transporter } from '../types.js'
 
 import Auth from './Auth.js'
 
 // Setup
 
 const authenticator: Authenticator = {
-  authenticate: async (
-    options: AuthOptions | null,
-    _action: Action | null
-  ) => ({
+  authenticate: async (options, _action) => ({
     status: options?.token === 't0k3n' ? 'granted' : 'refused',
     expired: options?.expired,
     token: options?.token,
     ...(options?.token === 't0k3n' ? {} : { error: 'Wrong token' }),
   }),
 
-  isAuthenticated: (
-    authentication: Authentication | null,
-    _action: Action | null
-  ) => !!authentication && !authentication.expired,
+  isAuthenticated: (authentication, _options, _action) =>
+    !!authentication && !authentication.expired,
 
   authentication: {
-    asHttpHeaders: (auth: Authentication | null) =>
-      auth?.token ? { Authorization: auth.token } : {},
-    asObject: (auth: Authentication | null) =>
-      auth?.token ? { token: auth.token } : {},
+    asHttpHeaders: (auth) => (auth?.token ? { Authorization: auth.token } : {}),
+    asObject: (auth) => (auth?.token ? { token: auth.token } : {}),
   },
 }
 
@@ -107,7 +100,7 @@ test('should ask the authenticator if the authentication is still valid and reau
   t.true(ret2)
 })
 
-test("should pass on action to authenticator's isAuthenticated", async (t) => {
+test("should pass on options and action to authenticator's isAuthenticated", async (t) => {
   const stubbedAuthenticator = {
     ...authenticator,
     isAuthenticated: sinon.stub().callsFake(authenticator.isAuthenticated),
@@ -118,7 +111,8 @@ test("should pass on action to authenticator's isAuthenticated", async (t) => {
   await auth.authenticate(action)
 
   t.is(stubbedAuthenticator.isAuthenticated.callCount, 1)
-  t.deepEqual(stubbedAuthenticator.isAuthenticated.args[0][1], action)
+  t.deepEqual(stubbedAuthenticator.isAuthenticated.args[0][1], options)
+  t.deepEqual(stubbedAuthenticator.isAuthenticated.args[0][2], action)
 })
 
 test("should pass on action to authenticator's authenticate", async (t) => {

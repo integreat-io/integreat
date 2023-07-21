@@ -25,17 +25,6 @@ export interface Authentication extends Record<string, unknown> {
   error?: string
 }
 
-export interface Authenticator<T extends Authentication = Authentication> {
-  authenticate: (
-    options: AuthOptions | null,
-    action: Action | null
-  ) => Promise<T>
-  isAuthenticated: (authentication: T | null, action: Action | null) => boolean
-  authentication: {
-    [asFunction: string]: (authentication: T | null) => Record<string, unknown>
-  }
-}
-
 export interface AuthDef {
   id: string
   authenticator: string

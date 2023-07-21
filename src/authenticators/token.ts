@@ -1,4 +1,5 @@
-import type { Authenticator, Authentication } from '../service/types.js'
+import type { Authenticator } from '../types.js'
+import type { Authentication } from '../service/types.js'
 
 interface TokenAuthentication extends Authentication {
   token?: string | null
@@ -36,7 +37,7 @@ const tokenAuth: Authenticator = {
    * Would normaly perform an authentication request and set the token received,
    * but in tokenAuth the token is set as from the options object.
    */
-  async authenticate(options, _action) {
+  async authenticate(options) {
     const { token = null, type, encode = false } = options || {}
     return token
       ? { status: 'granted', token, type, encode }
@@ -48,7 +49,7 @@ const tokenAuth: Authenticator = {
    * In the tokenAuth, this will be true if we get an authentication object
    * with granted status and a token.
    */
-  isAuthenticated(authentication, _action) {
+  isAuthenticated(authentication) {
     return !!(
       authentication &&
       authentication.status === 'granted' &&

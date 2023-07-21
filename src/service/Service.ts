@@ -25,13 +25,13 @@ import type {
   Middleware,
   Transporter,
   Adapter,
+  Authenticator,
 } from '../types.js'
 import type {
   ServiceDef,
   MapOptions,
   AuthObject,
   AuthProp,
-  Authenticator,
   AuthDef,
   TransporterOptions,
 } from './types.js'

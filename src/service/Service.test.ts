@@ -9,8 +9,9 @@ import createSchema from '../schema/index.js'
 import dispatch from '../tests/helpers/dispatch.js'
 import { isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
-import type { Authenticator, ServiceDef, ServiceOptions } from './types.js'
+import type { ServiceDef, ServiceOptions } from './types.js'
 import type {
+  Authenticator,
   Connection,
   Action,
   Response,

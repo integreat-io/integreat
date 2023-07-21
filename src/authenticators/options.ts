@@ -1,5 +1,6 @@
-import type { Authenticator, Authentication } from '../service/types.js'
 import { isObject } from '../utils/is.js'
+import type { Authenticator } from '../types.js'
+import type { Authentication } from '../service/types.js'
 
 /**
  * The options authenticator. Will always be authenticated, and will return the
@@ -13,7 +14,7 @@ const optionsAuth: Authenticator = {
    * received, but in optionsAuth the given options object is returned as the
    * authentication object.
    */
-  async authenticate(options, _action) {
+  async authenticate(options) {
     return { status: 'granted', ...options }
   },
 
@@ -22,7 +23,7 @@ const optionsAuth: Authenticator = {
    * In the optionsAuth, this will always be true, as no authentication is
    * really necessary.
    */
-  isAuthenticated(authentication, _action) {
+  isAuthenticated(authentication) {
     return !!(authentication && authentication.status === 'granted')
   },
 

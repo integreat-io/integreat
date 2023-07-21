@@ -1,5 +1,5 @@
-import type { Authenticator, AuthOptions, Authentication } from './types.js'
-import type { Action, Transporter } from '../types.js'
+import type { AuthOptions, Authentication } from './types.js'
+import type { Authenticator, Action, Transporter } from '../types.js'
 import { isObject } from '../utils/is.js'
 
 const MAX_RETRIES = 1
@@ -30,7 +30,11 @@ export default class Auth {
   async authenticate(action: Action | null): Promise<boolean> {
     if (
       this.#authentication?.status === 'granted' &&
-      this.#authenticator.isAuthenticated(this.#authentication, action)
+      this.#authenticator.isAuthenticated(
+        this.#authentication,
+        this.#options,
+        action
+      )
     ) {
       return true
     }

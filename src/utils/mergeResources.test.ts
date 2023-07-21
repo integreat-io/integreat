@@ -1,6 +1,5 @@
 import test from 'ava'
-import type { ActionHandler, Transporter } from '../types.js'
-import type { Authenticator } from '../service/types.js'
+import type { ActionHandler, Transporter, Authenticator } from '../types.js'
 
 import mergeResources from './mergeResources.js'
 

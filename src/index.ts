@@ -23,9 +23,9 @@ export type {
   SetProgress,
   JobDef,
   Job,
+  Authenticator,
 } from './types.js'
 export type {
-  Authenticator,
   Authentication,
   AuthOptions,
   AuthDef,
