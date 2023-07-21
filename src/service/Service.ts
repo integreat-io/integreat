@@ -1,5 +1,5 @@
 import debugLib from 'debug'
-import pProgress, { ProgressNotifier } from 'p-progress'
+import dispatchIncoming from './utils/dispatchIncoming.js'
 import Endpoint from './Endpoint.js'
 import {
   setErrorOnAction,
@@ -21,7 +21,6 @@ import type { Schema } from '../schema/index.js'
 import type {
   Action,
   Response,
-  Ident,
   Dispatch,
   Middleware,
   Transporter,
@@ -50,89 +49,6 @@ interface Resources {
   middleware?: Middleware[]
   emit?: (eventType: string, ...args: unknown[]) => void
 }
-
-const setServiceIdAsSourceServiceOnAction =
-  (serviceId: string): Middleware =>
-  (next) =>
-  async (action: Action) =>
-    next({
-      ...action,
-      payload: {
-        ...action.payload,
-        sourceService: action.payload.sourceService || serviceId,
-      },
-    })
-
-const isIdent = (ident: unknown): ident is Ident => isObject(ident)
-
-async function authorizeIncoming(
-  action: Action,
-  serviceId: string,
-  auth?: Auth | boolean
-) {
-  if (auth) {
-    if (typeof auth === 'boolean') {
-      return action
-    }
-
-    try {
-      const ident = await auth.authenticateAndGetAuthObject(action, 'asObject')
-      if (isIdent(ident)) {
-        return { ...action, meta: { ...action.meta, ident } }
-      }
-    } catch (err) {
-      return setErrorOnAction(action, err, `service:${serviceId}`, 'autherror')
-    }
-  }
-
-  return { ...action, meta: { ...action.meta, ident: undefined } }
-}
-
-const dispatchIncoming = (
-  dispatch: Dispatch,
-  setProgress: ProgressNotifier,
-  serviceId: string
-) =>
-  async function (action: Action): Promise<Response> {
-    if (typeof action.response?.status === 'string') {
-      return action.response
-    }
-
-    const p = dispatch(action)
-    p.onProgress(setProgress)
-    return setOrigin(await p, `service:${serviceId}`)
-  }
-
-// TODO: Consider if there is an easier way to pass the `setProgress` method
-// through to the caller, i.e. to preserve the PProgress
-const dispatchIncomingWithMiddleware =
-  (
-    dispatch: Dispatch,
-    middleware: Middleware,
-    serviceId: string,
-    auth?: Auth | boolean
-  ) =>
-  (action: Action | null) =>
-    pProgress<Response>(async (setProgress) => {
-      if (action) {
-        const response = await middleware(
-          dispatchIncoming(dispatch, setProgress, serviceId)
-        )(await authorizeIncoming(action, serviceId, auth))
-
-        return (
-          setOrigin(response, `middleware:service:${serviceId}`) || {
-            status: 'error',
-            origin: `service:${serviceId}`,
-          }
-        )
-      } else {
-        return {
-          status: 'noaction',
-          error: 'No action was dispatched',
-          origin: `service:${serviceId}`,
-        }
-      }
-    })
 
 const sendToTransporter = (
   transporter: Transporter,
@@ -591,19 +507,9 @@ export default class Service {
       )
     }
 
-    const incomingMiddleware = compose(
-      this.#middleware,
-      setServiceIdAsSourceServiceOnAction(this.id)
-    )
-
     debug('Calling transporter listen() ...')
     return this.#transporter.listen(
-      dispatchIncomingWithMiddleware(
-        dispatch,
-        incomingMiddleware,
-        this.id,
-        this.#incomingAuth
-      ),
+      dispatchIncoming(dispatch, this.#middleware, this.id, this.#incomingAuth),
       this.#connection.object
     )
   }
