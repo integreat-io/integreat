@@ -6,9 +6,15 @@ import jsonServiceDef from './tests/helpers/jsonServiceDef.js'
 import builtInMutations from './mutations/index.js'
 import user from './tests/helpers/defs/schemas/user.js'
 import resources from './tests/helpers/resources/index.js'
-import type { Action, HandlerDispatch, TypedData } from './types.js'
+import type {
+  Definitions,
+  Resources,
+  Action,
+  HandlerDispatch,
+  TypedData,
+} from './types.js'
 
-import create, { Definitions, Resources } from './create.js'
+import Instance from './instance.js'
 
 // Setup
 
@@ -87,7 +93,7 @@ const resourcesWithTransformer = {
 
 test('should return object with id, dispatch, on, schemas, services, identType, and queueService', (t) => {
   const identConfig = { type: 'account' }
-  const great = create(
+  const great = new Instance(
     {
       id: 'great1',
       services,
@@ -112,13 +118,19 @@ test('should return object with id, dispatch, on, schemas, services, identType, 
 
 test('should throw when no services', (t) => {
   t.throws(() => {
-    create({ schemas } as unknown as Definitions, resourcesWithTransformer)
+    new Instance(
+      { schemas } as unknown as Definitions,
+      resourcesWithTransformer
+    )
   })
 })
 
 test('should throw when no schemas', (t) => {
   t.throws(() => {
-    create({ services } as unknown as Definitions, resourcesWithTransformer)
+    new Instance(
+      { services } as unknown as Definitions,
+      resourcesWithTransformer
+    )
   })
 })
 
@@ -129,7 +141,7 @@ test('should dispatch with resources', async (t) => {
   const identConfig = { type: 'account' }
   const expectedOptions = { identConfig, queueService: 'queue' }
 
-  const great = create(
+  const great = new Instance(
     { services, schemas, mutations, identConfig, queueService: 'queue' },
     { ...resourcesWithTransformer, handlers }
   )
@@ -154,7 +166,7 @@ test('should dispatch with builtin action handler', async (t) => {
   }
   const action = { type: 'GET', payload: { type: 'entry' } }
 
-  const great = create(
+  const great = new Instance(
     { services, schemas, mutations },
     resourcesWithTransAndSend
   )
@@ -188,7 +200,7 @@ test('should use adapters', async (t) => {
   }
   const action = { type: 'GET', payload: { type: 'entry' } }
 
-  const great = create(
+  const great = new Instance(
     { services: servicesWithJson, schemas, mutations },
     resourcesWithTransSendAndAdapters
   )
@@ -243,7 +255,7 @@ test('should set adapter id', async (t) => {
     meta: { options: {} },
   }
 
-  const great = create(
+  const great = new Instance(
     { services: servicesWithJson, schemas, mutations },
     resourcesWithTransSendAndAdapters
   )
@@ -261,11 +273,12 @@ test('should throw when trying to use an unknown transporter', async (t) => {
     },
   ]
 
-  const error = t.throws(() =>
-    create(
-      { services: servicesWithUnknownTransporter, schemas, mutations },
-      resourcesWithTransformer
-    )
+  const error = t.throws(
+    () =>
+      new Instance(
+        { services: servicesWithUnknownTransporter, schemas, mutations },
+        resourcesWithTransformer
+      )
   )
 
   t.true(error instanceof Error)
@@ -290,7 +303,7 @@ test('should call middleware', async (t) => {
       next({ type: 'OTHER', payload: {} }),
   ]
 
-  const great = create(
+  const great = new Instance(
     { services, schemas, mutations },
     { ...resourcesWithTransformer, handlers },
     middleware
@@ -330,7 +343,7 @@ test('should mutate data', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const great = create(
+  const great = new Instance(
     { services, schemas, mutations, dictionaries },
     resourcesWithTransAndSend
   )
@@ -356,7 +369,7 @@ test('should dispatch scheduled', async (t) => {
   const fromDate = new Date('2021-05-11T14:32Z')
   const toDate = new Date('2021-05-11T14:59Z')
 
-  const great = create(
+  const great = new Instance(
     { services, schemas, mutations, jobs },
     { ...resourcesWithTransformer, handlers }
   )
@@ -372,7 +385,7 @@ test('should skip jobs without schedule', async (t) => {
   const fromDate = new Date('2021-05-11T14:32Z')
   const toDate = new Date('2021-05-11T14:59Z')
 
-  const great = create(
+  const great = new Instance(
     { services, schemas, mutations, jobs },
     { ...resourcesWithTransformer, handlers }
   )
@@ -399,7 +412,7 @@ test('should set up RUN handler with jobs', async (t) => {
     meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
   }
 
-  const great = create(
+  const great = new Instance(
     { services, schemas, mutations, jobs },
     { ...resourcesWithTransformer, handlers, transformers }
   )
@@ -454,7 +467,7 @@ test('should use auth', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const great = create(
+  const great = new Instance(
     { services: authServices, schemas, mutations, auths },
     resourcesWithTransSendAndAuth
   )
@@ -506,7 +519,7 @@ test('should set id on authenticators', async (t) => {
     },
   ]
 
-  const great = create(
+  const great = new Instance(
     { services: authServices, schemas, mutations, auths },
     resourcesWithTransSendAndAuth
   )
@@ -534,11 +547,12 @@ test('should throw when trying to use an unknown authenticator', async (t) => {
     },
   ]
 
-  const error = t.throws(() =>
-    create(
-      { services: authServices, schemas, mutations, auths },
-      resourcesWithTransformer
-    )
+  const error = t.throws(
+    () =>
+      new Instance(
+        { services: authServices, schemas, mutations, auths },
+        resourcesWithTransformer
+      )
   )
 
   t.true(error instanceof Error)
@@ -549,7 +563,7 @@ test('should throw when trying to use an unknown authenticator', async (t) => {
 })
 
 test('should have listen method', async (t) => {
-  const great = create(
+  const great = new Instance(
     { services, schemas, mutations },
     resourcesWithTransformer
   )
@@ -558,7 +572,7 @@ test('should have listen method', async (t) => {
 })
 
 test('should have close method', async (t) => {
-  const great = create(
+  const great = new Instance(
     { services, schemas, mutations },
     resourcesWithTransformer
   )

@@ -1,4 +1,4 @@
-import type { Definitions } from '../create.js'
+import type { Definitions } from '../types.js'
 
 const arrOrEmptyArr = <T>(arr?: T[]): T[] => (Array.isArray(arr) ? arr : [])
 

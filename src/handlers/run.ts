@@ -67,7 +67,7 @@ const isOkResponse = (response?: Response) =>
 const addModify = (mutation: ArrayElement<Pipeline>) =>
   isObject(mutation) ? { $modify: true, ...mutation } : mutation
 
-// TODO: Prepare mutations in `../create.ts` and call a `mutate()` function here
+// TODO: Prepare mutations in `../instance.ts` and call a `mutate()` function here
 function mutateAction(
   action: Action,
   mutation: TransformObject | Pipeline | undefined,

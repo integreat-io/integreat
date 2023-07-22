@@ -1,7 +1,7 @@
 import Auth from '../Auth.js'
 import anonymousAuth from '../../authenticators/anonymous.js'
 import { isObject } from '../../utils/is.js'
-import { setUpAuth } from '../../create.js'
+import { setUpAuth } from '../../instance.js'
 import { lookupById } from '../../utils/indexUtils.js'
 import type { Authenticator } from '../../types.js'
 import type { AuthObject, AuthProp, AuthDef } from '../types.js'

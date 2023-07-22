@@ -1,16 +1,21 @@
 import type { PProgress } from 'p-progress'
 import type {
+  Dictionaries,
+  Transformer,
   TransformDefinition,
   TransformObject,
   Pipeline,
 } from 'map-transform/types.js'
 import type {
+  ServiceDef,
+  AuthDef,
   IdentConfig,
   TransporterOptions,
   Authentication,
   AuthOptions,
 } from './service/types.js'
 import type Service from './service/Service.js'
+import type { SchemaDef } from './schema/types.js'
 
 export interface Reference {
   id: string | null
@@ -274,4 +279,24 @@ export interface ActionHandlerResources {
 
 export interface ActionHandler<T = unknown> {
   (action: Action, resources: ActionHandlerResources): Promise<Response<T>>
+}
+
+export interface Definitions {
+  id?: string
+  schemas: SchemaDef[]
+  services: ServiceDef[]
+  mutations?: Record<string, TransformDefinition>
+  auths?: AuthDef[]
+  identConfig?: IdentConfig
+  queueService?: string
+  dictionaries?: Dictionaries
+  jobs?: JobDef[]
+}
+
+export interface Resources {
+  transporters?: Record<string, Transporter>
+  adapters?: Record<string, Adapter>
+  handlers?: Record<string, ActionHandler>
+  authenticators?: Record<string, Authenticator>
+  transformers?: Record<string, Transformer>
 }
