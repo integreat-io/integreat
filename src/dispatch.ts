@@ -59,6 +59,13 @@ function getActionHandlerFromType(
   return undefined
 }
 
+/**
+ * Rename `service` to `targetService` and set id and cid if not already set.
+ *
+ * Note: We're also removing `meta.authorized`.This is really not needed
+ * anymore, as we're using a symbol for marking actions as authorized. We're
+ * still keeping it for now for good measures.
+ */
 function cleanUpActionAndSetIds({
   payload: { service, ...payload },
   meta: { queue, authorized, ...meta } = {},

@@ -2,6 +2,7 @@ import debugLib from 'debug'
 import pLimit from 'p-limit'
 import { createErrorResponse, setResponseOnAction } from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'
+import { isAuthorizedAction } from '../service/utils/authAction.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'
 import type Service from '../service/Service.js'
 import type Endpoint from '../service/Endpoint.js'
@@ -70,7 +71,7 @@ async function runAsIndividualActions(
 
 const doRunIndividualIds = (action: Action, endpoint?: Endpoint) =>
   Array.isArray(action.payload.id) &&
-  action.meta?.authorized &&
+  isAuthorizedAction(action) &&
   !isMembersScope(endpoint)
 
 async function runOneOrMany(

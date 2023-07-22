@@ -1,10 +1,12 @@
 import { setOrigin } from '../utils/action.js'
+import { setAuthorizedMark } from '../service/utils/authAction.js'
 import type { Action, ActionHandlerResources, Response } from '../types.js'
 
-const prepareQueuedAction = ({ meta, ...action }: Action) => ({
-  ...action,
-  meta: { ...meta, queuedAt: Date.now(), authorized: true },
-})
+const prepareQueuedAction = ({ meta, ...action }: Action) =>
+  setAuthorizedMark({
+    ...action,
+    meta: { ...meta, queuedAt: Date.now() },
+  })
 
 /**
  * Send action to queue service. An `ok` status from queue service is returned

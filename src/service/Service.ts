@@ -15,7 +15,7 @@ import Connection from './Connection.js'
 import Auth from './Auth.js'
 import { lookupById, lookupByIds } from '../utils/indexUtils.js'
 import * as authorizeData from './utils/authData.js'
-import authorizeAction from './utils/authAction.js'
+import authorizeAction, { isAuthorizedAction } from './utils/authAction.js'
 import { compose } from '../dispatch.js'
 import type { DataMapperEntry } from 'map-transform/types.js'
 import type { Schema } from '../schema/index.js'
@@ -151,15 +151,15 @@ export default class Service {
    */
   async mutateRequest(action: Action, endpoint: Endpoint): Promise<Action> {
     const castFn = getCastFn(this.#castFns, action.payload.type)
-    const casted = castPayload(action, endpoint, castFn)
-    const authorized = this.#authorizeDataToService(
-      casted,
+    const castedAction = castPayload(action, endpoint, castFn)
+    const authorizedAction = this.#authorizeDataToService(
+      castedAction,
       endpoint.allowRawRequest
     )
 
-    let mutated: Action
+    let mutatedAction: Action
     try {
-      mutated = await endpoint.mutate(authorized, true /* isRev */)
+      mutatedAction = await endpoint.mutate(authorizedAction, true /* isRev */)
     } catch (error) {
       return setErrorOnAction(
         action,
@@ -170,7 +170,7 @@ export default class Service {
       )
     }
 
-    return setOriginOnAction(mutated, 'mutate:request', false)
+    return setOriginOnAction(mutatedAction, 'mutate:request', false)
   }
 
   /**
@@ -239,17 +239,17 @@ export default class Service {
     endpoint: Endpoint
   ): Promise<Response> {
     const castFn = getCastFn(this.#castFns, action.payload.type)
-    const casted = castResponse(action, endpoint, castFn)
-    const authorized = this.#authorizeDataFromService(
-      casted,
+    const castedAction = castResponse(action, endpoint, castFn)
+    const authorizedAction = this.#authorizeDataFromService(
+      castedAction,
       endpoint.allowRawResponse
     )
 
-    let mutated
+    let mutatedAction: Action
     try {
       // Authorize and mutate in right order
-      mutated = await endpoint.mutate(
-        authorized,
+      mutatedAction = await endpoint.mutate(
+        authorizedAction,
         true // isRev
       )
     } catch (error) {
@@ -265,7 +265,7 @@ export default class Service {
     }
 
     const { response } = setOriginOnAction(
-      mutated,
+      mutatedAction,
       'mutate:response:incoming',
       false
     )
@@ -291,7 +291,7 @@ export default class Service {
       )
     }
 
-    if (!action.meta?.authorized) {
+    if (!isAuthorizedAction(action)) {
       return createErrorResponse(
         'Not authorized',
         `internal:service:${this.id}`,

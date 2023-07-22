@@ -1,6 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import Service from '../service/Service.js'
+import { isAuthorizedAction } from '../service/utils/authAction.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import type { Transporter, Response } from '../types.js'
 
@@ -49,13 +50,16 @@ test('should send action straight to service', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'someService' ? someService : undefined
   const expected = { status: 'ok' }
-  const sentAction = { ...action, meta: { ...action.meta, authorized: true } }
 
   const ret = await service(action, { ...handlerResources, getService })
 
   t.deepEqual(ret, expected)
   t.is(send.callCount, 1)
-  t.deepEqual(send.args[0][0], sentAction)
+  const sentAction = send.args[0][0]
+  t.is(sentAction.type, action.type)
+  t.deepEqual(sentAction.payload, action.payload)
+  t.deepEqual(sentAction.meta.ident, action.meta.ident)
+  t.true(isAuthorizedAction(sentAction))
 })
 
 test('should return error when service does not return a status', async (t) => {

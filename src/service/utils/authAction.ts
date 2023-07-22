@@ -3,6 +3,17 @@ import type { Action, Ident } from '../../types.js'
 import type { AccessDef } from '../../schema/types.js'
 import type { Schema } from '../../schema/index.js'
 
+const authorizedByIntegreat = Symbol('authorizedByIntegreat')
+
+export const isAuthorizedAction = (
+  action: Action & { meta?: { [authorizedByIntegreat]?: boolean } }
+) => action.meta && action.meta[authorizedByIntegreat] // eslint-disable-line security/detect-object-injection
+
+export const setAuthorizedMark = (action: Action, isAuthorized = true) => ({
+  ...action,
+  meta: { ...action.meta, [authorizedByIntegreat]: isAuthorized },
+})
+
 const isRoot = (ident?: Ident) => Boolean(ident?.root)
 
 function authorizeByAllow(allow?: string, hasIdent = false) {
@@ -129,7 +140,7 @@ export default (schemas: Record<string, Schema>, requireAuth: boolean) =>
 
     // Don't authenticate a request with an existing error
     if (typeof status === 'string' && status !== 'ok') {
-      return { ...action, meta: { ...action.meta, authorized: false } }
+      return setAuthorizedMark(action, false) // Don't authorize
     }
 
     // Authenticate if not root
@@ -147,21 +158,23 @@ export default (schemas: Record<string, Schema>, requireAuth: boolean) =>
         )
         // If we have got reason or error, the authentication failed
         if (reason || error) {
-          return {
-            ...action,
-            response: {
-              ...action.response,
-              status: 'noaccess',
-              error,
-              reason,
-              origin: 'auth:action',
+          return setAuthorizedMark(
+            {
+              ...action,
+              response: {
+                ...action.response,
+                status: 'noaccess',
+                error,
+                reason,
+                origin: 'auth:action',
+              },
             },
-            meta: { ...action.meta, authorized: false },
-          }
+            false // Don't authorize
+          )
         }
       }
     }
 
     // Authenticated
-    return { ...action, meta: { ...action.meta, authorized: true } }
+    return setAuthorizedMark(action) // Autorize
   }

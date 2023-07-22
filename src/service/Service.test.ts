@@ -3,10 +3,14 @@ import test from 'ava'
 import sinon from 'sinon'
 import pProgress from 'p-progress'
 import mapTransform from 'map-transform'
+import dispatch from '../tests/helpers/dispatch.js'
 import jsonResources from '../tests/helpers/resources/index.js'
 import transformers from '../transformers/builtIns/index.js'
 import createSchema from '../schema/index.js'
-import dispatch from '../tests/helpers/dispatch.js'
+import Auth from './Auth.js'
+import tokenAuth from '../authenticators/token.js'
+import optionsAuth from '../authenticators/options.js'
+import { isAuthorizedAction, setAuthorizedMark } from './utils/authAction.js'
 import { isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { ServiceDef, ServiceOptions } from './types.js'
@@ -18,9 +22,6 @@ import type {
   TypedData,
   Dispatch,
 } from '../types.js'
-import Auth from './Auth.js'
-import tokenAuth from '../authenticators/token.js'
-import optionsAuth from '../authenticators/options.js'
 
 import Service, { Resources } from './Service.js'
 
@@ -422,7 +423,7 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
 
 // Tests -- authorizeAction
 
-test('authorizeAction should set authorized flag', (t) => {
+test('authorizeAction should set authorizedByIntegreat (symbol) flag', (t) => {
   const service = new Service(
     {
       id: 'accounts',
@@ -442,17 +443,10 @@ test('authorizeAction should set authorized flag', (t) => {
     payload: { type: 'account' },
     meta: { ident: { root: true, id: 'root' } },
   }
-  const expectedAction = {
-    ...action,
-    meta: {
-      ...action.meta,
-      authorized: true,
-    },
-  }
 
   const ret = service.authorizeAction(action)
 
-  t.deepEqual(ret, expectedAction)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('authorizeAction should authorize action without type', (t) => {
@@ -475,17 +469,10 @@ test('authorizeAction should authorize action without type', (t) => {
     payload: { what: 'somethingelse' },
     meta: { ident: { id: 'johnf' } },
   }
-  const expectedAction = {
-    ...action,
-    meta: {
-      ...action.meta,
-      authorized: true,
-    },
-  }
 
   const ret = service.authorizeAction(action)
 
-  t.deepEqual(ret, expectedAction)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('authorizeAction should refuse based on schema', (t) => {
@@ -511,20 +498,43 @@ test('authorizeAction should refuse based on schema', (t) => {
       auth: { status: 'granted' },
     },
   }
-  const expectedAction = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused, role required: 'admin'",
-      reason: 'MISSING_ROLE',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused, role required: 'admin'",
+    reason: 'MISSING_ROLE',
+    origin: 'auth:action',
   }
 
   const ret = service.authorizeAction(action)
 
-  t.deepEqual(ret, expectedAction)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
+})
+
+test('authorizeAction should authorize when no auth is specified', (t) => {
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      // No auth
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      castFns,
+      ...jsonResources,
+    }
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = service.authorizeAction(action)
+
+  t.true(isAuthorizedAction(ret))
 })
 
 // Tests -- send
@@ -544,14 +554,11 @@ test('send should retrieve data from service', async (t) => {
     },
     mockResources(data)
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = { status: 'ok', data }
 
   const ret = await service.send(action)
@@ -580,15 +587,14 @@ test('send should use service middleware', async (t) => {
     },
     resources
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { type: 'entry' },
     meta: {
       ident: { id: 'johnf' },
       options: { uri: 'http://some.api/1.0' },
-      authorized: true,
     },
-  }
+  })
   const expected = {
     status: 'badresponse',
     origin: 'middleware:service:entries',
@@ -614,14 +620,11 @@ test('send should return error when no transporter', async (t) => {
     },
     mockResources(data)
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = {
     status: 'error',
     error: "Service 'entries' has no transporter",
@@ -648,14 +651,11 @@ test('send should try to authenticate and return with error when it fails', asyn
     },
     mockResources(data)
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = {
     status: 'noaccess',
     error: "Authentication attempt for 'refusing' was refused.",
@@ -682,14 +682,11 @@ test('send should authenticate with auth id on `outgoing` prop', async (t) => {
     },
     mockResources(data)
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = { status: 'ok', data }
 
   const ret = await service.send(action)
@@ -712,14 +709,11 @@ test('send should authenticate with auth def', async (t) => {
     },
     mockResources(data)
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = { status: 'ok', data }
 
   const ret = await service.send(action)
@@ -742,14 +736,11 @@ test('send should authenticate with auth def on `outgoing` prop', async (t) => {
     },
     mockResources(data)
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = { status: 'ok', data }
 
   const ret = await service.send(action)
@@ -773,14 +764,14 @@ test('send should fail when not authorized', async (t) => {
       auths,
     }
   )
-  const action = {
-    type: 'GET',
-    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: false,
+  const action = setAuthorizedMark(
+    {
+      type: 'GET',
+      payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+      meta: { ident: { id: 'johnf' } },
     },
-  }
+    false // Not authorized
+  )
   const expected = {
     status: 'autherror',
     error: 'Not authorized',
@@ -793,14 +784,11 @@ test('send should fail when not authorized', async (t) => {
 })
 
 test('send should connect before sending request', async (t) => {
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const connect = async (
     { value }: ServiceOptions,
     authentication: Record<string, unknown> | null | undefined,
@@ -873,15 +861,14 @@ test('send should store connection', async (t) => {
     },
     resources
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       auth: { status: 'granted', token: 't0k3n' },
-      authorized: true,
     },
-  }
+  })
 
   await service.send(action)
   await service.send(action)
@@ -918,15 +905,14 @@ test('send should return error when connection fails', async (t) => {
     },
     resources
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: {
       ident: { id: 'johnf' },
       auth: { status: 'granted', token: 't0k3n' },
-      authorized: true,
     },
-  }
+  })
   const expected = {
     status: 'error',
     error: "Could not connect to service 'entries'. [notfound] Not found",
@@ -963,14 +949,11 @@ test('send should pass on error response from service', async (t) => {
     },
     resources
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = {
     status: 'badrequest',
     error: 'Real bad request',
@@ -1008,14 +991,11 @@ test('send should pass on error response from service and prefix origin', async 
     },
     resources
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = {
     status: 'badrequest',
     error: 'Real bad request',
@@ -1051,14 +1031,11 @@ test('send should return with error when transport throws', async (t) => {
     },
     resources
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = {
     status: 'error',
     error: "Error retrieving from service 'entries': We did not expect this",
@@ -1095,7 +1072,7 @@ test('send should do nothing when action has a response', async (t) => {
     },
     resources
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     response: {
@@ -1103,11 +1080,8 @@ test('send should do nothing when action has a response', async (t) => {
       error: 'Bad request catched early',
       origin: 'mutate:request',
     },
-    meta: {
-      ident: { id: 'johnf' },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = action.response
 
   const ret = await service.send(action)
@@ -2118,7 +2092,7 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
       ...jsonResources,
     }
   )
-  const action = {
+  const action = setAuthorizedMark({
     type: 'SET',
     payload: {
       type: 'account',
@@ -2129,11 +2103,8 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
         ],
       },
     },
-    meta: {
-      ident: { id: 'johnf', roles: ['admin'] },
-      authorized: true,
-    },
-  }
+    meta: { ident: { id: 'johnf', roles: ['admin'] } },
+  })
   const endpoint = service.endpointFromAction(action, true /* isIncoming */)
   const expectedResponse = {
     status: undefined,

@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
+import { isAuthorizedAction } from '../../service/utils/authAction.js'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import type { Transporter } from '../../types.js'
@@ -68,7 +69,7 @@ test('should send action to queue', async (t) => {
   t.is(queuedAction.type, 'SET')
   t.deepEqual(queuedAction.payload, action.payload)
   t.deepEqual(queuedAction.meta.ident, { id: 'johnf' })
-  t.true(queuedAction.meta.authorized)
+  t.true(isAuthorizedAction(queuedAction))
   t.is(queuedAction.meta.id, '11004')
   t.is(queuedAction.meta.cid, '11004')
   t.is(typeof queuedAction.meta?.queuedAt, 'number')

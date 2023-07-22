@@ -1,7 +1,7 @@
 import test from 'ava'
 import createSchema from '../../schema/index.js'
 
-import authorizeAction from './authAction.js'
+import authorizeAction, { isAuthorizedAction } from './authAction.js'
 
 // Setup
 
@@ -17,16 +17,16 @@ const schemas = {
 test('should grant request when no type', (t) => {
   const action = {
     type: 'GET',
-    payload: {},
-  }
-  const expected = {
-    ...action,
-    meta: { authorized: true },
+    payload: { service: 'entries' },
+    meta: { ident: { id: 'johnf' } },
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
+  t.is(ret.type, action.type)
+  t.deepEqual(ret.payload, action.payload)
+  t.deepEqual(ret.meta?.ident, action.meta.ident)
 })
 
 test('should grant request when authorized and schema allows all', (t) => {
@@ -36,14 +36,10 @@ test('should grant request when authorized and schema allows all', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should refuse request when schema allows none', (t) => {
@@ -53,20 +49,17 @@ test('should refuse request when schema allows none', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'ALLOW_NONE',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'ALLOW_NONE',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should refuse request when schema has no access method', (t) => {
@@ -76,20 +69,17 @@ test('should refuse request when schema has no access method', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'ACCESS_METHOD_REQUIRED',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'ACCESS_METHOD_REQUIRED',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should grant request when schema has an identFromField method', (t) => {
@@ -101,14 +91,10 @@ test('should grant request when schema has an identFromField method', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should refuse request when schema has an identFromField method but no ident', (t) => {
@@ -120,20 +106,17 @@ test('should refuse request when schema has an identFromField method but no iden
     payload: { type: 'entry' },
     meta: { ident: undefined },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'NO_IDENT',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'NO_IDENT',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should grant request when schema has a roleFromField method', (t) => {
@@ -145,14 +128,10 @@ test('should grant request when schema has a roleFromField method', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should refuse request when schema has an roleFromField method but no ident', (t) => {
@@ -164,20 +143,17 @@ test('should refuse request when schema has an roleFromField method but no ident
     payload: { type: 'entry' },
     meta: { ident: undefined },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'NO_IDENT',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'NO_IDENT',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should not override existing error', (t) => {
@@ -192,19 +168,11 @@ test('should not override existing error', (t) => {
     },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'error',
-      error: 'Service messed up',
-      origin: 'service:entries',
-    },
-    meta: { ...action.meta, authorized: false },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, action.response)
 })
 
 test('should override ok status', (t) => {
@@ -215,20 +183,17 @@ test('should override ok status', (t) => {
     response: { status: 'ok' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'ALLOW_NONE',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'ALLOW_NONE',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should grant reqest for action without auth', (t) => {
@@ -238,14 +203,10 @@ test('should grant reqest for action without auth', (t) => {
     type: 'GET',
     payload: { type: 'entry' },
   }
-  const expected = {
-    ...action,
-    meta: { authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should refuse request for specified auth even when auth is not required', (t) => {
@@ -254,20 +215,17 @@ test('should refuse request for specified auth even when auth is not required', 
     type: 'GET',
     payload: { type: 'entry' },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'NO_IDENT',
-      origin: 'auth:action',
-    },
-    meta: { authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'NO_IDENT',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should grant request with ident when schema requires auth', (t) => {
@@ -276,14 +234,10 @@ test('should grant request with ident when schema requires auth', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should refuse request without ident when schema requires authentication', (t) => {
@@ -291,42 +245,37 @@ test('should refuse request without ident when schema requires authentication', 
     type: 'GET',
     payload: { type: 'entry' },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'NO_IDENT',
-      origin: 'auth:action',
-    },
-    meta: { authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'NO_IDENT',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should refuse request with empty ident id when schema requires authentication', (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
-    meta: { authorized: false, ident: { id: '' } },
+    meta: { ident: { id: '' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'NO_IDENT',
-      origin: 'auth:action',
-    },
-    meta: { authorized: false, ident: { id: '' } },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'NO_IDENT',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.meta?.ident, { id: '' })
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should refuse request when type does not match a schema', (t) => {
@@ -336,20 +285,17 @@ test('should refuse request when type does not match a schema', (t) => {
     payload: { type: 'unknown' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'unknown'",
-      reason: 'NO_SCHEMA',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'unknown'",
+    reason: 'NO_SCHEMA',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should refuse with allow prop on access object', (t) => {
@@ -361,20 +307,17 @@ test('should refuse with allow prop on access object', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'ALLOW_NONE',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'ALLOW_NONE',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should refuse for unknown allow prop', (t) => {
@@ -386,20 +329,17 @@ test('should refuse for unknown allow prop', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'ALLOW_NONE',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'ALLOW_NONE',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should grant by role', (t) => {
@@ -411,14 +351,9 @@ test('should grant by role', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1', roles: ['admin', 'user'] } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
-
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should refuse by role', (t) => {
@@ -430,20 +365,17 @@ test('should refuse by role', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1', roles: ['user'] } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused, role required: 'admin'",
-      reason: 'MISSING_ROLE',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused, role required: 'admin'",
+    reason: 'MISSING_ROLE',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should grant by role array', (t) => {
@@ -458,14 +390,10 @@ test('should grant by role array', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1', roles: ['admin', 'user'] } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should refuse by role array', (t) => {
@@ -480,20 +408,17 @@ test('should refuse by role array', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1', roles: ['user'] } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused, roles required: 'admin', 'superuser'",
-      reason: 'MISSING_ROLE',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused, roles required: 'admin', 'superuser'",
+    reason: 'MISSING_ROLE',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should grant by ident', (t) => {
@@ -505,14 +430,10 @@ test('should grant by ident', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should refuse by ident', (t) => {
@@ -524,20 +445,17 @@ test('should refuse by ident', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident2' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused, ident required: 'ident1'",
-      reason: 'WRONG_IDENT',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused, ident required: 'ident1'",
+    reason: 'WRONG_IDENT',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should refuse by ident array', (t) => {
@@ -552,20 +470,17 @@ test('should refuse by ident array', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident2' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused, idents required: 'ident1', 'ident3'",
-      reason: 'WRONG_IDENT',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused, idents required: 'ident1', 'ident3'",
+    reason: 'WRONG_IDENT',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should refuse for unknown access prop', (t) => {
@@ -580,20 +495,17 @@ test('should refuse for unknown access prop', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident2' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused for type 'entry'",
-      reason: 'ACCESS_METHOD_REQUIRED',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused for type 'entry'",
+    reason: 'ACCESS_METHOD_REQUIRED',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should grant by action access', (t) => {
@@ -608,14 +520,10 @@ test('should grant by action access', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should grant by action access with short form and using action prefix', (t) => {
@@ -630,14 +538,10 @@ test('should grant by action access with short form and using action prefix', (t
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should refuse by action access', (t) => {
@@ -652,20 +556,17 @@ test('should refuse by action access', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'ident1' } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused, role required: 'admin'",
-      reason: 'MISSING_ROLE',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused, role required: 'admin'",
+    reason: 'MISSING_ROLE',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should grant with several types', (t) => {
@@ -674,14 +575,10 @@ test('should grant with several types', (t) => {
     payload: { type: ['entry', 'user'] },
     meta: { ident: { id: 'ident1', roles: ['admin', 'user'] } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test('should refuse with several types', (t) => {
@@ -690,20 +587,17 @@ test('should refuse with several types', (t) => {
     payload: { type: ['entry', 'user'] },
     meta: { ident: { id: 'ident1', roles: ['user'] } },
   }
-  const expected = {
-    ...action,
-    response: {
-      status: 'noaccess',
-      error: "Authentication was refused, role required: 'admin'",
-      reason: 'MISSING_ROLE',
-      origin: 'auth:action',
-    },
-    meta: { ...action.meta, authorized: false },
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused, role required: 'admin'",
+    reason: 'MISSING_ROLE',
+    origin: 'auth:action',
   }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.false(isAuthorizedAction(ret))
+  t.deepEqual(ret.response, expectedResponse)
 })
 
 test('should grant request for root', (t) => {
@@ -712,14 +606,10 @@ test('should grant request for root', (t) => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'root', root: true } },
   }
-  const expected = {
-    ...action,
-    meta: { ...action.meta, authorized: true },
-  }
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.deepEqual(ret, expected)
+  t.true(isAuthorizedAction(ret))
 })
 
 test.todo('should grant unset allow when auth is not required')

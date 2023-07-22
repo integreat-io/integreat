@@ -1,11 +1,7 @@
+import { setAuthorizedMark } from '../service/utils/authAction.js'
 import { createErrorResponse } from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'
 import type { Action, ActionHandlerResources, Response } from '../types.js'
-
-const authorizeAction = ({ meta, ...action }: Action) => ({
-  ...action,
-  meta: { ...meta, authorized: true },
-})
 
 /**
  * Send action straight to service. The service is free to do whatever with the
@@ -22,7 +18,7 @@ export default async function service(
     return createUnknownServiceError(undefined, serviceId, 'SERVICE')
   }
 
-  const nextAction = authorizeAction(action) // TODO: Really authorize this?
+  const nextAction = setAuthorizedMark(action) // TODO: Should we validate more than this?
   const response = await service.send(nextAction)
 
   return response?.status

@@ -161,6 +161,8 @@ test('should override any present dispatchedAt meta', async (t) => {
 })
 
 test('should remove authorized meta if set', async (t) => {
+  // Note: This is really not needed anymore, as we're using a symbol for
+  // marking actions as authorized. But we keep it for now, just in case.
   const action = {
     type: 'GET',
     payload: {

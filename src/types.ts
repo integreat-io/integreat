@@ -139,7 +139,6 @@ export interface Meta extends Record<string, unknown> {
   queuedAt?: number
   auth?: Record<string, unknown> | null
   options?: TransporterOptions
-  authorized?: boolean
 }
 
 export interface Access {
