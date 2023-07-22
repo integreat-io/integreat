@@ -1,3 +1,5 @@
+import { isNotNullOrUndefined } from './is.js'
+
 export interface ObjectWithId {
   id: string
 }
@@ -14,8 +16,15 @@ export function indexById<T extends ObjectWithId>(
 
 export function lookupById<T>(
   id: string | T,
-  resource?: Record<string, T>
+  resources?: Record<string, T>
 ): T | undefined {
   // eslint-disable-next-line security/detect-object-injection
-  return typeof id === 'string' ? resource && resource[id] : id
+  return typeof id === 'string' ? resources && resources[id] : id
+}
+
+export function lookupByIds<T>(
+  ids: (string | T)[] = [],
+  resources?: Record<string, T>
+): T[] {
+  return ids.map((id) => lookupById(id, resources)).filter(isNotNullOrUndefined)
 }

@@ -1,7 +1,7 @@
 import test from 'ava'
 import createSchema from '../../schema/index.js'
 
-import { fromService, toService } from './data.js'
+import { fromService, toService } from './authData.js'
 
 // Setup
 

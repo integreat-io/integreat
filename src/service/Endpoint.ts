@@ -6,7 +6,7 @@ import type {
   DataMapperEntry,
   Pipeline,
 } from 'map-transform/types.js'
-import compareEndpoints from './utils/compare.js'
+import compareEndpoints from './utils/compareEndpoints.js'
 import type { Action, Adapter } from '../types.js'
 import type {
   MapOptions,
@@ -15,7 +15,7 @@ import type {
   MatchObject,
   PreparedOptions,
 } from './types.js'
-import isMatch from './utils/match.js'
+import isMatch from './utils/matchEnpoints.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
 import { ensureArray } from '../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../utils/is.js'

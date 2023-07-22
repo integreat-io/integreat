@@ -1,7 +1,7 @@
 import test from 'ava'
 import createSchema from '../../schema/index.js'
 
-import authorizeAction from './action.js'
+import authorizeAction from './authAction.js'
 
 // Setup
 

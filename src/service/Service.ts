@@ -1,7 +1,9 @@
 import debugLib from 'debug'
 import Endpoint from './Endpoint.js'
-import anonymousAuth from '../authenticators/anonymous.js'
+import { sendToTransporter } from './utils/send.js'
 import { dispatchIncoming, authenticateCallback } from './utils/incoming.js'
+import { resolveAuth, resolveIncomingAuth } from './utils/resolveAuth.js'
+import { castPayload, castResponse, getCastFn } from './utils/cast.js'
 import {
   setErrorOnAction,
   createErrorResponse,
@@ -11,12 +13,10 @@ import {
 import { prepareOptions, mergeOptions } from './utils/options.js'
 import Connection from './Connection.js'
 import Auth from './Auth.js'
-import { lookupById } from '../utils/indexUtils.js'
-import { isObject, isNotNullOrUndefined } from '../utils/is.js'
-import * as authorizeData from './authorize/data.js'
-import authorizeAction from './authorize/action.js'
+import { lookupById, lookupByIds } from '../utils/indexUtils.js'
+import * as authorizeData from './utils/authData.js'
+import authorizeAction from './utils/authAction.js'
 import { compose } from '../dispatch.js'
-import { setUpAuth } from '../create.js'
 import type { DataMapperEntry } from 'map-transform/types.js'
 import type { Schema } from '../schema/index.js'
 import type {
@@ -28,14 +28,7 @@ import type {
   Adapter,
   Authenticator,
 } from '../types.js'
-import type {
-  ServiceDef,
-  MapOptions,
-  AuthObject,
-  AuthProp,
-  AuthDef,
-  TransporterOptions,
-} from './types.js'
+import type { ServiceDef, MapOptions, TransporterOptions } from './types.js'
 
 const debug = debugLib('great')
 
@@ -51,121 +44,6 @@ export interface Resources {
   emit?: (eventType: string, ...args: unknown[]) => void
 }
 
-const sendToTransporter = (
-  transporter: Transporter,
-  connection: Connection,
-  serviceId: string
-) =>
-  async function send(action: Action): Promise<Response> {
-    try {
-      if (await connection.connect(action.meta?.auth)) {
-        return setOrigin(
-          await transporter.send(action, connection.object),
-          `service:${serviceId}`,
-          true
-        )
-      } else {
-        return createErrorResponse(
-          `Could not connect to service '${serviceId}'. [${
-            connection.status
-          }] ${connection.error || ''}`.trim(),
-          `service:${serviceId}`
-        )
-      }
-    } catch (error) {
-      return createErrorResponse(
-        `Error retrieving from service '${serviceId}': ${
-          (error as Error).message
-        }`,
-        `service:${serviceId}`
-      )
-    }
-  }
-
-const isAuthDef = (def: unknown): def is AuthDef =>
-  isObject(def) &&
-  typeof def.id === 'string' &&
-  typeof def.authenticator === 'string'
-
-function resolveAuthorization(
-  authenticators: Record<string, Authenticator>,
-  auths?: Record<string, Auth>,
-  auth?: AuthObject | AuthProp
-): Auth | undefined {
-  if (isObject(auth) && !!auth.outgoing) {
-    auth = auth.outgoing
-  }
-
-  if (typeof auth === 'string') {
-    return lookupById(auth, auths)
-  } else if (isAuthDef(auth)) {
-    return setUpAuth(authenticators)(auth)
-  } else if (auth) {
-    return new Auth('anonymous', anonymousAuth, {})
-  } else {
-    return undefined
-  }
-}
-
-function resolveIncomingAuth(
-  authenticators: Record<string, Authenticator>,
-  auths?: Record<string, Auth>,
-  auth?: AuthObject | AuthProp
-) {
-  if (isObject(auth) && auth.incoming) {
-    return resolveAuthorization(authenticators, auths, auth.incoming)
-  } else {
-    return undefined
-  }
-}
-
-const getCastFn = (
-  castFns: Record<string, DataMapperEntry>,
-  type?: string | string[]
-) =>
-  typeof type === 'string'
-    ? castFns[type] // eslint-disable-line security/detect-object-injection
-    : undefined
-
-const castPayload = (
-  action: Action,
-  endpoint: Endpoint,
-  castFn?: DataMapperEntry
-): Action => ({
-  ...action,
-  payload:
-    !endpoint.allowRawRequest && castFn
-      ? {
-          ...action.payload,
-          data: castFn(action.payload.data),
-        }
-      : action.payload,
-  meta: { ...action.meta, options: endpoint.options.transporter || {} },
-})
-
-const castResponse = (
-  action: Action,
-  endpoint: Endpoint,
-  castFn?: DataMapperEntry
-): Action =>
-  !endpoint.allowRawResponse && castFn
-    ? {
-        ...action,
-        response: {
-          ...action.response,
-          data: castFn(action.response?.data),
-        },
-      }
-    : action
-
-const lookupAdapters = (
-  defs: (string | Adapter)[] = [],
-  adapters: Record<string, Adapter>
-) =>
-  defs
-    .map((adapterId) => lookupById(adapterId, adapters))
-    .filter(isNotNullOrUndefined)
-
 /**
  * Create a service with the given id and transporter.
  */
@@ -179,7 +57,7 @@ export default class Service {
   #transporter?: Transporter
   #castFns: Record<string, DataMapperEntry>
 
-  #authorization?: Auth
+  #auth?: Auth
   #incomingAuth?: Auth
   #connection: Connection | null
 
@@ -221,13 +99,13 @@ export default class Service {
     this.#castFns = castFns
 
     this.#transporter = lookupById(transporterId, transporters)
-    this.#authorization = resolveAuthorization(authenticators, auths, auth)
+    this.#auth = resolveAuth(authenticators, auths, auth)
     this.#incomingAuth = resolveIncomingAuth(authenticators, auths, auth)
 
     this.#authorizeDataFromService = authorizeData.fromService(schemas)
     this.#authorizeDataToService = authorizeData.toService(schemas)
 
-    const serviceAdapters = lookupAdapters(adapterDefs, adapters)
+    const serviceAdapters = lookupByIds(adapterDefs, adapters)
     const serviceOptions = prepareOptions(options)
     this.#options = serviceOptions.transporter
 
@@ -241,7 +119,7 @@ export default class Service {
             : serviceOptions,
           mapOptions,
           mutation,
-          [...serviceAdapters, ...lookupAdapters(endpoint.adapters, adapters)]
+          [...serviceAdapters, ...lookupByIds(endpoint.adapters, adapters)]
         )
     )
 
@@ -265,7 +143,7 @@ export default class Service {
    * an appropriate status and error.
    */
   authorizeAction(action: Action): Action {
-    return authorizeAction(this.#schemas, !!this.#authorization)(action)
+    return authorizeAction(this.#schemas, !!this.#auth)(action)
   }
 
   /**
@@ -422,9 +300,9 @@ export default class Service {
     }
 
     // When an authenticator is set: Authenticate and apply result to action
-    if (this.#authorization) {
-      await this.#authorization.authenticate(action)
-      action = this.#authorization.applyToAction(action, this.#transporter)
+    if (this.#auth) {
+      await this.#auth.authenticate(action)
+      action = this.#auth.applyToAction(action, this.#transporter)
       if (action.response?.status) {
         return setOrigin(action.response, `service:${this.id}`, true)
       }
@@ -482,13 +360,10 @@ export default class Service {
       )
     }
 
-    if (
-      this.#authorization &&
-      !(await this.#authorization.authenticate(null))
-    ) {
+    if (this.#auth && !(await this.#auth.authenticate(null))) {
       debug('Could not authenticate')
       return setOrigin(
-        this.#authorization.getResponseFromAuth(),
+        this.#auth.getResponseFromAuth(),
         `service:${this.id}`,
         true
       )
@@ -496,7 +371,7 @@ export default class Service {
 
     if (
       !(await this.#connection.connect(
-        this.#authorization?.getAuthObject(this.#transporter)
+        this.#auth?.getAuthObject(this.#transporter)
       ))
     ) {
       debug(`Could not listen to '${this.id}' service. Failed to connect`)

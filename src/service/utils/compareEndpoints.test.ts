@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import compareEndpoints from './compare.js'
+import compareEndpoints from './compareEndpoints.js'
 
 // Helpers
 

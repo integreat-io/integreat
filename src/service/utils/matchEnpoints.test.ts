@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import isMatch from './match.js'
+import isMatch from './matchEnpoints.js'
 
 // Setup
 
