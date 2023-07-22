@@ -915,7 +915,7 @@ Set the `access` property on a schema to enforce permission checking. This
 applies to any service that provides data in this schema.
 
 The simplest access rule is `auth`, which means that anyone can do anything with
-the data of this schema, as long as they are authenticated. Being authenticated
+the data of this schema, as long as they are authenticated. Being authenticated,
 in this context, means that the dispatched action has an `ident` in the `meta`
 object. See [the section on idents](#idents) for more on this.
 

@@ -2544,35 +2544,7 @@ test('listen should authenticate with anonymous when auth is true', async (t) =>
   t.is(dispatchStub.callCount, 1)
 })
 
-test('listen should refuse authentication when no incoming auth', async (t) => {
-  const dispatchStub = sinon.stub().callsFake(dispatch)
-  const action = {
-    type: 'SET',
-    payload: { data: [], sourceService: 'other' },
-  }
-  const service = new Service(
-    {
-      id: 'entries',
-      auth: { outgoing: true }, // Only outgoing auth is specified
-      transporter: 'http',
-      options: { incoming: { port: 8080 } },
-      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    },
-    mockResources({}, action)
-  )
-  const expectedResponse = {
-    status: 'noaccess',
-    error: 'Authentication was refused. No incoming auth',
-    origin: 'auth:service:entries',
-  }
-
-  const ret = await service.listen(dispatchStub)
-
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 0)
-})
-
-test('listen should not accept action with ident not given by us', async (t) => {
+test('listen should remove ident not given by us', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -2590,8 +2562,36 @@ test('listen should not accept action with ident not given by us', async (t) => 
     mockResources({}, action, false)
   )
   const expectedResponse = {
-    status: 'noaccess',
-    error: 'Authentication was refused. Unauthorized ident provided',
+    status: 'ok',
+    access: { ident: undefined },
+  }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 1)
+})
+
+test('listen should return noaction from authenticate() when no incoming auth', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'other' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: true }, // Only outgoing auth is specified
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action)
+  )
+  const expectedResponse = {
+    status: 'noaction',
+    error:
+      "Could not authenticate. Service 'entries' has no incoming authenticator",
     origin: 'auth:service:entries',
   }
 

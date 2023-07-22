@@ -14,30 +14,58 @@ test.after.always(() => {
   nock.restore()
 })
 
+const createdAt = '2017-11-18T18:43:01Z'
+const updatedAt = '2017-11-24T07:11:43Z'
+
 // Tests
 
 test('should respond with noaccess when no ident', async (t) => {
-  const createdAt = '2017-11-18T18:43:01Z'
-  const updatedAt = '2017-11-24T07:11:43Z'
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: { ...johnfData, createdAt, updatedAt } })
   const action = {
     type: 'GET',
     payload: { id: 'johnf', type: 'user' },
+    meta: {}, // No ident
   }
 
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'noaccess', ret.error)
-  t.is(typeof ret.error, 'string')
+  t.is(ret.error, "Authentication was refused for type 'user'")
+  t.is(ret.reason, 'NO_IDENT')
+  t.is(ret.origin, 'auth:action')
+  t.falsy(ret.data)
+})
+
+test('should respond with noaccess for schema with no access method', async (t) => {
+  const defsWithoutAccessMethod = {
+    ...defs,
+    schemas: defs.schemas.map((schema) =>
+      schema.id === 'user' ? { ...schema, access: undefined } : schema
+    ),
+  }
+  nock('http://some.api')
+    .get('/users/johnf')
+    .reply(200, { data: { ...johnfData, createdAt, updatedAt } })
+  const action = {
+    type: 'GET',
+    payload: { id: 'johnf', type: 'user' },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const great = Integreat.create(defsWithoutAccessMethod, resources)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'noaccess', ret.error)
+  t.is(ret.error, "Authentication was refused for type 'user'")
+  t.is(ret.reason, 'ACCESS_METHOD_REQUIRED')
+  t.is(ret.origin, 'auth:action')
   t.falsy(ret.data)
 })
 
 test('should respond with only authorized data', async (t) => {
-  const createdAt = '2017-11-18T18:43:01Z'
-  const updatedAt = '2017-11-24T07:11:43Z'
   nock('http://some.api')
     .get('/users')
     .reply(200, {

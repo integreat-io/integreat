@@ -63,17 +63,13 @@ async function authorizeIncoming(action: Action, serviceId: string) {
       `auth:service:${serviceId}`,
       'noaccess'
     )
-  } else if (!isKnownIdent(ident)) {
-    return setErrorOnAction(
-      action,
-      `Authentication was refused. Unauthorized ident provided`,
-      `auth:service:${serviceId}`,
-      'noaccess'
-    )
   } else {
     return {
       ...action,
-      meta: { ...action.meta, ident: removeKnownIdentMarker(ident) },
+      meta: {
+        ...action.meta,
+        ident: isKnownIdent(ident) ? removeKnownIdentMarker(ident) : undefined, // Remove the marker if it's there, otherwise remove the ident
+      },
     }
   }
 }
@@ -105,9 +101,9 @@ export const authenticateCallback = (
   ) {
     if (authorization === undefined) {
       return createErrorResponse(
-        'Authentication was refused. No incoming auth',
+        `Could not authenticate. Service '${serviceId}' has no incoming authenticator`,
         `auth:service:${serviceId}`,
-        'noaccess'
+        'noaction'
       )
     } else {
       const response = markIdentAsKnown(
