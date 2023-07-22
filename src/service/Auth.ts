@@ -136,7 +136,10 @@ export default class Auth {
   getResponseFromAuth(): Response {
     const auth = this.#authentications.get('') // Only applies to `listen()` which doesn't support multi-user auth for now
     if (!auth) {
-      return { status: 'noaccess' }
+      return {
+        status: 'noaccess',
+        error: `Trying to use auth '${this.id}' before authentication has been run`,
+      }
     }
     if (auth.status === 'granted') {
       return { status: 'ok' }
@@ -144,8 +147,8 @@ export default class Auth {
     const status = auth.status === 'refused' ? 'noaccess' : 'autherror'
     const error =
       auth.status === 'refused'
-        ? `Authentication attempt for '${this.id}' was refused.`
-        : `Could not authenticate '${this.id}'. [${auth.status}]`
+        ? `Authentication attempt for auth '${this.id}' was refused.`
+        : `Could not authenticate auth '${this.id}'. [${auth.status}]`
     return { status, error: [error, auth.error].filter(Boolean).join(' ') }
   }
 

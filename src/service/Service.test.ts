@@ -658,7 +658,7 @@ test('send should try to authenticate and return with error when it fails', asyn
   })
   const expected = {
     status: 'noaccess',
-    error: "Authentication attempt for 'refusing' was refused.",
+    error: "Authentication attempt for auth 'refusing' was refused.",
     origin: 'service:entries',
   }
 
@@ -2555,7 +2555,7 @@ test('listen should return error when authentication fails', async (t) => {
   )
   const expectedResponse = {
     status: 'noaccess',
-    error: "Authentication attempt for 'refusing' was refused.",
+    error: "Authentication attempt for auth 'refusing' was refused.",
     origin: 'service:entries',
   }
 

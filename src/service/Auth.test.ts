@@ -336,7 +336,10 @@ test('should return status ok when granted', async (t) => {
 
 test('should return status noaccess when not authenticated', async (t) => {
   const auth = new Auth(id, authenticator, options)
-  const expected = { status: 'noaccess' }
+  const expected = {
+    status: 'noaccess',
+    error: "Trying to use auth 'auth1' before authentication has been run",
+  }
 
   const ret = auth.getResponseFromAuth()
 
@@ -354,7 +357,7 @@ test('should return status noaccess when authentication was refused', async (t) 
   const auth = new Auth(id, refusingAuthenticator, options)
   const expected = {
     status: 'noaccess',
-    error: "Authentication attempt for 'auth1' was refused. Not for you",
+    error: "Authentication attempt for auth 'auth1' was refused. Not for you",
   }
 
   await auth.authenticate(action)
@@ -374,7 +377,7 @@ test('should return status autherror on auth error', async (t) => {
   const auth = new Auth(id, failingAuthenticator, options)
   const expected = {
     status: 'autherror',
-    error: "Could not authenticate 'auth1'. [timeout] This was too slow",
+    error: "Could not authenticate auth 'auth1'. [timeout] This was too slow",
   }
 
   await auth.authenticate(action)
@@ -416,7 +419,10 @@ test('should set status noaccess and auth object to null when not authenticated'
   const auth = new Auth(id, authenticator, options)
   const expected = {
     ...action,
-    response: { status: 'noaccess' },
+    response: {
+      status: 'noaccess',
+      error: "Trying to use auth 'auth1' before authentication has been run",
+    },
     meta: { ...action.meta, auth: null },
   }
 
@@ -438,7 +444,7 @@ test('should set status noaccess and auth object to null when authentication was
     ...action,
     response: {
       status: 'noaccess',
-      error: "Authentication attempt for 'auth1' was refused. Not for you",
+      error: "Authentication attempt for auth 'auth1' was refused. Not for you",
     },
     meta: { ...action.meta, auth: null },
   }
@@ -462,7 +468,7 @@ test('should set status autherror and auth object to null on auth error', async 
     ...action,
     response: {
       status: 'autherror',
-      error: "Could not authenticate 'auth1'. [timeout] This was too slow",
+      error: "Could not authenticate auth 'auth1'. [timeout] This was too slow",
     },
     meta: { ...action.meta, auth: null },
   }
