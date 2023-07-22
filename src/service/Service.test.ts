@@ -2241,6 +2241,54 @@ test('listen should not call transporter.listen when transport.shouldListen retu
   t.is(listenStub.callCount, 0)
 })
 
+test('listen should use service middleware', async (t) => {
+  const failMiddleware = () => async (_action: Action) => ({
+    status: 'badresponse',
+  })
+  const action = {
+    type: 'SET',
+    payload: { data: [] },
+  }
+  let listenDispatch: Dispatch | undefined
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters!.http,
+        listen: async (dispatch: Dispatch) => {
+          listenDispatch = dispatch
+          return { status: 'ok' }
+        },
+      },
+    },
+    mapOptions,
+    schemas,
+    castFns,
+    auths,
+    middleware: [failMiddleware],
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: 'validating' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
+  const expected = {
+    status: 'badresponse',
+    origin: 'middleware:service:entries',
+  }
+
+  await service.listen(dispatch)
+  const ret = await listenDispatch!(action)
+
+  t.deepEqual(ret, expected)
+})
+
 test('listen should set sourceService', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
@@ -2268,6 +2316,39 @@ test('listen should set sourceService', async (t) => {
 
   t.is(dispatchStub.callCount, 1)
   t.deepEqual(dispatchStub.args[0][0], expectedAction)
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should set sourceService before middleware', async (t) => {
+  const sourceServiceMiddleware = () => async (action: Action) => ({
+    status: 'ok',
+    params: { sourceService: action.payload.sourceService }, // To verify that we got `sourceService`
+  })
+  const action = {
+    type: 'SET',
+    payload: { data: [] },
+  }
+  const resources = {
+    ...mockResources({}, action),
+    middleware: [sourceServiceMiddleware],
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: 'validating' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources
+  )
+  const expectedResponse = {
+    status: 'ok',
+    params: { sourceService: 'entries' },
+  }
+
+  const ret = await service.listen(dispatch)
+
   t.deepEqual(ret, expectedResponse)
 })
 
@@ -2635,54 +2716,6 @@ test('listen should return error when no transporter', async (t) => {
   const ret = await service.listen(dispatch)
 
   t.deepEqual(ret, expectedResponse)
-})
-
-test('listen should use service middleware', async (t) => {
-  const failMiddleware = () => async (_action: Action) => ({
-    status: 'badresponse',
-  })
-  const action = {
-    type: 'SET',
-    payload: { data: [] },
-  }
-  let listenDispatch: Dispatch | undefined
-  const resources = {
-    ...jsonResources,
-    transporters: {
-      ...jsonResources.transporters,
-      http: {
-        ...jsonResources.transporters!.http,
-        listen: async (dispatch: Dispatch) => {
-          listenDispatch = dispatch
-          return { status: 'ok' }
-        },
-      },
-    },
-    mapOptions,
-    schemas,
-    castFns,
-    auths,
-    middleware: [failMiddleware],
-  }
-  const service = new Service(
-    {
-      id: 'entries',
-      auth: { outgoing: 'granting', incoming: 'validating' },
-      transporter: 'http',
-      options: { incoming: { port: 8080 } },
-      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
-    },
-    resources
-  )
-  const expected = {
-    status: 'badresponse',
-    origin: 'middleware:service:entries',
-  }
-
-  await service.listen(dispatch)
-  const ret = await listenDispatch!(action)
-
-  t.deepEqual(ret, expected)
 })
 
 test('listen should return noaction when incoming action is null', async (t) => {
