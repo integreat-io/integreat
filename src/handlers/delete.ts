@@ -1,5 +1,6 @@
 import debugLib from 'debug'
 import mutateAndSend from '../utils/mutateAndSend.js'
+import { isTypedData } from '../utils/is.js'
 import { setDataOnActionPayload, createErrorResponse } from '../utils/action.js'
 import createUnknownServiceError from '../utils/createUnknownServiceError.js'
 import type {
@@ -13,10 +14,12 @@ const debug = debugLib('great')
 
 const prepareData = ({ type, id, data }: Payload) =>
   type && id
-    ? // Delete one action -- return as data
-      [{ id, $type: type }]
-    : // Filter away null values
-      ([] as unknown[]).concat(data).filter(Boolean)
+    ? { id, $type: type } // Delete one action -- return as data
+    : Array.isArray(data)
+    ? data.filter(isTypedData) // Filter away anything that is not cast data items
+    : isTypedData(data)
+    ? data
+    : undefined
 
 /**
  * Delete several items from a service, based on the given payload.
@@ -38,7 +41,7 @@ export default async function deleteFn(
   }
 
   const data = prepareData(action.payload)
-  if (data.length === 0) {
+  if ((Array.isArray(data) && data.length === 0) || !data) {
     return createErrorResponse(
       `No items to delete from service '${service.id}'`,
       'handler:DELETE',
