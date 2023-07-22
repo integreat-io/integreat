@@ -62,6 +62,21 @@ test('should get one entry from service', async (t) => {
   t.deepEqual(ret.data, expected)
 })
 
+test('should get no entry from service', async (t) => {
+  nock('http://some.api').get('/entries/ent0').reply(404)
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent0', type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const great = Integreat.create(defs, resources)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'notfound', ret.error)
+  t.is(ret.data, undefined)
+})
+
 test('should get one user from service', async (t) => {
   nock('http://some.api')
     .get('/users/johnf')
