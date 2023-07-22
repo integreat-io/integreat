@@ -18,6 +18,7 @@ const schemas = {
     shape: {
       title: { $type: 'string', default: 'A title' },
     },
+    access: 'auth',
   }),
   account: createSchema({
     id: 'account',
@@ -91,6 +92,7 @@ test('should delete items from service', async (t) => {
       ],
       targetService: 'entries',
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = { status: 'ok', data: null }
 
@@ -129,6 +131,7 @@ test('should delete one item from service', async (t) => {
   const action = {
     type: 'DELETE',
     payload: { id: 'ent1', type: 'entry', targetService: 'entries' },
+    meta: { ident: { id: 'johnf' } },
   }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
@@ -173,6 +176,7 @@ test('should infer service id from type', async (t) => {
         { id: 'ent2', $type: 'entry' },
       ],
     },
+    meta: { ident: { id: 'johnf' } },
   }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
@@ -210,6 +214,7 @@ test('should return error from response', async (t) => {
       type: 'entry',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     status: 'notfound',
@@ -240,6 +245,7 @@ test('should return noaction when nothing to delete', async (t) => {
   const action = {
     type: 'DELETE',
     payload: { data: [], targetService: 'entries' },
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     status: 'noaction',
@@ -268,6 +274,7 @@ test('should skip null values in data array', async (t) => {
   const action = {
     type: 'DELETE',
     payload: { data: [null], targetService: 'entries' },
+    meta: { ident: { id: 'johnf' } },
   }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })
@@ -319,6 +326,109 @@ test('should only delete items the ident is authorized to', async (t) => {
   t.true(scope.isDone())
 })
 
+test('should return failResponse when validation fails', async (t) => {
+  const scope = nock('http://api6.test')
+    .post('/database/bulk_delete', {
+      docs: [
+        { id: 'ent1', header: 'A title' }, // Default values are included and must be handled in mutation
+        { id: 'ent2', header: 'A title' },
+      ],
+    })
+    .reply(200, [
+      { ok: true, id: 'ent1', rev: '2-000001' },
+      { ok: true, id: 'ent2', rev: '2-000001' },
+    ])
+  const src = setupService({
+    id: 'entries',
+    ...jsonServiceDef,
+    endpoints: [
+      {
+        match: { action: 'DELETE' },
+        validate: [
+          {
+            condition: 'payload.source',
+            failResponse: { status: 'badrequest', error: 'We need a source!' },
+          },
+        ],
+        mutation: [
+          { 'payload.data': ['payload.data.docs[]', { $apply: 'entry' }] },
+        ],
+        options: {
+          uri: 'http://api6.test/database/bulk_delete',
+          method: 'POST',
+        },
+      },
+    ],
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+  const action = {
+    type: 'DELETE',
+    payload: {
+      data: [
+        { id: 'ent1', $type: 'entry' },
+        { id: 'ent2', $type: 'entry' },
+      ],
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'badrequest',
+    error: 'We need a source!',
+    data: undefined,
+    origin: 'mutate:response',
+  }
+
+  const ret = await deleteFn(action, { ...handlerResources, getService })
+
+  t.deepEqual(ret, expected)
+  t.false(scope.isDone())
+})
+
+test('should authorize before running validation', async (t) => {
+  const src = setupService({
+    id: 'entries',
+    ...jsonServiceDef,
+    endpoints: [
+      {
+        match: { action: 'DELETE' },
+        validate: [
+          {
+            condition: 'payload.source',
+            failResponse: { status: 'badrequest', error: 'We need a source!' },
+          },
+        ],
+        mutation: [
+          { 'payload.data': ['payload.data.docs[]', { $apply: 'entry' }] },
+        ],
+        options: {
+          uri: 'http://api6.test/database/bulk_delete',
+          method: 'POST',
+        },
+      },
+    ],
+  })
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+  const action = {
+    type: 'DELETE',
+    payload: {
+      type: 'entry',
+      data: [
+        { id: 'ent1', $type: 'entry' },
+        { id: 'ent2', $type: 'entry' },
+      ],
+      targetService: 'entries',
+    },
+    meta: {}, // No ident
+  }
+
+  const ret = await deleteFn(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'noaccess', ret.error) // We'll get this status when authorization is run before validation
+})
+
 test('should return error when no service exists for a type', async (t) => {
   const getService = () => undefined
   const action = {
@@ -341,6 +451,7 @@ test('should return error when specified service does not exist', async (t) => {
   const action = {
     type: 'DELETE',
     payload: { id: 'ent1', type: 'entry', targetService: 'entries' },
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     status: 'error',
@@ -370,6 +481,7 @@ test('should return badrequest when no endpoint matches', async (t) => {
       ],
       targetService: 'entries',
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     status: 'badrequest',

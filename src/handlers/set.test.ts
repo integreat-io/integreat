@@ -6,6 +6,7 @@ import schema from '../schema/index.js'
 import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import type { TypedData } from '../types.js'
+import type { ValidateObject } from '../service/types.js'
 
 import set from './set.js'
 
@@ -18,6 +19,7 @@ const schemas = {
       title: { $type: 'string', default: 'A title' },
       one: 'integer',
     },
+    access: { allow: 'auth' },
   }),
   account: schema({
     id: 'account',
@@ -57,13 +59,19 @@ const mapOptions = {
 const typeMappingFromServiceId = (serviceId: string) =>
   serviceId === 'accounts' ? 'account' : 'entry'
 
-const setupService = (uri: string, id = 'entries', method = 'POST') => {
+const setupService = (
+  uri: string,
+  id = 'entries',
+  method = 'POST',
+  validate?: ValidateObject[]
+) => {
   return new Service(
     {
       id,
       ...jsonServiceDef,
       endpoints: [
         {
+          validate,
           mutation: [
             {
               $direction: 'rev',
@@ -203,6 +211,7 @@ test('should infer service id from type', async (t) => {
         { id: 'ent2', $type: 'entry' },
       ],
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const src = setupService('http://api2.test/database/_bulk_docs')
   const getService = (type?: string | string[], _service?: string) =>
@@ -225,6 +234,7 @@ test('should set to specified endpoint', async (t) => {
       targetService: 'entries',
       endpoint: 'other',
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = () => src
@@ -246,6 +256,7 @@ test('should set to uri with payload params', async (t) => {
       typefolder: 'entries',
       targetService: 'entries',
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const src = setupService('http://api3.test/{payload.typefolder}/_bulk_docs')
   const getService = () => src
@@ -256,6 +267,74 @@ test('should set to uri with payload params', async (t) => {
   t.true(scope.isDone())
 })
 
+test('should return failResponse when validation fails', async (t) => {
+  const scope = nock('http://api5.test')
+    .post('/database/_bulk_docs', { docs: [] })
+    .reply(201, [{ ok: true }, { ok: true }])
+  const action = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      // No data
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const src = setupService(
+    'http://api5.test/database/_bulk_docs',
+    undefined,
+    undefined,
+    [
+      {
+        condition: 'payload.data',
+        failResponse: { status: 'error', error: 'We need data!' },
+      },
+    ]
+  )
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+  const expected = {
+    status: 'error',
+    error: 'We need data!',
+    data: undefined,
+    origin: 'mutate:response',
+  }
+
+  const ret = await set(action, { ...handlerResources, getService })
+
+  t.deepEqual(ret, expected)
+  t.false(scope.isDone())
+})
+
+test('should authorize before running validation', async (t) => {
+  const action = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      // No data
+      targetService: 'entries',
+    },
+    meta: {}, // No identity
+  }
+  const src = setupService(
+    'http://api5.test/database/_bulk_docs',
+    undefined,
+    undefined,
+    [
+      {
+        condition: 'payload.data',
+        failResponse: { status: 'error', error: 'We need data!' },
+      },
+    ]
+  )
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+
+  const ret = await set(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'noaccess', ret.error) // We'll get this status when authorization is run before validation
+})
+
 test('should return error when service fails', async (t) => {
   nock('http://api7.test').post('/database/_bulk_docs').reply(404)
   const action = {
@@ -264,6 +343,7 @@ test('should return error when service fails', async (t) => {
       data: [{ id: 'ent1', $type: 'entry' }],
       targetService: 'entries',
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const src = setupService('http://api7.test/database/_bulk_docs')
   const getService = () => src
@@ -288,6 +368,7 @@ test('should return error when no service exists for a type', async (t) => {
       type: 'entry',
       data: { id: 'ent1', $type: 'entry' },
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     status: 'error',
@@ -307,6 +388,7 @@ test('should get type from data $type', async (t) => {
     payload: {
       data: { id: 'ent1', $type: 'entry' },
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     status: 'error',
@@ -327,6 +409,7 @@ test('should return error when specified service does not exist', async (t) => {
       data: { id: 'ent1', $type: 'entry' },
       targetService: 'entries',
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
     status: 'error',
@@ -462,6 +545,7 @@ test('should allow null as request data', async (t) => {
       data: null,
       targetService: 'entries',
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = () => src
@@ -484,6 +568,7 @@ test('should return badrequest when no endpoint matches', async (t) => {
       endpoint: 'unknown',
       targetService: 'entries',
     },
+    meta: { ident: { id: 'johnf' } },
   }
   const src = setupService('http://api1.test/database/_bulk_docs')
   const getService = (_type?: string | string[], service?: string) =>

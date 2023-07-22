@@ -229,6 +229,177 @@ test('should return false when no match to action', (t) => {
   t.false(endpoint.isMatch(action))
 })
 
+// Tests -- validateAction
+
+test('should return null when no validation', async (t) => {
+  const endpointDef = {
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+
+  const ret = await endpoint.validateAction(action)
+
+  t.is(ret, null)
+})
+
+test('should return null when validate is empty array', async (t) => {
+  const endpointDef = {
+    validate: [],
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+
+  const ret = await endpoint.validateAction(action)
+
+  t.is(ret, null)
+})
+
+test('should return null when validation passes', async (t) => {
+  const endpointDef = {
+    validate: [{ condition: 'payload.id' }],
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      id: 'ent1',
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+
+  const ret = await endpoint.validateAction(action)
+
+  t.is(ret, null)
+})
+
+test('should return null when validation with several conditions passes', async (t) => {
+  const endpointDef = {
+    validate: [{ condition: 'payload.id' }, { condition: 'payload.type' }],
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      id: 'ent1',
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+
+  const ret = await endpoint.validateAction(action)
+
+  t.is(ret, null)
+})
+
+test('should return badrequest response when validation fails', async (t) => {
+  const endpointDef = {
+    validate: [{ condition: 'payload.id' }],
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      // No id
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const expectedResponse = {
+    status: 'badrequest',
+    error: 'Did not satisfy endpoint validation',
+  }
+
+  const ret = await endpoint.validateAction(action)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('should return badrequest response when one of several conditions fails', async (t) => {
+  const endpointDef = {
+    validate: [{ condition: 'payload.type' }, { condition: 'payload.id' }],
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      // No id
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const expectedResponse = {
+    status: 'badrequest',
+    error: 'Did not satisfy endpoint validation',
+  }
+
+  const ret = await endpoint.validateAction(action)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('should return failResponse when provided', async (t) => {
+  const endpointDef = {
+    validate: [
+      {
+        condition: 'payload.id',
+        failResponse: { status: 'error', error: 'This is no good' },
+      },
+    ],
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      // No id
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const expectedResponse = { status: 'error', error: 'This is no good' }
+
+  const ret = await endpoint.validateAction(action)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('should treat failResponse as error message when provided as a string', async (t) => {
+  const endpointDef = {
+    validate: [
+      {
+        condition: 'payload.id',
+        failResponse: 'This is no good',
+      },
+    ],
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      // No id
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const expectedResponse = { status: 'badrequest', error: 'This is no good' }
+
+  const ret = await endpoint.validateAction(action)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
 // Tests -- mutate response
 
 test('should mutate response from service with endpoint mutation', async (t) => {

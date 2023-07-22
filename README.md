@@ -242,9 +242,9 @@ merged with the `options` object on the endpoint. See
 
 ### Endpoints
 
-A service will have at least one endpoint, but often there will be several. An
-endpoint is a definition of one of the ways Integreat may interact with a
-service. You decide how you want to set up the endpoints and what is the right
+A service will have at least one endpoint, but often there will be several.
+Endpoints are the definitions of the different ways Integreat may interact with
+a service. You decide how you want to set up the endpoints and what is the right
 "endpoint design" for a service, but there might be one endpoint for each
 operation that can be done with a type of data.
 
@@ -271,8 +271,9 @@ different database operations (through the transporter).
 
 When you dispatch an action, Integreat will figure out what service and what
 endpoint to send the action to. The target service is often specified in the
-action payload with the `service` property, but if not, the default service of
-the schema specified with the payload `type` property, will be used.
+action payload with the `targetService` (or shorthand `service`) property, but
+if not, the default service of the schema specified with the payload `type`
+property, will be used.
 
 The matching to an endpoint is done by finding the endpoint whose `match` object
 matches the action with most accuracy. The rules of the endpoint matching is
@@ -291,6 +292,12 @@ Here's the format of an endpoint definition:
     incoming: <boolean>,
     filters: {...}
   },
+  validate: [
+    {
+      condition: <mutation pipeline>,
+      failResponse: <response object>
+    }
+  ],
   mutation: <mutation pipeline>,
   options: {...},
   allowRawRequest: <boolean>,
@@ -309,6 +316,17 @@ specify a few things:
   the action you dispatch.
 - `match`: The match object is used to decide the right endpoint for an action.
   More one this in the [Match properties](#match-properties) section.
+- `validate`: This is an array of condition that have to be met in order for
+  Integreat to proceed with the endpoint. The `condition` is a mutation pipeline
+  that should return a truthy value for the validation to pass. Any falsy value
+  will cause the validation to fail. If `validate` is missing or an empty array,
+  no validation will be done. This may sound similar to `match`, but `validate`
+  is only processed after a match is found, and if the validation fails, no
+  other endpoint is considered. On a failing validation, the `failResponse` is
+  returned as the response from this action, or a `badrequest` response if no
+  `failResponse` is provided. There's also a shorthand, where you set
+  `failResponse` to a string, which will be the `error` message of the
+  `badrequest` response. The response is passed through the mutation pipeline.
 - `mutation`: A mutation pipeline for the endpoint. The pipeline is run for both
   actions going to a service and the response coming back, so keep this in mind
   when you set up this pipeline. See [Mutation pipelines](#mutations)

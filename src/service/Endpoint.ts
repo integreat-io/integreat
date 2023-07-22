@@ -7,12 +7,13 @@ import type {
   Pipeline,
 } from 'map-transform/types.js'
 import compareEndpoints from './utils/compareEndpoints.js'
-import type { Action, Adapter } from '../types.js'
+import type { Action, Response, Adapter } from '../types.js'
 import type {
   MapOptions,
   EndpointDef,
   ServiceOptions,
   MatchObject,
+  ValidateObject,
   PreparedOptions,
 } from './types.js'
 import isMatch from './utils/matchEnpoints.js'
@@ -35,6 +36,38 @@ const prepareEndpoint = ({ match, ...endpoint }: EndpointDef) => ({
   match: prepareMatch(match || {}),
   ...endpoint,
 })
+
+function prepareValidator(
+  validate: ValidateObject[] | undefined,
+  mapOptions: MapOptions
+) {
+  // Always return null when no validation
+  if (!Array.isArray(validate) || validate.length === 0) {
+    return async () => null
+  }
+
+  // Prepare validators
+  const validators = validate.map(({ condition, failResponse }) => ({
+    validate: mapTransform(condition, mapOptions),
+    failResponse: isObject(failResponse)
+      ? failResponse
+      : {
+          status: 'badrequest',
+          error:
+            typeof failResponse === 'string'
+              ? failResponse
+              : 'Did not satisfy endpoint validation',
+        },
+  }))
+
+  return async function validateAction(action: Action) {
+    for (const { validate, failResponse } of validators) {
+      const result = validate(action)
+      if (!result) return failResponse
+    }
+    return null
+  }
+}
 
 async function mutateAction(
   action: Action,
@@ -97,6 +130,7 @@ export default class Endpoint {
   allowRawRequest?: boolean
   allowRawResponse?: boolean
 
+  #validator: (action: Action) => Promise<Response | null>
   #mutator: DataMapperEntry | null
   #normalize?: MutateAction
   #serialize?: MutateAction
@@ -117,6 +151,7 @@ export default class Endpoint {
     this.#checkIfMatch = isMatch(endpointDef)
     this.options = options
 
+    this.#validator = prepareValidator(endpointDef.validate, mapOptions)
     const mutation = flattenIfOneOrNone(
       [...ensureArray(serviceMutation), ...ensureArray(endpointDef.mutation)]
         .map(setModifyFlag)
@@ -131,6 +166,10 @@ export default class Endpoint {
     this.#serialize = pipeAdapters(
       adapters.map(prepareAdapter(serviceId, options.adapters, true))
     )
+  }
+
+  async validateAction(action: Action) {
+    return await this.#validator(action)
   }
 
   mutate(action: Action, isRev: boolean) {

@@ -13,16 +13,6 @@ const shouldHaveAuthor =
   () =>
   (action: unknown): unknown => {
     return ((action as Action).payload?.data as TypedData).author
-      ? action
-      : {
-          ...(action as Action),
-          response: {
-            ...(action as Action).response,
-            status: 'badrequest',
-            error: 'Error from validator',
-            data: undefined,
-          },
-        }
   }
 
 const resources: Resources = {

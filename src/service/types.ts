@@ -1,5 +1,11 @@
 import type { TransformDefinition, Options } from 'map-transform/types.js'
-import type { Action, Transporter, Adapter, Condition } from '../types.js'
+import type {
+  Action,
+  Response,
+  Transporter,
+  Adapter,
+  Condition,
+} from '../types.js'
 
 export type MapOptions = Options
 
@@ -61,14 +67,20 @@ export interface MatchObject {
   incoming?: boolean
 }
 
+export interface ValidateObject {
+  condition: TransformDefinition
+  failResponse?: Response | string
+}
+
 export interface EndpointDef {
   id?: string
-  match?: MatchObject
-  options?: ServiceOptions
-  mutation?: TransformDefinition
   adapters?: (string | Adapter)[]
+  match?: MatchObject
+  validate?: ValidateObject[]
+  mutation?: TransformDefinition
   allowRawRequest?: boolean
   allowRawResponse?: boolean
+  options?: ServiceOptions
 }
 
 export interface ServiceDef {
