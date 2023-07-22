@@ -44,7 +44,7 @@ test('should send action straight to service', async (t) => {
       type: 'cleanUp',
       targetService: 'someService',
     },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, auth: {} },
   }
   const getService = (_type?: string | string[], service?: string) =>
     service === 'someService' ? someService : undefined

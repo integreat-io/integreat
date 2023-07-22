@@ -96,19 +96,14 @@ const dispatchWithProgress = (
 // Passed to the transporter.listen() method. Transporters will call this to
 // get the ident to used when dispatching incoming actions.
 export const authenticateCallback = (
-  authorization: Auth | true | undefined,
+  authorization: Auth | undefined,
   serviceId: string
 ) =>
   async function authenticateFromListen(
     authentication: Authentication,
     action?: Action | null
   ) {
-    if (authorization === true) {
-      return markIdentAsKnown({
-        status: 'ok',
-        access: { ident: { id: 'anonymous' } },
-      })
-    } else if (authorization === undefined) {
+    if (authorization === undefined) {
       return createErrorResponse(
         'Authentication was refused. No incoming auth',
         `auth:service:${serviceId}`,

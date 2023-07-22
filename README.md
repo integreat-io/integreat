@@ -516,6 +516,8 @@ This definition format is used to authenticate with a service:
 
 Available authenticators:
 
+- `anonymous`: Will always grant access and return an ident with id
+  `'anonymous'` on validation. This is built into Integreat.
 - `options`: Will pass on the options as authentication, so whatever you provide
   here is the authentication. What options to provide, then, is depending on
   what the relevant transporter requires. This is built into Integreat.

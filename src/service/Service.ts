@@ -1,6 +1,7 @@
 import debugLib from 'debug'
-import { dispatchIncoming, authenticateCallback } from './utils/incoming.js'
 import Endpoint from './Endpoint.js'
+import anonymousAuth from '../authenticators/anonymous.js'
+import { dispatchIncoming, authenticateCallback } from './utils/incoming.js'
 import {
   setErrorOnAction,
   createErrorResponse,
@@ -86,7 +87,7 @@ const isAuthDef = (def: unknown): def is AuthDef =>
   typeof def.id === 'string' &&
   typeof def.authenticator === 'string'
 
-function retrieveAuthorization(
+function resolveAuthorization(
   authenticators: Record<string, Authenticator>,
   auths?: Record<string, Auth>,
   auth?: AuthObject | AuthProp
@@ -99,6 +100,8 @@ function retrieveAuthorization(
     return lookupById(auth, auths)
   } else if (isAuthDef(auth)) {
     return setUpAuth(authenticators)(auth)
+  } else if (auth) {
+    return new Auth('anonymous', anonymousAuth, {})
   } else {
     return undefined
   }
@@ -110,9 +113,7 @@ function resolveIncomingAuth(
   auth?: AuthObject | AuthProp
 ) {
   if (isObject(auth) && auth.incoming) {
-    return auth.incoming === true
-      ? true
-      : retrieveAuthorization(authenticators, auths, auth.incoming)
+    return resolveAuthorization(authenticators, auths, auth.incoming)
   } else {
     return undefined
   }
@@ -179,8 +180,7 @@ export default class Service {
   #castFns: Record<string, DataMapperEntry>
 
   #authorization?: Auth
-  #incomingAuth?: Auth | true
-  #requireAuth: boolean
+  #incomingAuth?: Auth
   #connection: Connection | null
 
   #authorizeDataFromService
@@ -221,9 +221,8 @@ export default class Service {
     this.#castFns = castFns
 
     this.#transporter = lookupById(transporterId, transporters)
-    this.#authorization = retrieveAuthorization(authenticators, auths, auth)
+    this.#authorization = resolveAuthorization(authenticators, auths, auth)
     this.#incomingAuth = resolveIncomingAuth(authenticators, auths, auth)
-    this.#requireAuth = !!auth
 
     this.#authorizeDataFromService = authorizeData.fromService(schemas)
     this.#authorizeDataToService = authorizeData.toService(schemas)
@@ -266,7 +265,7 @@ export default class Service {
    * an appropriate status and error.
    */
   authorizeAction(action: Action): Action {
-    return authorizeAction(this.#schemas, this.#requireAuth)(action)
+    return authorizeAction(this.#schemas, !!this.#authorization)(action)
   }
 
   /**
