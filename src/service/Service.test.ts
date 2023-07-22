@@ -306,8 +306,25 @@ test('should throw when no id', (t) => {
   })
 })
 
+test('should throw when service references unknown transporter', (t) => {
+  const endpoints = [
+    { id: 'endpoint1', options: { uri: 'http://some.api/1.0' } },
+  ]
+  const def = { id: 'entries', transporter: 'unknown', endpoints, meta: 'meta' }
+  const resources = {
+    ...jsonResources,
+    mapOptions,
+    schemas,
+    castFns,
+  }
+
+  const error = t.throws(() => new Service(def, resources))
+
+  t.true(error instanceof Error)
+})
+
 test('should throw when auth object references unknown authenticator', async (t) => {
-  const defs = {
+  const def = {
     id: 'entries',
     auth: {
       id: 'auth',
@@ -320,7 +337,7 @@ test('should throw when auth object references unknown authenticator', async (t)
   }
   const resources = mockResources({})
 
-  const error = t.throws(() => new Service(defs, resources))
+  const error = t.throws(() => new Service(def, resources))
 
   t.true(error instanceof Error)
 })
@@ -548,9 +565,9 @@ test('send should retrieve data from service', async (t) => {
   const service = new Service(
     {
       id: 'entries',
+      transporter: 'http',
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
       auth: 'granting',
-      transporter: 'http',
     },
     mockResources(data)
   )
@@ -581,9 +598,9 @@ test('send should use service middleware', async (t) => {
   const service = new Service(
     {
       id: 'entries',
+      transporter: 'http',
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
       auth: true,
-      transporter: 'http',
     },
     resources
   )
@@ -605,7 +622,7 @@ test('send should use service middleware', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('send should return error when no transporter', async (t) => {
+test('send should return error when no connection', async (t) => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -614,7 +631,7 @@ test('send should return error when no transporter', async (t) => {
   const service = new Service(
     {
       id: 'entries',
-      // No transporter
+      transporter: 'http',
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
       auth: 'granting',
     },
@@ -627,10 +644,11 @@ test('send should return error when no transporter', async (t) => {
   })
   const expected = {
     status: 'error',
-    error: "Service 'entries' has no transporter",
-    origin: 'internal:service:entries',
+    error: "Service 'entries' has no open connection",
+    origin: 'service:entries',
   }
 
+  await service.close() // Close connection to set it to null
   const ret = await service.send(action)
 
   t.deepEqual(ret, expected)
@@ -2681,7 +2699,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
   t.deepEqual(ret, expectedResponse)
 })
 
-test('listen should return error when no transporter', async (t) => {
+test('listen should return error when no connection', async (t) => {
   const listenStub = sinon.stub().resolves({ status: 'ok' })
   const resources = {
     ...jsonResources,
@@ -2701,7 +2719,7 @@ test('listen should return error when no transporter', async (t) => {
     {
       id: 'entries',
       auth: { outgoing: 'granting', incoming: 'validating' },
-      transporter: 'unknown',
+      transporter: 'http',
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
@@ -2709,10 +2727,11 @@ test('listen should return error when no transporter', async (t) => {
   )
   const expectedResponse = {
     status: 'error',
-    error: "Service 'entries' has no transporter",
-    origin: 'internal:service:entries',
+    error: "Service 'entries' has no open connection",
+    origin: 'service:entries',
   }
 
+  await service.close() // Closing will set the connection to null
   const ret = await service.listen(dispatch)
 
   t.deepEqual(ret, expectedResponse)
@@ -2838,7 +2857,7 @@ test('close should probihit closed connection from behind used again', async (t)
   t.deepEqual(ret, expected)
 })
 
-test('close should do nothing when no transporter', async (t) => {
+test('close should just return ok when no connection', async (t) => {
   const resources = {
     ...jsonResources,
     mapOptions,
@@ -2850,17 +2869,14 @@ test('close should do nothing when no transporter', async (t) => {
     {
       id: 'entries',
       auth: 'granting',
-      transporter: 'unknown',
+      transporter: 'http',
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
     resources
   )
-  const expected = {
-    status: 'noaction',
-    error: 'No transporter to disconnect',
-    origin: 'internal:service:entries',
-  }
+  const expected = { status: 'ok' }
 
+  await service.close() // Closing will set the connection to null
   const ret = await service.close()
 
   t.deepEqual(ret, expected)

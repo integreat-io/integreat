@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
+import httpTransporter from 'integreat-transporter-http'
 import Service from './service/Service.js'
 import { QUEUE_SYMBOL } from './handlers/index.js'
 import type {
@@ -507,9 +508,10 @@ test('should return error when no endoint on source service matches', async (t) 
     api: new Service(
       {
         id: 'api',
+        transporter: 'http',
         endpoints: [],
       },
-      { schemas: {} }
+      { schemas: {}, transporters: { http: httpTransporter } }
     ),
   }
   const action = {

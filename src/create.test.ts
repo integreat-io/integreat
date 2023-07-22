@@ -253,6 +253,28 @@ test('should set adapter id', async (t) => {
   t.true(ret.params?.setByPrepare)
 })
 
+test('should throw when trying to use an unknown transporter', async (t) => {
+  const servicesWithUnknownTransporter = [
+    {
+      ...services[0],
+      transporter: 'unknown',
+    },
+  ]
+
+  const error = t.throws(() =>
+    create(
+      { services: servicesWithUnknownTransporter, schemas, mutations },
+      resourcesWithTransformer
+    )
+  )
+
+  t.true(error instanceof Error)
+  t.is(
+    error?.message,
+    "Service 'entries' references unknown transporter 'unknown'"
+  )
+})
+
 test('should call middleware', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const otherAction = sinon.stub().resolves({ status: 'ok' })

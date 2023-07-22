@@ -54,7 +54,7 @@ export default class Service {
   #schemas: Record<string, Schema>
   #options: TransporterOptions
   #endpoints: Endpoint[]
-  #transporter?: Transporter
+  #transporter: Transporter
   #castFns: Record<string, DataMapperEntry>
 
   #auth?: Auth
@@ -98,7 +98,14 @@ export default class Service {
     this.#schemas = schemas
     this.#castFns = castFns
 
-    this.#transporter = lookupById(transporterId, transporters)
+    const transporter = lookupById(transporterId, transporters)
+    if (!transporter) {
+      throw new TypeError(
+        `Service '${serviceId}' references unknown transporter '${transporterId}'`
+      )
+    }
+    this.#transporter = transporter
+
     this.#auth = resolveAuth(authenticators, auths, auth)
     this.#incomingAuth = resolveIncomingAuth(authenticators, auths, auth)
 
@@ -126,9 +133,11 @@ export default class Service {
     this.#middleware =
       middleware.length > 0 ? compose(...middleware) : (fn) => fn
 
-    this.#connection = this.#transporter
-      ? new Connection(this.#transporter, serviceOptions.transporter, emit)
-      : null
+    this.#connection = new Connection(
+      this.#transporter,
+      serviceOptions.transporter,
+      emit
+    )
   }
 
   /**
@@ -282,12 +291,10 @@ export default class Service {
       return action.response
     }
 
-    // Fail if we have no transporter or connection. The second is because
-    // of the first, so it's really the same error.
-    if (!this.#transporter || !this.#connection) {
+    if (!this.#connection) {
       return createErrorResponse(
-        `Service '${this.id}' has no transporter`,
-        `internal:service:${this.id}`
+        `Service '${this.id}' has no open connection`,
+        `service:${this.id}`
       )
     }
 
@@ -324,13 +331,6 @@ export default class Service {
   async listen(dispatch: Dispatch): Promise<Response> {
     debug('Set up service listening ...')
 
-    if (!this.#transporter) {
-      debug(`Service '${this.id}' has no transporter`)
-      return createErrorResponse(
-        `Service '${this.id}' has no transporter`,
-        `internal:service:${this.id}`
-      )
-    }
     if (!this.#connection) {
       debug(`Service '${this.id}' has no open connection`)
       return createErrorResponse(
@@ -394,18 +394,15 @@ export default class Service {
    */
   async close(): Promise<Response> {
     debug(`Close service '${this.id}'`)
-    if (!this.#transporter || !this.#connection) {
-      debug('No transporter to disconnect')
-      return createErrorResponse(
-        'No transporter to disconnect',
-        `internal:service:${this.id}`,
-        'noaction'
-      )
+
+    if (this.#connection) {
+      await this.#transporter.disconnect(this.#connection.object)
+      this.#connection = null
+      debug(`Closed`)
+    } else {
+      debug('No connection to disconnect')
     }
 
-    await this.#transporter.disconnect(this.#connection.object)
-    this.#connection = null
-    debug(`Closed`)
     return { status: 'ok' }
   }
 }

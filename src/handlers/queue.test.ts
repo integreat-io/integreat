@@ -133,7 +133,13 @@ test('should return error from queue', async (t) => {
 
 test('should return error when queue does not respond status', async (t) => {
   const options = { queueService: 'queue' }
-  const queueService = new Service(queueDefs, { schemas, mapOptions })
+  const queueService = new Service(
+    {
+      ...queueDefs,
+      transporter: baseTransporter,
+    },
+    { schemas, mapOptions }
+  )
   sinon.stub(queueService, 'send').resolves({}) // Intentionally no status
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
