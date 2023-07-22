@@ -10,11 +10,6 @@ const shouldRetry = (
   retryCount: number
 ) => authentication?.status === 'timeout' && retryCount < MAX_RETRIES
 
-export interface StatusObject {
-  status: string
-  error?: string
-}
-
 const getKey = (
   authenticator: Authenticator,
   options: AuthOptions | null,
@@ -138,7 +133,7 @@ export default class Auth {
     return typeof fn === 'function' ? fn(auth) : null
   }
 
-  getStatusObject(): StatusObject {
+  getResponseFromAuth(): Response {
     const auth = this.#authentications.get('') // Only applies to `listen()` which doesn't support multi-user auth for now
     if (!auth) {
       return { status: 'noaccess' }
@@ -171,7 +166,7 @@ export default class Auth {
       ...action,
       response: {
         ...action.response,
-        ...this.getStatusObject(),
+        ...this.getResponseFromAuth(),
       },
       meta: { ...action.meta, auth: null },
     }

@@ -489,7 +489,7 @@ export default class Service {
     ) {
       debug('Could not authenticate')
       return setOrigin(
-        this.#authorization.getStatusObject(),
+        this.#authorization.getResponseFromAuth(),
         `service:${this.id}`,
         true
       )

@@ -329,7 +329,7 @@ test('should return status ok when granted', async (t) => {
   const expected = { status: 'ok' }
 
   await auth.authenticate(action)
-  const ret = auth.getStatusObject()
+  const ret = auth.getResponseFromAuth()
 
   t.deepEqual(ret, expected)
 })
@@ -338,7 +338,7 @@ test('should return status noaccess when not authenticated', async (t) => {
   const auth = new Auth(id, authenticator, options)
   const expected = { status: 'noaccess' }
 
-  const ret = auth.getStatusObject()
+  const ret = auth.getResponseFromAuth()
 
   t.deepEqual(ret, expected)
 })
@@ -358,7 +358,7 @@ test('should return status noaccess when authentication was refused', async (t) 
   }
 
   await auth.authenticate(action)
-  const ret = auth.getStatusObject()
+  const ret = auth.getResponseFromAuth()
 
   t.deepEqual(ret, expected)
 })
@@ -378,7 +378,7 @@ test('should return status autherror on auth error', async (t) => {
   }
 
   await auth.authenticate(action)
-  const ret = auth.getStatusObject()
+  const ret = auth.getResponseFromAuth()
 
   t.deepEqual(ret, expected)
 })
