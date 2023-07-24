@@ -45,7 +45,7 @@ test('should set up schema', (t) => {
   t.is(ret.id, 'entry')
   t.is(ret.plural, 'entries')
   t.is(ret.service, 'entries')
-  t.is(ret.access, 'auth')
+  t.deepEqual(ret.access, { allow: 'auth' })
   t.false(ret.internal)
   t.truthy(ret.shape)
   t.deepEqual(ret.shape.attributes, expectedAttributes)
@@ -66,6 +66,7 @@ test('should provide accessForAction method', (t) => {
   t.is(typeof ret.accessForAction, 'function')
   t.deepEqual(ret.accessForAction('GET'), { allow: 'all' })
   t.deepEqual(ret.accessForAction('SET'), { allow: 'auth' })
+  t.deepEqual(ret.access, { allow: 'all', actions: { SET: 'auth' } })
 })
 
 test('should set internal prop', (t) => {

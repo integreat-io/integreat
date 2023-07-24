@@ -40,9 +40,8 @@ const getActionAccess = (access?: AccessDef | null, actionType?: string) =>
     : access
 
 export default function accessForAction(
-  access?: string | AccessDef | null
-): (actionType?: string) => Access {
-  const accessObject = typeof access === 'string' ? { allow: access } : access
-  return (actionType) =>
-    ensureAccessObject(getActionAccess(accessObject, actionType))
+  access?: AccessDef | null,
+  actionType?: string
+): Access {
+  return ensureAccessObject(getActionAccess(access, actionType))
 }

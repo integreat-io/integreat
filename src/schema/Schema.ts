@@ -27,6 +27,9 @@ const expandFields = (vals: ShapeDef): Shape =>
     {}
   )
 
+const expandAccess = (access?: string | AccessDef): AccessDef | undefined =>
+  typeof access === 'string' ? { allow: access } : access
+
 /**
  * A schema with shape, cast function, and info on access control.
  */
@@ -36,9 +39,8 @@ export default class Schema {
   service?: string
   internal: boolean
   shape: Shape
-  access?: string | AccessDef
+  access?: AccessDef
   castFn: CastFn
-  accessForAction: (actionType?: string) => Access
 
   constructor(def: SchemaDef, castFns: CastFns = new Map()) {
     this.id = def.id
@@ -46,9 +48,12 @@ export default class Schema {
     this.service = def.service
     this.internal = def.internal ?? false
     this.shape = expandShape(def.shape || {})
-    this.access = def.access
+    this.access = expandAccess(def.access)
     const castFn = createCast(this.shape, def.id, castFns, def.generateId)
     this.castFn = castFn
-    this.accessForAction = accessForAction(def.access)
+  }
+
+  accessForAction(actionType?: string): Access {
+    return accessForAction(this.access, actionType)
   }
 }
