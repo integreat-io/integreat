@@ -17,8 +17,8 @@ import { lookupById, lookupByIds } from '../utils/indexUtils.js'
 import * as authorizeData from './utils/authData.js'
 import authorizeAction, { isAuthorizedAction } from './utils/authAction.js'
 import { compose } from '../dispatch.js'
-import type { DataMapperEntry } from 'map-transform/types.js'
 import type { Schema } from '../schema/index.js'
+import type { CastFn } from '../schema/types.js'
 import type {
   Action,
   Response,
@@ -38,7 +38,7 @@ export interface Resources {
   authenticators?: Record<string, Authenticator>
   auths?: Record<string, Auth>
   schemas: Record<string, Schema>
-  castFns?: Record<string, DataMapperEntry>
+  castFns?: Map<string, CastFn>
   mapOptions?: MapOptions
   middleware?: Middleware[]
   emit?: (eventType: string, ...args: unknown[]) => void
@@ -55,7 +55,7 @@ export default class Service {
   #options: TransporterOptions
   #endpoints: Endpoint[]
   #transporter: Transporter
-  #castFns: Record<string, DataMapperEntry>
+  #castFns: Map<string, CastFn>
 
   #auth?: Auth
   #incomingAuth?: Auth
@@ -82,7 +82,7 @@ export default class Service {
       authenticators = {},
       auths,
       schemas,
-      castFns = {},
+      castFns = new Map(),
       mapOptions = {},
       middleware = [],
       emit = () => undefined, // Provide a fallback for tests

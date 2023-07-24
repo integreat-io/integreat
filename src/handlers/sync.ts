@@ -13,8 +13,8 @@ import type {
 import { createErrorResponse } from '../utils/action.js'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is.js'
 import { ensureArray } from '../utils/array.js'
-import { castDate } from '../transformers/builtIns/date.js'
-import { castNumber } from '../transformers/builtIns/number.js'
+import castDate from '../schema/castFns/date.js'
+import castNumber from '../schema/castFns/number.js'
 
 type RetrieveOptions = 'all' | 'updated' | 'created'
 

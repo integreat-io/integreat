@@ -6,8 +6,12 @@ export interface FieldDefinition {
   const?: unknown | DataFunction
 }
 
+export interface ShapeDef {
+  [key: string]: ShapeDef | FieldDefinition | string | undefined
+}
+
 export interface Shape {
-  [key: string]: Shape | FieldDefinition | string | undefined
+  [key: string]: FieldDefinition | Shape
 }
 
 interface AccessDefBase {
@@ -35,7 +39,13 @@ export interface SchemaDef {
   plural?: string
   service?: string
   generateId?: boolean
-  shape?: Shape
+  shape?: ShapeDef
   access?: string | AccessDef
   internal?: boolean
 }
+
+export interface CastFn {
+  (data: unknown, isRev?: boolean): unknown
+}
+
+export type CastFns = Map<string, CastFn>

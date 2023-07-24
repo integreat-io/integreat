@@ -4,6 +4,8 @@ import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import johnfData from '../helpers/data/userJohnf.js'
 import ent1Data from '../helpers/data/entry1.js'
+import ent2Data from '../helpers/data/entry2.js'
+import type { TypedData } from '../../types.js'
 
 import Integreat from '../../index.js'
 
@@ -45,6 +47,7 @@ test('should get one entry from service', async (t) => {
     createdAt: new Date(createdAt),
     updatedAt: new Date(updatedAt),
     author: { id: 'johnf', $ref: 'user' },
+    approvedBy: undefined,
     sections: [
       { id: 'news', $ref: 'section' },
       { id: 'sports', $ref: 'section' },
@@ -60,6 +63,33 @@ test('should get one entry from service', async (t) => {
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, expected)
+})
+
+test('should get one entry from service with sub schemas', async (t) => {
+  nock('http://some.api')
+    .get('/entries/ent2')
+    .reply(200, {
+      data: {
+        ...ent2Data,
+        createdAt,
+        updatedAt,
+        approver: { id: 'johnf', firstname: 'John' },
+      },
+    })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent2', type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const great = Integreat.create(defs, resources)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  const approver = (ret.data as TypedData).approvedBy as TypedData
+  t.is(approver.$type, 'user')
+  t.is(approver.id, 'johnf')
+  t.is(approver.firstname, 'John')
 })
 
 test('should get no entry from service', async (t) => {

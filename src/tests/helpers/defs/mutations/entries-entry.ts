@@ -8,6 +8,7 @@ export default [
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     'author.id': 'authorId',
+    approvedBy: 'approver',
     sections: 'sections[]',
     props: 'props[]',
   },

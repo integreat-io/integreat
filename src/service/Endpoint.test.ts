@@ -2,7 +2,6 @@ import test from 'ava'
 import sinon from 'sinon'
 import jsonAdapter from 'integreat-adapter-json'
 import createSchema from '../schema/index.js'
-import builtInTransformers from '../transformers/builtIns/index.js'
 import transformers from '../transformers/index.js'
 import { isAction, isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
@@ -85,7 +84,6 @@ const pipelines = {
 }
 
 const allTransformers = {
-  ...builtInTransformers,
   ...transformers,
   shouldHaveToken,
   alwaysOk,

@@ -1,10 +1,8 @@
-import mapAny from 'map-any'
 import { isDate } from '../../utils/is.js'
-import type { Transformer } from 'map-transform/types.js'
 
 const numberOrUndefined = (value: number) => (isNaN(value) ? undefined : value)
 
-function castInteger(value: unknown): number | null | undefined {
+export default function castInteger(value: unknown): number | null | undefined {
   if (typeof value === 'number') {
     return isNaN(value) ? undefined : Math.round(value)
   } else if (typeof value === 'string') {
@@ -19,7 +17,3 @@ function castInteger(value: unknown): number | null | undefined {
     return undefined
   }
 }
-
-const integer: Transformer = () => () => mapAny(castInteger)
-
-export default integer

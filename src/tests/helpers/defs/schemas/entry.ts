@@ -6,6 +6,7 @@ export default {
     title: 'string',
     text: 'string',
     author: 'user',
+    approvedBy: 'user',
     sections: 'section[]',
     'props[]': {
       key: 'string',

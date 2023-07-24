@@ -3,7 +3,6 @@ import nock from 'nock'
 import Service from '../service/Service.js'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import schema from '../schema/index.js'
-import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import type { TypedData } from '../types.js'
 import type { ValidateObject } from '../service/types.js'
@@ -53,7 +52,6 @@ const mapOptions = {
     ['cast_entry']: schemas.entry.mapping,
     ['cast_account']: schemas.account.mapping,
   },
-  transformers,
 }
 
 const typeMappingFromServiceId = (serviceId: string) =>

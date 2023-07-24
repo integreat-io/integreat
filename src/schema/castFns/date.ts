@@ -1,8 +1,6 @@
-import mapAny from 'map-any'
 import { isDate } from '../../utils/is.js'
-import type { Transformer } from 'map-transform/types.js'
 
-export function castDate(value: unknown): Date | null | undefined {
+export default function castDate(value: unknown): Date | null | undefined {
   if (value === null || value === undefined) {
     return value
   } else if (
@@ -16,7 +14,3 @@ export function castDate(value: unknown): Date | null | undefined {
     return undefined
   }
 }
-
-const date: Transformer = () => () => mapAny(castDate)
-
-export default date

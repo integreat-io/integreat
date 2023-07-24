@@ -2,10 +2,8 @@
 import test from 'ava'
 import sinon from 'sinon'
 import pProgress from 'p-progress'
-import mapTransform from 'map-transform'
 import dispatch from '../tests/helpers/dispatch.js'
 import jsonResources from '../tests/helpers/resources/index.js'
-import transformers from '../transformers/builtIns/index.js'
 import createSchema from '../schema/index.js'
 import Auth from './Auth.js'
 import tokenAuth from '../authenticators/token.js'
@@ -27,8 +25,10 @@ import Service, { Resources } from './Service.js'
 
 // Setup
 
-const schemas = {
-  account: createSchema({
+const castFns = new Map()
+
+const accountSchema = createSchema(
+  {
     id: 'account',
     shape: {
       name: 'string',
@@ -40,8 +40,11 @@ const schemas = {
         TEST: 'all',
       },
     },
-  }),
-  entry: createSchema({
+  },
+  castFns
+)
+const entrySchema = createSchema(
+  {
     id: 'entry',
     plural: 'entries',
     shape: {
@@ -53,14 +56,28 @@ const schemas = {
       updatedAt: 'date',
     },
     access: 'auth',
-  }),
-  source: createSchema({
+  },
+  castFns
+)
+const sourceSchema = createSchema(
+  {
     id: 'source',
     shape: {
       name: 'string',
     },
     access: 'auth',
-  }),
+  },
+  castFns
+)
+
+castFns.set('account', accountSchema.castFn)
+castFns.set('entry', entrySchema.castFn)
+castFns.set('source', sourceSchema.castFn)
+
+const schemas = {
+  account: accountSchema,
+  entry: entrySchema,
+  source: sourceSchema,
 }
 
 const entryMutation = [
@@ -102,14 +119,7 @@ const mutations = {
   account: accountMutation,
 }
 
-const mapOptions = createMapOptions(schemas, mutations, transformers)
-
-const castFns = Object.fromEntries(
-  Object.entries(schemas).map(([type, schema]) => [
-    type,
-    mapTransform(schema.mapping, mapOptions),
-  ])
-)
+const mapOptions = createMapOptions(schemas, mutations)
 
 const endpoints = [
   {

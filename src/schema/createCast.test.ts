@@ -1,24 +1,31 @@
 import test from 'ava'
-import mapTransform from 'map-transform'
-import type { TransformDefinition, Pipeline } from 'map-transform/types.js'
-import transformers from '../transformers/builtIns/index.js'
-import user from '../tests/helpers/defs/schemas/user.js'
-import comment from '../tests/helpers/defs/schemas/comment.js'
-import createSchema from './index.js'
+import expandShape from './expandShape.js'
+import type { ShapeDef } from './types.js'
+import type { TypedData } from '../types.js'
 
-import createCastMapping from './createCastMapping.js'
+import createCast from './createCast.js'
 
 // Setup
 
-const pipelines = {
-  cast_comment: createSchema(comment).mapping,
-  cast_user: createSchema(user).mapping,
-}
+const castFns = new Map()
+castFns.set(
+  'comment',
+  createCast(
+    expandShape({ id: 'string', comment: 'string' }),
+    'comment',
+    castFns
+  )
+)
+castFns.set(
+  'user',
+  createCast(expandShape({ id: 'string', name: 'string' }), 'user', castFns)
+)
 
 // Tests
 
-test('should create mapping definition from schema', (t) => {
-  const schema = {
+test('should create mapping function from schema', (t) => {
+  const isRev = false
+  const shape = expandShape({
     id: 'string',
     type: { $type: 'string', const: 'entry' },
     title: { $type: 'string', default: 'Entry with no name' },
@@ -36,7 +43,7 @@ test('should create mapping definition from schema', (t) => {
       key: 'string',
       value: 'string',
     },
-  }
+  })
   const data = [
     {
       id: 12345,
@@ -108,16 +115,14 @@ test('should create mapping definition from schema', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-    pipelines,
-  })(data)
+  const ret = createCast(shape, 'entry')(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should reverse transform with mapping definition from schema', (t) => {
-  const schema = {
+  const isRev = true
+  const shape = expandShape({
     id: 'string',
     type: { $type: 'string', const: 'entry' },
     title: { $type: 'string', default: 'Entry with no name' },
@@ -130,7 +135,7 @@ test('should reverse transform with mapping definition from schema', (t) => {
     createdAt: 'date',
     author: 'user',
     payload: 'object',
-  }
+  })
   const data = [
     {
       $type: 'entry',
@@ -209,18 +214,16 @@ test('should reverse transform with mapping definition from schema', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-    pipelines,
-  })(data, { rev: true })
+  const ret = createCast(shape, 'entry')(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should be iteratable', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = [
     {
@@ -245,32 +248,105 @@ test('should be iteratable', (t) => {
     },
   ]
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const ret = mapTransform([createCastMapping(schema, 'entry')!], {
-    transformers,
-  })(data)
+  const ret = createCast(shape, 'entry')(data, isRev)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should cast missing id to null', (t) => {
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+  }
+  const data = { title: 'Entry 1' }
+  const expected = { id: null, $type: 'entry', title: 'Entry 1' }
+
+  const ret = createCast(shape, 'entry')(data, isRev)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should cast missing id to generated unique id', (t) => {
+  const isRev = false
+  const doGenerateId = true
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+  }
+  const data = { title: 'Entry 1' }
+
+  const ret = createCast(
+    shape,
+    'entry',
+    castFns,
+    doGenerateId
+  )(data, isRev) as TypedData
+
+  const { id } = ret
+  t.is(typeof id, 'string')
+  t.true((id as string).length >= 21) // We don't know what the id will be, but it should be at least 21 chars
+})
+
+test('should unwrap value from { $value } object', (t) => {
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+  }
+  const data = { id: { $value: 'ent1' }, title: { $value: 'Entry 1' } }
+  const expected = { id: 'ent1', $type: 'entry', title: 'Entry 1' }
+
+  const ret = createCast(shape, 'entry')(data, isRev)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should unwrap item from array when field is not expecting array and there is only one item', (t) => {
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+  }
+  const data = { id: 'ent1', title: ['Entry 1'] }
+  const expected = { id: 'ent1', $type: 'entry', title: 'Entry 1' }
+
+  const ret = createCast(shape, 'entry')(data, isRev)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should set value to undefined for array with more items when not expecting array', (t) => {
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+  }
+  const data = { id: 'ent1', title: ['Entry 1', 'Entry 2'] }
+  const expected = { id: 'ent1', $type: 'entry', title: undefined }
+
+  const ret = createCast(shape, 'entry')(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should not cast null', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = null
   const expected = undefined
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-    pipelines,
-  })(data)
+  const ret = createCast(shape, 'entry')(data, isRev)
 
   t.is(ret, expected)
 })
 
 test('should cast non-primitive fields with schema', (t) => {
-  const entrySchema = {
+  const isRev = false
+  const shape = expandShape({
     id: 'string',
     type: { $type: 'string', const: 'entry' },
     attributes: {
@@ -281,15 +357,7 @@ test('should cast non-primitive fields with schema', (t) => {
       author: 'user',
       comments: 'comment[]',
     },
-  }
-  const commentSchema = {
-    id: 'string',
-    comment: 'string',
-  }
-  const userSchema = {
-    id: 'string',
-    name: 'string',
-  }
+  })
   const data = [
     {
       id: 12345,
@@ -360,19 +428,14 @@ test('should cast non-primitive fields with schema', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(entrySchema, 'entry'), {
-    transformers,
-    pipelines: {
-      cast_comment: createCastMapping(commentSchema, 'comment'),
-      cast_user: createCastMapping(userSchema, 'user'),
-    },
-  })(data)
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should cast non-primitive fields with schema in reverse', (t) => {
-  const entrySchema = {
+  const isRev = true
+  const shape = expandShape({
     id: 'string',
     type: { $type: 'string', const: 'entry' },
     attributes: {
@@ -383,15 +446,7 @@ test('should cast non-primitive fields with schema in reverse', (t) => {
       comments: 'comment[]',
       author: 'user',
     },
-  }
-  const commentSchema = {
-    id: 'string',
-    comment: 'string',
-  }
-  const userSchema = {
-    id: 'string',
-    name: 'string',
-  }
+  })
   const data = [
     {
       $type: 'entry',
@@ -450,109 +505,18 @@ test('should cast non-primitive fields with schema in reverse', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(entrySchema, 'entry'), {
-    transformers,
-    pipelines: {
-      cast_comment: createCastMapping(commentSchema, 'comment'),
-      cast_user: createCastMapping(userSchema, 'user'),
-    },
-  })(data, { rev: true })
-
-  t.deepEqual(ret, expected)
-})
-
-test('should handle casting with array of non-primitive types within an iteration', (t) => {
-  const entrySchema = {
-    id: 'string',
-    title: { $type: 'string', default: 'Entry with no name' },
-    age: 'integer',
-    comments: 'comment[]',
-    author: 'user',
-  }
-  const commentSchema = {
-    id: 'string',
-    comment: 'string',
-  }
-  const userSchema = {
-    id: 'string',
-    name: 'string',
-  }
-  const data = {
-    data: [
-      {
-        $type: 'entry',
-        id: 12345,
-        title: 'Entry 1',
-        age: '180734118',
-        author: { id: 'johnf', $type: 'user', name: 'John F' },
-        comments: [
-          { id: 'comment12', $ref: 'comment' },
-          { id: 'comment13', $ref: 'comment' },
-        ],
-        unknown: 'Drop this',
-      },
-      {
-        $type: 'entry',
-        id: 'ent2',
-        age: 244511383,
-        author: { id: 'maryk', $ref: 'user' },
-        comments: [{ id: 'comment23', $ref: 'comment' }],
-      },
-      {
-        $type: 'entry',
-        id: 'ent3',
-        title: 'Entry 3',
-        age: 0,
-      },
-    ],
-  }
-  const expected = {
-    data: [
-      {
-        id: '12345',
-        title: 'Entry 1',
-        age: 180734118,
-        author: { id: 'johnf', name: 'John F' },
-        comments: [{ id: 'comment12' }, { id: 'comment13' }],
-      },
-      {
-        id: 'ent2',
-        title: 'Entry with no name',
-        age: 244511383,
-        author: { id: 'maryk' },
-        comments: [{ id: 'comment23' }],
-      },
-      {
-        id: 'ent3',
-        title: 'Entry 3',
-        age: 0,
-        author: undefined,
-        comments: undefined,
-      },
-    ],
-  }
-  const castPipeline = createCastMapping(entrySchema, 'entry')
-  const fullPipeline: TransformDefinition = {
-    data: ['data[]', ...(castPipeline as Pipeline)],
-  }
-
-  const ret = mapTransform(fullPipeline, {
-    transformers,
-    pipelines: {
-      cast_comment: createCastMapping(commentSchema, 'comment'),
-      cast_user: createCastMapping(userSchema, 'user'),
-    },
-  })(data, { rev: true })
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should set createdAt and updatedAt if not set and present in schema', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
-    createdAt: 'date',
-    updatedAt: 'date',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+    createdAt: { $type: 'date' },
+    updatedAt: { $type: 'date' },
   }
   const data = {
     id: 'ent1',
@@ -560,10 +524,7 @@ test('should set createdAt and updatedAt if not set and present in schema', (t) 
   }
   const before = Date.now()
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-    pipelines,
-  })(data) as Record<string, unknown>
+  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
 
   const after = Date.now()
   t.true(ret.createdAt instanceof Date)
@@ -574,10 +535,11 @@ test('should set createdAt and updatedAt if not set and present in schema', (t) 
 })
 
 test('should set only createdAt if not set and present in schema', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
-    createdAt: 'date',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+    createdAt: { $type: 'date' },
   }
   const data = {
     id: 'ent1',
@@ -585,10 +547,7 @@ test('should set only createdAt if not set and present in schema', (t) => {
   }
   const before = Date.now()
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-    pipelines,
-  })(data) as Record<string, unknown>
+  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
 
   const after = Date.now()
   t.true(ret.createdAt instanceof Date)
@@ -598,10 +557,11 @@ test('should set only createdAt if not set and present in schema', (t) => {
 })
 
 test('should set only updatedAt if not set and present in schema', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
-    updatedAt: 'date',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+    updatedAt: { $type: 'date' },
   }
   const data = {
     id: 'ent1',
@@ -609,10 +569,7 @@ test('should set only updatedAt if not set and present in schema', (t) => {
   }
   const before = Date.now()
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-    pipelines,
-  })(data) as Record<string, unknown>
+  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
 
   const after = Date.now()
   t.true(ret.updatedAt instanceof Date)
@@ -622,11 +579,12 @@ test('should set only updatedAt if not set and present in schema', (t) => {
 })
 
 test('should set updatedAt equal to createdAt', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
-    createdAt: 'date',
-    updatedAt: 'date',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+    createdAt: { $type: 'date' },
+    updatedAt: { $type: 'date' },
   }
   const data = {
     id: 'ent1',
@@ -634,21 +592,19 @@ test('should set updatedAt equal to createdAt', (t) => {
     createdAt: new Date('2023-03-18T14:03:44Z'),
   }
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-    pipelines,
-  })(data) as Record<string, unknown>
+  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
 
   t.deepEqual(ret.updatedAt, new Date('2023-03-18T14:03:44Z'))
   t.deepEqual(ret.createdAt, new Date('2023-03-18T14:03:44Z'))
 })
 
 test('should set createdAt equal to updatedAt', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
-    createdAt: 'date',
-    updatedAt: 'date',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+    createdAt: { $type: 'date' },
+    updatedAt: { $type: 'date' },
   }
   const data = {
     id: 'ent1',
@@ -656,40 +612,36 @@ test('should set createdAt equal to updatedAt', (t) => {
     updatedAt: new Date('2023-03-18T17:15:18Z'),
   }
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-    pipelines,
-  })(data) as Record<string, unknown>
+  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
 
   t.deepEqual(ret.createdAt, new Date('2023-03-18T17:15:18Z'))
   t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
 })
 
 test('should not set dates if not present in schema', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = {
     id: 'ent1',
     title: 'Entry 1',
   }
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-    pipelines,
-  })(data) as Record<string, unknown>
+  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
 
   t.is(ret.createdAt, undefined)
   t.is(ret.updatedAt, undefined)
 })
 
 test('should not set createdAt and updatedAt if already set', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
-    createdAt: 'date',
-    updatedAt: 'date',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+    createdAt: { $type: 'date' },
+    updatedAt: { $type: 'date' },
   }
   const data = {
     id: 'ent1',
@@ -698,24 +650,22 @@ test('should not set createdAt and updatedAt if already set', (t) => {
     updatedAt: new Date('2023-03-18T17:15:18Z'),
   }
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-    pipelines,
-  })(data) as Record<string, unknown>
+  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
 
   t.deepEqual(ret.createdAt, new Date('2023-03-18T14:03:44Z'))
   t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
 })
 
 test('should skip properties with invalid $type', (t) => {
-  const schema = {
+  const isRev = false
+  const shape = expandShape({
     id: 'string',
     title: 'string',
     abstract: null,
     age: undefined,
     active: 1,
     author: { $type: 78 },
-  }
+  } as unknown as ShapeDef)
   const data = [
     {
       id: 12345,
@@ -734,18 +684,16 @@ test('should skip properties with invalid $type', (t) => {
     },
   ]
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ret = mapTransform(createCastMapping(schema as any, 'entry'), {
-    transformers,
-  })(data)
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should recast items already cast with another $type', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = [
     {
@@ -756,17 +704,16 @@ test('should recast items already cast with another $type', (t) => {
   ]
   const expected = [{ id: 'johnf', $type: 'entry', title: undefined }]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-  })(data)
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should pass on items already cast with this $type', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = [
     {
@@ -777,17 +724,16 @@ test('should pass on items already cast with this $type', (t) => {
   ]
   const expected = data
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-  })(data)
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should recast items already cast with another $type in reverse', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = true
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = [
     {
@@ -798,17 +744,16 @@ test('should recast items already cast with another $type in reverse', (t) => {
   ]
   const expected = [{ id: 'johnf', title: undefined }]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-  })(data, { rev: true })
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should not set $type when casting in reverse', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = true
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = [
     {
@@ -824,17 +769,16 @@ test('should not set $type when casting in reverse', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-  })(data, { rev: true })
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should keep isNew and isDeleted when true', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = [
     {
@@ -854,17 +798,16 @@ test('should keep isNew and isDeleted when true', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-  })(data)
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should remove isNew and isDeleted when false', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = [
     {
@@ -882,17 +825,16 @@ test('should remove isNew and isDeleted when false', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-  })(data)
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should keep isNew and isDeleted when true in reverse', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = true
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = [
     {
@@ -911,17 +853,16 @@ test('should keep isNew and isDeleted when true in reverse', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-  })(data, { rev: true })
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should remove isNew and isDeleted when false in reverse', (t) => {
-  const schema = {
-    id: 'string',
-    title: 'string',
+  const isRev = true
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
   }
   const data = [
     {
@@ -938,16 +879,15 @@ test('should remove isNew and isDeleted when false in reverse', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-  })(data, { rev: true })
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should not cast null or undefined', (t) => {
-  const schema = {
-    id: 'string',
+  const isRev = false
+  const shape = {
+    id: { $type: 'string' },
     title: { $type: 'string', default: 'Entry with no name' },
   }
   const data = [null, undefined, { id: 'ent1' }]
@@ -959,16 +899,15 @@ test('should not cast null or undefined', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-  })(data)
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
 
 test('should not cast null or undefined in reverse', (t) => {
-  const schema = {
-    id: 'string',
+  const isRev = true
+  const shape = {
+    id: { $type: 'string' },
     title: { $type: 'string', default: 'Entry with no name' },
   }
   const data = [null, undefined, { id: 'ent1' }]
@@ -979,11 +918,7 @@ test('should not cast null or undefined in reverse', (t) => {
     },
   ]
 
-  const ret = mapTransform(createCastMapping(schema, 'entry'), {
-    transformers,
-  })(data, { rev: true })
+  const ret = createCast(shape, 'entry', castFns)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
-
-test.todo('should have some more error checking, probably')

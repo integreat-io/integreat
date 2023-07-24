@@ -3,7 +3,6 @@ import nock from 'nock'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import Service from '../service/Service.js'
 import createSchema from '../schema/index.js'
-import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { ServiceDef } from '../service/types.js'
@@ -40,7 +39,7 @@ const pipelines = {
   ],
 }
 
-const mapOptions = createMapOptions(schemas, pipelines, transformers)
+const mapOptions = createMapOptions(schemas, pipelines)
 const setupService = (defs: ServiceDef) =>
   new Service(defs, { schemas, mapOptions })
 

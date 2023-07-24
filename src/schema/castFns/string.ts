@@ -1,8 +1,6 @@
-import mapAny from 'map-any'
 import { isDate } from '../../utils/is.js'
-import type { Transformer } from 'map-transform/types.js'
 
-function castString(value: Record<string, unknown>): string | null | undefined {
+export default function castString(value: unknown) {
   if (value === null || value === undefined) {
     return value
   } else if (typeof value === 'object') {
@@ -11,7 +9,3 @@ function castString(value: Record<string, unknown>): string | null | undefined {
     return String(value)
   }
 }
-
-const string: Transformer = () => () => mapAny(castString)
-
-export default string

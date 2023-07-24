@@ -1,19 +1,16 @@
 import type Endpoint from '../Endpoint.js'
-import type { DataMapperEntry } from 'map-transform/types.js'
+import type { CastFn } from '../../schema/types.js'
 import type { Action } from '../../types.js'
 
 export const getCastFn = (
-  castFns: Record<string, DataMapperEntry>,
+  castFns: Map<string, CastFn>,
   type?: string | string[]
-) =>
-  typeof type === 'string'
-    ? castFns[type] // eslint-disable-line security/detect-object-injection
-    : undefined
+) => (typeof type === 'string' ? castFns.get(type) : undefined)
 
 export const castPayload = (
   action: Action,
   endpoint: Endpoint,
-  castFn?: DataMapperEntry
+  castFn?: CastFn
 ): Action => ({
   ...action,
   payload:
@@ -29,7 +26,7 @@ export const castPayload = (
 export const castResponse = (
   action: Action,
   endpoint: Endpoint,
-  castFn?: DataMapperEntry
+  castFn?: CastFn
 ): Action =>
   !endpoint.allowRawResponse && castFn
     ? {

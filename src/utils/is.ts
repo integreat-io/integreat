@@ -6,7 +6,7 @@ import type {
   JobWithAction,
   JobWithFlow,
 } from '../types.js'
-import type { Shape, FieldDefinition } from '../schema/types.js'
+import type { ShapeDef, FieldDefinition } from '../schema/types.js'
 
 export const isObject = (value: unknown): value is Record<string, unknown> =>
   Object.prototype.toString.call(value) === '[object Object]'
@@ -28,11 +28,11 @@ export const isTypedData = (value: unknown): value is TypedData =>
 export const isReference = (value: unknown): value is Reference =>
   isDataObject(value) && value.hasOwnProperty('$ref')
 
-export const isShape = (value: unknown): value is Shape =>
+export const isShape = (value: unknown): value is ShapeDef =>
   isDataObject(value) && !value.hasOwnProperty('$type')
 
 export const isFieldDefinition = (value: unknown): value is FieldDefinition =>
-  isDataObject(value) && value.hasOwnProperty('$type')
+  isObject(value) && typeof value.$type === 'string'
 
 export const isNullOrUndefined = (value: unknown): value is null | undefined =>
   value === null || value === undefined

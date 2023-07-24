@@ -1,9 +1,7 @@
 import EventEmitter from 'node:events'
-import mapTransform from 'map-transform'
 import Auth from './service/Auth.js'
 import builtinHandlers from './handlers/index.js'
 import runFn from './handlers/run.js'
-import builtinTransformers from './transformers/builtIns/index.js'
 import createSchema, { Schema } from './schema/index.js'
 import Service from './service/Service.js'
 import { isObject } from './utils/is.js'
@@ -75,24 +73,21 @@ export default class Instance extends EventEmitter {
     }
 
     // Prepare schemas
+    const castFns = new Map()
+    // TODO: Refactor to use Map for `schemas` as well
     const schemas = defs.schemas
-      .map(createSchema)
+      .map((schema) => createSchema(schema, castFns))
       .reduce(indexById, {} as Record<string, Schema>)
+    Object.entries(schemas).forEach(([type, schema]) => {
+      castFns.set(type, schema.castFn)
+    })
 
     // Prepare map options
     const mapOptions = createMapOptions(
       schemas,
       defs.mutations,
-      { ...builtinTransformers, ...resources.transformers },
+      resources.transformers,
       defs.dictionaries
-    )
-
-    // Prepare cast functions
-    const castFns = Object.fromEntries(
-      Object.entries(schemas).map(([type, schema]) => [
-        type,
-        mapTransform(schema.mapping, mapOptions),
-      ])
     )
 
     // Set id on all authenticators
@@ -120,7 +115,7 @@ export default class Instance extends EventEmitter {
             authenticators: authenticatorsWithId,
             auths,
             schemas,
-            castFns,
+            castFns, // TODO: This is redundant, as it's already in `schemas`
             mapOptions,
             middleware: middlewareForService,
             emit: this.emit.bind(this),

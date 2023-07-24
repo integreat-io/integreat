@@ -4,7 +4,6 @@ import nock from 'nock'
 import Service from '../service/Service.js'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import schema from '../schema/index.js'
-import transformers from '../transformers/builtIns/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { Action, TypedData } from '../types.js'
@@ -71,10 +70,7 @@ const pipelines = {
 const ms = () => () => (date: unknown) =>
   date instanceof Date ? date.getTime() : undefined
 
-const mapOptions = createMapOptions(schemas, pipelines, {
-  ...transformers,
-  ms,
-})
+const mapOptions = createMapOptions(schemas, pipelines, { ms })
 
 const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
   new Service(
