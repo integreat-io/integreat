@@ -1,3 +1,4 @@
+import { transform } from 'map-transform'
 import type {
   TransformDefinition,
   Transformer,
@@ -9,9 +10,15 @@ import type { MapOptions } from '../service/types.js'
 const pipelinesFromSchemas = (
   schemas: Record<string, Schema>
 ): Record<string, TransformDefinition> =>
-  Object.entries(schemas).reduce(
-    (pipelines, [id, def]) => ({ ...pipelines, [`cast_${id}`]: def.mutation }),
-    {}
+  Object.fromEntries(
+    Object.entries(schemas).map(([id, def]) => [
+      `cast_${id}`,
+      transform(
+        () =>
+          (data, { rev = false }) =>
+            def.castFn(data, rev)
+      ),
+    ])
   )
 
 export default function createMapOptions(

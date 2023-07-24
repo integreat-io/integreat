@@ -62,9 +62,6 @@ const pipelines = {
     },
     { $apply: 'cast_account' },
   ],
-  ['cast_entry']: schemas.entry.mutation,
-  ['cast_account']: schemas.account.mutation,
-  ['cast_source']: schemas.source.mutation,
 }
 
 const ms = () => () => (date: unknown) =>

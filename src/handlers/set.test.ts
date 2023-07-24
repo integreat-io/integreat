@@ -4,6 +4,7 @@ import Service from '../service/Service.js'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import Schema from '../schema/Schema.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
+import createMapOptions from '../utils/createMapOptions.js'
 import type { TypedData } from '../types.js'
 import type { ValidateObject } from '../service/types.js'
 
@@ -29,30 +30,27 @@ const schemas = {
     access: { identFromField: 'id' },
   }),
 }
-
-const mapOptions = {
-  pipelines: {
-    entry: [
-      {
-        $iterate: true,
-        id: 'id',
-        title: 'header',
-      },
-      { $apply: 'cast_entry' },
-    ],
-    account: [
-      {
-        $iterate: true,
-        id: 'id',
-        name: 'name',
-        posts: 'entries',
-      },
-      { $apply: 'cast_account' },
-    ],
-    ['cast_entry']: schemas.entry.mutation,
-    ['cast_account']: schemas.account.mutation,
-  },
+const pipelines = {
+  entry: [
+    {
+      $iterate: true,
+      id: 'id',
+      title: 'header',
+    },
+    { $apply: 'cast_entry' },
+  ],
+  account: [
+    {
+      $iterate: true,
+      id: 'id',
+      name: 'name',
+      posts: 'entries',
+    },
+    { $apply: 'cast_account' },
+  ],
 }
+
+const mapOptions = createMapOptions(schemas, pipelines)
 
 const typeMappingFromServiceId = (serviceId: string) =>
   serviceId === 'accounts' ? 'account' : 'entry'

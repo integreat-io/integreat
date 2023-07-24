@@ -43,15 +43,10 @@ test('should return map options with pipelines from mutations', (t) => {
 })
 
 test('should include schema cast mutations in pipelines', (t) => {
-  const expected = {
-    ...mutations,
-    ['cast_entry']: schemas.entry.mutation,
-    ['cast_user']: schemas.user.mutation,
-  }
-
   const ret = createMapOptions(schemas, mutations, transformers)
 
-  t.deepEqual(ret.pipelines, expected)
+  t.is(typeof ret.pipelines?.cast_entry, 'function')
+  t.is(typeof ret.pipelines?.cast_user, 'function')
 })
 
 test('should include transformers', (t) => {

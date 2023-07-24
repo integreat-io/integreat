@@ -1,8 +1,6 @@
-import { transform } from 'map-transform'
 import expandShape from './expandShape.js'
 import createCast from './createCast.js'
 import accessForAction from './accessForAction.js'
-import type { TransformDefinition } from 'map-transform/types.js'
 import {
   SchemaDef,
   FieldDefinition,
@@ -29,18 +27,8 @@ const expandFields = (vals: ShapeDef): Shape =>
     {}
   )
 
-const createMutationFromCastFn = (castFn: CastFn): TransformDefinition => [
-  transform(
-    () =>
-      (data, { rev = false }) =>
-        castFn(data, rev)
-  ),
-]
-
 /**
- * Create a schema with the given id and service.
- * @param def - Object with id, plural, service, and shape
- * @returns The created schema
+ * A schema with shape, cast function, and info on access control.
  */
 export default class Schema {
   id: string
@@ -49,7 +37,6 @@ export default class Schema {
   internal: boolean
   shape: Shape
   access?: string | AccessDef
-  mutation: TransformDefinition
   castFn: CastFn
   accessForAction: (actionType?: string) => Access
 
@@ -61,7 +48,6 @@ export default class Schema {
     this.shape = expandShape(def.shape || {})
     this.access = def.access
     const castFn = createCast(this.shape, def.id, castFns, def.generateId)
-    this.mutation = createMutationFromCastFn(castFn)
     this.castFn = castFn
     this.accessForAction = accessForAction(def.access)
   }
