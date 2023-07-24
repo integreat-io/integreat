@@ -43,12 +43,12 @@ const mutation = [
   {
     $direction: 'to',
     payload: 'payload',
-    'payload.data': ['payload.data', { $apply: 'cast_meta' }],
+    'payload.data': ['payload.data', { $cast: 'meta' }],
   },
   {
     $direction: 'from',
     response: 'response',
-    'response.data': ['response.data', { $apply: 'cast_meta' }],
+    'response.data': ['response.data', { $cast: 'meta' }],
   },
 ]
 

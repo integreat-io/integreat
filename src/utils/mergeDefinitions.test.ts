@@ -24,17 +24,14 @@ const userSchema = {
   access: 'all',
 }
 
-const entryMutation = [
-  {
-    $iterate: true,
-    id: ['key', { $transform: 'prefixId' }],
-    title: [
-      { $alt: ['headline', { $value: 'An entry' }] },
-      { $transform: 'trim' },
-    ],
-  },
-  { $apply: 'cast_entry' },
-]
+const entryMutation = {
+  $iterate: true,
+  id: ['key', { $transform: 'prefixId' }],
+  title: [
+    { $alt: ['headline', { $value: 'An entry' }] },
+    { $transform: 'trim' },
+  ],
+}
 
 const entriesService = {
   id: 'entries',

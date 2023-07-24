@@ -26,7 +26,7 @@ const mapping = [
     author: [{ $transform: 'fixed', value: 'admin' }],
     sections: 'sections[]',
   },
-  { $apply: 'cast_entry' },
+  { $cast: 'entry' },
 ]
 
 const defs = {

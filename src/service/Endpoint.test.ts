@@ -34,7 +34,7 @@ const entryMapping = [
     title: 'header',
     published: 'activated',
   },
-  { $apply: 'cast_entry' },
+  { $cast: 'entry' },
 ]
 
 const entryMapping2 = [
@@ -44,7 +44,7 @@ const entryMapping2 = [
     id: 'key',
     title: 'title',
   },
-  { $apply: 'cast_entry' },
+  { $cast: 'entry' },
 ]
 
 const entryMapping3 = [
@@ -54,7 +54,7 @@ const entryMapping3 = [
     id: 'key',
     title: 'header',
   },
-  { $apply: 'cast_entry' },
+  { $cast: 'entry' },
 ]
 
 const shouldHaveToken = () => () => (action: unknown) =>

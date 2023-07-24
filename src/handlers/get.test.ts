@@ -50,7 +50,7 @@ const pipelines = {
       updatedAt: 'updatedAt',
       source: '^payload.source',
     },
-    { $apply: 'cast_entry' },
+    { $cast: 'entry' },
   ],
   account: [
     {
@@ -60,7 +60,7 @@ const pipelines = {
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
     },
-    { $apply: 'cast_account' },
+    { $cast: 'account' },
   ],
 }
 

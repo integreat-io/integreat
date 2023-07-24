@@ -29,7 +29,7 @@ const defs = {
         author: ['author', { $apply: 'entries-user' }],
         'sections.id': 'sections[]',
       },
-      { $apply: 'cast_entry' },
+      { $cast: 'entry' },
     ],
     'entries-user': usersUserMapping,
   },

@@ -12,7 +12,7 @@ const defs = {
   ...definitions,
   mutations: {
     ...mutations,
-    'entries-entry': [{ $apply: 'cast_entry' }],
+    'entries-entry': [],
   },
 }
 

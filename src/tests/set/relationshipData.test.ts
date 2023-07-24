@@ -15,7 +15,7 @@ const entryMutation = [
     text: 'body',
     author: ['author', { $apply: 'entries-user' }],
   },
-  { $apply: 'cast_entry' },
+  { $cast: 'entry' }, // Not really needed, but checks that $cast works
 ]
 
 const userMutation = [
@@ -24,7 +24,7 @@ const userMutation = [
     id: 'username',
     firstname: 'forename',
   },
-  { $apply: 'cast_user' },
+  { $cast: 'user' },
 ]
 
 const defs = {

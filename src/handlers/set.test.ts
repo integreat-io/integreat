@@ -37,7 +37,7 @@ const pipelines = {
       id: 'id',
       title: 'header',
     },
-    { $apply: 'cast_entry' },
+    { $cast: 'entry' },
   ],
   account: [
     {
@@ -46,7 +46,7 @@ const pipelines = {
       name: 'name',
       posts: 'entries',
     },
-    { $apply: 'cast_account' },
+    { $cast: 'account' },
   ],
 }
 

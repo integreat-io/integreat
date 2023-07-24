@@ -29,14 +29,8 @@ const schemas = {
 }
 
 const pipelines = {
-  entry: [
-    { $iterate: true, id: 'id', title: 'header' },
-    { $apply: 'cast_entry' },
-  ],
-  account: [
-    { $iterate: true, id: 'id', name: 'name' },
-    { $apply: 'cast_account' },
-  ],
+  entry: [{ $iterate: true, id: 'id', title: 'header' }, { $cast: 'entry' }],
+  account: [{ $iterate: true, id: 'id', name: 'name' }, { $cast: 'account' }],
 }
 
 const mapOptions = createMapOptions(schemas, pipelines)

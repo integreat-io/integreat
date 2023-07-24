@@ -61,7 +61,7 @@ test('should transform entry', async (t) => {
       sections: 'sections[]',
     },
     { $transform: 'addSectionsToText' },
-    { $apply: 'cast_entry' },
+    { $cast: 'entry' },
   ]
   const defs = {
     ...definitions,
@@ -101,7 +101,7 @@ test('should transform array of entries', async (t) => {
       sections: 'sections[]',
     },
     { $transform: 'addSectionsToText' },
-    { $apply: 'cast_entry' },
+    { $cast: 'entry' },
   ]
   const defs = {
     ...definitions,

@@ -72,7 +72,7 @@ const mutations = {
       author: 'creator',
       createdAt: 'date',
     },
-    { $apply: 'cast_entry' },
+    { $cast: 'entry' },
   ],
 }
 
