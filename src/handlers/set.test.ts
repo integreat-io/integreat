@@ -2,7 +2,7 @@ import test from 'ava'
 import nock from 'nock'
 import Service from '../service/Service.js'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
-import schema from '../schema/index.js'
+import Schema from '../schema/Schema.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import type { TypedData } from '../types.js'
 import type { ValidateObject } from '../service/types.js'
@@ -12,7 +12,7 @@ import set from './set.js'
 // Setup
 
 const schemas = {
-  entry: schema({
+  entry: new Schema({
     id: 'entry',
     shape: {
       title: { $type: 'string', default: 'A title' },
@@ -20,7 +20,7 @@ const schemas = {
     },
     access: { allow: 'auth' },
   }),
-  account: schema({
+  account: new Schema({
     id: 'account',
     shape: {
       name: 'string',
@@ -49,8 +49,8 @@ const mapOptions = {
       },
       { $apply: 'cast_account' },
     ],
-    ['cast_entry']: schemas.entry.mapping,
-    ['cast_account']: schemas.account.mapping,
+    ['cast_entry']: schemas.entry.mutation,
+    ['cast_account']: schemas.account.mutation,
   },
 }
 

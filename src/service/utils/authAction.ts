@@ -1,7 +1,7 @@
 import { ensureArray } from '../../utils/array.js'
 import type { Action, Ident } from '../../types.js'
 import type { AccessDef } from '../../schema/types.js'
-import type { Schema } from '../../schema/index.js'
+import type Schema from '../../schema/Schema.js'
 
 const authorizedByIntegreat = Symbol('authorizedByIntegreat')
 

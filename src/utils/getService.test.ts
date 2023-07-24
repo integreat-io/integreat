@@ -1,5 +1,5 @@
 import test from 'ava'
-import createSchema from '../schema/index.js'
+import Schema from '../schema/Schema.js'
 import Service from '../service/Service.js'
 import type { Transporter } from '../types.js'
 
@@ -8,7 +8,7 @@ import getService from './getService.js'
 // Setup
 
 const schemas = {
-  entry: createSchema({ id: 'entry', plural: 'entries', service: 'entries' }),
+  entry: new Schema({ id: 'entry', plural: 'entries', service: 'entries' }),
 }
 
 const transporters = {

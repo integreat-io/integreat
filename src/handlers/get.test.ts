@@ -3,7 +3,7 @@ import sinon from 'sinon'
 import nock from 'nock'
 import Service from '../service/Service.js'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
-import schema from '../schema/index.js'
+import Schema from '../schema/Schema.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { Action, TypedData } from '../types.js'
@@ -13,7 +13,7 @@ import get from './get.js'
 // Setup
 
 const schemas = {
-  entry: schema({
+  entry: new Schema({
     id: 'entry',
     shape: {
       title: 'string',
@@ -24,14 +24,14 @@ const schemas = {
     },
     access: 'auth',
   }),
-  account: schema({
+  account: new Schema({
     id: 'account',
     shape: {
       name: 'string',
     },
     access: { identFromField: 'id' },
   }),
-  source: schema({
+  source: new Schema({
     id: 'source',
     shape: {
       name: 'string',
@@ -62,9 +62,9 @@ const pipelines = {
     },
     { $apply: 'cast_account' },
   ],
-  ['cast_entry']: schemas.entry.mapping,
-  ['cast_account']: schemas.account.mapping,
-  ['cast_source']: schemas.source.mapping,
+  ['cast_entry']: schemas.entry.mutation,
+  ['cast_account']: schemas.account.mutation,
+  ['cast_source']: schemas.source.mutation,
 }
 
 const ms = () => () => (date: unknown) =>

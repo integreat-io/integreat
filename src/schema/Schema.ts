@@ -29,55 +29,40 @@ const expandFields = (vals: ShapeDef): Shape =>
     {}
   )
 
-export interface Schema {
-  id: string
-  plural?: string
-  service?: string
-  internal: boolean
-  shape: ShapeDef
-  access?: string | AccessDef
-  mapping: TransformDefinition
-  castFn: CastFn
-  accessForAction: (actionType?: string) => Access
-}
+const createMutationFromCastFn = (castFn: CastFn): TransformDefinition => [
+  transform(
+    () =>
+      (data, { rev = false }) =>
+        castFn(data, rev)
+  ),
+]
 
 /**
  * Create a schema with the given id and service.
  * @param def - Object with id, plural, service, and shape
  * @returns The created schema
  */
-// TODO: Refactor as class
-export default function createSchema(
-  {
-    id,
-    plural,
-    service,
-    generateId = false,
-    shape: rawShape = {},
-    access,
-    internal = false,
-  }: SchemaDef,
-  castFns: CastFns = new Map()
-): Schema {
-  const shape = expandShape(rawShape)
-  const castFn = createCast(shape, id, castFns, generateId)
-  const mapping: TransformDefinition = [
-    transform(
-      () =>
-        (data, { rev = false }) =>
-          castFn(data, rev)
-    ),
-  ]
+export default class Schema {
+  id: string
+  plural?: string
+  service?: string
+  internal: boolean
+  shape: Shape
+  access?: string | AccessDef
+  mutation: TransformDefinition
+  castFn: CastFn
+  accessForAction: (actionType?: string) => Access
 
-  return {
-    id,
-    plural: plural || `${id}s`,
-    service,
-    internal,
-    shape,
-    access,
-    accessForAction: accessForAction(access),
-    mapping,
-    castFn,
+  constructor(def: SchemaDef, castFns: CastFns = new Map()) {
+    this.id = def.id
+    this.plural = def.plural || `${def.id}s`
+    this.service = def.service
+    this.internal = def.internal ?? false
+    this.shape = expandShape(def.shape || {})
+    this.access = def.access
+    const castFn = createCast(this.shape, def.id, castFns, def.generateId)
+    this.mutation = createMutationFromCastFn(castFn)
+    this.castFn = castFn
+    this.accessForAction = accessForAction(def.access)
   }
 }

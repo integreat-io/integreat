@@ -1,5 +1,5 @@
 import test from 'ava'
-import createSchema from '../schema/index.js'
+import Schema from '../schema/Schema.js'
 
 import createMapOptions from './createMapOptions.js'
 
@@ -21,12 +21,8 @@ const mutations = {
 }
 
 const schemas = {
-  entry: createSchema({
-    id: 'entry',
-  }),
-  user: createSchema({
-    id: 'user',
-  }),
+  entry: new Schema({ id: 'entry' }),
+  user: new Schema({ id: 'user' }),
 }
 
 const transformers = {
@@ -49,8 +45,8 @@ test('should return map options with pipelines from mutations', (t) => {
 test('should include schema cast mutations in pipelines', (t) => {
   const expected = {
     ...mutations,
-    ['cast_entry']: schemas.entry.mapping,
-    ['cast_user']: schemas.user.mapping,
+    ['cast_entry']: schemas.entry.mutation,
+    ['cast_user']: schemas.user.mutation,
   }
 
   const ret = createMapOptions(schemas, mutations, transformers)

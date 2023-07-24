@@ -4,7 +4,7 @@ import sinon from 'sinon'
 import pProgress from 'p-progress'
 import dispatch from '../tests/helpers/dispatch.js'
 import jsonResources from '../tests/helpers/resources/index.js'
-import createSchema from '../schema/index.js'
+import Schema from '../schema/Schema.js'
 import Auth from './Auth.js'
 import tokenAuth from '../authenticators/token.js'
 import optionsAuth from '../authenticators/options.js'
@@ -27,7 +27,7 @@ import Service, { Resources } from './Service.js'
 
 const castFns = new Map()
 
-const accountSchema = createSchema(
+const accountSchema = new Schema(
   {
     id: 'account',
     shape: {
@@ -43,7 +43,7 @@ const accountSchema = createSchema(
   },
   castFns
 )
-const entrySchema = createSchema(
+const entrySchema = new Schema(
   {
     id: 'entry',
     plural: 'entries',
@@ -59,7 +59,7 @@ const entrySchema = createSchema(
   },
   castFns
 )
-const sourceSchema = createSchema(
+const sourceSchema = new Schema(
   {
     id: 'source',
     shape: {

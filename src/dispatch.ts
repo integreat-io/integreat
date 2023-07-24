@@ -22,7 +22,7 @@ import type {
   HandlerOptions,
 } from './types.js'
 import type Service from './service/Service.js'
-import type { Schema } from './schema/index.js'
+import type Schema from './schema/Schema.js'
 import type Endpoint from './service/Endpoint.js'
 
 const debug = debugLib('great')

@@ -1,12 +1,12 @@
 import test from 'ava'
-import createSchema from '../../schema/index.js'
+import Schema from '../../schema/Schema.js'
 
 import { fromService, toService } from './authData.js'
 
 // Setup
 
 const schemas = {
-  account: createSchema({
+  account: new Schema({
     id: 'account',
     shape: {
       name: 'string',

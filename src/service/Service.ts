@@ -17,7 +17,7 @@ import { lookupById, lookupByIds } from '../utils/indexUtils.js'
 import * as authorizeData from './utils/authData.js'
 import authorizeAction, { isAuthorizedAction } from './utils/authAction.js'
 import { compose } from '../dispatch.js'
-import type { Schema } from '../schema/index.js'
+import type Schema from '../schema/Schema.js'
 import type { CastFn } from '../schema/types.js'
 import type {
   Action,

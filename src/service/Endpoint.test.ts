@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import jsonAdapter from 'integreat-adapter-json'
-import createSchema from '../schema/index.js'
+import Schema from '../schema/Schema.js'
 import transformers from '../transformers/index.js'
 import { isAction, isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
@@ -13,7 +13,7 @@ import Endpoint from './Endpoint.js'
 // Setup
 
 const schemas = {
-  entry: createSchema({
+  entry: new Schema({
     id: 'entry',
     plural: 'entries',
     shape: {

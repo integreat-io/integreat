@@ -2,7 +2,7 @@ import EventEmitter from 'node:events'
 import Auth from './service/Auth.js'
 import builtinHandlers from './handlers/index.js'
 import runFn from './handlers/run.js'
-import createSchema, { Schema } from './schema/index.js'
+import Schema from './schema/Schema.js'
 import Service from './service/Service.js'
 import { isObject } from './utils/is.js'
 import createMapOptions from './utils/createMapOptions.js'
@@ -76,7 +76,7 @@ export default class Instance extends EventEmitter {
     const castFns = new Map()
     // TODO: Refactor to use Map for `schemas` as well
     const schemas = defs.schemas
-      .map((schema) => createSchema(schema, castFns))
+      .map((schema) => new Schema(schema, castFns))
       .reduce(indexById, {} as Record<string, Schema>)
     Object.entries(schemas).forEach(([type, schema]) => {
       castFns.set(type, schema.castFn)

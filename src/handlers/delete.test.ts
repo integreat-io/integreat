@@ -2,7 +2,7 @@ import test from 'ava'
 import nock from 'nock'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import Service from '../service/Service.js'
-import createSchema from '../schema/index.js'
+import Schema from '../schema/Schema.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { ServiceDef } from '../service/types.js'
@@ -12,14 +12,14 @@ import deleteFn from './delete.js'
 // Setup
 
 const schemas = {
-  entry: createSchema({
+  entry: new Schema({
     id: 'entry',
     shape: {
       title: { $type: 'string', default: 'A title' },
     },
     access: 'auth',
   }),
-  account: createSchema({
+  account: new Schema({
     id: 'account',
     shape: {
       name: 'string',
