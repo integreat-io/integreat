@@ -6,7 +6,7 @@ import resources from '../helpers/resources/index.js'
 import mutations from '../../mutations/index.js'
 import entry1 from '../helpers/data/entry1.js'
 import entry2 from '../helpers/data/entry2.js'
-import { isDataObject } from '../../utils/is.js'
+import { isObject } from '../../utils/is.js'
 import type { TypedData } from '../../types.js'
 
 import Integreat from '../../index.js'
@@ -18,7 +18,7 @@ const transformers = {
     typeof value === 'string' ? value.toUpperCase() : value,
   addSectionsToText: () => () =>
     mapAny((item: unknown) => {
-      if (!isDataObject(item)) {
+      if (!isObject(item)) {
         return item
       }
       const sections = Array.isArray(item.sections)

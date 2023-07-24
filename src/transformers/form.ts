@@ -1,6 +1,6 @@
 /* eslint-disable security/detect-object-injection */
 import { getFirstIfArray } from '../utils/array.js'
-import { isObject, isDataObject } from '../utils/is.js'
+import { isObject, isObject } from '../utils/is.js'
 import type { Transformer } from 'map-transform/types.js'
 
 const parseObject = (value: string) => {
@@ -31,7 +31,7 @@ const formatValue = (value: unknown) =>
   encodeURIComponent(formatObject(value)).replace(/%20/g, '+')
 
 const stringifyForm = (data: unknown) =>
-  isDataObject(data)
+  isObject(data)
     ? Object.keys(data)
         .map((key: string) =>
           typeof data[key] === 'undefined'

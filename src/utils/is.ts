@@ -18,18 +18,14 @@ export const isDate = (value: unknown): value is Date =>
 export const isEmptyObject = (value: unknown): value is {} =>
   isObject(value) && Object.keys(value).length === 0
 
-export const isDataObject = (
-  value: unknown
-): value is Record<string, unknown> => isObject(value)
-
 export const isTypedData = (value: unknown): value is TypedData =>
-  isDataObject(value) && value.hasOwnProperty('$type')
+  isObject(value) && value.hasOwnProperty('$type')
 
 export const isReference = (value: unknown): value is Reference =>
-  isDataObject(value) && value.hasOwnProperty('$ref')
+  isObject(value) && value.hasOwnProperty('$ref')
 
 export const isShape = (value: unknown): value is ShapeDef =>
-  isDataObject(value) && !value.hasOwnProperty('$type')
+  isObject(value) && !value.hasOwnProperty('$type')
 
 export const isFieldDefinition = (value: unknown): value is FieldDefinition =>
   isObject(value) && typeof value.$type === 'string'
@@ -41,9 +37,9 @@ export const isNotNullOrUndefined = <T>(value: T): value is NonNullable<T> =>
   !isNullOrUndefined(value)
 
 export const isAction = (action: unknown): action is Action =>
-  isDataObject(action) &&
+  isObject(action) &&
   typeof action.type === 'string' &&
-  isDataObject(action.payload)
+  isObject(action.payload)
 
 export const isTruthy = (value: unknown): boolean => !!value
 export const isFalsy = (value: unknown): boolean => !value

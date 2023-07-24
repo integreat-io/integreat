@@ -1,7 +1,7 @@
 import debugLib from 'debug'
 import { createErrorResponse, setOrigin } from '../utils/action.js'
 import getHandler from './get.js'
-import { isDataObject } from '../utils/is.js'
+import { isObject } from '../utils/is.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'
 
 const debug = debugLib('great')
@@ -11,7 +11,7 @@ const extractAllMetaFields = (meta: Record<string, unknown>) =>
   Object.keys(meta).filter(isMetaField)
 
 const extractMeta = (meta: unknown, keys: unknown): Record<string, unknown> =>
-  isDataObject(meta)
+  isObject(meta)
     ? typeof keys === 'string' || Array.isArray(keys)
       ? ([] as string[])
           .concat(keys)
