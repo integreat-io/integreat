@@ -1,23 +1,16 @@
-import Later from 'later'
+import type Schedule from './utils/Schedule.js'
 import type { Dispatch, Action } from './types.js'
 
-export interface Scheduled {
-  later: Later.Schedule
-  action: Action
-}
-
-export default (dispatch: Dispatch, scheduled: (Scheduled | undefined)[]) =>
+export default (dispatch: Dispatch, schedules: Schedule[]) =>
   async function dispatchScheduled(from: Date, to: Date): Promise<Action[]> {
     const dispatched: Action[] = []
     const meta = { ident: { id: 'scheduler' }, queue: true }
 
-    for (const schedule of scheduled) {
-      if (schedule) {
-        const { later, action } = schedule
-        const next = later.next(1, from, to)
-        if (next) {
-          const response = await dispatch({ ...action, meta })
-          dispatched.push({ ...action, response, meta })
+    for (const schedule of schedules) {
+      if (schedule && schedule.action) {
+        if (schedule.shouldRun(from, to)) {
+          const response = await dispatch({ ...schedule.action, meta })
+          dispatched.push({ ...schedule.action, response, meta })
         }
       }
     }

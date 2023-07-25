@@ -11,7 +11,7 @@ import createDispatch from './dispatch.js'
 import listen from './listen.js'
 import close from './close.js'
 import { indexById } from './utils/indexUtils.js'
-import createSchedule from './utils/createSchedule.js'
+import Schedule from './utils/Schedule.js'
 import createDispatchScheduled from './dispatchScheduled.js'
 import type {
   Definitions,
@@ -47,6 +47,9 @@ const setAdapterIds = (adapters?: Record<string, Adapter>) =>
         ])
       )
     : {}
+
+const hasActionAndCron = (schedule: Schedule) =>
+  !!schedule.action && !!schedule.cron
 
 export default class Instance extends EventEmitter {
   id?: string
@@ -148,7 +151,10 @@ export default class Instance extends EventEmitter {
     })
 
     // Prepare scheduled actions
-    const scheduled = jobsDefs.filter(isObject).map(createSchedule)
+    const scheduled = jobsDefs
+      .filter(isObject)
+      .map((def) => new Schedule(def))
+      .filter(hasActionAndCron)
     const dispatchScheduled = createDispatchScheduled(dispatch, scheduled)
 
     this.id = defs.id

@@ -33,21 +33,6 @@ export interface TypedData extends Record<string, unknown> {
   isDeleted?: boolean
 }
 
-export type ScheduleObject = {
-  s?: number[]
-  m?: number[]
-  h?: number[]
-  t?: number[]
-  D?: number[]
-  M?: number[]
-  Y?: number[]
-  dw?: number[]
-  dc?: number[]
-  dy?: number[]
-  wm?: number[]
-  wy?: number[]
-}
-
 export interface ConditionFailObject extends Record<string, unknown> {
   message?: string
   status?: string
@@ -81,8 +66,6 @@ export interface JobDef {
   id?: string
   action?: Action
   flow?: (Job | Job[])[]
-  schedules?: ScheduleObject[]
-  exceptions?: ScheduleObject[]
   cron?: string
   human?: string
   responseMutation?: TransformObject | Pipeline

@@ -363,9 +363,7 @@ test('should mutate data', async (t) => {
 test('should dispatch scheduled', async (t) => {
   const handler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { TEST: handler }
-  const jobs = [
-    { schedules: [{ m: [45] }], action: { type: 'TEST', payload: {} } },
-  ]
+  const jobs = [{ cron: '45 * * * *', action: { type: 'TEST', payload: {} } }]
   const fromDate = new Date('2021-05-11T14:32Z')
   const toDate = new Date('2021-05-11T14:59Z')
 
