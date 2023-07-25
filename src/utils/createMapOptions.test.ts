@@ -43,11 +43,12 @@ test('should return map options with pipelines from mutations', (t) => {
 })
 
 test('should include transformers', (t) => {
-  const expectedTransformerKeys = ['string', 'cast_entry', 'cast_user']
-
   const ret = createMapOptions(schemas, mutations, transformers)
 
-  t.deepEqual(Object.keys(ret.transformers || {}), expectedTransformerKeys)
+  const trans = ret.transformers || {}
+  t.is(typeof trans.string, 'function')
+  t.is(typeof trans[Symbol.for('cast_entry')], 'function')
+  t.is(typeof trans[Symbol.for('cast_user')], 'function')
 })
 
 test('should include dictionaries', (t) => {

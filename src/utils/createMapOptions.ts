@@ -12,7 +12,7 @@ const transformersFromSchemas = (
 ): Record<string, Transformer> =>
   Object.fromEntries(
     Object.entries(schemas).map(([type, schema]) => [
-      `cast_${type}`,
+      Symbol.for(`cast_${type}`),
       () =>
         () =>
         (data, { rev = false }) =>

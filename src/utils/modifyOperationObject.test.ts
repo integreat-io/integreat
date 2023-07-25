@@ -6,7 +6,7 @@ import modifyOperationObject from './modifyOperationObject.js'
 
 test('should modify $cast operations to $transform', (t) => {
   const operation = { $cast: 'entry' }
-  const expected = { $transform: 'cast_entry' }
+  const expected = { $transform: Symbol.for('cast_entry') }
 
   const ret = modifyOperationObject(operation)
 
@@ -15,7 +15,7 @@ test('should modify $cast operations to $transform', (t) => {
 
 test('should keep other props', (t) => {
   const operation = { $cast: 'entry', $direction: 'to' }
-  const expected = { $transform: 'cast_entry', $direction: 'to' }
+  const expected = { $transform: Symbol.for('cast_entry'), $direction: 'to' }
 
   const ret = modifyOperationObject(operation)
 

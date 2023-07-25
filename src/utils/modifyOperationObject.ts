@@ -1,6 +1,6 @@
 const createCastOperation = ({ $cast, ...props }: Record<string, unknown>) => ({
   ...props,
-  $transform: `cast_${$cast}`,
+  $transform: Symbol.for(`cast_${$cast}`),
 })
 
 export default function modifyOperationObject(
