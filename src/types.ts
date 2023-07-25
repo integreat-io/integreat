@@ -67,7 +67,7 @@ export interface JobDef {
   action?: Action
   flow?: (Job | Job[])[]
   cron?: string
-  human?: string
+  tz?: string
   responseMutation?: TransformObject | Pipeline
 }
 

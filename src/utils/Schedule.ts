@@ -5,10 +5,12 @@ import type { JobDef, Action } from '../types.js'
 export default class Schedule {
   action: Action | null
   cron?: string
+  tz?: string
 
   constructor(job: JobDef) {
     this.action = isAction(job.action) ? job.action : null
     this.cron = typeof job.cron === 'string' ? job.cron : undefined
+    this.tz = typeof job.tz === 'string' ? job.tz : undefined
   }
 
   shouldRun(start: Date, end: Date) {
@@ -22,7 +24,7 @@ export default class Schedule {
         throw new Error('Missing start or end date')
       }
 
-      const options = { currentDate: start, endDate: end }
+      const options = { currentDate: start, endDate: end, tz: this.tz }
       const interval = cronParser.parseExpression(this.cron, options)
 
       try {

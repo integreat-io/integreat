@@ -67,6 +67,25 @@ test('should return false when schedule is not within the given time period', (t
   t.false(ret)
 })
 
+test('should support time zone', (t) => {
+  const tz = 'America/Nassau'
+  const start = new Date('2023-07-11T12:47:00+02:00') // 6:47 AM in Nassau
+  const end = new Date('2023-07-11T12:51:00+02:00')
+  const def = {
+    cron: '50 6 * * *',
+    tz,
+    action: {
+      type: 'SYNC',
+      payload: { type: 'entry', from: 'entryDb', to: 'dwh' },
+    },
+  }
+
+  const schedule = new Schedule(def)
+  const ret = schedule.shouldRun(start, end)
+
+  t.true(ret)
+})
+
 test('should return false when no cron string is given', (t) => {
   const start = new Date('2023-07-11T12:51:00+02:00')
   const end = new Date('2023-07-11T12:56:00+02:00')
