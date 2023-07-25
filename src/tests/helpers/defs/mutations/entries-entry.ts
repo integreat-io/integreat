@@ -8,6 +8,6 @@ export default {
   updatedAt: 'updatedAt',
   'author.id': 'authorId',
   approvedBy: 'approver',
-  sections: 'sections[]',
+  sections: ['sections[]', { id: { $alt: ['id', '.'] }, $iterate: true }],
   props: 'props[]',
 }

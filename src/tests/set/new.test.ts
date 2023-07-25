@@ -46,8 +46,7 @@ test.after.always(() => {
 
 // Tests
 
-// TODO: There's something wrong with cast to a service here ...
-test.failing('should set new entry (getting role from identity)', async (t) => {
+test('should set new entry (getting role from identity)', async (t) => {
   const middleware = [completeIdent]
   const putData = {
     key: 'ent1',
