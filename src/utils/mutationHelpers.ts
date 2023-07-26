@@ -4,26 +4,27 @@ import type { Action, Response } from '../types.js'
 const isResponseObject = (response: unknown): response is Response =>
   isObject(response) && Object.keys(response).length > 0
 
-const removeEmptyError = ({ error, ...response }: Response) =>
-  error ? { ...response, error } : response
+const joinErrorMessages = (errors?: string | string[]) =>
+  Array.isArray(errors)
+    ? errors.length > 0
+      ? errors.join(' | ')
+      : undefined
+    : errors
 
-const setStatusAndError = (
-  response: Partial<Response>,
+const isOkOrEmpty = (status: string | null | undefined) =>
+  ['ok', null, undefined].includes(status)
+
+function setStatusAndError(
+  { error: responseError, ...response }: Partial<Response>,
   originalStatus: string | null = null
-): Response =>
-  removeEmptyError({
-    ...response,
-    status:
-      response.error &&
-      ['ok', null, undefined].includes(response.status) &&
-      (!originalStatus || originalStatus === 'ok')
-        ? 'error'
-        : response.status || originalStatus || undefined,
-    error: Array.isArray(response.error)
-      ? response.error.join(' | ')
-      : response.error,
-  })
-
+): Response {
+  const error = joinErrorMessages(responseError)
+  const status =
+    error && isOkOrEmpty(response.status) && isOkOrEmpty(originalStatus)
+      ? 'error'
+      : response.status || originalStatus || undefined
+  return error ? { ...response, status, error } : { ...response, status }
+}
 export function populateActionAfterMutation(
   action: Action,
   mappedAction?: Partial<Action>
