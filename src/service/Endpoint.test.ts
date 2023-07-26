@@ -133,6 +133,7 @@ const mockAdapter: Adapter = {
               content: {
                 data: {
                   items: [
+                    // Duplicate the array
                     (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
                     (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
                   ],
@@ -676,7 +677,7 @@ test('should mutate response from service with service adapter', async (t) => {
   )
 })
 
-test('should mutate response from service with several adapters', async (t) => {
+test('should mutate response from service with both service and endpoint adapters', async (t) => {
   const endpointDef = {
     mutation: {
       response: {
@@ -693,14 +694,16 @@ test('should mutate response from service with several adapters', async (t) => {
       data: JSON.stringify(actionWithResponse.response.data),
     },
   }
-  const adapters = [jsonAdapter, mockAdapter]
+  const serviceAdapters = [jsonAdapter]
+  const endpointAdapters = [mockAdapter]
   const endpoint = new Endpoint(
     endpointDef,
     serviceId,
     options,
     mapOptions,
     undefined,
-    adapters
+    serviceAdapters,
+    endpointAdapters
   )
 
   const ret = await endpoint.mutate(actionWithJSON, false)
@@ -708,6 +711,49 @@ test('should mutate response from service with several adapters', async (t) => {
   t.is(ret.response?.status, 'ok', ret.response?.error)
   t.true(Array.isArray(ret.response?.data), 'Should be an array')
   t.is((ret.response?.data as TypedData[]).length, 2) // Mock adapter duplicates the array
+})
+
+test('should run service mutation _before_ endpoint adapters', async (t) => {
+  const endpointDef = {
+    mutation: {
+      response: {
+        $modify: 'response',
+        data: ['response.data.content.data', { $apply: 'entry' }],
+      },
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const actionWithJSON = {
+    ...actionWithResponse,
+    response: {
+      ...actionWithResponse.response,
+      data: JSON.stringify(actionWithResponse.response.data),
+    },
+  }
+  const serviceAdapters = [jsonAdapter]
+  const endpointAdapters = [mockAdapter]
+  const serviceMutation = {
+    '.': '.',
+    'response.data.content.data.items[0].header': { $value: 'Replaced title' },
+  }
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapOptions,
+    serviceMutation,
+    serviceAdapters,
+    endpointAdapters
+  )
+
+  const ret = await endpoint.mutate(actionWithJSON, false)
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  t.true(Array.isArray(ret.response?.data), 'Should be an array')
+  const data = ret.response?.data as TypedData[]
+  t.is(data.length, 2) // Mock adapter duplicates the array
+  t.is(data[0].title, 'Replaced title')
+  t.is(data[1].title, 'Replaced title') // Will be 'Entry 1' if service mutation is run _after_ endpoint adapters
 })
 
 test('should mutate response from service with service adapter and no mutation pipeline', async (t) => {
@@ -748,6 +794,7 @@ test('should mutate response from service with service adapter and no mutation p
 test('should mutate response to service (incoming) with service adapter', async (t) => {
   const endpointDef = {
     mutation: {
+      $direction: 'rev',
       response: {
         $modify: 'response',
         data: ['response.data.content.data', { $apply: 'entry' }],

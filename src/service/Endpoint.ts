@@ -1,6 +1,5 @@
 /* eslint-disable security/detect-object-injection */
-import mapTransform from 'map-transform'
-import pPipe from 'p-pipe'
+import mapTransform, { transform } from 'map-transform'
 import compareEndpoints from './utils/compareEndpoints.js'
 import isMatch from './utils/matchEnpoints.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
@@ -10,6 +9,8 @@ import type {
   TransformDefinition,
   DataMapper,
   InitialState,
+  State,
+  AsyncDataMapperWithOptions,
 } from 'map-transform/types.js'
 import type { Action, Response, Adapter } from '../types.js'
 import type {
@@ -20,10 +21,6 @@ import type {
   ValidateObject,
   PreparedOptions,
 } from './types.js'
-
-interface MutateAction {
-  (action: Action): Promise<Action>
-}
 
 export interface PrepareOptions {
   (options: ServiceOptions, serviceId: string): ServiceOptions
@@ -69,54 +66,76 @@ function prepareValidator(
   }
 }
 
-async function mutateAction(
-  action: Action,
-  isRev: boolean,
-  mutator: DataMapperEntry | null,
-  normalize: MutateAction = async (action) => action,
-  serialize: MutateAction = async (action) => action
-) {
-  // Normalize action if we're coming _from_ a service
-  const normalizedAction = isRev ? action : await normalize(action)
-
-  // Mutate action
-  const mutatedAction = mutator
-    ? populateActionAfterMutation(
-        action,
-        mutator(normalizedAction, { rev: isRev }) as Action
-      )
-    : normalizedAction
-
-  // Serialize action if we're going _to_ a service
-  return isRev ? await serialize(mutatedAction) : mutatedAction
+// Create a transformer that runs a mutation and populates the resulting action
+// with properties from the original action and makes sure the status and error
+// are correct.
+function runMutationAndPopulateAction(mutator: DataMapper) {
+  return () => async (action: unknown, state: State) => {
+    // TODO: Throw here if we don't get an action?
+    const mutatedAction = (await mutator(action, state)) as Action
+    return populateActionAfterMutation(action as Action, mutatedAction)
+  }
 }
-
-const flattenIfOneOrNone = <T>(arr: T[]): T | T[] =>
-  arr.length <= 1 ? arr[0] : arr
 
 const setModifyFlag = (def?: TransformDefinition) =>
   isObject(def) ? { ...def, $modify: true } : def
 
-const prepareAdapter = (
+const transformerFromAdapter = (
   serviceId: string,
-  options: Record<string, Record<string, unknown>> = {},
-  isSerialize = false
+  options: Record<string, Record<string, unknown>> = {}
 ) =>
-  function prepareAdapter(adapter: Adapter) {
+  function createAdapterTransformer(
+    adapter: Adapter
+  ): AsyncDataMapperWithOptions {
     const adapterId = adapter.id
     const preparedOptions =
       typeof adapterId === 'string'
         ? adapter.prepareOptions(options[adapterId] || {}, serviceId)
         : {}
-    return isSerialize
-      ? async (action: Action): Promise<Action> =>
-          await adapter.serialize(action, preparedOptions)
-      : async (action: Action): Promise<Action> =>
-          await adapter.normalize(action, preparedOptions)
+
+    // Return the transformer. It will call the adapter's `serialize()` method
+    // in reverse direction and `normalize()` when going forward.
+    return () => async (action, state) =>
+      // TODO: Throw here if we don't get an action?
+      state.rev
+        ? await adapter.serialize(action as Action, preparedOptions)
+        : await adapter.normalize(action as Action, preparedOptions)
   }
 
-const pipeAdapters = (adapters: MutateAction[]) =>
-  adapters.length > 0 ? (pPipe(...adapters) as MutateAction) : undefined
+function prepareActionMutation(
+  serviceMutation: TransformDefinition | undefined,
+  endpointMutation: TransformDefinition | undefined,
+  serviceAdapterTransformer: AsyncDataMapperWithOptions[],
+  endpointAdapterTransformer: AsyncDataMapperWithOptions[],
+  mapOptions: MapOptions
+) {
+  // Prepare service and endpoint mutations as separate mutate functions that
+  // can be run as a transformer in the pipeline.
+  const serviceMutator = mapTransform(
+    ensureArray(serviceMutation)
+      .map(setModifyFlag)
+      .filter(isNotNullOrUndefined),
+    mapOptions
+  )
+  const endpointMutator = mapTransform(
+    ensureArray(endpointMutation)
+      .map(setModifyFlag)
+      .filter(isNotNullOrUndefined),
+    mapOptions
+  )
+
+  // Prepare the pipeline, with service adapters, service mutation, endpoint
+  // adapters and endpoint mutation – in that order. Note that we run the
+  // mutations with a transformer that makes sure the result is a valid action
+  // and that the status and error are set correctly.
+  const pipeline = [
+    ...serviceAdapterTransformer.map((transformer) => transform(transformer)),
+    transform(runMutationAndPopulateAction(serviceMutator)),
+    ...endpointAdapterTransformer.map((transformer) => transform(transformer)),
+    transform(runMutationAndPopulateAction(endpointMutator)),
+  ]
+  return mapTransform(pipeline, mapOptions)
+}
 
 /**
  * Create endpoint from definition.
@@ -131,6 +150,7 @@ export default class Endpoint {
   allowRawResponse?: boolean
 
   #validator: (action: Action) => Promise<Response | null>
+  #mutateAction: DataMapper<InitialState>
   #checkIfMatch: (action: Action, isIncoming?: boolean) => Promise<boolean>
 
   constructor(
@@ -139,7 +159,8 @@ export default class Endpoint {
     options: PreparedOptions,
     mapOptions: MapOptions,
     serviceMutation?: TransformDefinition,
-    adapters: Adapter[] = []
+    serviceAdapters: Adapter[] = [],
+    endpointAdapters: Adapter[] = []
   ) {
     this.id = endpointDef.id
     this.allowRawRequest = endpointDef.allowRawRequest ?? false
@@ -149,19 +170,13 @@ export default class Endpoint {
     this.options = options
 
     this.#validator = prepareValidator(endpointDef.validate, mapOptions)
-    const mutation = flattenIfOneOrNone(
-      [...ensureArray(serviceMutation), ...ensureArray(endpointDef.mutation)]
-        .map(setModifyFlag)
-        .filter(isNotNullOrUndefined)
-    ) as Pipeline | TransformDefinition
-    this.#mutator = mutation ? mapTransform(mutation, mapOptions) : null
 
-    this.#normalize = pipeAdapters(
-      adapters.map(prepareAdapter(serviceId, options.adapters, false))
-    )
-    adapters.reverse() // Reverse adapter order before creating the serializer
-    this.#serialize = pipeAdapters(
-      adapters.map(prepareAdapter(serviceId, options.adapters, true))
+    this.#mutateAction = prepareActionMutation(
+      serviceMutation,
+      endpointDef.mutation,
+      serviceAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
+      endpointAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
+      mapOptions
     )
   }
 
@@ -169,14 +184,9 @@ export default class Endpoint {
     return await this.#validator(action)
   }
 
-  mutate(action: Action, isRev: boolean) {
-    return mutateAction(
-      action,
-      isRev,
-      this.#mutator,
-      this.#normalize,
-      this.#serialize
-    )
+  async mutate(action: Action, isRev: boolean): Promise<Action> {
+    // TODO: Throw here if we don't get an action?
+    return (await this.#mutateAction(action, { rev: isRev })) as Action
   }
 
   async isMatch(action: Action, isIncoming?: boolean): Promise<boolean> {
