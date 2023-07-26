@@ -1,12 +1,16 @@
 /* eslint-disable security/detect-object-injection */
 import mapTransform from 'map-transform'
 import pPipe from 'p-pipe'
+import compareEndpoints from './utils/compareEndpoints.js'
+import isMatch from './utils/matchEnpoints.js'
+import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
+import { ensureArray } from '../utils/array.js'
+import { isNotNullOrUndefined, isObject } from '../utils/is.js'
 import type {
   TransformDefinition,
-  DataMapperEntry,
-  Pipeline,
+  DataMapper,
+  InitialState,
 } from 'map-transform/types.js'
-import compareEndpoints from './utils/compareEndpoints.js'
 import type { Action, Response, Adapter } from '../types.js'
 import type {
   MapOptions,
@@ -16,10 +20,6 @@ import type {
   ValidateObject,
   PreparedOptions,
 } from './types.js'
-import isMatch from './utils/matchEnpoints.js'
-import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
-import { ensureArray } from '../utils/array.js'
-import { isNotNullOrUndefined, isObject } from '../utils/is.js'
 
 interface MutateAction {
   (action: Action): Promise<Action>
@@ -62,7 +62,7 @@ function prepareValidator(
 
   return async function validateAction(action: Action) {
     for (const { validate, failResponse } of validators) {
-      const result = validate(action)
+      const result = await validate(action)
       if (!result) return failResponse
     }
     return null
@@ -100,7 +100,7 @@ const setModifyFlag = (def?: TransformDefinition) =>
 const prepareAdapter = (
   serviceId: string,
   options: Record<string, Record<string, unknown>> = {},
-  doSerialize = false
+  isSerialize = false
 ) =>
   function prepareAdapter(adapter: Adapter) {
     const adapterId = adapter.id
@@ -108,7 +108,7 @@ const prepareAdapter = (
       typeof adapterId === 'string'
         ? adapter.prepareOptions(options[adapterId] || {}, serviceId)
         : {}
-    return doSerialize
+    return isSerialize
       ? async (action: Action): Promise<Action> =>
           await adapter.serialize(action, preparedOptions)
       : async (action: Action): Promise<Action> =>
@@ -131,10 +131,7 @@ export default class Endpoint {
   allowRawResponse?: boolean
 
   #validator: (action: Action) => Promise<Response | null>
-  #mutator: DataMapperEntry | null
-  #normalize?: MutateAction
-  #serialize?: MutateAction
-  #checkIfMatch: (action: Action, isIncoming?: boolean) => boolean
+  #checkIfMatch: (action: Action, isIncoming?: boolean) => Promise<boolean>
 
   constructor(
     endpointDef: EndpointDef,
@@ -182,19 +179,24 @@ export default class Endpoint {
     )
   }
 
-  isMatch(action: Action, isIncoming?: boolean): boolean {
-    return this.#checkIfMatch(action, isIncoming)
+  async isMatch(action: Action, isIncoming?: boolean): Promise<boolean> {
+    return await this.#checkIfMatch(action, isIncoming)
   }
 
   static sortAndPrepare(endpointDefs: EndpointDef[]): EndpointDef[] {
     return endpointDefs.map(prepareEndpoint).sort(compareEndpoints)
   }
 
-  static findMatchingEndpoint(
+  static async findMatchingEndpoint(
     endpoints: Endpoint[],
     action: Action,
     isIncoming = false
-  ): Endpoint | undefined {
-    return endpoints.find((endpoint) => endpoint.isMatch(action, isIncoming))
+  ): Promise<Endpoint | undefined> {
+    for (const endpoint of endpoints) {
+      if (await endpoint.isMatch(action, isIncoming)) {
+        return endpoint
+      }
+    }
+    return undefined
   }
 }

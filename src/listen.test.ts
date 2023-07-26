@@ -10,7 +10,7 @@ import listen from './listen.js'
 
 // TODO: Use actual Service class rather than this mock?
 const serviceMethods = {
-  endpointFromAction: () => undefined,
+  endpointFromAction: async () => undefined,
   authorizeAction: (action: Action) => action,
   mutateRequest: async (action: Action, _endpoint: unknown) => action,
   mutateResponse: async (_action: Action, _endpoint: unknown) => ({

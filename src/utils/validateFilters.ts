@@ -26,7 +26,7 @@ function prepareFilter(
     const val = validator.compile(cleanFilter(filter))
     const getFromPath = mapTransform(path)
 
-    return (data: unknown) => val(getFromPath(data))
+    return async (data: unknown) => val(await getFromPath(data))
   }
   return undefined
 }
@@ -70,13 +70,17 @@ export default function validateFilters(
     .filter(([filter]) => !!filter) as FilterAndMessage[]
   const isOrFilters = filters.$or === true
 
-  return function validate(data: unknown): ConditionFailObject[] {
+  return async function validate(
+    data: unknown
+  ): Promise<ConditionFailObject[]> {
     const state = { context: [], value: data } // Hack because we are using the `filter` transformer here
-    const failObjects = filterFns
-      .map(([filter, getMessage]) =>
-        filter(data, state) ? undefined : getMessage()
+    const failObjects = (
+      await Promise.all(
+        filterFns.map(async ([filter, getMessage]) =>
+          (await filter(data, state)) ? undefined : getMessage()
+        )
       )
-      .filter(Boolean) as ConditionFailObject[]
+    ).filter(Boolean) as ConditionFailObject[]
     return isOrFilters && failObjects.length < filterFns.length
       ? []
       : failObjects

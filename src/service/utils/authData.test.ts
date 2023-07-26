@@ -38,7 +38,7 @@ const account1 = {
 
 // Tests
 
-test('should remove unauthorized items in response data based on identFromField', (t) => {
+test('should remove unauthorized items in response data based on identFromField', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'account' },
@@ -54,12 +54,12 @@ test('should remove unauthorized items in response data based on identFromField'
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should remove unauthorized items in response data based on roleFromField', (t) => {
+test('should remove unauthorized items in response data based on roleFromField', async (t) => {
   const action = {
     type: 'SET',
     payload: { type: 'account' },
@@ -75,12 +75,12 @@ test('should remove unauthorized items in response data based on roleFromField',
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should authorized items by both identFromField and roleFromField', (t) => {
+test('should authorized items by both identFromField and roleFromField', async (t) => {
   const action = {
     type: 'SET',
     payload: { type: 'account' },
@@ -95,12 +95,12 @@ test('should authorized items by both identFromField and roleFromField', (t) => 
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should remove items of unknown type', (t) => {
+test('should remove items of unknown type', async (t) => {
   const action = {
     type: 'SET',
     payload: { type: 'account' },
@@ -119,12 +119,12 @@ test('should remove items of unknown type', (t) => {
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should authorize items with no data dependent auth methods', (t) => {
+test('should authorize items with no data dependent auth methods', async (t) => {
   const action = {
     type: 'TEST',
     payload: { type: 'account' },
@@ -133,12 +133,12 @@ test('should authorize items with no data dependent auth methods', (t) => {
   }
   const expected = action
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should authorized one item', (t) => {
+test('should authorized one item', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'account' },
@@ -153,12 +153,12 @@ test('should authorized one item', (t) => {
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should return undefined when one item is unauthorized by ident', (t) => {
+test('should return undefined when one item is unauthorized by ident', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'account', targetService: 'entries' },
@@ -177,12 +177,12 @@ test('should return undefined when one item is unauthorized by ident', (t) => {
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should return undefined when one item is unauthorized by role', (t) => {
+test('should return undefined when one item is unauthorized by role', async (t) => {
   const action = {
     type: 'DELETE',
     payload: { type: 'account' },
@@ -200,12 +200,12 @@ test('should return undefined when one item is unauthorized by role', (t) => {
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should not override existing error', (t) => {
+test('should not override existing error', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'account' },
@@ -227,12 +227,12 @@ test('should not override existing error', (t) => {
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should override ok status', (t) => {
+test('should override ok status', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'account' },
@@ -250,12 +250,12 @@ test('should override ok status', (t) => {
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should not authorize non-typed data for regular user', (t) => {
+test('should not authorize non-typed data for regular user', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'account', targetService: 'accounts' },
@@ -274,12 +274,12 @@ test('should not authorize non-typed data for regular user', (t) => {
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should authorize non-typed data for regular user when allowed', (t) => {
+test('should authorize non-typed data for regular user when allowed', async (t) => {
   const allowRawResponse = true
   const action = {
     type: 'GET',
@@ -289,12 +289,12 @@ test('should authorize non-typed data for regular user when allowed', (t) => {
   }
   const expected = action
 
-  const ret = fromService(schemas)(action, allowRawResponse)
+  const ret = await fromService(schemas)(action, allowRawResponse)
 
   t.deepEqual(ret, expected)
 })
 
-test('should do nothing with no data', (t) => {
+test('should do nothing with no data', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'account' },
@@ -302,12 +302,12 @@ test('should do nothing with no data', (t) => {
   }
   const expected = action
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should do nothing with null data', (t) => {
+test('should do nothing with null data', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'account' },
@@ -316,12 +316,12 @@ test('should do nothing with null data', (t) => {
   }
   const expected = action
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should authorized all items for root', (t) => {
+test('should authorized all items for root', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'account' },
@@ -336,12 +336,12 @@ test('should authorized all items for root', (t) => {
     },
   }
 
-  const ret = fromService(schemas)(action)
+  const ret = await fromService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should remove unauthorized items in request data', (t) => {
+test('should remove unauthorized items in request data', async (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'account', data: [account1, account0, account1] },
@@ -356,12 +356,12 @@ test('should remove unauthorized items in request data', (t) => {
     },
   }
 
-  const ret = toService(schemas)(action)
+  const ret = await toService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should not authorize non-typed request data for regular user', (t) => {
+test('should not authorize non-typed request data for regular user', async (t) => {
   const action = {
     type: 'GET',
     payload: {
@@ -383,12 +383,12 @@ test('should not authorize non-typed request data for regular user', (t) => {
     },
   }
 
-  const ret = toService(schemas)(action)
+  const ret = await toService(schemas)(action)
 
   t.deepEqual(ret, expected)
 })
 
-test('should authorize non-typed request data for regular user when allowed', (t) => {
+test('should authorize non-typed request data for regular user when allowed', async (t) => {
   const allowRawRequest = true
   const action = {
     type: 'GET',
@@ -397,7 +397,7 @@ test('should authorize non-typed request data for regular user when allowed', (t
   }
   const expected = action
 
-  const ret = toService(schemas)(action, allowRawRequest)
+  const ret = await toService(schemas)(action, allowRawRequest)
 
   t.deepEqual(ret, expected)
 })

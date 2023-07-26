@@ -1,6 +1,5 @@
 /* eslint-disable security/detect-object-injection */
 import mapTransform from 'map-transform'
-import pLimit from 'p-limit'
 import { ensureArray } from '../utils/array.js'
 import validateFilters from '../utils/validateFilters.js'
 import {
@@ -68,12 +67,12 @@ const addModify = (mutation: ArrayElement<Pipeline>) =>
   isObject(mutation) ? { $modify: true, ...mutation } : mutation
 
 // TODO: Prepare mutations in `../instance.ts` and call a `mutate()` function here
-function mutateAction(
+async function mutateAction(
   action: Action,
   mutation: TransformObject | Pipeline | undefined,
   actionsWithResponses: Record<string, Action>,
   mapOptions: MapOptions
-): Action {
+): Promise<Action> {
   if (mutation) {
     const mutationIncludingAction = Array.isArray(mutation)
       ? ['$action', ...mutation.map(addModify)]
@@ -82,10 +81,10 @@ function mutateAction(
       ...actionsWithResponses,
       $action: action,
     }
-    return mapTransform(
+    return (await mapTransform(
       mutationIncludingAction,
       mapOptions
-    )(responsesIncludingAction) as Action
+    )(responsesIncludingAction)) as Action
   } else {
     return action
   }
@@ -232,11 +231,11 @@ const getIteratePipeline = (
   step: JobWithAction
 ): TransformDefinition | undefined => step.iterate || step.iteratePath
 
-function unpackIterationSteps(
+async function unpackIterationSteps(
   step: Job,
   actionsWithResponses: Record<string, Action>,
   mapOptions: MapOptions
-): Job {
+): Promise<Job> {
   if (!isJobWithAction(step)) {
     return step
   }
@@ -246,7 +245,7 @@ function unpackIterationSteps(
   }
 
   const getter = mapTransform(iteratePipeline, mapOptions)
-  const items = ensureArray(getter(actionsWithResponses))
+  const items = ensureArray(await getter(actionsWithResponses))
 
   return {
     id: step.id,
@@ -292,7 +291,7 @@ async function runStep(
   // Check if conditions are met
   if (step.conditions) {
     // Validate specific conditions
-    const validationErrors = validateFilters(
+    const validationErrors = await validateFilters(
       step.conditions,
       true
     )(allResponses)
@@ -313,10 +312,10 @@ async function runStep(
   }
 
   try {
-    const job = unpackIterationSteps(step, allResponses, mapOptions)
+    const job = await unpackIterationSteps(step, allResponses, mapOptions)
     if (isJobWithAction(job)) {
       // We have reached an action -- run it
-      const action = mutateAction(
+      const action = await mutateAction(
         job.action,
         job.mutation,
         allResponses,
@@ -327,7 +326,13 @@ async function runStep(
         {
           [job.id]: setResponseOnAction(
             action,
-            mutateResponse(action, response, job, allResponses, mapOptions)
+            await mutateResponse(
+              action,
+              response,
+              job,
+              allResponses,
+              mapOptions
+            )
           ),
         },
         ourResponses
@@ -401,14 +406,14 @@ const cleanUpResponse = (response?: Response): Response =>
       )
     : { status: 'ok' }
 
-function mutateResponse(
+async function mutateResponse(
   action: Action,
   response: Response,
   job: Job,
   responses: Record<string, Action>,
   mapOptions: MapOptions
-): Response {
-  const { response: mutatedResponse } = mutateAction(
+): Promise<Response> {
+  const { response: mutatedResponse } = await mutateAction(
     setResponseOnAction(action, response),
     (job as JobDef).responseMutation, // Type hack, as Job is missing some of JobDef's props
     responses,
@@ -452,24 +457,22 @@ async function runFlow(
         // Note that it is okay to use `Promise.all` here, as rejections are
         // handled in `runStep()`
         const parallelResponses: Record<string, Action> = {}
-        doBreak = (
-          await Promise.all(
-            steps.map((step) =>
-              pLimit(1)(() =>
-                // Note: `runStep()` will mutate `arrayResponses` as it runs
-                runStep(
-                  step,
-                  allResponses,
-                  parallelResponses,
-                  dispatch,
-                  mapOptions,
-                  meta,
-                  prevStep
-                )
-              )
-            )
+        // These steps may be run in parallel, but run them one at a time for now
+        let doBreak = false
+        for (const step of steps) {
+          doBreak = await runStep(
+            step,
+            allResponses,
+            parallelResponses,
+            dispatch,
+            mapOptions,
+            meta,
+            prevStep
           )
-        ).includes(true) // Return `true` if any of the steps returns `true`
+          if (doBreak) {
+            break
+          }
+        }
         setResponses(parallelResponses, ourResponses)
       }
     } while (++index < job.flow.length && !doBreak)
@@ -514,7 +517,7 @@ export default (jobs: Record<string, JobDef>, mapOptions: MapOptions) =>
     if (isJobWithAction(job)) {
       return cleanUpResponse(response) // The response has alreay been mutated
     } else {
-      return mutateResponse(
+      return await mutateResponse(
         action,
         response,
         job,

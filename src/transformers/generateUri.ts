@@ -1,5 +1,5 @@
 import mapTransform from 'map-transform'
-import type { Transformer } from 'map-transform/types.js'
+import type { AsyncTransformer } from 'map-transform/types.js'
 
 export interface Props extends Record<string, unknown> {
   template?: string
@@ -36,8 +36,8 @@ function extractPathModifiers(path: string) {
 function prepareReplacement(rawPath: string, legacyDontEncode = false) {
   const { path, dontEncode } = extractPathModifiers(rawPath)
   const getFn = mapTransform(path)
-  return function get(data: unknown) {
-    return forceString(getFn(data), !(dontEncode || legacyDontEncode))
+  return async function get(data: unknown) {
+    return forceString(await getFn(data), !(dontEncode || legacyDontEncode))
   }
 }
 
@@ -57,27 +57,33 @@ function* split(template: string) {
 
 export const prepareTemplate = (template: string) => [...split(template)]
 
-export const replaceTemplate = (
-  parts: (string | ((value: unknown) => string))[],
+export const replaceTemplate = async (
+  parts: (string | ((value: unknown) => Promise<string>))[],
   data: unknown
-) =>
-  parts.map((part) => (typeof part === 'function' ? part(data) : part)).join('')
+): Promise<string> =>
+  (
+    await Promise.all(
+      parts.map(async (part) =>
+        typeof part === 'function' ? await part(data) : part
+      )
+    )
+  ).join('')
 
-const transformer: Transformer = function generateUri({
+const transformer: AsyncTransformer = function generateUri({
   template,
   templatePath,
 }: Props) {
   let parts =
     typeof template === 'string' ? prepareTemplate(template) : undefined
-  return () => (data: unknown) => {
+  return () => async (data: unknown) => {
     if (templatePath) {
-      const templateFromPath = mapTransform(templatePath)(data)
+      const templateFromPath = await mapTransform(templatePath)(data)
       if (typeof templateFromPath === 'string') {
         parts = prepareTemplate(templateFromPath)
       }
     }
 
-    return parts ? replaceTemplate(parts, data) : undefined
+    return parts ? await replaceTemplate(parts, data) : undefined
   }
 }
 

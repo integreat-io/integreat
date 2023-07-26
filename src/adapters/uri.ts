@@ -17,7 +17,7 @@ const adapter: Adapter = {
     const template = action.meta?.options?.uri
     if (typeof template === 'string') {
       const parts = prepareTemplate(template)
-      const uri = replaceTemplate(parts, action)
+      const uri = await replaceTemplate(parts, action)
       return {
         ...action,
         meta: { ...action.meta, options: { ...action.meta?.options, uri } },

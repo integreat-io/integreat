@@ -54,16 +54,18 @@ const matchIncoming = (
  */
 export default function isMatch(
   endpoint: EndpointDef
-): (action: Action, isIncoming?: boolean) => boolean {
+): (action: Action, isIncoming?: boolean) => Promise<boolean> {
   const match = endpoint.match || {}
-  const matchFilters = match.filters ? validateFilters(match.filters) : () => []
+  const matchFilters = match.filters
+    ? validateFilters(match.filters)
+    : async () => []
 
-  return (action, isIncoming = false) =>
+  return async (action, isIncoming = false) =>
     matchId(endpoint, action) &&
     matchType(endpoint, action) &&
     matchScope(endpoint, action) &&
     matchAction(endpoint, action) &&
     matchParams(endpoint, action) &&
     matchIncoming(endpoint, isIncoming) &&
-    matchFilters(action).length === 0 // Not too pretty
+    (await matchFilters(action)).length === 0 // Not too pretty
 }

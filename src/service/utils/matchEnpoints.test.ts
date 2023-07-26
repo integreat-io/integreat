@@ -76,317 +76,317 @@ const endpointSetWithNonIncoming = {
 
 // Tests
 
-test('should match catch-all endpoint', (t) => {
+test('should match catch-all endpoint', async (t) => {
   const endpoint = endpointCatchAll
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should match with action', (t) => {
+test('should match with action', async (t) => {
   const endpoint = endpointGet
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with action', (t) => {
+test('should mismatch with action', async (t) => {
   const endpoint = endpointDelete
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with action array', (t) => {
+test('should match with action array', async (t) => {
   const endpoint = endpointSetAndDelete
   const action = {
     type: 'SET',
     payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with action array', (t) => {
+test('should mismatch with action array', async (t) => {
   const endpoint = endpointSetAndDelete
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with member scope', (t) => {
+test('should match with member scope', async (t) => {
   const endpoints = endpointMember
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
   }
 
-  t.true(isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints)(action))
 })
 
-test('should mismatch with member scope', (t) => {
+test('should mismatch with member scope', async (t) => {
   const endpoints = endpointCollection
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
   }
 
-  t.false(isMatch(endpoints)(action))
+  t.false(await isMatch(endpoints)(action))
 })
 
-test('should match with members scope', (t) => {
+test('should match with members scope', async (t) => {
   const endpoint = endpointMembers
   const action = {
     type: 'GET',
     payload: { id: ['ent1', 'ent2'], type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with members scope', (t) => {
+test('should mismatch with members scope', async (t) => {
   const endpoint = endpointMember
   const action = {
     type: 'GET',
     payload: { id: ['ent1', 'ent2'], type: 'entry' },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with collection scope', (t) => {
+test('should match with collection scope', async (t) => {
   const endpoint = endpointCollection
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with collection scope', (t) => {
+test('should mismatch with collection scope', async (t) => {
   const endpoint = endpointMember
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with scope array', (t) => {
+test('should match with scope array', async (t) => {
   const endpoint = endpointMemberAndCollection
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with scope array', (t) => {
+test('should mismatch with scope array', async (t) => {
   const endpoint = endpointMemberAndCollection
   const action = {
     type: 'GET',
     payload: { type: 'entry', id: ['ent1', 'ent2'] },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with type', (t) => {
+test('should match with type', async (t) => {
   const endpoint = endpointEntry
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with type', (t) => {
+test('should mismatch with type', async (t) => {
   const endpoint = endpointEntry
   const action = {
     type: 'GET',
     payload: { type: 'user' },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with type array', (t) => {
+test('should match with type array', async (t) => {
   const endpoint = endpointEntryAndItem
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with type array', (t) => {
+test('should mismatch with type array', async (t) => {
   const endpoint = endpointEntryAndItem
   const action = {
     type: 'GET',
     payload: { type: 'user' },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with action type array', (t) => {
+test('should match with action type array', async (t) => {
   const endpoint = endpointEntry
   const action = {
     type: 'GET',
     payload: { type: ['user', 'entry'] },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with action type array', (t) => {
+test('should mismatch with action type array', async (t) => {
   const endpoint = endpointEntry
   const action = {
     type: 'GET',
     payload: { type: ['user', 'unknown'] },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with endpoint id', (t) => {
+test('should match with endpoint id', async (t) => {
   const endpoint = endpointWithId
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', endpoint: 'endpoint1' },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with endpoint id', (t) => {
+test('should mismatch with endpoint id', async (t) => {
   const endpoint = endpointEntry
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', endpoint: 'endpoint1' },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with required param', (t) => {
+test('should match with required param', async (t) => {
   const endpoint = endpointGetWithAuthor
   const action = {
     type: 'GET',
     payload: { author: 'johnf', type: 'entry' },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with required param', (t) => {
+test('should mismatch with required param', async (t) => {
   const endpoint = endpointGetWithAuthor
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with optional param', (t) => {
+test('should match with optional param', async (t) => {
   const endpoints = endpointGetWithOptionalAuthor
   const action = {
     type: 'GET',
     payload: { author: 'johnf', type: 'entry' },
   }
 
-  t.true(isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints)(action))
 })
 
-test('should match without optional param', (t) => {
+test('should match without optional param', async (t) => {
   const endpoints = endpointGetWithOptionalAuthor
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints)(action))
 })
 
-test('should match with filter', (t) => {
+test('should match with filter', async (t) => {
   const endpoint = endpointSetWithFilter
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
   }
 
-  t.true(isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint)(action))
 })
 
-test('should mismatch with filter', (t) => {
+test('should mismatch with filter', async (t) => {
   const endpoint = endpointSetWithFilter
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
   }
 
-  t.false(isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint)(action))
 })
 
-test('should match with several filters', (t) => {
+test('should match with several filters', async (t) => {
   const endpoints = endpointSetWithFilters
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
   }
 
-  t.true(isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints)(action))
 })
 
-test('should mismatch with several filters', (t) => {
+test('should mismatch with several filters', async (t) => {
   const endpoints = endpointSetWithFilters
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
   }
 
-  t.false(isMatch(endpoints)(action))
+  t.false(await isMatch(endpoints)(action))
 })
 
-test('should match with one of several filters', (t) => {
+test('should match with one of several filters', async (t) => {
   const endpoints = endpointSetWithOrFilters
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
   }
 
-  t.true(isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints)(action))
 })
 
-test('should match with no filters', (t) => {
+test('should match with no filters', async (t) => {
   const endpoints = endpointSetWithNoFilters
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
   }
 
-  t.true(isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints)(action))
 })
 
-test('should match with params filter', (t) => {
+test('should match with params filter', async (t) => {
   const endpoints = endpointSetWithParamFilter
   const action = {
     type: 'SET',
@@ -396,10 +396,10 @@ test('should match with params filter', (t) => {
     },
   }
 
-  t.true(isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints)(action))
 })
 
-test('should mismatch with params filter', (t) => {
+test('should mismatch with params filter', async (t) => {
   const endpoints = endpointSetWithParamFilter
   const action = {
     type: 'SET',
@@ -409,10 +409,10 @@ test('should mismatch with params filter', (t) => {
     },
   }
 
-  t.false(isMatch(endpoints)(action))
+  t.false(await isMatch(endpoints)(action))
 })
 
-test('should match with meta filter', (t) => {
+test('should match with meta filter', async (t) => {
   const endpoints = endpointSetWithMetaFilter
   const action = {
     type: 'SET',
@@ -420,10 +420,10 @@ test('should match with meta filter', (t) => {
     meta: { ident: { root: true, id: 'root' } },
   }
 
-  t.true(isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints)(action))
 })
 
-test('should mismatch with meta filter', (t) => {
+test('should mismatch with meta filter', async (t) => {
   const endpoints = endpointSetWithMetaFilter
   const action = {
     type: 'SET',
@@ -431,10 +431,10 @@ test('should mismatch with meta filter', (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(isMatch(endpoints)(action))
+  t.false(await isMatch(endpoints)(action))
 })
 
-test('incoming should match incoming endpoint', (t) => {
+test('incoming should match incoming endpoint', async (t) => {
   const endpoints = endpointSetWithIncoming
   const action = {
     type: 'SET',
@@ -442,10 +442,10 @@ test('incoming should match incoming endpoint', (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(isMatch(endpoints)(action, true))
+  t.true(await isMatch(endpoints)(action, true))
 })
 
-test('non-incoming should not match incoming endpoint', (t) => {
+test('non-incoming should not match incoming endpoint', async (t) => {
   const endpoints = endpointSetWithIncoming
   const action = {
     type: 'SET',
@@ -453,10 +453,10 @@ test('non-incoming should not match incoming endpoint', (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(isMatch(endpoints)(action, false))
+  t.false(await isMatch(endpoints)(action, false))
 })
 
-test('non-incoming should match non-incoming endpoint', (t) => {
+test('non-incoming should match non-incoming endpoint', async (t) => {
   const endpoints = endpointSetWithNonIncoming
   const action = {
     type: 'SET',
@@ -464,10 +464,10 @@ test('non-incoming should match non-incoming endpoint', (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(isMatch(endpoints)(action, false))
+  t.true(await isMatch(endpoints)(action, false))
 })
 
-test('incoming should not match non-incoming endpoint', (t) => {
+test('incoming should not match non-incoming endpoint', async (t) => {
   const endpoints = endpointSetWithNonIncoming
   const action = {
     type: 'SET',
@@ -475,10 +475,10 @@ test('incoming should not match non-incoming endpoint', (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(isMatch(endpoints)(action, true))
+  t.false(await isMatch(endpoints)(action, true))
 })
 
-test('incoming should match non-incoming endpoint', (t) => {
+test('incoming should match non-incoming endpoint', async (t) => {
   const endpoints = endpointGet
   const action = {
     type: 'GET',
@@ -486,5 +486,5 @@ test('incoming should match non-incoming endpoint', (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(isMatch(endpoints)(action, true))
+  t.true(await isMatch(endpoints)(action, true))
 })

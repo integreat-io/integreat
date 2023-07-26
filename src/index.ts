@@ -3,7 +3,11 @@ import mergeDefinitions from './utils/mergeDefinitions.js'
 import mergeResources from './utils/mergeResources.js'
 import type { Definitions, Resources, Middleware } from './types.js'
 
-export type { Transformer, TransformDefinition } from 'map-transform/types.js'
+export type {
+  Transformer,
+  AsyncTransformer,
+  TransformDefinition,
+} from 'map-transform/types.js'
 export type {
   Action,
   Payload,

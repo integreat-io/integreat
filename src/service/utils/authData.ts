@@ -1,22 +1,22 @@
 import getField from '../../utils/getField.js'
-import { arrayIncludes } from '../../utils/array.js'
+import { arrayIncludes, filterAsync } from '../../utils/array.js'
 import { isTypedData, isNullOrUndefined } from '../../utils/is.js'
 import type { Action, TypedData, Ident } from '../../types.js'
 import type Schema from '../../schema/Schema.js'
 
 export interface AuthorizeDataFn {
-  (action: Action, allowRaw?: boolean): Action
+  (action: Action, allowRaw?: boolean): Promise<Action>
 }
 
 const isStringOrArray = (value: unknown): value is string | string[] =>
   typeof value === 'string' || Array.isArray(value)
 
-function getValueAndCompare(
+async function getValueAndCompare(
   item: TypedData,
   fieldPath: string,
   compareValue?: string | string[]
 ) {
-  const values = getField(item, fieldPath)
+  const values = await getField(item, fieldPath)
   return isStringOrArray(values) && arrayIncludes(compareValue, values)
 }
 
@@ -27,7 +27,7 @@ const authorizeItem =
     allowRaw: boolean,
     ident?: Ident
   ) =>
-  (item: unknown): string | undefined => {
+  async (item: unknown): Promise<string | undefined> => {
     if (!isTypedData(item)) {
       return allowRaw ? undefined : 'RAW_DATA'
     }
@@ -47,10 +47,10 @@ const authorizeItem =
     // Get validation results for the required methods
     const identResult =
       !validateIdent ||
-      getValueAndCompare(item, identFromField as string, ident?.id)
+      (await getValueAndCompare(item, identFromField, ident?.id))
     const roleResult =
       !validateRole ||
-      getValueAndCompare(item, roleFromField as string, ident?.roles)
+      (await getValueAndCompare(item, roleFromField, ident?.roles))
 
     // Authorize if either ident or role validation passes
     if (validateIdent && validateRole && (identResult || roleResult)) {
@@ -89,21 +89,24 @@ const generateErrorAndReason = (
         service ? ` on service '${service}'` : ''
       }`
 
-function getAuthedWithResponse(
+async function getAuthedWithResponse(
   data: unknown,
-  authFn: (item: unknown) => string | undefined,
+  authFn: (item: unknown) => Promise<string | undefined>,
   isToService: boolean,
   service?: string
 ) {
   if (isNullOrUndefined(data)) {
     return { data }
   } else if (Array.isArray(data)) {
-    const authed = data.filter((data: unknown) => authFn(data) === undefined)
+    const authed = await filterAsync(
+      data,
+      async (data: unknown) => (await authFn(data)) === undefined
+    )
     const warning = generateWarning(data.length - authed.length, isToService)
     return { data: authed, warning }
   }
 
-  const reason = authFn(data)
+  const reason = await authFn(data)
   if (typeof reason === 'string') {
     const error = generateErrorAndReason(reason, data, isToService, service)
     return {
@@ -125,7 +128,10 @@ const authorizeDataBase = (
   schemas: Record<string, Schema>,
   isToService: boolean
 ) =>
-  function authorizeData(action: Action, allowRaw = false): Action {
+  async function authorizeData(
+    action: Action,
+    allowRaw = false
+  ): Promise<Action> {
     if (action.meta?.ident?.root) {
       return action
     }
@@ -141,7 +147,7 @@ const authorizeDataBase = (
       error,
       reason,
       warning,
-    } = getAuthedWithResponse(
+    } = await getAuthedWithResponse(
       isToService ? action.payload.data : action.response?.data,
       authorizeItem(schemas, actionType, allowRaw, ident),
       isToService,

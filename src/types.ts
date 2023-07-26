@@ -2,6 +2,7 @@ import type { PProgress } from 'p-progress'
 import type {
   Dictionaries,
   Transformer,
+  AsyncTransformer,
   TransformDefinition,
   TransformObject,
   Pipeline,
@@ -281,5 +282,5 @@ export interface Resources {
   adapters?: Record<string, Adapter>
   handlers?: Record<string, ActionHandler>
   authenticators?: Record<string, Authenticator>
-  transformers?: Record<string, Transformer>
+  transformers?: Record<string, Transformer | AsyncTransformer>
 }

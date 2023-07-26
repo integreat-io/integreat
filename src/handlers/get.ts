@@ -57,7 +57,7 @@ async function runAsIndividualActions(
   const actions = (action.payload.id as string[]).map((oneId) =>
     setIdOnActionPayload(action, oneId)
   )
-  const endpoint = service.endpointFromAction(actions[0])
+  const endpoint = await service.endpointFromAction(actions[0])
   if (!endpoint) {
     return createNoEndpointError(action, service.id)
   }
@@ -83,7 +83,7 @@ async function runOneOrMany(
   service: Service,
   mapPerId: (endpoint: Endpoint) => (action: Action) => Promise<Response>
 ): Promise<Response> {
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   if (!endpoint) {
     return createNoEndpointError(action, service.id)
   }

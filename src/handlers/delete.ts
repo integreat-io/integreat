@@ -55,7 +55,7 @@ export default async function deleteFn(
   debug("DELETE: Delete from service '%s' at %s.", service.id, endpointDebug)
 
   const nextAction = setDataOnActionPayload(action, data)
-  const endpoint = service.endpointFromAction(nextAction)
+  const endpoint = await service.endpointFromAction(nextAction)
   if (!endpoint) {
     return createErrorResponse(
       `No endpoint matching ${nextAction.type} request to service '${serviceId}'.`,

@@ -43,19 +43,19 @@ const wrapOk = (action: Action, data: unknown, ident: Ident): Response => ({
   access: { ident },
 })
 
-const prepareResponse = (
+const prepareResponse = async (
   action: Action,
   response: Response,
   params: IdentParams,
   propKeys: Record<string, string>
-): Response => {
+): Promise<Response> => {
   const data = getFirstIfArray(response.data)
 
   if (data) {
     const completeIdent = {
-      id: getField(data, propKeys.id),
-      roles: getField(data, propKeys.roles),
-      tokens: getField(data, propKeys.tokens),
+      id: await getField(data, propKeys.id),
+      roles: await getField(data, propKeys.roles),
+      tokens: await getField(data, propKeys.tokens),
     } as Ident
     return wrapOk(action, data, completeIdent)
   } else {
@@ -113,5 +113,5 @@ export default async function getIdent(
   }
   const response = await getHandler(nextAction, resources)
 
-  return prepareResponse(action, response, params, propKeys)
+  return await prepareResponse(action, response, params, propKeys)
 }

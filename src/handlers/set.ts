@@ -47,7 +47,7 @@ export default async function set(
   debug('SET: Send to service %s %s', service.id, endpointDebug)
 
   const nextAction = setIdAndTypeOnAction(action, id, type)
-  const endpoint = service.endpointFromAction(nextAction)
+  const endpoint = await service.endpointFromAction(nextAction)
   if (!endpoint) {
     return createErrorResponse(
       `No endpoint matching ${action.type} request to service '${serviceId}'.`,

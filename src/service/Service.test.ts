@@ -354,7 +354,7 @@ test('should throw when auth object references unknown authenticator', async (t)
 
 // Tests -- endpointFromAction
 
-test('endpointFromAction should return an endpoint for the action', (t) => {
+test('endpointFromAction should return an endpoint for the action', async (t) => {
   const service = new Service(
     {
       id: 'entries',
@@ -377,13 +377,13 @@ test('endpointFromAction should return an endpoint for the action', (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = service.endpointFromAction(action)
+  const ret = await service.endpointFromAction(action)
 
   t.truthy(ret)
   t.is(ret?.id, 'endpoint2')
 })
 
-test('endpointFromAction should return undefined when no match', (t) => {
+test('endpointFromAction should return undefined when no match', async (t) => {
   const service = new Service(
     {
       id: 'entries',
@@ -405,7 +405,7 @@ test('endpointFromAction should return undefined when no match', (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = service.endpointFromAction(action)
+  const ret = await service.endpointFromAction(action)
 
   t.is(ret, undefined)
 })
@@ -443,7 +443,7 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = service.endpointFromAction(action)
+  const ret = await service.endpointFromAction(action)
 
   t.is(ret?.id, 'endpoint2')
 })
@@ -1168,7 +1168,7 @@ test('mutateResponse should mutate data array from service', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'ok',
     data: [
@@ -1228,7 +1228,7 @@ test('mutateResponse should mutate data object from service', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
 
   const ret = await service.mutateResponse(action, endpoint!)
 
@@ -1274,7 +1274,7 @@ test('mutateResponse should set origin when mutation results in an error respons
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'error',
     data: undefined,
@@ -1336,7 +1336,7 @@ test('mutateResponse should use service adapters', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'ok',
     data: [
@@ -1408,7 +1408,7 @@ test('mutateResponse should use endpoint adapters', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'ok',
     data: [
@@ -1480,7 +1480,7 @@ test('mutateResponse should not cast data array from service when allowRawRespon
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'ok',
     data: [
@@ -1533,7 +1533,7 @@ test('mutateResponse should mutate null to undefined', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'ok',
     data: undefined,
@@ -1580,7 +1580,7 @@ test('should authorize typed data in array from service', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
 
   const ret = await service.mutateResponse(action, endpoint!)
 
@@ -1627,7 +1627,7 @@ test('should authorize typed data object from service', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'noaccess',
     error: "Authentication was refused for type 'account'",
@@ -1684,7 +1684,7 @@ test('mutateResponse should return error when transformer throws', async (t) => 
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     ...action.response,
     status: 'error',
@@ -1733,7 +1733,7 @@ test('mutateIncomingResponse should mutate and authorize data in response to inc
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
 
   const ret = await service.mutateIncomingResponse(action, endpoint!)
 
@@ -1784,7 +1784,7 @@ test('mutateIncomingResponse should set origin when mutation results in an error
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'error',
     origin: 'mutate:response:incoming',
@@ -1840,7 +1840,7 @@ test('mutateRequest should set endpoint options and cast and mutate request data
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expectedAction = {
     ...action,
     payload: {
@@ -1911,7 +1911,7 @@ test('mutateRequest should authorize data array going to service', async (t) => 
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expectedResponse = {
     status: undefined,
     warning: '1 item was removed from request data due to lack of access',
@@ -1952,7 +1952,7 @@ test('mutateRequest should authorize data object going to service', async (t) =>
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expectedResponse = {
     status: 'noaccess',
     error: "Authentication was refused for type 'account'",
@@ -1999,7 +1999,7 @@ test('mutateRequest should use mutation pipeline', async (t) => {
     payload: {},
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expectedData = {
     StupidSoapOperator: { StupidSoapEmptyArgs: {} },
   }
@@ -2040,7 +2040,7 @@ test('mutateRequest set origin when mutation results in an error response', asyn
     payload: {},
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expectedResponse = {
     status: 'error',
     origin: 'mutate:request',
@@ -2088,7 +2088,7 @@ test('mutateRequest should return error when transformer throws', async (t) => {
     payload: {},
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action)
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     ...action,
     response: {
@@ -2133,7 +2133,10 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
     },
     meta: { ident: { id: 'johnf', roles: ['admin'] } },
   })
-  const endpoint = service.endpointFromAction(action, true /* isIncoming */)
+  const endpoint = await service.endpointFromAction(
+    action,
+    true /* isIncoming */
+  )
   const expectedResponse = {
     status: undefined,
     warning: '1 item was removed from request data due to lack of access',
@@ -2179,7 +2182,10 @@ test('mutateIncomingRequest should set origin when mutation results in an error 
     payload: {},
     meta: { ident: { id: 'johnf' } },
   }
-  const endpoint = service.endpointFromAction(action, true /* isIncoming */)
+  const endpoint = await service.endpointFromAction(
+    action,
+    true /* isIncoming */
+  )
   const expectedResponse = {
     status: 'error',
     origin: 'mutate:request:incoming',

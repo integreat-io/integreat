@@ -2,6 +2,7 @@ import modifyOperationObject from './modifyOperationObject.js'
 import type {
   TransformDefinition,
   Transformer,
+  AsyncTransformer,
   Dictionaries,
 } from 'map-transform/types.js'
 import type Schema from '../schema/Schema.js'
@@ -23,7 +24,7 @@ const transformersFromSchemas = (
 export default function createMapOptions(
   schemas: Record<string, Schema>,
   mutations?: Record<string, TransformDefinition>,
-  transformers?: Record<string, Transformer>,
+  transformers?: Record<string, Transformer | AsyncTransformer>,
   dictionaries?: Dictionaries
 ): MapOptions {
   return {

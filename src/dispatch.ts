@@ -109,7 +109,7 @@ async function mutateIncomingAction(action: Action, getService: GetService) {
       ),
     }
   }
-  const endpoint = service.endpointFromAction(action, true)
+  const endpoint = await service.endpointFromAction(action, true)
   if (!endpoint) {
     return {
       action: setErrorOnAction(

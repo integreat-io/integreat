@@ -14,17 +14,17 @@ const state = {
 
 // Tests
 
-test('should replace placeholder in template', (t) => {
+test('should replace placeholder in template', async (t) => {
   const template = 'http://json1.test/entries/{payload.id}'
   const action = { type: 'GET', payload: { type: 'entry', id: 'ent1' } }
   const expected = 'http://json1.test/entries/ent1'
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should get template from templatePath', (t) => {
+test('should get template from templatePath', async (t) => {
   const templatePath = 'meta.options.uri'
   const action = {
     type: 'GET',
@@ -33,12 +33,12 @@ test('should get template from templatePath', (t) => {
   }
   const expected = 'http://json1.test/entries/ent1'
 
-  const ret = generateUri({ templatePath })(options)(action, state)
+  const ret = await generateUri({ templatePath })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should replace several placeholders in template and force to string', (t) => {
+test('should replace several placeholders in template and force to string', async (t) => {
   const template =
     'http://json1.test/entries/{payload.id}?archived={payload.archived}&refresh={payload.cacheAge}'
   const action = {
@@ -47,12 +47,12 @@ test('should replace several placeholders in template and force to string', (t) 
   }
   const expected = 'http://json1.test/entries/ent1?archived=true&refresh=3600'
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should uri encode values', (t) => {
+test('should uri encode values', async (t) => {
   const template =
     '/production?query={payload.query}&%24table=%22{payload.id}%22'
   const action = {
@@ -66,12 +66,12 @@ test('should uri encode values', (t) => {
   const expected =
     "/production?query=*%5B_type%3D%3D'table'%26%26key%3D%3D%24table%5D%5B0%5D.fields%7Bkey%2Cname%2Ctype%7D&%24table=%22orders%22"
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should convert date to ISO string', (t) => {
+test('should convert date to ISO string', async (t) => {
   const template = 'http://json1.test/entries?since={payload.updatedAfter}'
   const action = {
     type: 'GET',
@@ -80,12 +80,12 @@ test('should convert date to ISO string', (t) => {
   const expected =
     'http://json1.test/entries?since=2023-03-08T00%3A00%3A00.000Z'
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should convert array to comma separated string', (t) => {
+test('should convert array to comma separated string', async (t) => {
   const template = 'http://json1.test/entries?ids={payload.id}'
   const action = {
     type: 'GET',
@@ -93,12 +93,12 @@ test('should convert array to comma separated string', (t) => {
   }
   const expected = 'http://json1.test/entries?ids=ent1,ent2'
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should not uri encode values when placeholder starts with plus', (t) => {
+test('should not uri encode values when placeholder starts with plus', async (t) => {
   const template = 'http://awsome.api/v1/{+payload.method}'
   const action = {
     type: 'SET',
@@ -109,12 +109,12 @@ test('should not uri encode values when placeholder starts with plus', (t) => {
   }
   const expected = 'http://awsome.api/v1/entries:expire'
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should handle uris with a lot of strange chars', (t) => {
+test('should handle uris with a lot of strange chars', async (t) => {
   const template =
     '/data/query/production?query={payload.query}&$table={payload.table}'
   const action = {
@@ -129,12 +129,12 @@ test('should handle uris with a lot of strange chars', (t) => {
   const expected =
     "/data/query/production?query=*%5B_type%3D%3D'table'%26%26key%3D%3D%24table%5D%5B0%5D.fields%7Bkey%2Cname%2Ctype%2Chidden%2Cvariant%2CcurrencyField%2CdateField%2Caggregation%2Csize%7D&$table=%22orders%22"
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should allow double and triple brackets for compability', (t) => {
+test('should allow double and triple brackets for compability', async (t) => {
   const template =
     'http://json1.test/entries/{{{payload.id}}}?since={{payload.updatedAfter}}'
   const action = {
@@ -148,22 +148,22 @@ test('should allow double and triple brackets for compability', (t) => {
   const expected =
     'http://json1.test/entries/entry:ent1?since=2023-03-08T00%3A00%3A00.000Z'
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should return template without placeholders', (t) => {
+test('should return template without placeholders', async (t) => {
   const template = 'http://json1.test/entries'
   const action = { type: 'GET', payload: { type: 'entry', id: 'ent1' } }
   const expected = 'http://json1.test/entries'
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should remove placeholder when path does not match a value', (t) => {
+test('should remove placeholder when path does not match a value', async (t) => {
   const template =
     'http://json1.test/entries/{payload.id}?archived={payload.archived}'
   const action = {
@@ -172,17 +172,17 @@ test('should remove placeholder when path does not match a value', (t) => {
   }
   const expected = 'http://json1.test/entries/ent1?archived='
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })
 
-test('should return undefined when no template', (t) => {
+test('should return undefined when no template', async (t) => {
   const template = undefined
   const action = { type: 'GET', payload: { type: 'entry', id: 'ent1' } }
   const expected = undefined
 
-  const ret = generateUri({ template })(options)(action, state)
+  const ret = await generateUri({ template })(options)(action, state)
 
   t.is(ret, expected)
 })

@@ -194,7 +194,7 @@ test('should set match on endpoint', (t) => {
 
 // Tests -- isMatch
 
-test('should return true when endpoint is a match to an action', (t) => {
+test('should return true when endpoint is a match to an action', async (t) => {
   const endpointDef = {
     match: { filters: { 'payload.data.draft': { const: false } } },
     options: {},
@@ -208,10 +208,10 @@ test('should return true when endpoint is a match to an action', (t) => {
   }
   const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
 
-  t.true(endpoint.isMatch(action))
+  t.true(await endpoint.isMatch(action))
 })
 
-test('should return false when no match to action', (t) => {
+test('should return false when no match to action', async (t) => {
   const endpointDef = {
     match: { scope: 'member' },
     options: {},
@@ -224,7 +224,7 @@ test('should return false when no match to action', (t) => {
   }
   const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
 
-  t.false(endpoint.isMatch(action))
+  t.false(await endpoint.isMatch(action))
 })
 
 // Tests -- validateAction
@@ -1299,7 +1299,7 @@ test('should treat scope: all as no scope', (t) => {
 
 // Tests -- findMatchingEndpoint
 
-test('should find matching endpoint', (t) => {
+test('should find matching endpoint', async (t) => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -1323,13 +1323,13 @@ test('should find matching endpoint', (t) => {
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
     (defs) => new Endpoint(defs, serviceId, options, mapOptions)
   )
-  const mapping = Endpoint.findMatchingEndpoint(endpoints, action)
+  const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
   t.truthy(mapping)
   t.is((mapping as Endpoint).id, 'endpoint2')
 })
 
-test('should match by id', (t) => {
+test('should match by id', async (t) => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -1354,13 +1354,13 @@ test('should match by id', (t) => {
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
     (defs) => new Endpoint(defs, serviceId, options, mapOptions)
   )
-  const mapping = Endpoint.findMatchingEndpoint(endpoints, action)
+  const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
   t.truthy(mapping)
   t.is((mapping as Endpoint).id, 'endpoint2')
 })
 
-test('should match scope all', (t) => {
+test('should match scope all', async (t) => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -1383,13 +1383,13 @@ test('should match scope all', (t) => {
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
     (defs) => new Endpoint(defs, serviceId, options, mapOptions)
   )
-  const mapping = Endpoint.findMatchingEndpoint(endpoints, action)
+  const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
   t.truthy(mapping)
   t.is((mapping as Endpoint).id, 'endpoint1')
 })
 
-test('should treat scope all as no scope', (t) => {
+test('should treat scope all as no scope', async (t) => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -1413,7 +1413,7 @@ test('should treat scope all as no scope', (t) => {
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
     (defs) => new Endpoint(defs, serviceId, options, mapOptions)
   )
-  const mapping = Endpoint.findMatchingEndpoint(endpoints, action)
+  const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
   t.truthy(mapping)
   t.is((mapping as Endpoint).id, 'endpoint2')

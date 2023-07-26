@@ -143,8 +143,15 @@ export default class Service {
   /**
    * Return the endpoint mapper that best matches the given action.
    */
-  endpointFromAction(action: Action, isIncoming = false): Endpoint | undefined {
-    return Endpoint.findMatchingEndpoint(this.#endpoints, action, isIncoming)
+  async endpointFromAction(
+    action: Action,
+    isIncoming = false
+  ): Promise<Endpoint | undefined> {
+    return await Endpoint.findMatchingEndpoint(
+      this.#endpoints,
+      action,
+      isIncoming
+    )
   }
 
   /**
@@ -161,7 +168,7 @@ export default class Service {
   async mutateRequest(action: Action, endpoint: Endpoint): Promise<Action> {
     const castFn = getCastFn(this.#castFns, action.payload.type)
     const castedAction = castPayload(action, endpoint, castFn)
-    const authorizedAction = this.#authorizeDataToService(
+    const authorizedAction = await this.#authorizeDataToService(
       castedAction,
       endpoint.allowRawRequest
     )
@@ -231,7 +238,7 @@ export default class Service {
     const castFn = getCastFn(this.#castFns, action.payload.type)
     const casted = castResponse(mutated, endpoint, castFn)
     const withOrigin = setOriginOnAction(casted, 'mutate:response', false)
-    const { response } = this.#authorizeDataFromService(
+    const { response } = await this.#authorizeDataFromService(
       withOrigin,
       endpoint.allowRawResponse
     )
@@ -249,7 +256,7 @@ export default class Service {
   ): Promise<Response> {
     const castFn = getCastFn(this.#castFns, action.payload.type)
     const castedAction = castResponse(action, endpoint, castFn)
-    const authorizedAction = this.#authorizeDataFromService(
+    const authorizedAction = await this.#authorizeDataFromService(
       castedAction,
       endpoint.allowRawResponse
     )

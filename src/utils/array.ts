@@ -26,3 +26,11 @@ export function arrayIncludes<T = unknown>(a: T | T[], b: T | T[]): boolean {
 
 export const getFirstIfArray = <T>(data: T | T[]): T =>
   Array.isArray(data) ? data[0] : data
+
+export async function filterAsync<T>(
+  arr: T[],
+  comparer: (value: T) => Promise<boolean>
+) {
+  const results = await Promise.all(arr.map(async (val) => await comparer(val)))
+  return arr.filter((_v, index) => results[index]) // eslint-disable-line security/detect-object-injection
+}
