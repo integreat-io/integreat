@@ -71,6 +71,7 @@ test('should mutate incoming action data and response data', async (t) => {
   const expectedResponse = {
     status: 'ok',
     data: JSON.stringify(expectedResponseData),
+    headers: { 'Content-Type': 'application/json' },
     access: { ident: { root: true } },
   }
 

@@ -50,7 +50,7 @@ test('should use incoming endpoint over non-incoming', async (t) => {
     data: JSON.stringify(expectedResponseData),
     access: { ident: { root: true } },
     headers: {
-      'content-type': 'application/json',
+      'Content-Type': 'application/json',
     },
   }
 

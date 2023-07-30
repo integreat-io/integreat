@@ -2,7 +2,7 @@ export default {
   id: 'api',
   transporter: 'http',
   auth: true,
-  mutation: [{ $apply: 'exchange:json' }],
+  adapters: ['json'],
   endpoints: [
     {
       match: { action: 'SET', incoming: true },

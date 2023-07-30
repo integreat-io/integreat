@@ -30,6 +30,6 @@ test('should throw on unknown mutations', (t) => {
   t.true(error instanceof Error)
   t.is(
     error?.message,
-    "Failed to apply pipeline 'exchange:json'. Unknown pipeline"
+    "Failed to apply pipeline 'exchange:uri'. Unknown pipeline"
   )
 })

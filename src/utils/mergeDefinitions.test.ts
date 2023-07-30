@@ -37,7 +37,7 @@ const entriesService = {
   id: 'entries',
   transporter: 'mock',
   auth: 'entries',
-  mutation: [{ $apply: 'exchange:json' }],
+  adapters: ['json'],
   endpoints: [
     {
       mutation: {
@@ -50,7 +50,7 @@ const usersService = {
   id: 'users',
   transporter: 'mock',
   auth: 'users',
-  mutation: [{ $apply: 'exchange:json' }],
+  adapters: ['json'],
   endpoints: [
     {
       mutation: {
