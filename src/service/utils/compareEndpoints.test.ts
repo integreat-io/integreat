@@ -7,6 +7,17 @@ import compareEndpoints from './compareEndpoints.js'
 const draftFilter = { 'request.data.draft': { const: false } }
 const titleFilter = { 'request.data.title': { const: 'Entry 1' } }
 
+const draftCondition = {
+  $transform: 'compare',
+  path: 'request.data.draft',
+  match: false,
+}
+const titleCondition = {
+  $transfrom: 'compare',
+  path: 'request.data.title',
+  match: 'Entry 1',
+}
+
 const endpointCatchAll = {}
 const endpointGet = { match: { action: 'GET' } }
 const endpointPut = { match: { action: 'PUT' } }
@@ -44,23 +55,42 @@ const endpointEntryWithParam = {
   match: { type: 'entry', params: { author: true } },
 }
 const endpointOneFilter = { match: { filters: draftFilter } }
+const endpointOneCondition = { match: { conditions: [draftCondition] } }
 const endpointMemberWithFilter = {
   match: { scope: 'member', filters: draftFilter },
+}
+const endpointMemberWithCondition = {
+  match: { scope: 'member', conditions: [draftCondition] },
 }
 const endpointGetWithFilter = {
   match: { action: 'GET', filters: draftFilter },
 }
+const endpointGetWithCondition = {
+  match: { action: 'GET', conditions: [draftCondition] },
+}
 const endpointServiceParamWithFilter = {
   match: { params: { source: true }, filters: draftFilter },
+}
+const endpointServiceParamWithCondition = {
+  match: { params: { source: true }, conditions: [draftCondition] },
 }
 const endpointUserWithFilter = {
   match: { type: 'user', filters: draftFilter },
 }
+const endpointUserWithCondition = {
+  match: { type: 'user', conditions: [draftCondition] },
+}
 const endpointEntryWithFilter = {
   match: { type: 'entry', filters: draftFilter },
 }
+const endpointEntryWithCondition = {
+  match: { type: 'entry', conditions: [draftCondition] },
+}
 const endpointEntryWithTwoFilters = {
   match: { type: 'entry', filters: { ...draftFilter, ...titleFilter } },
+}
+const endpointEntryWithTwoConditions = {
+  match: { type: 'entry', conditions: [draftCondition, titleCondition] },
 }
 const endpointGetWithIncoming = {
   match: { action: 'GET', incoming: true },
@@ -290,6 +320,83 @@ test('should sort with filters before without', (t) => {
   t.true(paramWithVsWithout < 0)
   t.true(scopeWithVsWithout < 0)
   t.true(actionWithVsWithout < 0)
+})
+
+test('should sort more conditions before fewer', (t) => {
+  const higher = compareEndpoints(
+    endpointEntryWithTwoConditions,
+    endpointEntryWithCondition
+  )
+  const equal = compareEndpoints(
+    endpointEntryWithCondition,
+    endpointUserWithCondition
+  )
+  const lower = compareEndpoints(
+    endpointUserWithCondition,
+    endpointEntryWithTwoConditions
+  )
+
+  t.true(higher < 0)
+  t.is(equal, 0)
+  t.true(lower > 0)
+})
+
+test('should sort conditions after params', (t) => {
+  const filterVsType = compareEndpoints(endpointOneCondition, endpointEntry)
+  const filterVsParam = compareEndpoints(
+    endpointOneCondition,
+    endpointServiceParam
+  )
+  const filterVsScope = compareEndpoints(endpointOneCondition, endpointMember)
+  const filterVsAction = compareEndpoints(endpointOneCondition, endpointPut)
+
+  t.true(filterVsType > 0)
+  t.true(filterVsParam > 0)
+  t.true(filterVsScope < 0)
+  t.true(filterVsAction < 0)
+})
+
+test('should sort with conditions before without', (t) => {
+  const typeWithVsWithout = compareEndpoints(
+    endpointEntryWithCondition,
+    endpointEntry
+  )
+  const paramWithVsWithout = compareEndpoints(
+    endpointServiceParamWithCondition,
+    endpointServiceParam
+  )
+  const scopeWithVsWithout = compareEndpoints(
+    endpointMemberWithCondition,
+    endpointMember
+  )
+  const actionWithVsWithout = compareEndpoints(
+    endpointGetWithCondition,
+    endpointGet
+  )
+
+  t.true(typeWithVsWithout < 0)
+  t.true(paramWithVsWithout < 0)
+  t.true(scopeWithVsWithout < 0)
+  t.true(actionWithVsWithout < 0)
+})
+
+test('should sort conditions before filters', (t) => {
+  const two = compareEndpoints(
+    endpointEntryWithTwoConditions,
+    endpointEntryWithTwoFilters
+  )
+  const one = compareEndpoints(
+    endpointEntryWithFilter,
+    endpointEntryWithCondition
+  )
+  const moreFilters = compareEndpoints(
+    endpointEntryWithCondition,
+    endpointEntryWithTwoFilters
+  )
+
+  t.true(two < 0)
+  t.true(one > 0)
+  t.true(moreFilters < 0)
 })
 
 test('should sort incoming first', (t) => {

@@ -195,7 +195,48 @@ test('should set match on endpoint', (t) => {
 
 // Tests -- isMatch
 
-test('should return true when endpoint is a match to an action', async (t) => {
+test('should return true when endpoint is a match to an action with conditions', async (t) => {
+  const endpointDef = {
+    match: {
+      conditions: [
+        { $transform: 'compare', path: 'payload.data.draft', match: false },
+      ],
+    },
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      data: { draft: false },
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+
+  t.true(await endpoint.isMatch(action))
+})
+
+test('should return false when endpoint is not a match to an action with conditions', async (t) => {
+  const endpointDef = {
+    match: {
+      conditions: [
+        { $transform: 'compare', path: 'payload.data.draft', match: false },
+      ],
+    },
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+
+  t.false(await endpoint.isMatch(action))
+})
+
+test('should return true when endpoint is a match to an action with filter', async (t) => {
   const endpointDef = {
     match: { filters: { 'payload.data.draft': { const: false } } },
     options: {},

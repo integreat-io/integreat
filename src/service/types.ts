@@ -61,6 +61,7 @@ export interface MatchObject {
   type?: string | string[]
   scope?: string | string[]
   params?: Record<string, boolean | undefined>
+  conditions?: TransformDefinition[]
   filters?: Record<string, Condition | boolean | undefined>
   incoming?: boolean
 }

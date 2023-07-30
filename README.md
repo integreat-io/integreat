@@ -290,7 +290,7 @@ Here's the format of an endpoint definition:
     action: <action type>,
     params: {...},
     incoming: <boolean>,
-    filters: {...}
+    conditions: [...]
   },
   validate: [
     {
@@ -365,10 +365,15 @@ An endpoint may specify none or more of the following match properties:
   case several match, the endpoint with more specified params will be preferred.
 - `incoming`: If this is `true`, it will only match incoming actions, if `false`
   only outgoing, and if not set, it will match both.
-- `filters`: The filter object specifies a set of tests that needs to match an
-  action. The key of the object is a full dot notation path for the action
-  object, e.g. `payload.onlyArchived` and the value is a
-  [JSON Schema Validation object](https://json-schema.org/draft/2020-12/json-schema-validation.html).
+- `conditions`: An array of mutation pipelines that will be run on the action to
+  see if it's a fit for this endpoint. If all pipelines return a truthy value,
+  the endpoint is chosen (given that the other match properties also match). We
+  rely on JavaScript definition of 'truthy' here, so any value that is not
+  `false`, `null`, `undefined`, `0`, `NaN`, or `''` will be considered truthy.
+
+> There used to be a `filters` property on the endpoint match object. It is
+> still supported, but it's deprecated and will be removed in v1.1. Please use
+> `conditions` instead.
 
 > Editor's note: Describe what incoming actions are, and give more details on
 > filters.

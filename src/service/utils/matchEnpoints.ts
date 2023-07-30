@@ -1,7 +1,30 @@
-import type { Action, Params } from '../../types.js'
-import type { EndpointDef } from '../types.js'
+import mapTransform from 'map-transform'
 import validateFilters from '../../utils/validateFilters.js'
 import { arrayIncludes } from '../../utils/array.js'
+import type { TransformDefinition } from 'map-transform/types.js'
+import type { Action, MapOptions, Params } from '../../types.js'
+import type { EndpointDef } from '../types.js'
+
+function createConditionsValidator(
+  conditions: TransformDefinition[] | undefined,
+  mapOptions: MapOptions
+): (action: Action) => Promise<boolean> {
+  if (!conditions) {
+    return async () => true
+  }
+
+  const validators = conditions.map((condition) =>
+    mapTransform(condition, mapOptions)
+  )
+  return async function validateConditions(action) {
+    for (const validator of validators) {
+      if (!(await validator(action, { rev: false }))) {
+        return false
+      }
+    }
+    return true
+  }
+}
 
 const matchValue = (match?: string | string[], value?: string | string[]) =>
   arrayIncludes(match, value)
@@ -53,12 +76,17 @@ const matchIncoming = (
  * by the required sorting.
  */
 export default function isMatch(
-  endpoint: EndpointDef
+  endpoint: EndpointDef,
+  mapOptions: MapOptions
 ): (action: Action, isIncoming?: boolean) => Promise<boolean> {
   const match = endpoint.match || {}
   const matchFilters = match.filters
     ? validateFilters(match.filters)
     : async () => []
+  const matchConditions = createConditionsValidator(
+    match.conditions,
+    mapOptions
+  )
 
   return async (action, isIncoming = false) =>
     matchId(endpoint, action) &&
@@ -67,5 +95,6 @@ export default function isMatch(
     matchAction(endpoint, action) &&
     matchParams(endpoint, action) &&
     matchIncoming(endpoint, isIncoming) &&
+    (await matchConditions(action)) &&
     (await matchFilters(action)).length === 0 // Not too pretty
 }

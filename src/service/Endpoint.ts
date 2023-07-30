@@ -133,7 +133,7 @@ export default class Endpoint {
     this.allowRawRequest = endpointDef.allowRawRequest ?? false
     this.allowRawResponse = endpointDef.allowRawResponse ?? false
     this.match = endpointDef.match
-    this.#checkIfMatch = isMatch(endpointDef)
+    this.#checkIfMatch = isMatch(endpointDef, mapOptions)
     this.options = options
 
     this.#validator = prepareValidator(endpointDef.validate, mapOptions)

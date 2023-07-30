@@ -28,7 +28,13 @@ export default {
       match: {
         action: 'SET',
         incoming: true,
-        filters: { 'payload.data': { type: 'null' } },
+        conditions: [
+          {
+            $transform: 'compare',
+            path: 'payload.data',
+            match: null,
+          },
+        ],
       },
       mutation: [
         {

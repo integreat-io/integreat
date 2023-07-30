@@ -16,6 +16,26 @@ const filterParamAuthor = {
 const filterMetaRootIdent = {
   'meta.ident.root': { const: true },
 }
+const conditionNotDraft = {
+  $transform: 'compare',
+  path: 'payload.data.draft',
+  match: false,
+}
+const conditionEntry1 = {
+  $transform: 'compare',
+  path: 'payload.data.title',
+  match: 'Entry 1',
+}
+const conditionParamAuthor = {
+  $transform: 'compare',
+  path: 'payload.author',
+  match: 'johnf',
+}
+const conditionMetaRootIdent = {
+  $transform: 'compare',
+  path: 'meta.ident.root',
+  match: true,
+}
 
 const endpointCatchAll = {}
 const endpointGet = { match: { action: 'GET' } }
@@ -39,6 +59,9 @@ const endpointGetWithOptionalAuthor = {
 const endpointSetWithFilter = {
   match: { action: 'SET', filters: filterNotDraft },
 }
+const endpointSetWithCondition = {
+  match: { action: 'SET', conditions: [conditionNotDraft] },
+}
 const endpointSetWithFilters = {
   match: {
     action: 'SET',
@@ -46,6 +69,12 @@ const endpointSetWithFilters = {
       ...filterNotDraft,
       ...filterEntry1,
     },
+  },
+}
+const endpointSetWithConditions = {
+  match: {
+    action: 'SET',
+    conditions: [conditionNotDraft, conditionEntry1],
   },
 }
 const endpointSetWithOrFilters = {
@@ -59,11 +88,18 @@ const endpointSetWithOrFilters = {
   },
 }
 const endpointSetWithNoFilters = { match: { action: 'SET', filters: {} } }
+const endpointSetWithNoConditions = { match: { action: 'SET', conditions: [] } }
 const endpointSetWithParamFilter = {
   match: { action: 'SET', filters: filterParamAuthor },
 }
+const endpointSetWithParamCondition = {
+  match: { action: 'SET', conditions: [conditionParamAuthor] },
+}
 const endpointSetWithMetaFilter = {
   match: { action: 'SET', filters: filterMetaRootIdent },
+}
+const endpointSetWithMetaCondition = {
+  match: { action: 'SET', conditions: [conditionMetaRootIdent] },
 }
 
 const endpointSetWithIncoming = {
@@ -74,6 +110,8 @@ const endpointSetWithNonIncoming = {
   match: { action: 'SET', incoming: false },
 }
 
+const mapOptions = {}
+
 // Tests
 
 test('should match catch-all endpoint', async (t) => {
@@ -83,7 +121,7 @@ test('should match catch-all endpoint', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with action', async (t) => {
@@ -93,7 +131,7 @@ test('should match with action', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with action', async (t) => {
@@ -103,7 +141,7 @@ test('should mismatch with action', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with action array', async (t) => {
@@ -113,7 +151,7 @@ test('should match with action array', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with action array', async (t) => {
@@ -123,7 +161,7 @@ test('should mismatch with action array', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with member scope', async (t) => {
@@ -133,7 +171,7 @@ test('should match with member scope', async (t) => {
     payload: { id: 'ent1', type: 'entry' },
   }
 
-  t.true(await isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should mismatch with member scope', async (t) => {
@@ -143,7 +181,7 @@ test('should mismatch with member scope', async (t) => {
     payload: { id: 'ent1', type: 'entry' },
   }
 
-  t.false(await isMatch(endpoints)(action))
+  t.false(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should match with members scope', async (t) => {
@@ -153,7 +191,7 @@ test('should match with members scope', async (t) => {
     payload: { id: ['ent1', 'ent2'], type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with members scope', async (t) => {
@@ -163,7 +201,7 @@ test('should mismatch with members scope', async (t) => {
     payload: { id: ['ent1', 'ent2'], type: 'entry' },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with collection scope', async (t) => {
@@ -173,7 +211,7 @@ test('should match with collection scope', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with collection scope', async (t) => {
@@ -183,7 +221,7 @@ test('should mismatch with collection scope', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with scope array', async (t) => {
@@ -193,7 +231,7 @@ test('should match with scope array', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with scope array', async (t) => {
@@ -203,7 +241,7 @@ test('should mismatch with scope array', async (t) => {
     payload: { type: 'entry', id: ['ent1', 'ent2'] },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with type', async (t) => {
@@ -213,7 +251,7 @@ test('should match with type', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with type', async (t) => {
@@ -223,7 +261,7 @@ test('should mismatch with type', async (t) => {
     payload: { type: 'user' },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with type array', async (t) => {
@@ -233,7 +271,7 @@ test('should match with type array', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with type array', async (t) => {
@@ -243,7 +281,7 @@ test('should mismatch with type array', async (t) => {
     payload: { type: 'user' },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with action type array', async (t) => {
@@ -253,7 +291,7 @@ test('should match with action type array', async (t) => {
     payload: { type: ['user', 'entry'] },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with action type array', async (t) => {
@@ -263,7 +301,7 @@ test('should mismatch with action type array', async (t) => {
     payload: { type: ['user', 'unknown'] },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with endpoint id', async (t) => {
@@ -273,7 +311,7 @@ test('should match with endpoint id', async (t) => {
     payload: { id: 'ent1', type: 'entry', endpoint: 'endpoint1' },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with endpoint id', async (t) => {
@@ -283,7 +321,7 @@ test('should mismatch with endpoint id', async (t) => {
     payload: { id: 'ent1', type: 'entry', endpoint: 'endpoint1' },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with required param', async (t) => {
@@ -293,7 +331,7 @@ test('should match with required param', async (t) => {
     payload: { author: 'johnf', type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with required param', async (t) => {
@@ -303,7 +341,7 @@ test('should mismatch with required param', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with optional param', async (t) => {
@@ -313,7 +351,7 @@ test('should match with optional param', async (t) => {
     payload: { author: 'johnf', type: 'entry' },
   }
 
-  t.true(await isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should match without optional param', async (t) => {
@@ -323,7 +361,7 @@ test('should match without optional param', async (t) => {
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should match with filter', async (t) => {
@@ -333,7 +371,7 @@ test('should match with filter', async (t) => {
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
   }
 
-  t.true(await isMatch(endpoint)(action))
+  t.true(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should mismatch with filter', async (t) => {
@@ -343,7 +381,7 @@ test('should mismatch with filter', async (t) => {
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
   }
 
-  t.false(await isMatch(endpoint)(action))
+  t.false(await isMatch(endpoint, mapOptions)(action))
 })
 
 test('should match with several filters', async (t) => {
@@ -353,7 +391,7 @@ test('should match with several filters', async (t) => {
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
   }
 
-  t.true(await isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should mismatch with several filters', async (t) => {
@@ -363,7 +401,7 @@ test('should mismatch with several filters', async (t) => {
     payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
   }
 
-  t.false(await isMatch(endpoints)(action))
+  t.false(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should match with one of several filters', async (t) => {
@@ -373,7 +411,7 @@ test('should match with one of several filters', async (t) => {
     payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
   }
 
-  t.true(await isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should match with no filters', async (t) => {
@@ -383,7 +421,7 @@ test('should match with no filters', async (t) => {
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
   }
 
-  t.true(await isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should match with params filter', async (t) => {
@@ -396,7 +434,7 @@ test('should match with params filter', async (t) => {
     },
   }
 
-  t.true(await isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should mismatch with params filter', async (t) => {
@@ -409,7 +447,7 @@ test('should mismatch with params filter', async (t) => {
     },
   }
 
-  t.false(await isMatch(endpoints)(action))
+  t.false(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should match with meta filter', async (t) => {
@@ -420,7 +458,7 @@ test('should match with meta filter', async (t) => {
     meta: { ident: { root: true, id: 'root' } },
   }
 
-  t.true(await isMatch(endpoints)(action))
+  t.true(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('should mismatch with meta filter', async (t) => {
@@ -431,7 +469,105 @@ test('should mismatch with meta filter', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(await isMatch(endpoints)(action))
+  t.false(await isMatch(endpoints, mapOptions)(action))
+})
+
+test('should match with condition', async (t) => {
+  const endpoint = endpointSetWithCondition
+  const action = {
+    type: 'SET',
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
+  }
+
+  t.true(await isMatch(endpoint, mapOptions)(action))
+})
+
+test('should mismatch with condition', async (t) => {
+  const endpoint = endpointSetWithCondition
+  const action = {
+    type: 'SET',
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
+  }
+
+  t.false(await isMatch(endpoint, mapOptions)(action))
+})
+
+test('should match with several conditions', async (t) => {
+  const endpoints = endpointSetWithConditions
+  const action = {
+    type: 'SET',
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
+  }
+
+  t.true(await isMatch(endpoints, mapOptions)(action))
+})
+
+test('should mismatch with several conditions', async (t) => {
+  const endpoints = endpointSetWithConditions
+  const action = {
+    type: 'SET',
+    payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
+  }
+
+  t.false(await isMatch(endpoints, mapOptions)(action))
+})
+
+test('should match with no conditions', async (t) => {
+  const endpoints = endpointSetWithNoConditions
+  const action = {
+    type: 'SET',
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
+  }
+
+  t.true(await isMatch(endpoints, mapOptions)(action))
+})
+
+test('should match with params condition', async (t) => {
+  const endpoints = endpointSetWithParamCondition
+  const action = {
+    type: 'SET',
+    payload: {
+      author: 'johnf',
+      data: { $type: 'entry', title: 'Entry 1', draft: true },
+    },
+  }
+
+  t.true(await isMatch(endpoints, mapOptions)(action))
+})
+
+test('should mismatch with params condition', async (t) => {
+  const endpoints = endpointSetWithParamCondition
+  const action = {
+    type: 'SET',
+    payload: {
+      author: 'lucyk',
+      data: { $type: 'entry', title: 'Entry 1', draft: true },
+    },
+  }
+
+  t.false(await isMatch(endpoints, mapOptions)(action))
+})
+
+test('should match with meta condition', async (t) => {
+  const endpoints = endpointSetWithMetaCondition
+  const action = {
+    type: 'SET',
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
+    meta: { ident: { root: true, id: 'root' } },
+  }
+
+  t.true(await isMatch(endpoints, mapOptions)(action))
+})
+
+test('should mismatch with meta condition', async (t) => {
+  const endpoints = endpointSetWithMetaCondition
+  const action = {
+    type: 'SET',
+    payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  t.false(await isMatch(endpoints, mapOptions)(action))
 })
 
 test('incoming should match incoming endpoint', async (t) => {
@@ -442,7 +578,7 @@ test('incoming should match incoming endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(await isMatch(endpoints)(action, true))
+  t.true(await isMatch(endpoints, mapOptions)(action, true))
 })
 
 test('non-incoming should not match incoming endpoint', async (t) => {
@@ -453,7 +589,7 @@ test('non-incoming should not match incoming endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(await isMatch(endpoints)(action, false))
+  t.false(await isMatch(endpoints, mapOptions)(action, false))
 })
 
 test('non-incoming should match non-incoming endpoint', async (t) => {
@@ -464,7 +600,7 @@ test('non-incoming should match non-incoming endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(await isMatch(endpoints)(action, false))
+  t.true(await isMatch(endpoints, mapOptions)(action, false))
 })
 
 test('incoming should not match non-incoming endpoint', async (t) => {
@@ -475,7 +611,7 @@ test('incoming should not match non-incoming endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(await isMatch(endpoints)(action, true))
+  t.false(await isMatch(endpoints, mapOptions)(action, true))
 })
 
 test('incoming should match non-incoming endpoint', async (t) => {
@@ -486,5 +622,5 @@ test('incoming should match non-incoming endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(await isMatch(endpoints)(action, true))
+  t.true(await isMatch(endpoints, mapOptions)(action, true))
 })
