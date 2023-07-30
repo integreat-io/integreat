@@ -72,6 +72,7 @@ export interface EndpointDef {
   match?: MatchObject
   validate?: ValidateObject[]
   mutation?: TransformDefinition
+  mutate?: TransformDefinition
   allowRawRequest?: boolean
   allowRawResponse?: boolean
   options?: ServiceOptions

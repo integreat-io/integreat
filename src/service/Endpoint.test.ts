@@ -478,6 +478,29 @@ test('should mutate response from service with endpoint mutation', async (t) => 
   t.deepEqual(ret, expected)
 })
 
+test('should treat `mutate` as an alias of endpoint mutation', async (t) => {
+  const endpointDef = {
+    mutate: {
+      response: {
+        $modify: 'response',
+        data: ['response.data.content.data', { $apply: 'entry' }],
+      },
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+
+  const ret = await endpoint.mutate(actionWithResponse, false)
+
+  t.is(ret.response?.status, 'ok', ret.response?.error)
+  const data = ret.response?.data as TypedData[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'ent1')
+  t.is(data[0].$type, 'entry')
+  t.is(data[0].title, 'Entry 1')
+  t.is(data[0].published, false)
+})
+
 test('should run prepareOptions() on options before giving them to adapter', async (t) => {
   const prepareOptions = (options: ServiceOptions, serviceId: string) => ({
     ...options,

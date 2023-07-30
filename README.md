@@ -298,10 +298,10 @@ Here's the format of an endpoint definition:
       failResponse: <response object>
     }
   ],
-  mutation: <mutation pipeline>,
-  options: {...},
+  mutate: <mutation pipeline>,
   allowRawRequest: <boolean>,
   allowRawResponse: <boolean>
+  options: {...},
 }
 ```
 
@@ -327,19 +327,19 @@ specify a few things:
   `failResponse` is provided. There's also a shorthand, where you set
   `failResponse` to a string, which will be the `error` message of the
   `badrequest` response. The response is passed through the mutation pipeline.
-- `mutation`: A mutation pipeline for the endpoint. The pipeline is run for both
+- `mutate`: A mutation pipeline for the endpoint. The pipeline is run for both
   actions going to a service and the response coming back, so keep this in mind
   when you set up this pipeline. See [Mutation pipelines](#mutations)
-  for more on how to define the mutation.
-- `options`: This object is merged with the `options` object on the service
-  definition, and provide options for transporters and adapters. See
-  [the `options` object](#options-object) for more on this.
+  for more on how to define the mutation. `mutation` is an alias for `mutate`.
 - `allowRawRequest`: When set to `true`, payload `data` sent to this endpoint
   will not by cast automatically nor will an error be returned if the data is
   not typed.
 - `allowRawResponse`: When set to `true`, response `data` coming from this
   endpoint will not by cast automatically nor will an error be returned if the
   data is not typed.
+- `options`: This object is merged with the `options` object on the service
+  definition, and provide options for transporters and adapters. See
+  [the `options` object](#options-object) for more on this.
 
 #### Match properties
 

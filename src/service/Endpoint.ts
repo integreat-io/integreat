@@ -111,8 +111,6 @@ export default class Endpoint {
   id?: string
   match?: MatchObject
   options: PreparedOptions
-  mutation?: TransformDefinition
-  adapters?: (string | Adapter)[]
   allowRawRequest?: boolean
   allowRawResponse?: boolean
 
@@ -140,7 +138,7 @@ export default class Endpoint {
 
     this.#mutateAction = prepareActionMutation(
       serviceMutation,
-      endpointDef.mutation,
+      endpointDef.mutation || endpointDef.mutate,
       serviceAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
       endpointAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
       mapOptions
