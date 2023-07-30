@@ -1,14 +1,12 @@
 import cronParser from 'cron-parser'
-import { isDate, isAction } from './is.js'
-import type { JobDef, Action } from '../types.js'
+import { isDate } from '../utils/is.js'
+import type { JobDef } from './types.js'
 
 export default class Schedule {
-  action: Action | null
   cron?: string
   tz?: string
 
   constructor(job: JobDef) {
-    this.action = isAction(job.action) ? job.action : null
     this.cron = typeof job.cron === 'string' ? job.cron : undefined
     this.tz = typeof job.tz === 'string' ? job.tz : undefined
   }

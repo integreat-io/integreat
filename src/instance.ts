@@ -4,21 +4,20 @@ import builtinHandlers from './handlers/index.js'
 import runFn from './handlers/run.js'
 import Schema from './schema/Schema.js'
 import Service from './service/Service.js'
-import { isObject } from './utils/is.js'
+import { ensureArray } from './utils/array.js'
 import createMapOptions from './utils/createMapOptions.js'
 import { lookupById } from './utils/indexUtils.js'
 import createDispatch from './dispatch.js'
 import listen from './listen.js'
 import close from './close.js'
 import { indexById } from './utils/indexUtils.js'
-import Schedule from './utils/Schedule.js'
+import Job from './jobs/Job.js'
 import createDispatchScheduled from './dispatchScheduled.js'
 import type {
   Definitions,
   Resources,
   Middleware,
   Dispatch,
-  JobDef,
   Action,
   Response,
   Adapter,
@@ -48,8 +47,7 @@ const setAdapterIds = (adapters?: Record<string, Adapter>) =>
       )
     : {}
 
-const hasActionAndCron = (schedule: Schedule) =>
-  !!schedule.action && !!schedule.cron
+const isJobWithSchedule = (job: Job) => !!job.schedule
 
 export default class Instance extends EventEmitter {
   id?: string
@@ -127,12 +125,12 @@ export default class Instance extends EventEmitter {
       .reduce(indexById, {} as Record<string, Service>)
 
     // Prepare jobs
-    const { jobs: jobsDefs = [] } = defs
-    const jobs = jobsDefs.reduce(
-      (jobs, job) =>
-        typeof job.id === 'string' ? { ...jobs, [job.id]: job } : jobs,
-      {} as Record<string, JobDef>
-    )
+    const jobs = new Map<string, Job>()
+    ensureArray(defs.jobs).forEach((job) => {
+      if (typeof job.id === 'string') {
+        jobs.set(job.id, new Job(job, mapOptions))
+      }
+    })
 
     // Create dispatch
     const dispatch = createDispatch({
@@ -141,7 +139,7 @@ export default class Instance extends EventEmitter {
       handlers: {
         ...builtinHandlers,
         ...resources.handlers,
-        RUN: runFn(jobs, mapOptions),
+        RUN: runFn(jobs),
       }, // Set `RUN` handler here to include jobs
       middleware: middlewareForDispatch,
       options: {
@@ -151,10 +149,7 @@ export default class Instance extends EventEmitter {
     })
 
     // Prepare scheduled actions
-    const scheduled = jobsDefs
-      .filter(isObject)
-      .map((def) => new Schedule(def))
-      .filter(hasActionAndCron)
+    const scheduled = [...jobs.values()].filter(isJobWithSchedule)
     const dispatchScheduled = createDispatchScheduled(dispatch, scheduled)
 
     this.id = defs.id

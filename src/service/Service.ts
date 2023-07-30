@@ -27,8 +27,9 @@ import type {
   Transporter,
   Adapter,
   Authenticator,
+  MapOptions,
 } from '../types.js'
-import type { ServiceDef, MapOptions, TransporterOptions } from './types.js'
+import type { ServiceDef, TransporterOptions } from './types.js'
 
 const debug = debugLib('great')
 

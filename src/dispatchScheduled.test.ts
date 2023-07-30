@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import Schedule from './utils/Schedule.js'
+import Job from './jobs/Job.js'
 import type { Action } from './types.js'
 
 import dispatchScheduled from './dispatchScheduled.js'
@@ -21,42 +21,48 @@ const action3 = {
 }
 
 const meta = { ident: { id: 'scheduler' }, queue: true }
+const mapOptions = {}
 
 // Tests
 
 test('should dispatch actions scheduled within a time period', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'queued' })
-  const schedules = [
-    new Schedule({ cron: '0,10,15,20,25 * * * *', action: action1 }), // Will only trigger once
-    new Schedule({ cron: '45 * * * *', action: action2 }),
-    new Schedule({ cron: '25 * * * *', action: action3 }),
+  const jobs = [
+    new Job(
+      { id: 'action1', cron: '0,10,15,20,25 * * * *', action: action1 },
+      mapOptions
+    ), // Will only trigger once
+    new Job({ id: 'action2', cron: '45 * * * *', action: action2 }, mapOptions),
+    new Job({ id: 'action3', cron: '25 * * * *', action: action3 }, mapOptions),
   ]
   const fromDate = new Date('2021-05-11T11:03Z')
   const toDate = new Date('2021-05-11T11:26Z')
+  const expectedAction1 = { type: 'RUN', payload: { jobId: 'action1' }, meta }
+  const expectedAction3 = { type: 'RUN', payload: { jobId: 'action3' }, meta }
   const expected = [
-    { ...action1, response: { status: 'queued' }, meta },
-    { ...action3, response: { status: 'queued' }, meta },
+    { ...expectedAction1, response: { status: 'queued' } },
+    { ...expectedAction3, response: { status: 'queued' } },
   ]
 
-  const ret = await dispatchScheduled(dispatch, schedules)(fromDate, toDate)
+  const ret = await dispatchScheduled(dispatch, jobs)(fromDate, toDate)
 
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], { ...action1, meta })
-  t.deepEqual(dispatch.args[1][0], { ...action3, meta })
+  t.deepEqual(dispatch.args[0][0], expectedAction1)
+  t.deepEqual(dispatch.args[1][0], expectedAction3)
   t.deepEqual(ret, expected)
 })
 
 test('should do nothing when none is scheduled within period', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'queued' })
-  const schedules = [
-    new Schedule({ cron: '55 * * * *', action: action1 }),
-    new Schedule({ cron: '45 * * * *', action: action2 }),
+  const jobs = [
+    new Job({ cron: '55 * * * *', action: action1 }, mapOptions),
+    new Job({ cron: '45 * * * *', action: action2 }, mapOptions),
   ]
   const fromDate = new Date('2021-05-11T11:03Z')
   const toDate = new Date('2021-05-11T11:26Z')
   const expected: Action[] = []
 
-  const ret = await dispatchScheduled(dispatch, schedules)(fromDate, toDate)
+  const ret = await dispatchScheduled(dispatch, jobs)(fromDate, toDate)
 
   t.is(dispatch.callCount, 0)
   t.deepEqual(ret, expected)
@@ -64,12 +70,12 @@ test('should do nothing when none is scheduled within period', async (t) => {
 
 test('should do nothing when no schedules', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'queued' })
-  const schedules: Schedule[] = []
+  const jobs: Job[] = []
   const fromDate = new Date('2021-05-11T11:03Z')
   const toDate = new Date('2021-05-11T11:26Z')
   const expected: Action[] = []
 
-  const ret = await dispatchScheduled(dispatch, schedules)(fromDate, toDate)
+  const ret = await dispatchScheduled(dispatch, jobs)(fromDate, toDate)
 
   t.is(dispatch.callCount, 0)
   t.deepEqual(ret, expected)
@@ -77,19 +83,20 @@ test('should do nothing when no schedules', async (t) => {
 
 test('should skip schedule without cron string or action', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'queued' })
-  const schedules = [
-    new Schedule({ action: action1 }),
-    new Schedule({ cron: '15 * * * *' }),
-    new Schedule({ cron: '12 * * * *', action: action2 }),
+  const jobs = [
+    new Job({ id: 'action1', action: action1 }, mapOptions),
+    new Job({ id: 'action0', cron: '15 * * * *' }, mapOptions),
+    new Job({ id: 'action2', cron: '12 * * * *', action: action2 }, mapOptions),
   ]
   const fromDate = new Date('2021-05-11T11:03Z')
   const toDate = new Date('2021-05-11T11:26Z')
-  const expected = [{ ...action2, response: { status: 'queued' }, meta }]
+  const expectedActon2 = { type: 'RUN', payload: { jobId: 'action2' }, meta }
+  const expected = [{ ...expectedActon2, response: { status: 'queued' } }]
 
-  const ret = await dispatchScheduled(dispatch, schedules)(fromDate, toDate)
+  const ret = await dispatchScheduled(dispatch, jobs)(fromDate, toDate)
 
   t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], { ...action2, meta })
+  t.deepEqual(dispatch.args[0][0], expectedActon2)
   t.deepEqual(ret, expected)
 })
 
@@ -99,24 +106,29 @@ test('should return array of error responses', async (t) => {
     .resolves({ status: 'queued' })
     .onSecondCall()
     .resolves({ status: 'error', error: 'Could not queue' })
-  const schedules = [
-    new Schedule({ cron: '0,10,15,20,25 * * * *', action: action1 }),
-    new Schedule({ cron: '45 * * * *', action: action2 }),
-    new Schedule({ cron: '25 * * * *', action: action3 }),
+  const jobs = [
+    new Job(
+      { id: 'action1', cron: '0,10,15,20,25 * * * *', action: action1 },
+      mapOptions
+    ),
+    new Job({ id: 'action2', cron: '45 * * * *', action: action2 }, mapOptions),
+    new Job({ id: 'action3', cron: '25 * * * *', action: action3 }, mapOptions),
   ]
   const fromDate = new Date('2021-05-11T11:03Z')
   const toDate = new Date('2021-05-11T14:03Z')
+  const expectedActon1 = { type: 'RUN', payload: { jobId: 'action1' }, meta }
+  const expectedActon2 = { type: 'RUN', payload: { jobId: 'action2' }, meta }
+  const expectedActon3 = { type: 'RUN', payload: { jobId: 'action3' }, meta }
   const expected = [
-    { ...action1, response: { status: 'queued' }, meta },
+    { ...expectedActon1, response: { status: 'queued' } },
     {
-      ...action2,
+      ...expectedActon2,
       response: { status: 'error', error: 'Could not queue' },
-      meta,
     },
-    { ...action3, response: { status: 'queued' }, meta },
+    { ...expectedActon3, response: { status: 'queued' } },
   ]
 
-  const ret = await dispatchScheduled(dispatch, schedules)(fromDate, toDate)
+  const ret = await dispatchScheduled(dispatch, jobs)(fromDate, toDate)
 
   t.is(dispatch.callCount, 3)
   t.deepEqual(ret, expected)

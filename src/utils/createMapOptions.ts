@@ -6,7 +6,7 @@ import type {
   Dictionaries,
 } from 'map-transform/types.js'
 import type Schema from '../schema/Schema.js'
-import type { MapOptions } from '../service/types.js'
+import type { MapOptions } from '../types.js'
 
 const transformersFromSchemas = (
   schemas: Record<string, Schema>

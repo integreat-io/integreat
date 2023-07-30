@@ -6,6 +6,7 @@ import jsonServiceDef from './tests/helpers/jsonServiceDef.js'
 import builtInMutations from './mutations/index.js'
 import user from './tests/helpers/defs/schemas/user.js'
 import resources from './tests/helpers/resources/index.js'
+import { QUEUE_SYMBOL } from './handlers/index.js'
 import type {
   Definitions,
   Resources,
@@ -361,39 +362,56 @@ test('should mutate data', async (t) => {
 })
 
 test('should dispatch scheduled', async (t) => {
-  const handler = sinon.stub().resolves({ status: 'ok' })
-  const handlers = { TEST: handler }
-  const jobs = [{ cron: '45 * * * *', action: { type: 'TEST', payload: {} } }]
+  const queueStub = sinon.stub().resolves({ status: 'queued' })
+  const handlers = { [QUEUE_SYMBOL]: queueStub }
+  const jobs = [
+    {
+      id: 'action1',
+      cron: '45 * * * *',
+      action: { type: 'GET', payload: { type: 'entry' } },
+    },
+  ]
   const fromDate = new Date('2021-05-11T14:32Z')
   const toDate = new Date('2021-05-11T14:59Z')
+  const expected = [
+    {
+      type: 'RUN',
+      payload: { jobId: 'action1' },
+      response: {
+        status: 'queued',
+        origin: 'dispatch',
+        access: { ident: { id: 'scheduler' } },
+      },
+      meta: { ident: { id: 'scheduler' }, queue: true },
+    },
+  ]
 
   const great = new Instance(
-    { services, schemas, mutations, jobs },
+    { services, schemas, mutations, jobs, queueService: 'queue' }, // We don't have a queue service, but we've mocked the queue handler
     { ...resourcesWithTransformer, handlers }
   )
-  await great.dispatchScheduled(fromDate, toDate)
+  const ret = await great.dispatchScheduled(fromDate, toDate)
 
-  t.is(handler.callCount, 1) // If the action handler was called, the action was dispatched
+  t.deepEqual(ret, expected)
 })
 
 test('should skip jobs without schedule', async (t) => {
-  const handler = sinon.stub().resolves({ status: 'ok' })
-  const handlers = { TEST: handler }
   const jobs = [{ id: 'someAction', action: { type: 'TEST', payload: {} } }]
   const fromDate = new Date('2021-05-11T14:32Z')
   const toDate = new Date('2021-05-11T14:59Z')
 
   const great = new Instance(
     { services, schemas, mutations, jobs },
-    { ...resourcesWithTransformer, handlers }
+    resourcesWithTransformer
   )
-  await great.dispatchScheduled(fromDate, toDate)
+  const ret = await great.dispatchScheduled(fromDate, toDate)
 
-  t.is(handler.callCount, 0)
+  t.deepEqual(ret, [])
 })
 
 test('should set up RUN handler with jobs', async (t) => {
   const handler = sinon.stub().resolves({ status: 'ok' })
+  const handlers = { TEST: handler }
   const jobs = [
     {
       id: 'theJob',
@@ -403,7 +421,6 @@ test('should set up RUN handler with jobs', async (t) => {
   ]
   const nowDate = new Date()
   const transformers = { now: () => () => () => nowDate }
-  const handlers = { TEST: handler }
   const action = {
     type: 'RUN',
     payload: { jobId: 'theJob' },
@@ -414,8 +431,9 @@ test('should set up RUN handler with jobs', async (t) => {
     { services, schemas, mutations, jobs },
     { ...resourcesWithTransformer, handlers, transformers }
   )
-  await great.dispatch(action)
+  const ret = await great.dispatch(action)
 
+  t.is(ret.status, 'ok', ret.error)
   t.is(handler.callCount, 1)
   const dispatchedAction = handler.args[0][0]
   t.is(dispatchedAction.type, 'TEST')

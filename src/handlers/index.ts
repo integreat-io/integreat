@@ -19,7 +19,7 @@ const handlers: Record<string | symbol, ActionHandler> = {
   GET_ALL,
   GET_META,
   GET_IDENT,
-  RUN: runFn({}, {}), // This includes the handler with no jobs. Will be overwritten in `create()`
+  RUN: runFn(new Map()), // This includes the handler with no jobs. Will be overwritten in `create()`
   SET,
   SET_META,
   DELETE,

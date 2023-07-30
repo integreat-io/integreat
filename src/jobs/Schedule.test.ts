@@ -1,5 +1,5 @@
 import test from 'ava'
-import type { JobDef } from '../types.js'
+import type { JobDef } from './types.js'
 
 import Schedule from './Schedule.js'
 
@@ -16,7 +16,6 @@ test('should create Schedule from schedule definition', (t) => {
 
   const ret = new Schedule(def)
 
-  t.deepEqual(ret.action, def.action)
   t.is(ret.cron, def.cron)
   t.is(typeof ret.shouldRun, 'function')
 })
@@ -29,7 +28,6 @@ test('should not set invalid props', (t) => {
 
   const ret = new Schedule(def)
 
-  t.is(ret.action, null)
   t.is(ret.cron, undefined)
 })
 

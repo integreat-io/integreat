@@ -4,8 +4,7 @@ import type {
   Transformer,
   AsyncTransformer,
   TransformDefinition,
-  TransformObject,
-  Pipeline,
+  Options,
 } from 'map-transform/types.js'
 import type {
   ServiceDef,
@@ -17,6 +16,9 @@ import type {
 } from './service/types.js'
 import type Service from './service/Service.js'
 import type { SchemaDef } from './schema/types.js'
+import type { JobDef } from './jobs/types.js'
+
+export type MapOptions = Options
 
 export interface Reference {
   id: string | null
@@ -34,6 +36,11 @@ export interface TypedData extends Record<string, unknown> {
   isDeleted?: boolean
 }
 
+export interface ValidateObject {
+  condition: TransformDefinition
+  failResponse?: Response | string
+}
+
 export interface ConditionFailObject extends Record<string, unknown> {
   message?: string
   status?: string
@@ -42,34 +49,6 @@ export interface ConditionFailObject extends Record<string, unknown> {
 
 export interface Condition extends Record<string, unknown> {
   onFail?: ConditionFailObject | string
-}
-
-interface JobFields {
-  id: string
-  conditions?: Record<string, Condition | undefined>
-  mutation?: TransformObject | Pipeline
-}
-
-export interface JobWithFlow extends JobFields {
-  flow: (Job | Job[])[]
-}
-
-export interface JobWithAction extends JobFields {
-  action: Action
-  iterate?: TransformDefinition
-  iteratePath?: string
-  responseMutation?: TransformObject | Pipeline
-}
-
-export type Job = JobWithAction | JobWithFlow
-
-export interface JobDef {
-  id?: string
-  action?: Action
-  flow?: (Job | Job[])[]
-  cron?: string
-  tz?: string
-  responseMutation?: TransformObject | Pipeline
 }
 
 export interface DataFunction {

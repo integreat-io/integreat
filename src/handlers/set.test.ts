@@ -6,7 +6,7 @@ import Schema from '../schema/Schema.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { TypedData } from '../types.js'
-import type { ValidateObject } from '../service/types.js'
+import type { ValidateObject } from '../types.js'
 
 import set from './set.js'
 

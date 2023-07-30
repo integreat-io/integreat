@@ -1,12 +1,7 @@
-import type {
-  TypedData,
-  Reference,
-  Action,
-  Job,
-  JobWithAction,
-  JobWithFlow,
-} from '../types.js'
+import type { TypedData, Reference, Action, Response } from '../types.js'
 import type { ShapeDef, FieldDefinition } from '../schema/types.js'
+
+const OK_STATUSES = ['ok', 'noaction', 'queued']
 
 export const isObject = (value: unknown): value is Record<string, unknown> =>
   Object.prototype.toString.call(value) === '[object Object]'
@@ -41,20 +36,12 @@ export const isAction = (action: unknown): action is Action =>
   typeof action.type === 'string' &&
   isObject(action.payload)
 
+export const isOkResponse = (response?: Response) =>
+  typeof response?.status === 'string' && OK_STATUSES.includes(response.status)
+
+export const isErrorResponse = (response?: Response) =>
+  typeof response?.status === 'string' && !OK_STATUSES.includes(response.status)
+
 export const isTruthy = (value: unknown): boolean => !!value
 export const isFalsy = (value: unknown): boolean => !value
 export const not = isFalsy
-
-export const isJobStep = (step: unknown): step is Job =>
-  isObject(step) && typeof step.id === 'string'
-
-export const isJob = (job: unknown): job is Job =>
-  isJobStep(job) &&
-  typeof job.id === 'string' &&
-  !!((job as JobWithAction).action || (job as JobWithFlow).flow)
-
-export const isJobWithAction = (job: Job): job is JobWithAction =>
-  isObject((job as JobWithAction).action)
-
-export const isJobWithFlow = (job: Job): job is JobWithFlow =>
-  Array.isArray((job as JobWithFlow).flow)

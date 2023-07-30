@@ -1,13 +1,11 @@
-import type { TransformDefinition, Options } from 'map-transform/types.js'
+import type { TransformDefinition } from 'map-transform/types.js'
 import type {
   Action,
-  Response,
   Transporter,
   Adapter,
   Condition,
+  ValidateObject,
 } from '../types.js'
-
-export type MapOptions = Options
 
 export type TransformDefinitions = Record<string, string | TransformDefinition>
 
@@ -65,11 +63,6 @@ export interface MatchObject {
   params?: Record<string, boolean | undefined>
   filters?: Record<string, Condition | boolean | undefined>
   incoming?: boolean
-}
-
-export interface ValidateObject {
-  condition: TransformDefinition
-  failResponse?: Response | string
 }
 
 export interface EndpointDef {

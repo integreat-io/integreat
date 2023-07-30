@@ -25,8 +25,6 @@ export type {
   ActionHandlerResources,
   HandlerDispatch,
   SetProgress,
-  JobDef,
-  Job,
   Authenticator,
 } from './types.js'
 export type {
@@ -35,6 +33,7 @@ export type {
   AuthDef,
   ServiceDef,
 } from './service/types.js'
+export type { JobDef, JobStepDef } from './jobs/types.js'
 export type { Instance, Definitions, Resources, Middleware }
 
 export * as authenticators from './authenticators/index.js'
