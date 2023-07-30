@@ -6,21 +6,12 @@ import resources from '../helpers/resources/index.js'
 import entriesService from '../helpers/defs/services/entries.js'
 import entry1 from '../helpers/data/entry1.js'
 import entry2 from '../helpers/data/entry2.js'
-import json from '../../transformers/json.js'
 import type { TransformDefinition } from 'map-transform/types.js'
 import type { TypedData, Response } from '../../types.js'
 
 import Integreat from '../../index.js'
 
 // Setup
-
-const resourcesWithTrans = {
-  ...resources,
-  transformers: {
-    ...resources.transformers,
-    json,
-  },
-}
 
 const mutation = {
   $direction: 'fwd',
@@ -167,7 +158,7 @@ test('should transform at paths within the data', async (t) => {
   }
   const defs = defsWithMutation(mutation)
 
-  const great = Integreat.create(defs, resourcesWithTrans)
+  const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
   t.is(ret.status, 'ok', ret.error)

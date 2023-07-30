@@ -1,5 +1,6 @@
 import httpTransporter from 'integreat-transporter-http'
 import jsonAdapter from 'integreat-adapter-json'
+import jsonTransformer from 'integreat-adapter-json/transformer.js'
 import transformers from '../../../transformers/index.js'
 import { Resources, TypedData, Action } from '../../../types.js'
 
@@ -17,7 +18,12 @@ const shouldHaveAuthor =
 const resources: Resources = {
   transporters: { http: httpTransporter },
   adapters: { json: jsonAdapter },
-  transformers: { ...transformers, isoDate, shouldHaveAuthor },
+  transformers: {
+    ...transformers,
+    isoDate,
+    shouldHaveAuthor,
+    json: jsonTransformer,
+  },
 }
 
 export default resources

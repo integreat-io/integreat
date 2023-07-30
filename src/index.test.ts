@@ -24,7 +24,6 @@ test('should export resources', (t) => {
   t.truthy(mutations)
   t.truthy(mutations['exchange:json'])
   t.truthy(transformers)
-  t.truthy(transformers.json)
   t.truthy(adapters)
   t.truthy(adapters.uri)
 })
