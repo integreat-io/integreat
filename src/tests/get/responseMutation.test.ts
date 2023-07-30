@@ -34,9 +34,7 @@ const defsWithMutation = (
   services: [
     {
       ...entriesService,
-      mutation: serviceMutation
-        ? [...entriesService.mutation, serviceMutation]
-        : entriesService.mutation,
+      mutation: serviceMutation ? [serviceMutation] : [],
       endpoints: [
         {
           mutation,

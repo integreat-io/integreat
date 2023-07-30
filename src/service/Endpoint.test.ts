@@ -2,6 +2,7 @@ import test from 'ava'
 import sinon from 'sinon'
 import jsonAdapter from 'integreat-adapter-json'
 import jsonTransformer from 'integreat-adapter-json/transformer.js'
+import uriTransformer from 'integreat-adapter-uri/transformer.js'
 import Schema from '../schema/Schema.js'
 import transformers from '../transformers/index.js'
 import { isAction, isObject } from '../utils/is.js'
@@ -89,6 +90,7 @@ const allTransformers = {
   shouldHaveToken,
   alwaysOk,
   json: jsonTransformer,
+  uri: uriTransformer,
 }
 
 const mapOptions = createMapOptions(schemas, pipelines, allTransformers)
@@ -1090,7 +1092,7 @@ test('should mutate request with service mutation', async (t) => {
         '.': 'meta',
         options: {
           '.': 'meta.options',
-          uri: { $transform: 'generateUri', templatePath: 'meta.options.uri' },
+          uri: { $transform: 'uri', templatePath: 'meta.options.uri' },
         },
       },
     },

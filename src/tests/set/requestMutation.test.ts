@@ -130,7 +130,7 @@ test('should set data with service and endpoint mutation', async (t) => {
     services: [
       {
         ...entriesService,
-        mutation: [...entriesService.mutation, serviceMutation],
+        mutation: [serviceMutation],
         endpoints: [
           {
             mutation,

@@ -2,6 +2,7 @@ import test from 'ava'
 import sinon from 'sinon'
 import Schedule from './Schedule.js'
 import integreatTransformers from 'integreat-transformers'
+import uriTransformer from 'integreat-adapter-uri/transformer.js'
 import transformers from '../transformers/index.js'
 
 import Job from './Job.js'
@@ -11,7 +12,11 @@ import Job from './Job.js'
 const action = { type: 'GET', payload: { type: 'entry', id: 'ent1' } }
 
 const mapOptions = {
-  transformers: { ...transformers, size: integreatTransformers.size },
+  transformers: {
+    ...transformers,
+    size: integreatTransformers.size,
+    uri: uriTransformer,
+  },
 }
 
 // Tests
@@ -1920,7 +1925,7 @@ test('should mutate action with payload from original action', async (t) => {
               $alt: ['section', 'data.section[]'],
             },
             {
-              $transform: 'generateUri',
+              $transform: 'uri',
               template: 'section-{.}',
               $iterate: true,
             },

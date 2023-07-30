@@ -3,8 +3,7 @@ export default {
   transporter: 'http',
   auth: true,
   options: { baseUri: 'http://some.api', method: 'GET' },
-  adapters: ['json'],
-  mutation: [{ $apply: 'exchange:uri' }],
+  adapters: ['json', 'uri'],
   endpoints: [
     {
       match: { action: 'GET', scope: 'collection', params: { offset: false } },

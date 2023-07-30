@@ -10,7 +10,6 @@ import usersService from './services/users.js'
 
 import apiEntryMutation from './mutations/api-entry.js'
 import entriesEntryMutation from './mutations/entries-entry.js'
-import exchangeUriMutation from '../../../mutations/exchangeUri.js'
 import usersUserMutation from './mutations/users-user.js'
 
 export default {
@@ -20,7 +19,6 @@ export default {
     'api-entry': apiEntryMutation,
     'entries-entry': entriesEntryMutation,
     'users-user': usersUserMutation,
-    'exchange:uri': exchangeUriMutation,
   },
   dictionaries: {
     userRole: [['super', 'admin'] as const, ['readwrite', 'editor'] as const],

@@ -2,7 +2,6 @@ import test from 'ava'
 import nock from 'nock'
 import Integreat from '../index.js'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
-import mutations from '../mutations/index.js'
 import resources from '../tests/helpers/resources/index.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import type { EndpointDef } from '../service/types.js'
@@ -38,7 +37,7 @@ const defs = (endpoints: EndpointDef[], meta: string | null = 'meta') => ({
       endpoints,
     },
   ],
-  mutations,
+  mutations: {},
 })
 
 const lastSyncedAt = new Date()

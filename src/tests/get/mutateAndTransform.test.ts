@@ -3,7 +3,6 @@ import nock from 'nock'
 import mapAny from 'map-any'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
-import mutations from '../../mutations/index.js'
 import entry1 from '../helpers/data/entry1.js'
 import entry2 from '../helpers/data/entry2.js'
 import { isObject } from '../../utils/is.js'
@@ -66,7 +65,6 @@ test('should transform entry', async (t) => {
   const defs = {
     ...definitions,
     mutations: {
-      ...mutations,
       'entries-entry': mapping,
     },
   }
@@ -106,7 +104,6 @@ test('should transform array of entries', async (t) => {
   const defs = {
     ...definitions,
     mutations: {
-      ...mutations,
       'entries-entry': mapping,
     },
   }

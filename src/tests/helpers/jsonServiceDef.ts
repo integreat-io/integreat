@@ -1,6 +1,6 @@
 import httpTransporter from 'integreat-transporter-http'
 import jsonAdapter from 'integreat-adapter-json'
-import uriAdapter from '../../adapters/uri.js'
+import uriAdapter from 'integreat-adapter-uri'
 import type { ServiceDef } from '../../service/types.js'
 
 const jsonServiceDef: Partial<ServiceDef> = {

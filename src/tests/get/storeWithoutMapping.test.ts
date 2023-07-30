@@ -2,7 +2,6 @@ import test from 'ava'
 import nock from 'nock'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
-import mutations from '../../mutations/index.js'
 
 import Integreat from '../../index.js'
 
@@ -11,7 +10,6 @@ import Integreat from '../../index.js'
 const defs = {
   ...definitions,
   mutations: {
-    ...mutations,
     'entries-entry': [],
   },
 }
