@@ -1312,7 +1312,76 @@ test('should return error when job has no action or flow', async (t) => {
   t.is(dispatch.callCount, 0)
 })
 
-test('should return data from simple action based on response mutation', async (t) => {
+test('should return data from simple action based on response postmutation', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
+    params: { keep: true },
+  })
+  const jobDef = {
+    id: 'action1',
+    action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
+    postmutation: {
+      response: {
+        $modify: 'response',
+        data: 'response.data[0]',
+      },
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    data: { id: 'ent1', $type: 'entry' },
+    params: { keep: true },
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1)
+})
+
+test('should not use "magic" for postmutation', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
+    params: { keep: true },
+  })
+  const jobDef = {
+    id: 'action1',
+    action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
+    postmutation: {
+      'response.data': 'response.data[0]',
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    data: { id: 'ent1', $type: 'entry' },
+    // With "magic", we would have gotten `params: { keep: true }` here
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1)
+})
+
+test('should return data from simple action based on responseMutation', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })

@@ -432,7 +432,78 @@ test('should support json schema validation form as conditions', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should return data from simple action based on response mutation', async (t) => {
+test('should return data from simple action based on postmutation', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
+    params: { keep: true },
+  })
+  const stepDef = {
+    id: 'action1',
+    action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
+    postmutation: {
+      response: 'response',
+      'response.data': 'response.data[0]',
+    },
+  }
+  const expected = [
+    {
+      action1: {
+        ...stepDef.action,
+        response: {
+          status: 'ok',
+          data: { id: 'ent1', $type: 'entry' },
+          params: { keep: true },
+        },
+        meta,
+      },
+    },
+    false,
+  ]
+
+  const step = new Step(stepDef, mapOptions)
+  const ret = await step.run(meta, { action }, dispatch)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1)
+})
+
+test('should not use depricated "magic" from responseMutation for postmutation', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
+    params: { keep: true },
+  })
+  const stepDef = {
+    id: 'action1',
+    action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
+    postmutation: {
+      'response.data': 'response.data[0]',
+    },
+  }
+  const expected = [
+    {
+      action1: {
+        ...stepDef.action,
+        response: {
+          status: 'ok',
+          data: { id: 'ent1', $type: 'entry' },
+          // With the "magic", we should have gotten `params: { keep: true }` here
+        },
+        meta,
+      },
+    },
+    false,
+  ]
+
+  const step = new Step(stepDef, mapOptions)
+  const ret = await step.run(meta, { action }, dispatch)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1)
+})
+
+test('should return data from simple action based on responseMutation', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
@@ -462,6 +533,78 @@ test('should return data from simple action based on response mutation', async (
 })
 
 test('should mutate simple action', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
+  const stepDef = {
+    id: 'action1',
+    action: {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent1' },
+      meta: { queue: true },
+    },
+    premutation: { payload: { $modify: 'payload', flag: { $value: true } } },
+  }
+  const expectedAction = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent1', flag: true },
+    meta: { ...meta, queue: true },
+  }
+  const expected = [
+    {
+      action1: {
+        ...expectedAction,
+        response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+      },
+    },
+    false,
+  ]
+
+  const step = new Step(stepDef, mapOptions)
+  const ret = await step.run(meta, { action }, dispatch)
+
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.deepEqual(ret, expected)
+})
+
+test('should mutate simple action without "magic"', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
+  const stepDef = {
+    id: 'action1',
+    action: {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent1' },
+      meta: { queue: true },
+    },
+    premutation: { 'payload.flag': { $value: true } },
+  }
+  const expectedAction = {
+    type: 'GET',
+    payload: { flag: true }, // With "magic", we would have gotten `type: 'entry', id: 'ent1'` here too
+    meta: { ...meta, queue: true },
+  }
+  const expected = [
+    {
+      action1: {
+        ...expectedAction,
+        response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
+      },
+    },
+    false,
+  ]
+
+  const step = new Step(stepDef, mapOptions)
+  const ret = await step.run(meta, { action }, dispatch)
+
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.deepEqual(ret, expected)
+})
+
+test('should mutate simple action with depricated `muation` property', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })

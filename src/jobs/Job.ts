@@ -88,7 +88,11 @@ function getResponse(
   }
 }
 
-const removePostMutation = ({ responseMutation, ...job }: JobStepDef) => job
+const removePostmutation = ({
+  postmutation,
+  responseMutation,
+  ...job
+}: JobStepDef) => job
 
 export default class Job {
   id: string
@@ -112,10 +116,11 @@ export default class Job {
             new Step(stepDef, mapOptions, getPrevStepId(index, steps))
         )
     } else if (isJobStep(jobDef)) {
-      this.#steps = [new Step(removePostMutation(jobDef), mapOptions)] // We'll run the post mutation here when this is a job with an action only
+      this.#steps = [new Step(removePostmutation(jobDef), mapOptions)] // We'll run the post mutation here when this is a job with an action only
     }
-    this.#postmutator = jobDef.responseMutation
-      ? prepareMutation(jobDef.responseMutation, mapOptions)
+    const postmutation = jobDef.postmutation || jobDef.responseMutation
+    this.#postmutator = postmutation
+      ? prepareMutation(postmutation, mapOptions, !!jobDef.responseMutation) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
       : undefined
 
     if (jobDef.cron && this.#steps.length > 0) {

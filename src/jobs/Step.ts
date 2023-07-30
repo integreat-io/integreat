@@ -134,12 +134,18 @@ const cleanUpResponse = (
 const addModify = (mutation: ArrayElement<Pipeline>) =>
   isObject(mutation) ? { $modify: true, ...mutation } : mutation
 
-const putMutationInPipeline = (mutation: TransformObject | Pipeline) =>
+// Insert `'$action'` as the first step in a pipeline to get the action we're
+// mutating from.
+const putMutationInPipeline = (
+  mutation: TransformObject | Pipeline,
+  useMagic: boolean
+) =>
   Array.isArray(mutation)
     ? ['$action', ...mutation.map(addModify)]
-    : ['$action', { '.': '.', ...mutation }] // $action is the action we're mutating to
+    : useMagic
+    ? ['$action', { '.': '.', ...mutation }]
+    : ['$action', addModify(mutation)]
 
-// TODO: Prepare mutations in `../instance.ts` and call a `mutate()` function here
 async function mutateAction(
   action: Action,
   mutator: DataMapper<InitialState> | undefined,
@@ -212,8 +218,9 @@ function generateIterateResponse(actionsWithResponses: Action[]) {
 
 export const prepareMutation = (
   pipeline: TransformObject | Pipeline,
-  mapOptions: MapOptions
-) => mapTransform(putMutationInPipeline(pipeline), mapOptions)
+  mapOptions: MapOptions,
+  useMagic = false
+) => mapTransform(putMutationInPipeline(pipeline, useMagic), mapOptions)
 
 function getIterateMutator(step: JobStepDef, mapOptions: MapOptions) {
   const pipeline = step.iterate || step.iteratePath
@@ -273,11 +280,13 @@ export default class Step {
         prevStepId
       )
       this.#action = stepDef.action
-      this.#premutator = stepDef.mutation
-        ? prepareMutation(stepDef.mutation, mapOptions)
+      const premutation = stepDef.premutation || stepDef.mutation
+      const postmutation = stepDef.postmutation || stepDef.responseMutation
+      this.#premutator = premutation
+        ? prepareMutation(premutation, mapOptions, !!stepDef.mutation) // Set a flag for `mutation`, to signal that we want to use the obsolete "magic"
         : undefined
-      this.#postmutator = stepDef.responseMutation
-        ? prepareMutation(stepDef.responseMutation, mapOptions)
+      this.#postmutator = postmutation
+        ? prepareMutation(postmutation, mapOptions, !!stepDef.responseMutation) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
         : undefined
       this.#iterateMutator = getIterateMutator(stepDef, mapOptions)
     }
