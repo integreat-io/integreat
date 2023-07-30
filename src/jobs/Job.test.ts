@@ -658,7 +658,7 @@ test('should not treat noaction as error in parallel actions', async (t) => {
   t.is(dispatch.callCount, 2)
 })
 
-test.failing('should support using pipelines in condition', async (t) => {
+test('should not run step where preconditions fail', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok' })
@@ -688,16 +688,214 @@ test.failing('should support using pipelines in condition', async (t) => {
           {
             condition: {
               $transform: 'compare',
-              path: [
-                'getEntries.response.data',
-                { $transform: 'size', path: 'getEntries.response' },
-              ],
+              path: ['getEntries.response.data', { $transform: 'size' }],
               operator: '>',
               match: 1,
             },
             failResponse: {
-              message: 'No data to set',
+              warning: 'No data to set',
               status: 'noaction',
+            },
+          },
+        ],
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    warning: "Message from steps: 'setEntries' (noaction: No data to set)",
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1) // Only the first step should run
+})
+
+test('should not continue flow when failing step is marked with break', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
+  const jobDef = {
+    id: 'action6',
+    flow: [
+      {
+        id: 'getEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.id',
+              operator: 'exists',
+            },
+            failResponse: {
+              status: 'badrequest',
+              error: 'Must be called with an id',
+            },
+            break: true,
+          },
+        ],
+        action: {
+          type: 'GET',
+          payload: { type: 'entry' },
+        },
+      },
+      {
+        id: 'setEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.type',
+              operator: 'exists',
+            },
+          },
+        ],
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+      type: 'entry',
+      id: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action6', the following steps failed: 'getEntries' (badrequest: Must be called with an id)",
+    responses: [
+      {
+        status: 'badrequest',
+        error: 'Must be called with an id',
+        origin: 'job:action6:step:getEntries',
+      },
+    ],
+    origin: 'job:action6',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch)
+
+  t.is(dispatch.callCount, 0) // No steps should be run
+  t.deepEqual(ret, expected)
+})
+
+test('should continue flow when failing step is _not_ marked with break', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
+  const jobDef = {
+    id: 'action6',
+    flow: [
+      {
+        id: 'getEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.id',
+              operator: 'exists',
+            },
+            failResponse: {
+              status: 'badrequest',
+              error: 'Must be called with an id',
+            },
+            break: false,
+          },
+        ],
+        action: {
+          type: 'GET',
+          payload: { type: 'entry' },
+        },
+      },
+      {
+        id: 'setEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.type',
+              operator: 'exists',
+            },
+          },
+        ],
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+      type: 'entry',
+      id: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    data: [],
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch)
+
+  t.is(dispatch.callCount, 1) // Next step should run
+  t.deepEqual(ret, expected)
+})
+
+test('should run second action when its preconditions are fulfilled', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
+  const jobDef = {
+    id: 'action6',
+    flow: [
+      {
+        id: 'getEntries',
+        action: {
+          type: 'GET',
+          payload: { type: 'entry' },
+        },
+      },
+      {
+        id: 'setEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: ['getEntries.response.data', { $transform: 'size' }],
+              operator: '>',
+              match: 0,
             },
           },
         ],
@@ -719,20 +917,16 @@ test.failing('should support using pipelines in condition', async (t) => {
   const job = new Job(jobDef, mapOptions)
   const ret = await job.run(action, dispatch)
 
-  t.is(dispatch.callCount, 1) // Only the first step should run
+  t.is(dispatch.callCount, 2) // Both steps run
   t.is(ret.status, 'ok', ret.error)
-  t.is(
-    ret.warning,
-    "Message from steps: 'setEntries' (noaction: No data to set)"
-  )
 })
 
-test('should not run action when its conditions fail', async (t) => {
+test('should support truthy condition results', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok' })
     .onCall(0)
-    .resolves({ status: 'ok', data: [] })
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
   const jobDef = {
     id: 'action6',
     flow: [
@@ -745,9 +939,11 @@ test('should not run action when its conditions fail', async (t) => {
       },
       {
         id: 'setEntries',
-        conditions: {
-          'getEntries.response.data': { type: 'array', minItems: 1 },
-        },
+        preconditions: [
+          {
+            condition: ['getEntries.response.data', { $transform: 'size' }], // This works, as anything but 0 is a truthy value
+          },
+        ],
         action: {
           type: 'SET',
           payload: { type: 'entry' },
@@ -766,12 +962,246 @@ test('should not run action when its conditions fail', async (t) => {
   const job = new Job(jobDef, mapOptions)
   const ret = await job.run(action, dispatch)
 
-  t.is(dispatch.callCount, 1) // Only the first step should run
+  t.is(dispatch.callCount, 2) // Both steps run
   t.is(ret.status, 'ok', ret.error)
-  t.is(ret.error, undefined)
 })
 
-test('should use fail message and status from failed condition', async (t) => {
+test('should validate preconditions in parallel actions', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
+  const jobDef = {
+    id: 'action3',
+    flow: [
+      [
+        {
+          id: 'setEntry',
+          preconditions: [
+            {
+              condition: {
+                $transform: 'compare',
+                path: 'action.payload.id',
+                operator: 'exists',
+              },
+              failResponse: { status: 'error', error: 'Needs an id' },
+            },
+          ],
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'entry',
+              id: 'ent1',
+              data: [{ id: 'ent1', $type: 'entry' }],
+            },
+          },
+        },
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: { type: 'date', id: 'updatedAt' },
+          },
+        },
+      ],
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+      id: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: Needs an id)",
+    responses: [
+      {
+        status: 'error',
+        error: 'Needs an id',
+        origin: 'job:action3:step:setEntry',
+      },
+    ],
+    origin: 'job:action3',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch)
+
+  t.is(dispatch.callCount, 1) // Only the first step should run
+  t.deepEqual(ret, expected)
+})
+
+test('should return error from preconditions in parallel actions even though others give noaction', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
+  const jobDef = {
+    id: 'action3',
+    flow: [
+      [
+        {
+          id: 'setEntry',
+          preconditions: [
+            {
+              condition: {
+                $transform: 'compare',
+                path: 'action.payload.id',
+                operator: 'exists',
+              },
+              failResponse: { status: 'error', error: 'Needs an id' },
+            },
+          ],
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'entry',
+              id: 'ent1',
+              data: [{ id: 'ent1', $type: 'entry' }],
+            },
+          },
+        },
+        {
+          id: 'setDate',
+          preconditions: [
+            {
+              condition: {
+                $transform: 'compare',
+                path: 'action.payload.id',
+                operator: 'exists',
+              },
+            },
+          ],
+          action: {
+            type: 'SET',
+            payload: { type: 'date', id: 'updatedAt' },
+          },
+        },
+      ],
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+      id: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: Needs an id)",
+    responses: [
+      {
+        status: 'error',
+        error: 'Needs an id',
+        origin: 'job:action3:step:setEntry',
+      },
+    ],
+    origin: 'job:action3',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch)
+
+  t.is(dispatch.callCount, 0) // None should run
+  t.deepEqual(ret, expected)
+})
+
+test('should return several errors from preconditions in parallel actions', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
+  const jobDef = {
+    id: 'action3',
+    flow: [
+      [
+        {
+          id: 'setEntry',
+          preconditions: [
+            {
+              condition: {
+                $transform: 'compare',
+                path: 'action.payload.id',
+                operator: 'exists',
+              },
+              failResponse: { status: 'error', error: 'No id' },
+            },
+          ],
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'entry',
+              id: 'ent1',
+              data: [{ id: 'ent1', $type: 'entry' }],
+            },
+          },
+        },
+        {
+          id: 'setDate',
+          preconditions: [
+            {
+              condition: {
+                $transform: 'compare',
+                path: 'action.payload.type',
+                operator: 'exists',
+              },
+              failResponse: { status: 'error', error: 'No type' },
+            },
+          ],
+          action: {
+            type: 'SET',
+            payload: { type: 'date', id: 'updatedAt' },
+          },
+        },
+      ],
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+      id: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: No id), 'setDate' (error: No type)",
+    responses: [
+      {
+        status: 'error',
+        error: 'No id',
+        origin: 'job:action3:step:setEntry',
+      },
+      {
+        status: 'error',
+        error: 'No type',
+        origin: 'job:action3:step:setDate',
+      },
+    ],
+    origin: 'job:action3',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch)
+
+  t.is(dispatch.callCount, 0) // None should run
+  t.deepEqual(ret, expected)
+})
+
+test('should support json schema validation in conditions', async (t) => {
+  // Note: We'll remove this in the future
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok' })
@@ -826,392 +1256,6 @@ test('should use fail message and status from failed condition', async (t) => {
   const ret = await job.run(action, dispatch)
 
   t.is(dispatch.callCount, 1) // Only the first step should run
-  t.deepEqual(ret, expected)
-})
-
-test('should not continue flow when failing step is marked with break', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok' })
-    .onCall(0)
-    .resolves({ status: 'ok', data: [] })
-  const jobDef = {
-    id: 'action6',
-    flow: [
-      {
-        id: 'getEntries',
-        conditions: {
-          'action.payload.id': {
-            type: 'string',
-            onFail: {
-              status: 'badrequest',
-              message: 'Must be called with an id',
-              break: true,
-            },
-          },
-        },
-        action: {
-          type: 'GET',
-          payload: { type: 'entry' },
-        },
-      },
-      {
-        id: 'setEntries',
-        conditions: {
-          'action.payload.type': {
-            type: 'string',
-          },
-        },
-        action: {
-          type: 'SET',
-          payload: { type: 'entry' },
-        },
-      },
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action6',
-      type: 'entry',
-      id: undefined,
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action6', the following steps failed: 'getEntries' (badrequest: Must be called with an id)",
-    responses: [
-      {
-        status: 'badrequest',
-        error: 'Must be called with an id',
-        origin: 'job:action6:step:getEntries',
-      },
-    ],
-    origin: 'job:action6',
-  }
-
-  const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
-
-  t.is(dispatch.callCount, 0) // No steps should be run
-  t.deepEqual(ret, expected)
-})
-
-test('should continue flow when failing step is _not_ marked with break', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok' })
-    .onCall(0)
-    .resolves({ status: 'ok', data: [] })
-  const jobDef = {
-    id: 'action6',
-    flow: [
-      {
-        id: 'getEntries',
-        conditions: {
-          'action.payload.id': {
-            type: 'string',
-            onFail: {
-              status: 'badrequest',
-              message: 'Must be called with an id',
-              break: false,
-            },
-          },
-        },
-        action: {
-          type: 'GET',
-          payload: { type: 'entry' },
-        },
-      },
-      {
-        id: 'setEntries',
-        conditions: {
-          'action.payload.type': {
-            type: 'string',
-          },
-        },
-        action: {
-          type: 'SET',
-          payload: { type: 'entry' },
-        },
-      },
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action6',
-      type: 'entry',
-      id: undefined,
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'ok',
-    data: [],
-  }
-
-  const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
-
-  t.is(dispatch.callCount, 1) // Next step should run
-  t.deepEqual(ret, expected)
-})
-
-test('should run second action when its conditions are fulfilled', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok' })
-    .onCall(0)
-    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
-  const jobDef = {
-    id: 'action6',
-    flow: [
-      {
-        id: 'getEntries',
-        action: {
-          type: 'GET',
-          payload: { type: 'entry' },
-        },
-      },
-      {
-        id: 'setEntries',
-        conditions: {
-          'getEntries.response.data': { type: 'array', minItems: 1 },
-        },
-        action: {
-          type: 'SET',
-          payload: { type: 'entry' },
-        },
-      },
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action6',
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-
-  const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
-
-  t.is(dispatch.callCount, 2) // Both steps run
-  t.is(ret.status, 'ok', ret.error)
-})
-
-test('should validate conditions in parallel actions', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok' })
-    .onCall(0)
-    .resolves({ status: 'ok', data: [] })
-  const jobDef = {
-    id: 'action3',
-    flow: [
-      [
-        {
-          id: 'setEntry',
-          conditions: {
-            'action.payload.id': {
-              type: 'string',
-              onFail: { status: 'error' },
-            },
-          },
-          action: {
-            type: 'SET',
-            payload: {
-              type: 'entry',
-              id: 'ent1',
-              data: [{ id: 'ent1', $type: 'entry' }],
-            },
-          },
-        },
-        {
-          id: 'setDate',
-          action: {
-            type: 'SET',
-            payload: { type: 'date', id: 'updatedAt' },
-          },
-        },
-      ],
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action3',
-      id: undefined,
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' })",
-    responses: [
-      {
-        status: 'error',
-        error: "'action.payload.id' did not pass { type: 'string' }",
-        origin: 'job:action3:step:setEntry',
-      },
-    ],
-    origin: 'job:action3',
-  }
-
-  const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
-
-  t.is(dispatch.callCount, 1) // Only the first step should run
-  t.deepEqual(ret, expected)
-})
-
-test('should return error from conditions in parallel actions even though others give noaction', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok' })
-    .onCall(0)
-    .resolves({ status: 'ok', data: [] })
-  const jobDef = {
-    id: 'action3',
-    flow: [
-      [
-        {
-          id: 'setEntry',
-          conditions: {
-            'action.payload.id': {
-              type: 'string',
-              onFail: { status: 'error' },
-            },
-          },
-          action: {
-            type: 'SET',
-            payload: {
-              type: 'entry',
-              id: 'ent1',
-              data: [{ id: 'ent1', $type: 'entry' }],
-            },
-          },
-        },
-        {
-          id: 'setDate',
-          conditions: {
-            'action.payload.id': { type: 'string' },
-          },
-          action: {
-            type: 'SET',
-            payload: { type: 'date', id: 'updatedAt' },
-          },
-        },
-      ],
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action3',
-      id: undefined,
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: 'action.payload.id' did not pass { type: 'string' })",
-    responses: [
-      {
-        status: 'error',
-        error: "'action.payload.id' did not pass { type: 'string' }",
-        origin: 'job:action3:step:setEntry',
-      },
-    ],
-    origin: 'job:action3',
-  }
-
-  const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
-
-  t.is(dispatch.callCount, 0) // None should run
-  t.deepEqual(ret, expected)
-})
-
-test('should return several errors from conditions in parallel actions', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok' })
-    .onCall(0)
-    .resolves({ status: 'ok', data: [] })
-  const jobDef = {
-    id: 'action3',
-    flow: [
-      [
-        {
-          id: 'setEntry',
-          conditions: {
-            'action.payload.id': {
-              type: 'string',
-              onFail: { status: 'error', message: 'No id' },
-            },
-          },
-          action: {
-            type: 'SET',
-            payload: {
-              type: 'entry',
-              id: 'ent1',
-              data: [{ id: 'ent1', $type: 'entry' }],
-            },
-          },
-        },
-        {
-          id: 'setDate',
-          conditions: {
-            'action.payload.type': {
-              type: 'string',
-              onFail: { status: 'error', message: 'No type' },
-            },
-          },
-          action: {
-            type: 'SET',
-            payload: { type: 'date', id: 'updatedAt' },
-          },
-        },
-      ],
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action3',
-      id: undefined,
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: No id), 'setDate' (error: No type)",
-    responses: [
-      {
-        status: 'error',
-        error: 'No id',
-        origin: 'job:action3:step:setEntry',
-      },
-      {
-        status: 'error',
-        error: 'No type',
-        origin: 'job:action3:step:setDate',
-      },
-    ],
-    origin: 'job:action3',
-  }
-
-  const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
-
-  t.is(dispatch.callCount, 0) // None should run
   t.deepEqual(ret, expected)
 })
 

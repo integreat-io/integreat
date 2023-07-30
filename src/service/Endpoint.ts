@@ -5,6 +5,7 @@ import isMatch from './utils/matchEnpoints.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
 import { ensureArray } from '../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../utils/is.js'
+import prepareValidator, { ResponsesAndBreak } from '../utils/validation.js'
 import type {
   TransformDefinition,
   DataMapper,
@@ -12,13 +13,11 @@ import type {
   State,
   AsyncDataMapperWithOptions,
 } from 'map-transform/types.js'
-import type { Action, Response, Adapter } from '../types.js'
+import type { Action, Response, Adapter, MapOptions } from '../types.js'
 import type {
-  MapOptions,
   EndpointDef,
   ServiceOptions,
   MatchObject,
-  ValidateObject,
   PreparedOptions,
 } from './types.js'
 
@@ -33,38 +32,6 @@ const prepareEndpoint = ({ match, ...endpoint }: EndpointDef) => ({
   match: prepareMatch(match || {}),
   ...endpoint,
 })
-
-function prepareValidator(
-  validate: ValidateObject[] | undefined,
-  mapOptions: MapOptions
-) {
-  // Always return null when no validation
-  if (!Array.isArray(validate) || validate.length === 0) {
-    return async () => null
-  }
-
-  // Prepare validators
-  const validators = validate.map(({ condition, failResponse }) => ({
-    validate: mapTransform(condition, mapOptions),
-    failResponse: isObject(failResponse)
-      ? failResponse
-      : {
-          status: 'badrequest',
-          error:
-            typeof failResponse === 'string'
-              ? failResponse
-              : 'Did not satisfy endpoint validation',
-        },
-  }))
-
-  return async function validateAction(action: Action) {
-    for (const { validate, failResponse } of validators) {
-      const result = await validate(action)
-      if (!result) return failResponse
-    }
-    return null
-  }
-}
 
 // Create a transformer that runs a mutation and populates the resulting action
 // with properties from the original action and makes sure the status and error
@@ -149,7 +116,7 @@ export default class Endpoint {
   allowRawRequest?: boolean
   allowRawResponse?: boolean
 
-  #validator: (action: Action) => Promise<Response | null>
+  #validator: (action: Action) => Promise<ResponsesAndBreak>
   #mutateAction: DataMapper<InitialState>
   #checkIfMatch: (action: Action, isIncoming?: boolean) => Promise<boolean>
 
@@ -180,8 +147,10 @@ export default class Endpoint {
     )
   }
 
-  async validateAction(action: Action) {
-    return await this.#validator(action)
+  async validateAction(action: Action): Promise<Response | null> {
+    const [errors] = await this.#validator(action)
+    // TODO: Handle more than one error here
+    return errors[0] || null
   }
 
   async mutate(action: Action, isRev: boolean): Promise<Action> {

@@ -1,13 +1,13 @@
 import mapTransform from 'map-transform'
 import { ensureArray } from '../utils/array.js'
-import { isObject, isOkResponse } from '../utils/is.js'
+import { isErrorResponse, isObject, isOkResponse } from '../utils/is.js'
 import {
   setDataOnActionPayload,
   setResponseOnAction,
   setOrigin,
 } from '../utils/action.js'
 import validateFilters from '../utils/validateFilters.js'
-// import prepareValidator from '../utils/validation.js'
+import prepareValidator from '../utils/validation.js'
 import type {
   TransformObject,
   Pipeline,
@@ -21,6 +21,7 @@ import type {
   HandlerDispatch,
   Condition,
   MapOptions,
+  ValidateObject,
 } from '../types.js'
 import type { JobStepDef } from './types.js'
 
@@ -28,6 +29,26 @@ type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType[number]
 
 interface Validator {
   (actionResponses: Record<string, Action>): Promise<[Response | null, boolean]>
+}
+
+function combineResponses(responses: Response[]) {
+  if (responses.length < 2) {
+    return responses[0] // Will yield undefined if no responses
+  } else {
+    const error = responses
+      .filter((response) => response.error || isErrorResponse(response))
+      .map((response) => `[${response.status}] ${response.error}`)
+      .join(' | ')
+    const warning = responses
+      .filter((response) => response.warning)
+      .map((response) => response.warning)
+      .join(' | ')
+    return {
+      status: 'error',
+      ...(error && { error }),
+      ...(warning && { warning }),
+    }
+  }
 }
 
 const adjustValidationResponse = ({
@@ -41,26 +62,35 @@ const adjustValidationResponse = ({
       : { ...response, error: message }
     : response
 
-function createValidator(
-  conditions: Record<string, Condition | undefined> | undefined,
+function createPreconditionsValidator(
+  conditions:
+    | ValidateObject[]
+    | Record<string, Condition | undefined>
+    | undefined,
+  mapOptions: MapOptions,
   prevStepId?: string
 ): Validator {
-  if (!conditions) {
+  if (Array.isArray(conditions)) {
+    const validator = prepareValidator(conditions, mapOptions, 'noaction')
+    return async function validate(actionResponses) {
+      const [responses, doBreak] = await validator(actionResponses)
+      return [combineResponses(responses), doBreak]
+    }
+  } else if (isObject(conditions)) {
+    const validator = validateFilters(conditions, true)
+    return async function validate(actionResponses) {
+      const responses = await validator(actionResponses)
+      const doBreak = responses.some(({ break: doBreak }) => doBreak)
+
+      return responses.length > 0
+        ? [adjustValidationResponse(combineResponses(responses)), doBreak] // We only return the first error here
+        : [null, false]
+    }
+  } else {
     return async function validatePrevWasOk(actionResponses) {
       const prevStep = prevStepId ? actionResponses[prevStepId] : undefined // eslint-disable-line security/detect-object-injection
       return [null, !!prevStep && !isOkResponse(prevStep.response)]
     }
-  }
-
-  // prepareValidator(conditions, mapOptions)
-  const validator = validateFilters(conditions, true)
-  return async function validate(actionResponses) {
-    const responses = await validator(actionResponses)
-    const doBreak = responses.some(({ break: doBreak }) => doBreak)
-
-    return responses.length > 0
-      ? [adjustValidationResponse(responses[0]), doBreak]
-      : [null, false]
   }
 }
 
@@ -219,7 +249,7 @@ export default class Step {
   id: string
   #action?: Action
   #subSteps?: Step[]
-  #validateConditions: Validator = async () => [null, false]
+  #validatePreconditions: Validator = async () => [null, false]
   #premutator?: DataMapper<InitialState>
   #postmutator?: DataMapper<InitialState>
   #iterateMutator?: DataMapper<InitialState>
@@ -237,7 +267,11 @@ export default class Step {
       )
     } else {
       this.id = stepDef.id
-      this.#validateConditions = createValidator(stepDef.conditions, prevStepId)
+      this.#validatePreconditions = createPreconditionsValidator(
+        stepDef.preconditions ?? stepDef.conditions,
+        mapOptions,
+        prevStepId
+      )
       this.#action = stepDef.action
       this.#premutator = stepDef.mutation
         ? prepareMutation(stepDef.mutation, mapOptions)
@@ -291,7 +325,7 @@ export default class Step {
     actionResponses: Record<string, Action>,
     dispatch: HandlerDispatch
   ): Promise<[Record<string, Action>, boolean]> {
-    const [validateResponse, doBreak] = await this.#validateConditions(
+    const [validateResponse, doBreak] = await this.#validatePreconditions(
       actionResponses
     )
     if (validateResponse || doBreak) {

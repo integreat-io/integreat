@@ -318,7 +318,7 @@ test('should return badrequest response when validation fails', async (t) => {
   const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
   const expectedResponse = {
     status: 'badrequest',
-    error: 'Did not satisfy endpoint validation',
+    error: 'Did not satisfy condition',
   }
 
   const ret = await endpoint.validateAction(action)
@@ -341,7 +341,7 @@ test('should return badrequest response when one of several conditions fails', a
   const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
   const expectedResponse = {
     status: 'badrequest',
-    error: 'Did not satisfy endpoint validation',
+    error: 'Did not satisfy condition',
   }
 
   const ret = await endpoint.validateAction(action)

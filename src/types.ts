@@ -39,6 +39,7 @@ export interface TypedData extends Record<string, unknown> {
 export interface ValidateObject {
   condition: TransformDefinition
   failResponse?: Response | string
+  break?: boolean
 }
 
 export interface ConditionFailObject extends Record<string, unknown> {

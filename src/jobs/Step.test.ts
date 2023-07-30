@@ -311,7 +311,95 @@ test('should handle rejection when running steps', async (t) => {
   t.is(dispatch.callCount, 2)
 })
 
-test('should not run action when its conditions fail', async (t) => {
+test('should not run action when its preconditions fail', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const stepDef = {
+    id: 'setEntries',
+    preconditions: [
+      {
+        condition: {
+          $transform: 'compare',
+          path: ['getEntries.response.data', { $transform: 'size' }],
+          operator: '>',
+          match: 1,
+        },
+      },
+    ],
+    action: {
+      type: 'SET',
+      payload: { type: 'entry' },
+    },
+  }
+  const expected = [
+    {
+      setEntries: {
+        response: {
+          status: 'noaction',
+          error: 'Did not satisfy condition',
+          origin: 'setEntries',
+        },
+      },
+    },
+    false,
+  ]
+
+  const step = new Step(stepDef, mapOptions)
+  const ret = await step.run(meta, { action }, dispatch)
+
+  t.is(dispatch.callCount, 0) // Should not run action
+  t.deepEqual(ret, expected)
+})
+
+test('should return error from several failing conditions in preconditions', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const stepDef = {
+    id: 'setEntries',
+    preconditions: [
+      {
+        condition: {
+          $transform: 'compare',
+          path: ['getEntries.response.data', { $transform: 'size' }],
+          operator: '>',
+          match: 1,
+        },
+      },
+      {
+        condition: {
+          $transform: 'compare',
+          path: 'action.payload.id',
+          operator: 'exists',
+        },
+        failResponse: { status: 'badrequest', error: 'Missing id' },
+      },
+    ],
+    action: {
+      type: 'SET',
+      payload: { type: 'entry' },
+    },
+  }
+  const expected = [
+    {
+      setEntries: {
+        response: {
+          status: 'error',
+          error:
+            '[noaction] Did not satisfy condition | [badrequest] Missing id',
+          origin: 'setEntries',
+        },
+      },
+    },
+    false,
+  ]
+
+  const step = new Step(stepDef, mapOptions)
+  const ret = await step.run(meta, { action }, dispatch)
+
+  t.is(dispatch.callCount, 0) // Should not run action
+  t.deepEqual(ret, expected)
+})
+
+test('should support json schema validation form as conditions', async (t) => {
+  // Note: We'll remove this in the future
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const stepDef = {
     id: 'setEntries',
