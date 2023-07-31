@@ -46,8 +46,8 @@ const typeFromDef = (prop?: string | FieldDefinition | Shape) =>
   isFieldDefinition(prop)
     ? prop.$type
     : typeof prop === 'string'
-    ? prop
-    : undefined
+      ? prop
+      : undefined
 
 const hasArrayNotation = (key?: string) =>
   typeof key === 'string' && key.endsWith('[]')
@@ -92,10 +92,10 @@ const handleArray = (
 ): CastFnUnary =>
   isArrayExpected
     ? (isRev) => (value) =>
-        value === undefined ? undefined : ensureArray(value).map(fn(isRev)) // Ensure that an array is returned
+      value === undefined ? undefined : ensureArray(value).map(fn(isRev)) // Ensure that an array is returned
     : type === 'unknown'
-    ? (isRev) => fn(isRev) // Return 'unknown' fields as is
-    : (isRev) => unwrapSingleArrayItem(fn(isRev)) // Unwrap only item in an array when we don't expect an array
+      ? (isRev) => fn(isRev) // Return 'unknown' fields as is
+      : (isRev) => unwrapSingleArrayItem(fn(isRev)) // Unwrap only item in an array when we don't expect an array
 
 function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
   const nextCreatedAt = shape.createdAt // Should have
@@ -155,9 +155,9 @@ function createShapeCast(
       createCastFn(key, def, castFns),
     ])
     .filter(([, cast]) => cast !== undefined) as [
-    key: string,
-    cast: CastFnUnary
-  ][]
+      key: string,
+      cast: CastFnUnary
+    ][]
 
   return (isRev: boolean) =>
     function castItem(rawItem: unknown) {
@@ -188,7 +188,7 @@ export default function createCast(
 ): CastFn {
   const castShape = createShapeCast(shape, type, castFns, doGenerateId)
   return function castItem(data, isRev = false) {
-    const casted = mapAny(castShape(isRev), data)
+    const casted = mapAny(castShape(isRev))(data)
     return Array.isArray(casted) ? casted.filter(isNotNullOrUndefined) : casted
   }
 }
