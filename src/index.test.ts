@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import Integreat, { authenticators, transformers } from './index.js'
+import Integreat, { authenticators } from './index.js'
 
 // Tests
 
@@ -16,5 +16,4 @@ test('should have resource merger', (t) => {
 test('should export resources', (t) => {
   t.truthy(authenticators)
   t.truthy(authenticators.token)
-  t.truthy(transformers)
 })

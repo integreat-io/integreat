@@ -4,7 +4,6 @@ import jsonAdapter from 'integreat-adapter-json'
 import jsonTransformer from 'integreat-adapter-json/transformer.js'
 import uriTransformer from 'integreat-adapter-uri/transformer.js'
 import Schema from '../schema/Schema.js'
-import transformers from '../transformers/index.js'
 import { isAction, isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { Action, TypedData, Adapter } from '../types.js'
@@ -62,21 +61,21 @@ const entryMapping3 = [
 const shouldHaveToken = () => () => (action: unknown) =>
   isAction(action)
     ? {
-        ...action,
-        response: {
-          ...action.response,
-          status: action.payload.token ? null : 'badrequest',
-        },
-      }
+      ...action,
+      response: {
+        ...action.response,
+        status: action.payload.token ? null : 'badrequest',
+      },
+    }
     : action
 
 const alwaysOk = () => () => (action: unknown) =>
   isAction(action)
     ? {
-        ...action,
-        response: { ...action.response, status: null },
-        meta: { ok: true },
-      }
+      ...action,
+      response: { ...action.response, status: null },
+      meta: { ok: true },
+    }
     : action
 
 const pipelines = {
@@ -86,7 +85,6 @@ const pipelines = {
 }
 
 const allTransformers = {
-  ...transformers,
   shouldHaveToken,
   alwaysOk,
   json: jsonTransformer,
@@ -130,42 +128,42 @@ const mockAdapter: Adapter = {
     const data = action.response?.data
     return isObject(data)
       ? {
-          ...action,
-          response: {
-            ...action.response,
-            data: {
-              content: {
-                data: {
-                  items: [
-                    // Duplicate the array
-                    (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
-                    (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
-                  ],
-                },
+        ...action,
+        response: {
+          ...action.response,
+          data: {
+            content: {
+              data: {
+                items: [
+                  // Duplicate the array
+                  (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
+                  (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
+                ],
               },
             },
           },
-        }
+        },
+      }
       : action
   },
   async serialize(action, _options) {
     const data = action.payload?.data
     return isObject(data)
       ? {
-          ...action,
-          payload: {
-            ...action.payload,
-            data: {
-              content: {
-                data: {
-                  items: [
-                    (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
-                  ],
-                },
+        ...action,
+        payload: {
+          ...action.payload,
+          data: {
+            content: {
+              data: {
+                items: [
+                  (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
+                ],
               },
             },
           },
-        }
+        },
+      }
       : action
   },
 }

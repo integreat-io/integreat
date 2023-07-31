@@ -1,14 +1,13 @@
 import test from 'ava'
 import sinon from 'sinon'
 import integreatTransformers from 'integreat-transformers'
-import transformers from '../transformers/index.js'
 
 import Step from './Step.js'
 
 // Setup
 
 const mapOptions = {
-  transformers: { ...transformers, size: integreatTransformers.size },
+  transformers: { size: integreatTransformers.size },
 }
 
 const action = {

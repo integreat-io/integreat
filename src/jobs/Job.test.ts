@@ -3,7 +3,6 @@ import sinon from 'sinon'
 import Schedule from './Schedule.js'
 import integreatTransformers from 'integreat-transformers'
 import uriTransformer from 'integreat-adapter-uri/transformer.js'
-import transformers from '../transformers/index.js'
 
 import Job from './Job.js'
 
@@ -13,7 +12,6 @@ const action = { type: 'GET', payload: { type: 'entry', id: 'ent1' } }
 
 const mapOptions = {
   transformers: {
-    ...transformers,
     size: integreatTransformers.size,
     uri: uriTransformer,
   },

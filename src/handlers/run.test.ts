@@ -2,7 +2,6 @@ import test from 'ava'
 import sinon from 'sinon'
 import integreatTransformers from 'integreat-transformers'
 import handlerResources from '../tests/helpers/handlerResources.js'
-import transformers from '../transformers/index.js'
 import Job from '../jobs/Job.js'
 import type { JobDef } from '../jobs/types.js'
 
@@ -17,7 +16,7 @@ const defaultResources = {
 }
 
 const mapOptions = {
-  transformers: { ...transformers, size: integreatTransformers.size },
+  transformers: { size: integreatTransformers.size },
 }
 
 const createJobsMap = (jobDef: JobDef, mo = mapOptions) => {
