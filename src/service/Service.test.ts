@@ -2108,6 +2108,76 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
   t.deepEqual(ret.response, expectedResponse)
 })
 
+test('mutateIncomingRequest should mutate and use type from mutated action to cast items', async (t) => {
+  const endpoints = [
+    {
+      match: { incoming: true },
+      mutation: [
+        {
+          $direction: 'from',
+          payload: {
+            $modify: 'payload',
+            type: { $value: 'account' }, // This type will be used for casting
+            data: ['payload.data', { $apply: 'account' }],
+          },
+        },
+        {
+          $direction: 'to',
+          $flip: true,
+          response: {
+            $modify: 'response',
+            data: ['response.data', { $apply: 'account' }],
+          },
+        },
+      ],
+      options: { uri: 'http://some.api/1.0' },
+    },
+  ]
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      ...jsonResources,
+    }
+  )
+  const action = setAuthorizedMark({
+    type: 'SET',
+    payload: {
+      // type: 'account',
+      data: {
+        accounts: [
+          { id: 'johnf', name: 'John F.' },
+          { id: 'lucyk', name: 'Lucy K.' },
+        ],
+      },
+    },
+    meta: { ident: { id: 'johnf', roles: ['admin'] } },
+  })
+  const endpoint = await service.endpointFromAction(
+    action,
+    true /* isIncoming */
+  )
+  const expectedResponse = {
+    status: undefined,
+    warning: '1 item was removed from request data due to lack of access',
+  }
+
+  const ret = await service.mutateIncomingRequest(action, endpoint!)
+
+  t.is(ret.response?.status, undefined, ret.response?.error)
+  const data = ret.payload.data as TypedData[]
+  t.is(data.length, 1)
+  t.is(data[0].id, 'johnf')
+  t.is(data[0].$type, 'account')
+  t.deepEqual(ret.response, expectedResponse)
+})
+
 test('mutateIncomingRequest should set origin when mutation results in an error response', async (t) => {
   const service = new Service(
     {
