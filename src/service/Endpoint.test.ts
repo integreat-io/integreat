@@ -888,6 +888,54 @@ test('should mutate response to service (incoming) with service adapter', async 
   t.is(ret.response?.data, expectedData)
 })
 
+test('should throw when mutations are applying unknown pipeline/mutation', async (t) => {
+  const serviceMutation = [
+    {
+      response: {
+        '.': 'response',
+        data: ['response.data', { $apply: 'unknown' }, { $transform: 'json' }],
+        error: 'payload.message',
+      },
+    },
+    { response: { '.': 'response', status: 'response.status' } }, // Just to check that we're not missing any props
+  ]
+  const endpointDef = {
+    mutation: {
+      response: {
+        '.': 'response',
+        data: ['response.data.content', { $apply: 'entry' }],
+        status: 'response.data.result',
+      },
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const actionWithProps = {
+    ...actionWithResponse,
+    payload: {
+      message: 'Too much',
+    },
+    response: {
+      ...actionWithResponse.response,
+      data: JSON.stringify({
+        content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
+        result: 'badrequest',
+      }),
+    },
+  }
+
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapOptions,
+    serviceMutation
+  )
+  const error = await t.throwsAsync(endpoint.mutate(actionWithProps, false))
+
+  t.true(error instanceof Error)
+  t.is(error?.message, 'Failed to apply pipeline \'unknown\'. Unknown pipeline')
+})
+
 test('should keep action props not mapped from response', async (t) => {
   const endpointDef = {
     mutation: {

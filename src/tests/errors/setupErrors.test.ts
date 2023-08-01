@@ -20,7 +20,7 @@ test('should throw on unknown transformer', (t) => {
   )
 })
 
-// TODO: This should fail based on endpoint mutations too
+// TODO: This should fail on creation, not on execution
 test.failing('should throw on unknown mutations', (t) => {
   const defsWithoutMutations = { ...defs, mutations: {} }
 
