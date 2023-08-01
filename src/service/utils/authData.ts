@@ -22,55 +22,53 @@ async function getValueAndCompare(
 
 const authorizeItem =
   (
-    schemas: Record<string, Schema>,
+    schemas: Map<string, Schema>,
     actionType: string,
     allowRaw: boolean,
     ident?: Ident
   ) =>
-  async (item: unknown): Promise<string | undefined> => {
-    if (!isTypedData(item)) {
-      return allowRaw ? undefined : 'RAW_DATA'
-    }
-    const schema = schemas[item.$type]
-    if (!schema) {
-      return 'NO_SCHEMA'
-    }
-    const { identFromField, roleFromField } = schema.accessForAction(actionType)
-    const validateIdent = typeof identFromField === 'string'
-    const validateRole = typeof roleFromField === 'string'
+    async (item: unknown): Promise<string | undefined> => {
+      if (!isTypedData(item)) {
+        return allowRaw ? undefined : 'RAW_DATA'
+      }
+      const schema = schemas.get(item.$type)
+      if (!schema) {
+        return 'NO_SCHEMA'
+      }
+      const { identFromField, roleFromField } = schema.accessForAction(actionType)
+      const validateIdent = typeof identFromField === 'string'
+      const validateRole = typeof roleFromField === 'string'
 
-    // Authorize when neither ident nor role should be validated
-    if (!validateIdent && !validateRole) {
-      return undefined
-    }
+      // Authorize when neither ident nor role should be validated
+      if (!validateIdent && !validateRole) {
+        return undefined
+      }
 
-    // Get validation results for the required methods
-    const identResult =
-      !validateIdent ||
-      (await getValueAndCompare(item, identFromField, ident?.id))
-    const roleResult =
-      !validateRole ||
-      (await getValueAndCompare(item, roleFromField, ident?.roles))
+      // Get validation results for the required methods
+      const identResult =
+        !validateIdent ||
+        (await getValueAndCompare(item, identFromField, ident?.id))
+      const roleResult =
+        !validateRole ||
+        (await getValueAndCompare(item, roleFromField, ident?.roles))
 
-    // Authorize if either ident or role validation passes
-    if (validateIdent && validateRole && (identResult || roleResult)) {
-      return undefined
+      // Authorize if either ident or role validation passes
+      if (validateIdent && validateRole && (identResult || roleResult)) {
+        return undefined
+      }
+      // We are supposed to validate by only one of the methods - do it
+      return (
+        (!identResult && 'WRONG_IDENT') ||
+        (!roleResult && 'MISSING_ROLE') ||
+        undefined
+      )
     }
-    // We are supposed to validate by only one of the methods - do it
-    return (
-      (!identResult && 'WRONG_IDENT') ||
-      (!roleResult && 'MISSING_ROLE') ||
-      undefined
-    )
-  }
 
 const generateWarning = (removedCount: number, isToService: boolean) =>
   removedCount > 0
-    ? `${removedCount} item${
-        removedCount === 1 ? ' was' : 's were'
-      } removed from ${
-        isToService ? 'request' : 'response'
-      } data due to lack of access`
+    ? `${removedCount} item${removedCount === 1 ? ' was' : 's were'
+    } removed from ${isToService ? 'request' : 'response'
+    } data due to lack of access`
     : undefined
 
 const generateErrorAndReason = (
@@ -80,14 +78,11 @@ const generateErrorAndReason = (
   service?: string
 ) =>
   reason === 'RAW_DATA'
-    ? `Authentication was refused for raw ${
-        isToService ? 'request' : 'response'
-      } data${
-        service ? ` ${isToService ? 'to' : 'from'} service '${service}'` : ''
-      }`
-    : `Authentication was refused for type '${(data as TypedData).$type}'${
-        service ? ` on service '${service}'` : ''
-      }`
+    ? `Authentication was refused for raw ${isToService ? 'request' : 'response'
+    } data${service ? ` ${isToService ? 'to' : 'from'} service '${service}'` : ''
+    }`
+    : `Authentication was refused for type '${(data as TypedData).$type}'${service ? ` on service '${service}'` : ''
+    }`
 
 async function getAuthedWithResponse(
   data: unknown,
@@ -125,7 +120,7 @@ const isError = (status?: string | null) =>
   typeof status === 'string' && status !== 'ok'
 
 const authorizeDataBase = (
-  schemas: Record<string, Schema>,
+  schemas: Map<string, Schema>,
   isToService: boolean
 ) =>
   async function authorizeData(
@@ -161,16 +156,16 @@ const authorizeDataBase = (
     const response =
       status !== undefined || warning
         ? {
-            ...action.response,
-            ...(!isToService && { data }),
-            ...(!action.response?.error && error && { error }),
-            ...(!action.response?.error && reason && { reason }),
-            ...(warning && { warning }),
-            ...(isError(status)
-              ? { origin: action.response?.origin || 'auth:data' }
-              : {}),
-            status,
-          }
+          ...action.response,
+          ...(!isToService && { data }),
+          ...(!action.response?.error && error && { error }),
+          ...(!action.response?.error && reason && { reason }),
+          ...(warning && { warning }),
+          ...(isError(status)
+            ? { origin: action.response?.origin || 'auth:data' }
+            : {}),
+          status,
+        }
         : undefined
 
     return {
@@ -183,8 +178,8 @@ const authorizeDataBase = (
     }
   }
 
-export const fromService = (schemas: Record<string, Schema>): AuthorizeDataFn =>
+export const fromService = (schemas: Map<string, Schema>): AuthorizeDataFn =>
   authorizeDataBase(schemas, false)
 
-export const toService = (schemas: Record<string, Schema>): AuthorizeDataFn =>
+export const toService = (schemas: Map<string, Schema>): AuthorizeDataFn =>
   authorizeDataBase(schemas, true)

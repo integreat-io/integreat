@@ -9,7 +9,7 @@ import queue from './queue.js'
 
 // Setup
 
-const schemas = {}
+const schemas = new Map()
 const mapOptions = {}
 
 const queueDefs = {

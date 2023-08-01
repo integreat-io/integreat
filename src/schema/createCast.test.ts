@@ -1,5 +1,6 @@
 import test from 'ava'
 import expandShape from './expandShape.js'
+import Schema from './Schema.js'
 import type { ShapeDef } from './types.js'
 import type { TypedData } from '../types.js'
 
@@ -7,19 +8,20 @@ import createCast from './createCast.js'
 
 // Setup
 
-const castFns = new Map()
-castFns.set(
+const schemas = new Map()
+schemas.set(
   'comment',
-  createCast(
-    expandShape({ id: 'string', comment: 'string' }),
-    'comment',
-    castFns
-  )
+  new Schema({
+    id: 'comment',
+    shape: { id: 'string', comment: 'string' },
+  }, schemas)
 )
-castFns.set(
+schemas.set(
   'user',
-  createCast(expandShape({ id: 'string', name: 'string' }), 'user', castFns)
-)
+  new Schema({
+    id: 'user',
+    shape: { id: 'string', name: 'string' }
+  }, schemas))
 
 // Tests
 
@@ -279,7 +281,7 @@ test('should cast missing id to generated unique id', (t) => {
   const ret = createCast(
     shape,
     'entry',
-    castFns,
+    schemas,
     doGenerateId
   )(data, isRev) as TypedData
 
@@ -428,7 +430,7 @@ test('should cast non-primitive fields with schema', (t) => {
     },
   ]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -505,7 +507,7 @@ test('should cast non-primitive fields with schema in reverse', (t) => {
     },
   ]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -524,7 +526,7 @@ test('should set createdAt and updatedAt if not set and present in schema', (t) 
   }
   const before = Date.now()
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
+  const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
   const after = Date.now()
   t.true(ret.createdAt instanceof Date)
@@ -547,7 +549,7 @@ test('should set only createdAt if not set and present in schema', (t) => {
   }
   const before = Date.now()
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
+  const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
   const after = Date.now()
   t.true(ret.createdAt instanceof Date)
@@ -569,7 +571,7 @@ test('should set only updatedAt if not set and present in schema', (t) => {
   }
   const before = Date.now()
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
+  const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
   const after = Date.now()
   t.true(ret.updatedAt instanceof Date)
@@ -592,7 +594,7 @@ test('should set updatedAt equal to createdAt', (t) => {
     createdAt: new Date('2023-03-18T14:03:44Z'),
   }
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
+  const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
   t.deepEqual(ret.updatedAt, new Date('2023-03-18T14:03:44Z'))
   t.deepEqual(ret.createdAt, new Date('2023-03-18T14:03:44Z'))
@@ -612,7 +614,7 @@ test('should set createdAt equal to updatedAt', (t) => {
     updatedAt: new Date('2023-03-18T17:15:18Z'),
   }
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
+  const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
   t.deepEqual(ret.createdAt, new Date('2023-03-18T17:15:18Z'))
   t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
@@ -629,7 +631,7 @@ test('should not set dates if not present in schema', (t) => {
     title: 'Entry 1',
   }
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
+  const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
   t.is(ret.createdAt, undefined)
   t.is(ret.updatedAt, undefined)
@@ -650,7 +652,7 @@ test('should not set createdAt and updatedAt if already set', (t) => {
     updatedAt: new Date('2023-03-18T17:15:18Z'),
   }
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev) as TypedData
+  const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
   t.deepEqual(ret.createdAt, new Date('2023-03-18T14:03:44Z'))
   t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
@@ -684,7 +686,7 @@ test('should skip properties with invalid $type', (t) => {
     },
   ]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -704,7 +706,7 @@ test('should recast items already cast with another $type', (t) => {
   ]
   const expected = [{ id: 'johnf', $type: 'entry', title: undefined }]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -724,7 +726,7 @@ test('should pass on items already cast with this $type', (t) => {
   ]
   const expected = data
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -744,7 +746,7 @@ test('should recast items already cast with another $type in reverse', (t) => {
   ]
   const expected = [{ id: 'johnf', title: undefined }]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -769,7 +771,7 @@ test('should not set $type when casting in reverse', (t) => {
     },
   ]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -798,7 +800,7 @@ test('should keep isNew and isDeleted when true', (t) => {
     },
   ]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -825,7 +827,7 @@ test('should remove isNew and isDeleted when false', (t) => {
     },
   ]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -853,7 +855,7 @@ test('should keep isNew and isDeleted when true in reverse', (t) => {
     },
   ]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -879,7 +881,7 @@ test('should remove isNew and isDeleted when false in reverse', (t) => {
     },
   ]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -899,7 +901,7 @@ test('should not cast null or undefined', (t) => {
     },
   ]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })
@@ -918,7 +920,7 @@ test('should not cast null or undefined in reverse', (t) => {
     },
   ]
 
-  const ret = createCast(shape, 'entry', castFns)(data, isRev)
+  const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
   t.deepEqual(ret, expected)
 })

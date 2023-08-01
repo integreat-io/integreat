@@ -15,7 +15,7 @@ import dispatch from './dispatch.js'
 // Setup
 
 const services = {}
-const schemas = {}
+const schemas = new Map()
 const options = {}
 
 // Tests
@@ -349,7 +349,7 @@ test('should call action handler with action, dispatch, getService, and options'
   const getHandler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { GET: getHandler }
   const services = {}
-  const schemas = {}
+  const schemas = new Map()
   const options = { identConfig: { type: 'account' }, queueService: 'queue' }
   const ident = { id: 'ident1', roles: [], tokens: [] }
   const action = {
@@ -511,7 +511,7 @@ test('should return error when no endoint on source service matches', async (t) 
         transporter: 'http',
         endpoints: [],
       },
-      { schemas: {}, transporters: { http: httpTransporter } }
+      { schemas: new Map(), transporters: { http: httpTransporter } }
     ),
   }
   const action = {

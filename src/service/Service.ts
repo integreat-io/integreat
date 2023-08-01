@@ -18,7 +18,6 @@ import * as authorizeData from './utils/authData.js'
 import authorizeAction, { isAuthorizedAction } from './utils/authAction.js'
 import { compose } from '../dispatch.js'
 import type Schema from '../schema/Schema.js'
-import type { CastFn } from '../schema/types.js'
 import type {
   Action,
   Response,
@@ -38,8 +37,7 @@ export interface Resources {
   adapters?: Record<string, Adapter>
   authenticators?: Record<string, Authenticator>
   auths?: Record<string, Auth>
-  schemas: Record<string, Schema>
-  castFns?: Map<string, CastFn>
+  schemas: Map<string, Schema>
   mapOptions?: MapOptions
   middleware?: Middleware[]
   emit?: (eventType: string, ...args: unknown[]) => void
@@ -52,11 +50,10 @@ export default class Service {
   id: string
   meta?: string
 
-  #schemas: Record<string, Schema>
+  #schemas: Map<string, Schema>
   #options: TransporterOptions
   #endpoints: Endpoint[]
   #transporter: Transporter
-  #castFns: Map<string, CastFn>
 
   #auth?: Auth
   #incomingAuth?: Auth
@@ -83,7 +80,6 @@ export default class Service {
       authenticators = {},
       auths,
       schemas,
-      castFns = new Map(),
       mapOptions = {},
       middleware = [],
       emit = () => undefined, // Provide a fallback for tests
@@ -97,7 +93,6 @@ export default class Service {
     this.meta = meta
 
     this.#schemas = schemas
-    this.#castFns = castFns
 
     const transporter = lookupById(transporterId, transporters)
     if (!transporter) {
@@ -167,7 +162,7 @@ export default class Service {
    * Mutate request. Will authorize data and mutate action – in that order.
    */
   async mutateRequest(action: Action, endpoint: Endpoint): Promise<Action> {
-    const castFn = getCastFn(this.#castFns, action.payload.type)
+    const castFn = getCastFn(this.#schemas, action.payload.type)
     const castedAction = castPayload(action, endpoint, castFn)
     const authorizedAction = await this.#authorizeDataToService(
       castedAction,
@@ -180,8 +175,7 @@ export default class Service {
     } catch (error) {
       return setErrorOnAction(
         action,
-        `Error while mutating request: ${
-          error instanceof Error ? error.message : String(error)
+        `Error while mutating request: ${error instanceof Error ? error.message : String(error)
         }`,
         'mutate:request'
       )
@@ -204,14 +198,13 @@ export default class Service {
     } catch (error) {
       return setErrorOnAction(
         action,
-        `Error while mutating incoming request: ${
-          error instanceof Error ? error.message : String(error)
+        `Error while mutating incoming request: ${error instanceof Error ? error.message : String(error)
         }`,
         'mutate:request:incoming'
       )
     }
 
-    const castFn = getCastFn(this.#castFns, action.payload.type)
+    const castFn = getCastFn(this.#schemas, action.payload.type)
     const casted = castPayload(mutated, endpoint, castFn)
     const withOrigin = setOriginOnAction(casted, 'mutate:request:incoming')
     return this.#authorizeDataToService(withOrigin, endpoint.allowRawRequest)
@@ -228,15 +221,14 @@ export default class Service {
       return {
         ...action.response,
         ...createErrorResponse(
-          `Error while mutating response: ${
-            error instanceof Error ? error.message : String(error)
+          `Error while mutating response: ${error instanceof Error ? error.message : String(error)
           }`,
           'mutate:response'
         ),
       }
     }
 
-    const castFn = getCastFn(this.#castFns, action.payload.type)
+    const castFn = getCastFn(this.#schemas, action.payload.type)
     const casted = castResponse(mutated, endpoint, castFn)
     const withOrigin = setOriginOnAction(casted, 'mutate:response', false)
     const { response } = await this.#authorizeDataFromService(
@@ -255,7 +247,7 @@ export default class Service {
     action: Action,
     endpoint: Endpoint
   ): Promise<Response> {
-    const castFn = getCastFn(this.#castFns, action.payload.type)
+    const castFn = getCastFn(this.#schemas, action.payload.type)
     const castedAction = castResponse(action, endpoint, castFn)
     const authorizedAction = await this.#authorizeDataFromService(
       castedAction,
@@ -273,8 +265,7 @@ export default class Service {
       return {
         ...action.response,
         ...createErrorResponse(
-          `Error while mutating response: ${
-            error instanceof Error ? error.message : String(error)
+          `Error while mutating response: ${error instanceof Error ? error.message : String(error)
           }`,
           'mutate:response:incoming'
         ),

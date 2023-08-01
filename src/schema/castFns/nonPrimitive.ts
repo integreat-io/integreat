@@ -1,5 +1,5 @@
 import { isTypedData, isReference, isDate, isObject } from '../../utils/is.js'
-import type { CastFns } from '../types.js'
+import type Schema from '../Schema.js'
 
 function extractId(value: unknown) {
   if (isObject(value)) {
@@ -30,7 +30,7 @@ const hasMoreProps = (value: unknown): value is Record<string, unknown> => {
   return keys.length > 0
 }
 
-export default function castNonPrimitive(type: string, castFns: CastFns) {
+export default function castNonPrimitive(type: string, schemas: Map<string, Schema>) {
   return (value: unknown, isRev = false) => {
     // Return undefined when this is a reference with other type than ours
     if (isReference(value) && value.$ref !== type) {
@@ -43,7 +43,7 @@ export default function castNonPrimitive(type: string, castFns: CastFns) {
       if (typeof value.$type === 'string' && value.$type !== type) {
         return undefined
       } else {
-        const cast = castFns.get(type)
+        const cast = schemas.get(type)?.castFn
         return typeof cast === 'function' ? cast(value, isRev) : value
       }
     }

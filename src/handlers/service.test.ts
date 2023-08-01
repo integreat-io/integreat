@@ -9,7 +9,7 @@ import service from './service.js'
 
 // Setup
 
-const schemas = {}
+const schemas = new Map()
 const mapOptions = {}
 
 const serviceDefs = {

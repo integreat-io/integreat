@@ -12,33 +12,32 @@ import get from './get.js'
 
 // Setup
 
-const schemas = {
-  entry: new Schema({
-    id: 'entry',
-    shape: {
-      title: 'string',
-      byline: { $type: 'string', default: 'Somebody' },
-      source: 'source',
-      createdAt: 'date',
-      updatedAt: 'date',
-    },
-    access: 'auth',
-  }),
-  account: new Schema({
-    id: 'account',
-    shape: {
-      name: 'string',
-    },
-    access: { identFromField: 'id' },
-  }),
-  source: new Schema({
-    id: 'source',
-    shape: {
-      name: 'string',
-    },
-    access: 'auth',
-  }),
-}
+const schemas = new Map()
+schemas.set('entry', new Schema({
+  id: 'entry',
+  shape: {
+    title: 'string',
+    byline: { $type: 'string', default: 'Somebody' },
+    source: 'source',
+    createdAt: 'date',
+    updatedAt: 'date',
+  },
+  access: 'auth',
+}))
+schemas.set('account', new Schema({
+  id: 'account',
+  shape: {
+    name: 'string',
+  },
+  access: { identFromField: 'id' },
+}))
+schemas.set('source', new Schema({
+  id: 'source',
+  shape: {
+    name: 'string',
+  },
+  access: 'auth',
+}))
 
 const pipelines = {
   entry: [

@@ -44,8 +44,7 @@ const hasAuthMethod = (access: AccessDef) =>
   Object.keys(access).filter(isAuthMethod).length > 0
 
 const createRequiredError = (items: string[], itemName: string) =>
-  `Authentication was refused, ${itemName}${
-    items.length > 1 ? 's' : ''
+  `Authentication was refused, ${itemName}${items.length > 1 ? 's' : ''
   } required: ${items.map((item) => `'${item}'`).join(', ')}`
 
 function authorizeByOneSchema(
@@ -110,7 +109,7 @@ function authorizeByOneSchema(
 
 function authorizeBySchema(
   ident: Ident | undefined,
-  schemas: Record<string, Schema>,
+  schemas: Map<string, Schema>,
   actionTypes: string[],
   action: string,
   requireAuth: boolean
@@ -118,7 +117,7 @@ function authorizeBySchema(
   for (const actionType of actionTypes) {
     const error = authorizeByOneSchema(
       ident,
-      schemas[actionType], // eslint-disable-line security/detect-object-injection
+      schemas.get(actionType),
       actionType,
       action,
       requireAuth
@@ -130,7 +129,7 @@ function authorizeBySchema(
   return { reason: undefined, error: undefined }
 }
 
-export default (schemas: Record<string, Schema>, requireAuth: boolean) =>
+export default (schemas: Map<string, Schema>, requireAuth: boolean) =>
   function authorizeAction(action: Action): Action {
     const {
       payload: { type },

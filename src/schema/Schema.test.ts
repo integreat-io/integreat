@@ -7,7 +7,7 @@ import Schema from './Schema.js'
 
 // Setup
 
-const castFns = new Map()
+const schemas = new Map()
 
 // Tests
 
@@ -39,7 +39,7 @@ test('should set up schema', (t) => {
     comments: { $type: 'comment' },
   }
 
-  const ret = new Schema(def, castFns)
+  const ret = new Schema(def, schemas)
 
   t.truthy(ret)
   t.is(ret.id, 'entry')
@@ -61,7 +61,7 @@ test('should provide accessForAction method', (t) => {
     access: { allow: 'all', actions: { SET: 'auth' } },
   }
 
-  const ret = new Schema(def, castFns)
+  const ret = new Schema(def, schemas)
 
   t.is(typeof ret.accessForAction, 'function')
   t.deepEqual(ret.accessForAction('GET'), { allow: 'all' })
@@ -76,7 +76,7 @@ test('should set internal prop', (t) => {
     internal: true,
   }
 
-  const ret = new Schema(def, castFns)
+  const ret = new Schema(def, schemas)
 
   t.true(ret.internal)
 })
@@ -87,7 +87,7 @@ test('should infer plural when not set', (t) => {
     shape: {},
   }
 
-  const ret = new Schema(def, castFns)
+  const ret = new Schema(def, schemas)
 
   t.is(ret.id, 'article')
   t.is(ret.plural, 'articles')
@@ -103,7 +103,7 @@ test('should always include id in schema', (t) => {
     id: { $type: 'string' },
   }
 
-  const ret = new Schema(def, castFns)
+  const ret = new Schema(def, schemas)
 
   t.deepEqual(ret.shape, expected)
 })
@@ -119,7 +119,7 @@ test('should throw when base fields are provided with the wrong type', (t) => {
     },
   }
 
-  const error = t.throws(() => new Schema(def, castFns))
+  const error = t.throws(() => new Schema(def, schemas))
 
   t.true(error instanceof Error)
   t.is(
@@ -166,7 +166,7 @@ test('should provide cast mutation', (t) => {
     },
   ]
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data)
 
   t.deepEqual(ret, expected)
@@ -192,7 +192,7 @@ test('should not include dates by default', (t) => {
     title: 'Entry with no name',
   }
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data)
 
   t.deepEqual(ret, expected)
@@ -213,9 +213,9 @@ test('should provide map with other cast function', (t) => {
     },
     access: 'auth',
   }
-  const castFns = new Map()
-  castFns.set('user', new Schema(userSchema, castFns).castFn)
-  castFns.set('comment', new Schema(commentSchema, castFns).castFn)
+  const schemas = new Map()
+  schemas.set('user', new Schema(userSchema, schemas))
+  schemas.set('comment', new Schema(commentSchema, schemas))
   const data = [
     {
       id: 12345,
@@ -229,7 +229,7 @@ test('should provide map with other cast function', (t) => {
   ]
   const expectedComments = [{ id: 'comment23', $ref: 'comment' }]
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data) as TypedData[]
 
   const author = ret[0].author as TypedData
@@ -257,7 +257,7 @@ test('should set createdAt and updatedAt to now when not set', (t) => {
   }
   const before = Date.now()
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data)
 
   const after = Date.now()
@@ -285,7 +285,7 @@ test('should cast id to string', (t) => {
     title: 'Entry 1',
   }
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data)
 
   const { id } = ret as TypedData
@@ -306,7 +306,7 @@ test('should set missing id to null', (t) => {
     title: 'Entry 1',
   }
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data)
 
   const { id } = ret as TypedData
@@ -328,7 +328,7 @@ test('should generate id when not set and generateId is true', (t) => {
     title: 'Entry 1',
   }
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data)
 
   const { id } = ret as TypedData
@@ -349,7 +349,7 @@ test('should not cast undefined', (t) => {
   const data = undefined
   const expected = undefined
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data)
 
   t.deepEqual(ret, expected)
@@ -368,7 +368,7 @@ test('should not cast null', (t) => {
   const data = null
   const expected = undefined
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data)
 
   t.deepEqual(ret, expected)
@@ -393,7 +393,7 @@ test('should not cast undefined in array', (t) => {
     },
   ]
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data)
 
   t.deepEqual(ret, expected)
@@ -414,7 +414,7 @@ test('should not return array when expecting value', (t) => {
     title: ['Entry 1', 'Entry 2'],
   }
 
-  const schema = new Schema(def, castFns)
+  const schema = new Schema(def, schemas)
   const ret = schema.castFn(data)
 
   const { title } = ret as TypedData

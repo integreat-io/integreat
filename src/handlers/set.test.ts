@@ -12,24 +12,23 @@ import set from './set.js'
 
 // Setup
 
-const schemas = {
-  entry: new Schema({
-    id: 'entry',
-    shape: {
-      title: { $type: 'string', default: 'A title' },
-      one: 'integer',
-    },
-    access: { allow: 'auth' },
-  }),
-  account: new Schema({
-    id: 'account',
-    shape: {
-      name: 'string',
-      posts: 'entry',
-    },
-    access: { identFromField: 'id' },
-  }),
-}
+const schemas = new Map()
+schemas.set('entry', new Schema({
+  id: 'entry',
+  shape: {
+    title: { $type: 'string', default: 'A title' },
+    one: 'integer',
+  },
+  access: { allow: 'auth' },
+}))
+schemas.set('account', new Schema({
+  id: 'account',
+  shape: {
+    name: 'string',
+    posts: 'entry',
+  },
+  access: { identFromField: 'id' },
+}))
 const pipelines = {
   entry: [
     {

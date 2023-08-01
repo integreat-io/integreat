@@ -1,9 +1,8 @@
-/* eslint-disable security/detect-object-injection */
 import type Schema from '../schema/Schema.js'
 import type Service from '../service/Service.js'
 
-function serviceIdFromSchema(schemas: Record<string, Schema>, type?: string) {
-  const schema = type ? schemas[type] : undefined
+function serviceIdFromSchema(schemas: Map<string, Schema>, type?: string) {
+  const schema = type ? schemas.get(type) : undefined
   return schema?.service
 }
 
@@ -11,7 +10,7 @@ function serviceIdFromSchema(schemas: Record<string, Schema>, type?: string) {
  * Get service from type or service id.
  */
 export default function getService(
-  schemas?: Record<string, Schema>,
+  schemas?: Map<string, Schema>,
   services?: Record<string, Service>
 ): (types?: string | string[], serviceId?: string) => Service | undefined {
   if (!services) {
@@ -31,6 +30,7 @@ export default function getService(
         serviceId = serviceIdFromSchema(schemas, types)
       }
     }
+    // eslint-disable-next-line security/detect-object-injection
     return (serviceId && services[serviceId]) || undefined
   }
 }

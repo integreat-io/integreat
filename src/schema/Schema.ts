@@ -9,7 +9,6 @@ import {
   CastFn,
   Access,
   AccessDef,
-  CastFns,
 } from './types.js'
 import { isShape } from '../utils/is.js'
 
@@ -17,8 +16,8 @@ const expandField = (val: ShapeDef | FieldDefinition | string | undefined) =>
   typeof val === 'string'
     ? { $type: val }
     : isShape(val)
-    ? expandFields(val)
-    : val
+      ? expandFields(val)
+      : val
 
 const expandFields = (vals: ShapeDef): Shape =>
   Object.entries(vals).reduce(
@@ -42,14 +41,14 @@ export default class Schema {
   access?: AccessDef
   castFn: CastFn
 
-  constructor(def: SchemaDef, castFns: CastFns = new Map()) {
+  constructor(def: SchemaDef, schemas: Map<string, Schema> = new Map()) {
     this.id = def.id
     this.plural = def.plural || `${def.id}s`
     this.service = def.service
     this.internal = def.internal ?? false
     this.shape = expandShape(def.shape || {})
     this.access = expandAccess(def.access)
-    const castFn = createCast(this.shape, def.id, castFns, def.generateId)
+    const castFn = createCast(this.shape, def.id, schemas, def.generateId)
     this.castFn = castFn
   }
 

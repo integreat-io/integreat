@@ -7,7 +7,8 @@ import numberFn from './castFns/number.js'
 import objectFn from './castFns/object.js'
 import nonPrimitiveFn from './castFns/nonPrimitive.js'
 import stringFn from './castFns/string.js'
-import type { CastFns, CastFn, Shape, FieldDefinition } from './types.js'
+import type Schema from './Schema.js'
+import type { CastFn, Shape, FieldDefinition } from './types.js'
 import {
   isObject,
   isFieldDefinition,
@@ -20,7 +21,7 @@ interface CastFnUnary {
   (isRev: boolean): (value: unknown) => unknown
 }
 
-function castFnFromType(type: string, castFns: CastFns) {
+function castFnFromType(type: string, schemas: Map<string, Schema>) {
   switch (type) {
     case 'string':
       return stringFn
@@ -38,7 +39,7 @@ function castFnFromType(type: string, castFns: CastFns) {
     case 'unknown':
       return (value: unknown) => value
     default:
-      return nonPrimitiveFn(type, castFns)
+      return nonPrimitiveFn(type, schemas)
   }
 }
 
@@ -60,14 +61,14 @@ const unwrapValue = (value: unknown) =>
 
 function createFieldCast(
   def: FieldDefinition | Shape | string | undefined,
-  castFns: CastFns
+  schemas: Map<string, Schema>
 ): CastFnUnary | undefined {
   if (isFieldDefinition(def)) {
     // Primivite type or reference
     if (def?.const !== undefined) {
       return () => () => def.const
     }
-    const castFn = castFnFromType(removeArrayNotation(def.$type), castFns)
+    const castFn = castFnFromType(removeArrayNotation(def.$type), schemas)
     return (isRev: boolean) =>
       function castValue(rawValue: unknown) {
         const value = unwrapValue(rawValue)
@@ -75,7 +76,7 @@ function createFieldCast(
       }
   } else if (isShape(def)) {
     // Shape
-    return createShapeCast(def, undefined, castFns)
+    return createShapeCast(def, undefined, schemas)
   } else {
     return undefined
   }
@@ -118,9 +119,9 @@ function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
 function createCastFn(
   key: string,
   def: FieldDefinition | Shape | string | undefined,
-  castFns: CastFns
+  schemas: Map<string, Schema>,
 ) {
-  const cast = createFieldCast(def, castFns)
+  const cast = createFieldCast(def, schemas)
   if (cast) {
     const type = typeFromDef(def)
     return handleArray(
@@ -146,13 +147,13 @@ const completeItemBeforeCast = (
 function createShapeCast(
   shape: Shape,
   type: string | undefined,
-  castFns: CastFns,
+  schemas: Map<string, Schema>,
   doGenerateId = false
 ) {
   const fields = Object.entries(shape)
     .map(([key, def]) => [
       removeArrayNotation(key),
-      createCastFn(key, def, castFns),
+      createCastFn(key, def, schemas),
     ])
     .filter(([, cast]) => cast !== undefined) as [
       key: string,
@@ -183,10 +184,10 @@ function createShapeCast(
 export default function createCast(
   shape: Shape,
   type: string,
-  castFns: CastFns = new Map(),
+  schemas: Map<string, Schema> = new Map(),
   doGenerateId = false
 ): CastFn {
-  const castShape = createShapeCast(shape, type, castFns, doGenerateId)
+  const castShape = createShapeCast(shape, type, schemas, doGenerateId)
   return function castItem(data, isRev = false) {
     const casted = mapAny(castShape(isRev), data)
     return Array.isArray(casted) ? casted.filter(isNotNullOrUndefined) : casted

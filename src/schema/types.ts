@@ -47,5 +47,3 @@ export interface SchemaDef {
 export interface CastFn {
   (data: unknown, isRev?: boolean): unknown
 }
-
-export type CastFns = Map<string, CastFn>

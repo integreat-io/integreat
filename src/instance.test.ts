@@ -108,7 +108,7 @@ test('should return object with id, dispatch, on, schemas, services, identType, 
   t.is(typeof great.dispatch, 'function')
   t.is(typeof great.on, 'function')
   t.truthy(great.schemas)
-  t.truthy(great.schemas.entry)
+  t.truthy(great.schemas.get('entry'))
   t.truthy(great.services)
   t.truthy(great.services.entries)
   t.is(great.identType, 'account')

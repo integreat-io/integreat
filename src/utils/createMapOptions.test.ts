@@ -20,10 +20,9 @@ const mutations = {
   ],
 }
 
-const schemas = {
-  entry: new Schema({ id: 'entry' }),
-  user: new Schema({ id: 'user' }),
-}
+const schemas = new Map()
+schemas.set('entry', new Schema({ id: 'entry' }))
+schemas.set('user', new Schema({ id: 'user' }))
 
 const transformers = {
   string: () => () => (value: unknown) => String(value),
@@ -37,7 +36,7 @@ const dictionaries = {
 
 test('should return map options with pipelines from mutations', (t) => {
   const expected = mutations
-  const ret = createMapOptions({}, mutations, transformers)
+  const ret = createMapOptions(new Map(), mutations, transformers)
 
   t.deepEqual(ret.pipelines, expected)
 })

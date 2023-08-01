@@ -5,22 +5,21 @@ import { fromService, toService } from './authData.js'
 
 // Setup
 
-const schemas = {
-  account: new Schema({
-    id: 'account',
-    shape: {
-      name: 'string',
+const schemas = new Map()
+schemas.set('account', new Schema({
+  id: 'account',
+  shape: {
+    name: 'string',
+  },
+  access: {
+    identFromField: 'id',
+    actions: {
+      SET: { roleFromField: 'allowAccess.roles', identFromField: 'id' },
+      TEST: { allow: 'auth' },
+      DELETE: { roleFromField: 'allowAccess.roles' },
     },
-    access: {
-      identFromField: 'id',
-      actions: {
-        SET: { roleFromField: 'allowAccess.roles', identFromField: 'id' },
-        TEST: { allow: 'auth' },
-        DELETE: { roleFromField: 'allowAccess.roles' },
-      },
-    },
-  }),
-}
+  },
+}))
 
 const account0 = {
   $type: 'account',

@@ -13,19 +13,18 @@ import Endpoint from './Endpoint.js'
 
 // Setup
 
-const schemas = {
-  entry: new Schema({
-    id: 'entry',
-    plural: 'entries',
-    shape: {
-      title: 'string',
-      published: { $type: 'boolean', default: false },
-      createdAt: 'date',
-      updatedAt: 'date',
-    },
-    access: 'auth',
-  }),
-}
+const schemas = new Map()
+schemas.set('entry', new Schema({
+  id: 'entry',
+  plural: 'entries',
+  shape: {
+    title: 'string',
+    published: { $type: 'boolean', default: false },
+    createdAt: 'date',
+    updatedAt: 'date',
+  },
+  access: 'auth',
+}))
 
 const entryMapping = [
   'items[]',

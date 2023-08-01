@@ -7,9 +7,8 @@ import getService from './getService.js'
 
 // Setup
 
-const schemas = {
-  entry: new Schema({ id: 'entry', plural: 'entries', service: 'entries' }),
-}
+const schemas = new Map()
+schemas.set('entry', new Schema({ id: 'entry', plural: 'entries', service: 'entries' }))
 
 const transporters = {
   http: {} as Transporter,

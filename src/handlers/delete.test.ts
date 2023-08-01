@@ -11,22 +11,21 @@ import deleteFn from './delete.js'
 
 // Setup
 
-const schemas = {
-  entry: new Schema({
-    id: 'entry',
-    shape: {
-      title: { $type: 'string', default: 'A title' },
-    },
-    access: 'auth',
-  }),
-  account: new Schema({
-    id: 'account',
-    shape: {
-      name: 'string',
-    },
-    access: { identFromField: 'id' },
-  }),
-}
+const schemas = new Map()
+schemas.set('entry', new Schema({
+  id: 'entry',
+  shape: {
+    title: { $type: 'string', default: 'A title' },
+  },
+  access: 'auth',
+}))
+schemas.set('account', new Schema({
+  id: 'account',
+  shape: {
+    name: 'string',
+  },
+  access: { identFromField: 'id' },
+}))
 
 const pipelines = {
   entry: [{ $iterate: true, id: 'id', title: 'header' }, { $cast: 'entry' }],

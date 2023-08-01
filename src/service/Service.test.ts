@@ -25,7 +25,7 @@ import Service, { Resources } from './Service.js'
 
 // Setup
 
-const castFns = new Map()
+const schemas = new Map()
 
 const accountSchema = new Schema(
   {
@@ -41,8 +41,10 @@ const accountSchema = new Schema(
       },
     },
   },
-  castFns
+  schemas
 )
+schemas.set('account', accountSchema)
+
 const entrySchema = new Schema(
   {
     id: 'entry',
@@ -57,8 +59,10 @@ const entrySchema = new Schema(
     },
     access: 'auth',
   },
-  castFns
+  schemas
 )
+schemas.set('entry', entrySchema)
+
 const sourceSchema = new Schema(
   {
     id: 'source',
@@ -67,18 +71,9 @@ const sourceSchema = new Schema(
     },
     access: 'auth',
   },
-  castFns
+  schemas
 )
-
-castFns.set('account', accountSchema.castFn)
-castFns.set('entry', entrySchema.castFn)
-castFns.set('source', sourceSchema.castFn)
-
-const schemas = {
-  account: accountSchema,
-  entry: entrySchema,
-  source: sourceSchema,
-}
+schemas.set('source', sourceSchema)
 
 const entryMutation = [
   'items[]',
@@ -282,7 +277,6 @@ const mockResources = (
   },
   mapOptions,
   schemas,
-  castFns,
   auths,
 })
 
@@ -298,7 +292,6 @@ test('should return service object with id and meta', (t) => {
     ...jsonResources,
     mapOptions,
     schemas,
-    castFns,
   })
 
   t.is(service.id, 'entries')
@@ -311,7 +304,6 @@ test('should throw when no id', (t) => {
       ...jsonResources,
       mapOptions,
       schemas,
-      castFns,
     })
   })
 })
@@ -325,7 +317,6 @@ test('should throw when service references unknown transporter', (t) => {
     ...jsonResources,
     mapOptions,
     schemas,
-    castFns,
   }
 
   const error = t.throws(() => new Service(def, resources))
@@ -364,7 +355,6 @@ test('endpointFromAction should return an endpoint for the action', async (t) =>
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -393,7 +383,6 @@ test('endpointFromAction should return undefined when no match', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -433,7 +422,6 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -461,7 +449,6 @@ test('authorizeAction should set authorizedByIntegreat (symbol) flag', (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -487,7 +474,6 @@ test('authorizeAction should authorize action without type', (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -513,7 +499,6 @@ test('authorizeAction should refuse based on schema', (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -549,7 +534,6 @@ test('authorizeAction should authorize when no auth is specified', (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -601,7 +585,6 @@ test('send should use service middleware', async (t) => {
     ...jsonResources,
     mapOptions,
     schemas,
-    castFns,
     auths,
     middleware: [failMiddleware],
   }
@@ -787,7 +770,6 @@ test('send should fail when not authorized', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
       auths,
     }
@@ -831,7 +813,6 @@ test('send should connect before sending request', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const service = new Service(
@@ -875,7 +856,6 @@ test('send should store connection', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
   }
   const service = new Service(
     {
@@ -919,7 +899,6 @@ test('send should return error when connection fails', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
   }
   const service = new Service(
     {
@@ -967,7 +946,6 @@ test('send should pass on error response from service', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
   }
   const service = new Service(
     {
@@ -1009,7 +987,6 @@ test('send should pass on error response from service and prefix origin', async 
     },
     mapOptions,
     schemas,
-    castFns,
   }
   const service = new Service(
     {
@@ -1049,7 +1026,6 @@ test('send should return with error when transport throws', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
   }
   const service = new Service(
     {
@@ -1090,7 +1066,6 @@ test('send should do nothing when action has a response', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
   }
   const service = new Service(
     {
@@ -1141,7 +1116,6 @@ test('mutateResponse should mutate data array from service', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1211,7 +1185,6 @@ test('mutateResponse should mutate data object from service', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1257,7 +1230,6 @@ test('mutateResponse should set origin when mutation results in an error respons
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1309,7 +1281,6 @@ test('mutateResponse should use service adapters', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1381,7 +1352,6 @@ test('mutateResponse should use endpoint adapters', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1453,7 +1423,6 @@ test('mutateResponse should not cast data array from service when allowRawRespon
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1520,7 +1489,6 @@ test('mutateResponse should mutate null to undefined', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1562,7 +1530,6 @@ test('should authorize typed data in array from service', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1612,7 +1579,6 @@ test('should authorize typed data object from service', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1667,7 +1633,6 @@ test('mutateResponse should return error when transformer throws', async (t) => 
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1717,7 +1682,6 @@ test('mutateIncomingResponse should mutate and authorize data in response to inc
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1767,7 +1731,6 @@ test('mutateIncomingResponse should set origin when mutation results in an error
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1819,7 +1782,6 @@ test('mutateRequest should set endpoint options and cast and mutate request data
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1888,7 +1850,6 @@ test('mutateRequest should authorize data array going to service', async (t) => 
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1936,7 +1897,6 @@ test('mutateRequest should authorize data object going to service', async (t) =>
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -1990,7 +1950,6 @@ test('mutateRequest should use mutation pipeline', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -2031,7 +1990,6 @@ test('mutateRequest set origin when mutation results in an error response', asyn
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -2079,7 +2037,6 @@ test('mutateRequest should return error when transformer throws', async (t) => {
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -2116,7 +2073,6 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -2173,7 +2129,6 @@ test('mutateIncomingRequest should set origin when mutation results in an error 
     {
       mapOptions,
       schemas,
-      castFns,
       ...jsonResources,
     }
   )
@@ -2211,7 +2166,6 @@ test('listen should call transporter.listen', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const service = new Service(
@@ -2250,7 +2204,6 @@ test('listen should not call transporter.listen when transport.shouldListen retu
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const service = new Service(
@@ -2298,7 +2251,6 @@ test('listen should use service middleware', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
     middleware: [failMiddleware],
   }
@@ -2435,7 +2387,6 @@ test('should support progress reporting', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const action = {
@@ -2633,7 +2584,6 @@ test('listen should return error when connection fails', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const service = new Service(
@@ -2691,7 +2641,6 @@ test('listen should do nothing when transporter has no listen method', async (t)
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const service = new Service(
@@ -2728,7 +2677,6 @@ test('listen should return error when no connection', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const service = new Service(
@@ -2769,7 +2717,6 @@ test('listen should return noaction when incoming action is null', async (t) => 
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const service = new Service(
@@ -2810,7 +2757,6 @@ test('close should disconnect transporter', async (t) => {
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const service = new Service(
@@ -2848,7 +2794,6 @@ test('close should probihit closed connection from behind used again', async (t)
     },
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const service = new Service(
@@ -2878,7 +2823,6 @@ test('close should just return ok when no connection', async (t) => {
     ...jsonResources,
     mapOptions,
     schemas,
-    castFns,
     auths,
   }
   const service = new Service(

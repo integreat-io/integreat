@@ -29,7 +29,7 @@ const debug = debugLib('great')
 
 export interface Resources {
   handlers: Record<string, ActionHandler>
-  schemas: Record<string, Schema>
+  schemas: Map<string, Schema>
   services: Record<string, Service>
   middleware?: Middleware[]
   options: HandlerOptions
@@ -169,7 +169,7 @@ async function handleAction(
  */
 export default function createDispatch({
   handlers = {},
-  schemas = {},
+  schemas = new Map(),
   services = {},
   middleware = [],
   options,

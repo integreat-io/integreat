@@ -40,11 +40,11 @@ export const setUpAuth = (authenticators?: Record<string, Authenticator>) =>
 const setAdapterIds = (adapters?: Record<string, Adapter>) =>
   adapters
     ? Object.fromEntries(
-        Object.entries(adapters).map(([id, adapter]) => [
-          id,
-          { ...adapter, id },
-        ])
-      )
+      Object.entries(adapters).map(([id, adapter]) => [
+        id,
+        { ...adapter, id },
+      ])
+    )
     : {}
 
 const isJobWithSchedule = (job: Job) => !!job.schedule
@@ -52,7 +52,7 @@ const isJobWithSchedule = (job: Job) => !!job.schedule
 export default class Instance extends EventEmitter {
   id?: string
   services: Record<string, Service>
-  schemas: Record<string, Schema>
+  schemas: Map<string, Schema>
   identType?: string
   queueService?: string
 
@@ -74,13 +74,9 @@ export default class Instance extends EventEmitter {
     }
 
     // Prepare schemas
-    const castFns = new Map()
-    // TODO: Refactor to use Map for `schemas` as well
-    const schemas = defs.schemas
-      .map((schema) => new Schema(schema, castFns))
-      .reduce(indexById, {} as Record<string, Schema>)
-    Object.entries(schemas).forEach(([type, schema]) => {
-      castFns.set(type, schema.castFn)
+    const schemas = new Map<string, Schema>()
+    defs.schemas.forEach((schema) => {
+      schemas.set(schema.id, new Schema(schema, schemas))
     })
 
     // Prepare map options
@@ -102,8 +98,8 @@ export default class Instance extends EventEmitter {
     // Setup auths object from auth defs
     const auths = Array.isArray(defs.auths)
       ? defs.auths
-          .map(setUpAuth(authenticatorsWithId))
-          .reduce(indexById, {} as Record<string, Auth>)
+        .map(setUpAuth(authenticatorsWithId))
+        .reduce(indexById, {} as Record<string, Auth>)
       : undefined
 
     // Prepare services
@@ -116,7 +112,6 @@ export default class Instance extends EventEmitter {
             authenticators: authenticatorsWithId,
             auths,
             schemas,
-            castFns, // TODO: This is redundant, as it's already in `schemas`
             mapOptions,
             middleware: middlewareForService,
             emit: this.emit.bind(this),
