@@ -8,4 +8,4 @@ export default async (
   item: unknown,
   field: string
 ): Promise<unknown | unknown[]> =>
-  mapAny(extractIdFromRef)(await mapTransform(field)(item))
+  mapAny(extractIdFromRef, await mapTransform(field)(item))

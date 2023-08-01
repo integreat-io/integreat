@@ -188,7 +188,7 @@ export default function createCast(
 ): CastFn {
   const castShape = createShapeCast(shape, type, castFns, doGenerateId)
   return function castItem(data, isRev = false) {
-    const casted = mapAny(castShape(isRev))(data)
+    const casted = mapAny(castShape(isRev), data)
     return Array.isArray(casted) ? casted.filter(isNotNullOrUndefined) : casted
   }
 }
