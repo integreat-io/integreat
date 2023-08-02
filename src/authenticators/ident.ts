@@ -1,7 +1,7 @@
 import type { Authenticator } from '../types.js'
 
 /**
- * The token strategy. The token is given as an option.
+ * The `ident` authenticator.
  */
 const anonymousAuth: Authenticator = {
   id: 'anonymous',

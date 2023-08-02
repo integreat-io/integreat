@@ -1,5 +1,5 @@
 import Auth from '../Auth.js'
-import anonymousAuth from '../../authenticators/anonymous.js'
+import identAuth from '../../authenticators/ident.js'
 import { isObject } from '../../utils/is.js'
 import { setUpAuth } from '../../instance.js'
 import { lookupById } from '../../utils/indexUtils.js'
@@ -25,7 +25,7 @@ export function resolveAuth(
   } else if (isAuthDef(auth)) {
     return setUpAuth(authenticators)(auth)
   } else if (auth) {
-    return new Auth('anonymous', anonymousAuth, {})
+    return new Auth('ident', identAuth, {})
   } else {
     return undefined
   }

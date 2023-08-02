@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import authenticator from './anonymous.js'
+import authenticator from './ident.js'
 
 // Setup
 
