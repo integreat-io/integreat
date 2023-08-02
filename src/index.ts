@@ -33,7 +33,7 @@ export type {
   AuthOptions,
   AuthDef,
   ServiceDef,
-  ServiceOptions
+  ServiceOptions,
 } from './service/types.js'
 export type { JobDef, JobStepDef } from './jobs/types.js'
 export type { Instance, Definitions, Resources, Middleware }
@@ -43,7 +43,7 @@ export * as middleware from './middleware/index.js'
 export { createAction } from './utils/action.js'
 
 export default {
-  version: '1.0.0-rc.2',
+  version: '1.0.0-rc.3',
 
   /**
    * Create a new instance of Integreat.
