@@ -19,6 +19,7 @@ export type {
   TypedData,
   Reference,
   Transporter,
+  AuthenticateExternal,
   Adapter,
   Connection,
   ActionHandler,

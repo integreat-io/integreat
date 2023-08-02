@@ -180,6 +180,10 @@ export interface Authenticator<
   }
 }
 
+export interface AuthenticateExternal {
+  (authentication: Authentication, action?: Action | null): Promise<Response>
+}
+
 export interface Transporter {
   authentication: string | null
   prepareOptions: (
@@ -197,10 +201,7 @@ export interface Transporter {
   listen?: (
     dispatch: Dispatch,
     connection: Connection | null,
-    authenticate: (
-      authentication: Authentication,
-      action?: Action | null
-    ) => Promise<Response>
+    authenticate: AuthenticateExternal
   ) => Promise<Response>
   disconnect: (connection: Connection | null) => Promise<void>
 }
