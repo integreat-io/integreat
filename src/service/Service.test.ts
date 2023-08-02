@@ -1608,7 +1608,7 @@ test('should authorize typed data object from service', async (t) => {
 })
 
 test('mutateResponse should return error when transformer throws', async (t) => {
-  const willThrow = () => () => {
+  const willThrow = () => () => () => {
     throw new Error('Transformer error')
   }
   const mapOptions = createMapOptions(schemas, mutations, { willThrow })
@@ -2016,7 +2016,7 @@ test('mutateRequest set origin when mutation results in an error response', asyn
 })
 
 test('mutateRequest should return error when transformer throws', async (t) => {
-  const willThrow = () => () => {
+  const willThrow = () => () => () => {
     throw new Error('Transformer error')
   }
   const mapOptions = createMapOptions(schemas, mutations, { willThrow })

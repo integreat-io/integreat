@@ -14,17 +14,20 @@ import Endpoint from './Endpoint.js'
 // Setup
 
 const schemas = new Map()
-schemas.set('entry', new Schema({
-  id: 'entry',
-  plural: 'entries',
-  shape: {
-    title: 'string',
-    published: { $type: 'boolean', default: false },
-    createdAt: 'date',
-    updatedAt: 'date',
-  },
-  access: 'auth',
-}))
+schemas.set(
+  'entry',
+  new Schema({
+    id: 'entry',
+    plural: 'entries',
+    shape: {
+      title: 'string',
+      published: { $type: 'boolean', default: false },
+      createdAt: 'date',
+      updatedAt: 'date',
+    },
+    access: 'auth',
+  })
+)
 
 const entryMapping = [
   'items[]',
@@ -60,21 +63,21 @@ const entryMapping3 = [
 const shouldHaveToken = () => () => (action: unknown) =>
   isAction(action)
     ? {
-      ...action,
-      response: {
-        ...action.response,
-        status: action.payload.token ? null : 'badrequest',
-      },
-    }
+        ...action,
+        response: {
+          ...action.response,
+          status: action.payload.token ? null : 'badrequest',
+        },
+      }
     : action
 
 const alwaysOk = () => () => (action: unknown) =>
   isAction(action)
     ? {
-      ...action,
-      response: { ...action.response, status: null },
-      meta: { ok: true },
-    }
+        ...action,
+        response: { ...action.response, status: null },
+        meta: { ok: true },
+      }
     : action
 
 const pipelines = {
@@ -127,42 +130,42 @@ const mockAdapter: Adapter = {
     const data = action.response?.data
     return isObject(data)
       ? {
-        ...action,
-        response: {
-          ...action.response,
-          data: {
-            content: {
-              data: {
-                items: [
-                  // Duplicate the array
-                  (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
-                  (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
-                ],
+          ...action,
+          response: {
+            ...action.response,
+            data: {
+              content: {
+                data: {
+                  items: [
+                    // Duplicate the array
+                    (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
+                    (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
+                  ],
+                },
               },
             },
           },
-        },
-      }
+        }
       : action
   },
   async serialize(action, _options) {
     const data = action.payload?.data
     return isObject(data)
       ? {
-        ...action,
-        payload: {
-          ...action.payload,
-          data: {
-            content: {
-              data: {
-                items: [
-                  (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
-                ],
+          ...action,
+          payload: {
+            ...action.payload,
+            data: {
+              content: {
+                data: {
+                  items: [
+                    (data.content as any).data.items[0], // eslint-disable-line @typescript-eslint/no-explicit-any
+                  ],
+                },
               },
             },
           },
-        },
-      }
+        }
       : action
   },
 }
@@ -908,31 +911,14 @@ test('should throw when mutations are applying unknown pipeline/mutation', async
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const actionWithProps = {
-    ...actionWithResponse,
-    payload: {
-      message: 'Too much',
-    },
-    response: {
-      ...actionWithResponse.response,
-      data: JSON.stringify({
-        content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
-        result: 'badrequest',
-      }),
-    },
-  }
 
-  const endpoint = new Endpoint(
-    endpointDef,
-    serviceId,
-    options,
-    mapOptions,
-    serviceMutation
+  const error = t.throws(
+    () =>
+      new Endpoint(endpointDef, serviceId, options, mapOptions, serviceMutation)
   )
-  const error = await t.throwsAsync(endpoint.mutate(actionWithProps, false))
 
   t.true(error instanceof Error)
-  t.is(error?.message, 'Failed to apply pipeline \'unknown\'. Unknown pipeline')
+  t.is(error?.message, "Failed to apply pipeline 'unknown'. Unknown pipeline")
 })
 
 test('should keep action props not mapped from response', async (t) => {

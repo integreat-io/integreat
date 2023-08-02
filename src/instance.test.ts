@@ -418,7 +418,6 @@ test('should set up RUN handler with jobs', async (t) => {
     },
   ]
   const nowDate = new Date()
-  const transformers = { now: () => () => () => nowDate }
   const action = {
     type: 'RUN',
     payload: { jobId: 'theJob' },
@@ -427,7 +426,14 @@ test('should set up RUN handler with jobs', async (t) => {
 
   const great = new Instance(
     { services, schemas, mutations, jobs },
-    { ...resourcesWithTransformer, handlers, transformers }
+    {
+      ...resourcesWithTransformer,
+      handlers,
+      transformers: {
+        ...resourcesWithTransformer.transformers,
+        now: () => () => () => nowDate,
+      },
+    }
   )
   const ret = await great.dispatch(action)
 

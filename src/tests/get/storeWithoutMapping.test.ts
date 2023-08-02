@@ -10,6 +10,7 @@ import Integreat from '../../index.js'
 const defs = {
   ...definitions,
   mutations: {
+    ...definitions.mutations,
     'entries-entry': [],
   },
 }

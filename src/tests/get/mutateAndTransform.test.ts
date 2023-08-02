@@ -65,6 +65,7 @@ test('should transform entry', async (t) => {
   const defs = {
     ...definitions,
     mutations: {
+      ...definitions.mutations,
       'entries-entry': mapping,
     },
   }
@@ -104,6 +105,7 @@ test('should transform array of entries', async (t) => {
   const defs = {
     ...definitions,
     mutations: {
+      ...definitions.mutations,
       'entries-entry': mapping,
     },
   }

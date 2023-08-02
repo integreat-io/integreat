@@ -16,12 +16,11 @@ test('should throw on unknown transformer', (t) => {
   t.true(error instanceof Error)
   t.is(
     error?.message,
-    "Transform operator was given the unknown transformer id 'shouldHaveAuthor'"
+    "Transform operator was given the unknown transformer id 'isoDate'"
   )
 })
 
-// TODO: This should fail on creation, not on execution
-test.failing('should throw on unknown mutations', (t) => {
+test('should throw on unknown mutations', (t) => {
   const defsWithoutMutations = { ...defs, mutations: {} }
 
   const error = t.throws(() =>
@@ -29,8 +28,5 @@ test.failing('should throw on unknown mutations', (t) => {
   )
 
   t.true(error instanceof Error)
-  t.is(
-    error?.message,
-    "Failed to apply pipeline 'entries-entry'. Unknown pipeline"
-  )
+  t.is(error?.message, "Failed to apply pipeline 'api-entry'. Unknown pipeline")
 })

@@ -31,6 +31,7 @@ const mapping = [
 const defs = {
   ...definitions,
   mutations: {
+    ...definitions.mutations,
     'entries-entry': mapping,
   },
 }
