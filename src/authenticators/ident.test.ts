@@ -10,7 +10,7 @@ const action = {
   meta: { ident: { id: 'johnf' } },
 }
 
-const options = { token: 'someToken' }
+const options = {}
 
 // Tests
 
@@ -49,6 +49,17 @@ test('asObject should return empty object', (t) => {
 test('validate should return ident with id anonymous', async (t) => {
   const authentication = { status: 'granted' } // Doesn't matter what we pass here
   const expected = { id: 'anonymous' }
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const ret = await authenticator.validate!(authentication, options, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('validate should return ident with the id set in options', async (t) => {
+  const options = { identId: 'johnf' }
+  const authentication = { status: 'granted' } // Doesn't matter what we pass here
+  const expected = { id: 'johnf' }
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ret = await authenticator.validate!(authentication, options, action)

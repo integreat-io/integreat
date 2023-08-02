@@ -1,10 +1,12 @@
 import type { Authenticator } from '../types.js'
 
 /**
- * The `ident` authenticator.
+ * The `ident` authenticator. Will always grant. `validate()` returns an ident
+ * with the id provided in the `identId` option, or `'anonymous'` if no id is
+ * provided.
  */
-const anonymousAuth: Authenticator = {
-  id: 'anonymous',
+const identAuth: Authenticator = {
+  id: 'ident',
 
   /**
    * Authenticate and return authentication object if authentication was
@@ -27,8 +29,10 @@ const anonymousAuth: Authenticator = {
    * Validate authentication object.
    * The anonymous authenticator always returns an ident with id anonymous.
    */
-  async validate(_authentication) {
-    return { id: 'anonymous' }
+  async validate(_authentication, options) {
+    const { identId } = options || {}
+    const id = typeof identId === 'string' ? identId : 'anonymous'
+    return { id }
   },
 
   authentication: {
@@ -52,4 +56,4 @@ const anonymousAuth: Authenticator = {
   },
 }
 
-export default anonymousAuth
+export default identAuth
