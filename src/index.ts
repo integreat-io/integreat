@@ -33,6 +33,7 @@ export type {
   AuthOptions,
   AuthDef,
   ServiceDef,
+  ServiceOptions
 } from './service/types.js'
 export type { JobDef, JobStepDef } from './jobs/types.js'
 export type { Instance, Definitions, Resources, Middleware }
