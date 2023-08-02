@@ -1769,11 +1769,16 @@ test('mutateRequest should set endpoint options and cast and mutate request data
       endpoints: [
         {
           mutation: {
-            payload: 'payload',
-            'payload.data': [
-              'payload.data.content.data[].createOrMutate',
-              { $apply: 'entry' },
-            ],
+            $direction: 'to',
+            $flip: true,
+            payload: {
+              $modify: 'payload',
+              'data.content.data[].createOrMutate': [
+                'payload.data',
+                { $apply: 'entry' },
+              ],
+              uri: 'meta.options.uri',
+            },
           },
           options: { uri: 'http://some.api/1.0' },
         },
@@ -1827,6 +1832,7 @@ test('mutateRequest should set endpoint options and cast and mutate request data
           ],
         },
       },
+      uri: 'http://some.api/1.0',
     },
     meta: {
       ...action.meta,
@@ -2068,7 +2074,31 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
       id: 'accounts',
       transporter: 'http',
       auth: 'granting',
-      endpoints,
+      endpoints: [
+        {
+          id: 'endpoint3',
+          match: { type: 'account', incoming: true },
+          mutation: [
+            {
+              $direction: 'from',
+              payload: {
+                $modify: 'payload',
+                data: ['payload.data', { $apply: 'account' }],
+                uri: 'meta.options.uri',
+              },
+            },
+            {
+              $direction: 'to',
+              $flip: true,
+              response: {
+                $modify: 'response',
+                data: ['response.data', { $apply: 'account' }],
+              },
+            },
+          ],
+          options: { uri: 'http://some.api/1.0' },
+        },
+      ],
     },
     {
       mapOptions,
@@ -2086,6 +2116,7 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
           { id: 'lucyk', name: 'Lucy K.' },
         ],
       },
+      sourceService: 'accounts',
     },
     meta: { ident: { id: 'johnf', roles: ['admin'] } },
   })
@@ -2105,6 +2136,7 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
   t.is(data.length, 1)
   t.is(data[0].id, 'johnf')
   t.is(data[0].$type, 'account')
+  t.is(ret.payload.uri, 'http://some.api/1.0')
   t.deepEqual(ret.response, expectedResponse)
 })
 

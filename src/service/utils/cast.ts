@@ -17,11 +17,10 @@ export const castPayload = (
   payload:
     !endpoint.allowRawRequest && castFn
       ? {
-        ...action.payload,
-        data: castFn(action.payload.data),
-      }
+          ...action.payload,
+          data: castFn(action.payload.data),
+        }
       : action.payload,
-  meta: { ...action.meta, options: endpoint.options.transporter || {} },
 })
 
 export const castResponse = (
@@ -31,10 +30,10 @@ export const castResponse = (
 ): Action =>
   !endpoint.allowRawResponse && castFn
     ? {
-      ...action,
-      response: {
-        ...action.response,
-        data: castFn(action.response?.data),
-      },
-    }
+        ...action,
+        response: {
+          ...action.response,
+          data: castFn(action.response?.data),
+        },
+      }
     : action

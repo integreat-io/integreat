@@ -43,6 +43,11 @@ export interface Resources {
   emit?: (eventType: string, ...args: unknown[]) => void
 }
 
+const setOptionsOnAction = (action: Action, endpoint: Endpoint) => ({
+  ...action,
+  meta: { ...action.meta, options: endpoint.options.transporter || {} },
+})
+
 /**
  * Create a service with the given id and transporter.
  */
@@ -163,7 +168,8 @@ export default class Service {
    */
   async mutateRequest(action: Action, endpoint: Endpoint): Promise<Action> {
     const castFn = getCastFn(this.#schemas, action.payload.type)
-    const castedAction = castPayload(action, endpoint, castFn)
+    const actionWithOptions = setOptionsOnAction(action, endpoint)
+    const castedAction = castPayload(actionWithOptions, endpoint, castFn)
     const authorizedAction = await this.#authorizeDataToService(
       castedAction,
       endpoint.allowRawRequest
@@ -175,7 +181,8 @@ export default class Service {
     } catch (error) {
       return setErrorOnAction(
         action,
-        `Error while mutating request: ${error instanceof Error ? error.message : String(error)
+        `Error while mutating request: ${
+          error instanceof Error ? error.message : String(error)
         }`,
         'mutate:request'
       )
@@ -192,13 +199,15 @@ export default class Service {
     action: Action,
     endpoint: Endpoint
   ): Promise<Action> {
+    const actionWithOptions = setOptionsOnAction(action, endpoint)
     let mutated: Action
     try {
-      mutated = await endpoint.mutate(action, false /* isRev */)
+      mutated = await endpoint.mutate(actionWithOptions, false /* isRev */)
     } catch (error) {
       return setErrorOnAction(
         action,
-        `Error while mutating incoming request: ${error instanceof Error ? error.message : String(error)
+        `Error while mutating incoming request: ${
+          error instanceof Error ? error.message : String(error)
         }`,
         'mutate:request:incoming'
       )
@@ -221,7 +230,8 @@ export default class Service {
       return {
         ...action.response,
         ...createErrorResponse(
-          `Error while mutating response: ${error instanceof Error ? error.message : String(error)
+          `Error while mutating response: ${
+            error instanceof Error ? error.message : String(error)
           }`,
           'mutate:response'
         ),
@@ -265,7 +275,8 @@ export default class Service {
       return {
         ...action.response,
         ...createErrorResponse(
-          `Error while mutating response: ${error instanceof Error ? error.message : String(error)
+          `Error while mutating response: ${
+            error instanceof Error ? error.message : String(error)
           }`,
           'mutate:response:incoming'
         ),
