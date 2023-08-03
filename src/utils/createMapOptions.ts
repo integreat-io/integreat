@@ -16,10 +16,10 @@ const transformersFromSchemas = (
       Symbol.for(`cast_${schema.id}`),
       () =>
         () =>
-          (data, { rev = false }) =>
-            schema.castFn(data, rev),
-    ]
-    ))
+        (data, { rev = false }) =>
+          schema.castFn(data, rev),
+    ])
+  )
 
 export default function createMapOptions(
   schemas: Map<string, Schema>,
@@ -28,7 +28,7 @@ export default function createMapOptions(
   dictionaries?: Dictionaries
 ): MapOptions {
   return {
-    pipelines: mutations,
+    pipelines: { ...mutations }, // TODO: We create a new object here, because MapTransform mutates it. Should really be fixed in MapTransform
     transformers: {
       ...transformers,
       ...transformersFromSchemas(schemas),
