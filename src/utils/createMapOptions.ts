@@ -1,4 +1,5 @@
 import modifyOperationObject from './modifyOperationObject.js'
+import unwrapValue from './unwrapValue.js'
 import type {
   TransformDefinition,
   Transformer,
@@ -38,5 +39,6 @@ export default function createMapOptions(
     revAlias: 'to',
     nonvalues: [undefined, null, ''],
     modifyOperationObject,
+    modifyGetValue: unwrapValue,
   }
 }

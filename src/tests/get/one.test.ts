@@ -171,3 +171,51 @@ test('should respond with headers', async (t) => {
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.headers, expected)
 })
+
+test('should unfold $value props', async (t) => {
+  nock('http://some.api')
+    .get('/entries/ent1')
+    .reply(200, {
+      data: {
+        ...ent1Data,
+        key: { $value: 'ent1' },
+        headline: { $value: 'Entry 1' },
+        createdAt: { $value: createdAt },
+        updatedAt: { $value: updatedAt },
+        props: [
+          { key: { $value: 'sourceCheckBy' }, value: { $value: 'Anita' } },
+          { key: { $value: 'proofReadBy' }, value: { $value: 'Svein' } },
+        ],
+        sections: [{ $value: 'news' }, { $value: 'sports' }],
+      },
+    })
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    $type: 'entry',
+    id: 'ent1',
+    title: 'Entry 1',
+    text: 'The text of entry 1',
+    createdAt: new Date(createdAt),
+    updatedAt: new Date(updatedAt),
+    author: { id: 'johnf', $ref: 'user' },
+    approvedBy: undefined,
+    sections: [
+      { id: 'news', $ref: 'section' },
+      { id: 'sports', $ref: 'section' },
+    ],
+    props: [
+      { key: 'sourceCheckBy', value: 'Anita' },
+      { key: 'proofReadBy', value: 'Svein' },
+    ],
+  }
+
+  const great = Integreat.create(defs, resources)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, expected)
+})

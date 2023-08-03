@@ -7,15 +7,16 @@ import numberFn from './castFns/number.js'
 import objectFn from './castFns/object.js'
 import nonPrimitiveFn from './castFns/nonPrimitive.js'
 import stringFn from './castFns/string.js'
-import type Schema from './Schema.js'
-import type { CastFn, Shape, FieldDefinition } from './types.js'
 import {
   isObject,
   isFieldDefinition,
   isShape,
   isNotNullOrUndefined,
 } from '../utils/is.js'
+import unwrapValue from '../utils/unwrapValue.js'
 import { ensureArray } from '../utils/array.js'
+import type Schema from './Schema.js'
+import type { CastFn, Shape, FieldDefinition } from './types.js'
 
 interface CastFnUnary {
   (isRev: boolean): (value: unknown) => unknown
@@ -47,17 +48,14 @@ const typeFromDef = (prop?: string | FieldDefinition | Shape) =>
   isFieldDefinition(prop)
     ? prop.$type
     : typeof prop === 'string'
-      ? prop
-      : undefined
+    ? prop
+    : undefined
 
 const hasArrayNotation = (key?: string) =>
   typeof key === 'string' && key.endsWith('[]')
 
 const removeArrayNotation = (key: string) =>
   hasArrayNotation(key) ? key.slice(0, key.length - 2) : key
-
-const unwrapValue = (value: unknown) =>
-  isObject(value) && value.hasOwnProperty('$value') ? value.$value : value
 
 function createFieldCast(
   def: FieldDefinition | Shape | string | undefined,
@@ -93,10 +91,10 @@ const handleArray = (
 ): CastFnUnary =>
   isArrayExpected
     ? (isRev) => (value) =>
-      value === undefined ? undefined : ensureArray(value).map(fn(isRev)) // Ensure that an array is returned
+        value === undefined ? undefined : ensureArray(value).map(fn(isRev)) // Ensure that an array is returned
     : type === 'unknown'
-      ? (isRev) => fn(isRev) // Return 'unknown' fields as is
-      : (isRev) => unwrapSingleArrayItem(fn(isRev)) // Unwrap only item in an array when we don't expect an array
+    ? (isRev) => fn(isRev) // Return 'unknown' fields as is
+    : (isRev) => unwrapSingleArrayItem(fn(isRev)) // Unwrap only item in an array when we don't expect an array
 
 function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
   const nextCreatedAt = shape.createdAt // Should have
@@ -119,7 +117,7 @@ function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
 function createCastFn(
   key: string,
   def: FieldDefinition | Shape | string | undefined,
-  schemas: Map<string, Schema>,
+  schemas: Map<string, Schema>
 ) {
   const cast = createFieldCast(def, schemas)
   if (cast) {
@@ -156,9 +154,9 @@ function createShapeCast(
       createCastFn(key, def, schemas),
     ])
     .filter(([, cast]) => cast !== undefined) as [
-      key: string,
-      cast: CastFnUnary
-    ][]
+    key: string,
+    cast: CastFnUnary
+  ][]
 
   return (isRev: boolean) =>
     function castItem(rawItem: unknown) {
