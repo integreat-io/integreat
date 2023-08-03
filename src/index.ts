@@ -43,7 +43,7 @@ export * as middleware from './middleware/index.js'
 export { createAction } from './utils/action.js'
 
 export default {
-  version: '1.0.0-rc.3',
+  version: '1.0.0-rc.4',
 
   /**
    * Create a new instance of Integreat.
