@@ -19,6 +19,7 @@ import type {
   Response,
   TypedData,
   Dispatch,
+  Adapter,
 } from '../types.js'
 
 import Service, { Resources } from './Service.js'
@@ -1469,6 +1470,79 @@ test('mutateResponse should use endpoint adapters', async (t) => {
   const ret = await service.mutateResponse(action, endpoint!)
 
   t.deepEqual(ret, expected)
+})
+
+test.only('mutateResponse should use both service and endpoint adapters', async (t) => {
+  const mockAdapter: Adapter = {
+    ...jsonResources.adapters!.json, // Borrow methods from json adapter
+    async normalize(action, _options) {
+      const data = action.response?.data
+      return isObject(data)
+        ? {
+            ...action,
+            response: {
+              ...action.response,
+              // Duplicate data when serializing
+              data: { items: [(data.items as any)[0], (data.items as any)[0]] }, // eslint-disable-line @typescript-eslint/no-explicit-any
+            },
+          }
+        : action
+    },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      adapters: ['json'],
+      mutation: {
+        $direction: 'from',
+        response: {
+          $modify: 'response',
+          data: 'response.data.content',
+        },
+      },
+      endpoints: [
+        {
+          adapters: ['mock'],
+          mutation: {
+            $direction: 'from',
+            response: {
+              $modify: 'response',
+              data: ['response.data', { $apply: 'entry' }],
+            },
+          },
+          options: { uri: 'http://some.api/1.0' },
+        },
+      ],
+    },
+    {
+      mapOptions,
+      schemas,
+      ...jsonResources,
+      adapters: {
+        ...jsonResources.adapters,
+        mock: mockAdapter,
+      },
+    }
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry', source: 'thenews' },
+    response: {
+      status: 'ok',
+      data: JSON.stringify({
+        content: { items: [{ key: 'ent1', header: 'Entry 1' }] },
+      }),
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.mutateResponse(action, endpoint!)
+
+  const data = ret.data as TypedData[]
+  t.is(data.length, 2)
+  t.is(data[0].id, 'ent1')
+  t.is(data[1].id, 'ent1')
 })
 
 test('mutateResponse should not cast data array from service when allowRawResponse is true', async (t) => {

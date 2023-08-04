@@ -123,7 +123,8 @@ export default class Service {
             : serviceOptions,
           mapOptions,
           mutation,
-          [...serviceAdapters, ...lookupByIds(endpoint.adapters, adapters)]
+          serviceAdapters,
+          lookupByIds(endpoint.adapters, adapters)
         )
     )
 
