@@ -43,10 +43,6 @@ test('should create Step instance', (t) => {
   t.is(typeof ret.run, 'function')
 })
 
-// Tests -- validate
-
-test.todo('should return true when action is valid')
-
 // Tests -- run
 
 test('should run action step', async (t) => {

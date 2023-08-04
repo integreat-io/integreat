@@ -192,7 +192,6 @@ test('should complete ident with other prop keys', async (t) => {
   t.deepEqual(ret.access?.ident, expectedIdent)
 })
 
-// TODO: Best way to treat missing user?
 test('should return notfound when unknown service', async (t) => {
   nock('http://some.api')
     .get('/users')

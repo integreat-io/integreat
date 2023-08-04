@@ -38,7 +38,6 @@ const prepareEndpoint = ({ match, ...endpoint }: EndpointDef) => ({
 // are correct.
 function runMutationAndPopulateAction(mutator: DataMapper) {
   return () => async (action: unknown, state: State) => {
-    // TODO: Throw here if we don't get an action?
     const mutatedAction = (await mutator(action, state)) as Action
     return populateActionAfterMutation(action as Action, mutatedAction)
   }
@@ -63,7 +62,6 @@ const transformerFromAdapter = (
     // Return the transformer. It will call the adapter's `serialize()` method
     // in reverse direction and `normalize()` when going forward.
     return () => async (action, state) =>
-      // TODO: Throw here if we don't get an action?
       state.rev
         ? await adapter.serialize(action as Action, preparedOptions)
         : await adapter.normalize(action as Action, preparedOptions)
