@@ -1,7 +1,8 @@
 import mapTransform from 'map-transform'
 import { ensureArray } from '../utils/array.js'
-import { isErrorResponse, isObject, isOkResponse } from '../utils/is.js'
+import { isObject, isOkResponse } from '../utils/is.js'
 import {
+  combineResponses,
   setDataOnActionPayload,
   setResponseOnAction,
   setOrigin,
@@ -29,26 +30,6 @@ type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType[number]
 
 interface Validator {
   (actionResponses: Record<string, Action>): Promise<[Response | null, boolean]>
-}
-
-function combineResponses(responses: Response[]) {
-  if (responses.length < 2) {
-    return responses[0] // Will yield undefined if no responses
-  } else {
-    const error = responses
-      .filter((response) => response.error || isErrorResponse(response))
-      .map((response) => `[${response.status}] ${response.error}`)
-      .join(' | ')
-    const warning = responses
-      .filter((response) => response.warning)
-      .map((response) => response.warning)
-      .join(' | ')
-    return {
-      status: 'error',
-      ...(error && { error }),
-      ...(warning && { warning }),
-    }
-  }
 }
 
 const adjustValidationResponse = ({

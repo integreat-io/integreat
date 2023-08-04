@@ -419,6 +419,38 @@ test('should return failResponse when provided', async (t) => {
   t.deepEqual(ret, expectedResponse)
 })
 
+test('should return response from several failed failResponse', async (t) => {
+  const endpointDef = {
+    validate: [
+      {
+        condition: 'payload.id',
+        failResponse: { status: 'error', error: 'This is no good' },
+      },
+      {
+        condition: 'payload.notMissing',
+        failResponse: { status: 'notfound', error: 'Something is gone' },
+      },
+    ],
+    options: {},
+  }
+  const action = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      // No id
+    },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const expectedResponse = {
+    status: 'error',
+    error: '[error] This is no good | [notfound] Something is gone',
+  }
+
+  const ret = await endpoint.validateAction(action)
+
+  t.deepEqual(ret, expectedResponse)
+})
+
 test('should treat failResponse as error message when provided as a string', async (t) => {
   const endpointDef = {
     validate: [

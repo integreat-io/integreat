@@ -5,6 +5,7 @@ import isMatch from './utils/matchEnpoints.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
 import { ensureArray } from '../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../utils/is.js'
+import { combineResponses } from '../utils/action.js'
 import prepareValidator, { ResponsesAndBreak } from '../utils/validation.js'
 import type {
   TransformDefinition,
@@ -145,8 +146,7 @@ export default class Endpoint {
 
   async validateAction(action: Action): Promise<Response | null> {
     const [errors] = await this.#validator(action)
-    // TODO: Handle more than one error here
-    return errors[0] || null
+    return combineResponses(errors) || null
   }
 
   async mutate(action: Action, isRev: boolean): Promise<Action> {

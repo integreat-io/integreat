@@ -1,3 +1,4 @@
+import { isErrorResponse } from './is.js'
 import type { Action, Payload, Meta, Response } from '../types.js'
 import type Endpoint from '../service/Endpoint.js'
 
@@ -75,6 +76,29 @@ export function setErrorOnAction(
     ...action.response,
     ...createErrorResponse(error, origin, status),
   })
+}
+
+/**
+ * Combine several error responses into one.
+ */
+export function combineResponses(responses: Response[]) {
+  if (responses.length < 2) {
+    return responses[0] // Will yield undefined if no responses
+  } else {
+    const error = responses
+      .filter((response) => response.error || isErrorResponse(response))
+      .map((response) => `[${response.status}] ${response.error}`)
+      .join(' | ')
+    const warning = responses
+      .filter((response) => response.warning)
+      .map((response) => response.warning)
+      .join(' | ')
+    return {
+      status: 'error',
+      ...(error && { error }),
+      ...(warning && { warning }),
+    }
+  }
 }
 
 // Set origin on response if status is not ok.
