@@ -95,16 +95,21 @@ test('should keep most specific options on conflict', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should not merge top-level options with adapter options', (t) => {
+test('should also merge top-level options with adapter options', (t) => {
   const options = {
     uri: 'https://api.test/v1',
-    adapters: { xml: { namespaces: { '': 'http://our.com/namespace' } } },
+    adapters: {
+      xml: {
+        namespaces: { '': 'http://our.com/namespace' },
+      },
+    },
   }
   const expected = {
     transporter: { uri: 'https://api.test/v1' },
     adapters: {
       xml: {
         namespaces: { '': 'http://our.com/namespace' },
+        uri: 'https://api.test/v1',
       },
     },
   }
@@ -225,6 +230,7 @@ test('should deep clone objects', (t) => {
   }
 
   const ret = mergeOptions(options1, options2)
+
   const queryParams = ret.transporter.queryParams as Record<string, unknown>
   const namespaces = ret.adapters?.xml.namespaces as Record<string, unknown>
   const auth = (ret.transporter.incoming as Record<string, unknown>)

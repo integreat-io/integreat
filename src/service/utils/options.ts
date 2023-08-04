@@ -21,9 +21,18 @@ export function prepareOptions({
       : {}),
   }
 
-  return adapters
-    ? { transporter: transporterOptions, adapters }
-    : { transporter: transporterOptions }
+  if (!adapters) {
+    return { transporter: transporterOptions }
+  }
+
+  const adapterOptions = Object.fromEntries(
+    Object.entries(adapters || {}).map(([id, options]) => [
+      id,
+      { ...topLevel, ...options },
+    ])
+  )
+
+  return { transporter: transporterOptions, adapters: adapterOptions }
 }
 
 const removeIncoming = ({ incoming, ...options }: TransporterOptions) => options
