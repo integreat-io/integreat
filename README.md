@@ -5,11 +5,6 @@ An integration layer for node.js.
 [![npm Version](https://img.shields.io/npm/v/integreat.svg)](https://www.npmjs.com/package/integreat)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a5bd9841a47ff9f74577/maintainability)](https://codeclimate.com/github/integreat-io/integreat/maintainability)
 
-**Note:** We're closing in on a more stable version, but there might still be
-a few changes coming before v1.0. We encourage trying out and experimenting with
-Integreat, and we highly appreciate feedback, but know that some things might
-still change.
-
 The basic idea of Integreat is to make it easy to define how to send data to and
 receive data from a set of [**services**](#services), and expose them through a
 well defined interface, abstracting away the specifics of each service.
