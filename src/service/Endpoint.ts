@@ -150,7 +150,9 @@ export default class Endpoint {
   }
 
   async mutate(action: Action, isRev: boolean): Promise<Action> {
-    // TODO: Throw here if we don't get an action?
+    if (!action) {
+      throw new Error('Endpoint mutation was run without action')
+    }
     return (await this.#mutateAction(action, { rev: isRev })) as Action
   }
 

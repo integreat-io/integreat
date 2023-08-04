@@ -859,6 +859,25 @@ test('should mutate response from service with service adapter and no mutation p
   t.deepEqual(ret.response?.data, expectedData)
 })
 
+test('should return error when no action', async (t) => {
+  const endpointDef = {
+    mutation: {
+      response: {
+        $modify: 'response',
+        data: ['response.data.content.data', { $apply: 'entry' }],
+      },
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const error = await t.throwsAsync(endpoint.mutate(undefined as any, false))
+
+  t.true(error instanceof Error)
+  t.is(error?.message, 'Endpoint mutation was run without action')
+})
+
 test('should mutate response to service (incoming) with service adapter', async (t) => {
   const endpointDef = {
     mutation: {
