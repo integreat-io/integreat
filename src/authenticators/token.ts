@@ -49,7 +49,7 @@ const tokenAuth: Authenticator = {
    * In the tokenAuth, this will be true if we get an authentication object
    * with granted status and a token.
    */
-  isAuthenticated(authentication) {
+  isAuthenticated(authentication, _options, _action) {
     return !!(
       authentication &&
       authentication.status === 'granted' &&

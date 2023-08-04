@@ -23,7 +23,7 @@ const optionsAuth: Authenticator = {
    * In the optionsAuth, this will always be true, as no authentication is
    * really necessary.
    */
-  isAuthenticated(authentication) {
+  isAuthenticated(authentication, _options, _action) {
     return !!(authentication && authentication.status === 'granted')
   },
 

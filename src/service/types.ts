@@ -27,6 +27,7 @@ export type AuthOptions = Record<string, unknown>
 export interface Authentication extends Record<string, unknown> {
   status: string
   error?: string
+  authKey?: string
 }
 
 export interface AuthDef {

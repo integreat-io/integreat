@@ -13,22 +13,28 @@ import set from './set.js'
 // Setup
 
 const schemas = new Map()
-schemas.set('entry', new Schema({
-  id: 'entry',
-  shape: {
-    title: { $type: 'string', default: 'A title' },
-    one: 'integer',
-  },
-  access: { allow: 'auth' },
-}))
-schemas.set('account', new Schema({
-  id: 'account',
-  shape: {
-    name: 'string',
-    posts: 'entry',
-  },
-  access: { identFromField: 'id' },
-}))
+schemas.set(
+  'entry',
+  new Schema({
+    id: 'entry',
+    shape: {
+      title: { $type: 'string', default: 'A title' },
+      one: 'integer',
+    },
+    access: { allow: 'auth' },
+  })
+)
+schemas.set(
+  'account',
+  new Schema({
+    id: 'account',
+    shape: {
+      name: 'string',
+      posts: 'entry',
+    },
+    access: { identFromField: 'id' },
+  })
+)
 const pipelines = {
   entry: [
     {
@@ -265,7 +271,7 @@ test('should set to uri with payload params', async (t) => {
 test('should return failResponse when validation fails', async (t) => {
   const scope = nock('http://api5.test')
     .post('/database/_bulk_docs', { docs: [] })
-    .reply(201, [{ ok: true }, { ok: true }])
+    .reply(201, [])
   const action = {
     type: 'SET',
     payload: {
