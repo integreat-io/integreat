@@ -44,7 +44,7 @@ export { createAction } from './utils/action.js'
 export const transformers = {} // We don't have any built-in transformers right now, but we might in the future
 
 export default {
-  version: '1.0.0-rc.4',
+  version: '1.0.0',
 
   /**
    * Create a new instance of Integreat.
