@@ -2,6 +2,7 @@ import test from 'ava'
 import sinon from 'sinon'
 import httpTransporter from 'integreat-transporter-http'
 import Service from './service/Service.js'
+import Schema from './schema/Schema.js'
 import { QUEUE_SYMBOL } from './handlers/index.js'
 import type {
   Action,
@@ -11,11 +12,71 @@ import type {
 } from './types.js'
 
 import dispatch from './dispatch.js'
+import createMapOptions from './utils/createMapOptions.js'
 
 // Setup
 
-const services = {}
 const schemas = new Map()
+const entrySchema = new Schema(
+  {
+    id: 'entry',
+    plural: 'entries',
+    shape: {
+      id: 'string',
+      title: 'string',
+    },
+    access: 'auth',
+  },
+  schemas
+)
+schemas.set('entry', entrySchema)
+
+const mapOptions = createMapOptions(schemas)
+
+const services = {
+  api: new Service(
+    {
+      id: 'api',
+      transporter: 'http',
+      auth: true,
+      options: {
+        transporter: { uri: 'http://some.api/1.0' },
+        adapters: { json: { someOtherFlag: true } },
+        someFlag: true,
+      },
+      endpoints: [
+        {
+          match: { type: 'entry', incoming: true },
+          mutation: [
+            {
+              $direction: 'from',
+              payload: {
+                $modify: 'payload',
+                data: 'payload.data',
+                uri: {
+                  $alt: ['meta.options.uri', 'meta.options.transporter.uri'],
+                }, // None of these should be available
+                flag: 'meta.options.someFlag',
+              },
+            },
+            {
+              $direction: 'to',
+              $flip: true,
+              response: {
+                $modify: 'response',
+                data: 'response.data[0]',
+                params: {
+                  flag: 'meta.options.someFlag',
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
+    { mapOptions, schemas, transporters: { http: httpTransporter } }
+  ),
+}
 const options = {}
 
 // Tests
@@ -476,7 +537,47 @@ test('should support progress reporting', async (t) => {
   t.is(progressStub.args[1][0], 1)
 })
 
-// Note: Happy case for incoming mapping is tested in /tests/incoming
+test('should mutate incoming from source service', async (t) => {
+  const getHandler = sinon.stub().resolves({
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry', title: 'Entry 1' }],
+  })
+  const handlers = { GET: getHandler }
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      sourceService: 'api',
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedActionPayload = {
+    id: 'ent1',
+    type: 'entry',
+    data: undefined,
+    sourceService: 'api',
+    targetService: 'entries',
+    flag: true,
+    uri: 'http://some.api/1.0',
+  }
+  const expectedActionOptions = { someFlag: true, uri: 'http://some.api/1.0' }
+  const expectedResponse = {
+    status: 'ok',
+    data: { id: 'ent1', $type: 'entry', title: 'Entry 1' },
+    access: { ident: { id: 'johnf' } },
+    params: { flag: true },
+  }
+
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+
+  t.is(getHandler.callCount, 1)
+  const calledAction = getHandler.args[0][0] as Action
+  t.deepEqual(calledAction.meta?.options, expectedActionOptions)
+  t.deepEqual(calledAction.payload, expectedActionPayload)
+  t.deepEqual(ret, expectedResponse)
+})
 
 test('should return error when source service is not found', async (t) => {
   const action = {
@@ -504,27 +605,16 @@ test('should return error when source service is not found', async (t) => {
 })
 
 test('should return error when no endoint on source service matches', async (t) => {
-  const services = {
-    api: new Service(
-      {
-        id: 'api',
-        transporter: 'http',
-        endpoints: [],
-      },
-      { schemas: new Map(), transporters: { http: httpTransporter } }
-    ),
-  }
   const action = {
     type: 'GET',
     payload: {
-      id: 'ent1',
-      type: 'entry',
+      type: 'unknown',
       sourceService: 'api',
       targetService: 'entries',
     },
   }
   const handlers = {
-    GET: async () => ({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }),
+    GET: async () => ({ status: 'ok', data: [] }),
   }
   const expected = {
     status: 'badrequest',
@@ -550,7 +640,7 @@ test('should return error instead of throwing', async (t) => {
   ]
   const expected = {
     status: 'error',
-    error: "Error thrown in dispatch: Error: Too little memory. It's tiny",
+    error: "Error thrown in dispatch: Too little memory. It's tiny",
     origin: 'dispatch',
     access: { ident: { id: 'johnf' } },
   }

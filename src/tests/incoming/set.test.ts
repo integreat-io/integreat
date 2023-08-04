@@ -73,6 +73,7 @@ test('should mutate incoming action data and response data', async (t) => {
     data: JSON.stringify(expectedResponseData),
     headers: { 'Content-Type': 'application/json' },
     access: { ident: { root: true } },
+    params: { flag: true },
   }
 
   const great = Integreat.create(defs, resources)
@@ -85,5 +86,7 @@ test('should mutate incoming action data and response data', async (t) => {
   t.is(sentAction.payload.id, 'ent1')
   t.is(sentAction.payload.type, 'entry')
   t.is(sentAction.payload.data, expectedRequestData)
+  t.true(sentAction.payload.flag)
+  t.is(sentAction.payload.uri, 'http://localhost:3000')
   t.deepEqual(ret, expectedResponse)
 })

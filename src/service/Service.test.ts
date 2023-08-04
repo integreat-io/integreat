@@ -11,7 +11,7 @@ import optionsAuth from '../authenticators/options.js'
 import { isAuthorizedAction, setAuthorizedMark } from './utils/authAction.js'
 import { isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
-import type { ServiceDef, ServiceOptions } from './types.js'
+import type { ServiceDef, TransporterOptions } from './types.js'
 import type {
   Authenticator,
   Connection,
@@ -793,17 +793,76 @@ test('send should fail when not authorized', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('send should connect before sending request', async (t) => {
+test('send should provide auth and options', async (t) => {
+  const send = sinon.stub().resolves({ status: 'ok', data: {} })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: { ...jsonResources.transporters!.http, send },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [
+        {
+          options: { uri: 'http://some.api/1.0', value: 'Value from endpoint' },
+        },
+      ],
+      options: {
+        value: 'Value from service',
+        transporter: { secret: 's3cr3t' },
+        adapters: { json: { someFlag: true } },
+      },
+      transporter: 'http',
+      auth: 'granting',
+    },
+    resources
+  )
   const action = setAuthorizedMark({
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
-    meta: { ident: { id: 'johnf' } },
+    meta: {
+      ident: { id: 'johnf' },
+      options: {
+        uri: 'http://some.api/1.0',
+        secret: 's3cr3t',
+      },
+    },
   })
+  const expected = {
+    ...action,
+    meta: {
+      ...action.meta,
+      auth: { Authorization: 'Bearer t0k3n' },
+      options: {
+        uri: 'http://some.api/1.0',
+        secret: 's3cr3t',
+      },
+    },
+  }
+
+  const ret = await service.send(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(send.callCount, 1)
+  t.deepEqual(send.args[0][0], expected)
+})
+
+test('send should connect before sending request', async (t) => {
   const connect = async (
-    { value }: ServiceOptions,
+    options: TransporterOptions,
     authentication: Record<string, unknown> | null | undefined,
     _connection: Connection | null
-  ) => ({ status: 'ok', value, token: authentication?.Authorization })
+  ): Promise<Connection> => ({
+    status: 'ok',
+    options,
+    token: authentication?.Authorization,
+  })
   const send = sinon.stub().resolves({ status: 'ok', data: {} })
   const resources = {
     ...jsonResources,
@@ -823,15 +882,27 @@ test('send should connect before sending request', async (t) => {
           options: { uri: 'http://some.api/1.0', value: 'Value from endpoint' },
         },
       ],
-      options: { value: 'Value from service' },
+      options: {
+        value: 'Value from service',
+        transporter: { secret: 's3cr3t' },
+        adapters: { json: { someFlag: true } },
+      },
       transporter: 'http',
       auth: 'granting',
     },
     resources
   )
+  const action = setAuthorizedMark({
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    meta: { ident: { id: 'johnf' } },
+  })
   const expected = {
     status: 'ok',
-    value: 'Value from service',
+    options: {
+      value: 'Value from service',
+      secret: 's3cr3t',
+    },
     token: 'Bearer t0k3n',
   }
 
@@ -1766,6 +1837,7 @@ test('mutateRequest should set endpoint options and cast and mutate request data
     {
       id: 'entries',
       transporter: 'http',
+      options: { transporter: { secret: 's3cr3t' } },
       endpoints: [
         {
           mutation: {
@@ -1778,6 +1850,10 @@ test('mutateRequest should set endpoint options and cast and mutate request data
                 { $apply: 'entry' },
               ],
               uri: 'meta.options.uri',
+            },
+            meta: {
+              $modify: 'meta',
+              options: { $modify: 'meta.options', port: { $value: 3000 } },
             },
           },
           options: { uri: 'http://some.api/1.0' },
@@ -1836,7 +1912,11 @@ test('mutateRequest should set endpoint options and cast and mutate request data
     },
     meta: {
       ...action.meta,
-      options: { uri: 'http://some.api/1.0' },
+      options: {
+        secret: 's3cr3t',
+        uri: 'http://some.api/1.0',
+        port: 3000,
+      },
     },
   }
 
@@ -2118,7 +2198,10 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
       },
       sourceService: 'accounts',
     },
-    meta: { ident: { id: 'johnf', roles: ['admin'] } },
+    meta: {
+      ident: { id: 'johnf', roles: ['admin'] },
+      options: { uri: 'http://some.api/1.0' }, // This will be set by `dispatch()`
+    },
   })
   const endpoint = await service.endpointFromAction(
     action,
@@ -2136,7 +2219,6 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
   t.is(data.length, 1)
   t.is(data[0].id, 'johnf')
   t.is(data[0].$type, 'account')
-  t.is(ret.payload.uri, 'http://some.api/1.0')
   t.deepEqual(ret.response, expectedResponse)
 })
 

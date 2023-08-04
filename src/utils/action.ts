@@ -1,4 +1,5 @@
 import type { Action, Payload, Meta, Response } from '../types.js'
+import type Endpoint from '../service/Endpoint.js'
 
 /**
  * Create an action object.
@@ -29,6 +30,16 @@ export function setDataOnActionPayload(action: Action, data?: unknown) {
  */
 export function setResponseOnAction(action: Action, response?: Response) {
   return { ...action, response: response || {} }
+}
+
+/**
+ * Set the general options from an endpoint on `action.meta.options`.
+ */
+export function setOptionsOnAction(action: Action, endpoint: Endpoint): Action {
+  return {
+    ...action,
+    meta: { ...action.meta, options: endpoint?.options.transporter || {} },
+  }
 }
 
 /**

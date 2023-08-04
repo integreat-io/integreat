@@ -7,7 +7,10 @@ import Connection from './Connection.js'
 
 // Setup
 
-const options = { uri: 'http://api.test/1.0' }
+const options = {
+  uri: 'http://api.test/1.0',
+  secret: 's3cr3t',
+}
 const auth = { Authorization: 'Bearer t0k3n' }
 const emit = () => undefined
 
@@ -19,12 +22,13 @@ test('should call transporter connect method and return true', async (t) => {
     ...httpTransporter,
     connect,
   }
+  const expectedOptions = { uri: 'http://api.test/1.0', secret: 's3cr3t' }
 
   const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
   t.is(connect.callCount, 1)
-  t.deepEqual(connect.args[0][0], options)
+  t.deepEqual(connect.args[0][0], expectedOptions)
   t.deepEqual(connect.args[0][1], auth)
   t.is(connect.args[0][2], null)
   t.true(ret)

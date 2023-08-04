@@ -8,6 +8,7 @@ import {
   createErrorResponse,
   setResponseOnAction,
   setOrigin,
+  setOptionsOnAction,
 } from './utils/action.js'
 import type {
   Dispatch,
@@ -121,7 +122,10 @@ async function mutateIncomingAction(action: Action, getService: GetService) {
     }
   }
   return {
-    action: await service.mutateIncomingRequest(action, endpoint),
+    action: await service.mutateIncomingRequest(
+      setOptionsOnAction(action, endpoint),
+      endpoint
+    ),
     service,
     endpoint,
   }
@@ -129,11 +133,14 @@ async function mutateIncomingAction(action: Action, getService: GetService) {
 
 async function mutateIncomingResponse(
   action: Action,
-  incomingService?: Service,
-  incomingEndpoint?: Endpoint
+  service?: Service,
+  endpoint?: Endpoint
 ): Promise<Response> {
-  return incomingService && incomingEndpoint
-    ? await incomingService.mutateIncomingResponse(action, incomingEndpoint) // Mutate if this is an incoming action
+  return service && endpoint
+    ? await service.mutateIncomingResponse(
+        setOptionsOnAction(action, endpoint),
+        endpoint
+      ) // Mutate if this is an incoming action
     : action.response || {}
 }
 
@@ -230,7 +237,9 @@ export default function createDispatch({
           }
         } catch (err) {
           response = createErrorResponse(
-            `Error thrown in dispatch: ${err}`,
+            `Error thrown in dispatch: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
             'dispatch'
           )
         }

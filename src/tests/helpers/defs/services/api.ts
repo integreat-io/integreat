@@ -3,6 +3,12 @@ export default {
   transporter: 'http',
   auth: true,
   adapters: ['json'],
+  options: {
+    someFlag: true,
+    transporter: {
+      url: 'http://localhost:3000',
+    },
+  },
   endpoints: [
     {
       match: { action: 'SET', incoming: true },
@@ -12,6 +18,8 @@ export default {
           payload: {
             $modify: 'payload',
             data: ['payload.data.article', { $apply: 'api-entry' }],
+            flag: 'meta.options.someFlag',
+            uri: 'meta.options.url',
           },
         },
         {
@@ -20,6 +28,9 @@ export default {
           response: {
             $modify: 'response',
             data: ['response.data', { $apply: 'api-entry' }],
+            params: {
+              flag: 'meta.options.someFlag',
+            },
           },
         },
       ],

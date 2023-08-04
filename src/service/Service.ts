@@ -9,6 +9,7 @@ import {
   createErrorResponse,
   setOrigin,
   setOriginOnAction,
+  setOptionsOnAction,
 } from '../utils/action.js'
 import { prepareOptions, mergeOptions } from './utils/options.js'
 import Connection from './Connection.js'
@@ -42,11 +43,6 @@ export interface Resources {
   middleware?: Middleware[]
   emit?: (eventType: string, ...args: unknown[]) => void
 }
-
-const setOptionsOnAction = (action: Action, endpoint: Endpoint) => ({
-  ...action,
-  meta: { ...action.meta, options: endpoint.options.transporter || {} },
-})
 
 /**
  * Create a service with the given id and transporter.
@@ -199,10 +195,9 @@ export default class Service {
     action: Action,
     endpoint: Endpoint
   ): Promise<Action> {
-    const actionWithOptions = setOptionsOnAction(action, endpoint)
     let mutated: Action
     try {
-      mutated = await endpoint.mutate(actionWithOptions, false /* isRev */)
+      mutated = await endpoint.mutate(action, false /* isRev */)
     } catch (error) {
       return setErrorOnAction(
         action,

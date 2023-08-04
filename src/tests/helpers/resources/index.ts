@@ -11,10 +11,10 @@ const isoDate = () => () => (date: unknown) =>
 // Lots of typing hoops. Sorry
 const shouldHaveAuthor =
   () =>
-    () =>
-      (action: unknown): unknown => {
-        return ((action as Action).payload?.data as TypedData).author
-      }
+  () =>
+  (action: unknown): unknown => {
+    return ((action as Action).payload?.data as TypedData).author
+  }
 
 const resources: Resources = {
   transporters: { http: httpTransporter },
