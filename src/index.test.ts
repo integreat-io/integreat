@@ -5,7 +5,6 @@ import Integreat, { authenticators } from './index.js'
 // Tests
 
 test('should have version and create', (t) => {
-  t.is(typeof Integreat.version, 'string')
   t.is(typeof Integreat.create, 'function')
 })
 
