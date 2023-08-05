@@ -1,9 +1,10 @@
 import { isTypedData, isReference, isDate, isObject } from '../../utils/is.js'
+import unwrapValue from '../../utils/unwrapValue.js'
 import type Schema from '../Schema.js'
 
 function extractId(value: unknown) {
   if (isObject(value)) {
-    return value.id
+    return unwrapValue(value.id)
   } else {
     return isDate(value) ? value.getTime() : value
   }
@@ -30,7 +31,10 @@ const hasMoreProps = (value: unknown): value is Record<string, unknown> => {
   return keys.length > 0
 }
 
-export default function castNonPrimitive(type: string, schemas: Map<string, Schema>) {
+export default function castNonPrimitive(
+  type: string,
+  schemas: Map<string, Schema>
+) {
   return (value: unknown, isRev = false) => {
     // Return undefined when this is a reference with other type than ours
     if (isReference(value) && value.$ref !== type) {

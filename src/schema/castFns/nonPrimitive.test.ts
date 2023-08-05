@@ -7,10 +7,13 @@ import nonPrimitive from './nonPrimitive.js'
 // Setup
 
 const schemas = new Map()
-const entrySchema = new Schema({
-  id: 'entry',
-  shape: { id: { $type: 'string' }, title: { $type: 'string' } },
-}, schemas)
+const entrySchema = new Schema(
+  {
+    id: 'entry',
+    shape: { id: { $type: 'string' }, title: { $type: 'string' } },
+  },
+  schemas
+)
 schemas.set('entry', entrySchema)
 
 const createRef = (
@@ -27,6 +30,10 @@ test('should return reference object from value', (t) => {
   t.deepEqual(nonPrimitive('entry', schemas)('ent1', false), createRef('ent1'))
   t.deepEqual(
     nonPrimitive('entry', schemas)({ id: 'ent1' }, false),
+    createRef('ent1')
+  )
+  t.deepEqual(
+    nonPrimitive('entry', schemas)({ id: { $value: 'ent1' } }, false),
     createRef('ent1')
   )
   t.deepEqual(
