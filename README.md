@@ -634,6 +634,7 @@ Integreat currently have the following adapters:
 - [JSON](https://github.com/integreat-io/integreat-adapter-json)
 - [SOAP](https://github.com/integreat-io/integreat-adapter-soap)
 - [Url encoded form data](https://github.com/integreat-io/integreat-adapter-form)
+- [URI templates](https://github.com/integreat-io/integreat-adapter-uri)
 - [XML](https://github.com/integreat-io/integreat-adapter-xml)
 
 You may write your own adapters as well, and documentation on this is coming.
