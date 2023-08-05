@@ -1472,7 +1472,7 @@ test('mutateResponse should use endpoint adapters', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test.only('mutateResponse should use both service and endpoint adapters', async (t) => {
+test('mutateResponse should use both service and endpoint adapters', async (t) => {
   const mockAdapter: Adapter = {
     ...jsonResources.adapters!.json, // Borrow methods from json adapter
     async normalize(action, _options) {
