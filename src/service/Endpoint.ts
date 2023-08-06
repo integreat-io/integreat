@@ -5,7 +5,7 @@ import isMatch from './utils/matchEnpoints.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
 import { ensureArray } from '../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../utils/is.js'
-import { combineResponses } from '../utils/action.js'
+import { combineResponses, setOrigin } from '../utils/action.js'
 import prepareValidator, { ResponsesAndBreak } from '../utils/validation.js'
 import type {
   TransformDefinition,
@@ -113,6 +113,7 @@ export default class Endpoint {
   allowRawRequest?: boolean
   allowRawResponse?: boolean
 
+  #origin: string
   #validator: (action: Action) => Promise<ResponsesAndBreak>
   #mutateAction: DataMapper<InitialState>
   #checkIfMatch: (action: Action, isIncoming?: boolean) => Promise<boolean>
@@ -127,6 +128,9 @@ export default class Endpoint {
     endpointAdapters: Adapter[] = []
   ) {
     this.id = endpointDef.id
+    this.#origin = endpointDef.id
+      ? `service:${serviceId}:endpoint:${endpointDef.id}`
+      : `service:${serviceId}:endpoint`
     this.allowRawRequest = endpointDef.allowRawRequest ?? false
     this.allowRawResponse = endpointDef.allowRawResponse ?? false
     this.match = endpointDef.match
@@ -146,7 +150,8 @@ export default class Endpoint {
 
   async validateAction(action: Action): Promise<Response | null> {
     const [errors] = await this.#validator(action)
-    return combineResponses(errors) || null
+    const response = combineResponses(errors)
+    return response ? setOrigin(response, `validate:${this.#origin}`) : null
   }
 
   async mutate(action: Action, isRev: boolean): Promise<Action> {

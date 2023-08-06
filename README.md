@@ -1303,6 +1303,9 @@ common codes:
 - `handler:<handler id>`: The error occurred with the handler with the given id,
   e.g. `'handler:GET'`. This means the error did happen in the service or the
   mutation pipelines, but in the internal workings of then handler.
+- `validate:service:<service id>:endpoint:<endpoint id>`: Validation of an
+  action against an endpoint failed. Note that not all endpoints has an id, in
+  which case that part of the origin code is left out.
 - `middleware:dispatch`: The error happened within the middleware chain, on the
   `dispatch()` end (not on the service end).
 - `dispatch`: This is the lowest level of origin, as the error happened within

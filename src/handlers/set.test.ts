@@ -298,7 +298,7 @@ test('should return failResponse when validation fails', async (t) => {
     status: 'error',
     error: 'We need data!',
     data: undefined,
-    origin: 'mutate:response',
+    origin: 'validate:service:entries:endpoint',
   }
 
   const ret = await set(action, { ...handlerResources, getService })
