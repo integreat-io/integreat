@@ -225,7 +225,10 @@ authentication. In cases where the service is authenticated by other means, e.g.
 by including username and password in the uri, set the `auth` property to `true`
 to signal that this is an authenticated service. For services accepting incoming
 actions, `auth` should be set to an object with
-`{ outgoing: <auth id | true>, incoming: <auth id | true>}`.
+`{ outgoing: <auth id | true>, incoming: <auth id | true>}`. To accept several
+incoming actions, provide an array of `<auth id | true>`, and they will be run
+from first to last until one of them returns an ident or an error other than
+`noaccess`.
 
 **Note:** When connecting to a service for listening, the `outgoing` auth is
 used. `incoming` is only used for validating the actions being dispatched "back"

@@ -1,6 +1,7 @@
 import Auth from '../Auth.js'
 import identAuth from '../../authenticators/ident.js'
-import { isObject } from '../../utils/is.js'
+import { ensureArray } from '../../utils/array.js'
+import { isNotNullOrUndefined, isObject } from '../../utils/is.js'
 import { setUpAuth } from '../../instance.js'
 import { lookupById } from '../../utils/indexUtils.js'
 import type { Authenticator } from '../../types.js'
@@ -37,7 +38,10 @@ export function resolveIncomingAuth(
   auth?: AuthObject | AuthProp
 ) {
   if (isObject(auth) && auth.incoming) {
-    return resolveAuth(authenticators, auths, auth.incoming)
+    const incomingAuths = ensureArray(auth.incoming)
+    return incomingAuths
+      .map((incoming) => resolveAuth(authenticators, auths, incoming))
+      .filter(isNotNullOrUndefined)
   } else {
     return undefined
   }
