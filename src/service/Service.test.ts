@@ -212,7 +212,10 @@ const testAuth: Authenticator = {
       : { status: 'rejected', error: 'Missing API-TOKEN header' }
   },
   isAuthenticated: (_authentication, _action) => false,
-  validate: async (_authentication, _options, _action) => ({ id: 'anonymous' }),
+  validate: async (_authentication, _options, _action) => ({
+    status: 'ok',
+    access: { ident: { id: 'anonymous' } },
+  }),
   authentication: {
     asObject: (authentication) =>
       isObject(authentication?.ident) ? authentication!.ident : {},
@@ -223,9 +226,9 @@ const validateAuth: Authenticator = {
   ...tokenAuth,
   validate: async (_authentication, options, _action) => {
     if (options?.invalid) {
-      throw new Error('Validated by authenticator')
+      return { status: 'autherror', error: 'Invalidated by authenticator' }
     } else {
-      return { id: 'johnf' }
+      return { status: 'ok', access: { ident: { id: 'johnf' } } }
     }
   },
 }
@@ -2731,8 +2734,8 @@ test('listen should reject authentication when validate() returns an error', asy
     mockResources({}, action, true)
   )
   const expectedResponse = {
-    status: 'noaccess',
-    error: 'Authentication was refused. Validated by authenticator',
+    status: 'autherror',
+    error: 'Authentication was refused. Invalidated by authenticator',
     origin: 'auth:service:entries:invalidating',
   }
 

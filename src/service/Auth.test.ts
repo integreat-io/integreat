@@ -21,10 +21,21 @@ const authenticator: Authenticator = {
     !!authentication && !authentication.expired,
 
   validate: async (authentication, options, _action) => {
-    if (authentication?.token === options?.token) {
-      return { id: 'johnf' }
+    if (!authentication?.token) {
+      return {
+        status: 'noaccess',
+        error: 'No token',
+        reason: 'noauth',
+      }
+    } else if (authentication?.token === options?.token) {
+      return { status: 'ok', access: { ident: { id: 'johnf' } } }
+    } else {
+      return {
+        status: 'autherror',
+        error: 'Wrong token',
+        reason: 'invalidauth',
+      }
     }
-    throw new Error('Wrong token')
   },
 
   authentication: {
@@ -226,13 +237,30 @@ test('should return response with ident when authentication is valid', async (t)
   t.deepEqual(ret, expected)
 })
 
-test('should return noaccess when authentication is invalid', async (t) => {
+test('should return autherror when authentication is invalid', async (t) => {
   const options = { token: 't0k3n' }
   const auth = new Auth(id, authenticator, options)
   const authentication = { status: 'granted', token: 'wr0ng' }
   const expected = {
-    status: 'noaccess',
+    status: 'autherror',
     error: 'Authentication was refused. Wrong token',
+    reason: 'invalidauth',
+    origin: 'auth1',
+  }
+
+  const ret = await auth.validate(authentication, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return noaccess when authentication is missing', async (t) => {
+  const options = { token: 't0k3n' }
+  const auth = new Auth(id, authenticator, options)
+  const authentication = { status: 'granted', token: undefined }
+  const expected = {
+    status: 'noaccess',
+    error: 'Authentication was refused. No token',
+    reason: 'noauth',
     origin: 'auth1',
   }
 

@@ -46,9 +46,9 @@ test('asObject should return empty object', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('validate should return ident with id anonymous', async (t) => {
+test('validate should return response with ident anonymous', async (t) => {
   const authentication = { status: 'granted' } // Doesn't matter what we pass here
-  const expected = { id: 'anonymous' }
+  const expected = { status: 'ok', access: { ident: { id: 'anonymous' } } }
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ret = await authenticator.validate!(authentication, options, action)
@@ -56,10 +56,10 @@ test('validate should return ident with id anonymous', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('validate should return ident with the id set in options', async (t) => {
+test('validate should return response with ident with the id set in options', async (t) => {
   const options = { identId: 'johnf' }
   const authentication = { status: 'granted' } // Doesn't matter what we pass here
-  const expected = { id: 'johnf' }
+  const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ret = await authenticator.validate!(authentication, options, action)
