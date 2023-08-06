@@ -63,7 +63,10 @@ async function runAsIndividualActions(
   }
   const validateResponse = await endpoint.validateAction(action)
   if (validateResponse) {
-    return validateResponse
+    return service.mutateResponse(
+      setResponseOnAction(action, validateResponse),
+      endpoint
+    )
   }
   return combineResponses(
     action,

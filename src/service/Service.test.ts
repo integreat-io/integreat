@@ -212,7 +212,10 @@ const testAuth: Authenticator = {
       : { status: 'rejected', error: 'Missing API-TOKEN header' }
   },
   isAuthenticated: (_authentication, _action) => false,
-  validate: async (_authentication, _options, _action) => ({ id: 'anonymous' }),
+  validate: async (_authentication, _options, _action) => ({
+    status: 'ok',
+    access: { ident: { id: 'anonymous' } },
+  }),
   authentication: {
     asObject: (authentication) =>
       isObject(authentication?.ident) ? authentication!.ident : {},
@@ -222,10 +225,12 @@ const testAuth: Authenticator = {
 const validateAuth: Authenticator = {
   ...tokenAuth,
   validate: async (_authentication, options, _action) => {
-    if (options?.invalid) {
-      throw new Error('Validated by authenticator')
+    if (options?.refuse) {
+      return { status: 'noaccess', error: 'Refused by authenticator' }
+    } else if (options?.invalid) {
+      return { status: 'autherror', error: 'Invalidated by authenticator' }
     } else {
-      return { id: 'johnf' }
+      return { status: 'ok', access: { ident: { id: 'johnf' } } }
     }
   },
 }
@@ -2714,6 +2719,68 @@ test('listen should authenticate action when called back from service', async (t
   t.is(dispatchedAction.meta?.ident?.id, 'johnf')
 })
 
+test('listen should authenticate action with second auth', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: ['refusing', 'validating'] },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action, true)
+  )
+  const expectedResponse = {
+    status: 'ok',
+    access: { ident: { id: 'johnf' } },
+  }
+  const expectedPayload = { ...action.payload, sourceService: 'entries' }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 1)
+  const dispatchedAction = dispatchStub.args[0][0]
+  t.deepEqual(dispatchedAction.payload, expectedPayload)
+  t.is(dispatchedAction.meta?.ident?.id, 'johnf')
+})
+
+test('listen should fall back to ident authenticator on true', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: ['refusing', true] },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action, true)
+  )
+  const expectedResponse = {
+    status: 'ok',
+    access: { ident: { id: 'anonymous' } },
+  }
+  const expectedPayload = { ...action.payload, sourceService: 'entries' }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 1)
+  const dispatchedAction = dispatchStub.args[0][0]
+  t.deepEqual(dispatchedAction.payload, expectedPayload)
+  t.is(dispatchedAction.meta?.ident?.id, 'anonymous')
+})
+
 test('listen should reject authentication when validate() returns an error', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
@@ -2731,8 +2798,36 @@ test('listen should reject authentication when validate() returns an error', asy
     mockResources({}, action, true)
   )
   const expectedResponse = {
-    status: 'noaccess',
-    error: 'Authentication was refused. Validated by authenticator',
+    status: 'autherror',
+    error: 'Authentication was refused. Invalidated by authenticator',
+    origin: 'auth:service:entries:invalidating',
+  }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 0)
+})
+
+test('listen should reject authentication when second validate() returns an error', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: ['rejecting', 'invalidating'] },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action, true)
+  )
+  const expectedResponse = {
+    status: 'autherror',
+    error: 'Authentication was refused. Invalidated by authenticator',
     origin: 'auth:service:entries:invalidating',
   }
 

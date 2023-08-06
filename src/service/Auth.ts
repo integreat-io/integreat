@@ -78,24 +78,23 @@ export default class Auth {
       )
     }
 
-    try {
-      // Validate authentication
-      const ident = await this.#authenticator.validate(
-        authentication,
-        this.#options,
-        action
-      )
+    // Validate authentication
+    const response = await this.#authenticator.validate(
+      authentication,
+      this.#options,
+      action
+    )
 
+    if (response.status === 'ok' && response.access?.ident) {
       // We got an ident back, so authentication was successful
-      return { status: 'ok', access: { ident } }
-    } catch (err) {
+      return response
+    } else {
       // Validation failed, so return error
       return createErrorResponse(
-        `Authentication was refused. ${
-          err instanceof Error ? err.message : String(err)
-        }`,
+        `Authentication was refused. ${response.error}`,
         this.id,
-        'noaccess'
+        response.status || 'autherror',
+        response.reason
       )
     }
   }

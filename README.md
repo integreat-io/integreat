@@ -225,7 +225,10 @@ authentication. In cases where the service is authenticated by other means, e.g.
 by including username and password in the uri, set the `auth` property to `true`
 to signal that this is an authenticated service. For services accepting incoming
 actions, `auth` should be set to an object with
-`{ outgoing: <auth id | true>, incoming: <auth id | true>}`.
+`{ outgoing: <auth id | true>, incoming: <auth id | true>}`. To accept several
+incoming actions, provide an array of `<auth id | true>`, and they will be run
+from first to last until one of them returns an ident or an error other than
+`noaccess`.
 
 **Note:** When connecting to a service for listening, the `outgoing` auth is
 used. `incoming` is only used for validating the actions being dispatched "back"
@@ -1300,6 +1303,9 @@ common codes:
 - `handler:<handler id>`: The error occurred with the handler with the given id,
   e.g. `'handler:GET'`. This means the error did happen in the service or the
   mutation pipelines, but in the internal workings of then handler.
+- `validate:service:<service id>:endpoint:<endpoint id>`: Validation of an
+  action against an endpoint failed. Note that not all endpoints has an id, in
+  which case that part of the origin code is left out.
 - `middleware:dispatch`: The error happened within the middleware chain, on the
   `dispatch()` end (not on the service end).
 - `dispatch`: This is the lowest level of origin, as the error happened within

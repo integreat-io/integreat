@@ -13,31 +13,40 @@ import get from './get.js'
 // Setup
 
 const schemas = new Map()
-schemas.set('entry', new Schema({
-  id: 'entry',
-  shape: {
-    title: 'string',
-    byline: { $type: 'string', default: 'Somebody' },
-    source: 'source',
-    createdAt: 'date',
-    updatedAt: 'date',
-  },
-  access: 'auth',
-}))
-schemas.set('account', new Schema({
-  id: 'account',
-  shape: {
-    name: 'string',
-  },
-  access: { identFromField: 'id' },
-}))
-schemas.set('source', new Schema({
-  id: 'source',
-  shape: {
-    name: 'string',
-  },
-  access: 'auth',
-}))
+schemas.set(
+  'entry',
+  new Schema({
+    id: 'entry',
+    shape: {
+      title: 'string',
+      byline: { $type: 'string', default: 'Somebody' },
+      source: 'source',
+      createdAt: 'date',
+      updatedAt: 'date',
+    },
+    access: 'auth',
+  })
+)
+schemas.set(
+  'account',
+  new Schema({
+    id: 'account',
+    shape: {
+      name: 'string',
+    },
+    access: { identFromField: 'id' },
+  })
+)
+schemas.set(
+  'source',
+  new Schema({
+    id: 'source',
+    shape: {
+      name: 'string',
+    },
+    access: 'auth',
+  })
+)
 
 const pipelines = {
   entry: [
@@ -507,7 +516,7 @@ test('should return failResponse when validation fails', async (t) => {
     status: 'badrequest',
     error: 'We need a source!',
     data: undefined,
-    origin: 'mutate:response',
+    origin: 'validate:service:entries:endpoint',
   }
 
   const ret = await get(action, { ...handlerResources, getService })
@@ -543,7 +552,7 @@ test('should return failResponse when validation fails for member_s_ endpoint', 
     status: 'badrequest',
     error: 'We need a source!',
     data: undefined,
-    origin: 'mutate:response',
+    origin: 'validate:service:entries:endpoint',
   }
 
   const ret = await get(action, { ...handlerResources, getService })
@@ -578,6 +587,8 @@ test('should return failResponse when validation fails for individual member end
   const expected = {
     status: 'badrequest',
     error: 'We need a source!',
+    data: undefined, // This is a vague indication that we ran the response mutation too
+    origin: 'validate:service:entries:endpoint',
   }
 
   const ret = await get(action, { ...handlerResources, getService })

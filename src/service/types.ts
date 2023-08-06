@@ -39,7 +39,7 @@ export interface AuthDef {
 export type AuthProp = AuthDef | string | boolean | null
 
 export interface AuthObject {
-  incoming?: AuthProp
+  incoming?: AuthProp | AuthProp[]
   outgoing?: AuthProp
 }
 

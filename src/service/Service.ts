@@ -57,7 +57,7 @@ export default class Service {
   #transporter: Transporter
 
   #auth?: Auth
-  #incomingAuth?: Auth
+  #incomingAuth?: Auth[]
   #connection: Connection | null
 
   #authorizeDataFromService

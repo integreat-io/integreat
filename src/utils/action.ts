@@ -49,7 +49,8 @@ export function setOptionsOnAction(action: Action, endpoint: Endpoint): Action {
 export function createErrorResponse(
   error: unknown,
   origin: string,
-  status = 'error'
+  status = 'error',
+  reason?: string
 ): Response {
   return {
     status,
@@ -59,6 +60,7 @@ export function createErrorResponse(
         : typeof error === 'string'
         ? error
         : 'Unknown error',
+    ...(reason ? { reason } : {}),
     ...(origin ? { origin } : {}),
   }
 }

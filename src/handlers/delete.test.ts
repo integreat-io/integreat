@@ -12,20 +12,26 @@ import deleteFn from './delete.js'
 // Setup
 
 const schemas = new Map()
-schemas.set('entry', new Schema({
-  id: 'entry',
-  shape: {
-    title: { $type: 'string', default: 'A title' },
-  },
-  access: 'auth',
-}))
-schemas.set('account', new Schema({
-  id: 'account',
-  shape: {
-    name: 'string',
-  },
-  access: { identFromField: 'id' },
-}))
+schemas.set(
+  'entry',
+  new Schema({
+    id: 'entry',
+    shape: {
+      title: { $type: 'string', default: 'A title' },
+    },
+    access: 'auth',
+  })
+)
+schemas.set(
+  'account',
+  new Schema({
+    id: 'account',
+    shape: {
+      name: 'string',
+    },
+    access: { identFromField: 'id' },
+  })
+)
 
 const pipelines = {
   entry: [{ $iterate: true, id: 'id', title: 'header' }, { $cast: 'entry' }],
@@ -411,7 +417,7 @@ test('should return failResponse when validation fails', async (t) => {
     status: 'badrequest',
     error: 'We need a source!',
     data: undefined,
-    origin: 'mutate:response',
+    origin: 'validate:service:entries:endpoint',
   }
 
   const ret = await deleteFn(action, { ...handlerResources, getService })

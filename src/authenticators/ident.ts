@@ -32,7 +32,7 @@ const identAuth: Authenticator = {
   async validate(_authentication, options) {
     const { identId } = options || {}
     const id = typeof identId === 'string' ? identId : 'anonymous'
-    return { id }
+    return { status: 'ok', access: { ident: { id } } }
   },
 
   authentication: {

@@ -89,27 +89,44 @@ const dispatchWithProgress = (
     return setOrigin(await p, `service:${serviceId}`)
   }
 
+async function runAuths(
+  auths: Auth[],
+  authentication: Authentication,
+  action: Action | null
+) {
+  let response: Response | undefined = undefined
+  for (const auth of auths) {
+    response = await auth.validate(authentication, action)
+    if (response.status !== 'noaccess' && response.access?.ident) {
+      return response
+    }
+  }
+  return response || { status: 'noaccess', error: 'No authentication was run' }
+}
+
 // Passed to the transporter.listen() method. Transporters will call this to
 // get the ident to used when dispatching incoming actions.
 export const authenticateCallback = (
-  authorization: Auth | undefined,
+  auths: Auth[] | undefined,
   serviceId: string
 ) =>
   async function authenticateFromListen(
     authentication: Authentication,
     action?: Action | null
   ) {
-    if (authorization === undefined) {
+    if (auths === undefined) {
       return createErrorResponse(
         `Could not authenticate. Service '${serviceId}' has no incoming authenticator`,
         `auth:service:${serviceId}`,
         'noaction'
       )
     } else {
-      const response = markIdentAsKnown(
-        await authorization.validate(authentication, action || null)
+      const response = await runAuths(auths, authentication, action || null)
+      return setOrigin(
+        markIdentAsKnown(response),
+        `auth:service:${serviceId}`,
+        true
       )
-      return setOrigin(response, `auth:service:${serviceId}`, true)
     }
   }
 

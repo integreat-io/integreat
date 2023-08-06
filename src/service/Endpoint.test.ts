@@ -364,6 +364,7 @@ test('should return badrequest response when validation fails', async (t) => {
   const expectedResponse = {
     status: 'badrequest',
     error: 'Did not satisfy condition',
+    origin: 'validate:service:accountStore:endpoint',
   }
 
   const ret = await endpoint.validateAction(action)
@@ -387,6 +388,7 @@ test('should return badrequest response when one of several conditions fails', a
   const expectedResponse = {
     status: 'badrequest',
     error: 'Did not satisfy condition',
+    origin: 'validate:service:accountStore:endpoint',
   }
 
   const ret = await endpoint.validateAction(action)
@@ -412,7 +414,11 @@ test('should return failResponse when provided', async (t) => {
     },
   }
   const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
-  const expectedResponse = { status: 'error', error: 'This is no good' }
+  const expectedResponse = {
+    status: 'error',
+    error: 'This is no good',
+    origin: 'validate:service:accountStore:endpoint',
+  }
 
   const ret = await endpoint.validateAction(action)
 
@@ -444,6 +450,7 @@ test('should return response from several failed failResponse', async (t) => {
   const expectedResponse = {
     status: 'error',
     error: '[error] This is no good | [notfound] Something is gone',
+    origin: 'validate:service:accountStore:endpoint',
   }
 
   const ret = await endpoint.validateAction(action)
@@ -469,7 +476,11 @@ test('should treat failResponse as error message when provided as a string', asy
     },
   }
   const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
-  const expectedResponse = { status: 'badrequest', error: 'This is no good' }
+  const expectedResponse = {
+    status: 'badrequest',
+    error: 'This is no good',
+    origin: 'validate:service:accountStore:endpoint',
+  }
 
   const ret = await endpoint.validateAction(action)
 

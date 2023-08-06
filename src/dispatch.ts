@@ -121,14 +121,18 @@ async function mutateIncomingAction(action: Action, getService: GetService) {
       ),
     }
   }
-  return {
-    action: await service.mutateIncomingRequest(
+
+  let responseAction
+  const validateResponse = await endpoint.validateAction(action)
+  if (validateResponse) {
+    responseAction = setResponseOnAction(action, validateResponse)
+  } else {
+    responseAction = await service.mutateIncomingRequest(
       setOptionsOnAction(action, endpoint),
       endpoint
-    ),
-    service,
-    endpoint,
+    )
   }
+  return { action: responseAction, service, endpoint }
 }
 
 async function mutateIncomingResponse(
