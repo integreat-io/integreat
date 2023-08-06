@@ -1,8 +1,10 @@
 import mapAny from 'map-any'
 import { isObject } from './is.js'
 
-export default mapAny(function unwrapValue(value: unknown) {
+function unwrapValue(value: unknown): unknown {
   return isObject(value) && value.hasOwnProperty('$value')
     ? value.$value
     : value
-})
+}
+
+export default (value: unknown) => mapAny(unwrapValue, value)
