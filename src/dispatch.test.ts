@@ -46,7 +46,22 @@ const services = {
       },
       endpoints: [
         {
+          id: 'incomingEntry',
           match: { type: 'entry', incoming: true },
+          validate: [
+            {
+              condition: {
+                $transform: 'compare',
+                path: 'payload.id',
+                not: true,
+                match: 'ent99',
+              },
+              failResponse: {
+                status: 'noaccess',
+                error: '99 is off limits!',
+              },
+            },
+          ],
           mutation: [
             {
               $direction: 'from',
@@ -576,6 +591,37 @@ test('should mutate incoming from source service', async (t) => {
   const calledAction = getHandler.args[0][0] as Action
   t.deepEqual(calledAction.meta?.options, expectedActionOptions)
   t.deepEqual(calledAction.payload, expectedActionPayload)
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('should validate incoming action with source service endpoint', async (t) => {
+  const getHandler = sinon.stub().resolves({
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry', title: 'Entry 1' }],
+  })
+  const handlers = { GET: getHandler }
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent99', // The validation accepts any id but `'ent99'`
+      type: 'entry',
+      sourceService: 'api',
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedResponse = {
+    status: 'noaccess',
+    error: '99 is off limits!',
+    data: undefined,
+    origin: 'validate:service:api:endpoint:incomingEntry',
+    access: { ident: { id: 'johnf' } },
+    params: { flag: true },
+  }
+
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+
+  t.is(getHandler.callCount, 0) // Return right away
   t.deepEqual(ret, expectedResponse)
 })
 
