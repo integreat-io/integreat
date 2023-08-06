@@ -587,6 +587,7 @@ test('should return failResponse when validation fails for individual member end
   const expected = {
     status: 'badrequest',
     error: 'We need a source!',
+    data: undefined, // This is a vague indication that we ran the response mutation too
     origin: 'validate:service:entries:endpoint',
   }
 
