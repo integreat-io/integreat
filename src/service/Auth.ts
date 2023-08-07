@@ -131,10 +131,12 @@ export default class Auth {
     }
 
     const authenticator = this.#authenticator
+    const authAsMethod =
+      transporter.defaultAuthAsMethod || transporter.authentication
     const authObjectFn =
       isObject(authenticator?.authentication) &&
-      typeof transporter.authentication === 'string' &&
-      authenticator.authentication[transporter.authentication]
+      typeof authAsMethod === 'string' &&
+      authenticator.authentication[authAsMethod] // eslint-disable-line security/detect-object-injection
     return typeof authObjectFn === 'function' ? authObjectFn(auth) : null
   }
 

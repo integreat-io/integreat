@@ -45,7 +45,7 @@ const authenticator: Authenticator = {
 }
 
 const transporter = {
-  authentication: 'asHttpHeaders',
+  defaultAuthAsMethod: 'asHttpHeaders',
 } as unknown as Transporter
 
 const action = {
@@ -313,6 +313,19 @@ test('should return auth object when granted', async (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should return auth object when granted - with depricated auth as method prop', async (t) => {
+  const oldTransporter = {
+    authentication: 'asHttpHeaders',
+  } as unknown as Transporter
+  const auth = new Auth(id, authenticator, options)
+  const expected = { Authorization: 't0k3n' }
+
+  await auth.authenticate(action)
+  const ret = auth.getAuthObject(oldTransporter, null)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should return auth object from authenticator supporting auth keys', async (t) => {
   const keyAuthenticator: Authenticator = {
     ...authenticator,
@@ -334,7 +347,7 @@ test('should return auth object from authenticator supporting auth keys', async 
 })
 
 test('should return null for unkown auth method', async (t) => {
-  const strangeAdapter = { ...transporter, authentication: 'asUnknown' }
+  const strangeAdapter = { ...transporter, defaultAuthAsMethod: 'asUnknown' }
   const auth = new Auth(id, authenticator, options)
   const expected = null
 
@@ -473,7 +486,7 @@ test('should set auth object to action for authenticator supporting keys', async
 })
 
 test('should set auth object to null for unkown auth method', async (t) => {
-  const strangeAdapter = { ...transporter, authentication: 'asUnknown' }
+  const strangeAdapter = { ...transporter, defaultAuthAsMethod: 'asUnknown' }
   const auth = new Auth(id, authenticator, options)
   const expected = {
     ...action,
