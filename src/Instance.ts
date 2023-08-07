@@ -34,7 +34,12 @@ export const setUpAuth = (authenticators?: Record<string, Authenticator>) =>
       )
     }
 
-    return new Auth(def.id, authenticator, def.options)
+    return new Auth(
+      def.id,
+      authenticator,
+      def.options,
+      def.overrideAuthAsMethod
+    )
   }
 
 const setAdapterIds = (adapters?: Record<string, Adapter>) =>

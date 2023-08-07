@@ -58,3 +58,47 @@ test('should get entries from service requiring authentication', async (t) => {
   t.is(ret.status, 'ok', ret.error)
   t.is((ret.data as TypedData[]).length, 3)
 })
+
+test('should get override the transporter default auth as method', async (t) => {
+  nock('http://some.api', {
+    reqheaders: {
+      // These is not a valid auth headers, but it verifies that the override works
+      type: 'Bearer',
+      token: 't0k3n',
+    },
+  })
+    .get('/entries')
+    .reply(200, { data: entriesData })
+  const resourcesWithAuth = {
+    ...resources,
+    authenticators: { token: tokenAuth },
+  }
+  const defsWithAuth = {
+    ...defs,
+    services: [
+      {
+        ...entriesService,
+        auth: 'entriesToken',
+      } as ServiceDef,
+    ],
+    auths: [
+      {
+        id: 'entriesToken',
+        authenticator: 'token',
+        options: { token: 't0k3n', type: 'Bearer' },
+        overrideAuthAsMethod: 'asObject',
+      },
+    ],
+  }
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const great = Integreat.create(defsWithAuth, resourcesWithAuth)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData[]).length, 3)
+})

@@ -23,12 +23,19 @@ export default class Auth {
   readonly id: string
   #authenticator: Authenticator
   #options: AuthOptions
+  #overrideAuthAsMethod?: string
   #authentications = new Map<string, Authentication>()
 
-  constructor(id: string, authenticator: Authenticator, options?: AuthOptions) {
+  constructor(
+    id: string,
+    authenticator: Authenticator,
+    options?: AuthOptions,
+    overrideAuthAsMethod?: string
+  ) {
     this.id = id
     this.#authenticator = authenticator
     this.#options = options || {}
+    this.#overrideAuthAsMethod = overrideAuthAsMethod
   }
 
   async authenticate(action: Action | null): Promise<boolean> {
@@ -101,10 +108,10 @@ export default class Auth {
 
   async authenticateAndGetAuthObject(
     action: Action | null,
-    method: string
+    authAsMethod: string
   ): Promise<Record<string, unknown> | null> {
     // eslint-disable-next-line security/detect-object-injection
-    const fn = this.#authenticator.authentication[method]
+    const fn = this.#authenticator.authentication[authAsMethod]
 
     if (typeof fn === 'function') {
       const auth = await this.#authenticator.authenticate(this.#options, action)
@@ -132,7 +139,9 @@ export default class Auth {
 
     const authenticator = this.#authenticator
     const authAsMethod =
-      transporter.defaultAuthAsMethod || transporter.authentication
+      this.#overrideAuthAsMethod ||
+      transporter.defaultAuthAsMethod ||
+      transporter.authentication
     const authObjectFn =
       isObject(authenticator?.authentication) &&
       typeof authAsMethod === 'string' &&

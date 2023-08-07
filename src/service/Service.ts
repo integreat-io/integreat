@@ -13,12 +13,12 @@ import {
 } from '../utils/action.js'
 import { prepareOptions, mergeOptions } from './utils/options.js'
 import Connection from './Connection.js'
-import Auth from './Auth.js'
 import { lookupById, lookupByIds } from '../utils/indexUtils.js'
 import * as authorizeData from './utils/authData.js'
 import authorizeAction, { isAuthorizedAction } from './utils/authAction.js'
 import { compose } from '../dispatch.js'
 import type Schema from '../schema/Schema.js'
+import type Auth from './Auth.js'
 import type {
   Action,
   Response,

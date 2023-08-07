@@ -313,7 +313,7 @@ test('should return auth object when granted', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should return auth object when granted - with depricated auth as method prop', async (t) => {
+test('should return auth object with depricated auth as method prop', async (t) => {
   const oldTransporter = {
     authentication: 'asHttpHeaders',
   } as unknown as Transporter
@@ -322,6 +322,17 @@ test('should return auth object when granted - with depricated auth as method pr
 
   await auth.authenticate(action)
   const ret = auth.getAuthObject(oldTransporter, null)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return auth object with overriden method from auth definition', async (t) => {
+  const overrideAuthAsMethod = 'asObject'
+  const auth = new Auth(id, authenticator, options, overrideAuthAsMethod)
+  const expected = { token: 't0k3n' } // This is the format expected from `asObject()`
+
+  await auth.authenticate(action)
+  const ret = auth.getAuthObject(transporter, null)
 
   t.deepEqual(ret, expected)
 })
