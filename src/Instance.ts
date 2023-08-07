@@ -40,11 +40,11 @@ export const setUpAuth = (authenticators?: Record<string, Authenticator>) =>
 const setAdapterIds = (adapters?: Record<string, Adapter>) =>
   adapters
     ? Object.fromEntries(
-      Object.entries(adapters).map(([id, adapter]) => [
-        id,
-        { ...adapter, id },
-      ])
-    )
+        Object.entries(adapters).map(([id, adapter]) => [
+          id,
+          { ...adapter, id },
+        ])
+      )
     : {}
 
 const isJobWithSchedule = (job: Job) => !!job.schedule
@@ -98,8 +98,8 @@ export default class Instance extends EventEmitter {
     // Setup auths object from auth defs
     const auths = Array.isArray(defs.auths)
       ? defs.auths
-        .map(setUpAuth(authenticatorsWithId))
-        .reduce(indexById, {} as Record<string, Auth>)
+          .map(setUpAuth(authenticatorsWithId))
+          .reduce(indexById, {} as Record<string, Auth>)
       : undefined
 
     // Prepare services

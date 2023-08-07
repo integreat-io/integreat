@@ -14,7 +14,7 @@ import type {
   TypedData,
 } from './types.js'
 
-import Instance from './instance.js'
+import Instance from './Instance.js'
 
 // Setup
 
