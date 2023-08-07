@@ -377,7 +377,7 @@ export default class Service {
 
     if (
       !(await this.#connection.connect(
-        this.#auth?.getAuthObject(this.#transporter)
+        this.#auth?.getAuthObject(this.#transporter, null)
       ))
     ) {
       debug(`Could not listen to '${this.id}' service. Failed to connect`)
