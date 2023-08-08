@@ -118,8 +118,11 @@ export default class Auth {
     return null
   }
 
-  getAuthObject(transporter: Transporter): Record<string, unknown> | null {
-    const auth = this.#authentications.get('') // Only applies to `listen()` which doesn't support multi-user auth for now
+  getAuthObject(
+    transporter: Transporter,
+    key = ''
+  ): Record<string, unknown> | null {
+    const auth = this.#authentications.get(key)
     if (!auth || auth.status !== 'granted') {
       return null
     }
@@ -132,8 +135,8 @@ export default class Auth {
     return typeof fn === 'function' ? fn(auth) : null
   }
 
-  getResponseFromAuth(): Response {
-    const auth = this.#authentications.get('') // Only applies to `listen()` which doesn't support multi-user auth for now
+  getResponseFromAuth(key = ''): Response {
+    const auth = this.#authentications.get(key)
     if (!auth) {
       return {
         status: 'noaccess',
@@ -159,7 +162,7 @@ export default class Auth {
         ...action,
         meta: {
           ...action.meta,
-          auth: this.getAuthObject(transporter),
+          auth: this.getAuthObject(transporter, key),
         },
       }
     }
@@ -168,7 +171,7 @@ export default class Auth {
       ...action,
       response: {
         ...action.response,
-        ...this.getResponseFromAuth(),
+        ...this.getResponseFromAuth(key),
       },
       meta: { ...action.meta, auth: null },
     }
