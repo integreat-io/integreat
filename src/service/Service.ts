@@ -10,6 +10,7 @@ import {
   setOrigin,
   setOriginOnAction,
   setOptionsOnAction,
+  setResponseOnAction,
 } from '../utils/action.js'
 import { prepareOptions, mergeOptions } from './utils/options.js'
 import Connection from './Connection.js'
@@ -153,11 +154,26 @@ export default class Service {
   }
 
   /**
-   * Authorize the action. Sets the authorized flag if okay, otherwise sets
-   * an appropriate status and error.
+   * Authorize and validate the action. This is required before sending it to
+   * the service, and should be done before mutation. The `auth` object will be
+   * set on the action here, for services that are configured to include make
+   * auth available to mutations.
+   *
+   * Note that the returned action may include a response, which should be
+   * returned instead of the action being sent to the service. The response
+   * should be run through the response mutation, though.
    */
-  authorizeAction(action: Action): Action {
-    return authorizeAction(this.#schemas, !!this.#auth)(action)
+  async preflightAction(action: Action, endpoint: Endpoint): Promise<Action> {
+    const authorized = authorizeAction(this.#schemas, !!this.#auth)(action)
+    if (authorized.response?.status) {
+      return authorized
+    }
+
+    const validateResponse = await endpoint.validateAction(authorized)
+    if (validateResponse) {
+      return setResponseOnAction(authorized, validateResponse)
+    }
+    return authorized
   }
 
   /**
@@ -312,7 +328,7 @@ export default class Service {
       )
     }
 
-    // When an authenticator is set: Authenticate and apply result to action
+    // When an authentication is defined: Authenticate and apply result to action
     if (this.#auth) {
       await this.#auth.authenticate(action)
       action = this.#auth.applyToAction(action, this.#transporter)

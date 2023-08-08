@@ -442,9 +442,9 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
   t.is(ret?.id, 'endpoint2')
 })
 
-// Tests -- authorizeAction
+// Tests -- preflightAction
 
-test('authorizeAction should set authorizedByIntegreat (symbol) flag', (t) => {
+test('preflightAction should set authorizedByIntegreat (symbol) flag', async (t) => {
   const service = new Service(
     {
       id: 'accounts',
@@ -464,12 +464,13 @@ test('authorizeAction should set authorizedByIntegreat (symbol) flag', (t) => {
     meta: { ident: { root: true, id: 'root' } },
   }
 
-  const ret = service.authorizeAction(action)
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.preflightAction(action, endpoint!)
 
   t.true(isAuthorizedAction(ret))
 })
 
-test('authorizeAction should authorize action without type', (t) => {
+test('preflightAction should authorize action without type', async (t) => {
   const service = new Service(
     {
       id: 'accounts',
@@ -489,12 +490,13 @@ test('authorizeAction should authorize action without type', (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = service.authorizeAction(action)
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.preflightAction(action, endpoint!)
 
   t.true(isAuthorizedAction(ret))
 })
 
-test('authorizeAction should refuse based on schema', (t) => {
+test('preflightAction should refuse based on schema', async (t) => {
   const service = new Service(
     {
       id: 'accounts',
@@ -523,13 +525,14 @@ test('authorizeAction should refuse based on schema', (t) => {
     origin: 'auth:action',
   }
 
-  const ret = service.authorizeAction(action)
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.preflightAction(action, endpoint!)
 
   t.false(isAuthorizedAction(ret))
   t.deepEqual(ret.response, expectedResponse)
 })
 
-test('authorizeAction should authorize when no auth is specified', (t) => {
+test('preflightAction should authorize when no auth is specified', async (t) => {
   const service = new Service(
     {
       id: 'accounts',
@@ -549,9 +552,108 @@ test('authorizeAction should authorize when no auth is specified', (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = service.authorizeAction(action)
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.preflightAction(action, endpoint!)
 
   t.true(isAuthorizedAction(ret))
+})
+
+test('preflightAction should not touch action when endpoint validation succeeds', async (t) => {
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints: [{ ...endpoints[3], validate: [{ condition: 'payload.id' }] }],
+    },
+    {
+      mapOptions,
+      schemas,
+      ...jsonResources,
+    }
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'account', id: 'acc1' },
+    meta: { ident: { root: true, id: 'root' } },
+  }
+
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.preflightAction(action, endpoint!)
+
+  t.is(ret.response, undefined)
+  t.is(ret.type, 'GET')
+  t.deepEqual(ret.payload, action.payload)
+})
+
+test('preflightAction should set error response when validate fails', async (t) => {
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints: [{ ...endpoints[3], validate: [{ condition: 'payload.id' }] }],
+    },
+    {
+      mapOptions,
+      schemas,
+      ...jsonResources,
+    }
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'account' }, // No id
+    meta: { ident: { root: true, id: 'root' } },
+  }
+  const expectedResponse = {
+    status: 'badrequest',
+    error: 'Did not satisfy condition',
+    origin: 'validate:service:accounts:endpoint',
+  }
+
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.preflightAction(action, endpoint!)
+
+  t.deepEqual(ret.response, expectedResponse)
+  t.is(ret.type, 'GET')
+  t.deepEqual(ret.payload, action.payload)
+})
+
+test('preflightAction should authorize before validation', async (t) => {
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints: [{ ...endpoints[3], validate: [{ condition: 'payload.id' }] }],
+    },
+    {
+      mapOptions,
+      schemas,
+      ...jsonResources,
+    }
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'account' },
+    meta: {
+      ident: { id: 'johnf', roles: ['user'] },
+      auth: { status: 'granted' },
+    },
+  }
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Authentication was refused, role required: 'admin'",
+    reason: 'MISSING_ROLE',
+    origin: 'auth:action',
+  }
+
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.preflightAction(action, endpoint!)
+
+  t.deepEqual(ret.response, expectedResponse)
+  t.is(ret.type, 'GET')
+  t.deepEqual(ret.payload, action.payload)
 })
 
 // Tests -- send
