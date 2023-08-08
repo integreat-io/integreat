@@ -429,6 +429,30 @@ test('should set auth object to action', async (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should set auth object to action with auth key', async (t) => {
+  const keyedAuthenticator: Authenticator = {
+    ...authenticator,
+    authenticate: async (_options, action) => ({
+      status: 'granted',
+      token: `t0k3n_${action?.meta?.id}`,
+    }),
+    extractAuthKey: (_options, action) => `key_${action?.meta?.id}`, // To get a new key for every call
+  }
+  const auth = new Auth(id, keyedAuthenticator, options)
+  const action1 = { ...action, meta: { ...action.meta, id: 'action1' } }
+  const action2 = { ...action, meta: { ...action.meta, id: 'action2' } }
+  const expected = {
+    ...action2,
+    meta: { ...action2.meta, auth: { Authorization: 't0k3n_action2' } },
+  }
+
+  await auth.authenticate(action1)
+  await auth.authenticate(action2)
+  const ret = auth.applyToAction(action2, transporter)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should set auth object to null for unkown auth method', async (t) => {
   const strangeAdapter = { ...transporter, authentication: 'asUnknown' }
   const auth = new Auth(id, authenticator, options)
