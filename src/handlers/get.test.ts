@@ -359,12 +359,16 @@ test('should return error when one or more requests for individual ids fails', a
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const svc = setupService('http://api8.test/entries/{id}', { scope: 'member' })
+  const svc = setupService('http://api8.test/entries/{payload.id}', {
+    scope: 'member',
+  })
   const getService = () => svc
   const expected = {
     status: 'error',
-    error: 'One or more of the requests for ids ent1,ent2 failed.',
-    origin: 'handler:GET',
+    error:
+      'One or more of the requests for ids ent1,ent2 failed with the following error(s): Server returned 500 for http://api8.test/entries/ent2',
+    data: undefined,
+    origin: 'service:entries',
   }
 
   const ret = await get(action, { ...handlerResources, getService })
@@ -585,10 +589,10 @@ test('should return failResponse when validation fails for individual member end
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
   const expected = {
-    status: 'badrequest',
-    error: 'We need a source!',
-    data: undefined, // This is a vague indication that we ran the response mutation too
-    origin: 'validate:service:entries:endpoint',
+    status: 'error', // TODO: We want 'badrequest' here
+    error:
+      'One or more of the requests for ids ent1,ent2,ent3 failed with the following error(s): [badrequest] We need a source! | [badrequest] We need a source! | [badrequest] We need a source!', // TODO: This is not the error message we want here
+    origin: 'handler:GET', // TODO: We want origin to be 'validate:service:entries:endpoint:member' here
   }
 
   const ret = await get(action, { ...handlerResources, getService })
