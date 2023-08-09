@@ -6,13 +6,18 @@ import authenticator from './options.js'
 
 const action = {
   type: 'GET',
-  payload: { type: 'entry' },
+  payload: {
+    type: 'entry',
+    headers: { ['X-API-Key']: 't0k3n' },
+    role: 'admin',
+  },
   meta: { ident: { id: 'johnf' } },
 }
 
 const options = { username: 'bill', password: 'secret' }
+const authentication = { status: 'granted' }
 
-// Tests
+// Tests - authenticate
 
 test('authenticate should always grant and return options', async (t) => {
   const expected = { status: 'granted', username: 'bill', password: 'secret' }
@@ -21,6 +26,8 @@ test('authenticate should always grant and return options', async (t) => {
 
   t.deepEqual(ret, expected)
 })
+
+// Tests - isAuthenticated
 
 test('isAuthenticated should return true when granted', (t) => {
   const authentication = {
@@ -54,6 +61,113 @@ test('isAuthenticated should return false when no authentication', (t) => {
   t.false(ret)
 })
 
+// Test - validate
+
+test('validate should return response with the ident given by identId when all options are found in the provided action', async (t) => {
+  const options = {
+    identId: 'johnf',
+    'payload.headers.X-API-Key': 't0k3n',
+    'payload.role': 'admin',
+  }
+  const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const ret = await authenticator.validate!(authentication, options, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('validate should return response with the ident when one value in an array in options match', async (t) => {
+  const options = {
+    identId: 'johnf',
+    'payload.headers.X-API-Key': 't0k3n',
+    'payload.role': ['editor', 'admin'],
+  }
+  const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const ret = await authenticator.validate!(authentication, options, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('validate should return response with the ident when options has no props to match', async (t) => {
+  const options = { identId: 'johnf' }
+  const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const ret = await authenticator.validate!(authentication, options, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('validate should return autherror error when some options are found, but their values does not match', async (t) => {
+  const options = {
+    identId: 'johnf',
+    'payload.headers.X-API-Key': '0th3r',
+    'payload.role': 'admin',
+  }
+  const expected = {
+    status: 'autherror',
+    error: 'Invalid credentials',
+    reason: 'invalidauth',
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const ret = await authenticator.validate!(authentication, options, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('validate should return autherror error when none of the options in an array match', async (t) => {
+  const options = {
+    identId: 'johnf',
+    'payload.headers.X-API-Key': ['0th3r', '1th3r'],
+  }
+  const expected = {
+    status: 'autherror',
+    error: 'Invalid credentials',
+    reason: 'invalidauth',
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const ret = await authenticator.validate!(authentication, options, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('validate should return noaccess error when none of the options are found in the provided action', async (t) => {
+  const options = { identId: 'johnf', 'payload.headers.Other-Key': 't0k3n' }
+  const expected = {
+    status: 'noaccess',
+    error: 'Authentication required',
+    reason: 'noauth',
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const ret = await authenticator.validate!(authentication, options, action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('validate should return noaccess error when no authentication or action are provided', async (t) => {
+  const options = { identId: 'johnf', 'payload.headers.X-API-Key': 't0k3n' }
+  const authentication = null
+  const action = null
+  const expected = {
+    status: 'noaccess',
+    error: 'Authentication required',
+    reason: 'noauth',
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const ret = await authenticator.validate!(authentication, options, action)
+
+  t.deepEqual(ret, expected)
+})
+
+// Tests - asHttpHeaders
+
 test('asHttpHeaders should return the options object', (t) => {
   const authentication = {
     status: 'granted',
@@ -77,6 +191,8 @@ test('asHttpHeaders should return empty object when not granted', (t) => {
 
   t.deepEqual(ret, expected)
 })
+
+// Tests - asObject
 
 test('asObject should return the options object', (t) => {
   const authentication = {

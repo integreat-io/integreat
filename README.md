@@ -523,34 +523,28 @@ This definition format is used to authenticate with a service:
   authenticator: <authenticator id>,
   options: {
     // ...
-  }
+  },
+  overrideAuthAsMethod: <auth-as method>,
 }
 ```
 
 - `id`: The id used to reference this authentication, especially from the
   [service definition](#services).
-- `authenticator`: The id of an authenticator used to authenticate requests.
-  Integreat comes with a few basic ones built in, and there are others
-  available.
+- `authenticator`: The id of an [authenticator](#authenticators) used to
+  authenticate requests. Integreat comes with a few basic ones built in, and
+  there are others available.
 - `options`: An object of values meaningful to the authenticator. See the
   documentation of each authenticator to learn how it should be configured.
+- `overrideAuthAsMethod`: Transporters specify a default method for getting an
+  auth object that makes sense for authenticating with the service. For
+  instance, the HTTP transporter has `asHttpHeaders` as the default, to get the
+  relevant auth headers to send with the request. With `overrideAuthAsMethod`,
+  you may override this in the service auth definition when relevant. Default
+  value is `undefined`, meaning "no override". Note that we say "method" here,
+  but the value is a string with the name of the auth-as method to use.
 
-Available authenticators:
-
-- `ident`: Will always grant access and `validate()` will return an ident with
-  the id provided in `identId` on the `options` object, or `'anonymous'` if no
-  `identId` is provided. This is built into Integreat.
-- `options`: Will pass on the options as authentication, so whatever you provide
-  here is the authentication. What options to provide, then, is depending on
-  what the relevant transporter requires. This is built into Integreat.
-- `token`: A simple way of authenticating with a given token. For HTTP requests,
-  the token will be provided as a `Authorization` header, and a configurable
-  prefix like `Basic` or `Bearer`. This is built into Integreat.
-- [`jwt`](https://github.com/integreat-io/integreat-authenticator-jwt): Will
-  generate and encode a JavaScript Web Token (JWT) based on the options.
-- [`oauth2`](https://github.com/integreat-io/integreat-authenticator-oauth2):
-  Will run the balett of calling different OAuth2 endpoints and receive a token
-  based on the provided options.
+The authenticator is responsible for doing all the heavy-lifting, based on the
+options provided in the service authentication definition.
 
 ### Configuring service metadata
 
@@ -641,6 +635,61 @@ Integreat currently have the following adapters:
 - [XML](https://github.com/integreat-io/integreat-adapter-xml)
 
 You may write your own adapters as well, and documentation on this is coming.
+
+## Authenticators
+
+At its simplest, an authenticator will provide necessary credientials to an
+outgoing action, or an ident to an incoming action. Some authenticators do this
+based only on the options provided, while others will do a more complex dance
+with the service or a third-party service, like with OAuth2.
+
+When [setting up a service](#services), you may provide it with an auth id that
+refers to a [service authentication definition](#service-authentication), that
+again refers to an authenticator by id. The service auth definition also holds
+options for the authenticator, so when assigning an auth id to a service, you're
+assigning it an authenticator with those specific options. Another service may
+use the same authenticator, but with different options, and you would set this
+up with a different service authentication definition.
+
+Authentication for outgoing actions are done when sending the action. When
+authenticated, an auth object is retrieved with the auth-as method specified on
+the transporter (e.g. `asHttpHeaders` for the http transporter), or on the
+`overrideAuthAsMethod` in [auth options](#service-authentication) if set. The
+auth object is passed to the transporter on the action `meta.auth` prop. It is
+applied just before sending it, though, so it will be available to service
+middleware, but not to the mutation pipeline. This is done to expose credentials
+in as few places as possible. If you however _want_ to have the auth object in
+mutations, set `authInData` to `true` on the service or endpoint options, and
+authentication will be done in the `preflightAction` step instead, making it
+available on `meta.auth` throughout the entire mutation pipeline.
+
+For incoming actions, authentication is done when a listening action calls the
+`authenticate()` callback. The `validate()` method on the authenticator is used
+here, which will provide the transporter with an authorized ident.
+
+Available authenticators:
+
+- `http`: Supports http native authentications, like `Basic` and `Bearer`. It's
+  included with the
+  [HTTP transporter](https://github.com/integreat-io/integreat-transporter-http).
+- `ident`: Will always grant access and `validate()` will return an ident with
+  the id provided in `identId` on the `options` object, or `'anonymous'` if no
+  `identId` is provided. This is built into Integreat.
+- `options`: Will pass on the options as authentication, so whatever you provide
+  here is the authentication. What options to provide, then, is depending on
+  what the relevant transporter requires. For outgoing actions, the options are
+  provided as is. Incoming action are validated agains the values given in the
+  options (the keys may be dot notation paths in this case, and `identId` is
+  excluded). An ident with the `identId` from the options as `id`, is returned
+  if the action matches. This is built into Integreat.
+- `token`: A simple way of authenticating with a given token. For HTTP requests,
+  the token will be provided as a `Authorization` header, and a configurable
+  prefix like `Basic` or `Bearer`. This is built into Integreat.
+- [`jwt`](https://github.com/integreat-io/integreat-authenticator-jwt): Will
+  generate and encode a JavaScript Web Token (JWT) based on the options.
+- [`oauth2`](https://github.com/integreat-io/integreat-authenticator-oauth2):
+  Will run the balett of calling different OAuth2 endpoints and receive a token
+  based on the provided options.
 
 ## Mutations
 

@@ -35,7 +35,7 @@ const tokenAuth: Authenticator = {
    * Authenticate and return authentication object if authentication was
    * successful.
    * Would normaly perform an authentication request and set the token received,
-   * but in tokenAuth the token is set as from the options object.
+   * but in the token strategy, we just set the token from the options object.
    */
   async authenticate(options) {
     const { token = null, type, encode = false } = options || {}
@@ -46,7 +46,7 @@ const tokenAuth: Authenticator = {
 
   /**
    * Check whether we've already ran authentication.
-   * In the tokenAuth, this will be true if we get an authentication object
+   * In the token strategy, this will be true if we get an authentication object
    * with granted status and a token.
    */
   isAuthenticated(authentication, _options, _action) {
@@ -61,16 +61,16 @@ const tokenAuth: Authenticator = {
     /**
      * Return an object with the information needed for authenticated requests
      * with this authenticator. The object will include `token` and `type` as
-     * seperate properties. The token will be encoded when the `encode` option is
-     * set true.
+     * seperate properties. The token will be encoded when the `encode` option
+     * is set true.
      */
     asObject(authentication: TokenAuthentication | null): TokenObject {
       return getTypeAndToken(authentication)
     },
 
     /**
-     * Return a headers object with the headers needed for authenticated requests
-     * with this authenticator. There will be only one property, namely
+     * Return a headers object with the headers needed for authenticated
+     * requests with this authenticator. There will be only one property, namely
      * `Authorization`, which will consist of the type and the token, the latter
      * encoded if the `encode` option is true.
      */

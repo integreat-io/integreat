@@ -1,5 +1,5 @@
 import debugLib from 'debug'
-import { createErrorResponse, setOrigin } from '../utils/action.js'
+import { createErrorResponse, setOrigin } from '../utils/response.js'
 import getHandler from './get.js'
 import { isObject } from '../utils/is.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'

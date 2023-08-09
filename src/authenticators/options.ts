@@ -1,6 +1,57 @@
+import mapTransform from 'map-transform'
 import { isObject } from '../utils/is.js'
-import type { Authenticator } from '../types.js'
-import type { Authentication } from '../service/types.js'
+import type { Authenticator, Action } from '../types.js'
+import type { AuthOptions, Authentication } from '../service/types.js'
+
+export interface ValidateOptions extends AuthOptions {
+  identId?: string
+}
+
+const compareValues = (expected: unknown | unknown[], value: unknown) =>
+  expected !== undefined && Array.isArray(expected)
+    ? expected.includes(value)
+    : expected === value
+
+const getIsMatchCount = (matches: [boolean, boolean][]) =>
+  matches.filter(([match]) => !!match).length
+
+const getHasPropsCount = (matches: [boolean, boolean][]) =>
+  matches.filter(([, exists]) => !!exists).length
+
+// Returns a tuple where the first boolean is `true` if the entries in `options`
+// are all present with the expected values in the given action. The second
+// boolean is `true` if any of the entries in `options` are present in the given
+// action, even though they might not have the expected values.
+async function validateOptions(options: AuthOptions, action: Action | null) {
+  if (action === null) {
+    // There is no action, so we don't have a match and none of the expected
+    // props are present
+    return [false, false] // [isMatch, hasProps]
+  }
+
+  // Extract the paths and the expected values from the options object
+  const pathAndExpectedArr = Object.entries(options)
+  if (pathAndExpectedArr.length === 0) {
+    // This is a match, although none of the expected props are present
+    return [true, false] // [isMatch, hasProps]
+  }
+
+  // Extract the values at the paths from the action, and compare them to the
+  // expected values. `matches` wil be an array of [isMatch, hasProp] tuples for
+  // each path.
+  const matches: [boolean, boolean][] = await Promise.all(
+    pathAndExpectedArr.map(async function ([path, expected]) {
+      const value = await mapTransform(path)(action)
+      return [compareValues(expected, value), value !== undefined] // [isMatch, hasProp]
+    })
+  )
+
+  // Count up the matches to return the expected flags
+  return [
+    getIsMatchCount(matches) === pathAndExpectedArr.length, // isMatch
+    getHasPropsCount(matches) > 0, // hasProps
+  ]
+}
 
 /**
  * The options authenticator. Will always be authenticated, and will return the
@@ -25,6 +76,37 @@ const optionsAuth: Authenticator = {
    */
   isAuthenticated(authentication, _options, _action) {
     return !!(authentication && authentication.status === 'granted')
+  },
+
+  /**
+   * Validate authentication object.
+   * The options authenticator will check that all the properties of the options
+   * object (except `identId`) are present in the given action. If so, an ident
+   * with the id provided in the `identId` option is returned. Otherwise, an
+   * error response is returned.
+   */
+  async validate(_authentication, options: ValidateOptions | null, action) {
+    const { identId, ...authOptions } = options || {}
+
+    const [isValid, hasProps] = await validateOptions(authOptions, action)
+    if (isValid) {
+      return { status: 'ok', access: { ident: { id: identId } } }
+    } else {
+      // The action was invalid, so return an error response. If the action had
+      // none of the expected props, we return a noaccess error, as this means
+      // no authentication was provided.
+      return hasProps
+        ? {
+            status: 'autherror',
+            error: 'Invalid credentials',
+            reason: 'invalidauth',
+          }
+        : {
+            status: 'noaccess',
+            error: 'Authentication required',
+            reason: 'noauth',
+          }
+    }
   },
 
   authentication: {

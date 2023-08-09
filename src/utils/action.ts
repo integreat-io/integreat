@@ -1,4 +1,4 @@
-import { isErrorResponse } from './is.js'
+import { createErrorResponse, setOrigin } from './response.js'
 import type { Action, Payload, Meta, Response } from '../types.js'
 import type Endpoint from '../service/Endpoint.js'
 
@@ -44,28 +44,6 @@ export function setOptionsOnAction(action: Action, endpoint: Endpoint): Action {
 }
 
 /**
- * Create an error response.
- */
-export function createErrorResponse(
-  error: unknown,
-  origin: string,
-  status = 'error',
-  reason?: string
-): Response {
-  return {
-    status,
-    error:
-      error instanceof Error
-        ? error.message
-        : typeof error === 'string'
-        ? error
-        : 'Unknown error',
-    ...(reason ? { reason } : {}),
-    ...(origin ? { origin } : {}),
-  }
-}
-
-/**
  * Set error message and status on an action.
  */
 export function setErrorOnAction(
@@ -81,46 +59,11 @@ export function setErrorOnAction(
 }
 
 /**
- * Combine several error responses into one.
+ * Set the given origin on the response of an action, if the response status is
+ * not ok and there is not an origin already specified.
+ * If `doPrefix` is true, any existing origin will be prefixed with the given
+ * origin.
  */
-export function combineResponses(responses: Response[]) {
-  if (responses.length < 2) {
-    return responses[0] // Will yield undefined if no responses
-  } else {
-    const error = responses
-      .filter((response) => response.error || isErrorResponse(response))
-      .map((response) => `[${response.status}] ${response.error}`)
-      .join(' | ')
-    const warning = responses
-      .filter((response) => response.warning)
-      .map((response) => response.warning)
-      .join(' | ')
-    return {
-      status: 'error',
-      ...(error && { error }),
-      ...(warning && { warning }),
-    }
-  }
-}
-
-// Set origin on response if status is not ok.
-export const setOrigin = (
-  response: Response,
-  origin: string,
-  doPrefix = false
-) =>
-  response.status === 'ok' || response.status === 'queued'
-    ? response
-    : {
-        ...response,
-        origin: response.origin
-          ? doPrefix
-            ? `${origin}:${response.origin}` // Prefix existing origin
-            : response.origin // Keep existing origin as-is
-          : origin,
-      }
-
-// Set on response of action if status is not ok.
 export const setOriginOnAction = (
   action: Action,
   origin: string,

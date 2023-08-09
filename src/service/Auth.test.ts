@@ -45,7 +45,7 @@ const authenticator: Authenticator = {
 }
 
 const transporter = {
-  authentication: 'asHttpHeaders',
+  defaultAuthAsMethod: 'asHttpHeaders',
 } as unknown as Transporter
 
 const action = {
@@ -308,18 +308,62 @@ test('should return auth object when granted', async (t) => {
   const expected = { Authorization: 't0k3n' }
 
   await auth.authenticate(action)
-  const ret = auth.getAuthObject(transporter)
+  const ret = auth.getAuthObject(transporter, null)
 
   t.deepEqual(ret, expected)
 })
 
-test('should return null for unkown auth method', async (t) => {
-  const strangeAdapter = { ...transporter, authentication: 'asUnknown' }
+test('should return auth object with depricated auth as method prop', async (t) => {
+  const oldTransporter = {
+    authentication: 'asHttpHeaders',
+  } as unknown as Transporter
+  const auth = new Auth(id, authenticator, options)
+  const expected = { Authorization: 't0k3n' }
+
+  await auth.authenticate(action)
+  const ret = auth.getAuthObject(oldTransporter, null)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return auth object with overriden method from auth definition', async (t) => {
+  const overrideAuthAsMethod = 'asObject'
+  const auth = new Auth(id, authenticator, options, overrideAuthAsMethod)
+  const expected = { token: 't0k3n' } // This is the format expected from `asObject()`
+
+  await auth.authenticate(action)
+  const ret = auth.getAuthObject(transporter, null)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return auth object from authenticator supporting auth keys', async (t) => {
+  const keyAuthenticator: Authenticator = {
+    ...authenticator,
+    async authenticate(_options, action) {
+      return { status: 'granted', token: `t0k3n_${action?.meta?.id}` }
+    },
+    extractAuthKey: (_options, action) => `key_${action?.meta?.id}`,
+  }
+  const auth = new Auth(id, keyAuthenticator, options)
+  const action1 = { ...action, meta: { ...action.meta, id: 'action1' } }
+  const action2 = { ...action, meta: { ...action.meta, id: 'action2' } }
+  const expected = { Authorization: 't0k3n_action2' }
+
+  await auth.authenticate(action1)
+  await auth.authenticate(action2)
+  const ret = auth.getAuthObject(transporter, action2)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return null for unknown auth method', async (t) => {
+  const strangeAdapter = { ...transporter, defaultAuthAsMethod: 'asUnknown' }
   const auth = new Auth(id, authenticator, options)
   const expected = null
 
   await auth.authenticate(action)
-  const ret = auth.getAuthObject(strangeAdapter)
+  const ret = auth.getAuthObject(strangeAdapter, action)
 
   t.is(ret, expected)
 })
@@ -328,7 +372,7 @@ test('should return null when not authenticated', async (t) => {
   const auth = new Auth(id, authenticator, options)
   const expected = null
 
-  const ret = auth.getAuthObject(transporter)
+  const ret = auth.getAuthObject(transporter, action)
 
   t.is(ret, expected)
 })
@@ -345,7 +389,7 @@ test('should return null when authentication was refused', async (t) => {
   const expected = null
 
   await auth.authenticate(action)
-  const ret = auth.getAuthObject(transporter)
+  const ret = auth.getAuthObject(transporter, action)
 
   t.is(ret, expected)
 })
@@ -429,16 +473,15 @@ test('should set auth object to action', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should set auth object to action with auth key', async (t) => {
-  const keyedAuthenticator: Authenticator = {
+test('should set auth object to action for authenticator supporting keys', async (t) => {
+  const keyAuthenticator: Authenticator = {
     ...authenticator,
-    authenticate: async (_options, action) => ({
-      status: 'granted',
-      token: `t0k3n_${action?.meta?.id}`,
-    }),
-    extractAuthKey: (_options, action) => `key_${action?.meta?.id}`, // To get a new key for every call
+    async authenticate(_options, action) {
+      return { status: 'granted', token: `t0k3n_${action?.meta?.id}` }
+    },
+    extractAuthKey: (_options, action) => `key_${action?.meta?.id}`,
   }
-  const auth = new Auth(id, keyedAuthenticator, options)
+  const auth = new Auth(id, keyAuthenticator, options)
   const action1 = { ...action, meta: { ...action.meta, id: 'action1' } }
   const action2 = { ...action, meta: { ...action.meta, id: 'action2' } }
   const expected = {
@@ -454,7 +497,7 @@ test('should set auth object to action with auth key', async (t) => {
 })
 
 test('should set auth object to null for unkown auth method', async (t) => {
-  const strangeAdapter = { ...transporter, authentication: 'asUnknown' }
+  const strangeAdapter = { ...transporter, defaultAuthAsMethod: 'asUnknown' }
   const auth = new Auth(id, authenticator, options)
   const expected = {
     ...action,
@@ -503,6 +546,34 @@ test('should set status noaccess and auth object to null when authentication was
 
   await auth.authenticate(action)
   const ret = auth.applyToAction(action, transporter)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should set status noaccess and auth object to null when authentication was refused for authenticator supporting keys', async (t) => {
+  const refusingAuthenticator: Authenticator = {
+    ...authenticator,
+    authenticate: async (_options, action) =>
+      action?.meta?.id === 'action2'
+        ? { status: 'refused', error: 'Not for you' }
+        : { status: 'granted', token: `t0k3n_${action?.meta?.id}` },
+    extractAuthKey: (_options, action) => `key_${action?.meta?.id}`,
+  }
+  const auth = new Auth(id, refusingAuthenticator, options)
+  const action1 = { ...action, meta: { ...action.meta, id: 'action1' } }
+  const action2 = { ...action, meta: { ...action.meta, id: 'action2' } }
+  const expected = {
+    ...action2,
+    response: {
+      status: 'noaccess',
+      error: "Authentication attempt for auth 'auth1' was refused. Not for you",
+    },
+    meta: { ...action2.meta, auth: null },
+  }
+
+  await auth.authenticate(action1)
+  await auth.authenticate(action2)
+  const ret = auth.applyToAction(action2, transporter)
 
   t.deepEqual(ret, expected)
 })

@@ -1,4 +1,4 @@
-import { createErrorResponse } from '../utils/action.js'
+import { createErrorResponse } from '../utils/response.js'
 import { isTypedData } from '../utils/is.js'
 import type {
   Action,

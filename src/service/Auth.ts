@@ -1,7 +1,7 @@
 import type { AuthOptions, Authentication } from './types.js'
 import type { Authenticator, Action, Response, Transporter } from '../types.js'
 import { isObject } from '../utils/is.js'
-import { createErrorResponse } from '../utils/action.js'
+import { createErrorResponse } from '../utils/response.js'
 
 const MAX_RETRIES = 1
 
@@ -10,7 +10,7 @@ const shouldRetry = (
   retryCount: number
 ) => authentication?.status === 'timeout' && retryCount < MAX_RETRIES
 
-const getKey = (
+const getAuthKey = (
   authenticator: Authenticator,
   options: AuthOptions | null,
   action: Action | null
@@ -23,17 +23,24 @@ export default class Auth {
   readonly id: string
   #authenticator: Authenticator
   #options: AuthOptions
+  #overrideAuthAsMethod?: string
   #authentications = new Map<string, Authentication>()
 
-  constructor(id: string, authenticator: Authenticator, options?: AuthOptions) {
+  constructor(
+    id: string,
+    authenticator: Authenticator,
+    options?: AuthOptions,
+    overrideAuthAsMethod?: string
+  ) {
     this.id = id
     this.#authenticator = authenticator
     this.#options = options || {}
+    this.#overrideAuthAsMethod = overrideAuthAsMethod
   }
 
   async authenticate(action: Action | null): Promise<boolean> {
-    const key = getKey(this.#authenticator, this.#options, action)
-    let authentication = this.#authentications.get(key)
+    const authKey = getAuthKey(this.#authenticator, this.#options, action)
+    let authentication = this.#authentications.get(authKey)
 
     if (
       authentication?.status === 'granted' &&
@@ -50,7 +57,7 @@ export default class Auth {
       )
     } while (shouldRetry(authentication, attempt++))
 
-    this.#authentications.set(key, authentication)
+    this.#authentications.set(authKey, authentication)
     return authentication?.status === 'granted'
   }
 
@@ -101,10 +108,10 @@ export default class Auth {
 
   async authenticateAndGetAuthObject(
     action: Action | null,
-    method: string
+    authAsMethod: string
   ): Promise<Record<string, unknown> | null> {
     // eslint-disable-next-line security/detect-object-injection
-    const fn = this.#authenticator.authentication[method]
+    const fn = this.#authenticator.authentication[authAsMethod]
 
     if (typeof fn === 'function') {
       const auth = await this.#authenticator.authenticate(this.#options, action)
@@ -120,23 +127,30 @@ export default class Auth {
 
   getAuthObject(
     transporter: Transporter,
-    key = ''
+    action: Action | null,
+    providedAuthKey?: string
   ): Record<string, unknown> | null {
-    const auth = this.#authentications.get(key)
+    const authKey =
+      providedAuthKey ?? getAuthKey(this.#authenticator, this.#options, action) // Use provided auth key or extract it from action
+    const auth = this.#authentications.get(authKey)
     if (!auth || auth.status !== 'granted') {
       return null
     }
 
     const authenticator = this.#authenticator
-    const fn =
+    const authAsMethod =
+      this.#overrideAuthAsMethod ||
+      transporter.defaultAuthAsMethod ||
+      transporter.authentication
+    const authObjectFn =
       isObject(authenticator?.authentication) &&
-      typeof transporter.authentication === 'string' &&
-      authenticator.authentication[transporter.authentication]
-    return typeof fn === 'function' ? fn(auth) : null
+      typeof authAsMethod === 'string' &&
+      authenticator.authentication[authAsMethod] // eslint-disable-line security/detect-object-injection
+    return typeof authObjectFn === 'function' ? authObjectFn(auth) : null
   }
 
-  getResponseFromAuth(key = ''): Response {
-    const auth = this.#authentications.get(key)
+  getResponseFromAuth(authKey = ''): Response {
+    const auth = this.#authentications.get(authKey) // Use the provided authKey or default to empty string
     if (!auth) {
       return {
         status: 'noaccess',
@@ -155,14 +169,14 @@ export default class Auth {
   }
 
   applyToAction(action: Action, transporter: Transporter): Action {
-    const key = getKey(this.#authenticator, this.#options, action)
-    const auth = this.#authentications.get(key)
+    const authKey = getAuthKey(this.#authenticator, this.#options, action)
+    const auth = this.#authentications.get(authKey)
     if (auth?.status === 'granted') {
       return {
         ...action,
         meta: {
           ...action.meta,
-          auth: this.getAuthObject(transporter, key),
+          auth: this.getAuthObject(transporter, action, authKey), // Provide authKey, so we don't have to extract it again
         },
       }
     }
@@ -171,7 +185,7 @@ export default class Auth {
       ...action,
       response: {
         ...action.response,
-        ...this.getResponseFromAuth(key),
+        ...this.getResponseFromAuth(authKey),
       },
       meta: { ...action.meta, auth: null },
     }

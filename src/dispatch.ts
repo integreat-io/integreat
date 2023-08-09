@@ -5,11 +5,10 @@ import { QUEUE_SYMBOL } from './handlers/index.js'
 import setupGetService from './utils/getService.js'
 import {
   setErrorOnAction,
-  createErrorResponse,
   setResponseOnAction,
-  setOrigin,
   setOptionsOnAction,
 } from './utils/action.js'
+import { createErrorResponse, setOrigin } from './utils/response.js'
 import type {
   Dispatch,
   HandlerDispatch,

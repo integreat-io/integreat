@@ -1,4 +1,4 @@
-import Instance from './instance.js'
+import Instance from './Instance.js'
 import mergeDefinitions from './utils/mergeDefinitions.js'
 import mergeResources from './utils/mergeResources.js'
 import type { Definitions, Resources, Middleware } from './types.js'

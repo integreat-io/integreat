@@ -45,3 +45,9 @@ export const isErrorResponse = (response?: Response) =>
 export const isTruthy = (value: unknown): boolean => !!value
 export const isFalsy = (value: unknown): boolean => !value
 export const not = isFalsy
+
+export const isDuplicate = <T = unknown>(
+  error: T,
+  index: number,
+  errors: T[]
+): boolean => errors.indexOf(error) === index

@@ -1,8 +1,12 @@
 import debugLib from 'debug'
 import pLimit from 'p-limit'
-import { createErrorResponse, setResponseOnAction } from '../utils/action.js'
-import createUnknownServiceError from '../utils/createUnknownServiceError.js'
-import { isAuthorizedAction } from '../service/utils/authAction.js'
+import {
+  createErrorResponse,
+  createUnknownServiceError,
+  combineResponses,
+  setOrigin,
+} from '../utils/response.js'
+import mutateAndSend from '../utils/mutateAndSend.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'
 import type Service from '../service/Service.js'
 import type Endpoint from '../service/Endpoint.js'
@@ -15,21 +19,33 @@ const isErrorResponse = (response: Response) =>
 const getIdFromAction = ({ payload: { id } }: Action) =>
   Array.isArray(id) && id.length === 1 ? id[0] : id
 
-const combineResponses = (action: Action, responses: Response[]): Response =>
-  responses.some(isErrorResponse)
-    ? createErrorResponse(
-        `One or more of the requests for ids ${getIdFromAction(
+function combineIndividualResponses(
+  action: Action,
+  responses: Response[]
+): Response {
+  const errorResponses = responses.filter(isErrorResponse)
+
+  if (errorResponses.length > 0) {
+    const combinedResponse = combineResponses(errorResponses)
+    return setOrigin(
+      {
+        ...combinedResponse,
+        error: `One or more of the requests for ids ${getIdFromAction(
           action
-        )} failed.`,
-        'handler:GET'
-      )
-    : {
-        ...action.response,
-        status: 'ok',
-        data: responses.map((response) =>
-          Array.isArray(response.data) ? response.data[0] : response.data
-        ),
-      }
+        )} failed with the following error(s): ${combinedResponse.error}`,
+      },
+      'handler:GET'
+    )
+  } else {
+    return {
+      ...action.response,
+      status: 'ok',
+      data: responses.map((response) =>
+        Array.isArray(response.data) ? response.data[0] : response.data
+      ),
+    }
+  }
+}
 
 const isMembersScope = (endpoint?: Endpoint) =>
   endpoint?.match?.scope === 'members'
@@ -49,76 +65,48 @@ const createNoEndpointError = (action: Action, serviceId: string) =>
     'badrequest'
   )
 
-async function runAsIndividualActions(
-  action: Action,
-  service: Service,
-  mapPerId: (endpoint: Endpoint) => (action: Action) => Promise<Response>
-) {
-  const actions = (action.payload.id as string[]).map((oneId) =>
-    setIdOnActionPayload(action, oneId)
+async function runAsIndividualActions(action: Action, service: Service) {
+  const actions = (action.payload.id as string[]).map((individualId) =>
+    setIdOnActionPayload(action, individualId)
   )
   const endpoint = await service.endpointFromAction(actions[0])
   if (!endpoint) {
     return createNoEndpointError(action, service.id)
   }
-  const validateResponse = await endpoint.validateAction(action)
-  if (validateResponse) {
-    return service.mutateResponse(
-      setResponseOnAction(action, validateResponse),
-      endpoint
-    )
-  }
-  return combineResponses(
-    action,
-    await Promise.all(
-      actions.map((action) => pLimit(1)(() => mapPerId(endpoint)(action)))
+
+  const responses = await Promise.all(
+    actions.map((individualAction) =>
+      pLimit(1)(() => mutateAndSend(service, endpoint, individualAction))
     )
   )
+
+  return combineIndividualResponses(action, responses)
 }
 
 const doRunIndividualIds = (action: Action, endpoint?: Endpoint) =>
   Array.isArray(action.payload.id) &&
-  isAuthorizedAction(action) &&
+  // isAuthorizedAction(action) &&
   !isMembersScope(endpoint)
 
 async function runOneOrMany(
   action: Action,
-  service: Service,
-  mapPerId: (endpoint: Endpoint) => (action: Action) => Promise<Response>
+  service: Service
 ): Promise<Response> {
   const endpoint = await service.endpointFromAction(action)
   if (!endpoint) {
     return createNoEndpointError(action, service.id)
   }
 
-  const authorizedAction = service.authorizeAction(action)
-  if (authorizedAction.response?.status) {
-    return await service.mutateResponse(authorizedAction, endpoint) // Return right away if there's already a status
+  if (doRunIndividualIds(action, endpoint)) {
+    // This is an action with an array of ids, but the endpoint we've got is not
+    // a members endpoint. Instead we'll run the action for each id
+    // individually.
+    return runAsIndividualActions(action, service)
+  } else {
+    // We've got an endpoint that match the action, so run it
+    return mutateAndSend(service, endpoint, action)
   }
-
-  if (doRunIndividualIds(authorizedAction, endpoint)) {
-    return runAsIndividualActions(authorizedAction, service, mapPerId)
-  }
-  const validateResponse = await endpoint.validateAction(authorizedAction)
-  if (validateResponse) {
-    return service.mutateResponse(
-      setResponseOnAction(authorizedAction, validateResponse),
-      endpoint
-    )
-  }
-
-  return mapPerId(endpoint)(authorizedAction)
 }
-
-const runOne = (service: Service) => (endpoint: Endpoint) =>
-  async function (action: Action) {
-    const requestAction = await service.mutateRequest(action, endpoint)
-    const response = await service.send(requestAction)
-    return await service.mutateResponse(
-      setResponseOnAction(action, response),
-      endpoint
-    )
-  }
 
 /**
  * Get several items from a service, based on the given action object.
@@ -154,5 +142,5 @@ export default async function get(
 
   const nextAction = setIdOnActionPayload(action, id)
 
-  return await runOneOrMany(nextAction, service, runOne(service))
+  return await runOneOrMany(nextAction, service)
 }

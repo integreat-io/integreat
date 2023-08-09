@@ -185,7 +185,8 @@ export interface AuthenticateExternal {
 }
 
 export interface Transporter {
-  authentication: string | null
+  defaultAuthAsMethod?: string | null // Preferred alias of `authentication`
+  authentication?: string | null // For backward compability, may be removed
   prepareOptions: (
     options: TransporterOptions,
     serviceId: string
