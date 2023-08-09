@@ -1,7 +1,7 @@
 import type { AuthOptions, Authentication } from './types.js'
 import type { Authenticator, Action, Response, Transporter } from '../types.js'
 import { isObject } from '../utils/is.js'
-import { createErrorResponse } from '../utils/action.js'
+import { createErrorResponse } from '../utils/response.js'
 
 const MAX_RETRIES = 1
 

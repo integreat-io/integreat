@@ -1,6 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
-import { createErrorResponse } from '../utils/action.js'
+import { createErrorResponse } from '../utils/response.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import type { Response, HandlerDispatch, TypedData } from '../types.js'
 

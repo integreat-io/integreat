@@ -1,7 +1,9 @@
 import debugLib from 'debug'
 import mutateAndSend from '../utils/mutateAndSend.js'
-import { createErrorResponse } from '../utils/action.js'
-import createUnknownServiceError from '../utils/createUnknownServiceError.js'
+import {
+  createErrorResponse,
+  createUnknownServiceError,
+} from '../utils/response.js'
 import { isTypedData } from '../utils/is.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'
 

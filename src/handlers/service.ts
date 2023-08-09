@@ -1,6 +1,8 @@
 import { setAuthorizedMark } from '../service/utils/authAction.js'
-import { createErrorResponse } from '../utils/action.js'
-import createUnknownServiceError from '../utils/createUnknownServiceError.js'
+import {
+  createErrorResponse,
+  createUnknownServiceError,
+} from '../utils/response.js'
 import type { Action, ActionHandlerResources, Response } from '../types.js'
 
 /**

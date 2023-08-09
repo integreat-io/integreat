@@ -1,4 +1,4 @@
-import { createErrorResponse, setOrigin } from '../../utils/action.js'
+import { createErrorResponse, setOrigin } from '../../utils/response.js'
 import type Connection from '../Connection.js'
 import type { Action, Response, Transporter } from '../../types.js'
 

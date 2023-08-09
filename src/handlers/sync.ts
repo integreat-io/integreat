@@ -10,7 +10,7 @@ import type {
   Params,
   ActionHandlerResources,
 } from '../types.js'
-import { createErrorResponse } from '../utils/action.js'
+import { createErrorResponse } from '../utils/response.js'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is.js'
 import { ensureArray } from '../utils/array.js'
 import castDate from '../schema/castFns/date.js'
