@@ -1,5 +1,5 @@
 import debugLib from 'debug'
-import { isErrorResponse } from './is.js'
+import { isErrorResponse, isNotNullOrUndefined, isDuplicate } from './is.js'
 import type { Response } from '../types.js'
 
 const debug = debugLib('great')
@@ -45,18 +45,29 @@ export function combineResponses(responses: Response[]) {
   if (responses.length < 2) {
     return responses[0] // Will yield undefined if no responses
   } else {
-    const error = responses
+    const status = responses
+      .map((response) => response.status)
+      .reduce((combined, status) => (combined === status ? combined : 'error'))
+    const errors = responses
       .filter((response) => response.error || isErrorResponse(response))
       .map((response) => `[${response.status}] ${response.error}`)
-      .join(' | ')
+      .filter(isDuplicate)
+    const error = errors.length === 1 ? responses[0].error : errors.join(' | ')
     const warning = responses
-      .filter((response) => response.warning)
       .map((response) => response.warning)
+      .filter(isNotNullOrUndefined)
+      .filter(isDuplicate)
       .join(' | ')
+    const origins = responses
+      .map((response) => response.origin)
+      .filter(isNotNullOrUndefined)
+      .filter(isDuplicate)
+    const origin = origins.length === 1 ? origins[0] : undefined
     return {
-      status: 'error',
+      status,
       ...(error && { error }),
       ...(warning && { warning }),
+      ...(origin && { origin }),
     }
   }
 }
