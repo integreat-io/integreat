@@ -55,6 +55,24 @@ action. A ground principle is that nothing that enters Integreat from an
 authenticated service, will leave Integreat unauthenticated. What this means,
 though, depends on how you define your services.
 
+# Table of contents
+
+1. [Usage](#usage)
+   1. [Install](#install)
+   2. [Basic example](#basic-example)
+2. [Integreat concepts](#integreat-concepts)
+   1. [Services](#services)
+   2. [Transporters](#transporters)
+   3. [Adapters](#adapters)
+   4. [Authenticators](#authenticators)
+   5. [Mutations](#mutations)
+   6. [Schemas](#schemas)
+   7. [Actions](#actions)
+   8. [Jobs](#jobs)
+   9. [Queues](#queues)
+   10. [Middleware](#middleware)
+3. [Debugging](#debugging)
+
 # Usage
 
 ## Install
@@ -790,10 +808,6 @@ A double carret `^^` takes you to the top -- the root -- so after
 
 Carret notations -- parents and roots -- does not currently work in reverse, but
 they might in a future version.
-
-### Jobs
-
-> Editor's note: Write this.
 
 ## Schemas
 
@@ -1778,6 +1792,10 @@ already used by one of Integreat's built-in action handlers, the custom handler
 will have precedence. So be careful when you choose an action type, if your
 intention is not to replace an existing action handler.
 
+## Jobs
+
+> **Editor's note:** Write this section.
+
 ## Queues
 
 As everything else in Integreat, a queue is also a service. You configure a
@@ -1945,7 +1963,7 @@ the ident with this id is loaded, otherwise a `withToken` is used to load the
 ident with the specified token. If no ident is found, the original ident is
 kept.
 
-## Writing middleware
+### Writing middleware
 
 You may write middleware to intercept dispatched actions. This may be useful
 for logging, debugging, and situations where you need to make adjustments to
@@ -1969,7 +1987,7 @@ const logger = (next) => async (action) => {
 }
 ```
 
-## Debugging
+# Debugging
 
 Run Integreat with env variable `DEBUG=great`, to receive debug messages.
 
