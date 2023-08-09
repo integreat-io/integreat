@@ -34,6 +34,7 @@ export interface AuthDef {
   id: string
   authenticator: string
   options: AuthOptions
+  overrideAuthAsMethod?: string
 }
 
 export type AuthProp = AuthDef | string | boolean | null

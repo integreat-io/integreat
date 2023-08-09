@@ -10,15 +10,16 @@ import {
   setOrigin,
   setOriginOnAction,
   setOptionsOnAction,
+  setResponseOnAction,
 } from '../utils/action.js'
 import { prepareOptions, mergeOptions } from './utils/options.js'
 import Connection from './Connection.js'
-import Auth from './Auth.js'
 import { lookupById, lookupByIds } from '../utils/indexUtils.js'
 import * as authorizeData from './utils/authData.js'
 import authorizeAction, { isAuthorizedAction } from './utils/authAction.js'
 import { compose } from '../dispatch.js'
 import type Schema from '../schema/Schema.js'
+import type Auth from './Auth.js'
 import type {
   Action,
   Response,
@@ -153,11 +154,38 @@ export default class Service {
   }
 
   /**
-   * Authorize the action. Sets the authorized flag if okay, otherwise sets
-   * an appropriate status and error.
+   * Authorize and validate the action. This is required before sending it to
+   * the service, and should be done before mutation. The `auth` object will be
+   * set on the action here, for services that are configured to include make
+   * auth available to mutations.
+   *
+   * Note that the returned action may include a response, which should be
+   * returned instead of the action being sent to the service. The response
+   * should be run through the response mutation, though.
    */
-  authorizeAction(action: Action): Action {
-    return authorizeAction(this.#schemas, !!this.#auth)(action)
+  async preflightAction(action: Action, endpoint: Endpoint): Promise<Action> {
+    let preparedAction = authorizeAction(this.#schemas, !!this.#auth)(action)
+    if (preparedAction.response?.status) {
+      return preparedAction
+    }
+
+    const validateResponse = await endpoint.validateAction(preparedAction)
+    if (validateResponse) {
+      return setResponseOnAction(action, validateResponse)
+    }
+
+    if (endpoint.options?.transporter.authInData && this.#auth) {
+      await this.#auth.authenticate(preparedAction)
+      preparedAction = this.#auth.applyToAction(
+        preparedAction,
+        this.#transporter
+      )
+      if (preparedAction.response?.status) {
+        return setResponseOnAction(action, preparedAction.response)
+      }
+    }
+
+    return preparedAction
   }
 
   /**
@@ -306,14 +334,14 @@ export default class Service {
 
     if (!isAuthorizedAction(action)) {
       return createErrorResponse(
-        'Not authorized',
+        'Action has not been authorized by Integreat',
         `internal:service:${this.id}`,
         'autherror'
       )
     }
 
-    // When an authenticator is set: Authenticate and apply result to action
-    if (this.#auth) {
+    // When an authentication is defined: Authenticate and apply result to action
+    if (this.#auth && !action.meta?.auth) {
       await this.#auth.authenticate(action)
       action = this.#auth.applyToAction(action, this.#transporter)
       if (action.response?.status) {
@@ -377,7 +405,7 @@ export default class Service {
 
     if (
       !(await this.#connection.connect(
-        this.#auth?.getAuthObject(this.#transporter)
+        this.#auth?.getAuthObject(this.#transporter, null)
       ))
     ) {
       debug(`Could not listen to '${this.id}' service. Failed to connect`)

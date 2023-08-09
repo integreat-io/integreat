@@ -189,6 +189,33 @@ export default {
       ],
       options: { uri: '/entries/{payload.id}', method: 'PUT' },
     },
+    {
+      match: {
+        action: 'SET',
+        conditions: ['payload.authInBody'],
+      },
+      mutation: [
+        {
+          $direction: 'to',
+          $flip: true,
+          payload: {
+            $modify: 'payload',
+            data: {
+              items: ['payload.data[]', { $iterate: true, id: 'id' }],
+              auth: 'meta.auth',
+            },
+          },
+        },
+        {
+          $direction: 'from',
+          response: {
+            $modify: 'response',
+            data: ['response.data.data', { $apply: 'entries-entry' }],
+          },
+        },
+      ],
+      options: { uri: '/entries', method: 'POST' },
+    },
     // {
     //   match: { action: 'SET', scope: 'new' },
     //   mutation: [
