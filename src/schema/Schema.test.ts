@@ -333,7 +333,7 @@ test('should generate id when not set and generateId is true', (t) => {
 
   const { id } = ret as TypedData
   t.is(typeof id, 'string')
-  t.true((id as string).length >= 21)
+  t.regex(id as string, /^[A-Za-z0-9_-]{21}$/)
 })
 
 test('should not cast undefined', (t) => {

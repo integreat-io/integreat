@@ -853,7 +853,8 @@ automatically cast to that type.
   [the section below](#the-shape-of-a-schema).
 - `generateId`: Set this to `true` to generate a unique id for the `id` field
   when the data being cast does not provide an `id`. Default is `false`, which
-  will just set `id: null`
+  will just set `id: null`. The id will be 36 chars and consist of A-Z, a-z,
+  0-9, underscore `'_'`, and hyphen `'-'`.
 - `access`: Integreat lets you define authorization schemes per schema. All use
   of data cast to a schema will then be controlled by the rules you set here.
   See [Access rules](#access-rules) below for details on these rules. Note that
