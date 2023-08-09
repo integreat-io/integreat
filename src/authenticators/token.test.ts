@@ -12,7 +12,7 @@ const action = {
 
 const options = { token: 'someToken' }
 
-// Tests
+// Tests -- authenticate
 
 test('authenticate should return granted when token is set', async (t) => {
   const expected = {
@@ -36,6 +36,8 @@ test('authenticate should return refused when token is not set', async (t) => {
   t.deepEqual(ret, expected)
 })
 
+// Tests -- isAuthenticated
+
 test('isAuthenticated should return false when no authentication', (t) => {
   const authentication = null
 
@@ -47,6 +49,8 @@ test('isAuthenticated should return true when authentication is granted and toke
 
   t.true(authenticator.isAuthenticated(authentication, options, action))
 })
+
+// Tests -- asHttpHeaders
 
 test('asHttpHeaders should return auth header with token', (t) => {
   const authentication = {
@@ -120,6 +124,8 @@ test('asHttpHeaders should return empty object when not granted', (t) => {
 
   t.deepEqual(ret, expected)
 })
+
+// Tests -- asObject
 
 test('asObject should return token and type', (t) => {
   const authentication = {
