@@ -1,10 +1,7 @@
 import Auth from '../Auth.js'
 import pProgress, { ProgressNotifier } from 'p-progress'
-import {
-  setErrorOnAction,
-  createErrorResponse,
-  setOrigin,
-} from '../../utils/action.js'
+import { setErrorOnAction } from '../../utils/action.js'
+import { createErrorResponse, setOrigin } from '../../utils/response.js'
 import { isObject } from '../../utils/is.js'
 import type { Authentication } from '../types.js'
 import type {

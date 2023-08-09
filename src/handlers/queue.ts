@@ -1,4 +1,4 @@
-import { setOrigin } from '../utils/action.js'
+import { setOrigin } from '../utils/response.js'
 import { setAuthorizedMark } from '../service/utils/authAction.js'
 import type { Action, ActionHandlerResources, Response } from '../types.js'
 

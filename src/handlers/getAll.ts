@@ -1,4 +1,4 @@
-import { createErrorResponse, setOrigin } from '../utils/action.js'
+import { createErrorResponse, setOrigin } from '../utils/response.js'
 import { isObject, isTypedData } from '../utils/is.js'
 import type {
   Action,

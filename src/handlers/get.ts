@@ -2,10 +2,10 @@ import debugLib from 'debug'
 import pLimit from 'p-limit'
 import {
   createErrorResponse,
+  createUnknownServiceError,
   combineResponses,
   setOrigin,
-} from '../utils/action.js'
-import createUnknownServiceError from '../utils/createUnknownServiceError.js'
+} from '../utils/response.js'
 import mutateAndSend from '../utils/mutateAndSend.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'
 import type Service from '../service/Service.js'

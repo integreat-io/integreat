@@ -589,10 +589,10 @@ test('should return failResponse when validation fails for individual member end
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
   const expected = {
-    status: 'error', // TODO: We want 'badrequest' here
+    status: 'badrequest',
     error:
-      'One or more of the requests for ids ent1,ent2,ent3 failed with the following error(s): [badrequest] We need a source! | [badrequest] We need a source! | [badrequest] We need a source!', // TODO: This is not the error message we want here
-    origin: 'handler:GET', // TODO: We want origin to be 'validate:service:entries:endpoint:member' here
+      'One or more of the requests for ids ent1,ent2,ent3 failed with the following error(s): We need a source!',
+    origin: 'validate:service:entries:endpoint',
   }
 
   const ret = await get(action, { ...handlerResources, getService })

@@ -1,7 +1,7 @@
 import util from 'util'
 import getHandler from './get.js'
 import getField from '../utils/getField.js'
-import { createErrorResponse } from '../utils/action.js'
+import { createErrorResponse } from '../utils/response.js'
 import { getFirstIfArray } from '../utils/array.js'
 import type {
   Action,
