@@ -1365,15 +1365,15 @@ common codes:
 
 An ident in Integreat is basically an id unique to one participant in the
 security scheme. It is represented by an object that may also have other
-properties to describe the ident's permissions, or to make it possible to match
-to identities in other services.
+properties to describe the ident's access, like `roles`, or to make it possible
+to match to identities in other services.
 
 Example ident:
 
 ```javascript
 {
   id: 'ident1',
-  tokens: ['facebook|12345', 'twitter|23456'],
+  tokens: ['auth0|12345', 'github|23456'],
   roles: ['admin']
 }
 ```
@@ -1385,7 +1385,7 @@ Example ident:
   services.
 - `tokens`: A list of values that may identify this ident in other services. For
   example, an api that uses Twitter OAuth to identify its users, may provide
-  the `'twitter|23456'` token in the example above, which will be replaced with
+  the `'github|23456'` token in the example above, which will be replaced with
   this ident when it enters Integreat.
 - `roles`: A list of roles or permissions given to this ident. The roles are
   custom defined per setup, and may be mapped to roles from other systems. When
@@ -1922,7 +1922,7 @@ actions like this:
   type: 'GET',
   payload: {
     type: 'user',
-    tokens: 'twitter|23456'
+    tokens: 'github|23456'
   }
 }
 ```
