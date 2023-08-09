@@ -136,6 +136,45 @@ function createServices(
     .reduce(indexById, {} as Record<string, Service>)
 }
 
+function setupServicesAndDispatch(
+  defs: Definitions,
+  resources: Resources,
+  schemas: Map<string, Schema>,
+  middlewareForDispatch: Middleware[],
+  middlewareForService: Middleware[],
+  emit: (eventName: string | symbol, ...args: unknown[]) => boolean
+) {
+  const mapOptions = createMapOptions(
+    schemas,
+    defs.mutations,
+    resources.transformers,
+    defs.dictionaries
+  )
+  const services = createServices(
+    defs,
+    resources,
+    schemas,
+    mapOptions,
+    middlewareForService,
+    emit
+  )
+
+  const jobs = prepareJobs(defs.jobs || [], mapOptions)
+  const dispatch = createDispatch({
+    schemas,
+    services,
+    handlers: combineHandlers(resources.handlers || {}, jobs),
+    middleware: middlewareForDispatch,
+    options: handlerOptionsFromDefs(defs),
+  })
+  const dispatchScheduled = createDispatchScheduled(
+    dispatch,
+    [...jobs.values()].filter(isJobWithSchedule)
+  )
+
+  return { services, dispatch, dispatchScheduled }
+}
+
 export default class Instance extends EventEmitter {
   id?: string
   services: Record<string, Service>
@@ -165,33 +204,18 @@ export default class Instance extends EventEmitter {
     this.queueService = defs.queueService
     this.schemas = prepareSchemas(defs.schemas)
 
-    const mapOptions = createMapOptions(
-      this.schemas,
-      defs.mutations,
-      resources.transformers,
-      defs.dictionaries
-    )
-    this.services = createServices(
+    const { services, dispatch, dispatchScheduled } = setupServicesAndDispatch(
       defs,
       resources,
       this.schemas,
-      mapOptions,
+      middlewareForDispatch,
       middlewareForService,
       this.emit.bind(this)
     )
 
-    const jobs = prepareJobs(defs.jobs || [], mapOptions)
-    this.dispatch = createDispatch({
-      schemas: this.schemas,
-      services: this.services,
-      handlers: combineHandlers(resources.handlers || {}, jobs),
-      middleware: middlewareForDispatch,
-      options: handlerOptionsFromDefs(defs),
-    })
-    this.dispatchScheduled = createDispatchScheduled(
-      this.dispatch,
-      [...jobs.values()].filter(isJobWithSchedule)
-    )
+    this.services = services
+    this.dispatch = dispatch
+    this.dispatchScheduled = dispatchScheduled
   }
 
   async listen(): Promise<Response> {
