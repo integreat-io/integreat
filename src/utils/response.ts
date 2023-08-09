@@ -38,6 +38,34 @@ export function createUnknownServiceError(
   return createErrorResponse(error, `handler:${actionType}`)
 }
 
+const getCombinedStatus = (responses: Response[]) =>
+  responses
+    .map((response) => response.status)
+    .reduce((combined, status) => (combined === status ? combined : 'error'))
+
+function getCombinedErrors(responses: Response[]) {
+  const errors = responses
+    .filter((response) => response.error || isErrorResponse(response))
+    .map((response) => `[${response.status}] ${response.error}`)
+    .filter(isDuplicate)
+  return errors.length === 1 ? responses[0].error : errors.join(' | ')
+}
+
+const getCombinedWarnings = (responses: Response[]) =>
+  responses
+    .map((response) => response.warning)
+    .filter(isNotNullOrUndefined)
+    .filter(isDuplicate)
+    .join(' | ')
+
+function getCombinedOrigins(responses: Response[]) {
+  const origins = responses
+    .map((response) => response.origin)
+    .filter(isNotNullOrUndefined)
+    .filter(isDuplicate)
+  return origins.length === 1 ? origins[0] : undefined
+}
+
 /**
  * Combine several error responses into one.
  */
@@ -45,24 +73,10 @@ export function combineResponses(responses: Response[]) {
   if (responses.length < 2) {
     return responses[0] // Will yield undefined if no responses
   } else {
-    const status = responses
-      .map((response) => response.status)
-      .reduce((combined, status) => (combined === status ? combined : 'error'))
-    const errors = responses
-      .filter((response) => response.error || isErrorResponse(response))
-      .map((response) => `[${response.status}] ${response.error}`)
-      .filter(isDuplicate)
-    const error = errors.length === 1 ? responses[0].error : errors.join(' | ')
-    const warning = responses
-      .map((response) => response.warning)
-      .filter(isNotNullOrUndefined)
-      .filter(isDuplicate)
-      .join(' | ')
-    const origins = responses
-      .map((response) => response.origin)
-      .filter(isNotNullOrUndefined)
-      .filter(isDuplicate)
-    const origin = origins.length === 1 ? origins[0] : undefined
+    const status = getCombinedStatus(responses)
+    const error = getCombinedErrors(responses)
+    const warning = getCombinedWarnings(responses)
+    const origin = getCombinedOrigins(responses)
     return {
       status,
       ...(error && { error }),
@@ -71,6 +85,17 @@ export function combineResponses(responses: Response[]) {
     }
   }
 }
+
+const generateOrigin = (
+  origin: string,
+  responseOrigin: string | undefined,
+  doPrefix: boolean
+) =>
+  responseOrigin
+    ? doPrefix
+      ? `${origin}:${responseOrigin}` // Prefix existing origin
+      : responseOrigin // Keep existing origin as-is
+    : origin
 
 /**
  * Set the given origin on a response if the response status is not ok and there
@@ -87,9 +112,5 @@ export const setOrigin = (
     ? response
     : {
         ...response,
-        origin: response.origin
-          ? doPrefix
-            ? `${origin}:${response.origin}` // Prefix existing origin
-            : response.origin // Keep existing origin as-is
-          : origin,
+        origin: generateOrigin(origin, response.origin, doPrefix),
       }

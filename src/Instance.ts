@@ -22,8 +22,12 @@ import type {
   Response,
   Adapter,
   Authenticator,
+  MapOptions,
+  ActionHandler,
 } from './types.js'
 import type { AuthDef } from './service/types.js'
+import type { SchemaDef } from './schema/types.js'
+import type { JobDef } from './jobs/types.js'
 
 export const setUpAuth = (authenticators?: Record<string, Authenticator>) =>
   function setUpAuth(def: AuthDef) {
@@ -54,6 +58,84 @@ const setAdapterIds = (adapters?: Record<string, Adapter>) =>
 
 const isJobWithSchedule = (job: Job) => !!job.schedule
 
+function prepareSchemas(schemaDefs: SchemaDef[]) {
+  const schemas = new Map<string, Schema>()
+  schemaDefs.forEach((def) => {
+    schemas.set(def.id, new Schema(def, schemas))
+  })
+  return schemas
+}
+
+const setIdOnAuthenticators = (
+  authenticators: Record<string, Authenticator>
+): Record<string, Authenticator> =>
+  Object.fromEntries(
+    Object.entries(authenticators ?? {}).map(([id, auth]) => [
+      id,
+      { ...auth, id },
+    ])
+  )
+
+const createAuthObjects = (
+  authDefs: AuthDef[],
+  authenticators: Record<string, Authenticator>
+) =>
+  authDefs
+    .map(setUpAuth(authenticators))
+    .reduce(indexById, {} as Record<string, Auth>)
+
+function prepareJobs(jobDefs: JobDef[], mapOptions: MapOptions) {
+  const jobs = new Map<string, Job>()
+  ensureArray(jobDefs).forEach((job) => {
+    if (typeof job.id === 'string') {
+      jobs.set(job.id, new Job(job, mapOptions))
+    }
+  })
+  return jobs
+}
+
+const combineHandlers = (
+  handlers: Record<string, ActionHandler>,
+  jobs: Map<string, Job>
+) => ({
+  ...builtinHandlers,
+  ...handlers,
+  RUN: runFn(jobs), // Set `RUN` handler here to include jobs
+})
+
+const handlerOptionsFromDefs = (defs: Definitions) => ({
+  identConfig: defs.identConfig,
+  queueService: defs.queueService,
+})
+
+function createServices(
+  defs: Definitions,
+  resources: Resources,
+  schemas: Map<string, Schema>,
+  mapOptions: MapOptions,
+  middlewareForService: Middleware[],
+  emit: (eventName: string | symbol, ...args: unknown[]) => boolean
+) {
+  const authenticators = setIdOnAuthenticators(resources.authenticators || {})
+  const auths = createAuthObjects(defs.auths || [], authenticators)
+
+  return defs.services
+    .map(
+      (def) =>
+        new Service(def, {
+          transporters: resources.transporters,
+          adapters: setAdapterIds(resources.adapters),
+          authenticators: authenticators,
+          auths,
+          schemas,
+          mapOptions,
+          middleware: middlewareForService,
+          emit,
+        })
+    )
+    .reduce(indexById, {} as Record<string, Service>)
+}
+
 export default class Instance extends EventEmitter {
   id?: string
   services: Record<string, Service>
@@ -78,87 +160,38 @@ export default class Instance extends EventEmitter {
       )
     }
 
-    // Prepare schemas
-    const schemas = new Map<string, Schema>()
-    defs.schemas.forEach((schema) => {
-      schemas.set(schema.id, new Schema(schema, schemas))
-    })
+    this.id = defs.id
+    this.identType = defs.identConfig?.type
+    this.queueService = defs.queueService
+    this.schemas = prepareSchemas(defs.schemas)
 
-    // Prepare map options
     const mapOptions = createMapOptions(
-      schemas,
+      this.schemas,
       defs.mutations,
       resources.transformers,
       defs.dictionaries
     )
-
-    // Set id on all authenticators
-    const authenticatorsWithId = Object.fromEntries(
-      Object.entries(resources.authenticators ?? {}).map(([id, auth]) => [
-        id,
-        { ...auth, id },
-      ])
+    this.services = createServices(
+      defs,
+      resources,
+      this.schemas,
+      mapOptions,
+      middlewareForService,
+      this.emit.bind(this)
     )
 
-    // Setup auths object from auth defs
-    const auths = Array.isArray(defs.auths)
-      ? defs.auths
-          .map(setUpAuth(authenticatorsWithId))
-          .reduce(indexById, {} as Record<string, Auth>)
-      : undefined
-
-    // Prepare services
-    const services = defs.services
-      .map(
-        (def) =>
-          new Service(def, {
-            transporters: resources.transporters,
-            adapters: setAdapterIds(resources.adapters),
-            authenticators: authenticatorsWithId,
-            auths,
-            schemas,
-            mapOptions,
-            middleware: middlewareForService,
-            emit: this.emit.bind(this),
-          })
-      )
-      .reduce(indexById, {} as Record<string, Service>)
-
-    // Prepare jobs
-    const jobs = new Map<string, Job>()
-    ensureArray(defs.jobs).forEach((job) => {
-      if (typeof job.id === 'string') {
-        jobs.set(job.id, new Job(job, mapOptions))
-      }
-    })
-
-    // Create dispatch
-    const dispatch = createDispatch({
-      schemas,
-      services,
-      handlers: {
-        ...builtinHandlers,
-        ...resources.handlers,
-        RUN: runFn(jobs),
-      }, // Set `RUN` handler here to include jobs
+    const jobs = prepareJobs(defs.jobs || [], mapOptions)
+    this.dispatch = createDispatch({
+      schemas: this.schemas,
+      services: this.services,
+      handlers: combineHandlers(resources.handlers || {}, jobs),
       middleware: middlewareForDispatch,
-      options: {
-        identConfig: defs.identConfig,
-        queueService: defs.queueService,
-      },
+      options: handlerOptionsFromDefs(defs),
     })
-
-    // Prepare scheduled actions
-    const scheduled = [...jobs.values()].filter(isJobWithSchedule)
-    const dispatchScheduled = createDispatchScheduled(dispatch, scheduled)
-
-    this.id = defs.id
-    this.services = services
-    this.schemas = schemas
-    this.identType = defs.identConfig?.type
-    this.queueService = defs.queueService
-    this.dispatch = dispatch
-    this.dispatchScheduled = dispatchScheduled
+    this.dispatchScheduled = createDispatchScheduled(
+      this.dispatch,
+      [...jobs.values()].filter(isJobWithSchedule)
+    )
   }
 
   async listen(): Promise<Response> {
