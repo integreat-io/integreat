@@ -357,7 +357,7 @@ test('should return auth object from authenticator supporting auth keys', async 
   t.deepEqual(ret, expected)
 })
 
-test('should return null for unkown auth method', async (t) => {
+test('should return null for unknown auth method', async (t) => {
   const strangeAdapter = { ...transporter, defaultAuthAsMethod: 'asUnknown' }
   const auth = new Auth(id, authenticator, options)
   const expected = null
