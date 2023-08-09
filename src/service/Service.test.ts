@@ -455,6 +455,7 @@ test('preflightAction should set authorizedByIntegreat (symbol) flag', async (t)
     {
       mapOptions,
       schemas,
+      auths,
       ...jsonResources,
     }
   )
@@ -481,6 +482,7 @@ test('preflightAction should authorize action without type', async (t) => {
     {
       mapOptions,
       schemas,
+      auths,
       ...jsonResources,
     }
   )
@@ -507,6 +509,7 @@ test('preflightAction should refuse based on schema', async (t) => {
     {
       mapOptions,
       schemas,
+      auths,
       ...jsonResources,
     }
   )
@@ -543,6 +546,7 @@ test('preflightAction should authorize when no auth is specified', async (t) => 
     {
       mapOptions,
       schemas,
+      auths,
       ...jsonResources,
     }
   )
@@ -569,6 +573,7 @@ test('preflightAction should not touch action when endpoint validation succeeds'
     {
       mapOptions,
       schemas,
+      auths,
       ...jsonResources,
     }
   )
@@ -597,6 +602,7 @@ test('preflightAction should set error response when validate fails', async (t) 
     {
       mapOptions,
       schemas,
+      auths,
       ...jsonResources,
     }
   )
@@ -630,6 +636,7 @@ test('preflightAction should authorize before validation', async (t) => {
     {
       mapOptions,
       schemas,
+      auths,
       ...jsonResources,
     }
   )
@@ -652,6 +659,78 @@ test('preflightAction should authorize before validation', async (t) => {
   const ret = await service.preflightAction(action, endpoint!)
 
   t.deepEqual(ret.response, expectedResponse)
+  t.is(ret.type, 'GET')
+  t.deepEqual(ret.payload, action.payload)
+})
+
+test('preflightAction should make auth available to mutations when authInData is true', async (t) => {
+  const authInData = true
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'granting',
+      options: { transporter: { authInData } },
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      auths,
+      ...jsonResources,
+    }
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'account' },
+    meta: { ident: { id: 'johnf', roles: ['admin'] } },
+  }
+  const expectedAuth = {
+    Authorization: 'Bearer t0k3n',
+  }
+
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.preflightAction(action, endpoint!)
+
+  t.is(ret.response?.status, undefined, ret.response?.error)
+  t.deepEqual(ret.meta?.auth, expectedAuth)
+  t.is(ret.type, 'GET')
+  t.deepEqual(ret.payload, action.payload)
+  t.true(isAuthorizedAction(ret))
+})
+
+test('preflightAction should respond with error when authInData is true and auth fails', async (t) => {
+  const authInData = true
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'refusing',
+      options: { transporter: { authInData } },
+      endpoints,
+    },
+    {
+      mapOptions,
+      schemas,
+      auths,
+      ...jsonResources,
+    }
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'account' },
+    meta: { ident: { id: 'johnf', roles: ['admin'] } },
+  }
+
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.preflightAction(action, endpoint!)
+
+  t.is(ret.response?.status, 'noaccess', ret.response?.error)
+  t.is(
+    ret.response?.error,
+    "Authentication attempt for auth 'refusing' was refused."
+  )
+  t.is(ret.meta?.auth, undefined)
   t.is(ret.type, 'GET')
   t.deepEqual(ret.payload, action.payload)
 })
@@ -892,7 +971,7 @@ test('send should fail when not authorized', async (t) => {
   )
   const expected = {
     status: 'autherror',
-    error: 'Not authorized',
+    error: 'Action has not been authorized by Integreat',
     origin: 'internal:service:entries',
   }
 
@@ -947,6 +1026,67 @@ test('send should provide auth and options', async (t) => {
     meta: {
       ...action.meta,
       auth: { Authorization: 'Bearer t0k3n' },
+      options: {
+        uri: 'http://some.api/1.0',
+        secret: 's3cr3t',
+      },
+    },
+  }
+
+  const ret = await service.send(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(send.callCount, 1)
+  t.deepEqual(send.args[0][0], expected)
+})
+
+test('send should not authorize when action has already got meta.auth', async (t) => {
+  const send = sinon.stub().resolves({ status: 'ok', data: {} })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: { ...jsonResources.transporters!.http, send },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [
+        {
+          options: { uri: 'http://some.api/1.0', value: 'Value from endpoint' },
+        },
+      ],
+      options: {
+        value: 'Value from service',
+        transporter: { secret: 's3cr3t' },
+        adapters: { json: { someFlag: true } },
+      },
+      transporter: 'http',
+      auth: 'granting',
+    },
+    resources
+  )
+  const action = setAuthorizedMark({
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    meta: {
+      ident: { id: 'johnf' },
+      options: {
+        uri: 'http://some.api/1.0',
+        secret: 's3cr3t',
+      },
+      auth: { token: 'ourT0k3n' },
+    },
+  })
+  const expected = {
+    ...action,
+    meta: {
+      ...action.meta,
+      auth: { token: 'ourT0k3n' },
       options: {
         uri: 'http://some.api/1.0',
         secret: 's3cr3t',

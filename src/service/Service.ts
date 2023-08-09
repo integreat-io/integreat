@@ -164,16 +164,28 @@ export default class Service {
    * should be run through the response mutation, though.
    */
   async preflightAction(action: Action, endpoint: Endpoint): Promise<Action> {
-    const authorized = authorizeAction(this.#schemas, !!this.#auth)(action)
-    if (authorized.response?.status) {
-      return authorized
+    let preparedAction = authorizeAction(this.#schemas, !!this.#auth)(action)
+    if (preparedAction.response?.status) {
+      return preparedAction
     }
 
-    const validateResponse = await endpoint.validateAction(authorized)
+    const validateResponse = await endpoint.validateAction(preparedAction)
     if (validateResponse) {
-      return setResponseOnAction(authorized, validateResponse)
+      return setResponseOnAction(action, validateResponse)
     }
-    return authorized
+
+    if (endpoint.options?.transporter.authInData && this.#auth) {
+      await this.#auth.authenticate(preparedAction)
+      preparedAction = this.#auth.applyToAction(
+        preparedAction,
+        this.#transporter
+      )
+      if (preparedAction.response?.status) {
+        return setResponseOnAction(action, preparedAction.response)
+      }
+    }
+
+    return preparedAction
   }
 
   /**
@@ -322,14 +334,14 @@ export default class Service {
 
     if (!isAuthorizedAction(action)) {
       return createErrorResponse(
-        'Not authorized',
+        'Action has not been authorized by Integreat',
         `internal:service:${this.id}`,
         'autherror'
       )
     }
 
     // When an authentication is defined: Authenticate and apply result to action
-    if (this.#auth) {
+    if (this.#auth && !action.meta?.auth) {
       await this.#auth.authenticate(action)
       action = this.#auth.applyToAction(action, this.#transporter)
       if (action.response?.status) {

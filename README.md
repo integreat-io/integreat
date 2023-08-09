@@ -651,6 +651,22 @@ assigning it an authenticator with those specific options. Another service may
 use the same authenticator, but with different options, and you would set this
 up with a different service authentication definition.
 
+Authentication for outgoing actions are done when sending the action. When
+authenticated, an auth object is retrieved with the auth-as method specified on
+the transporter (e.g. `asHttpHeaders` for the http transporter), or on the
+`overrideAuthAsMethod` in [auth options](#service-authentication) if set. The
+auth object is passed to the transporter on the action `meta.auth` prop. It is
+applied just before sending it, though, so it will be available to service
+middleware, but not to the mutation pipeline. This is done to expose credentials
+in as few places as possible. If you however _want_ to have the auth object in
+mutations, set `authInData` to `true` on the service or endpoint options, and
+authentication will be done in the `preflightAction` step instead, making it
+available on `meta.auth` throughout the entire mutation pipeline.
+
+For incoming actions, authentication is done when a listening action calls the
+`authenticate()` callback. The `validate()` method on the authenticator is used
+here, which will provide the transporter with an authorized ident.
+
 Available authenticators:
 
 - `http`: Supports http native authentications, like `Basic` and `Bearer`. It's
