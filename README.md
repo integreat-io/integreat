@@ -677,7 +677,11 @@ Available authenticators:
   `identId` is provided. This is built into Integreat.
 - `options`: Will pass on the options as authentication, so whatever you provide
   here is the authentication. What options to provide, then, is depending on
-  what the relevant transporter requires. This is built into Integreat.
+  what the relevant transporter requires. For outgoing actions, the options are
+  provided as is. Incoming action are validated agains the values given in the
+  options (the keys may be dot notation paths in this case, and `identId` is
+  excluded). An ident with the `identId` from the options as `id`, is returned
+  if the action matches. This is built into Integreat.
 - `token`: A simple way of authenticating with a given token. For HTTP requests,
   the token will be provided as a `Authorization` header, and a configurable
   prefix like `Basic` or `Bearer`. This is built into Integreat.
