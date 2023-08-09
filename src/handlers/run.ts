@@ -1,4 +1,4 @@
-import { createErrorResponse } from '../utils/action.js'
+import { createErrorResponse } from '../utils/response.js'
 import type { Action, ActionHandlerResources, Response } from '../types.js'
 import type Job from '../jobs/Job.js'
 

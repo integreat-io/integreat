@@ -1,5 +1,5 @@
 import debugLib from 'debug'
-import { createErrorResponse } from '../utils/action.js'
+import { createErrorResponse } from '../utils/response.js'
 import setHandler from './set.js'
 import { generateMetaId } from './getMeta.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'

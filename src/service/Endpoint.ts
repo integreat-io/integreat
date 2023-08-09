@@ -5,7 +5,7 @@ import isMatch from './utils/matchEnpoints.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
 import { ensureArray } from '../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../utils/is.js'
-import { combineResponses, setOrigin } from '../utils/action.js'
+import { combineResponses, setOrigin } from '../utils/response.js'
 import prepareValidator, { ResponsesAndBreak } from '../utils/validation.js'
 import type {
   TransformDefinition,

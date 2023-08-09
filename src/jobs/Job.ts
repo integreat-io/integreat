@@ -6,7 +6,7 @@ import Step, {
   mutateResponse,
 } from './Step.js'
 import { isObject, isOkResponse, isErrorResponse } from '../utils/is.js'
-import { setOrigin } from '../utils/action.js'
+import { setOrigin } from '../utils/response.js'
 import type { DataMapper, InitialState } from 'map-transform/types.js'
 import type {
   Action,

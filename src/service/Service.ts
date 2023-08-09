@@ -6,12 +6,11 @@ import { resolveAuth, resolveIncomingAuth } from './utils/resolveAuth.js'
 import { castPayload, castResponse, getCastFn } from './utils/cast.js'
 import {
   setErrorOnAction,
-  createErrorResponse,
-  setOrigin,
   setOriginOnAction,
   setOptionsOnAction,
   setResponseOnAction,
 } from '../utils/action.js'
+import { createErrorResponse, setOrigin } from '../utils/response.js'
 import { prepareOptions, mergeOptions } from './utils/options.js'
 import Connection from './Connection.js'
 import { lookupById, lookupByIds } from '../utils/indexUtils.js'

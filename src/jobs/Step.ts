@@ -1,12 +1,8 @@
 import mapTransform from 'map-transform'
 import { ensureArray } from '../utils/array.js'
 import { isObject, isOkResponse } from '../utils/is.js'
-import {
-  combineResponses,
-  setDataOnActionPayload,
-  setResponseOnAction,
-  setOrigin,
-} from '../utils/action.js'
+import { setDataOnActionPayload, setResponseOnAction } from '../utils/action.js'
+import { combineResponses, setOrigin } from '../utils/response.js'
 import validateFilters from '../utils/validateFilters.js'
 import prepareValidator from '../utils/validation.js'
 import type {
