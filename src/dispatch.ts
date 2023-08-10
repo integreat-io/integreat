@@ -250,7 +250,7 @@ export default function createDispatch({
 
       return cleanUpResponseAndSetAccessAndOrigin(
         await mutateIncomingResponse(
-          setResponseOnAction(rawAction, response),
+          setResponseOnAction(action, response),
           incomingService,
           incomingEndpoint
         ),

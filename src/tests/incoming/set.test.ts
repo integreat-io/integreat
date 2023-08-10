@@ -73,7 +73,7 @@ test('should mutate incoming action data and response data', async (t) => {
     data: JSON.stringify(expectedResponseData),
     headers: { 'Content-Type': 'application/json' },
     access: { ident: { root: true } },
-    params: { flag: true },
+    params: { flag: true, author: 'johnf' },
   }
 
   const great = Integreat.create(defs, resources)

@@ -30,6 +30,7 @@ export default {
             data: ['response.data', { $apply: 'api-entry' }],
             params: {
               flag: 'meta.options.someFlag',
+              author: 'payload.data.author.id',
             },
           },
         },
