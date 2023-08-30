@@ -68,7 +68,11 @@ test('should delete items from service', async (t) => {
         match: { action: 'DELETE' },
         mutation: [
           {
+            $direction: 'to',
             'payload.data': ['payload.data.docs[]', { $apply: 'entry' }],
+          },
+          {
+            $direction: 'from',
             'response.data': { $value: null }, // Just remove response data now, so we don't have to expect it all
           },
         ],
@@ -114,7 +118,11 @@ test('should delete one item from service', async (t) => {
         match: { action: 'DELETE' },
         mutation: [
           {
+            $direction: 'to',
             'payload.data': ['payload.data.doc', { $apply: 'entry' }],
+          },
+          {
+            $direction: 'from',
             'response.data': { $value: null }, // Just remove response data now, so we don't have to expect it all
           },
         ],

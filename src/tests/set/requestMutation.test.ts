@@ -62,7 +62,7 @@ test('should set data with endpoint mutation', async (t) => {
             footnote: { $transform: 'fixed', value: '' },
             meta: [
               { $flip: true, datatype: 'payload.type' },
-              { $transform: 'json', $direction: 'rev' },
+              { $transform: 'json', $direction: 'to' },
             ],
           },
         },

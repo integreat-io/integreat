@@ -167,7 +167,7 @@ test('should complete ident with other prop keys', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const identConfig = {
-    type: 'entry',
+    type: 'entry', // This does not make any sense, but it is just for testing
     props: {
       id: 'author',
       roles: 'sections',
