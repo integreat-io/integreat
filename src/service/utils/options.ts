@@ -1,5 +1,5 @@
 /* eslint-disable security/detect-object-injection */
-import deepClone from '../../utils/deepClone.js'
+import { deepClone } from '../../utils/deep.js'
 import type {
   ServiceOptions,
   PreparedOptions,

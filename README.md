@@ -1481,45 +1481,6 @@ The action ...
 
 See [the section on pagination](#pagination) for more on the paging properties.
 
-#### `GET_META`
-
-Get metadata for a service. See
-[the section on metadata](#configuring-service-metadata) for how to set this up.
-
-The `data` of the response from this aciton contains the `service` (the service
-id) and `meta` object with the metadata set as properties.
-
-Example `GET_META` action:
-
-```javascript
-{
-  type: 'GET_META',
-  payload: {
-    service: 'entries',
-    keys: ['lastSyncedAt', 'status']
-  }
-}
-```
-
-This will return data in the following form:
-
-```javascript
-{
-  status: 'ok',
-  data: {
-    service: 'entries',
-    meta: {
-      lastSyncedAt: '2017-08-19T17:40:31.861Z',
-      status: 'ready'
-    }
-  }
-}
-```
-
-If the action has no `keys`, all metadata set on the service will be retrieved.
-The `keys` property may be an array of keys to retrieve several in one request,
-or a single key.
-
 #### `SET`
 
 Send data to a service. The data to send is provided in the payload `data`
@@ -1546,32 +1507,53 @@ Example `SET` action:
 }
 ```
 
-#### `SET_META`
+#### `UPDATE`
 
-Set metadata on a service. The payload should contain the `service` to get
-metadata for (the service id), and a `meta` object, with all metadata to set as
-properties.
+Update data on a service. The idea is that while `SET` is used for setting data
+to a service – with no regard to what is actually set in the service already,
+`UPDATE` is used for updating data, possibly not overwriting all properties.
+If `UPDATE` provides data with only a few properties, the expectation is that
+only these properties will be updated in the service. The `UPDATE` action is
+also expected to fail when the item being updated does not exist, unlike `SET`,
+that will usually create it.
 
-Any data coming back from the service, will be provided on `response.data` and
-may be mutated through service endpoint mutations, just as for [`GET`](#get)
-actions.
+Note that the actual behavior is up to how you set up the service and what the
+service itself supports, but the `UPDATE` action will provide you with a way of
+doing this.
 
-Example `SET_META` action:
+An `UPDATE` action may be handled in one of two ways, where the first is just to
+run it against a service endpoint, much like a `SET` action (except it will
+match different endpoints). Data provided in the payload `data` is mutated and
+sent to the service according to the endpoint configuration, and any data coming
+back, will be provided on `response.data` and mutated.
+
+What makes `UPDATE` different from `SET`, though, is the second way we may
+handle `UPDATE` actions. Whenever there is no maching `UPDATE` endpoint,
+Integreat will run the action as a `GET` and then a `SET`, to mimick and update.
+The `GET` action will have the same `payload` and `meta` as the original action.
+The same goes for the `SET` action, but the `payload.data` will be the data
+returned from `GET` merged with the data on the original `UPDATE` action. This
+will be a deep merge, prioritizing properties from the `UPDATE` action. A
+requirement for this to work as expected, is that the data is casted to the same
+schema, but that should normally be the case when you use `payload.type` and
+don't set `allowRawRequest` or `allowRawResponse` on the endpoint.
+
+When a `GET` fail, the `UPDATE` will fail with the same status and error.
+
+Example `UPDATE` action:
 
 ```javascript
 {
-  type: 'SET_META',
+  type: 'UPDATE',
   payload: {
-    service: 'entries',
-    meta: {
-      lastSyncedAt: Date.now()
-    }
+    type: 'article',
+    data: [
+      { id: '12345', $type: 'article', title: 'First article' },
+      { id: '12346', $type: 'article', title: 'Second article' }
+    ]
   }
 }
 ```
-
-Note that the service must be set up to handle metadata. See
-[Configuring metadata](#configuring-service-metadata) for more.
 
 #### `DELETE` / `DEL`
 
@@ -1612,6 +1594,72 @@ You may also `DELETE` one item like this:
 ```
 
 `DEL` is a shorthand for `DELETE`.
+
+#### `GET_META`
+
+Get metadata for a service. See
+[the section on metadata](#configuring-service-metadata) for how to set this up.
+
+The `data` of the response from this aciton contains the `service` (the service
+id) and `meta` object with the metadata set as properties.
+
+Example `GET_META` action:
+
+```javascript
+{
+  type: 'GET_META',
+  payload: {
+    service: 'entries',
+    keys: ['lastSyncedAt', 'status']
+  }
+}
+```
+
+This will return data in the following form:
+
+```javascript
+{
+  status: 'ok',
+  data: {
+    service: 'entries',
+    meta: {
+      lastSyncedAt: '2017-08-19T17:40:31.861Z',
+      status: 'ready'
+    }
+  }
+}
+```
+
+If the action has no `keys`, all metadata set on the service will be retrieved.
+The `keys` property may be an array of keys to retrieve several in one request,
+or a single key.
+
+#### `SET_META`
+
+Set metadata on a service. The payload should contain the `service` to get
+metadata for (the service id), and a `meta` object, with all metadata to set as
+properties.
+
+Any data coming back from the service, will be provided on `response.data` and
+may be mutated through service endpoint mutations, just as for [`GET`](#get)
+actions.
+
+Example `SET_META` action:
+
+```javascript
+{
+  type: 'SET_META',
+  payload: {
+    service: 'entries',
+    meta: {
+      lastSyncedAt: Date.now()
+    }
+  }
+}
+```
+
+Note that the service must be set up to handle metadata. See
+[Configuring metadata](#configuring-service-metadata) for more.
 
 #### `RUN`
 

@@ -15,7 +15,13 @@ const extractType = (action: Action, data?: unknown) =>
 const extractId = (action: Action, data?: unknown) =>
   action.payload.id || (isTypedData(data) && data.id) || undefined
 
-const setIdAndTypeOnAction = (
+export function getTypeAndId(action: Action, data: unknown) {
+  const type = extractType(action, data)
+  const id = extractId(action, data)
+  return { type, id }
+}
+
+export const setIdAndTypeOnAction = (
   action: Action,
   id?: string | string[],
   type?: string | string[]
@@ -37,9 +43,7 @@ export default async function set(
     endpoint: endpointId,
   } = action.payload
 
-  const type = extractType(action, data)
-  const id = extractId(action, data)
-
+  const { type, id } = getTypeAndId(action, data)
   const service = getService(type, serviceId)
   if (!service) {
     return createUnknownServiceError(type, serviceId, 'SET')

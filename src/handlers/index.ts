@@ -10,6 +10,7 @@ import SYNC from './sync.js'
 import EXPIRE from './expire.js'
 import QUEUE from './queue.js'
 import SERVICE from './service.js'
+import UPDATE from './update.js'
 import type { ActionHandler } from '../types.js'
 
 export const QUEUE_SYMBOL = Symbol('<internal queue>')
@@ -28,6 +29,7 @@ const handlers: Record<string | symbol, ActionHandler> = {
   EXPIRE,
   [QUEUE_SYMBOL]: QUEUE,
   SERVICE,
+  UPDATE,
 }
 
 export default handlers
