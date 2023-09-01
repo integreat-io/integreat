@@ -1724,6 +1724,13 @@ or set to the `to` service, you may provide a params object for the `from` or
 different action types than `GET` and `SET`, by setting the `action` prop on
 the `from` or `to` objects respectively.
 
+By default, `SYNC` will send every item gotten from the `from` service to the
+`to` service. You can split an array of items into several sets, by setting the
+`maxPerSet` on the payload object, to a max number of items per set. If you need
+to have one set per individual item, you may set `setMember` to `true` on the
+payload object. (This is almost the same as setting `maxPerSet` to `1`, except
+it won't be wrapped in an array.)
+
 > There are more options than these, and the documentation will be updated to
 > include them later.
 

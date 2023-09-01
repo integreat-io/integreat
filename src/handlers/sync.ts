@@ -50,6 +50,7 @@ interface SyncParams extends Payload {
   alwaysSet?: boolean
   setLastSyncedAtFromData?: boolean
   maxPerSet?: number
+  setMember?: boolean
 }
 
 interface MetaData {
@@ -104,28 +105,32 @@ const createSetAction = (
 async function setData(
   dispatch: HandlerDispatch,
   data: TypedData[],
-  { alwaysSet = false, maxPerSet, ...params }: ActionParams,
+  { alwaysSet = false, maxPerSet, setMember, ...params }: ActionParams,
   doQueueSet: boolean,
   meta?: Meta
 ): Promise<Response> {
   let index = data.length === 0 && alwaysSet ? -1 : 0 // Trick to always dispatch SET for `alwaysSet`
-  const maxCount = castNumber(maxPerSet) || Number.MAX_SAFE_INTEGER
+  const maxCount = setMember
+    ? 1 // `setMember` is true, so we only want to set one item at a time
+    : castNumber(maxPerSet) || Number.MAX_SAFE_INTEGER
 
   while (index < data.length) {
     const response = await dispatch(
       createSetAction(
-        data.slice(index, index + maxCount),
+        setMember ? data[index] : data.slice(index, index + maxCount), // eslint-disable-line security/detect-object-injection
         params,
         doQueueSet,
         meta
       )
     )
     if (!response?.status || !['ok', 'queued'].includes(response.status)) {
+      const progressMessage =
+        index > 0 ? `, but the first ${index} items where set successfully` : ''
       return {
         status: response?.status || 'error',
-        error: `SYNC: Could not set data. Set ${index} of ${
-          data.length
-        } items. ${response?.error || ''}`.trim(),
+        error: `SYNC: Setting data failed${progressMessage}. ${
+          response?.error || ''
+        }`.trim(),
       }
     }
     index += maxCount
@@ -333,11 +338,12 @@ function generateToParams(
   type: string | string[],
   { payload }: Action
 ): ActionParams {
-  const { to, maxPerSet, alwaysSet }: SyncParams = payload
+  const { to, maxPerSet, setMember, alwaysSet }: SyncParams = payload
   return {
     type,
     alwaysSet,
     maxPerSet,
+    setMember,
     ...generateSetDates(fromParams, payload, 'updated'),
     ...generateSetDates(fromParams, payload, 'created'),
     ...paramsAsObject(to),

@@ -186,6 +186,60 @@ test('should split in several SET actions when item count is higher than maxPerS
   t.deepEqual(dispatch.args[2][0], expected2)
 })
 
+test('should split in several SET actions with individual items when setMember is true', async (t) => {
+  const action = {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      from: 'entries',
+      to: 'store',
+      setMember: true,
+    },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: { status: 'ok', data: [...data, ...data2] },
+      SET: { status: 'ok' },
+    })
+  )
+  const expected1 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: data[0],
+      targetService: 'store',
+    },
+    meta: { ident, project: 'project1', queue: true },
+  }
+  const expected2 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: data2[0],
+      targetService: 'store',
+    },
+    meta: { ident, project: 'project1', queue: true },
+  }
+  const expected3 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: data[1],
+      targetService: 'store',
+    },
+    meta: { ident, project: 'project1', queue: true },
+  }
+
+  const ret = await sync(action, { ...handlerResources, dispatch })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(dispatch.callCount, 4)
+  t.deepEqual(dispatch.args[1][0], expected1)
+  t.deepEqual(dispatch.args[2][0], expected2)
+  t.deepEqual(dispatch.args[3][0], expected3)
+})
+
 test('should use params from from and to', async (t) => {
   const action = {
     type: 'SYNC',
@@ -1618,7 +1672,7 @@ test('should return error when set action fails', async (t) => {
   )
   const expected = {
     status: 'error',
-    error: 'SYNC: Could not set data. Set 0 of 2 items. Service is sleeping',
+    error: 'SYNC: Setting data failed. Service is sleeping',
     origin: 'handler:SYNC',
   }
 
@@ -1647,7 +1701,7 @@ test('should return error from first SET action with maxPerSet', async (t) => {
   )
   const expected = {
     status: 'timeout',
-    error: 'SYNC: Could not set data. Set 0 of 3 items.',
+    error: 'SYNC: Setting data failed.',
     origin: 'handler:SYNC',
   }
 
@@ -1676,7 +1730,8 @@ test('should return error from second SET action with maxPerSet', async (t) => {
   )
   const expected = {
     status: 'timeout',
-    error: 'SYNC: Could not set data. Set 2 of 3 items.',
+    error:
+      'SYNC: Setting data failed, but the first 2 items where set successfully.',
     origin: 'handler:SYNC',
   }
 
