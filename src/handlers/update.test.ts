@@ -12,14 +12,30 @@ import update from './update.js'
 
 // Setup
 
-const schemas = new Map()
-schemas.set(
+const commonSchemas = new Map()
+commonSchemas.set(
   'entry',
   new Schema({
     id: 'entry',
     shape: {
       title: { $type: 'string', default: 'A title' },
       author: 'string',
+      createdAt: 'date',
+    },
+    access: { allow: 'auth' },
+  })
+)
+
+const schemasWithUpdatedAt = new Map()
+schemasWithUpdatedAt.set(
+  'entry',
+  new Schema({
+    id: 'entry',
+    shape: {
+      title: { $type: 'string', default: 'A title' },
+      author: 'string',
+      createdAt: 'date',
+      updatedAt: 'date',
     },
     access: { allow: 'auth' },
   })
@@ -32,19 +48,20 @@ const pipelines = {
       id: 'id',
       title: 'header',
       author: 'author',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
     },
     { $cast: 'entry' },
   ],
 }
 
-const mapOptions = createMapOptions(schemas, pipelines, transformers)
-
 const setupService = (
   uri: string,
   getUri?: string,
-  validate?: ValidateObject[]
-) => {
-  return new Service(
+  validate?: ValidateObject[],
+  schemas: Map<string, Schema> = commonSchemas
+) =>
+  new Service(
     {
       id: 'entries',
       ...jsonServiceDef,
@@ -140,10 +157,9 @@ const setupService = (
     },
     {
       schemas,
-      mapOptions,
+      mapOptions: createMapOptions(schemas, pipelines, transformers),
     }
   )
-}
 
 test.after(() => {
   nock.restore()
@@ -152,16 +168,21 @@ test.after(() => {
 // Tests -- with UPDATE endpoint
 
 test('should send UPDATE action to UPDATE endpoint', async (t) => {
+  const createdAt = new Date()
   const scope = nock('http://api1.test')
     .post('/database/update/ent1', {
-      doc: { id: 'ent1', header: 'Entry 1' },
+      doc: {
+        id: 'ent1',
+        header: 'Entry 1',
+        createdAt: createdAt.toISOString(),
+      },
     })
     .reply(201, [{ ok: true }])
   const action = {
     type: 'UPDATE',
     payload: {
       type: 'entry',
-      data: { $type: 'entry', id: 'ent1', title: 'Entry 1' },
+      data: { $type: 'entry', id: 'ent1', title: 'Entry 1', createdAt },
       targetService: 'entries',
     },
     meta: { ident: { id: 'johnf' } },
@@ -178,11 +199,20 @@ test('should send UPDATE action to UPDATE endpoint', async (t) => {
 })
 
 test('should send UPDATE action to UPDATE endpoint with several items', async (t) => {
+  const createdAt = new Date()
   const scope = nock('http://api2.test')
     .post('/database/update', {
       doc: [
-        { id: 'ent1', header: 'Entry 1' },
-        { id: 'ent2', header: 'Entry 2' },
+        {
+          id: 'ent1',
+          header: 'Entry 1',
+          createdAt: createdAt.toISOString(),
+        },
+        {
+          id: 'ent2',
+          header: 'Entry 2',
+          createdAt: createdAt.toISOString(),
+        },
       ],
     })
     .reply(201, [{ ok: true }, { ok: true }])
@@ -191,8 +221,8 @@ test('should send UPDATE action to UPDATE endpoint with several items', async (t
     payload: {
       type: 'entry',
       data: [
-        { $type: 'entry', id: 'ent1', title: 'Entry 1' },
-        { $type: 'entry', id: 'ent2', title: 'Entry 2' },
+        { $type: 'entry', id: 'ent1', title: 'Entry 1', createdAt },
+        { $type: 'entry', id: 'ent2', title: 'Entry 2', createdAt },
       ],
       targetService: 'entries',
     },
@@ -236,16 +266,23 @@ test('should send UPDATE action to UPDATE endpoint with id and no data', async (
 })
 
 test('should mutate response data', async (t) => {
+  const createdAt = new Date()
   const scope = nock('http://api4.test')
     .post('/database/update/ent1', {
-      doc: { id: 'ent1', header: 'Entry 1' },
+      doc: {
+        id: 'ent1',
+        header: 'Entry 1',
+        createdAt: createdAt.toISOString(),
+      },
     })
-    .reply(201, [{ id: 'ent1', header: 'Entry 1 - updated', author: 'johnf' }])
+    .reply(201, [
+      { id: 'ent1', header: 'Entry 1 - updated', author: 'johnf', createdAt },
+    ])
   const action = {
     type: 'UPDATE',
     payload: {
       type: 'entry',
-      data: { $type: 'entry', id: 'ent1', title: 'Entry 1' },
+      data: { $type: 'entry', id: 'ent1', title: 'Entry 1', createdAt },
       targetService: 'entries',
     },
     meta: { ident: { id: 'johnf' } },
@@ -254,7 +291,13 @@ test('should mutate response data', async (t) => {
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
   const expectedData = [
-    { id: 'ent1', $type: 'entry', title: 'Entry 1 - updated', author: 'johnf' },
+    {
+      id: 'ent1',
+      $type: 'entry',
+      title: 'Entry 1 - updated',
+      author: 'johnf',
+      createdAt,
+    },
   ]
 
   const ret = await update(action, { ...handlerResources, getService })
@@ -370,20 +413,32 @@ test('should return badrequest when no endpoint matches', async (t) => {
 // Tests -- with GET and SET endpoints
 
 test('should send UPDATE action to GET and SET endpoints', async (t) => {
+  const createdAt = new Date()
   const scope = nock('http://api50.test')
     .get('/database/get/ent1')
-    .reply(200, { id: 'ent1', header: 'Entry 1', author: 'johnf' })
+    .reply(200, {
+      id: 'ent1',
+      header: 'Entry 1',
+      author: 'johnf',
+      createdAt: createdAt.toISOString(),
+    })
     .post('/database/update/ent1', {
       id: 'ent1',
       header: 'Entry 1 - updated',
       author: 'johnf',
+      createdAt: createdAt.toISOString(),
     })
     .reply(201, [{ ok: true }])
   const action = {
     type: 'UPDATE',
     payload: {
       type: 'entry',
-      data: { $type: 'entry', id: 'ent1', title: 'Entry 1 - updated' },
+      data: {
+        $type: 'entry',
+        id: 'ent1',
+        title: 'Entry 1 - updated',
+        createdAt,
+      },
       targetService: 'entries',
     },
     meta: { ident: { id: 'johnf' } },
@@ -403,15 +458,36 @@ test('should send UPDATE action to GET and SET endpoints', async (t) => {
 })
 
 test('should send UPDATE action to GET and SET endpoints with several items', async (t) => {
+  const createdAt = new Date()
   const scope = nock('http://api51.test')
     .get('/database/get?ids=ent1,ent2')
     .reply(200, [
-      { id: 'ent1', header: 'Entry 1', author: 'johnf' },
-      { id: 'ent2', header: 'Entry 2', author: 'katef' },
+      {
+        id: 'ent1',
+        header: 'Entry 1',
+        author: 'johnf',
+        createdAt: createdAt.toISOString(),
+      },
+      {
+        id: 'ent2',
+        header: 'Entry 2',
+        author: 'katef',
+        createdAt: createdAt.toISOString(),
+      },
     ])
     .post('/database/update', [
-      { id: 'ent1', header: 'Entry 1 - updated', author: 'johnf' },
-      { id: 'ent2', header: 'Entry 2 - updated', author: 'katef' },
+      {
+        id: 'ent1',
+        header: 'Entry 1 - updated',
+        author: 'johnf',
+        createdAt: createdAt.toISOString(),
+      },
+      {
+        id: 'ent2',
+        header: 'Entry 2 - updated',
+        author: 'katef',
+        createdAt: createdAt.toISOString(),
+      },
     ])
     .reply(201, [{ ok: true }])
   const action = {
@@ -419,8 +495,8 @@ test('should send UPDATE action to GET and SET endpoints with several items', as
     payload: {
       type: 'entry',
       data: [
-        { $type: 'entry', id: 'ent1', title: 'Entry 1 - updated' },
-        { $type: 'entry', id: 'ent2', title: 'Entry 2 - updated' },
+        { $type: 'entry', id: 'ent1', title: 'Entry 1 - updated', createdAt },
+        { $type: 'entry', id: 'ent2', title: 'Entry 2 - updated', createdAt },
       ],
       targetService: 'entries',
     },
@@ -440,8 +516,160 @@ test('should send UPDATE action to GET and SET endpoints with several items', as
   t.true(scope.isDone())
 })
 
-test('should respond with error when the original data and the gotten data is not both array or non-array', async (t) => {
+test('should not override createdAt in fetched data', async (t) => {
+  const createdAt = new Date()
   const scope = nock('http://api52.test')
+    .get('/database/get/ent1')
+    .reply(200, {
+      id: 'ent1',
+      header: 'Entry 1',
+      author: 'johnf',
+      createdAt: '2023-01-14T17:43:11.000Z',
+    })
+    .post('/database/update/ent1', {
+      id: 'ent1',
+      header: 'Entry 1 - updated',
+      author: 'johnf',
+      createdAt: '2023-01-14T17:43:11.000Z',
+    })
+    .reply(201, [{ ok: true }])
+  const action = {
+    type: 'UPDATE',
+    payload: {
+      type: 'entry',
+      data: {
+        $type: 'entry',
+        id: 'ent1',
+        title: 'Entry 1 - updated',
+        createdAt,
+      },
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const src = setupService(
+    'http://api52.test/database/update/{payload.id}',
+    'http://api52.test/database/get/{payload.id}'
+  )
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+
+  const ret = await update(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.headers, { 'content-type': 'application/json' })
+  t.true(scope.isDone())
+})
+
+test('should not override createdAt in array of fetched data', async (t) => {
+  const createdAt = new Date()
+  const scope = nock('http://api53.test')
+    .get('/database/get?ids=ent1,ent2')
+    .reply(200, [
+      {
+        id: 'ent1',
+        header: 'Entry 1',
+        author: 'johnf',
+        createdAt: '2023-01-14T17:43:11.000Z',
+      },
+      {
+        id: 'ent2',
+        header: 'Entry 2',
+        author: 'katef',
+        createdAt: '2023-01-14T17:57:09.000Z',
+      },
+    ])
+    .post('/database/update', [
+      {
+        id: 'ent1',
+        header: 'Entry 1 - updated',
+        author: 'johnf',
+        createdAt: '2023-01-14T17:43:11.000Z',
+      },
+      {
+        id: 'ent2',
+        header: 'Entry 2 - updated',
+        author: 'katef',
+        createdAt: '2023-01-14T17:57:09.000Z',
+      },
+    ])
+    .reply(201, [{ ok: true }])
+  const action = {
+    type: 'UPDATE',
+    payload: {
+      type: 'entry',
+      data: [
+        { $type: 'entry', id: 'ent1', title: 'Entry 1 - updated', createdAt },
+        { $type: 'entry', id: 'ent2', title: 'Entry 2 - updated', createdAt },
+      ],
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const src = setupService(
+    'http://api53.test/database/update',
+    'http://api53.test/database/get?ids={payload.id}'
+  )
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+
+  const ret = await update(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.headers, { 'content-type': 'application/json' })
+  t.true(scope.isDone())
+})
+
+test('should set updatedAt to now when found in merged data', async (t) => {
+  const before = Date.now()
+  const createdAt = new Date('2023-08-18T14:27:54.000Z')
+  const scope = nock('http://api54.test')
+    .get('/database/get/ent1')
+    .reply(200, {
+      id: 'ent1',
+      header: 'Entry 1',
+      author: 'johnf',
+      createdAt: '2023-01-14T17:43:11.000Z',
+      updatedAt: '2023-01-14T17:43:11.000Z',
+    })
+    .post(
+      '/database/update/ent1',
+      (item) => new Date(item.updatedAt).getTime() >= before
+    )
+    .reply(201, [{ ok: true }])
+  const action = {
+    type: 'UPDATE',
+    payload: {
+      type: 'entry',
+      data: {
+        $type: 'entry',
+        id: 'ent1',
+        title: 'Entry 1 - updated',
+        createdAt,
+        updatedAt: createdAt,
+      },
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const src = setupService(
+    'http://api54.test/database/update/{payload.id}',
+    'http://api54.test/database/get/{payload.id}',
+    undefined,
+    schemasWithUpdatedAt
+  )
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+
+  const ret = await update(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.headers, { 'content-type': 'application/json' })
+  t.true(scope.isDone())
+})
+
+test('should respond with error when the original data and the gotten data is not both array or non-array', async (t) => {
+  const scope = nock('http://api55.test')
     .get('/database/get?ids=ent1,ent2')
     .reply(200, { id: 'ent1', header: 'Entry 1', author: 'johnf' })
   const action = {
@@ -457,8 +685,8 @@ test('should respond with error when the original data and the gotten data is no
     meta: { ident: { id: 'johnf' } },
   }
   const src = setupService(
-    'http://api52.test/database/update',
-    'http://api52.test/database/get?ids={payload.id}'
+    'http://api55.test/database/update',
+    'http://api55.test/database/get?ids={payload.id}'
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -471,7 +699,7 @@ test('should respond with error when the original data and the gotten data is no
 })
 
 test('should return error from GET', async (t) => {
-  const scope = nock('http://api53.test').get('/database/get/ent1').reply(404)
+  const scope = nock('http://api56.test').get('/database/get/ent1').reply(404)
   const action = {
     type: 'UPDATE',
     payload: {
@@ -482,8 +710,8 @@ test('should return error from GET', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const src = setupService(
-    'http://api53.test/database/update/{payload.id}',
-    'http://api53.test/database/get/{payload.id}'
+    'http://api56.test/database/update/{payload.id}',
+    'http://api56.test/database/get/{payload.id}'
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -493,14 +721,14 @@ test('should return error from GET', async (t) => {
   t.is(ret.status, 'notfound', ret.error)
   t.is(
     ret.error,
-    'UPDATE failed: Could not find the url http://api53.test/database/get/ent1'
+    'UPDATE failed: Could not find the url http://api56.test/database/get/ent1'
   )
   // t.deepEqual(ret.headers, { 'content-type': 'application/json' })
   t.true(scope.isDone())
 })
 
 test('should return error from SET', async (t) => {
-  const scope = nock('http://api54.test')
+  const scope = nock('http://api57.test')
     .get('/database/get/ent1')
     .reply(200, { id: 'ent1', header: 'Entry 1', author: 'johnf' })
     .post('/database/update/ent1')
@@ -515,8 +743,8 @@ test('should return error from SET', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const src = setupService(
-    'http://api54.test/database/update/{payload.id}',
-    'http://api54.test/database/get/{payload.id}'
+    'http://api57.test/database/update/{payload.id}',
+    'http://api57.test/database/get/{payload.id}'
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -526,7 +754,7 @@ test('should return error from SET', async (t) => {
   t.is(ret.status, 'timeout', ret.error)
   t.is(
     ret.error,
-    'UPDATE failed: Server returned 408 for http://api54.test/database/update/ent1'
+    'UPDATE failed: Server returned 408 for http://api57.test/database/update/ent1'
   )
   // t.deepEqual(ret.headers, { 'content-type': 'application/json' })
   t.true(scope.isDone())

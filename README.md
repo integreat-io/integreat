@@ -1533,10 +1533,14 @@ Integreat will run the action as a `GET` and then a `SET`, to mimick and update.
 The `GET` action will have the same `payload` and `meta` as the original action.
 The same goes for the `SET` action, but the `payload.data` will be the data
 returned from `GET` merged with the data on the original `UPDATE` action. This
-will be a deep merge, prioritizing properties from the `UPDATE` action. A
-requirement for this to work as expected, is that the data is casted to the same
-schema, but that should normally be the case when you use `payload.type` and
-don't set `allowRawRequest` or `allowRawResponse` on the endpoint.
+will be a deep merge, prioritizing properties from the `UPDATE` action, but any
+`createdAt` date in the data from `GET` will be kept. If there's an `updatedAt`
+in the merged data, it will be overriden by the current time.
+
+A requirement for this approach to work as expected, is that the data is casted
+to the same schema, but that should normally be the case when you use
+`payload.type` and don't set `allowRawRequest` or `allowRawResponse` on the
+endpoint.
 
 When a `GET` fail, the `UPDATE` will fail with the same status and error.
 

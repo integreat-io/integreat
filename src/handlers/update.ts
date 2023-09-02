@@ -6,7 +6,7 @@ import {
 } from '../utils/response.js'
 import { getTypeAndId, setIdAndTypeOnAction } from './set.js'
 import { deepMergeItems } from '../utils/deep.js'
-import { isErrorResponse } from '../utils/is.js'
+import { isErrorResponse, isTypedData } from '../utils/is.js'
 import type Endpoint from '../service/Endpoint.js'
 import type Service from '../service/Service.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'
@@ -43,6 +43,25 @@ async function dispatchAction(service: Service, action: Action) {
   }
 }
 
+const updateDatesInItem = (original: unknown, merged: unknown) =>
+  isTypedData(original) && isTypedData(merged)
+    ? {
+        ...merged,
+        createdAt: original.createdAt,
+        ...(merged.updatedAt ? { updatedAt: new Date() } : {}),
+      }
+    : merged
+
+function keepCreatedAt(original: unknown, merged: unknown) {
+  if (Array.isArray(original) && Array.isArray(merged)) {
+    return original.map(
+      (item, index) => updateDatesInItem(item, merged[index]) // eslint-disable-line security/detect-object-injection
+    )
+  } else {
+    return updateDatesInItem(original, merged)
+  }
+}
+
 async function updateWithGetAndSet(service: Service, action: Action) {
   const getAction = createGetAction(action)
   const getResponse = await dispatchAction(service, getAction)
@@ -52,7 +71,10 @@ async function updateWithGetAndSet(service: Service, action: Action) {
 
   let data
   try {
-    data = deepMergeItems(getResponse.data, action.payload.data)
+    data = keepCreatedAt(
+      getResponse.data,
+      deepMergeItems(getResponse.data, action.payload.data)
+    )
   } catch (error) {
     return createErrorResponse(error, 'handler:UPDATE')
   }
