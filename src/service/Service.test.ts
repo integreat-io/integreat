@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon from 'sinon'
 import pProgress from 'p-progress'
@@ -42,7 +41,7 @@ const accountSchema = new Schema(
       },
     },
   },
-  schemas
+  schemas,
 )
 schemas.set('account', accountSchema)
 
@@ -60,7 +59,7 @@ const entrySchema = new Schema(
     },
     access: 'auth',
   },
-  schemas
+  schemas,
 )
 schemas.set('entry', entrySchema)
 
@@ -72,7 +71,7 @@ const sourceSchema = new Schema(
     },
     access: 'auth',
   },
-  schemas
+  schemas,
 )
 schemas.set('source', sourceSchema)
 
@@ -249,7 +248,7 @@ const auths = {
 const mockResources = (
   data: unknown,
   action: Action = { type: 'GET', payload: {}, meta: {} },
-  doValidate = true
+  doValidate = true,
 ): Resources => ({
   ...jsonResources,
   authenticators: {
@@ -362,7 +361,7 @@ test('endpointFromAction should return an endpoint for the action', async (t) =>
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -390,7 +389,7 @@ test('endpointFromAction should return undefined when no match', async (t) => {
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -429,7 +428,7 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -457,7 +456,7 @@ test('preflightAction should set authorizedByIntegreat (symbol) flag', async (t)
       schemas,
       auths,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -484,7 +483,7 @@ test('preflightAction should authorize action without type', async (t) => {
       schemas,
       auths,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -511,7 +510,7 @@ test('preflightAction should refuse based on schema', async (t) => {
       schemas,
       auths,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -548,7 +547,7 @@ test('preflightAction should authorize when no auth is specified', async (t) => 
       schemas,
       auths,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -575,7 +574,7 @@ test('preflightAction should not touch action when endpoint validation succeeds'
       schemas,
       auths,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -604,7 +603,7 @@ test('preflightAction should set error response when validate fails', async (t) 
       schemas,
       auths,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -638,7 +637,7 @@ test('preflightAction should authorize before validation', async (t) => {
       schemas,
       auths,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -678,7 +677,7 @@ test('preflightAction should make auth available to mutations when authInData is
       schemas,
       auths,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -714,7 +713,7 @@ test('preflightAction should respond with error when authInData is true and auth
       schemas,
       auths,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -728,7 +727,7 @@ test('preflightAction should respond with error when authInData is true and auth
   t.is(ret.response?.status, 'noaccess', ret.response?.error)
   t.is(
     ret.response?.error,
-    "Authentication attempt for auth 'refusing' was refused."
+    "Authentication attempt for auth 'refusing' was refused.",
   )
   t.is(ret.meta?.auth, undefined)
   t.is(ret.type, 'GET')
@@ -750,7 +749,7 @@ test('send should retrieve data from service', async (t) => {
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
       auth: 'granting',
     },
-    mockResources(data)
+    mockResources(data),
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -782,7 +781,7 @@ test('send should use service middleware', async (t) => {
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
       auth: true,
     },
-    resources
+    resources,
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -815,7 +814,7 @@ test('send should return error when no connection', async (t) => {
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
       auth: 'granting',
     },
-    mockResources(data)
+    mockResources(data),
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -847,7 +846,7 @@ test('send should try to authenticate and return with error when it fails', asyn
       auth: 'refusing',
       transporter: 'http',
     },
-    mockResources(data)
+    mockResources(data),
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -878,7 +877,7 @@ test('send should authenticate with auth id on `outgoing` prop', async (t) => {
       auth: { outgoing: 'granting' },
       transporter: 'http',
     },
-    mockResources(data)
+    mockResources(data),
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -905,7 +904,7 @@ test('send should authenticate with auth def', async (t) => {
       auth: grantingAuth,
       transporter: 'http',
     },
-    mockResources(data)
+    mockResources(data),
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -932,7 +931,7 @@ test('send should authenticate with auth def on `outgoing` prop', async (t) => {
       auth: { outgoing: grantingAuth },
       transporter: 'http',
     },
-    mockResources(data)
+    mockResources(data),
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -959,7 +958,7 @@ test('send should fail when not authorized', async (t) => {
       schemas,
       ...jsonResources,
       auths,
-    }
+    },
   )
   const action = setAuthorizedMark(
     {
@@ -967,7 +966,7 @@ test('send should fail when not authorized', async (t) => {
       payload: { id: 'ent1', type: 'entry', source: 'thenews' },
       meta: { ident: { id: 'johnf' } },
     },
-    false // Not authorized
+    false, // Not authorized
   )
   const expected = {
     status: 'autherror',
@@ -1008,7 +1007,7 @@ test('send should provide auth and options', async (t) => {
       transporter: 'http',
       auth: 'granting',
     },
-    resources
+    resources,
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -1068,7 +1067,7 @@ test('send should not authorize when action has already got meta.auth', async (t
       transporter: 'http',
       auth: 'granting',
     },
-    resources
+    resources,
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -1105,7 +1104,7 @@ test('send should connect before sending request', async (t) => {
   const connect = async (
     options: TransporterOptions,
     authentication: Record<string, unknown> | null | undefined,
-    _connection: Connection | null
+    _connection: Connection | null,
   ): Promise<Connection> => ({
     status: 'ok',
     options,
@@ -1138,7 +1137,7 @@ test('send should connect before sending request', async (t) => {
       transporter: 'http',
       auth: 'granting',
     },
-    resources
+    resources,
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -1186,7 +1185,7 @@ test('send should store connection', async (t) => {
       ],
       transporter: 'http',
     },
-    resources
+    resources,
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -1229,7 +1228,7 @@ test('send should return error when connection fails', async (t) => {
       ],
       transporter: 'http',
     },
-    resources
+    resources,
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -1272,7 +1271,7 @@ test('send should pass on error response from service', async (t) => {
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
       transporter: 'http',
     },
-    resources
+    resources,
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -1313,7 +1312,7 @@ test('send should pass on error response from service and prefix origin', async 
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
       transporter: 'http',
     },
-    resources
+    resources,
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -1352,7 +1351,7 @@ test('send should return with error when transport throws', async (t) => {
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
       transporter: 'http',
     },
-    resources
+    resources,
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -1392,7 +1391,7 @@ test('send should do nothing when action has a response', async (t) => {
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
       transporter: 'http',
     },
-    resources
+    resources,
   )
   const action = setAuthorizedMark({
     type: 'GET',
@@ -1436,7 +1435,7 @@ test('mutateResponse should mutate data array from service', async (t) => {
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -1505,7 +1504,7 @@ test('mutateResponse should mutate data object from service', async (t) => {
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -1550,7 +1549,7 @@ test('mutateResponse should set origin when mutation results in an error respons
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -1601,7 +1600,7 @@ test('mutateResponse should use service adapters', async (t) => {
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -1672,7 +1671,7 @@ test('mutateResponse should use endpoint adapters', async (t) => {
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -1770,7 +1769,7 @@ test('mutateResponse should use both service and endpoint adapters', async (t) =
         ...jsonResources.adapters,
         mock: mockAdapter,
       },
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -1816,7 +1815,7 @@ test('mutateResponse should not cast data array from service when allowRawRespon
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -1882,7 +1881,7 @@ test('mutateResponse should mutate null to undefined', async (t) => {
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -1923,7 +1922,7 @@ test('should authorize typed data in array from service', async (t) => {
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -1949,7 +1948,7 @@ test('should authorize typed data in array from service', async (t) => {
   t.is(data[0].id, 'johnf')
   t.is(
     ret.warning,
-    '1 item was removed from response data due to lack of access'
+    '1 item was removed from response data due to lack of access',
   )
 })
 
@@ -1972,7 +1971,7 @@ test('should authorize typed data object from service', async (t) => {
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -2026,7 +2025,7 @@ test('mutateResponse should return error when transformer throws', async (t) => 
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -2075,7 +2074,7 @@ test('mutateIncomingResponse should mutate and authorize data in response to inc
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -2099,7 +2098,7 @@ test('mutateIncomingResponse should mutate and authorize data in response to inc
   t.is(accounts[0].id, 'johnf')
   t.is(
     ret.warning,
-    '1 item was removed from response data due to lack of access'
+    '1 item was removed from response data due to lack of access',
   )
 })
 
@@ -2124,7 +2123,7 @@ test('mutateIncomingResponse should set origin when mutation results in an error
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'GET',
@@ -2185,7 +2184,7 @@ test('mutateRequest should set endpoint options and cast and mutate request data
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -2258,7 +2257,7 @@ test('mutateRequest should authorize data array going to service', async (t) => 
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -2305,7 +2304,7 @@ test('mutateRequest should authorize data object going to service', async (t) =>
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -2358,7 +2357,7 @@ test('mutateRequest should use mutation pipeline', async (t) => {
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -2398,7 +2397,7 @@ test('mutateRequest set origin when mutation results in an error response', asyn
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -2445,7 +2444,7 @@ test('mutateRequest should return error when transformer throws', async (t) => {
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -2505,7 +2504,7 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = setAuthorizedMark({
     type: 'SET',
@@ -2526,7 +2525,7 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
   })
   const endpoint = await service.endpointFromAction(
     action,
-    true /* isIncoming */
+    true /* isIncoming */,
   )
   const expectedResponse = {
     status: undefined,
@@ -2579,7 +2578,7 @@ test('mutateIncomingRequest should mutate and use type from mutated action to ca
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = setAuthorizedMark({
     type: 'SET',
@@ -2596,7 +2595,7 @@ test('mutateIncomingRequest should mutate and use type from mutated action to ca
   })
   const endpoint = await service.endpointFromAction(
     action,
-    true /* isIncoming */
+    true /* isIncoming */,
   )
   const expectedResponse = {
     status: undefined,
@@ -2635,7 +2634,7 @@ test('mutateIncomingRequest should set origin when mutation results in an error 
       mapOptions,
       schemas,
       ...jsonResources,
-    }
+    },
   )
   const action = {
     type: 'SET',
@@ -2644,7 +2643,7 @@ test('mutateIncomingRequest should set origin when mutation results in an error 
   }
   const endpoint = await service.endpointFromAction(
     action,
-    true /* isIncoming */
+    true /* isIncoming */,
   )
   const expectedResponse = {
     status: 'error',
@@ -2681,7 +2680,7 @@ test('listen should call transporter.listen', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
   const expectedResponse = { status: 'ok' }
 
@@ -2719,7 +2718,7 @@ test('listen should not call transporter.listen when transport.shouldListen retu
       options: {},
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
   const expectedResponse = {
     status: 'noaction',
@@ -2767,7 +2766,7 @@ test('listen should use service middleware', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
   const expected = {
     status: 'badresponse',
@@ -2794,7 +2793,7 @@ test('listen should set sourceService', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action)
+    mockResources({}, action),
   )
   const expectedAction = {
     type: 'SET',
@@ -2831,7 +2830,7 @@ test('listen should set sourceService before middleware', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
   const expectedResponse = {
     status: 'ok',
@@ -2857,7 +2856,7 @@ test('listen should not set sourceService when already set', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action)
+    mockResources({}, action),
   )
   const expectedAction = {
     type: 'SET',
@@ -2910,7 +2909,7 @@ test('should support progress reporting', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
 
   await service.listen(dispatch)
@@ -2944,7 +2943,7 @@ test('listen should authenticate action when called back from service', async (t
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action, true)
+    mockResources({}, action, true),
   )
   const expectedResponse = {
     status: 'ok',
@@ -2975,7 +2974,7 @@ test('listen should authenticate action with second auth', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action, true)
+    mockResources({}, action, true),
   )
   const expectedResponse = {
     status: 'ok',
@@ -3006,7 +3005,7 @@ test('listen should fall back to ident authenticator on true', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action, true)
+    mockResources({}, action, true),
   )
   const expectedResponse = {
     status: 'ok',
@@ -3037,7 +3036,7 @@ test('listen should reject authentication when validate() returns an error', asy
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action, true)
+    mockResources({}, action, true),
   )
   const expectedResponse = {
     status: 'autherror',
@@ -3065,7 +3064,7 @@ test('listen should reject authentication when second validate() returns an erro
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action, true)
+    mockResources({}, action, true),
   )
   const expectedResponse = {
     status: 'autherror',
@@ -3093,7 +3092,7 @@ test('listen should authenticate with anonymous when auth is true', async (t) =>
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action, true)
+    mockResources({}, action, true),
   )
   const expectedResponse = {
     status: 'ok',
@@ -3121,7 +3120,7 @@ test('listen should remove ident not given by us', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action, false)
+    mockResources({}, action, false),
   )
   const expectedResponse = {
     status: 'ok',
@@ -3148,7 +3147,7 @@ test('listen should return noaction from authenticate() when no incoming auth', 
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({}, action)
+    mockResources({}, action),
   )
   const expectedResponse = {
     status: 'noaction',
@@ -3189,7 +3188,7 @@ test('listen should return error when connection fails', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
   const expectedResponse = {
     status: 'error',
@@ -3211,7 +3210,7 @@ test('listen should return error when authentication fails', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    mockResources({})
+    mockResources({}),
   )
   const expectedResponse = {
     status: 'noaccess',
@@ -3246,7 +3245,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
       transporter: 'http',
       options: { incoming: { port: 8080 } },
     },
-    resources
+    resources,
   )
   const expectedResponse = {
     status: 'noaction',
@@ -3282,7 +3281,7 @@ test('listen should return error when no connection', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
   const expectedResponse = {
     status: 'error',
@@ -3322,7 +3321,7 @@ test('listen should return noaction when incoming action is null', async (t) => 
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
   const expected = {
     status: 'noaction',
@@ -3362,7 +3361,7 @@ test('close should disconnect transporter', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
   const expected = { status: 'ok' }
 
@@ -3398,7 +3397,7 @@ test('close should probihit closed connection from behind used again', async (t)
       transporter: 'http',
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
   const expected = {
     status: 'error',
@@ -3427,7 +3426,7 @@ test('close should just return ok when no connection', async (t) => {
       transporter: 'http',
       endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
     },
-    resources
+    resources,
   )
   const expected = { status: 'ok' }
 

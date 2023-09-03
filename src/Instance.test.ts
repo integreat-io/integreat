@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon from 'sinon'
 import jsonAdapter from 'integreat-adapter-json'
@@ -101,7 +100,7 @@ test('should return object with id, dispatch, on, schemas, services, identType, 
       identConfig,
       queueService: 'queue',
     },
-    resourcesWithTransformer
+    resourcesWithTransformer,
   )
 
   t.is(great.id, 'great1')
@@ -119,7 +118,7 @@ test('should throw when no services', (t) => {
   t.throws(() => {
     new Instance(
       { schemas } as unknown as Definitions,
-      resourcesWithTransformer
+      resourcesWithTransformer,
     )
   })
 })
@@ -128,7 +127,7 @@ test('should throw when no schemas', (t) => {
   t.throws(() => {
     new Instance(
       { services } as unknown as Definitions,
-      resourcesWithTransformer
+      resourcesWithTransformer,
     )
   })
 })
@@ -142,7 +141,7 @@ test('should dispatch with resources', async (t) => {
 
   const great = new Instance(
     { services, schemas, mutations, identConfig, queueService: 'queue' },
-    { ...resourcesWithTransformer, handlers }
+    { ...resourcesWithTransformer, handlers },
   )
   await great.dispatch(action)
 
@@ -167,7 +166,7 @@ test('should dispatch with builtin action handler', async (t) => {
 
   const great = new Instance(
     { services, schemas, mutations },
-    resourcesWithTransAndSend
+    resourcesWithTransAndSend,
   )
   await great.dispatch(action)
 
@@ -201,7 +200,7 @@ test('should use adapters', async (t) => {
 
   const great = new Instance(
     { services: servicesWithJson, schemas, mutations },
-    resourcesWithTransSendAndAdapters
+    resourcesWithTransSendAndAdapters,
   )
   const ret = await great.dispatch(action)
 
@@ -256,7 +255,7 @@ test('should set adapter id', async (t) => {
 
   const great = new Instance(
     { services: servicesWithJson, schemas, mutations },
-    resourcesWithTransSendAndAdapters
+    resourcesWithTransSendAndAdapters,
   )
   const ret = await great.dispatch(action)
 
@@ -276,14 +275,14 @@ test('should throw when trying to use an unknown transporter', async (t) => {
     () =>
       new Instance(
         { services: servicesWithUnknownTransporter, schemas, mutations },
-        resourcesWithTransformer
-      )
+        resourcesWithTransformer,
+      ),
   )
 
   t.true(error instanceof Error)
   t.is(
     error?.message,
-    "Service 'entries' references unknown transporter 'unknown'"
+    "Service 'entries' references unknown transporter 'unknown'",
   )
 })
 
@@ -305,7 +304,7 @@ test('should call middleware', async (t) => {
   const great = new Instance(
     { services, schemas, mutations },
     { ...resourcesWithTransformer, handlers },
-    middleware
+    middleware,
   )
   const ret = await great.dispatch(action)
 
@@ -344,7 +343,7 @@ test('should mutate data', async (t) => {
 
   const great = new Instance(
     { services, schemas, mutations, dictionaries },
-    resourcesWithTransAndSend
+    resourcesWithTransAndSend,
   )
   const ret = await great.dispatch(action)
 
@@ -386,7 +385,7 @@ test('should dispatch scheduled', async (t) => {
 
   const great = new Instance(
     { services, schemas, mutations, jobs, queueService: 'queue' }, // We don't have a queue service, but we've mocked the queue handler
-    { ...resourcesWithTransformer, handlers }
+    { ...resourcesWithTransformer, handlers },
   )
   const ret = await great.dispatchScheduled(fromDate, toDate)
 
@@ -400,7 +399,7 @@ test('should skip jobs without schedule', async (t) => {
 
   const great = new Instance(
     { services, schemas, mutations, jobs },
-    resourcesWithTransformer
+    resourcesWithTransformer,
   )
   const ret = await great.dispatchScheduled(fromDate, toDate)
 
@@ -433,7 +432,7 @@ test('should set up RUN handler with jobs', async (t) => {
         ...resourcesWithTransformer.transformers,
         now: () => () => () => nowDate,
       },
-    }
+    },
   )
   const ret = await great.dispatch(action)
 
@@ -489,7 +488,7 @@ test('should use auth', async (t) => {
 
   const great = new Instance(
     { services: authServices, schemas, mutations, auths },
-    resourcesWithTransSendAndAuth
+    resourcesWithTransSendAndAuth,
   )
   const ret = await great.dispatch(action)
 
@@ -541,14 +540,14 @@ test('should set id on authenticators', async (t) => {
 
   const great = new Instance(
     { services: authServices, schemas, mutations, auths },
-    resourcesWithTransSendAndAuth
+    resourcesWithTransSendAndAuth,
   )
   const ret = await great.services.entries.listen(dispatchMock)
 
   t.is(ret.status, 'autherror', ret.error)
   t.is(
     ret.error,
-    "Could not authenticate. Authenticator 'mock' doesn't support validation" // The fact that we get `'mock'` here means that the authenticator id was set
+    "Could not authenticate. Authenticator 'mock' doesn't support validation", // The fact that we get `'mock'` here means that the authenticator id was set
   )
 })
 
@@ -571,21 +570,21 @@ test('should throw when trying to use an unknown authenticator', async (t) => {
     () =>
       new Instance(
         { services: authServices, schemas, mutations, auths },
-        resourcesWithTransformer
-      )
+        resourcesWithTransformer,
+      ),
   )
 
   t.true(error instanceof Error)
   t.is(
     error?.message,
-    "Auth config 'mauth' references an unknown authenticator id 'unknown'"
+    "Auth config 'mauth' references an unknown authenticator id 'unknown'",
   )
 })
 
 test('should have listen method', async (t) => {
   const great = new Instance(
     { services, schemas, mutations },
-    resourcesWithTransformer
+    resourcesWithTransformer,
   )
 
   t.is(typeof great.listen, 'function')
@@ -594,7 +593,7 @@ test('should have listen method', async (t) => {
 test('should have close method', async (t) => {
   const great = new Instance(
     { services, schemas, mutations },
-    resourcesWithTransformer
+    resourcesWithTransformer,
   )
 
   t.is(typeof great.close, 'function')

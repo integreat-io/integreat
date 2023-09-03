@@ -71,7 +71,6 @@ test('validate should return response with the ident given by identId when all o
   }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ret = await authenticator.validate!(authentication, options, action)
 
   t.deepEqual(ret, expected)
@@ -85,7 +84,6 @@ test('validate should return response with the ident when one value in an array 
   }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ret = await authenticator.validate!(authentication, options, action)
 
   t.deepEqual(ret, expected)
@@ -95,7 +93,6 @@ test('validate should return response with the ident when options has no props t
   const options = { identId: 'johnf' }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ret = await authenticator.validate!(authentication, options, action)
 
   t.deepEqual(ret, expected)
@@ -113,7 +110,6 @@ test('validate should return autherror error when some options are found, but th
     reason: 'invalidauth',
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ret = await authenticator.validate!(authentication, options, action)
 
   t.deepEqual(ret, expected)
@@ -130,7 +126,6 @@ test('validate should return autherror error when none of the options in an arra
     reason: 'invalidauth',
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ret = await authenticator.validate!(authentication, options, action)
 
   t.deepEqual(ret, expected)
@@ -144,7 +139,6 @@ test('validate should return noaccess error when none of the options are found i
     reason: 'noauth',
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ret = await authenticator.validate!(authentication, options, action)
 
   t.deepEqual(ret, expected)
@@ -160,7 +154,6 @@ test('validate should return noaccess error when no authentication or action are
     reason: 'noauth',
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const ret = await authenticator.validate!(authentication, options, action)
 
   t.deepEqual(ret, expected)

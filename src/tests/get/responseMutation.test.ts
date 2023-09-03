@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import nock from 'nock'
 import definitions from '../helpers/defs/index.js'
@@ -28,7 +27,7 @@ const mutation = {
 
 const defsWithMutation = (
   mutation: TransformDefinition,
-  serviceMutation?: TransformDefinition
+  serviceMutation?: TransformDefinition,
 ) => ({
   ...definitions,
   services: [

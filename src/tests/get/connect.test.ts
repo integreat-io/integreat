@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import test from 'ava'
 import sinon from 'sinon'
 import tokenAuth from '../../authenticators/token.js'
@@ -16,7 +15,7 @@ test('should connect to service and reuse connection', async (t) => {
   const connect = async (
     _options: Record<string, unknown>,
     _args: Record<string, unknown> | null,
-    conn: Connection | null
+    conn: Connection | null,
   ) => conn || { status: 'ok', value: `Call ${count++}` }
   const send = async (action: Action, _connection: Connection | null) => ({
     ...action.response,
