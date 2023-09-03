@@ -23,7 +23,7 @@ commonSchemas.set(
       createdAt: 'date',
     },
     access: { allow: 'auth' },
-  })
+  }),
 )
 
 const schemasWithUpdatedAt = new Map()
@@ -38,7 +38,7 @@ schemasWithUpdatedAt.set(
       updatedAt: 'date',
     },
     access: { allow: 'auth' },
-  })
+  }),
 )
 
 const pipelines = {
@@ -59,7 +59,8 @@ const setupService = (
   uri: string,
   getUri?: string,
   validate?: ValidateObject[],
-  schemas: Map<string, Schema> = commonSchemas
+  schemas: Map<string, Schema> = commonSchemas,
+  matchMoreThanUpdate = false,
 ) =>
   new Service(
     {
@@ -131,7 +132,7 @@ const setupService = (
             },
             {
               match: {
-                action: 'UPDATE',
+                action: matchMoreThanUpdate ? ['SET', 'UPDATE'] : 'UPDATE',
                 type: 'entry',
               },
               validate,
@@ -158,7 +159,7 @@ const setupService = (
     {
       schemas,
       mapOptions: createMapOptions(schemas, pipelines, transformers),
-    }
+    },
   )
 
 test.after(() => {
@@ -188,6 +189,44 @@ test('should send UPDATE action to UPDATE endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const src = setupService('http://api1.test/database/update/{payload.id}')
+  const getService = (_type?: string | string[], service?: string) =>
+    service === 'entries' ? src : undefined
+
+  const ret = await update(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.headers, { 'content-type': 'application/json' })
+  t.true(scope.isDone())
+})
+
+test('should send UPDATE action to UPDATE endpoint when endpoint matches several actions', async (t) => {
+  const createdAt = new Date()
+  const scope = nock('http://api1.test')
+    .post('/database/update/ent1', {
+      doc: {
+        id: 'ent1',
+        header: 'Entry 1',
+        createdAt: createdAt.toISOString(),
+      },
+    })
+    .reply(201, [{ ok: true }])
+  const action = {
+    type: 'UPDATE',
+    payload: {
+      type: 'entry',
+      data: { $type: 'entry', id: 'ent1', title: 'Entry 1', createdAt },
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const matchMoreThanUpdate = true
+  const src = setupService(
+    'http://api1.test/database/update/{payload.id}',
+    undefined,
+    undefined,
+    undefined,
+    matchMoreThanUpdate,
+  )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
 
@@ -445,7 +484,7 @@ test('should send UPDATE action to GET and SET endpoints', async (t) => {
   }
   const src = setupService(
     'http://api50.test/database/update/{payload.id}',
-    'http://api50.test/database/get/{payload.id}'
+    'http://api50.test/database/get/{payload.id}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -504,7 +543,7 @@ test('should send UPDATE action to GET and SET endpoints with several items', as
   }
   const src = setupService(
     'http://api51.test/database/update',
-    'http://api51.test/database/get?ids={payload.id}'
+    'http://api51.test/database/get?ids={payload.id}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -549,7 +588,7 @@ test('should not override createdAt in fetched data', async (t) => {
   }
   const src = setupService(
     'http://api52.test/database/update/{payload.id}',
-    'http://api52.test/database/get/{payload.id}'
+    'http://api52.test/database/get/{payload.id}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -608,7 +647,7 @@ test('should not override createdAt in array of fetched data', async (t) => {
   }
   const src = setupService(
     'http://api53.test/database/update',
-    'http://api53.test/database/get?ids={payload.id}'
+    'http://api53.test/database/get?ids={payload.id}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -634,7 +673,7 @@ test('should set updatedAt to now when found in merged data', async (t) => {
     })
     .post(
       '/database/update/ent1',
-      (item) => new Date(item.updatedAt).getTime() >= before
+      (item) => new Date(item.updatedAt).getTime() >= before,
     )
     .reply(201, [{ ok: true }])
   const action = {
@@ -656,7 +695,7 @@ test('should set updatedAt to now when found in merged data', async (t) => {
     'http://api54.test/database/update/{payload.id}',
     'http://api54.test/database/get/{payload.id}',
     undefined,
-    schemasWithUpdatedAt
+    schemasWithUpdatedAt,
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -686,7 +725,7 @@ test('should respond with error when the original data and the gotten data is no
   }
   const src = setupService(
     'http://api55.test/database/update',
-    'http://api55.test/database/get?ids={payload.id}'
+    'http://api55.test/database/get?ids={payload.id}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -711,7 +750,7 @@ test('should return error from GET', async (t) => {
   }
   const src = setupService(
     'http://api56.test/database/update/{payload.id}',
-    'http://api56.test/database/get/{payload.id}'
+    'http://api56.test/database/get/{payload.id}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -721,7 +760,7 @@ test('should return error from GET', async (t) => {
   t.is(ret.status, 'notfound', ret.error)
   t.is(
     ret.error,
-    'UPDATE failed: Could not find the url http://api56.test/database/get/ent1'
+    'UPDATE failed: Could not find the url http://api56.test/database/get/ent1',
   )
   // t.deepEqual(ret.headers, { 'content-type': 'application/json' })
   t.true(scope.isDone())
@@ -744,7 +783,7 @@ test('should return error from SET', async (t) => {
   }
   const src = setupService(
     'http://api57.test/database/update/{payload.id}',
-    'http://api57.test/database/get/{payload.id}'
+    'http://api57.test/database/get/{payload.id}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -754,7 +793,7 @@ test('should return error from SET', async (t) => {
   t.is(ret.status, 'timeout', ret.error)
   t.is(
     ret.error,
-    'UPDATE failed: Server returned 408 for http://api57.test/database/update/ent1'
+    'UPDATE failed: Server returned 408 for http://api57.test/database/update/ent1',
   )
   // t.deepEqual(ret.headers, { 'content-type': 'application/json' })
   t.true(scope.isDone())

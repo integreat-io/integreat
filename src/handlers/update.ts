@@ -21,8 +21,12 @@ const createSetAction = (action: Action, data: unknown) => ({
   payload: { ...action.payload, data },
 })
 
-const isUpdateEndpoint = (endpoint?: Endpoint): endpoint is Endpoint =>
-  endpoint?.match?.action === 'UPDATE'
+function isUpdateEndpoint(endpoint?: Endpoint): endpoint is Endpoint {
+  const actionType = endpoint?.match?.action
+  return Array.isArray(actionType)
+    ? actionType.includes('UPDATE')
+    : actionType === 'UPDATE'
+}
 
 async function dispatchAction(service: Service, action: Action) {
   const endpoint = await service.endpointFromAction(action)
@@ -32,7 +36,7 @@ async function dispatchAction(service: Service, action: Action) {
         action.type === 'GET' ? 'UPDATE' : 'SET'
       } request to service '${service.id}'.`,
       'handler:UPDATE',
-      'badrequest'
+      'badrequest',
     )
   }
   const response = await mutateAndSend(service, endpoint, action)
@@ -55,7 +59,7 @@ const updateDatesInItem = (original: unknown, merged: unknown) =>
 function keepCreatedAt(original: unknown, merged: unknown) {
   if (Array.isArray(original) && Array.isArray(merged)) {
     return original.map(
-      (item, index) => updateDatesInItem(item, merged[index]) // eslint-disable-line security/detect-object-injection
+      (item, index) => updateDatesInItem(item, merged[index]), // eslint-disable-line security/detect-object-injection
     )
   } else {
     return updateDatesInItem(original, merged)
@@ -73,7 +77,7 @@ async function updateWithGetAndSet(service: Service, action: Action) {
   try {
     data = keepCreatedAt(
       getResponse.data,
-      deepMergeItems(getResponse.data, action.payload.data)
+      deepMergeItems(getResponse.data, action.payload.data),
     )
   } catch (error) {
     return createErrorResponse(error, 'handler:UPDATE')
@@ -88,7 +92,7 @@ async function updateWithGetAndSet(service: Service, action: Action) {
  */
 export default async function update(
   action: Action,
-  { getService }: ActionHandlerResources
+  { getService }: ActionHandlerResources,
 ): Promise<Response> {
   const {
     data,
