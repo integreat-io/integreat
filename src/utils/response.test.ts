@@ -47,7 +47,7 @@ test('should extract error message from Error', (t) => {
 
 // Tests -- combineResponses
 
-test('should combine to error responses', (t) => {
+test('should combine two error responses', (t) => {
   const responses = [
     { status: 'error', error: 'Wait, what?' },
     { status: 'badrequest', error: 'Makes no sense' },
@@ -58,6 +58,22 @@ test('should combine to error responses', (t) => {
   }
 
   const ret = combineResponses(responses)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should handle undefined in response list', (t) => {
+  const responses = [
+    { status: 'error', error: 'Wait, what?' },
+    undefined,
+    { status: 'badrequest', error: 'Makes no sense' },
+  ]
+  const expected = {
+    status: 'error',
+    error: '[error] Wait, what? | [badrequest] Makes no sense',
+  }
+
+  const ret = combineResponses(responses as Response[])
 
   t.deepEqual(ret, expected)
 })

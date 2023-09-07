@@ -11,7 +11,7 @@ export function createErrorResponse(
   error: unknown,
   origin: string,
   status = 'error',
-  reason?: string
+  reason?: string,
 ): Response {
   return {
     status,
@@ -29,7 +29,7 @@ export function createErrorResponse(
 export function createUnknownServiceError(
   type: string | string[] | undefined,
   serviceId: string | undefined,
-  actionType: string
+  actionType: string,
 ): Response {
   const error = serviceId
     ? `Service with id '${serviceId || '<not set>'}' does not exist`
@@ -70,13 +70,14 @@ function getCombinedOrigins(responses: Response[]) {
  * Combine several error responses into one.
  */
 export function combineResponses(responses: Response[]) {
-  if (responses.length < 2) {
-    return responses[0] // Will yield undefined if no responses
+  const realResponses = responses.filter(isNotNullOrUndefined)
+  if (realResponses.length < 2) {
+    return realResponses[0] // Will yield undefined if no responses
   } else {
-    const status = getCombinedStatus(responses)
-    const error = getCombinedErrors(responses)
-    const warning = getCombinedWarnings(responses)
-    const origin = getCombinedOrigins(responses)
+    const status = getCombinedStatus(realResponses)
+    const error = getCombinedErrors(realResponses)
+    const warning = getCombinedWarnings(realResponses)
+    const origin = getCombinedOrigins(realResponses)
     return {
       status,
       ...(error && { error }),
@@ -89,7 +90,7 @@ export function combineResponses(responses: Response[]) {
 const generateOrigin = (
   origin: string,
   responseOrigin: string | undefined,
-  doPrefix: boolean
+  doPrefix: boolean,
 ) =>
   responseOrigin
     ? doPrefix
@@ -106,7 +107,7 @@ const generateOrigin = (
 export const setOrigin = (
   response: Response,
   origin: string,
-  doPrefix = false
+  doPrefix = false,
 ) =>
   response.status === 'ok' || response.status === 'queued'
     ? response

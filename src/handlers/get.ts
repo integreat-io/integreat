@@ -7,6 +7,7 @@ import {
   setOrigin,
 } from '../utils/response.js'
 import mutateAndSend from '../utils/mutateAndSend.js'
+import { isObject } from '../utils/is.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'
 import type Service from '../service/Service.js'
 import type Endpoint from '../service/Endpoint.js'
@@ -14,14 +15,16 @@ import type Endpoint from '../service/Endpoint.js'
 const debug = debugLib('great')
 
 const isErrorResponse = (response: Response) =>
-  response.status !== 'ok' && response.status !== 'notfound'
+  isObject(response) &&
+  response.status !== 'ok' &&
+  response.status !== 'notfound'
 
 const getIdFromAction = ({ payload: { id } }: Action) =>
   Array.isArray(id) && id.length === 1 ? id[0] : id
 
 function combineIndividualResponses(
   action: Action,
-  responses: Response[]
+  responses: Response[],
 ): Response {
   const errorResponses = responses.filter(isErrorResponse)
 
@@ -31,17 +34,17 @@ function combineIndividualResponses(
       {
         ...combinedResponse,
         error: `One or more of the requests for ids ${getIdFromAction(
-          action
+          action,
         )} failed with the following error(s): ${combinedResponse.error}`,
       },
-      'handler:GET'
+      'handler:GET',
     )
   } else {
     return {
       ...action.response,
       status: 'ok',
       data: responses.map((response) =>
-        Array.isArray(response.data) ? response.data[0] : response.data
+        Array.isArray(response.data) ? response.data[0] : response.data,
       ),
     }
   }
@@ -52,7 +55,7 @@ const isMembersScope = (endpoint?: Endpoint) =>
 
 const setIdOnActionPayload = (
   action: Action,
-  id?: string | string[]
+  id?: string | string[],
 ): Action => ({
   ...action,
   payload: { ...action.payload, id },
@@ -62,12 +65,12 @@ const createNoEndpointError = (action: Action, serviceId: string) =>
   createErrorResponse(
     `No endpoint matching ${action.type} request to service '${serviceId}'.`,
     'handler:GET',
-    'badrequest'
+    'badrequest',
   )
 
 async function runAsIndividualActions(action: Action, service: Service) {
   const actions = (action.payload.id as string[]).map((individualId) =>
-    setIdOnActionPayload(action, individualId)
+    setIdOnActionPayload(action, individualId),
   )
   const endpoint = await service.endpointFromAction(actions[0])
   if (!endpoint) {
@@ -76,8 +79,8 @@ async function runAsIndividualActions(action: Action, service: Service) {
 
   const responses = await Promise.all(
     actions.map((individualAction) =>
-      pLimit(1)(() => mutateAndSend(service, endpoint, individualAction))
-    )
+      pLimit(1)(() => mutateAndSend(service, endpoint, individualAction)),
+    ),
   )
 
   return combineIndividualResponses(action, responses)
@@ -90,7 +93,7 @@ const doRunIndividualIds = (action: Action, endpoint?: Endpoint) =>
 
 async function runOneOrMany(
   action: Action,
-  service: Service
+  service: Service,
 ): Promise<Response> {
   const endpoint = await service.endpointFromAction(action)
   if (!endpoint) {
@@ -113,7 +116,7 @@ async function runOneOrMany(
  */
 export default async function get(
   action: Action,
-  { getService }: ActionHandlerResources
+  { getService }: ActionHandlerResources,
 ): Promise<Response> {
   const {
     type,
@@ -126,7 +129,7 @@ export default async function get(
     return createErrorResponse(
       'GET action was dispatched with empty array of ids',
       'handler:GET',
-      'noaction'
+      'noaction',
     )
   }
 
