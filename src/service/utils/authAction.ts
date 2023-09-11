@@ -1,12 +1,12 @@
 import { ensureArray } from '../../utils/array.js'
 import type { Action, Ident } from '../../types.js'
-import type { AccessDef } from '../../schema/types.js'
+import type { AccessDef, Access } from '../../schema/types.js'
 import type Schema from '../../schema/Schema.js'
 
 const authorizedByIntegreat = Symbol('authorizedByIntegreat')
 
 export const isAuthorizedAction = (
-  action: Action & { meta?: { [authorizedByIntegreat]?: boolean } }
+  action: Action & { meta?: { [authorizedByIntegreat]?: boolean } },
 ) => action.meta && action.meta[authorizedByIntegreat] // eslint-disable-line security/detect-object-injection
 
 export const setAuthorizedMark = (action: Action, isAuthorized = true) => ({
@@ -31,6 +31,11 @@ function authorizeByAllow(allow?: string, hasIdent = false) {
 
 const hasRole = (required: string[], present?: string[]) =>
   Boolean(present && required.some((role) => present.includes(role)))
+const hasIdent = (required: string[], present?: string) =>
+  typeof present === 'string' && required.includes(present)
+const hasFromFields = (access: AccessDef) =>
+  typeof access.identFromField === 'string' ||
+  typeof access.roleFromField === 'string'
 
 const authMethods = [
   'allow',
@@ -44,15 +49,61 @@ const hasAuthMethod = (access: AccessDef) =>
   Object.keys(access).filter(isAuthMethod).length > 0
 
 const createRequiredError = (items: string[], itemName: string) =>
-  `Authentication was refused, ${itemName}${items.length > 1 ? 's' : ''
+  `Authentication was refused, ${itemName}${
+    items.length > 1 ? 's' : ''
   } required: ${items.map((item) => `'${item}'`).join(', ')}`
+
+function authorizeByFromField(type: string, ident?: Ident) {
+  if (ident) {
+    // Grant for now when we have `identFromField` or `roleFromField`, as we
+    // can't refuse until we have the data
+    return undefined
+  } else {
+    // Refuse, as we can't grant without an ident
+    return {
+      reason: 'NO_IDENT',
+      error: `Authentication was refused for type '${type}'`,
+    }
+  }
+}
+
+function authorizeByRoleOrIdent(access: Access, ident?: Ident) {
+  const roles = ensureArray(access.role)
+  const idents = ensureArray(access.ident)
+  const isGrantedByRole = roles.length > 0 && hasRole(roles, ident?.roles)
+  const isGrantedByIdent = idents.length > 0 && hasIdent(idents, ident?.id)
+
+  if (
+    isGrantedByIdent ||
+    isGrantedByRole ||
+    (roles.length === 0 && idents.length === 0)
+  ) {
+    // We either require no ident or role, or we do and at least one of them are
+    // present
+    return undefined
+  }
+
+  if (roles.length > 0 && !isGrantedByRole) {
+    // Refused because of role (possibly also ident, but at least role)
+    return {
+      reason: 'MISSING_ROLE',
+      error: createRequiredError(roles, 'role'),
+    }
+  } else {
+    // Refused by ident
+    return {
+      reason: 'WRONG_IDENT',
+      error: createRequiredError(idents, 'ident'),
+    }
+  }
+}
 
 function authorizeByOneSchema(
   ident: Ident | undefined,
   schema: Schema | undefined,
   type: string,
   actionType: string,
-  requireAuth: boolean
+  requireAuth: boolean,
 ) {
   if (!schema) {
     return {
@@ -77,34 +128,13 @@ function authorizeByOneSchema(
     }
   }
 
-  const roles = ensureArray(access.role)
-  if (roles.length > 0 && !hasRole(roles, ident?.roles)) {
-    return {
-      reason: 'MISSING_ROLE',
-      error: createRequiredError(roles, 'role'),
-    }
+  if (hasFromFields(access)) {
+    // We have `identFromField` or `roleFromField`, so we can't refuse until we
+    // have the data – unless already know that we have no ident
+    return authorizeByFromField(type, ident)
   }
 
-  const idents = ensureArray(access.ident)
-  if (idents.length > 0 && ident?.id && !idents.includes(ident?.id)) {
-    return {
-      reason: 'WRONG_IDENT',
-      error: createRequiredError(idents, 'ident'),
-    }
-  }
-
-  if (
-    (typeof access.identFromField === 'string' ||
-      typeof access.roleFromField === 'string') &&
-    !ident
-  ) {
-    return {
-      reason: 'NO_IDENT',
-      error: `Authentication was refused for type '${type}'`,
-    }
-  }
-
-  return undefined
+  return authorizeByRoleOrIdent(access, ident)
 }
 
 function authorizeBySchema(
@@ -112,7 +142,7 @@ function authorizeBySchema(
   schemas: Map<string, Schema>,
   actionTypes: string[],
   action: string,
-  requireAuth: boolean
+  requireAuth: boolean,
 ) {
   for (const actionType of actionTypes) {
     const error = authorizeByOneSchema(
@@ -120,7 +150,7 @@ function authorizeBySchema(
       schemas.get(actionType),
       actionType,
       action,
-      requireAuth
+      requireAuth,
     )
     if (error) {
       return error
@@ -153,7 +183,7 @@ export default (schemas: Map<string, Schema>, requireAuth: boolean) =>
           schemas,
           types,
           action.type,
-          requireAuth
+          requireAuth,
         )
         // If we have got reason or error, the authentication failed
         if (reason || error) {
@@ -168,7 +198,7 @@ export default (schemas: Map<string, Schema>, requireAuth: boolean) =>
                 origin: 'auth:action',
               },
             },
-            false // Don't authorize
+            false, // Don't authorize
           )
         }
       }

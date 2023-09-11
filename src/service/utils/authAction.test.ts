@@ -1,5 +1,6 @@
 import test from 'ava'
 import Schema from '../../schema/Schema.js'
+import { SchemaDef } from '../../schema/types.js'
 
 import authorizeAction, { isAuthorizedAction } from './authAction.js'
 
@@ -86,7 +87,10 @@ test('should refuse request when schema has no access method', (t) => {
 
 test('should grant request when schema has an identFromField method', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({ id: 'entry', access: { identFromField: 'id' } }))
+  schemas.set(
+    'entry',
+    new Schema({ id: 'entry', access: { identFromField: 'id' } }),
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -100,7 +104,10 @@ test('should grant request when schema has an identFromField method', (t) => {
 
 test('should refuse request when schema has an identFromField method but no ident', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({ id: 'entry', access: { identFromField: 'id' } }))
+  schemas.set(
+    'entry',
+    new Schema({ id: 'entry', access: { identFromField: 'id' } }),
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -121,7 +128,10 @@ test('should refuse request when schema has an identFromField method but no iden
 
 test('should grant request when schema has a roleFromField method', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({ id: 'entry', access: { roleFromField: 'roles' } }))
+  schemas.set(
+    'entry',
+    new Schema({ id: 'entry', access: { roleFromField: 'roles' } }),
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -135,7 +145,10 @@ test('should grant request when schema has a roleFromField method', (t) => {
 
 test('should refuse request when schema has an roleFromField method but no ident', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({ id: 'entry', access: { roleFromField: 'roles' } }))
+  schemas.set(
+    'entry',
+    new Schema({ id: 'entry', access: { roleFromField: 'roles' } }),
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -323,7 +336,10 @@ test('should refuse with allow prop on access object', (t) => {
 
 test('should refuse for unknown allow prop', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({ id: 'entry', access: { allow: 'unknown' } }))
+  schemas.set(
+    'entry',
+    new Schema({ id: 'entry', access: { allow: 'unknown' } }),
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -379,10 +395,12 @@ test('should refuse by role', (t) => {
 test('should grant by role array', (t) => {
   const schemas = new Map()
   schemas.set(
-    'entry', new Schema({
+    'entry',
+    new Schema({
       id: 'entry',
       access: { role: ['admin', 'superuser'] },
-    }))
+    }),
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -396,10 +414,13 @@ test('should grant by role array', (t) => {
 
 test('should refuse by role array', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({
-    id: 'entry',
-    access: { role: ['admin', 'superuser'] },
-  }))
+  schemas.set(
+    'entry',
+    new Schema({
+      id: 'entry',
+      access: { role: ['admin', 'superuser'] },
+    }),
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -455,10 +476,13 @@ test('should refuse by ident', (t) => {
 
 test('should refuse by ident array', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({
-    id: 'entry',
-    access: { ident: ['ident1', 'ident3'] },
-  }))
+  schemas.set(
+    'entry',
+    new Schema({
+      id: 'entry',
+      access: { ident: ['ident1', 'ident3'] },
+    }),
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -477,12 +501,89 @@ test('should refuse by ident array', (t) => {
   t.deepEqual(ret.response, expectedResponse)
 })
 
+test('should grant by ident, even when refused by role', (t) => {
+  const schemas = new Map()
+  schemas.set(
+    'entry',
+    new Schema({ id: 'entry', access: { ident: 'ident1', role: 'admin' } }),
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'ident1', roles: ['user'] } },
+  }
+
+  const ret = authorizeAction(schemas, requireAuth)(action)
+
+  t.true(isAuthorizedAction(ret))
+})
+
+test('should grant by role, even when refused by ident', (t) => {
+  const schemas = new Map()
+  schemas.set(
+    'entry',
+    new Schema({ id: 'entry', access: { ident: 'ident1', role: 'admin' } }),
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'ident2', roles: ['admin'] } },
+  }
+
+  const ret = authorizeAction(schemas, requireAuth)(action)
+
+  t.true(isAuthorizedAction(ret))
+})
+
+test('should grant for identFromField, even when refused by role', (t) => {
+  const schemas = new Map()
+  schemas.set(
+    'entry',
+    new Schema({
+      id: 'entry',
+      access: { identFromField: 'users.id', role: 'admin' },
+    }),
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'ident1', roles: ['user'] } },
+  }
+
+  const ret = authorizeAction(schemas, requireAuth)(action)
+
+  t.true(isAuthorizedAction(ret))
+})
+
+test('should grant for roleFromField, even when refused by ident', (t) => {
+  const schemas = new Map()
+  schemas.set(
+    'entry',
+    new Schema({
+      id: 'entry',
+      access: { ident: 'ident1', roleFromField: 'roles' },
+    }),
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'ident2' } },
+  }
+
+  const ret = authorizeAction(schemas, requireAuth)(action)
+
+  t.true(isAuthorizedAction(ret))
+})
+
 test('should refuse for unknown access prop', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({
-    id: 'entry',
-    access: { unknown: 'something' },
-  } as any)) // eslint-disable-line @typescript-eslint/no-explicit-any
+  schemas.set(
+    'entry',
+    new Schema({
+      id: 'entry',
+      access: { unknown: 'something' },
+    } as SchemaDef),
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -503,10 +604,13 @@ test('should refuse for unknown access prop', (t) => {
 
 test('should grant by action access', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({
-    id: 'entry',
-    access: { allow: 'none', actions: { GET: { allow: 'auth' } } },
-  }))
+  schemas.set(
+    'entry',
+    new Schema({
+      id: 'entry',
+      access: { allow: 'none', actions: { GET: { allow: 'auth' } } },
+    }),
+  )
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -520,10 +624,13 @@ test('should grant by action access', (t) => {
 
 test('should grant by action access with short form and using action prefix', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({
-    id: 'entry',
-    access: { allow: 'none', actions: { GET: 'auth' } },
-  }))
+  schemas.set(
+    'entry',
+    new Schema({
+      id: 'entry',
+      access: { allow: 'none', actions: { GET: 'auth' } },
+    }),
+  )
   const action = {
     type: 'GET_SOMETHING',
     payload: { type: 'entry' },
@@ -537,10 +644,13 @@ test('should grant by action access with short form and using action prefix', (t
 
 test('should refuse by action access', (t) => {
   const schemas = new Map()
-  schemas.set('entry', new Schema({
-    id: 'entry',
-    access: { allow: 'all', actions: { SET: { role: 'admin' } } },
-  }))
+  schemas.set(
+    'entry',
+    new Schema({
+      id: 'entry',
+      access: { allow: 'all', actions: { SET: { role: 'admin' } } },
+    }),
+  )
   const action = {
     type: 'SET',
     payload: { type: 'entry' },
