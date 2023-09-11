@@ -1,4 +1,5 @@
 import test from 'ava'
+import sinon from 'sinon'
 import nock from 'nock'
 import Integreat from '../index.js'
 import defs from '../tests/helpers/defs/index.js'
@@ -30,6 +31,9 @@ test.after.always(() => {
 // Tests
 
 test('should complete ident with token', async (t) => {
+  const great = Integreat.create(defs, resources)
+  const dispatch = sinon.spy(great.services.users, 'send')
+  const getService = () => great.services.users
   const scope = nock('http://some.api')
     .get('/users')
     .query({ tokens: 'twitter|23456' })
@@ -43,11 +47,17 @@ test('should complete ident with token', async (t) => {
     ident: johnfIdent,
   }
 
-  const ret = await getIdent(action, handlerResources)
+  const ret = await getIdent(action, { ...handlerResources, getService })
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.access, expected)
   t.is((ret.data as TypedData).id, 'johnf')
+  t.is(dispatch.callCount, 1)
+  const dispatchedAction = dispatch.args[0][0]
+  t.is(dispatchedAction.type, 'GET')
+  t.is(dispatchedAction.payload.tokens, 'twitter|23456')
+  t.is(dispatchedAction.payload.type, 'user')
+  t.deepEqual(dispatchedAction.meta?.ident, { id: 'root', root: true })
   t.true(scope.isDone())
 })
 
