@@ -16,7 +16,7 @@ const identityFromIntegreat = Symbol('identityFromIntegreat')
 
 const setServiceIdAsSourceServiceOnAction = (
   action: Action,
-  serviceId: string
+  serviceId: string,
 ): Action => ({
   ...action,
   payload: {
@@ -26,7 +26,8 @@ const setServiceIdAsSourceServiceOnAction = (
 })
 
 const isIdent = (ident: unknown): ident is Ident =>
-  isObject(ident) && typeof ident.id === 'string'
+  isObject(ident) &&
+  (typeof ident.id === 'string' || typeof ident.withToken === 'string')
 
 const isKnownIdent = (ident: Ident & { [identityFromIntegreat]?: boolean }) =>
   ident[identityFromIntegreat] === true // eslint-disable-line security/detect-object-injection
@@ -58,7 +59,7 @@ async function authorizeIncoming(action: Action, serviceId: string) {
       action,
       'Authentication was refused. No ident',
       `auth:service:${serviceId}`,
-      'noaccess'
+      'noaccess',
     )
   } else {
     return {
@@ -74,7 +75,7 @@ async function authorizeIncoming(action: Action, serviceId: string) {
 const dispatchWithProgress = (
   dispatch: Dispatch,
   setProgress: ProgressNotifier,
-  serviceId: string
+  serviceId: string,
 ) =>
   async function (action: Action): Promise<Response> {
     if (typeof action.response?.status === 'string') {
@@ -89,7 +90,7 @@ const dispatchWithProgress = (
 async function runAuths(
   auths: Auth[],
   authentication: Authentication,
-  action: Action | null
+  action: Action | null,
 ) {
   let response: Response | undefined = undefined
   for (const auth of auths) {
@@ -105,24 +106,24 @@ async function runAuths(
 // get the ident to used when dispatching incoming actions.
 export const authenticateCallback = (
   auths: Auth[] | undefined,
-  serviceId: string
+  serviceId: string,
 ) =>
   async function authenticateFromListen(
     authentication: Authentication,
-    action?: Action | null
+    action?: Action | null,
   ) {
     if (auths === undefined) {
       return createErrorResponse(
         `Could not authenticate. Service '${serviceId}' has no incoming authenticator`,
         `auth:service:${serviceId}`,
-        'noaction'
+        'noaction',
       )
     } else {
       const response = await runAuths(auths, authentication, action || null)
       return setOrigin(
         markIdentAsKnown(response),
         `auth:service:${serviceId}`,
-        true
+        true,
       )
     }
   }
@@ -132,17 +133,17 @@ export const authenticateCallback = (
 export function dispatchIncoming(
   dispatch: Dispatch,
   middleware: Middleware,
-  serviceId: string
+  serviceId: string,
 ) {
   return (action: Action | null) =>
     pProgress<Response>(async (setProgress) => {
       if (action) {
         const authorizedAction = await authorizeIncoming(
           setServiceIdAsSourceServiceOnAction(action, serviceId),
-          serviceId
+          serviceId,
         )
         const response = await middleware(
-          dispatchWithProgress(dispatch, setProgress, serviceId)
+          dispatchWithProgress(dispatch, setProgress, serviceId),
         )(authorizedAction)
         return (
           setOrigin(response, `middleware:service:${serviceId}`) || {

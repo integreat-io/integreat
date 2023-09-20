@@ -228,6 +228,11 @@ const validateAuth: Authenticator = {
       return { status: 'noaccess', error: 'Refused by authenticator' }
     } else if (options?.invalid) {
       return { status: 'autherror', error: 'Invalidated by authenticator' }
+    } else if (options?.withToken) {
+      return {
+        status: 'ok',
+        access: { ident: { withToken: 'validator|johnf' } },
+      }
     } else {
       return { status: 'ok', access: { ident: { id: 'johnf' } } }
     }
@@ -242,6 +247,10 @@ const auths = {
   invalidating: new Auth('invalidating', validateAuth, {
     ...grantingAuth.options,
     invalid: true,
+  }),
+  withToken: new Auth('withToken', validateAuth, {
+    ...grantingAuth.options,
+    withToken: true,
   }),
 }
 
@@ -3076,6 +3085,33 @@ test('listen should reject authentication when second validate() returns an erro
 
   t.deepEqual(ret, expectedResponse)
   t.is(dispatchStub.callCount, 0)
+})
+
+test('listen should accept an incoming ident with withTokens only', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: 'withToken' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action, true),
+  )
+  const expectedResponse = {
+    status: 'ok',
+    access: { ident: { withToken: 'validator|johnf' } }, // This ident will be completed by the `completeIdent` middleware when used
+  }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 1)
 })
 
 test('listen should authenticate with anonymous when auth is true', async (t) => {
