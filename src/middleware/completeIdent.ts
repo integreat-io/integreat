@@ -31,9 +31,9 @@ const isIdentGetable = (ident?: Ident): ident is Ident =>
  * and final dispatch.
  */
 const completeIdent: Middleware = (next) => async (action) => {
-  const identId = action.meta?.ident
-  if (isIdentGetable(identId)) {
-    const ident = await getIdent(identId, next)
+  const originalIdent = action.meta?.ident
+  if (isIdentGetable(originalIdent)) {
+    const ident = await getIdent(originalIdent, next)
     return next({ ...action, meta: { ...action.meta, ident } })
   } else {
     return next(action)

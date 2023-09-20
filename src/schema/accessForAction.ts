@@ -19,7 +19,7 @@ const massageAccessObject = ({
 
 function getActionPrefix(action: string) {
   const index = action.indexOf('_')
-  return index >= 0 ? action.substr(0, index) : action
+  return index >= 0 ? action.slice(0, index) : action
 }
 
 function ensureAccessObject(access?: string | AccessDef | null) {
@@ -41,7 +41,7 @@ const getActionAccess = (access?: AccessDef | null, actionType?: string) =>
 
 export default function accessForAction(
   access?: AccessDef | null,
-  actionType?: string
+  actionType?: string,
 ): Access {
   return ensureAccessObject(getActionAccess(access, actionType))
 }

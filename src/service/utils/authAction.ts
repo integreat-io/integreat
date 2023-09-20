@@ -1,4 +1,8 @@
-import { ensureArray } from '../../utils/array.js'
+import {
+  arrayIncludes,
+  ensureArray,
+  ensureArrayOrUndefined,
+} from '../../utils/array.js'
 import type { Action, Ident } from '../../types.js'
 import type { AccessDef, Access } from '../../schema/types.js'
 import type Schema from '../../schema/Schema.js'
@@ -29,10 +33,6 @@ function authorizeByAllow(allow?: string, hasIdent = false) {
   }
 }
 
-const hasRole = (required: string[], present?: string[]) =>
-  Boolean(present && required.some((role) => present.includes(role)))
-const hasIdent = (required: string[], present?: string) =>
-  typeof present === 'string' && required.includes(present)
 const hasFromFields = (access: AccessDef) =>
   typeof access.identFromField === 'string' ||
   typeof access.roleFromField === 'string'
@@ -67,34 +67,37 @@ function authorizeByFromField(type: string, ident?: Ident) {
   }
 }
 
-function authorizeByRoleOrIdent(access: Access, ident?: Ident) {
-  const roles = ensureArray(access.role)
-  const idents = ensureArray(access.ident)
-  const isGrantedByRole = roles.length > 0 && hasRole(roles, ident?.roles)
-  const isGrantedByIdent = idents.length > 0 && hasIdent(idents, ident?.id)
+export function validateRoleOrIdent(
+  required?: string | string[],
+  present?: string | string[],
+) {
+  const rolesArr = ensureArray(required)
+  return (
+    rolesArr.length > 0 &&
+    arrayIncludes(rolesArr, ensureArrayOrUndefined(present))
+  )
+}
 
+export function authorizeByRoleOrIdent(access: Access, ident?: Ident) {
   if (
-    isGrantedByIdent ||
-    isGrantedByRole ||
-    (roles.length === 0 && idents.length === 0)
+    (!access.role && !access.ident) ||
+    validateRoleOrIdent(access.role, ident?.roles) ||
+    validateRoleOrIdent(access.ident, ident?.id)
   ) {
-    // We either require no ident or role, or we do and at least one of them are
-    // present
+    // We require no ident or role, or we have a matching ident or role
     return undefined
-  }
-
-  if (roles.length > 0 && !isGrantedByRole) {
-    // Refused because of role (possibly also ident, but at least role)
-    return {
-      reason: 'MISSING_ROLE',
-      error: createRequiredError(roles, 'role'),
-    }
   } else {
-    // Refused by ident
-    return {
-      reason: 'WRONG_IDENT',
-      error: createRequiredError(idents, 'ident'),
-    }
+    // Refused, so return the reason and error. If both ident and role has
+    // refused, we'll return `WRONG_IDENT` as the reason.
+    return access.ident
+      ? {
+          reason: 'WRONG_IDENT',
+          error: createRequiredError(ensureArray(access.ident), 'ident'),
+        }
+      : {
+          reason: 'MISSING_ROLE',
+          error: createRequiredError(ensureArray(access.role), 'role'),
+        }
   }
 }
 
