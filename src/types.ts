@@ -58,7 +58,7 @@ export interface DataFunction {
 
 export interface TransformFunction<
   T extends Record<string, unknown> = Record<string, unknown>,
-  U = unknown
+  U = unknown,
 > {
   (operands: T): (value: unknown) => U
 }
@@ -66,7 +66,7 @@ export interface TransformFunction<
 export interface Ident {
   id?: string
   root?: boolean
-  withToken?: string
+  withToken?: string | string[]
   roles?: string[]
   tokens?: string[]
 }
@@ -154,26 +154,26 @@ export interface Connection extends Record<string, unknown> {
 
 export interface Authenticator<
   T extends Authentication = Authentication,
-  U extends AuthOptions = AuthOptions
+  U extends AuthOptions = AuthOptions,
 > {
   id?: string
   extractAuthKey?: (
     options: U | null,
-    action: Action | null
+    action: Action | null,
   ) => string | undefined
   authenticate: (
     options: AuthOptions | null,
-    action: Action | null
+    action: Action | null,
   ) => Promise<T>
   isAuthenticated: (
     authentication: T | null,
     options: U | null,
-    action: Action | null
+    action: Action | null,
   ) => boolean
   validate?: (
     authentication: T | null,
     options: AuthOptions | null,
-    action: Action | null
+    action: Action | null,
   ) => Promise<Response>
   authentication: {
     [asFunction: string]: (authentication: T | null) => Record<string, unknown>
@@ -189,20 +189,20 @@ export interface Transporter {
   authentication?: string | null // For backward compability, may be removed
   prepareOptions: (
     options: TransporterOptions,
-    serviceId: string
+    serviceId: string,
   ) => Record<string, unknown>
   connect: (
     options: TransporterOptions,
     authentication: Record<string, unknown> | null,
     connection: Connection | null,
-    emit: (eventType: string, ...args: unknown[]) => void
+    emit: (eventType: string, ...args: unknown[]) => void,
   ) => Promise<Connection | null>
   send: (action: Action, connection: Connection | null) => Promise<Response>
   shouldListen?: (options: TransporterOptions) => boolean
   listen?: (
     dispatch: Dispatch,
     connection: Connection | null,
-    authenticate: AuthenticateExternal
+    authenticate: AuthenticateExternal,
   ) => Promise<Response>
   disconnect: (connection: Connection | null) => Promise<void>
 }
@@ -211,15 +211,15 @@ export interface Adapter {
   id?: string
   prepareOptions: (
     options: Record<string, unknown>,
-    serviceId: string
+    serviceId: string,
   ) => Record<string, unknown>
   normalize: (
     action: Action,
-    options: Record<string, unknown>
+    options: Record<string, unknown>,
   ) => Promise<Action>
   serialize: (
     action: Action,
-    options: Record<string, unknown>
+    options: Record<string, unknown>,
   ) => Promise<Action>
 }
 

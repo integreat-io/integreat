@@ -228,10 +228,16 @@ const validateAuth: Authenticator = {
       return { status: 'noaccess', error: 'Refused by authenticator' }
     } else if (options?.invalid) {
       return { status: 'autherror', error: 'Invalidated by authenticator' }
-    } else if (options?.withToken) {
+    } else if (options?.withToken || options?.withTokens) {
       return {
         status: 'ok',
-        access: { ident: { withToken: 'validator|johnf' } },
+        access: {
+          ident: {
+            withToken: options.withTokens
+              ? ['validator|johnf']
+              : 'validator|johnf',
+          },
+        },
       }
     } else {
       return { status: 'ok', access: { ident: { id: 'johnf' } } }
@@ -251,6 +257,10 @@ const auths = {
   withToken: new Auth('withToken', validateAuth, {
     ...grantingAuth.options,
     withToken: true,
+  }),
+  withTokens: new Auth('withTokens', validateAuth, {
+    ...grantingAuth.options,
+    withTokens: true,
   }),
 }
 
@@ -3106,6 +3116,33 @@ test('listen should accept an incoming ident with withTokens only', async (t) =>
   const expectedResponse = {
     status: 'ok',
     access: { ident: { withToken: 'validator|johnf' } }, // This ident will be completed by the `completeIdent` middleware when used
+  }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 1)
+})
+
+test('listen should accept an incoming ident with withTokens array', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: 'withTokens' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action, true),
+  )
+  const expectedResponse = {
+    status: 'ok',
+    access: { ident: { withToken: ['validator|johnf'] } }, // This ident will be completed by the `completeIdent` middleware when used
   }
 
   const ret = await service.listen(dispatchStub)

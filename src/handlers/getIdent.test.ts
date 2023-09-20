@@ -61,6 +61,37 @@ test('should complete ident with token', async (t) => {
   t.true(scope.isDone())
 })
 
+test('should complete ident with array of tokens', async (t) => {
+  const great = Integreat.create(defs, resources)
+  const dispatch = sinon.spy(great.services.users, 'send')
+  const getService = () => great.services.users
+  const scope = nock('http://some.api')
+    .get('/users')
+    .query({ tokens: 'twitter|23456' })
+    .reply(200, { data: johnfData })
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { withToken: ['twitter|23456'] } },
+  }
+  const expected = {
+    ident: johnfIdent,
+  }
+
+  const ret = await getIdent(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.access, expected)
+  t.is((ret.data as TypedData).id, 'johnf')
+  t.is(dispatch.callCount, 1)
+  const dispatchedAction = dispatch.args[0][0]
+  t.is(dispatchedAction.type, 'GET')
+  t.deepEqual(dispatchedAction.payload.tokens, ['twitter|23456'])
+  t.is(dispatchedAction.payload.type, 'user')
+  t.deepEqual(dispatchedAction.meta?.ident, { id: 'root', root: true })
+  t.true(scope.isDone())
+})
+
 test('should complete ident with id', async (t) => {
   nock('http://some.api')
     .get('/users/johnf')

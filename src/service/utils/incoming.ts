@@ -27,7 +27,9 @@ const setServiceIdAsSourceServiceOnAction = (
 
 const isIdent = (ident: unknown): ident is Ident =>
   isObject(ident) &&
-  (typeof ident.id === 'string' || typeof ident.withToken === 'string')
+  (typeof ident.id === 'string' ||
+    typeof ident.withToken === 'string' ||
+    (Array.isArray(ident.withToken) && typeof ident.withToken[0] === 'string'))
 
 const isKnownIdent = (ident: Ident & { [identityFromIntegreat]?: boolean }) =>
   ident[identityFromIntegreat] === true // eslint-disable-line security/detect-object-injection
