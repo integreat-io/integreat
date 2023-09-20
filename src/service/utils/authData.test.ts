@@ -6,20 +6,25 @@ import { fromService, toService } from './authData.js'
 // Setup
 
 const schemas = new Map()
-schemas.set('account', new Schema({
-  id: 'account',
-  shape: {
-    name: 'string',
-  },
-  access: {
-    identFromField: 'id',
-    actions: {
-      SET: { roleFromField: 'allowAccess.roles', identFromField: 'id' },
-      TEST: { allow: 'auth' },
-      DELETE: { roleFromField: 'allowAccess.roles' },
+schemas.set(
+  'account',
+  new Schema({
+    id: 'account',
+    shape: {
+      name: 'string',
     },
-  },
-}))
+    access: {
+      identFromField: 'id',
+      role: 'admin',
+      ident: 'katyf',
+      actions: {
+        SET: { roleFromField: 'allowAccess.roles', identFromField: 'id' },
+        TEST: { allow: 'auth' },
+        DELETE: { roleFromField: 'allowAccess.roles' },
+      },
+    },
+  }),
+)
 
 const account0 = {
   $type: 'account',
@@ -93,6 +98,34 @@ test('should authorized items by both identFromField and roleFromField', async (
       data: [account0, account1],
     },
   }
+
+  const ret = await fromService(schemas)(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should authorized items based on a "fixed" role', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'account' },
+    response: { status: 'ok', data: [account1, account0, account1] },
+    meta: { ident: { id: 'johnf', roles: ['admin'] } },
+  }
+  const expected = action // Don't remove anything, as ident has the admin role
+
+  const ret = await fromService(schemas)(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should authorized items based on a "fixed" identity', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'account' },
+    response: { status: 'ok', data: [account1, account0, account1] },
+    meta: { ident: { id: 'katyf' } },
+  }
+  const expected = action // Don't remove anything, as ident has the katyf ident
 
   const ret = await fromService(schemas)(action)
 

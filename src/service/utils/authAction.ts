@@ -67,33 +67,35 @@ function authorizeByFromField(type: string, ident?: Ident) {
   }
 }
 
-function authorizeByRoleOrIdent(access: Access, ident?: Ident) {
+export function validateByRole(access: Access, ident?: Ident) {
   const roles = ensureArray(access.role)
+  return roles.length > 0 && hasRole(roles, ident?.roles)
+}
+
+export function validateByIdent(access: Access, ident?: Ident) {
   const idents = ensureArray(access.ident)
-  const isGrantedByRole = roles.length > 0 && hasRole(roles, ident?.roles)
-  const isGrantedByIdent = idents.length > 0 && hasIdent(idents, ident?.id)
+  return idents.length > 0 && hasIdent(idents, ident?.id)
+}
 
+export function authorizeByRoleOrIdent(access: Access, ident?: Ident) {
   if (
-    isGrantedByIdent ||
-    isGrantedByRole ||
-    (roles.length === 0 && idents.length === 0)
+    (!access.role && !access.ident) ||
+    validateByRole(access, ident) ||
+    validateByIdent(access, ident)
   ) {
-    // We either require no ident or role, or we do and at least one of them are
-    // present
+    // We require no ident or role, or we have a matching ident or role
     return undefined
-  }
-
-  if (roles.length > 0 && !isGrantedByRole) {
+  } else if (access.role) {
     // Refused because of role (possibly also ident, but at least role)
     return {
       reason: 'MISSING_ROLE',
-      error: createRequiredError(roles, 'role'),
+      error: createRequiredError(ensureArray(access.role), 'role'),
     }
   } else {
     // Refused by ident
     return {
       reason: 'WRONG_IDENT',
-      error: createRequiredError(idents, 'ident'),
+      error: createRequiredError(ensureArray(access.ident), 'ident'),
     }
   }
 }
