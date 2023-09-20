@@ -59,7 +59,7 @@
     "@types/sinon": "^10.0.16",
     "integreat-adapter-json": "^1.0.0",
     "integreat-adapter-uri": "^1.0.0",
-    "integreat-transformers": "^1.0.0",
+    "integreat-transformers": "^1.0.1",
     "integreat-transporter-http": "1.2.0",
     "nock": "^13.3.3",
     "sinon": "^16.0.0"
