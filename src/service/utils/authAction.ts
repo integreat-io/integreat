@@ -1,4 +1,8 @@
-import { ensureArray } from '../../utils/array.js'
+import {
+  arrayIncludes,
+  ensureArray,
+  ensureArrayOrUndefined,
+} from '../../utils/array.js'
 import type { Action, Ident } from '../../types.js'
 import type { AccessDef, Access } from '../../schema/types.js'
 import type Schema from '../../schema/Schema.js'
@@ -29,10 +33,6 @@ function authorizeByAllow(allow?: string, hasIdent = false) {
   }
 }
 
-const hasRole = (required: string[], present?: string[]) =>
-  Boolean(present && required.some((role) => present.includes(role)))
-const hasIdent = (required: string[], present?: string) =>
-  typeof present === 'string' && required.includes(present)
 const hasFromFields = (access: AccessDef) =>
   typeof access.identFromField === 'string' ||
   typeof access.roleFromField === 'string'
@@ -67,36 +67,37 @@ function authorizeByFromField(type: string, ident?: Ident) {
   }
 }
 
-export function validateByRole(access: Access, ident?: Ident) {
-  const roles = ensureArray(access.role)
-  return roles.length > 0 && hasRole(roles, ident?.roles)
-}
-
-export function validateByIdent(access: Access, ident?: Ident) {
-  const idents = ensureArray(access.ident)
-  return idents.length > 0 && hasIdent(idents, ident?.id)
+export function validateRoleOrIdent(
+  required?: string | string[],
+  present?: string | string[],
+) {
+  const rolesArr = ensureArray(required)
+  return (
+    rolesArr.length > 0 &&
+    arrayIncludes(rolesArr, ensureArrayOrUndefined(present))
+  )
 }
 
 export function authorizeByRoleOrIdent(access: Access, ident?: Ident) {
   if (
     (!access.role && !access.ident) ||
-    validateByRole(access, ident) ||
-    validateByIdent(access, ident)
+    validateRoleOrIdent(access.role, ident?.roles) ||
+    validateRoleOrIdent(access.ident, ident?.id)
   ) {
     // We require no ident or role, or we have a matching ident or role
     return undefined
-  } else if (access.role) {
-    // Refused because of role (possibly also ident, but at least role)
-    return {
-      reason: 'MISSING_ROLE',
-      error: createRequiredError(ensureArray(access.role), 'role'),
-    }
   } else {
-    // Refused by ident
-    return {
-      reason: 'WRONG_IDENT',
-      error: createRequiredError(ensureArray(access.ident), 'ident'),
-    }
+    // Refused, so return the reason and error. If both ident and role has
+    // refused, we'll return `WRONG_IDENT` as the reason.
+    return access.ident
+      ? {
+          reason: 'WRONG_IDENT',
+          error: createRequiredError(ensureArray(access.ident), 'ident'),
+        }
+      : {
+          reason: 'MISSING_ROLE',
+          error: createRequiredError(ensureArray(access.role), 'role'),
+        }
   }
 }
 
