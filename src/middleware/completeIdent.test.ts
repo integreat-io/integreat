@@ -53,6 +53,23 @@ test('should complete ident with token', async (t) => {
   t.deepEqual(action1.meta?.ident, expectedIdent1)
 })
 
+test('should not complete root ident', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'notfound',
+    error: 'rOoT?',
+  })
+  const action = {
+    type: 'GET',
+    payload: {},
+    meta: { ident: { id: 'root', root: true } },
+  }
+
+  await completeIdent(dispatch)(action)
+
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], action)
+})
+
 test('should complete ident with ident from action when ok response has no ident', async (t) => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',

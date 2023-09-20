@@ -11,7 +11,7 @@ const getIdent = async (ident: Ident, dispatch: HandlerDispatch) => {
 }
 
 const isIdentGetable = (ident?: Ident): ident is Ident =>
-  !!(ident?.id || ident?.withToken)
+  !ident?.root && !!(ident?.id || ident?.withToken)
 
 /**
  * Middleware that will complete the identity of the dispatched action.
