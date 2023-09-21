@@ -55,6 +55,9 @@ const removeKnownIdentMarker = ({
 }: Ident & { [identityFromIntegreat]?: boolean }) => identWithoutMarker
 
 async function authorizeIncoming(action: Action, serviceId: string) {
+  if (typeof action.response?.status === 'string') {
+    return action
+  }
   const ident = action.meta?.ident
   if (!isIdent(ident)) {
     return setErrorOnAction(
@@ -80,13 +83,10 @@ const dispatchWithProgress = (
   serviceId: string,
 ) =>
   async function (action: Action): Promise<Response> {
-    if (typeof action.response?.status === 'string') {
-      return action.response
-    }
-
     const p = dispatch(action)
     p.onProgress(setProgress)
-    return setOrigin(await p, `service:${serviceId}`)
+    const response = await p
+    return setOrigin(response, `service:${serviceId}`)
   }
 
 async function runAuths(

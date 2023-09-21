@@ -227,7 +227,11 @@ const validateAuth: Authenticator = {
     if (options?.refuse) {
       return { status: 'noaccess', error: 'Refused by authenticator' }
     } else if (options?.invalid) {
-      return { status: 'autherror', error: 'Invalidated by authenticator' }
+      return {
+        status: 'autherror',
+        error: 'Invalidated by authenticator',
+        reason: 'becauseisayso',
+      }
     } else if (options?.withToken || options?.withTokens) {
       return {
         status: 'ok',
@@ -285,12 +289,10 @@ const mockResources = (
         // set the ident on the response if authentication was successful.
         if (doValidate) {
           const authResponse = await authenticate({ status: 'granted' }, null)
-          if (authResponse.status !== 'ok') {
-            return authResponse
-          }
           const ident = authResponse.access?.ident
           return await dispatch({
             ...action,
+            ...(authResponse.status !== 'ok' ? { response: authResponse } : {}),
             meta: { ...action.meta, ident },
           })
         } else {
@@ -3060,13 +3062,20 @@ test('listen should reject authentication when validate() returns an error', asy
   const expectedResponse = {
     status: 'autherror',
     error: 'Authentication was refused. Invalidated by authenticator',
+    reason: 'becauseisayso',
     origin: 'auth:service:entries:invalidating',
+  }
+  const expectedAction = {
+    ...action,
+    response: expectedResponse,
+    meta: { ident: undefined },
   }
 
   const ret = await service.listen(dispatchStub)
 
+  t.is(dispatchStub.callCount, 1)
+  t.deepEqual(dispatchStub.args[0][0], expectedAction)
   t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 0)
 })
 
 test('listen should reject authentication when second validate() returns an error', async (t) => {
@@ -3088,13 +3097,14 @@ test('listen should reject authentication when second validate() returns an erro
   const expectedResponse = {
     status: 'autherror',
     error: 'Authentication was refused. Invalidated by authenticator',
+    reason: 'becauseisayso',
     origin: 'auth:service:entries:invalidating',
   }
 
   const ret = await service.listen(dispatchStub)
 
   t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 0)
+  t.is(dispatchStub.callCount, 1)
 })
 
 test('listen should accept an incoming ident with withTokens only', async (t) => {
@@ -3232,7 +3242,7 @@ test('listen should return noaction from authenticate() when no incoming auth', 
   const ret = await service.listen(dispatchStub)
 
   t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 0)
+  t.is(dispatchStub.callCount, 1)
 })
 
 test('listen should return error when connection fails', async (t) => {
