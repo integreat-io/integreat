@@ -3,6 +3,7 @@ import nock from 'nock'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import entriesService from '../helpers/defs/services/entries.js'
+import { IdentType } from '../../types.js'
 
 import Integreat from '../../index.js'
 
@@ -48,7 +49,7 @@ test('should set data with endpoint mutation', async (t) => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
-    meta: { ident: { root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const mutation = [
     {
@@ -104,7 +105,7 @@ test('should set data with service and endpoint mutation', async (t) => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
-    meta: { ident: { root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const serviceMutation = {
     $direction: 'to',

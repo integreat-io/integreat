@@ -3,7 +3,7 @@ import sinon from 'sinon'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import ent1Data from '../helpers/data/entry1.js'
-import type { Action } from '../../types.js'
+import { type Action, IdentType } from '../../types.js'
 
 import Integreat from '../../index.js'
 
@@ -28,7 +28,7 @@ test('should mutate incoming action data to error status and mutate response', a
       data: null,
       sourceService: 'api', // Makes this a candidate for incoming mapping
     },
-    meta: { ident: { root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const expectedResponseData = JSON.stringify({
     code: 'badrequest',
