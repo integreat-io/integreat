@@ -3,10 +3,11 @@ import getHandler from './get.js'
 import getField from '../utils/getField.js'
 import { createErrorResponse } from '../utils/response.js'
 import { getFirstIfArray } from '../utils/array.js'
-import type {
+import {
   Action,
   Response,
   Ident,
+  IdentType,
   ActionHandlerResources,
 } from '../types.js'
 
@@ -28,7 +29,7 @@ const preparePropKeys = ({
 // best way to go about this.
 const prepareParams = (
   ident: Ident,
-  keys: Record<string, string>
+  keys: Record<string, string>,
 ): IdentParams | null =>
   ident.id
     ? { [keys.id]: ident.id }
@@ -47,7 +48,7 @@ const prepareResponse = async (
   action: Action,
   response: Response,
   params: IdentParams,
-  propKeys: Record<string, string>
+  propKeys: Record<string, string>,
 ): Promise<Response> => {
   const data = getFirstIfArray(response.data)
 
@@ -64,7 +65,7 @@ const prepareResponse = async (
         response.error
       }`,
       'handler:GET_IDENT',
-      'notfound'
+      'notfound',
     )
   }
 }
@@ -74,14 +75,14 @@ const prepareResponse = async (
  */
 export default async function getIdent(
   action: Action,
-  resources: ActionHandlerResources
+  resources: ActionHandlerResources,
 ): Promise<Response> {
   const { ident } = action.meta || {}
   if (!ident) {
     return createErrorResponse(
       'GET_IDENT: The request has no ident',
       'handler:GET_IDENT',
-      'noaction'
+      'noaction',
     )
   }
 
@@ -92,7 +93,7 @@ export default async function getIdent(
     return createErrorResponse(
       'GET_IDENT: Integreat is not set up with authentication',
       'handler:GET_IDENT',
-      'noaction'
+      'noaction',
     )
   }
 
@@ -102,14 +103,14 @@ export default async function getIdent(
     return createErrorResponse(
       'GET_IDENT: The request has no ident with id or withToken',
       'handler:GET_IDENT',
-      'noaction'
+      'noaction',
     )
   }
 
   const nextAction = {
     type: 'GET',
     payload: { type, ...params },
-    meta: { ident: { id: 'root', root: true } },
+    meta: { ident: { id: 'root', root: true, type: IdentType.Root } }, // Set `root` flag here until we can remove it
   }
   const response = await getHandler(nextAction, resources)
 

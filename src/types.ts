@@ -63,12 +63,19 @@ export interface TransformFunction<
   (operands: T): (value: unknown) => U
 }
 
+export enum IdentType {
+  Root = 'ROOT',
+  Anon = 'ANON',
+  Custom = 'CUST',
+}
+
 export interface Ident {
   id?: string
-  root?: boolean
+  root?: boolean // Note: The `root` flag will be replaced by the `type` enum
   withToken?: string | string[]
   roles?: string[]
   tokens?: string[]
+  type?: IdentType
 }
 
 export type Params = Record<string, unknown>

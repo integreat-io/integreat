@@ -7,7 +7,7 @@ import resources from '../tests/helpers/resources/index.js'
 import johnfData from '../tests/helpers/data/userJohnf.js'
 import ent1Data from '../tests/helpers/data/entry1.js'
 import defaultHandlerResources from '../tests/helpers/handlerResources.js'
-import type { TypedData } from '../types.js'
+import { TypedData, IdentType } from '../types.js'
 
 import getIdent from './getIdent.js'
 
@@ -46,6 +46,7 @@ test('should complete ident with token', async (t) => {
   const expected = {
     ident: johnfIdent,
   }
+  const expectedIdent = { id: 'root', root: true, type: IdentType.Root }
 
   const ret = await getIdent(action, { ...handlerResources, getService })
 
@@ -57,7 +58,7 @@ test('should complete ident with token', async (t) => {
   t.is(dispatchedAction.type, 'GET')
   t.is(dispatchedAction.payload.tokens, 'twitter|23456')
   t.is(dispatchedAction.payload.type, 'user')
-  t.deepEqual(dispatchedAction.meta?.ident, { id: 'root', root: true })
+  t.deepEqual(dispatchedAction.meta?.ident, expectedIdent)
   t.true(scope.isDone())
 })
 
@@ -77,6 +78,7 @@ test('should complete ident with array of tokens', async (t) => {
   const expected = {
     ident: johnfIdent,
   }
+  const expectedIdent = { id: 'root', root: true, type: IdentType.Root }
 
   const ret = await getIdent(action, { ...handlerResources, getService })
 
@@ -88,7 +90,7 @@ test('should complete ident with array of tokens', async (t) => {
   t.is(dispatchedAction.type, 'GET')
   t.deepEqual(dispatchedAction.payload.tokens, ['twitter|23456'])
   t.is(dispatchedAction.payload.type, 'user')
-  t.deepEqual(dispatchedAction.meta?.ident, { id: 'root', root: true })
+  t.deepEqual(dispatchedAction.meta?.ident, expectedIdent)
   t.true(scope.isDone())
 })
 

@@ -1,5 +1,6 @@
 import test from 'ava'
 import Schema from '../../schema/Schema.js'
+import { IdentType } from '../../types.js'
 
 import { fromService, toService } from './authData.js'
 
@@ -358,7 +359,7 @@ test('should authorized all items for root', async (t) => {
     type: 'GET',
     payload: { type: 'account' },
     response: { status: 'ok', data: [account0, account1] },
-    meta: { ident: { id: 'root', root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const expected = {
     ...action,
