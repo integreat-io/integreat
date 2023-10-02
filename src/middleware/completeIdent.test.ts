@@ -2,6 +2,7 @@ import test from 'ava'
 import sinon from 'sinon'
 
 import completeIdent from './completeIdent.js'
+import { IdentType } from '../types.js'
 
 // Tests
 
@@ -77,7 +78,24 @@ test('should complete ident with arary of tokens', async (t) => {
   t.deepEqual(action1.meta?.ident, expectedIdent1)
 })
 
-test('should not complete root ident', async (t) => {
+test('should not complete root ident ', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'notfound',
+    error: 'rOoT?',
+  })
+  const action = {
+    type: 'GET',
+    payload: {},
+    meta: { ident: { id: 'root', type: IdentType.Root } },
+  }
+
+  await completeIdent(dispatch)(action)
+
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], action)
+})
+
+test('should not complete root ident with the obsolete root flag', async (t) => {
   const dispatch = sinon.stub().resolves({
     status: 'notfound',
     error: 'rOoT?',
@@ -86,6 +104,23 @@ test('should not complete root ident', async (t) => {
     type: 'GET',
     payload: {},
     meta: { ident: { id: 'root', root: true } },
+  }
+
+  await completeIdent(dispatch)(action)
+
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], action)
+})
+
+test('should not complete anonymous ident ', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'notfound',
+    error: 'who?',
+  })
+  const action = {
+    type: 'GET',
+    payload: {},
+    meta: { ident: { id: 'anonymous', type: IdentType.Anon } },
   }
 
   await completeIdent(dispatch)(action)
