@@ -1,4 +1,11 @@
-import type { TypedData, Reference, Action, Response } from '../types.js'
+import {
+  TypedData,
+  Reference,
+  Action,
+  Response,
+  Ident,
+  IdentType,
+} from '../types.js'
 import type { ShapeDef, FieldDefinition } from '../schema/types.js'
 
 const OK_STATUSES = ['ok', 'noaction', 'queued']
@@ -49,5 +56,10 @@ export const not = isFalsy
 export const isDuplicate = <T = unknown>(
   error: T,
   index: number,
-  errors: T[]
+  errors: T[],
 ): boolean => errors.indexOf(error) === index
+
+export const isRootIdent = (ident?: Ident) =>
+  ident?.type === IdentType.Root || ident?.root
+
+export const isAnonIdent = (ident?: Ident) => ident?.type === IdentType.Anon

@@ -4,6 +4,7 @@ import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import ent1Data from '../helpers/data/entry1.js'
 import ent2Data from '../helpers/data/entry2.js'
+import { IdentType } from '../../types.js'
 
 import Integreat from '../../index.js'
 
@@ -29,7 +30,7 @@ test('should get raw response from service for root', async (t) => {
       targetService: 'entries', // Find service by `targetService`
       rawForRoot: true,
     }, // Flag to trigger raw endpoint
-    meta: { ident: { id: 'admin', root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const expected = { ...ent1Data, createdAt, updatedAt }
 

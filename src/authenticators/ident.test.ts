@@ -1,6 +1,7 @@
 import test from 'ava'
 
 import authenticator from './ident.js'
+import { IdentType } from '../types.js'
 
 // Setup
 
@@ -48,7 +49,10 @@ test('asObject should return empty object', (t) => {
 
 test('validate should return response with ident anonymous', async (t) => {
   const authentication = { status: 'granted' } // Doesn't matter what we pass here
-  const expected = { status: 'ok', access: { ident: { id: 'anonymous' } } }
+  const expected = {
+    status: 'ok',
+    access: { ident: { id: 'anonymous', type: IdentType.Anon } },
+  }
 
   const ret = await authenticator.validate!(authentication, options, action)
 

@@ -154,7 +154,7 @@ const services = [
 // transporters and adapters we require.
 const great = Integreat.create(
   { schemas, services },
-  { transporters: { http: httpTransporter }, adapters: { json: jsonAdapter } }
+  { transporters: { http: httpTransporter }, adapters: { json: jsonAdapter } },
 )
 
 // Prepare an action to fetch all cat facts from the service `catfact`
@@ -1239,7 +1239,7 @@ Current meta properties reserved by Integreat:
 
 - `ident`: The ident to authorize the action with. May hold an `id`, `roles`,
   `tokens`, and a few other options. See
-  [the section on idents](#idents-and-security-rules).
+  [the section on idents](#idents).
 - `id`: The id of the action itself. You may set this yourself or let Integreat
   generate a universally unique id for you. Useful for logging and may be used
   by queues.
@@ -1406,6 +1406,15 @@ Example ident:
   setting the auth rules for a schema, you specify required rules so that to get
   data cast in this schema, an ident with e.g. the role `admin` must be
   provided.
+- `type`: An optional string to signal when this ident is `'ROOT'` or `'ANON'`.
+  This is used internally by Integreat, but in some cases you may want to set
+  this yourself. Make sure, however, that you don't let third-parties set
+  `'ROOT'`. Make sure to also set the id, typically to `'root'` or
+  `'anonymous'`. Not setting any `type` is the same as setting it to `'CUST'`,
+  which is the default.
+- `isCompleted`: A flag to signal that an ident has already been completed, so
+  that it won't be completed again. Used by the `completeIdent` middleware. You
+  should normally not need to set this yourself.
 
 Actions are authenticated by setting an ident on the `meta.ident` property. It's
 up to the code dispatching an action to get hold of the properties of an ident
@@ -1939,7 +1948,7 @@ const great = Integreat.create(
   ],
   [
     // Service middleware
-  ]
+  ],
 )
 ```
 
@@ -1972,7 +1981,7 @@ const great = Integreat.create(
   },
   {
     // ...
-  }
+  },
 )
 ```
 

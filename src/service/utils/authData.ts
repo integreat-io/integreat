@@ -1,7 +1,7 @@
 import { validateRoleOrIdent } from './authAction.js'
 import getField from '../../utils/getField.js'
 import { arrayIncludes, filterAsync } from '../../utils/array.js'
-import { isTypedData, isNullOrUndefined } from '../../utils/is.js'
+import { isTypedData, isNullOrUndefined, isRootIdent } from '../../utils/is.js'
 import type { Action, Response, TypedData, Ident } from '../../types.js'
 import type Schema from '../../schema/Schema.js'
 import type { Access } from '../../schema/types.js'
@@ -158,7 +158,7 @@ const authorizeDataBase = (
     action: Action,
     allowRaw = false,
   ): Promise<Action> {
-    if (action.meta?.ident?.root) {
+    if (isRootIdent(action.meta?.ident)) {
       return action
     }
 

@@ -11,7 +11,7 @@ import { isAuthorizedAction, setAuthorizedMark } from './utils/authAction.js'
 import { isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { ServiceDef, TransporterOptions } from './types.js'
-import type {
+import {
   Authenticator,
   Connection,
   Action,
@@ -19,6 +19,7 @@ import type {
   TypedData,
   Dispatch,
   Adapter,
+  IdentType,
 } from '../types.js'
 
 import Service, { Resources } from './Service.js'
@@ -213,7 +214,7 @@ const testAuth: Authenticator = {
   isAuthenticated: (_authentication, _action) => false,
   validate: async (_authentication, _options, _action) => ({
     status: 'ok',
-    access: { ident: { id: 'anonymous' } },
+    access: { ident: { id: 'anonymous', type: IdentType.Anon } },
   }),
   authentication: {
     asObject: (authentication) =>
@@ -482,7 +483,7 @@ test('preflightAction should set authorizedByIntegreat (symbol) flag', async (t)
   const action = {
     type: 'GET',
     payload: { type: 'account' },
-    meta: { ident: { root: true, id: 'root' } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
 
   const endpoint = await service.endpointFromAction(action)
@@ -600,7 +601,7 @@ test('preflightAction should not touch action when endpoint validation succeeds'
   const action = {
     type: 'GET',
     payload: { type: 'account', id: 'acc1' },
-    meta: { ident: { root: true, id: 'root' } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
 
   const endpoint = await service.endpointFromAction(action)
@@ -629,7 +630,7 @@ test('preflightAction should set error response when validate fails', async (t) 
   const action = {
     type: 'GET',
     payload: { type: 'account' }, // No id
-    meta: { ident: { root: true, id: 'root' } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const expectedResponse = {
     status: 'badrequest',
@@ -3030,9 +3031,10 @@ test('listen should fall back to ident authenticator on true', async (t) => {
   )
   const expectedResponse = {
     status: 'ok',
-    access: { ident: { id: 'anonymous' } },
+    access: { ident: { id: 'anonymous', type: IdentType.Anon } },
   }
   const expectedPayload = { ...action.payload, sourceService: 'entries' }
+  const expectedActionIdent = { id: 'anonymous', type: IdentType.Anon }
 
   const ret = await service.listen(dispatchStub)
 
@@ -3040,7 +3042,7 @@ test('listen should fall back to ident authenticator on true', async (t) => {
   t.is(dispatchStub.callCount, 1)
   const dispatchedAction = dispatchStub.args[0][0]
   t.deepEqual(dispatchedAction.payload, expectedPayload)
-  t.is(dispatchedAction.meta?.ident?.id, 'anonymous')
+  t.deepEqual(dispatchedAction.meta?.ident, expectedActionIdent)
 })
 
 test('listen should reject authentication when validate() returns an error', async (t) => {
@@ -3179,7 +3181,7 @@ test('listen should authenticate with anonymous when auth is true', async (t) =>
   )
   const expectedResponse = {
     status: 'ok',
-    access: { ident: { id: 'anonymous' } },
+    access: { ident: { id: 'anonymous', type: IdentType.Anon } },
   }
 
   const ret = await service.listen(dispatchStub)

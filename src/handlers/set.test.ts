@@ -5,7 +5,7 @@ import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import Schema from '../schema/Schema.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import createMapOptions from '../utils/createMapOptions.js'
-import type { TypedData } from '../types.js'
+import { IdentType, type TypedData } from '../types.js'
 import type { ValidateObject } from '../types.js'
 
 import set from './set.js'
@@ -22,7 +22,7 @@ schemas.set(
       one: 'integer',
     },
     access: { allow: 'auth' },
-  })
+  }),
 )
 schemas.set(
   'account',
@@ -33,7 +33,7 @@ schemas.set(
       posts: 'entry',
     },
     access: { identFromField: 'id' },
-  })
+  }),
 )
 const pipelines = {
   entry: [
@@ -64,7 +64,7 @@ const setupService = (
   uri: string,
   id = 'entries',
   method = 'POST',
-  validate?: ValidateObject[]
+  validate?: ValidateObject[],
 ) => {
   return new Service(
     {
@@ -107,7 +107,7 @@ const setupService = (
     {
       schemas,
       mapOptions,
-    }
+    },
   )
 }
 
@@ -189,7 +189,7 @@ test('should mutate and set with id to service', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const src = setupService(
-    'http://api11.test/database/{payload.type}:{payload.id}'
+    'http://api11.test/database/{payload.type}:{payload.id}',
   )
   const getService = () => src
 
@@ -290,7 +290,7 @@ test('should return failResponse when validation fails', async (t) => {
         condition: 'payload.data',
         failResponse: { status: 'error', error: 'We need data!' },
       },
-    ]
+    ],
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -326,7 +326,7 @@ test('should authorize before running validation', async (t) => {
         condition: 'payload.data',
         failResponse: { status: 'error', error: 'We need data!' },
       },
-    ]
+    ],
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? src : undefined
@@ -492,7 +492,7 @@ test('should mutate response data', async (t) => {
       ],
       targetService: 'accounts',
     },
-    meta: { ident: { root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const src = setupService('http://api9.test/database/_bulk_docs', 'accounts')
   const getService = () => src
@@ -521,7 +521,7 @@ test('should mutate non-array response data', async (t) => {
       data: { $type: 'account', name: 'John F.' },
       targetService: 'accounts',
     },
-    meta: { ident: { root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const src = setupService('http://api10.test/database/_bulk_docs', 'accounts')
   const getService = () => src

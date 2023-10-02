@@ -1,4 +1,4 @@
-import type { Authenticator } from '../types.js'
+import { IdentType, type Authenticator } from '../types.js'
 
 /**
  * The `ident` authenticator. Will always grant. `validate()` returns an ident
@@ -31,8 +31,11 @@ const identAuth: Authenticator = {
    */
   async validate(_authentication, options) {
     const { identId } = options || {}
-    const id = typeof identId === 'string' ? identId : 'anonymous'
-    return { status: 'ok', access: { ident: { id } } }
+    const ident =
+      typeof identId === 'string'
+        ? { id: identId }
+        : { id: 'anonymous', type: IdentType.Anon }
+    return { status: 'ok', access: { ident } }
   },
 
   authentication: {

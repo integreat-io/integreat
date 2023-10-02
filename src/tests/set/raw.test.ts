@@ -2,7 +2,7 @@ import test from 'ava'
 import nock from 'nock'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
-import type { TypedData } from '../../types.js'
+import { type TypedData, IdentType } from '../../types.js'
 
 import Integreat from '../../index.js'
 
@@ -58,7 +58,7 @@ test('should set new entry with raw data as root', async (t) => {
   const action = {
     type: 'SET',
     payload: { data: putData2, service: 'entries', rawForRoot: true },
-    meta: { ident: { id: 'admin', root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
 
   const great = Integreat.create(defs, resources)
