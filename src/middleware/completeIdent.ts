@@ -5,7 +5,7 @@ const getIdent = async (ident: Ident, dispatch: HandlerDispatch) => {
   const response = await dispatch({
     type: 'GET_IDENT',
     payload: {},
-    meta: { ident },
+    meta: { ident, cache: true },
   })
 
   return response.status === 'ok' ? response?.access?.ident || ident : undefined

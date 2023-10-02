@@ -2,7 +2,7 @@ import test from 'ava'
 import sinon from 'sinon'
 
 import completeIdent from './completeIdent.js'
-import { IdentType } from '../types.js'
+import { IdentType, type Action } from '../types.js'
 
 // Tests
 
@@ -22,10 +22,11 @@ test('should complete ident with id', async (t) => {
   await completeIdent(dispatch)(action)
 
   t.is(dispatch.callCount, 2)
-  const action0 = dispatch.args[0][0]
+  const action0: Action = dispatch.args[0][0]
   t.is(action0.type, 'GET_IDENT')
   t.deepEqual(action0.meta?.ident, expectedIdent0)
-  const action1 = dispatch.args[1][0]
+  t.true(action0.meta?.cache)
+  const action1: Action = dispatch.args[1][0]
   t.is(action1.type, 'GET')
   t.deepEqual(action1.meta?.ident, expectedIdent1)
 })

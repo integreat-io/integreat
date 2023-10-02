@@ -114,6 +114,7 @@ export interface Meta extends Record<string, unknown> {
   dispatchedAt?: number
   queue?: boolean | number
   queuedAt?: number
+  cache?: boolean
   auth?: Record<string, unknown> | null
   options?: TransporterOptions
 }
