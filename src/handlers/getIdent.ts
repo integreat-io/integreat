@@ -57,7 +57,8 @@ const prepareResponse = async (
       id: await getField(data, propKeys.id),
       roles: await getField(data, propKeys.roles),
       tokens: await getField(data, propKeys.tokens),
-    } as Ident
+      isCompleted: true,
+    } as Ident // Force type because `getField()` returns `unknown`
     return wrapOk(action, data, completeIdent)
   } else {
     return createErrorResponse(

@@ -12,6 +12,7 @@ const getIdent = async (ident: Ident, dispatch: HandlerDispatch) => {
 }
 
 const isIdentGetable = (ident?: Ident): ident is Ident =>
+  !ident?.isCompleted &&
   !isRootIdent(ident) &&
   !isAnonIdent(ident) &&
   !!(ident?.id || ident?.withToken)

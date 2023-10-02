@@ -44,7 +44,7 @@ test('should complete ident with token', async (t) => {
     meta: { ident: { withToken: 'twitter|23456' } },
   }
   const expected = {
-    ident: johnfIdent,
+    ident: { ...johnfIdent, isCompleted: true },
   }
   const expectedIdent = { id: 'root', root: true, type: IdentType.Root }
 
@@ -76,7 +76,7 @@ test('should complete ident with array of tokens', async (t) => {
     meta: { ident: { withToken: ['twitter|23456'] } },
   }
   const expected = {
-    ident: johnfIdent,
+    ident: { ...johnfIdent, isCompleted: true },
   }
   const expectedIdent = { id: 'root', root: true, type: IdentType.Root }
 
@@ -103,11 +103,12 @@ test('should complete ident with id', async (t) => {
     payload: {},
     meta: { ident: { id: 'johnf' } },
   }
+  const expectedIdent = { ...johnfIdent, isCompleted: true }
 
   const ret = await getIdent(action, handlerResources)
 
   t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.access?.ident, johnfIdent)
+  t.deepEqual(ret.access?.ident, expectedIdent)
   t.is((ret.data as TypedData).id, 'johnf')
 })
 
@@ -120,11 +121,12 @@ test('should complete ident with id when more props are present', async (t) => {
     payload: {},
     meta: { ident: { id: 'johnf', withToken: 'other|34567' } },
   }
+  const expectedIdent = { ...johnfIdent, isCompleted: true }
 
   const ret = await getIdent(action, handlerResources)
 
   t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.access?.ident, johnfIdent)
+  t.deepEqual(ret.access?.ident, expectedIdent)
   t.is((ret.data as TypedData).id, 'johnf')
 })
 
@@ -223,6 +225,7 @@ test('should complete ident with other prop keys', async (t) => {
     id: 'johnf',
     roles: ['news', 'sports'],
     tokens: undefined,
+    isCompleted: true,
   }
 
   const ret = await getIdent(action, {

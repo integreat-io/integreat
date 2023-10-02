@@ -76,6 +76,7 @@ export interface Ident {
   roles?: string[]
   tokens?: string[]
   type?: IdentType
+  isCompleted?: boolean
 }
 
 export type Params = Record<string, unknown>
