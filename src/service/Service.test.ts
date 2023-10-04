@@ -2820,7 +2820,7 @@ test('listen should set sourceService', async (t) => {
   const expectedAction = {
     type: 'SET',
     payload: { data: [], sourceService: 'entries' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, auth: undefined },
   }
   const expectedResponse = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
@@ -2883,7 +2883,7 @@ test('listen should not set sourceService when already set', async (t) => {
   const expectedAction = {
     type: 'SET',
     payload: { data: [], sourceService: 'other' },
-    meta: { ident: { id: 'johnf' } },
+    meta: { ident: { id: 'johnf' }, auth: undefined },
   }
   const expectedResponse = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
@@ -3216,6 +3216,32 @@ test('listen should remove ident not given by us', async (t) => {
 
   t.deepEqual(ret, expectedResponse)
   t.is(dispatchStub.callCount, 1)
+})
+
+test('listen should remove incoming auth on meta', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+    meta: { auth: { token: 'h4ck1n6!' } },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: true },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    mockResources({}, action, true),
+  )
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret.status, 'ok', ret.error)
+  t.is(dispatchStub.callCount, 1)
+  const dispatchedAction = dispatchStub.args[0][0]
+  t.is(dispatchedAction.meta?.auth, undefined)
 })
 
 test('listen should return noaction from authenticate() when no incoming auth', async (t) => {

@@ -72,6 +72,7 @@ async function authorizeIncoming(action: Action, serviceId: string) {
       meta: {
         ...action.meta,
         ident: isKnownIdent(ident) ? removeKnownIdentMarker(ident) : undefined, // Remove the marker if it's there, otherwise remove the ident
+        auth: undefined, // Accept no incoming ident
       },
     }
   }
