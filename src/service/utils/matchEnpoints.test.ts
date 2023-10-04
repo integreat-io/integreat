@@ -1,4 +1,5 @@
 import test from 'ava'
+import { IdentType } from '../../types.js'
 
 import isMatch from './matchEnpoints.js'
 
@@ -14,7 +15,7 @@ const filterParamAuthor = {
   'payload.author': { const: 'johnf' },
 }
 const filterMetaRootIdent = {
-  'meta.ident.root': { const: true },
+  'meta.ident.type': { const: 'ROOT' },
 }
 const conditionNotDraft = {
   $transform: 'compare',
@@ -33,8 +34,8 @@ const conditionParamAuthor = {
 }
 const conditionMetaRootIdent = {
   $transform: 'compare',
-  path: 'meta.ident.root',
-  match: true,
+  path: 'meta.ident.type',
+  match: 'ROOT',
 }
 
 const endpointCatchAll = {}
@@ -455,7 +456,7 @@ test('should match with meta filter', async (t) => {
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
-    meta: { ident: { root: true, id: 'root' } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
 
   t.true(await isMatch(endpoints, mapOptions)(action))
@@ -553,7 +554,7 @@ test('should match with meta condition', async (t) => {
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
-    meta: { ident: { root: true, id: 'root' } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
 
   t.true(await isMatch(endpoints, mapOptions)(action))

@@ -2,6 +2,7 @@ import test from 'ava'
 import nock from 'nock'
 import defsBase from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
+import { IdentType } from '../../types.js'
 
 import Integreat from '../../index.js'
 
@@ -68,7 +69,7 @@ test('should send item with sub schema to service', async (t) => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
-    meta: { ident: { root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)

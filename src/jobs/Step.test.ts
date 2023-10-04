@@ -1,10 +1,26 @@
 import test from 'ava'
 import sinon from 'sinon'
+import { setTimeout } from 'node:timers/promises'
 import integreatTransformers from 'integreat-transformers'
 
 import Step from './Step.js'
 
 // Setup
+
+// Update `concurrency` counts, wait to make sure concurrency is noticable, and
+// return `ret`
+function countConcurrency(
+  concurrency: { now: number; max: number },
+  ret: unknown,
+) {
+  return async () => {
+    concurrency.now++
+    await setTimeout(200) // Give it 200 ms to make sure parallel dispatches are running simultaneously
+    if (concurrency.now > concurrency.max) concurrency.max = concurrency.now // Update highest concurrency count
+    concurrency.now--
+    return ret
+  }
+}
 
 const mapOptions = {
   transformers: { size: integreatTransformers.size },
@@ -636,11 +652,17 @@ test('should mutate simple action with depricated `muation` property', async (t)
 })
 
 test('should mutate action into several actions based on iterate pipeline', async (t) => {
+  const concurrency = { now: 0, max: 0 }
   const dispatch = sinon
     .stub()
-    .resolves({ status: 'ok', data: [] })
+    .callsFake(countConcurrency(concurrency, { status: 'ok', data: [] }))
     .onCall(1)
-    .resolves({ status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] })
+    .callsFake(
+      countConcurrency(concurrency, {
+        status: 'ok',
+        data: [{ id: 'ent3', title: 'Entry 3' }],
+      }),
+    )
   const stepDef = {
     id: 'setItem',
     action: { type: 'SET', payload: { type: 'entry' } },
@@ -704,6 +726,49 @@ test('should mutate action into several actions based on iterate pipeline', asyn
   t.deepEqual(dispatch.args[0][0], expectedAction0)
   t.deepEqual(dispatch.args[1][0], expectedAction1)
   t.deepEqual(ret, expected)
+  t.is(concurrency.max, 2) // Ran in parallel
+})
+
+test('should limit the number of concurrently run iterate actions', async (t) => {
+  const concurrency = { now: 0, max: 0 }
+  const dispatch = sinon
+    .stub()
+    .callsFake(countConcurrency(concurrency, { status: 'ok', data: [] }))
+    .onCall(1)
+    .callsFake(
+      countConcurrency(concurrency, {
+        status: 'ok',
+        data: [{ id: 'ent3', title: 'Entry 3' }],
+      }),
+    )
+  const stepDef = {
+    id: 'setItem',
+    action: { type: 'SET', payload: { type: 'entry' } },
+    iterate: [
+      'action.payload.data.items[]',
+      { $filter: 'compare', path: 'include', match: true },
+    ],
+    iterateConcurrency: 1,
+    mutation: { 'payload.key': 'payload.data.id' },
+  }
+  const data = {
+    items: [
+      { id: 'ent1', include: true },
+      { id: 'ent2', include: false },
+      { id: 'ent3', include: true },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action1', data },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const step = new Step(stepDef, mapOptions)
+  await step.run(meta, { action }, dispatch)
+
+  t.is(dispatch.callCount, 2)
+  t.is(concurrency.max, 1) // Ran only one at a time
 })
 
 test('should mutate action into several actions based on iterate path', async (t) => {

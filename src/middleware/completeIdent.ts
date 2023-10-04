@@ -1,17 +1,21 @@
+import { isRootIdent, isAnonIdent } from '../utils/is.js'
 import type { HandlerDispatch, Middleware, Ident } from '../types.js'
 
 const getIdent = async (ident: Ident, dispatch: HandlerDispatch) => {
   const response = await dispatch({
     type: 'GET_IDENT',
     payload: {},
-    meta: { ident },
+    meta: { ident, cache: true },
   })
 
   return response.status === 'ok' ? response?.access?.ident || ident : undefined
 }
 
 const isIdentGetable = (ident?: Ident): ident is Ident =>
-  !ident?.root && !!(ident?.id || ident?.withToken)
+  !ident?.isCompleted &&
+  !isRootIdent(ident) &&
+  !isAnonIdent(ident) &&
+  !!(ident?.id || ident?.withToken)
 
 /**
  * Middleware that will complete the identity of the dispatched action.

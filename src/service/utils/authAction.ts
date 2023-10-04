@@ -3,6 +3,7 @@ import {
   ensureArray,
   ensureArrayOrUndefined,
 } from '../../utils/array.js'
+import { isRootIdent } from '../../utils/is.js'
 import type { Action, Ident } from '../../types.js'
 import type { AccessDef, Access } from '../../schema/types.js'
 import type Schema from '../../schema/Schema.js'
@@ -17,8 +18,6 @@ export const setAuthorizedMark = (action: Action, isAuthorized = true) => ({
   ...action,
   meta: { ...action.meta, [authorizedByIntegreat]: isAuthorized },
 })
-
-const isRoot = (ident?: Ident) => Boolean(ident?.root)
 
 function authorizeByAllow(allow?: string, hasIdent = false) {
   switch (allow) {
@@ -176,7 +175,7 @@ export default (schemas: Map<string, Schema>, requireAuth: boolean) =>
     }
 
     // Authenticate if not root
-    if (!isRoot(ident)) {
+    if (!isRootIdent(ident)) {
       const types = ensureArray(type)
 
       // Always allow requests without type

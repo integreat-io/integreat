@@ -3,7 +3,7 @@ import sinon from 'sinon'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import ent1Data from '../helpers/data/entry1.js'
-import type { Action, TypedData } from '../../types.js'
+import { type Action, type TypedData, IdentType } from '../../types.js'
 
 import Integreat from '../../index.js'
 
@@ -29,7 +29,7 @@ test('should use incoming endpoint over non-incoming', async (t) => {
       sourceService: 'api', // Makes this a candidate for incoming mapping
       section: 'news',
     },
-    meta: { ident: { root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const expectedResponseData = {
     id: 'ent1',
@@ -47,7 +47,7 @@ test('should use incoming endpoint over non-incoming', async (t) => {
   const expectedResponse = {
     status: 'ok',
     data: JSON.stringify(expectedResponseData),
-    access: { ident: { root: true } },
+    access: { ident: { id: 'root', type: IdentType.Root } },
     headers: {
       'Content-Type': 'application/json',
     },
@@ -88,7 +88,7 @@ test('should use non-incoming endpoint over incoming', async (t) => {
       id: 'ent1',
       // No source service specified
     },
-    meta: { ident: { root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
 
   const great = Integreat.create(defs, resourcesWithSend)

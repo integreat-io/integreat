@@ -3,7 +3,7 @@ import nock from 'nock'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import entriesService from '../helpers/defs/services/entries.js'
-import type { TypedData } from '../../types.js'
+import { type TypedData, IdentType } from '../../types.js'
 
 import Integreat from '../../index.js'
 
@@ -34,7 +34,7 @@ test('should mutate response and merge with request data', async (t) => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
-    meta: { ident: { root: true } },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
   }
   const defs = {
     ...definitions,

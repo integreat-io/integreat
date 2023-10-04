@@ -1,6 +1,7 @@
 import test from 'ava'
 import Schema from '../../schema/Schema.js'
-import { SchemaDef } from '../../schema/types.js'
+import { IdentType } from '../../types.js'
+import type { SchemaDef } from '../../schema/types.js'
 
 import authorizeAction, { isAuthorizedAction } from './authAction.js'
 
@@ -701,6 +702,18 @@ test('should refuse with several types', (t) => {
 })
 
 test('should grant request for root', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'root', type: IdentType.Root } },
+  }
+
+  const ret = authorizeAction(schemas, requireAuth)(action)
+
+  t.true(isAuthorizedAction(ret))
+})
+
+test('should grant request for root with obsolete root flag', (t) => {
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
