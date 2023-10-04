@@ -248,9 +248,10 @@ incoming actions, provide an array of `<auth id | true>`, and they will be run
 from first to last until one of them returns an ident or an error other than
 `noaccess`.
 
-**Note:** When connecting to a service for listening, the `outgoing` auth is
-used. `incoming` is only used for validating the actions being dispatched "back"
-from the service.
+> [!NOTE]
+> When connecting to a service for listening, the `outgoing` auth is
+> used. `incoming` is only used for validating the actions being dispatched "back"
+> from the service.
 
 In `options`, you may provide options for transporters and adapters. It is
 merged with the `options` object on the endpoint. See
@@ -280,7 +281,8 @@ one, creating, updating, and the same all over for users. Instead of urls and
 http verbs, as for REST, these endpoints will address different databases and
 different database operations (through the transporter).
 
-> Note: This is not to say that Integreat requires you to set up endpoints
+> [!NOTE]
+> This is not to say that Integreat requires you to set up endpoints
 > exactly as described in these examples, it might be that you would like to set
 > up an endpoint that handles many of these cases. The intention here is just to
 > give you an understanding of what an endpoint is in Integreat.
@@ -387,10 +389,12 @@ An endpoint may specify none or more of the following match properties:
   rely on JavaScript definition of 'truthy' here, so any value that is not
   `false`, `null`, `undefined`, `0`, `NaN`, or `''` will be considered truthy.
 
+> [!NOTE]
 > There used to be a `filters` property on the endpoint match object. It is
 > still supported, but it's deprecated and will be removed in v1.1. Please use
 > `conditions` instead.
 
+> [!NOTE]
 > Editor's note: Describe what incoming actions are, and give more details on
 > filters.
 
@@ -1189,7 +1193,8 @@ page at a time, the following properties may be supported:
   that this id may hold internal logic from the transporter, but you should
   never rely on this logic and simply use it as an id.
 
-> **Important note:** Pagination has to be supported by the service and your
+> [!IMPORTANT]
+> Pagination has to be supported by the service and your
 > service configuration, and sometimes also the transporter. Integreat prepares
 > and passes on these pagination properties, but if the service disregards them,
 > there is little Integreat can do – except limiting the number of items
@@ -1318,6 +1323,7 @@ When you dispatch an action, you will get a response object back in this format:
   `SYNC` or `RUN`. The action handlers _may_ then provide an array of all the
   sub-response objects here.
 
+> [!NOTE]
 > Editor's note: Is it correct that queues return the id in the data?
 
 When the status is `queued`, the id of the queued action may found in
@@ -1744,12 +1750,14 @@ to have one set per individual item, you may set `setMember` to `true` on the
 payload object. (This is almost the same as setting `maxPerSet` to `1`, except
 it won't be wrapped in an array.)
 
+> [!NOTE]
 > There are more options than these, and the documentation will be updated to
 > include them later.
 
 #### `EXPIRE`
 
-> Note: This action will change before we reach v1.0.
+> [!NOTE]
+> This action will change before we reach v1.0.
 
 The `EXPIRE` action will `GET` expired data items from a service, and the then
 `DELETE` them.
@@ -1908,6 +1916,7 @@ You may also use queues directly, by dispatching to it as a server and getting
 incoming actions from its `listen()` method. In that case, it's just as any
 other service with no need for any special handling.
 
+> [!NOTE]
 > Queueing actions are actually done through an action handler, but this handler
 > is not available from outside Integreat.
 
