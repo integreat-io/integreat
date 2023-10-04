@@ -1,4 +1,5 @@
 import mapTransform from 'map-transform'
+import pLimit from 'p-limit'
 import { ensureArray } from '../utils/array.js'
 import { isObject, isOkResponse } from '../utils/is.js'
 import { setDataOnActionPayload, setResponseOnAction } from '../utils/action.js'
@@ -45,7 +46,7 @@ function createPreconditionsValidator(
     | Record<string, Condition | undefined>
     | undefined,
   mapOptions: MapOptions,
-  prevStepId?: string
+  prevStepId?: string,
 ): Validator {
   if (Array.isArray(conditions)) {
     const validator = prepareValidator(conditions, mapOptions, 'noaction')
@@ -73,7 +74,7 @@ function createPreconditionsValidator(
 
 export function getLastJobWithResponse(
   steps: Step[],
-  actionResponses: Record<string, Action>
+  actionResponses: Record<string, Action>,
 ) {
   for (let i = steps.length - 1; i > -1; i--) {
     const step = steps.at(i) as Step // TS: We know this is a step
@@ -88,7 +89,7 @@ export function getLastJobWithResponse(
 
 const cleanUpResponse = (
   response: Response | undefined,
-  origin: string
+  origin: string,
 ): Response =>
   response
     ? setOrigin(
@@ -104,7 +105,7 @@ const cleanUpResponse = (
               : response.error,
           }),
         },
-        String(origin)
+        String(origin),
       )
     : { status: 'ok' }
 
@@ -115,7 +116,7 @@ const addModify = (mutation: ArrayElement<Pipeline>) =>
 // mutating from.
 const putMutationInPipeline = (
   mutation: TransformObject | Pipeline,
-  useMagic: boolean
+  useMagic: boolean,
 ) =>
   Array.isArray(mutation)
     ? ['$action', ...mutation.map(addModify)]
@@ -126,7 +127,7 @@ const putMutationInPipeline = (
 async function mutateAction(
   action: Action,
   mutator: DataMapper<InitialState> | undefined,
-  actionsWithResponses: Record<string, Action>
+  actionsWithResponses: Record<string, Action>,
 ): Promise<Action> {
   if (mutator) {
     const responsesIncludingAction = {
@@ -144,18 +145,18 @@ export async function mutateResponse(
   origin: string,
   response: Response,
   responses: Record<string, Action>,
-  postmutator?: DataMapper<InitialState>
+  postmutator?: DataMapper<InitialState>,
 ): Promise<Action> {
   const { response: mutatedResponse } = await mutateAction(
     setResponseOnAction(action, response),
     postmutator,
-    responses
+    responses,
   )
   return setResponseOnAction(action, cleanUpResponse(mutatedResponse, origin))
 }
 
 function responseFromSteps(
-  actionResponses: Record<string, Action>
+  actionResponses: Record<string, Action>,
 ): Action | undefined {
   const errorResponses = Object.values(actionResponses)
     .map(({ response }) => response)
@@ -179,7 +180,7 @@ function generateIterateResponse(actionsWithResponses: Action[]) {
   const status = errorResponses.length === 0 ? 'ok' : 'error'
   const error = errorResponses
     .map((response) =>
-      response ? `[${response.status}] ${response.error}` : undefined
+      response ? `[${response.status}] ${response.error}` : undefined,
     )
     .filter(Boolean)
     .join(' | ')
@@ -196,7 +197,7 @@ function generateIterateResponse(actionsWithResponses: Action[]) {
 export const prepareMutation = (
   pipeline: TransformObject | Pipeline,
   mapOptions: MapOptions,
-  useMagic = false
+  useMagic = false,
 ) => mapTransform(putMutationInPipeline(pipeline, useMagic), mapOptions)
 
 function getIterateMutator(step: JobStepDef, mapOptions: MapOptions) {
@@ -218,7 +219,7 @@ const prepareAction = (action: Action, meta: Meta) => ({
 
 export function getPrevStepId(
   index: number,
-  steps: (JobStepDef | JobStepDef[])[]
+  steps: (JobStepDef | JobStepDef[])[],
 ) {
   const prevStep = index > 0 ? steps[index - 1] : undefined
   return Array.isArray(prevStep)
@@ -237,24 +238,25 @@ export default class Step {
   #premutator?: DataMapper<InitialState>
   #postmutator?: DataMapper<InitialState>
   #iterateMutator?: DataMapper<InitialState>
+  #iterateConcurrency?: number
 
   constructor(
     stepDef: JobStepDef | JobStepDef[],
     mapOptions: MapOptions,
-    prevStepId?: string
+    prevStepId?: string,
   ) {
     if (Array.isArray(stepDef)) {
       this.id = stepDef.map((step) => step.id).join(':')
       this.#subSteps = stepDef.map(
         (step, index, steps) =>
-          new Step(step, mapOptions, getPrevStepId(index, steps))
+          new Step(step, mapOptions, getPrevStepId(index, steps)),
       )
     } else {
       this.id = stepDef.id
       this.#validatePreconditions = createPreconditionsValidator(
         stepDef.preconditions ?? stepDef.conditions,
         mapOptions,
-        prevStepId
+        prevStepId,
       )
       this.#action = stepDef.action
       const premutation = stepDef.premutation || stepDef.mutation
@@ -266,6 +268,7 @@ export default class Step {
         ? prepareMutation(postmutation, mapOptions, !!stepDef.responseMutation) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
         : undefined
       this.#iterateMutator = getIterateMutator(stepDef, mapOptions)
+      this.#iterateConcurrency = stepDef.iterateConcurrency
     }
   }
 
@@ -274,11 +277,11 @@ export default class Step {
     idIndex: number | undefined,
     actionResponses: Record<string, Action>,
     dispatch: HandlerDispatch,
-    meta: Meta
+    meta: Meta,
   ): Promise<[Record<string, Action>, boolean]> {
     const action = prepareAction(
       await mutateAction(rawAction, this.#premutator, actionResponses),
-      meta
+      meta,
     )
 
     let response
@@ -299,7 +302,7 @@ export default class Step {
           stepId, // Used as origin
           response,
           actionResponses,
-          this.#postmutator
+          this.#postmutator,
         ),
       },
       false,
@@ -309,11 +312,10 @@ export default class Step {
   async run(
     meta: Meta,
     actionResponses: Record<string, Action>,
-    dispatch: HandlerDispatch
+    dispatch: HandlerDispatch,
   ): Promise<[Record<string, Action>, boolean]> {
-    const [validateResponse, doBreak] = await this.#validatePreconditions(
-      actionResponses
-    )
+    const [validateResponse, doBreak] =
+      await this.#validatePreconditions(actionResponses)
     if (validateResponse || doBreak) {
       return [
         {
@@ -335,22 +337,24 @@ export default class Step {
       } else {
         actions = [action]
       }
+      const limit = pLimit(this.#iterateConcurrency ?? Infinity)
       arrayOfStepResponses = await Promise.all(
-        actions.map(
-          async (action, index) =>
-            await this.runAction(
+        actions.map((action, index) =>
+          limit(() =>
+            this.runAction(
               action,
               actions.length === 1 ? undefined : index,
               actionResponses,
               dispatch,
-              meta
-            )
-        )
+              meta,
+            ),
+          ),
+        ),
       )
     } else if (this.#subSteps) {
       // TODO: Actually run all parallel steps, even if one fails
       arrayOfStepResponses = await Promise.all(
-        this.#subSteps.map((step) => step.run(meta, actionResponses, dispatch))
+        this.#subSteps.map((step) => step.run(meta, actionResponses, dispatch)),
       )
     } else {
       return [{}, false]
@@ -361,7 +365,7 @@ export default class Step {
         ...allResponses,
         ...stepResponses,
       }),
-      {}
+      {},
     )
     const thisStep = this.#subSteps
       ? responseFromSteps(stepResponses)

@@ -13,6 +13,7 @@ export interface JobStepDef {
   mutation?: TransformObject | Pipeline
   iterate?: TransformDefinition
   iteratePath?: string
+  iterateConcurrency?: number
   action: Action
   postmutation?: TransformObject | Pipeline
   responseMutation?: TransformObject | Pipeline
