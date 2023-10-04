@@ -25,7 +25,7 @@ schemas.set(
       updatedAt: 'date',
     },
     access: 'auth',
-  })
+  }),
 )
 schemas.set(
   'account',
@@ -35,7 +35,7 @@ schemas.set(
       name: 'string',
     },
     access: { identFromField: 'id' },
-  })
+  }),
 )
 schemas.set(
   'source',
@@ -45,7 +45,7 @@ schemas.set(
       name: 'string',
     },
     access: 'auth',
-  })
+  }),
 )
 
 const pipelines = {
@@ -77,7 +77,12 @@ const ms = () => () => (date: unknown) =>
 
 const mapOptions = createMapOptions(schemas, pipelines, { ms })
 
-const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
+const setupService = (
+  uri: string,
+  match = {},
+  { id = 'entries' } = {},
+  includeOther = false,
+) =>
   new Service(
     {
       id,
@@ -116,19 +121,23 @@ const setupService = (uri: string, match = {}, { id = 'entries' } = {}) =>
           ],
           options: { uri },
         },
-        {
-          id: 'other',
-          mutation: {
-            response: {
-              $modify: 'response',
-              data: ['response.data', { $apply: 'entry' }],
-            },
-          },
-          options: { uri: 'http://api5.test/other' },
-        },
+        ...(includeOther
+          ? [
+              {
+                id: 'other',
+                mutation: {
+                  response: {
+                    $modify: 'response',
+                    data: ['response.data', { $apply: 'entry' }],
+                  },
+                },
+                options: { uri: 'http://api5.test/other' },
+              },
+            ]
+          : []),
       ],
     },
-    { schemas, mapOptions }
+    { schemas, mapOptions },
   )
 
 test.after.always(() => {
@@ -162,7 +171,7 @@ test('should get items from service', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const svc = setupService(
-    'http://api1.test/database?since={payload.updatedAfter}'
+    'http://api1.test/database?since={payload.updatedAfter}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
@@ -205,7 +214,7 @@ test('should get item by id from service', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const svc = setupService(
-    'http://api1.test/database/{payload.type}:{payload.id}'
+    'http://api1.test/database/{payload.type}:{payload.id}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
@@ -453,7 +462,12 @@ test('should get from other endpoint', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const svc = setupService('http://api5.test/database')
+  const svc = setupService(
+    'http://api5.test/database',
+    undefined,
+    undefined,
+    true,
+  )
   const getService = () => svc
 
   const ret = await get(action, { ...handlerResources, getService })
@@ -512,7 +526,7 @@ test('should return failResponse when validation fails', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const svc = setupService(
-    'http://api10.test/database?since={payload.updatedAfter}'
+    'http://api10.test/database?since={payload.updatedAfter}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
@@ -626,7 +640,7 @@ test('should authorize before validation', async (t) => {
     meta: {}, // No ident
   }
   const svc = setupService(
-    'http://api10.test/database?since={payload.updatedAfter}'
+    'http://api10.test/database?since={payload.updatedAfter}',
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'entries' ? svc : undefined
