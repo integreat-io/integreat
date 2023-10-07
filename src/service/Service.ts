@@ -17,6 +17,7 @@ import { lookupById, lookupByIds } from '../utils/indexUtils.js'
 import * as authorizeData from './utils/authData.js'
 import authorizeAction, { isAuthorizedAction } from './utils/authAction.js'
 import { compose } from '../dispatch.js'
+import type { TransformDefinition } from 'map-transform/types.js'
 import type Schema from '../schema/Schema.js'
 import type Auth from './Auth.js'
 import type {
@@ -29,7 +30,14 @@ import type {
   Authenticator,
   MapOptions,
 } from '../types.js'
-import type { EndpointDef, ServiceDef, TransporterOptions } from './types.js'
+import type {
+  EndpointDef,
+  ServiceDef,
+  TransporterOptions,
+  PreparedOptions,
+  AuthObject,
+  AuthProp,
+} from './types.js'
 
 const debug = debugLib('great')
 
@@ -57,6 +65,45 @@ const createEndpointAdapterError = (endpoint: EndpointDef, serviceId: string) =>
     endpoint.id ? `Endpoint '${endpoint.id}'` : 'An endpoint'
   } on service '${serviceId}' references one or more unknown adapters`
 
+function setUpEndpoint(
+  serviceId: string,
+  adapters: Record<string, Adapter>,
+  resolveOutgoingAuth: (auth?: AuthObject | AuthProp) => Auth | undefined,
+  resolveIncomingAuth: (auth?: AuthObject | AuthProp) => Auth[] | undefined,
+  serviceOutgoingAuth: Auth | undefined,
+  serviceIncomingAuth: Auth[] | undefined,
+  serviceOptions: PreparedOptions,
+  mapOptions: MapOptions,
+  mutation: TransformDefinition | undefined,
+  serviceAdapters: Adapter[],
+) {
+  return (endpointDef: EndpointDef) => {
+    const endpointAdapters = lookupByIds(endpointDef.adapters, adapters)
+    if (areWeMissingAdapters(endpointDef.adapters, endpointAdapters)) {
+      throw new TypeError(createEndpointAdapterError(endpointDef, serviceId))
+    }
+    const outgoingAuth =
+      resolveOutgoingAuth(endpointDef.auth) || serviceOutgoingAuth
+    const incomingAuth =
+      resolveIncomingAuth(endpointDef.auth) || serviceIncomingAuth
+    const options = endpointDef.options
+      ? mergeOptions(serviceOptions, prepareOptions(endpointDef.options))
+      : serviceOptions
+
+    return new Endpoint(
+      endpointDef,
+      serviceId,
+      options,
+      mapOptions,
+      mutation,
+      serviceAdapters,
+      endpointAdapters,
+      outgoingAuth,
+      incomingAuth,
+    )
+  }
+}
+
 /**
  * Create a service with the given id and transporter.
  */
@@ -69,7 +116,7 @@ export default class Service {
   #endpoints: Endpoint[]
   #transporter: Transporter
 
-  #auth?: Auth
+  #outgoingAuth?: Auth
   #incomingAuth?: Auth[]
   #connection: Connection | null
 
@@ -116,8 +163,10 @@ export default class Service {
     }
     this.#transporter = transporter
 
-    this.#auth = resolveAuth(authenticators, auths, auth)
-    this.#incomingAuth = resolveIncomingAuth(authenticators, auths, auth)
+    const outgoingAuthResolver = resolveAuth(authenticators, auths)
+    const incomingAuthResolver = resolveIncomingAuth(authenticators, auths)
+    this.#outgoingAuth = outgoingAuthResolver(auth)
+    this.#incomingAuth = incomingAuthResolver(auth)
 
     this.#authorizeDataFromService = authorizeData.fromService(schemas)
     this.#authorizeDataToService = authorizeData.toService(schemas)
@@ -129,23 +178,20 @@ export default class Service {
     const serviceOptions = prepareOptions(options)
     this.#options = serviceOptions.transporter
 
-    this.#endpoints = Endpoint.sortAndPrepare(endpointDefs).map((endpoint) => {
-      const endpointAdapters = lookupByIds(endpoint.adapters, adapters)
-      if (areWeMissingAdapters(endpoint.adapters, endpointAdapters)) {
-        throw new TypeError(createEndpointAdapterError(endpoint, serviceId))
-      }
-      return new Endpoint(
-        endpoint,
+    this.#endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
+      setUpEndpoint(
         serviceId,
-        endpoint.options
-          ? mergeOptions(serviceOptions, prepareOptions(endpoint.options))
-          : serviceOptions,
+        adapters,
+        outgoingAuthResolver,
+        incomingAuthResolver,
+        this.#outgoingAuth,
+        this.#incomingAuth,
+        serviceOptions,
         mapOptions,
         mutation,
         serviceAdapters,
-        endpointAdapters,
-      )
-    })
+      ),
+    )
 
     this.#middleware =
       middleware.length > 0 ? compose(...middleware) : (fn) => fn
@@ -182,7 +228,8 @@ export default class Service {
    * should be run through the response mutation, though.
    */
   async preflightAction(action: Action, endpoint: Endpoint): Promise<Action> {
-    let preparedAction = authorizeAction(this.#schemas, !!this.#auth)(action)
+    const outgoingAuth = endpoint.outgoingAuth
+    let preparedAction = authorizeAction(this.#schemas, !!outgoingAuth)(action)
     if (preparedAction.response?.status) {
       return preparedAction
     }
@@ -192,9 +239,9 @@ export default class Service {
       return setResponseOnAction(action, validateResponse)
     }
 
-    if (endpoint.options?.transporter.authInData && this.#auth) {
-      await this.#auth.authenticate(preparedAction)
-      preparedAction = this.#auth.applyToAction(
+    if (endpoint.options?.transporter.authInData && outgoingAuth) {
+      await outgoingAuth.authenticate(preparedAction)
+      preparedAction = outgoingAuth.applyToAction(
         preparedAction,
         this.#transporter,
       )
@@ -337,7 +384,7 @@ export default class Service {
    * The given action is sent to the service via the relevant transporter,
    * and the response from the service is returned.
    */
-  async send(action: Action): Promise<Response> {
+  async send(action: Action, endpoint: Endpoint | null): Promise<Response> {
     // Do nothing if the action response already has a status
     if (action.response?.status) {
       return action.response
@@ -359,9 +406,10 @@ export default class Service {
     }
 
     // When an authentication is defined: Authenticate and apply result to action
-    if (this.#auth && !action.meta?.auth) {
-      await this.#auth.authenticate(action)
-      action = this.#auth.applyToAction(action, this.#transporter)
+    const outgoingAuth = endpoint?.outgoingAuth
+    if (outgoingAuth && !action.meta?.auth) {
+      await outgoingAuth.authenticate(action)
+      action = outgoingAuth.applyToAction(action, this.#transporter)
       if (action.response?.status) {
         return setOrigin(action.response, `service:${this.id}`, true)
       }
@@ -412,10 +460,10 @@ export default class Service {
       )
     }
 
-    if (this.#auth && !(await this.#auth.authenticate(null))) {
+    if (this.#outgoingAuth && !(await this.#outgoingAuth.authenticate(null))) {
       debug('Could not authenticate')
       return setOrigin(
-        this.#auth.getResponseFromAuth(),
+        this.#outgoingAuth.getResponseFromAuth(),
         `service:${this.id}`,
         true,
       )
@@ -423,7 +471,7 @@ export default class Service {
 
     if (
       !(await this.#connection.connect(
-        this.#auth?.getAuthObject(this.#transporter, null),
+        this.#outgoingAuth?.getAuthObject(this.#transporter, null),
       ))
     ) {
       debug(`Could not listen to '${this.id}' service. Failed to connect`)
@@ -437,7 +485,7 @@ export default class Service {
     return this.#transporter.listen(
       dispatchIncoming(dispatch, this.#middleware, this.id),
       this.#connection.object,
-      authenticateCallback(this.#incomingAuth, this.id),
+      authenticateCallback(this, this.#incomingAuth),
     )
   }
 

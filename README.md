@@ -315,6 +315,8 @@ Here's the format of an endpoint definition:
     }
   ],
   mutate: <mutation pipeline>,
+  adapters: [<adapter id>, <adapter id>, ...],
+  auth: <auth config>,
   allowRawRequest: <boolean>,
   allowRawResponse: <boolean>,
   castWithoutDefaults: <boolean>,
@@ -348,6 +350,15 @@ specify a few things:
   actions going to a service and the response coming back, so keep this in mind
   when you set up this pipeline. See [Mutation pipelines](#mutations)
   for more on how to define the mutation. `mutation` is an alias for `mutate`.
+- `adapters`: An array of adapter ids that will be appended to the array of
+  adapters set on the service.
+- `auth`: Auth config that will override the `auth` config on the service. See
+  [description of `auth` under Services](#services) for more on this. The
+  endpoint `auth` will only apply in cases where we have an endpoint, like when
+  we're sending a request to a service or receiving an incoming request, but
+  when we're e.g. connecting to a service to start listening, the `auth` on the
+  service will be used. This also goes for incoming requests where the
+  transporter does not provide an action with the auth attempt.
 - `allowRawRequest`: When set to `true`, payload `data` sent to this endpoint
   will not by cast automatically nor will an error be returned if the data is
   not typed.

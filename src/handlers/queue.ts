@@ -17,7 +17,7 @@ const prepareQueuedAction = ({ meta, ...action }: Action) =>
  */
 export default async function queue(
   action: Action,
-  { dispatch, getService, options: { queueService } }: ActionHandlerResources
+  { dispatch, getService, options: { queueService } }: ActionHandlerResources,
 ): Promise<Response> {
   const service = getService(undefined, queueService)
   if (!service) {
@@ -25,7 +25,7 @@ export default async function queue(
   }
 
   const nextAction = prepareQueuedAction(action)
-  const response = await service.send(nextAction)
+  const response = await service.send(nextAction, null)
   const status = response?.status === 'ok' ? 'queued' : response?.status
 
   return setOrigin(
@@ -35,6 +35,6 @@ export default async function queue(
       status: status || 'badresponse',
       ...(status ? {} : { error: 'Queue did not respond correctly' }),
     },
-    'handler:QUEUE'
+    'handler:QUEUE',
   )
 }

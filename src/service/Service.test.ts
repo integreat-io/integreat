@@ -290,7 +290,7 @@ const mockResources = (
         // given action. If doValidate is true, it will first authenticate, and
         // set the ident on the response if authentication was successful.
         if (doValidate) {
-          const authResponse = await authenticate({ status: 'granted' }, null)
+          const authResponse = await authenticate({ status: 'granted' }, action)
           const ident = authResponse.access?.ident
           return await dispatch({
             ...action,
@@ -768,6 +768,42 @@ test('preflightAction should make auth available to mutations when authInData is
   t.true(isAuthorizedAction(ret))
 })
 
+test('preflightAction should use auth from endpoint when available', async (t) => {
+  const authInData = true
+  const service = new Service(
+    {
+      id: 'accounts',
+      transporter: 'http',
+      auth: 'refusing',
+      options: { transporter: { authInData } },
+      endpoints: [{ ...endpoints[3], auth: 'granting' }],
+    },
+    {
+      mapOptions,
+      schemas,
+      auths,
+      ...jsonResources,
+    },
+  )
+  const action = {
+    type: 'GET',
+    payload: { type: 'account' },
+    meta: { ident: { id: 'johnf', roles: ['admin'] } },
+  }
+  const expectedAuth = {
+    Authorization: 'Bearer t0k3n',
+  }
+
+  const endpoint = await service.endpointFromAction(action)
+  const ret = await service.preflightAction(action, endpoint!)
+
+  t.is(ret.response?.status, undefined, ret.response?.error)
+  t.deepEqual(ret.meta?.auth, expectedAuth)
+  t.is(ret.type, 'GET')
+  t.deepEqual(ret.payload, action.payload)
+  t.true(isAuthorizedAction(ret))
+})
+
 test('preflightAction should respond with error when authInData is true and auth fails', async (t) => {
   const authInData = true
   const service = new Service(
@@ -826,9 +862,10 @@ test('send should retrieve data from service', async (t) => {
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = { status: 'ok', data }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -861,12 +898,13 @@ test('send should use service middleware', async (t) => {
       options: { uri: 'http://some.api/1.0' },
     },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'badresponse',
     origin: 'middleware:service:entries',
   }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -891,6 +929,7 @@ test('send should return error when no connection', async (t) => {
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'error',
     error: "Service 'entries' has no open connection",
@@ -898,7 +937,7 @@ test('send should return error when no connection', async (t) => {
   }
 
   await service.close() // Close connection to set it to null
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -923,13 +962,14 @@ test('send should try to authenticate and return with error when it fails', asyn
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'noaccess',
     error: "Authentication attempt for auth 'refusing' was refused.",
     origin: 'service:entries',
   }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -954,9 +994,10 @@ test('send should authenticate with auth id on `outgoing` prop', async (t) => {
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = { status: 'ok', data }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -981,9 +1022,10 @@ test('send should authenticate with auth def', async (t) => {
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = { status: 'ok', data }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1008,9 +1050,43 @@ test('send should authenticate with auth def on `outgoing` prop', async (t) => {
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = { status: 'ok', data }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
+
+  t.deepEqual(ret, expected)
+})
+
+test('send should authenticate with auth from endpoint', async (t) => {
+  const data = {
+    content: {
+      data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
+    },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [
+        {
+          options: { uri: 'http://some.api/1.0' },
+          auth: { outgoing: 'granting' },
+        },
+      ],
+      auth: { outgoing: 'refusing' },
+      transporter: 'http',
+    },
+    mockResources(data),
+  )
+  const action = setAuthorizedMark({
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    meta: { ident: { id: 'johnf' } },
+  })
+  const endpoint = await service.endpointFromAction(action)
+  const expected = { status: 'ok', data }
+
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1038,13 +1114,14 @@ test('send should fail when not authorized', async (t) => {
     },
     false, // Not authorized
   )
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'autherror',
     error: 'Action has not been authorized by Integreat',
     origin: 'internal:service:entries',
   }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1090,6 +1167,7 @@ test('send should provide auth and options', async (t) => {
       },
     },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     ...action,
     meta: {
@@ -1102,7 +1180,7 @@ test('send should provide auth and options', async (t) => {
     },
   }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)
@@ -1151,6 +1229,7 @@ test('send should not authorize when action has already got meta.auth', async (t
       auth: { token: 'ourT0k3n' },
     },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     ...action,
     meta: {
@@ -1163,7 +1242,7 @@ test('send should not authorize when action has already got meta.auth', async (t
     },
   }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)
@@ -1214,6 +1293,7 @@ test('send should connect before sending request', async (t) => {
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'ok',
     options: {
@@ -1223,7 +1303,7 @@ test('send should connect before sending request', async (t) => {
     token: 'Bearer t0k3n',
   }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)
@@ -1265,9 +1345,10 @@ test('send should store connection', async (t) => {
       auth: { status: 'granted', token: 't0k3n' },
     },
   })
+  const endpoint = await service.endpointFromAction(action)
 
-  await service.send(action)
-  await service.send(action)
+  await service.send(action, endpoint!)
+  await service.send(action, endpoint!)
 
   t.is(connect.callCount, 2)
   t.deepEqual(connect.args[0][2], null)
@@ -1308,13 +1389,14 @@ test('send should return error when connection fails', async (t) => {
       auth: { status: 'granted', token: 't0k3n' },
     },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'error',
     error: "Could not connect to service 'entries'. [notfound] Not found",
     origin: 'service:entries',
   }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1348,13 +1430,14 @@ test('send should pass on error response from service', async (t) => {
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'badrequest',
     error: 'Real bad request',
     origin: 'service:entries',
   }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1389,13 +1472,14 @@ test('send should pass on error response from service and prefix origin', async 
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'badrequest',
     error: 'Real bad request',
     origin: 'service:entries:somewhere',
   }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1428,13 +1512,14 @@ test('send should return with error when transport throws', async (t) => {
     payload: { id: 'ent1', type: 'entry', source: 'thenews' },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = {
     status: 'error',
     error: "Error retrieving from service 'entries': We did not expect this",
     origin: 'service:entries',
   }
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -1473,9 +1558,10 @@ test('send should do nothing when action has a response', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   })
+  const endpoint = await service.endpointFromAction(action)
   const expected = action.response
 
-  const ret = await service.send(action)
+  const ret = await service.send(action, endpoint!)
 
   t.deepEqual(ret, expected)
 })
@@ -3199,6 +3285,42 @@ test('listen should fall back to ident authenticator on true', async (t) => {
   const dispatchedAction = dispatchStub.args[0][0]
   t.deepEqual(dispatchedAction.payload, expectedPayload)
   t.deepEqual(dispatchedAction.meta?.ident, expectedActionIdent)
+})
+
+test('listen should authenticate action with endpoint auth', async (t) => {
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: 'invalidating' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [
+        {
+          options: { uri: 'http://some.api/1.0' },
+          auth: { incoming: 'validating' },
+        },
+      ],
+    },
+    mockResources({}, action, true),
+  )
+  const expectedResponse = {
+    status: 'ok',
+    access: { ident: { id: 'johnf' } },
+  }
+  const expectedPayload = { ...action.payload, sourceService: 'entries' }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 1)
+  const dispatchedAction = dispatchStub.args[0][0]
+  t.deepEqual(dispatchedAction.payload, expectedPayload)
+  t.is(dispatchedAction.meta?.ident?.id, 'johnf')
 })
 
 test('listen should reject authentication when validate() returns an error', async (t) => {

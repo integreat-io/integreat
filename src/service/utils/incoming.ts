@@ -11,6 +11,7 @@ import type {
   Dispatch,
   Middleware,
 } from '../../types.js'
+import type Service from '../Service.js'
 
 const identityFromIntegreat = Symbol('identityFromIntegreat')
 
@@ -107,25 +108,26 @@ async function runAuths(
 
 // Passed to the transporter.listen() method. Transporters will call this to
 // get the ident to used when dispatching incoming actions.
-export const authenticateCallback = (
-  auths: Auth[] | undefined,
-  serviceId: string,
-) =>
+export const authenticateCallback = (service: Service, incomingAuth?: Auth[]) =>
   async function authenticateFromListen(
     authentication: Authentication,
     action?: Action | null,
   ) {
+    const endpoint = action
+      ? await service.endpointFromAction(action)
+      : undefined
+    const auths = endpoint?.incomingAuth || incomingAuth
     if (auths === undefined) {
       return createErrorResponse(
-        `Could not authenticate. Service '${serviceId}' has no incoming authenticator`,
-        `auth:service:${serviceId}`,
+        `Could not authenticate. Service '${service.id}' has no incoming authenticator`,
+        `auth:service:${service.id}`,
         'noaction',
       )
     } else {
       const response = await runAuths(auths, authentication, action || null)
       return setOrigin(
         markIdentAsKnown(response),
-        `auth:service:${serviceId}`,
+        `auth:service:${service.id}`,
         true,
       )
     }

@@ -4,6 +4,8 @@ import jsonAdapter from 'integreat-adapter-json'
 import jsonTransformer from 'integreat-adapter-json/transformer.js'
 import uriTransformer from 'integreat-adapter-uri/transformer.js'
 import Schema from '../schema/Schema.js'
+import Auth from './Auth.js'
+import optionsAuth from '../authenticators/options.js'
 import { isAction, isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { Action, TypedData, Adapter } from '../types.js'
@@ -186,6 +188,33 @@ test('should set id, allowRawRequest, allowRawResponse, and castWithoutDefaults 
   t.true(ret.allowRawRequest)
   t.true(ret.allowRawResponse)
   t.true(ret.castWithoutDefaults)
+})
+
+test('should expose given outgoing and incoming auth', (t) => {
+  const endpointDef = {
+    id: 'endpoint1',
+    allowRawRequest: true,
+    allowRawResponse: true,
+    castWithoutDefaults: true,
+  }
+  const outgoingAuth = new Auth('outgoing', optionsAuth, { token: 's3cr3t' })
+  const incomingAuth = [new Auth('incoming', optionsAuth, { token: 's4cr4t' })]
+
+  const ret = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    {},
+    undefined,
+    undefined,
+    undefined,
+    outgoingAuth,
+    incomingAuth,
+  )
+
+  t.is(ret.outgoingAuth, outgoingAuth)
+  t.is(ret.incomingAuth, incomingAuth)
+  t.is(ret.id, 'endpoint1')
 })
 
 test('should set match on endpoint', (t) => {
