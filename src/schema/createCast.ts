@@ -59,7 +59,7 @@ const removeArrayNotation = (key: string) =>
 
 function createFieldCast(
   def: FieldDefinition | Shape | string | undefined,
-  schemas: Map<string, Schema>
+  schemas: Map<string, Schema>,
 ): CastFnUnary | undefined {
   if (isFieldDefinition(def)) {
     // Primivite type or reference
@@ -87,7 +87,7 @@ const unwrapSingleArrayItem =
 const handleArray = (
   fn: CastFnUnary,
   isArrayExpected: boolean,
-  type?: string
+  type?: string,
 ): CastFnUnary =>
   isArrayExpected
     ? (isRev) => (value) =>
@@ -117,7 +117,7 @@ function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
 function createCastFn(
   key: string,
   def: FieldDefinition | Shape | string | undefined,
-  schemas: Map<string, Schema>
+  schemas: Map<string, Schema>,
 ) {
   const cast = createFieldCast(def, schemas)
   if (cast) {
@@ -125,7 +125,7 @@ function createCastFn(
     return handleArray(
       cast,
       hasArrayNotation(key) || hasArrayNotation(type),
-      type
+      type,
     )
   } else {
     return undefined
@@ -135,18 +135,27 @@ function createCastFn(
 const completeItemBeforeCast = (
   { id, createdAt, updatedAt, ...item }: Record<string, unknown>,
   shape: Shape,
-  doGenerateId: boolean
+  doGenerateId: boolean,
 ): Record<string, unknown> => ({
   id: id ?? (doGenerateId ? nanoid() : null),
   ...item,
   ...getDates(shape, createdAt, updatedAt),
 })
 
+const castField =
+  (item: Record<string, unknown>, isRev: boolean) =>
+  ([key, cast]: [string, CastFnUnary]): [string, unknown] => [
+    key,
+    cast(isRev)(item[key]), // eslint-disable-line security/detect-object-injection
+  ]
+
+const fieldHasValue = ([_, value]: [string, unknown]) => value !== undefined
+
 function createShapeCast(
   shape: Shape,
   type: string | undefined,
   schemas: Map<string, Schema>,
-  doGenerateId = false
+  doGenerateId = false,
 ) {
   const fields = Object.entries(shape)
     .map(([key, def]) => [
@@ -155,7 +164,7 @@ function createShapeCast(
     ])
     .filter(([, cast]) => cast !== undefined) as [
     key: string,
-    cast: CastFnUnary
+    cast: CastFnUnary,
   ][]
 
   return (isRev: boolean) =>
@@ -163,7 +172,7 @@ function createShapeCast(
       if (isObject(rawItem)) {
         const item = completeItemBeforeCast(rawItem, shape, doGenerateId)
         return Object.fromEntries([
-          ...fields.map(([key, cast]) => [key, cast(isRev)(item[key])]), // eslint-disable-line security/detect-object-injection
+          ...fields.map(castField(item, isRev)).filter(fieldHasValue),
           ...(!isRev && typeof type === 'string' ? [['$type', type]] : []),
           ...(item.isNew === true ? [['isNew', true]] : []),
           ...(item.isDeleted === true ? [['isDeleted', true]] : []),
@@ -183,7 +192,7 @@ export default function createCast(
   shape: Shape,
   type: string,
   schemas: Map<string, Schema> = new Map(),
-  doGenerateId = false
+  doGenerateId = false,
 ): CastFn {
   const castShape = createShapeCast(shape, type, schemas, doGenerateId)
   return function castItem(data, isRev = false) {

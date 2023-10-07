@@ -47,7 +47,6 @@ test('should get one entry from service', async (t) => {
     createdAt: new Date(createdAt),
     updatedAt: new Date(updatedAt),
     author: { id: 'johnf', $ref: 'user' },
-    approvedBy: undefined,
     sections: [
       { id: 'news', $ref: 'section' },
       { id: 'sports', $ref: 'section' },
@@ -124,7 +123,6 @@ test('should get one user from service', async (t) => {
     firstname: 'John',
     lastname: 'Fjon',
     yearOfBirth: 1987,
-    createdBy: undefined,
     createdAt: new Date(createdAt),
     updatedAt: new Date(updatedAt),
     roles: ['editor'],
@@ -202,7 +200,6 @@ test('should unfold $value props', async (t) => {
     createdAt: new Date(createdAt),
     updatedAt: new Date(updatedAt),
     author: { id: 'johnf', $ref: 'user' },
-    approvedBy: undefined,
     sections: [
       { id: 'news', $ref: 'section' },
       { id: 'sports', $ref: 'section' },
