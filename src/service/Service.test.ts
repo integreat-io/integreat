@@ -352,6 +352,53 @@ test('should throw when service references unknown transporter', (t) => {
   t.true(error instanceof Error)
 })
 
+test('should throw when service references unknown adapters', (t) => {
+  const endpoints = [
+    { id: 'endpoint1', options: { uri: 'http://some.api/1.0' } },
+  ]
+  const def = {
+    id: 'entries',
+    transporter: 'http',
+    adapters: ['unknown'],
+    endpoints,
+    meta: 'meta',
+  }
+  const resources = {
+    ...jsonResources,
+    mapOptions,
+    schemas,
+  }
+
+  const error = t.throws(() => new Service(def, resources))
+
+  t.true(error instanceof Error)
+})
+
+test('should throw when endpoint references unknown adapters', (t) => {
+  const endpoints = [
+    {
+      id: 'endpoint1',
+      adapters: ['unknown'],
+      options: { uri: 'http://some.api/1.0' },
+    },
+  ]
+  const def = {
+    id: 'entries',
+    transporter: 'http',
+    endpoints,
+    meta: 'meta',
+  }
+  const resources = {
+    ...jsonResources,
+    mapOptions,
+    schemas,
+  }
+
+  const error = t.throws(() => new Service(def, resources))
+
+  t.true(error instanceof Error)
+})
+
 test('should throw when auth object references unknown authenticator', async (t) => {
   const def = {
     id: 'entries',

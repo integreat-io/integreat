@@ -29,7 +29,7 @@ import type {
   Authenticator,
   MapOptions,
 } from '../types.js'
-import type { ServiceDef, TransporterOptions } from './types.js'
+import type { EndpointDef, ServiceDef, TransporterOptions } from './types.js'
 
 const debug = debugLib('great')
 
@@ -43,6 +43,19 @@ export interface Resources {
   middleware?: Middleware[]
   emit?: (eventType: string, ...args: unknown[]) => void
 }
+
+const areWeMissingAdapters = (
+  defs: unknown[] | undefined,
+  adapters: unknown[],
+) => Array.isArray(defs) && defs.length !== adapters.length
+
+const createServiceAdapterError = (serviceId: string) =>
+  `Service '${serviceId}' references one or more unknown adapters`
+
+const createEndpointAdapterError = (endpoint: EndpointDef, serviceId: string) =>
+  `${
+    endpoint.id ? `Endpoint '${endpoint.id}'` : 'An endpoint'
+  } on service '${serviceId}' references one or more unknown adapters`
 
 /**
  * Create a service with the given id and transporter.
@@ -84,7 +97,7 @@ export default class Service {
       mapOptions = {},
       middleware = [],
       emit = () => undefined, // Provide a fallback for tests
-    }: Resources
+    }: Resources,
   ) {
     if (typeof serviceId !== 'string' || serviceId === '') {
       throw new TypeError(`Can't create service without an id.`)
@@ -98,7 +111,7 @@ export default class Service {
     const transporter = lookupById(transporterId, transporters)
     if (!transporter) {
       throw new TypeError(
-        `Service '${serviceId}' references unknown transporter '${transporterId}'`
+        `Service '${serviceId}' references unknown transporter '${transporterId}'`,
       )
     }
     this.#transporter = transporter
@@ -110,23 +123,29 @@ export default class Service {
     this.#authorizeDataToService = authorizeData.toService(schemas)
 
     const serviceAdapters = lookupByIds(adapterDefs, adapters)
+    if (areWeMissingAdapters(serviceAdapters, adapterDefs)) {
+      throw new TypeError(createServiceAdapterError(serviceId))
+    }
     const serviceOptions = prepareOptions(options)
     this.#options = serviceOptions.transporter
 
-    this.#endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-      (endpoint) =>
-        new Endpoint(
-          endpoint,
-          serviceId,
-          endpoint.options
-            ? mergeOptions(serviceOptions, prepareOptions(endpoint.options))
-            : serviceOptions,
-          mapOptions,
-          mutation,
-          serviceAdapters,
-          lookupByIds(endpoint.adapters, adapters)
-        )
-    )
+    this.#endpoints = Endpoint.sortAndPrepare(endpointDefs).map((endpoint) => {
+      const endpointAdapters = lookupByIds(endpoint.adapters, adapters)
+      if (areWeMissingAdapters(endpoint.adapters, endpointAdapters)) {
+        throw new TypeError(createEndpointAdapterError(endpoint, serviceId))
+      }
+      return new Endpoint(
+        endpoint,
+        serviceId,
+        endpoint.options
+          ? mergeOptions(serviceOptions, prepareOptions(endpoint.options))
+          : serviceOptions,
+        mapOptions,
+        mutation,
+        serviceAdapters,
+        endpointAdapters,
+      )
+    })
 
     this.#middleware =
       middleware.length > 0 ? compose(...middleware) : (fn) => fn
@@ -134,7 +153,7 @@ export default class Service {
     this.#connection = new Connection(
       this.#transporter,
       serviceOptions.transporter,
-      emit
+      emit,
     )
   }
 
@@ -143,12 +162,12 @@ export default class Service {
    */
   async endpointFromAction(
     action: Action,
-    isIncoming = false
+    isIncoming = false,
   ): Promise<Endpoint | undefined> {
     return await Endpoint.findMatchingEndpoint(
       this.#endpoints,
       action,
-      isIncoming
+      isIncoming,
     )
   }
 
@@ -177,7 +196,7 @@ export default class Service {
       await this.#auth.authenticate(preparedAction)
       preparedAction = this.#auth.applyToAction(
         preparedAction,
-        this.#transporter
+        this.#transporter,
       )
       if (preparedAction.response?.status) {
         return setResponseOnAction(action, preparedAction.response)
@@ -196,7 +215,7 @@ export default class Service {
     const castedAction = castPayload(actionWithOptions, endpoint, castFn)
     const authorizedAction = await this.#authorizeDataToService(
       castedAction,
-      endpoint.allowRawRequest
+      endpoint.allowRawRequest,
     )
 
     let mutatedAction: Action
@@ -208,7 +227,7 @@ export default class Service {
         `Error while mutating request: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        'mutate:request'
+        'mutate:request',
       )
     }
 
@@ -221,7 +240,7 @@ export default class Service {
    */
   async mutateIncomingRequest(
     action: Action,
-    endpoint: Endpoint
+    endpoint: Endpoint,
   ): Promise<Action> {
     let mutated: Action
     try {
@@ -232,7 +251,7 @@ export default class Service {
         `Error while mutating incoming request: ${
           error instanceof Error ? error.message : String(error)
         }`,
-        'mutate:request:incoming'
+        'mutate:request:incoming',
       )
     }
 
@@ -256,7 +275,7 @@ export default class Service {
           `Error while mutating response: ${
             error instanceof Error ? error.message : String(error)
           }`,
-          'mutate:response'
+          'mutate:response',
         ),
       }
     }
@@ -266,7 +285,7 @@ export default class Service {
     const withOrigin = setOriginOnAction(casted, 'mutate:response', false)
     const { response } = await this.#authorizeDataFromService(
       withOrigin,
-      endpoint.allowRawResponse
+      endpoint.allowRawResponse,
     )
 
     return response || { status: undefined }
@@ -278,13 +297,13 @@ export default class Service {
    */
   async mutateIncomingResponse(
     action: Action,
-    endpoint: Endpoint
+    endpoint: Endpoint,
   ): Promise<Response> {
     const castFn = getCastFn(this.#schemas, action.payload.type)
     const castedAction = castResponse(action, endpoint, castFn)
     const authorizedAction = await this.#authorizeDataFromService(
       castedAction,
-      endpoint.allowRawResponse
+      endpoint.allowRawResponse,
     )
 
     let mutatedAction: Action
@@ -292,7 +311,7 @@ export default class Service {
       // Authorize and mutate in right order
       mutatedAction = await endpoint.mutate(
         authorizedAction,
-        true // isRev
+        true, // isRev
       )
     } catch (error) {
       return {
@@ -301,7 +320,7 @@ export default class Service {
           `Error while mutating response: ${
             error instanceof Error ? error.message : String(error)
           }`,
-          'mutate:response:incoming'
+          'mutate:response:incoming',
         ),
       }
     }
@@ -309,7 +328,7 @@ export default class Service {
     const { response } = setOriginOnAction(
       mutatedAction,
       'mutate:response:incoming',
-      false
+      false,
     )
     return response || { status: undefined }
   }
@@ -327,7 +346,7 @@ export default class Service {
     if (!this.#connection) {
       return createErrorResponse(
         `Service '${this.id}' has no open connection`,
-        `service:${this.id}`
+        `service:${this.id}`,
       )
     }
 
@@ -335,7 +354,7 @@ export default class Service {
       return createErrorResponse(
         'Action has not been authorized by Integreat',
         `internal:service:${this.id}`,
-        'autherror'
+        'autherror',
       )
     }
 
@@ -350,9 +369,9 @@ export default class Service {
 
     return setOrigin(
       await this.#middleware(
-        sendToTransporter(this.#transporter, this.#connection, this.id)
+        sendToTransporter(this.#transporter, this.#connection, this.id),
       )(action),
-      `middleware:service:${this.id}`
+      `middleware:service:${this.id}`,
     )
   }
 
@@ -368,7 +387,7 @@ export default class Service {
       debug(`Service '${this.id}' has no open connection`)
       return createErrorResponse(
         `Service '${this.id}' has no open connection`,
-        `service:${this.id}`
+        `service:${this.id}`,
       )
     }
 
@@ -377,7 +396,7 @@ export default class Service {
       return createErrorResponse(
         'Transporter has no listen method',
         `service:${this.id}`,
-        'noaction'
+        'noaction',
       )
     }
 
@@ -389,7 +408,7 @@ export default class Service {
       return createErrorResponse(
         'Transporter is not configured to listen',
         `service:${this.id}`,
-        'noaction'
+        'noaction',
       )
     }
 
@@ -398,19 +417,19 @@ export default class Service {
       return setOrigin(
         this.#auth.getResponseFromAuth(),
         `service:${this.id}`,
-        true
+        true,
       )
     }
 
     if (
       !(await this.#connection.connect(
-        this.#auth?.getAuthObject(this.#transporter, null)
+        this.#auth?.getAuthObject(this.#transporter, null),
       ))
     ) {
       debug(`Could not listen to '${this.id}' service. Failed to connect`)
       return createErrorResponse(
         `Could not listen to '${this.id}' service. Failed to connect`,
-        `service:${this.id}`
+        `service:${this.id}`,
       )
     }
 
@@ -418,7 +437,7 @@ export default class Service {
     return this.#transporter.listen(
       dispatchIncoming(dispatch, this.#middleware, this.id),
       this.#connection.object,
-      authenticateCallback(this.#incomingAuth, this.id)
+      authenticateCallback(this.#incomingAuth, this.id),
     )
   }
 
