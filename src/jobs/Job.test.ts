@@ -34,9 +34,9 @@ test('should create Job instance', (t) => {
 test('should create Job instance with Schedule', (t) => {
   const jobDef = {
     id: 'action1',
-    action,
     cron: '* */1 * * *',
     tz: 'Europe/Oslo',
+    action,
   }
   const ret = new Job(jobDef, mapOptions)
 
@@ -54,6 +54,28 @@ test('should not create Schedule when no action or flow', (t) => {
   const ret = new Job(jobDef, mapOptions)
 
   t.is(ret.schedule, undefined)
+})
+
+test('should generate a job id when none is given', (t) => {
+  const jobDef = {
+    // No id
+    action,
+  }
+  const ret = new Job(jobDef, mapOptions)
+
+  t.is(typeof ret.id, 'string')
+  t.is(ret.id.length, 21)
+})
+
+test('should create Schedule when no id is given', (t) => {
+  const jobDef = {
+    // No id
+    cron: '* */1 * * *',
+    action,
+  }
+  const ret = new Job(jobDef, mapOptions)
+
+  t.not(ret.schedule, undefined)
 })
 
 // Tests -- run

@@ -34,7 +34,7 @@ export const setUpAuth = (authenticators?: Record<string, Authenticator>) =>
     const authenticator = lookupById(def.authenticator, authenticators)
     if (!authenticator) {
       throw new Error(
-        `Auth config '${def.id}' references an unknown authenticator id '${def.authenticator}'`
+        `Auth config '${def.id}' references an unknown authenticator id '${def.authenticator}'`,
       )
     }
 
@@ -42,7 +42,7 @@ export const setUpAuth = (authenticators?: Record<string, Authenticator>) =>
       def.id,
       authenticator,
       def.options,
-      def.overrideAuthAsMethod
+      def.overrideAuthAsMethod,
     )
   }
 
@@ -52,7 +52,7 @@ const setAdapterIds = (adapters?: Record<string, Adapter>) =>
         Object.entries(adapters).map(([id, adapter]) => [
           id,
           { ...adapter, id },
-        ])
+        ]),
       )
     : {}
 
@@ -67,18 +67,18 @@ function prepareSchemas(schemaDefs: SchemaDef[]) {
 }
 
 const setIdOnAuthenticators = (
-  authenticators: Record<string, Authenticator>
+  authenticators: Record<string, Authenticator>,
 ): Record<string, Authenticator> =>
   Object.fromEntries(
     Object.entries(authenticators ?? {}).map(([id, auth]) => [
       id,
       { ...auth, id },
-    ])
+    ]),
   )
 
 const createAuthObjects = (
   authDefs: AuthDef[],
-  authenticators: Record<string, Authenticator>
+  authenticators: Record<string, Authenticator>,
 ) =>
   authDefs
     .map(setUpAuth(authenticators))
@@ -86,17 +86,16 @@ const createAuthObjects = (
 
 function prepareJobs(jobDefs: JobDef[], mapOptions: MapOptions) {
   const jobs = new Map<string, Job>()
-  ensureArray(jobDefs).forEach((job) => {
-    if (typeof job.id === 'string') {
-      jobs.set(job.id, new Job(job, mapOptions))
-    }
+  ensureArray(jobDefs).forEach((jobDef) => {
+    const job = new Job(jobDef, mapOptions)
+    jobs.set(job.id, new Job(jobDef, mapOptions))
   })
   return jobs
 }
 
 const combineHandlers = (
   handlers: Record<string, ActionHandler>,
-  jobs: Map<string, Job>
+  jobs: Map<string, Job>,
 ) => ({
   ...builtinHandlers,
   ...handlers,
@@ -114,7 +113,7 @@ function createServices(
   schemas: Map<string, Schema>,
   mapOptions: MapOptions,
   middlewareForService: Middleware[],
-  emit: (eventName: string | symbol, ...args: unknown[]) => boolean
+  emit: (eventName: string | symbol, ...args: unknown[]) => boolean,
 ) {
   const authenticators = setIdOnAuthenticators(resources.authenticators || {})
   const auths = createAuthObjects(defs.auths || [], authenticators)
@@ -131,7 +130,7 @@ function createServices(
           mapOptions,
           middleware: middlewareForService,
           emit,
-        })
+        }),
     )
     .reduce(indexById, {} as Record<string, Service>)
 }
@@ -142,13 +141,13 @@ function setupServicesAndDispatch(
   schemas: Map<string, Schema>,
   middlewareForDispatch: Middleware[],
   middlewareForService: Middleware[],
-  emit: (eventName: string | symbol, ...args: unknown[]) => boolean
+  emit: (eventName: string | symbol, ...args: unknown[]) => boolean,
 ) {
   const mapOptions = createMapOptions(
     schemas,
     defs.mutations,
     resources.transformers,
-    defs.dictionaries
+    defs.dictionaries,
   )
   const services = createServices(
     defs,
@@ -156,7 +155,7 @@ function setupServicesAndDispatch(
     schemas,
     mapOptions,
     middlewareForService,
-    emit
+    emit,
   )
 
   const jobs = prepareJobs(defs.jobs || [], mapOptions)
@@ -169,7 +168,7 @@ function setupServicesAndDispatch(
   })
   const dispatchScheduled = createDispatchScheduled(
     dispatch,
-    [...jobs.values()].filter(isJobWithSchedule)
+    [...jobs.values()].filter(isJobWithSchedule),
   )
 
   return { services, dispatch, dispatchScheduled }
@@ -189,13 +188,13 @@ export default class Instance extends EventEmitter {
     defs: Definitions,
     resources: Resources,
     middlewareForDispatch: Middleware[] = [],
-    middlewareForService: Middleware[] = []
+    middlewareForService: Middleware[] = [],
   ) {
     super()
 
     if (!Array.isArray(defs.services) || !Array.isArray(defs.schemas)) {
       throw new TypeError(
-        'Please provide Integreat with at least services and schemas'
+        'Please provide Integreat with at least services and schemas',
       )
     }
 
@@ -210,7 +209,7 @@ export default class Instance extends EventEmitter {
       this.schemas,
       middlewareForDispatch,
       middlewareForService,
-      this.emit.bind(this)
+      this.emit.bind(this),
     )
 
     this.services = services

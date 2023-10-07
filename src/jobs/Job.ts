@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import Schedule from './Schedule.js'
 import Step, {
   getPrevStepId,
@@ -18,11 +19,11 @@ import type {
 import type { JobDef, JobStepDef } from './types.js'
 
 const isJobStep = (job: unknown): job is JobStepDef =>
-  isObject(job) && typeof job.id === 'string' && isObject(job.action)
+  isObject(job) && isObject(job.action)
 
 const generateSubMeta = (
   { ident, project, queue, cid }: Meta,
-  jobId: string
+  jobId: string,
 ) => ({
   ident,
   jobId,
@@ -46,7 +47,7 @@ const removeOriginAndWarning = ({ origin, warning, ...response }: Response) =>
 function setMessageAndOrigin(
   response: Response,
   jobId: string,
-  isFlow: boolean
+  isFlow: boolean,
 ): Response {
   const responses = response.responses || [response]
   const stepMessages = responses
@@ -68,7 +69,7 @@ function setMessageAndOrigin(
           ? `Could not finish job '${jobId}', the following steps failed: ${stepMessages}`
           : `Could not finish job '${jobId}': ${stepMessages}`,
         responses: responses.map((response) =>
-          setOrigin(response, `job:${jobId}:step`, true)
+          setOrigin(response, `job:${jobId}:step`, true),
         ),
         origin: `job:${jobId}`,
       }
@@ -78,7 +79,7 @@ function getResponse(
   jobId: string,
   steps: Step[],
   responses: Record<string, Action>,
-  isFlow: boolean
+  isFlow: boolean,
 ): Response {
   const lastResponse = getLastJobWithResponse(steps, responses)
   if (!lastResponse) {
@@ -88,11 +89,13 @@ function getResponse(
   }
 }
 
-const removePostmutation = ({
-  postmutation,
-  responseMutation,
-  ...job
-}: JobStepDef) => job
+const getId = (jobDef: JobDef) =>
+  typeof jobDef.id === 'string' && jobDef.id ? jobDef.id : nanoid()
+
+const removePostmutationAndSetId = (
+  { postmutation, responseMutation, ...job }: JobStepDef,
+  id: string,
+) => ({ ...job, id })
 
 export default class Job {
   id: string
@@ -102,21 +105,23 @@ export default class Job {
   #isFlow = false
 
   constructor(jobDef: JobDef, mapOptions: MapOptions) {
-    this.id = jobDef.id || ''
+    this.id = getId(jobDef)
 
     if (Array.isArray(jobDef.flow)) {
       this.#isFlow = true
       this.#steps = jobDef.flow
         .filter(
           (step): step is JobStepDef | JobStepDef[] =>
-            Array.isArray(step) || isJobStep(step)
+            Array.isArray(step) || isJobStep(step),
         )
         .map(
           (stepDef, index, steps) =>
-            new Step(stepDef, mapOptions, getPrevStepId(index, steps))
+            new Step(stepDef, mapOptions, getPrevStepId(index, steps)),
         )
     } else if (isJobStep(jobDef)) {
-      this.#steps = [new Step(removePostmutation(jobDef), mapOptions)] // We'll run the post mutation here when this is a job with an action only
+      this.#steps = [
+        new Step(removePostmutationAndSetId(jobDef, this.id), mapOptions),
+      ] // We'll run the post mutation here when this is a job with an action only
     }
     const postmutation = jobDef.postmutation || jobDef.responseMutation
     this.#postmutator = postmutation
@@ -144,7 +149,7 @@ export default class Job {
       const [responses, doBreak] = await step.run(
         meta,
         actionResponses,
-        dispatch
+        dispatch,
       )
       actionResponses = { ...actionResponses, ...responses }
       if (doBreak) {
@@ -156,7 +161,7 @@ export default class Job {
       this.id,
       this.#steps,
       actionResponses,
-      this.#isFlow
+      this.#isFlow,
     )
     actionResponses = { ...actionResponses, action: { ...action, response } }
 
@@ -166,7 +171,7 @@ export default class Job {
         `job:${this.id}`,
         response,
         actionResponses,
-        this.#postmutator
+        this.#postmutator,
       )
       return mutatedResponse || response
     } else {
