@@ -316,7 +316,8 @@ Here's the format of an endpoint definition:
   ],
   mutate: <mutation pipeline>,
   allowRawRequest: <boolean>,
-  allowRawResponse: <boolean>
+  allowRawResponse: <boolean>,
+  castWithoutDefaults: <boolean>,
   options: {...},
 }
 ```
@@ -353,6 +354,10 @@ specify a few things:
 - `allowRawResponse`: When set to `true`, response `data` coming from this
   endpoint will not by cast automatically nor will an error be returned if the
   data is not typed.
+- `castWithoutDefaults`: Set to `true` when you don't want to set default values
+  on casted data. This also means no `id` will be generated and no `createdAt`
+  or `updatedAt` will be set – when any of these are missing in the data.
+  Default is `false`.
 - `options`: This object is merged with the `options` object on the service
   definition, and provide options for transporters and adapters. See
   [the `options` object](#options-object) for more on this.
@@ -822,8 +827,8 @@ do so without involving the other side. If you need to switch out service B with
 service C, you can do so without involving the configuration of service A, or
 you can send data to both B and C, using the same setup for service A.
 
-To be clear, you can setup flows without schemas in Integreat, but at the loss
-of this flexibility and maintainability.
+To be clear, you can setup flows without schemas in Integreat, but then you may
+loose this flexibility and maintainability.
 
 A schema describe the data you expected to get out of Integreat, or send through
 it. You basically define the fields and their types, and may then cast data to
@@ -971,12 +976,15 @@ When data is cast to a schema, the data will be in the following format:
   an `updatedAt` field, and the date is not set in the data, it will be set to
   the same as `createdAt` (if provided) or the current date/time.
 - `<key>`: Then follows the values of all the fields specified in the schema.
-  Any value not provided in the data will be set to their default value or
-  `undefined`. Fields with other schemas as their type, will be an object. If
-  only the id is provided in the data, the `{ id: <string>, $ref: <schema id> }`
-  format will be used, with `$ref` being the id of the field type schema. When
-  more data is provided, Integreat will cast it to the target schema and provide
-  the entire data object, or array of objects, with the relevant `$type`.
+  Any value not provided in the data will be set to their default value, unless
+  `castWithoutDefaults` is set to `true` in
+  [the endpoint definition](#endpoints). When casting a value results in
+  `undefined`, it will not be included on the returned object. Fields that has
+  the `id` of other schemas as their type, will be objects. If only the id is
+  provided in the data, the `{ id: <string>, $ref: <schema id> }` format will be
+  used, with `$ref` being the id of the field type schema. When more data is
+  provided, Integreat will cast it to the target schema and provide the entire
+  data object, or array of objects, with the relevant `$type`.
 
 ### Access rules
 

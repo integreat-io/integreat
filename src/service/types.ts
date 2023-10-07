@@ -77,6 +77,7 @@ export interface EndpointDef {
   mutate?: TransformDefinition
   allowRawRequest?: boolean
   allowRawResponse?: boolean
+  castWithoutDefaults?: boolean
   options?: ServiceOptions
 }
 

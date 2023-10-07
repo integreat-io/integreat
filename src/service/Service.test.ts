@@ -50,6 +50,7 @@ const entrySchema = new Schema(
   {
     id: 'entry',
     plural: 'entries',
+    generateId: true,
     shape: {
       title: 'string',
       one: { $type: 'integer', default: 1 },
@@ -1551,6 +1552,62 @@ test('mutateResponse should mutate data object from service', async (t) => {
   t.is(data.$type, 'account')
 })
 
+test('mutateResponse should not use defaults when castWithoutDefaults is true', async (t) => {
+  const service = new Service(
+    {
+      id: 'entries',
+      endpoints: [
+        {
+          mutation: {
+            $direction: 'from',
+            response: {
+              $modify: 'response',
+              data: ['response.data.content.data', { $apply: 'entry' }],
+            },
+          },
+          options: { uri: 'http://some.api/1.0' },
+          castWithoutDefaults: true,
+        },
+      ],
+      transporter: 'http',
+    },
+    {
+      mapOptions,
+      schemas,
+      ...jsonResources,
+    },
+  )
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry', source: 'thenews' },
+    response: {
+      status: 'ok',
+      data: {
+        content: {
+          data: {
+            items: [
+              {
+                header: 'Entry 1',
+                two: 2,
+              },
+            ],
+          },
+        },
+      },
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const endpoint = await service.endpointFromAction(action)
+
+  const ret = await service.mutateResponse(action, endpoint!)
+
+  const data = ret.data as TypedData[]
+  t.is(data[0].id, null)
+  t.is(data[0].createdAt, undefined)
+  t.is(data[0].updatedAt, undefined)
+  t.is(data[0].one, undefined)
+})
+
 test('mutateResponse should set origin when mutation results in an error response', async (t) => {
   const service = new Service(
     {
@@ -2632,6 +2689,58 @@ test('mutateIncomingRequest should mutate and use type from mutated action to ca
   t.is(data[0].id, 'johnf')
   t.is(data[0].$type, 'account')
   t.deepEqual(ret.response, expectedResponse)
+})
+
+test('mutateIncomingRequest should not use defaults when castWithoutDefaults is true', async (t) => {
+  const endpoints = [
+    {
+      match: { incoming: true },
+      mutation: [
+        {
+          $direction: 'from',
+          payload: {
+            $modify: 'payload',
+            type: { $value: 'entry' }, // This type will be used for casting
+            data: ['payload.data', { $apply: 'entry' }],
+          },
+        },
+      ],
+      options: { uri: 'http://some.api/1.0' },
+      castWithoutDefaults: true,
+    },
+  ]
+  const service = new Service(
+    {
+      id: 'entries',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints,
+    },
+    { mapOptions, schemas, ...jsonResources },
+  )
+  const action = setAuthorizedMark({
+    type: 'SET',
+    payload: {
+      data: {
+        items: [{ header: 'Entry 1' }],
+      },
+    },
+    meta: { ident: { id: 'johnf', roles: ['admin'] } },
+  })
+  const endpoint = await service.endpointFromAction(
+    action,
+    true /* isIncoming */,
+  )
+
+  const ret = await service.mutateIncomingRequest(action, endpoint!)
+
+  t.is(ret.response?.status, undefined, ret.response?.error)
+  const data = ret.payload.data as TypedData[]
+  t.is(data[0].id, null)
+  t.is(data[0].title, 'Entry 1')
+  t.is(data[0].createdAt, undefined)
+  t.is(data[0].updatedAt, undefined)
+  t.is(data[0].one, undefined)
 })
 
 test('mutateIncomingRequest should set origin when mutation results in an error response', async (t) => {

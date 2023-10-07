@@ -646,6 +646,32 @@ test('should not set createdAt and updatedAt if already set', (t) => {
   t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
 })
 
+test('should no use any defaults when noDefaults is true', (t) => {
+  const noDefaults = true
+  const isRev = false
+  const doGenerateId = true
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+    age: { $type: 'integer', default: 0 },
+    createdAt: { $type: 'date' },
+    updatedAt: { $type: 'date' },
+  }
+  const data = { title: 'Entry 1' }
+
+  const ret = createCast(
+    shape,
+    'entry',
+    schemas,
+    doGenerateId,
+  )(data, isRev, noDefaults) as TypedData
+
+  t.is(ret.id, null)
+  t.is(ret.createdAt, undefined)
+  t.is(ret.updatedAt, undefined)
+  t.is(ret.age, undefined)
+})
+
 test('should skip properties with invalid $type', (t) => {
   const isRev = false
   const shape = expandShape({

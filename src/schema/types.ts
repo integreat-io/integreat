@@ -45,5 +45,5 @@ export interface SchemaDef {
 }
 
 export interface CastFn {
-  (data: unknown, isRev?: boolean): unknown
+  (data: unknown, isRev?: boolean, noDefaults?: boolean): unknown
 }

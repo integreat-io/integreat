@@ -26,7 +26,7 @@ schemas.set(
       updatedAt: 'date',
     },
     access: 'auth',
-  })
+  }),
 )
 
 const entryMapping = [
@@ -172,11 +172,12 @@ const mockAdapter: Adapter = {
 
 // Tests -- props
 
-test('should set id, allowRawRequest, and allowRawResponse on endpoint', (t) => {
+test('should set id, allowRawRequest, allowRawResponse, and castWithoutDefaults on endpoint', (t) => {
   const endpointDef = {
     id: 'endpoint1',
     allowRawRequest: true,
     allowRawResponse: true,
+    castWithoutDefaults: true,
   }
 
   const ret = new Endpoint(endpointDef, serviceId, options, {})
@@ -184,6 +185,7 @@ test('should set id, allowRawRequest, and allowRawResponse on endpoint', (t) => 
   t.is(ret.id, 'endpoint1')
   t.true(ret.allowRawRequest)
   t.true(ret.allowRawResponse)
+  t.true(ret.castWithoutDefaults)
 })
 
 test('should set match on endpoint', (t) => {
@@ -580,7 +582,7 @@ test('should run prepareOptions() on options before giving them to adapter', asy
     options,
     mapOptions,
     undefined,
-    adapters
+    adapters,
   )
 
   const ret = await endpoint.mutate(actionWithResponse, false)
@@ -614,7 +616,7 @@ test('should provide prepareOptions() with empty object when no adapter options'
     options,
     mapOptions,
     undefined,
-    adapters
+    adapters,
   )
 
   const ret = await endpoint.mutate(actionWithResponse, false)
@@ -707,7 +709,7 @@ test('should mutate response from service with service and endpoint mutations', 
     serviceId,
     options,
     mapOptions,
-    serviceMutation
+    serviceMutation,
   )
   const ret = await endpoint.mutate(actionWithProps, false)
 
@@ -741,7 +743,7 @@ test('should mutate response from service with service mutation only', async (t)
     serviceId,
     options,
     mapOptions,
-    serviceMutation
+    serviceMutation,
   )
   const ret = await endpoint.mutate(actionWithProps, false)
 
@@ -775,7 +777,7 @@ test('should mutate response from service with service adapter', async (t) => {
     options,
     mapOptions,
     undefined,
-    adapters
+    adapters,
   )
 
   const ret = await endpoint.mutate(actionWithJSON, false)
@@ -784,7 +786,7 @@ test('should mutate response from service with service adapter', async (t) => {
   t.true(Array.isArray(ret.response?.data), 'Should be an array')
   t.true(
     isObject((ret.response?.data as TypedData[])[0]),
-    'Should be an object'
+    'Should be an object',
   )
 })
 
@@ -814,7 +816,7 @@ test('should mutate response from service with both service and endpoint adapter
     mapOptions,
     undefined,
     serviceAdapters,
-    endpointAdapters
+    endpointAdapters,
   )
 
   const ret = await endpoint.mutate(actionWithJSON, false)
@@ -854,7 +856,7 @@ test('should run service mutation _before_ endpoint adapters', async (t) => {
     mapOptions,
     serviceMutation,
     serviceAdapters,
-    endpointAdapters
+    endpointAdapters,
   )
 
   const ret = await endpoint.mutate(actionWithJSON, false)
@@ -886,7 +888,7 @@ test('should mutate response from service with service adapter and no mutation p
     options,
     mapOptions,
     undefined,
-    adapters
+    adapters,
   )
   const expectedData = {
     content: {
@@ -940,7 +942,7 @@ test('should mutate response to service (incoming) with service adapter', async 
     options,
     mapOptions,
     undefined,
-    adapters
+    adapters,
   )
   const isRev = true
   const expectedData =
@@ -976,7 +978,13 @@ test('should throw when mutations are applying unknown pipeline/mutation', async
 
   const error = t.throws(
     () =>
-      new Endpoint(endpointDef, serviceId, options, mapOptions, serviceMutation)
+      new Endpoint(
+        endpointDef,
+        serviceId,
+        options,
+        mapOptions,
+        serviceMutation,
+      ),
   )
 
   t.true(error instanceof Error)
@@ -1237,7 +1245,7 @@ test('should mutate request with service mutation', async (t) => {
     serviceId,
     options,
     mapOptions,
-    serviceMutation
+    serviceMutation,
   )
   const ret = await endpoint.mutate(actionWithOptions, true)
 
@@ -1370,7 +1378,7 @@ test('should mutate request with adapter', async (t) => {
     options,
     mapOptions,
     undefined,
-    adapters
+    adapters,
   )
 
   const ret = await endpoint.mutate(action, true)
@@ -1410,7 +1418,7 @@ test('should mutate request with several adapters', async (t) => {
     options,
     mapOptions,
     undefined,
-    adapters
+    adapters,
   )
 
   const ret = await endpoint.mutate(action, true)
@@ -1443,7 +1451,7 @@ test('should mutate request from service (incoming) with adapter', async (t) => 
     options,
     mapOptions,
     undefined,
-    adapters
+    adapters,
   )
   const isRev = false
 
@@ -1529,7 +1537,7 @@ test('should find matching endpoint', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions)
+    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
@@ -1560,7 +1568,7 @@ test('should match by id', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions)
+    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
@@ -1589,7 +1597,7 @@ test('should match scope all', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions)
+    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
@@ -1619,7 +1627,7 @@ test('should treat scope all as no scope', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions)
+    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 

@@ -18,8 +18,8 @@ import { ensureArray } from '../utils/array.js'
 import type Schema from './Schema.js'
 import type { CastFn, Shape, FieldDefinition } from './types.js'
 
-interface CastFnUnary {
-  (isRev: boolean): (value: unknown) => unknown
+interface CastItemFn {
+  (isRev: boolean, noDefaults: boolean): (value: unknown) => unknown
 }
 
 function castFnFromType(type: string, schemas: Map<string, Schema>) {
@@ -60,17 +60,21 @@ const removeArrayNotation = (key: string) =>
 function createFieldCast(
   def: FieldDefinition | Shape | string | undefined,
   schemas: Map<string, Schema>,
-): CastFnUnary | undefined {
+): CastItemFn | undefined {
   if (isFieldDefinition(def)) {
     // Primivite type or reference
     if (def?.const !== undefined) {
       return () => () => def.const
     }
     const castFn = castFnFromType(removeArrayNotation(def.$type), schemas)
-    return (isRev: boolean) =>
+    return (isRev: boolean, noDefaults = false) =>
       function castValue(rawValue: unknown) {
         const value = unwrapValue(rawValue)
-        return value === undefined ? def.default : castFn(value, isRev)
+        if (value === undefined) {
+          return noDefaults ? undefined : def.default
+        } else {
+          return castFn(value, isRev)
+        }
       }
   } else if (isShape(def)) {
     // Shape
@@ -85,16 +89,18 @@ const unwrapSingleArrayItem =
     Array.isArray(value) && value.length === 1 ? fn(value[0]) : fn(value)
 
 const handleArray = (
-  fn: CastFnUnary,
+  fn: CastItemFn,
   isArrayExpected: boolean,
   type?: string,
-): CastFnUnary =>
+): CastItemFn =>
   isArrayExpected
-    ? (isRev) => (value) =>
-        value === undefined ? undefined : ensureArray(value).map(fn(isRev)) // Ensure that an array is returned
+    ? (isRev, noDefaults) => (value) =>
+        value === undefined
+          ? undefined
+          : ensureArray(value).map(fn(isRev, noDefaults)) // Ensure that an array is returned
     : type === 'unknown'
-    ? (isRev) => fn(isRev) // Return 'unknown' fields as is
-    : (isRev) => unwrapSingleArrayItem(fn(isRev)) // Unwrap only item in an array when we don't expect an array
+    ? (isRev, noDefaults) => fn(isRev, noDefaults) // Return 'unknown' fields as is
+    : (isRev, noDefaults) => unwrapSingleArrayItem(fn(isRev, noDefaults)) // Unwrap only item in an array when we don't expect an array
 
 function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
   const nextCreatedAt = shape.createdAt // Should have
@@ -136,17 +142,18 @@ const completeItemBeforeCast = (
   { id, createdAt, updatedAt, ...item }: Record<string, unknown>,
   shape: Shape,
   doGenerateId: boolean,
+  noDefaults: boolean,
 ): Record<string, unknown> => ({
-  id: id ?? (doGenerateId ? nanoid() : null),
+  id: id ?? (doGenerateId && !noDefaults ? nanoid() : null),
   ...item,
-  ...getDates(shape, createdAt, updatedAt),
+  ...(noDefaults ? {} : getDates(shape, createdAt, updatedAt)),
 })
 
 const castField =
-  (item: Record<string, unknown>, isRev: boolean) =>
-  ([key, cast]: [string, CastFnUnary]): [string, unknown] => [
+  (item: Record<string, unknown>, isRev: boolean, noDefaults: boolean) =>
+  ([key, cast]: [string, CastItemFn]): [string, unknown] => [
     key,
-    cast(isRev)(item[key]), // eslint-disable-line security/detect-object-injection
+    cast(isRev, noDefaults)(item[key]), // eslint-disable-line security/detect-object-injection
   ]
 
 const fieldHasValue = ([_, value]: [string, unknown]) => value !== undefined
@@ -164,15 +171,22 @@ function createShapeCast(
     ])
     .filter(([, cast]) => cast !== undefined) as [
     key: string,
-    cast: CastFnUnary,
+    cast: CastItemFn,
   ][]
 
-  return (isRev: boolean) =>
+  return (isRev: boolean, noDefaults: boolean) =>
     function castItem(rawItem: unknown) {
       if (isObject(rawItem)) {
-        const item = completeItemBeforeCast(rawItem, shape, doGenerateId)
+        const item = completeItemBeforeCast(
+          rawItem,
+          shape,
+          doGenerateId,
+          noDefaults,
+        )
         return Object.fromEntries([
-          ...fields.map(castField(item, isRev)).filter(fieldHasValue),
+          ...fields
+            .map(castField(item, isRev, noDefaults))
+            .filter(fieldHasValue),
           ...(!isRev && typeof type === 'string' ? [['$type', type]] : []),
           ...(item.isNew === true ? [['isNew', true]] : []),
           ...(item.isDeleted === true ? [['isDeleted', true]] : []),
@@ -195,8 +209,8 @@ export default function createCast(
   doGenerateId = false,
 ): CastFn {
   const castShape = createShapeCast(shape, type, schemas, doGenerateId)
-  return function castItem(data, isRev = false) {
-    const casted = mapAny(castShape(isRev), data)
+  return function castItem(data, isRev = false, noDefaults = false) {
+    const casted = mapAny(castShape(isRev, noDefaults), data)
     return Array.isArray(casted) ? casted.filter(isNotNullOrUndefined) : casted
   }
 }
