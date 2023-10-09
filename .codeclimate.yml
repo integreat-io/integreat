@@ -5,3 +5,7 @@ exclude_patterns:
   - 'node_modules/'
   - 'coverage/'
   - 'dist/'
+checks:
+  argument-count:
+    config:
+      threshold: 5

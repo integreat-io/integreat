@@ -27,7 +27,7 @@ const entrySchema = new Schema(
     },
     access: 'auth',
   },
-  schemas
+  schemas,
 )
 schemas.set('entry', entrySchema)
 
@@ -89,7 +89,7 @@ const services = {
         },
       ],
     },
-    { mapOptions, schemas, transporters: { http: httpTransporter } }
+    { mapOptions, schemas, transporters: { http: httpTransporter } },
   ),
 }
 const options = {}
@@ -237,9 +237,7 @@ test('should override any present dispatchedAt meta', async (t) => {
   t.true((calledAction.meta?.dispatchedAt as number) <= after)
 })
 
-test('should remove authorized meta if set', async (t) => {
-  // Note: This is really not needed anymore, as we're using a symbol for
-  // marking actions as authorized. But we keep it for now, just in case.
+test('should remove auth object in meta if set', async (t) => {
   const action = {
     type: 'GET',
     payload: {
@@ -247,7 +245,7 @@ test('should remove authorized meta if set', async (t) => {
       type: 'entry',
       targetService: 'entries',
     },
-    meta: { authorized: true },
+    meta: { auth: { token: '0ld4uTh' } },
   }
   const handlers = {
     GET: async (_action: Action) => ({
@@ -262,7 +260,7 @@ test('should remove authorized meta if set', async (t) => {
   t.is(ret.status, 'ok')
   t.is(getSpy.callCount, 1)
   const calledAction = getSpy.args[0][0] as Action
-  t.is(calledAction.meta?.authorized, undefined)
+  t.is(calledAction.meta?.auth, undefined)
 })
 
 test('should set id and cid in meta when not already set', async (t) => {

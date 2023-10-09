@@ -392,6 +392,31 @@ test('should dispatch scheduled', async (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should generate id when job def is missing one', async (t) => {
+  const queueStub = sinon.stub().resolves({ status: 'queued' })
+  const handlers = { [QUEUE_SYMBOL]: queueStub }
+  const jobs = [
+    {
+      // No id
+      cron: '45 * * * *',
+      action: { type: 'GET', payload: { type: 'entry' } },
+    },
+  ]
+  const fromDate = new Date('2021-05-11T14:32Z')
+  const toDate = new Date('2021-05-11T14:59Z')
+
+  const great = new Instance(
+    { services, schemas, mutations, jobs, queueService: 'queue' }, // We don't have a queue service, but we've mocked the queue handler
+    { ...resourcesWithTransformer, handlers },
+  )
+  const ret = await great.dispatchScheduled(fromDate, toDate)
+
+  t.is(ret.length, 1)
+  t.is(ret[0].type, 'RUN')
+  t.is(typeof ret[0].payload.jobId, 'string')
+  t.is((ret[0].payload.jobId as string).length, 21)
+})
+
 test('should skip jobs without schedule', async (t) => {
   const jobs = [{ id: 'someAction', action: { type: 'TEST', payload: {} } }]
   const fromDate = new Date('2021-05-11T14:32Z')

@@ -14,6 +14,7 @@ import type {
   State,
   AsyncDataMapperWithOptions,
 } from 'map-transform/types.js'
+import type Auth from './Auth.js'
 import type { Action, Response, Adapter, MapOptions } from '../types.js'
 import type {
   EndpointDef,
@@ -49,10 +50,10 @@ const setModifyFlag = (def?: TransformDefinition) =>
 
 const transformerFromAdapter = (
   serviceId: string,
-  options: Record<string, Record<string, unknown>> = {}
+  options: Record<string, Record<string, unknown>> = {},
 ) =>
   function createAdapterTransformer(
-    adapter: Adapter
+    adapter: Adapter,
   ): AsyncDataMapperWithOptions {
     const adapterId = adapter.id
     const preparedOptions =
@@ -73,7 +74,7 @@ function prepareActionMutation(
   endpointMutation: TransformDefinition | undefined,
   serviceAdapterTransformer: AsyncDataMapperWithOptions[],
   endpointAdapterTransformer: AsyncDataMapperWithOptions[],
-  mapOptions: MapOptions
+  mapOptions: MapOptions,
 ) {
   // Prepare service and endpoint mutations as separate mutate functions that
   // can be run as a transformer in the pipeline.
@@ -81,13 +82,13 @@ function prepareActionMutation(
     ensureArray(serviceMutation)
       .map(setModifyFlag)
       .filter(isNotNullOrUndefined),
-    mapOptions
+    mapOptions,
   )
   const endpointMutator = mapTransform(
     ensureArray(endpointMutation)
       .map(setModifyFlag)
       .filter(isNotNullOrUndefined),
-    mapOptions
+    mapOptions,
   )
 
   // Prepare the pipeline, with service adapters, service mutation, endpoint
@@ -112,6 +113,9 @@ export default class Endpoint {
   options: PreparedOptions
   allowRawRequest?: boolean
   allowRawResponse?: boolean
+  castWithoutDefaults?: boolean
+  outgoingAuth?: Auth
+  incomingAuth?: Auth[]
 
   #origin: string
   #validator: (action: Action) => Promise<ResponsesAndBreak>
@@ -125,7 +129,9 @@ export default class Endpoint {
     mapOptions: MapOptions,
     serviceMutation?: TransformDefinition,
     serviceAdapters: Adapter[] = [],
-    endpointAdapters: Adapter[] = []
+    endpointAdapters: Adapter[] = [],
+    outgoingAuth?: Auth,
+    incomingAuth?: Auth[],
   ) {
     this.id = endpointDef.id
     this.#origin = endpointDef.id
@@ -133,6 +139,7 @@ export default class Endpoint {
       : `service:${serviceId}:endpoint`
     this.allowRawRequest = endpointDef.allowRawRequest ?? false
     this.allowRawResponse = endpointDef.allowRawResponse ?? false
+    this.castWithoutDefaults = endpointDef.castWithoutDefaults ?? false
     this.match = endpointDef.match
     this.#checkIfMatch = isMatch(endpointDef, mapOptions)
     this.options = options
@@ -144,8 +151,11 @@ export default class Endpoint {
       endpointDef.mutation || endpointDef.mutate,
       serviceAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
       endpointAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
-      mapOptions
+      mapOptions,
     )
+
+    this.outgoingAuth = outgoingAuth
+    this.incomingAuth = incomingAuth
   }
 
   async validateAction(action: Action): Promise<Response | null> {
@@ -172,7 +182,7 @@ export default class Endpoint {
   static async findMatchingEndpoint(
     endpoints: Endpoint[],
     action: Action,
-    isIncoming = false
+    isIncoming = false,
   ): Promise<Endpoint | undefined> {
     for (const endpoint of endpoints) {
       if (await endpoint.isMatch(action, isIncoming)) {

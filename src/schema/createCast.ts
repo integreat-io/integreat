@@ -18,8 +18,8 @@ import { ensureArray } from '../utils/array.js'
 import type Schema from './Schema.js'
 import type { CastFn, Shape, FieldDefinition } from './types.js'
 
-interface CastFnUnary {
-  (isRev: boolean): (value: unknown) => unknown
+interface CastItemFn {
+  (isRev: boolean, noDefaults: boolean): (value: unknown) => unknown
 }
 
 function castFnFromType(type: string, schemas: Map<string, Schema>) {
@@ -57,20 +57,24 @@ const hasArrayNotation = (key?: string) =>
 const removeArrayNotation = (key: string) =>
   hasArrayNotation(key) ? key.slice(0, key.length - 2) : key
 
-function createFieldCast(
+function createCastFn(
   def: FieldDefinition | Shape | string | undefined,
-  schemas: Map<string, Schema>
-): CastFnUnary | undefined {
+  schemas: Map<string, Schema>,
+): CastItemFn | undefined {
   if (isFieldDefinition(def)) {
     // Primivite type or reference
     if (def?.const !== undefined) {
       return () => () => def.const
     }
     const castFn = castFnFromType(removeArrayNotation(def.$type), schemas)
-    return (isRev: boolean) =>
+    return (isRev: boolean, noDefaults = false) =>
       function castValue(rawValue: unknown) {
         const value = unwrapValue(rawValue)
-        return value === undefined ? def.default : castFn(value, isRev)
+        if (value === undefined) {
+          return noDefaults ? undefined : def.default
+        } else {
+          return castFn(value, isRev)
+        }
       }
   } else if (isShape(def)) {
     // Shape
@@ -85,24 +89,36 @@ const unwrapSingleArrayItem =
     Array.isArray(value) && value.length === 1 ? fn(value[0]) : fn(value)
 
 const handleArray = (
-  fn: CastFnUnary,
+  fn: CastItemFn,
   isArrayExpected: boolean,
-  type?: string
-): CastFnUnary =>
+  type?: string,
+): CastItemFn =>
   isArrayExpected
-    ? (isRev) => (value) =>
-        value === undefined ? undefined : ensureArray(value).map(fn(isRev)) // Ensure that an array is returned
+    ? (isRev, noDefaults) => (value) =>
+        value === undefined
+          ? undefined
+          : ensureArray(value).map(fn(isRev, noDefaults)) // Ensure that an array is returned
     : type === 'unknown'
-    ? (isRev) => fn(isRev) // Return 'unknown' fields as is
-    : (isRev) => unwrapSingleArrayItem(fn(isRev)) // Unwrap only item in an array when we don't expect an array
+    ? (isRev, noDefaults) => fn(isRev, noDefaults) // Return 'unknown' fields as is
+    : (isRev, noDefaults) => unwrapSingleArrayItem(fn(isRev, noDefaults)) // Unwrap only item in an array when we don't expect an array
 
-function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
-  const nextCreatedAt = shape.createdAt // Should have
+function getDates(
+  shouldHaveCreatedAt: boolean,
+  shouldHaveUpdatedAt: boolean,
+  createdAt: unknown,
+  updatedAt: unknown,
+  noDefaults: boolean,
+) {
+  if (noDefaults) {
+    return {}
+  }
+
+  const nextCreatedAt = shouldHaveCreatedAt
     ? createdAt
       ? createdAt // Already has
       : updatedAt ?? new Date() // Use updatedAt or now
     : undefined
-  const nextUpdatedAt = shape.updatedAt // Should have
+  const nextUpdatedAt = shouldHaveUpdatedAt
     ? updatedAt
       ? updatedAt // Already has
       : nextCreatedAt ?? new Date() // createdAt or now
@@ -114,64 +130,111 @@ function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
   }
 }
 
-function createCastFn(
+function createCastFnHandlingArrays(
   key: string,
   def: FieldDefinition | Shape | string | undefined,
-  schemas: Map<string, Schema>
+  schemas: Map<string, Schema>,
 ) {
-  const cast = createFieldCast(def, schemas)
+  const cast = createCastFn(def, schemas)
   if (cast) {
     const type = typeFromDef(def)
     return handleArray(
       cast,
       hasArrayNotation(key) || hasArrayNotation(type),
-      type
+      type,
     )
   } else {
     return undefined
   }
 }
 
-const completeItemBeforeCast = (
-  { id, createdAt, updatedAt, ...item }: Record<string, unknown>,
-  shape: Shape,
-  doGenerateId: boolean
-): Record<string, unknown> => ({
-  id: id ?? (doGenerateId ? nanoid() : null),
-  ...item,
-  ...getDates(shape, createdAt, updatedAt),
-})
+const completeItemBeforeCast =
+  (
+    shouldHaveCreatedAt: boolean,
+    shouldHaveUpdatedAt: boolean,
+    doGenerateId: boolean,
+  ) =>
+  (
+    { id, createdAt, updatedAt, ...item }: Record<string, unknown>,
+    noDefaults: boolean,
+  ): Record<string, unknown> => ({
+    id: id ?? (doGenerateId && !noDefaults ? nanoid() : null),
+    ...item,
+    ...getDates(
+      shouldHaveCreatedAt,
+      shouldHaveUpdatedAt,
+      createdAt,
+      updatedAt,
+      noDefaults,
+    ),
+  })
+
+const castField =
+  (item: Record<string, unknown>, isRev: boolean, noDefaults: boolean) =>
+  ([key, cast]: [string, CastItemFn]): [string, unknown] => [
+    key,
+    cast(isRev, noDefaults)(item[key]), // eslint-disable-line security/detect-object-injection
+  ]
+
+const fieldHasValue = ([_, value]: [string, unknown]) => value !== undefined
+
+const createFieldCast =
+  (schemas: Map<string, Schema>) =>
+  ([key, def]: [string, FieldDefinition | Shape]): [
+    string,
+    CastItemFn | undefined,
+  ] => [removeArrayNotation(key), createCastFnHandlingArrays(key, def, schemas)]
+
+const entryHasCastFn = (
+  entry: [string, CastItemFn | undefined],
+): entry is [string, CastItemFn] => entry[1] !== undefined
+
+const includeType = (isRev: boolean, type?: string) =>
+  !isRev && typeof type === 'string' ? [['$type', type]] : []
+
+const includeIsNewAndIsDeleted = (item: Record<string, unknown>) => [
+  ...(item.isNew === true ? [['isNew', true]] : []),
+  ...(item.isDeleted === true ? [['isDeleted', true]] : []),
+]
+
+const createCastItemFn =
+  (
+    completeItem: ReturnType<typeof completeItemBeforeCast>,
+    fields: [string, CastItemFn][],
+    type?: string,
+  ) =>
+  (isRev: boolean, noDefaults: boolean) =>
+    function castItem(rawItem: unknown) {
+      if (!isObject(rawItem)) {
+        return undefined
+      }
+
+      const item = completeItem(rawItem, noDefaults)
+      return Object.fromEntries([
+        ...fields.map(castField(item, isRev, noDefaults)).filter(fieldHasValue),
+        ...includeType(isRev, type),
+        ...includeIsNewAndIsDeleted(item),
+      ])
+    }
 
 function createShapeCast(
   shape: Shape,
   type: string | undefined,
   schemas: Map<string, Schema>,
-  doGenerateId = false
+  doGenerateId = false,
 ) {
   const fields = Object.entries(shape)
-    .map(([key, def]) => [
-      removeArrayNotation(key),
-      createCastFn(key, def, schemas),
-    ])
-    .filter(([, cast]) => cast !== undefined) as [
-    key: string,
-    cast: CastFnUnary
-  ][]
+    .map(createFieldCast(schemas))
+    .filter(entryHasCastFn)
+  const shouldHaveCreatedAt = !!shape.createdAt
+  const shouldHaveUpdatedAt = !!shape.updatedAt
+  const completeItem = completeItemBeforeCast(
+    shouldHaveCreatedAt,
+    shouldHaveUpdatedAt,
+    doGenerateId,
+  )
 
-  return (isRev: boolean) =>
-    function castItem(rawItem: unknown) {
-      if (isObject(rawItem)) {
-        const item = completeItemBeforeCast(rawItem, shape, doGenerateId)
-        return Object.fromEntries([
-          ...fields.map(([key, cast]) => [key, cast(isRev)(item[key])]), // eslint-disable-line security/detect-object-injection
-          ...(!isRev && typeof type === 'string' ? [['$type', type]] : []),
-          ...(item.isNew === true ? [['isNew', true]] : []),
-          ...(item.isDeleted === true ? [['isDeleted', true]] : []),
-        ])
-      } else {
-        return undefined
-      }
-    }
+  return createCastItemFn(completeItem, fields, type)
 }
 
 /**
@@ -183,11 +246,11 @@ export default function createCast(
   shape: Shape,
   type: string,
   schemas: Map<string, Schema> = new Map(),
-  doGenerateId = false
+  doGenerateId = false,
 ): CastFn {
   const castShape = createShapeCast(shape, type, schemas, doGenerateId)
-  return function castItem(data, isRev = false) {
-    const casted = mapAny(castShape(isRev), data)
+  return function castItem(data, isRev = false, noDefaults = false) {
+    const casted = mapAny(castShape(isRev, noDefaults), data)
     return Array.isArray(casted) ? casted.filter(isNotNullOrUndefined) : casted
   }
 }

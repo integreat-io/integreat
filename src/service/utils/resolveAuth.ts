@@ -12,37 +12,37 @@ const isAuthDef = (def: unknown): def is AuthDef =>
   typeof def.id === 'string' &&
   typeof def.authenticator === 'string'
 
-export function resolveAuth(
+export const resolveAuth = (
   authenticators: Record<string, Authenticator>,
   auths?: Record<string, Auth>,
-  auth?: AuthObject | AuthProp
-): Auth | undefined {
-  if (isObject(auth) && !!auth.outgoing) {
-    auth = auth.outgoing
+) =>
+  function resolveAuth(auth?: AuthObject | AuthProp): Auth | undefined {
+    if (isObject(auth) && !!auth.outgoing) {
+      auth = auth.outgoing
+    }
+
+    if (typeof auth === 'string') {
+      return lookupById(auth, auths)
+    } else if (isAuthDef(auth)) {
+      return setUpAuth(authenticators)(auth)
+    } else if (auth) {
+      return new Auth('ident', identAuth, {})
+    } else {
+      return undefined
+    }
   }
 
-  if (typeof auth === 'string') {
-    return lookupById(auth, auths)
-  } else if (isAuthDef(auth)) {
-    return setUpAuth(authenticators)(auth)
-  } else if (auth) {
-    return new Auth('ident', identAuth, {})
-  } else {
-    return undefined
-  }
-}
-
-export function resolveIncomingAuth(
+export const resolveIncomingAuth = (
   authenticators: Record<string, Authenticator>,
   auths?: Record<string, Auth>,
-  auth?: AuthObject | AuthProp
-) {
-  if (isObject(auth) && auth.incoming) {
-    const incomingAuths = ensureArray(auth.incoming)
-    return incomingAuths
-      .map((incoming) => resolveAuth(authenticators, auths, incoming))
-      .filter(isNotNullOrUndefined)
-  } else {
-    return undefined
+) =>
+  function resolveIncomingAuth(auth?: AuthObject | AuthProp) {
+    if (isObject(auth) && auth.incoming) {
+      const incomingAuths = ensureArray(auth.incoming)
+      return incomingAuths
+        .map((incoming) => resolveAuth(authenticators, auths)(incoming))
+        .filter(isNotNullOrUndefined)
+    } else {
+      return undefined
+    }
   }
-}

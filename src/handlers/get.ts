@@ -10,7 +10,6 @@ import mutateAndSend from '../utils/mutateAndSend.js'
 import { isObject } from '../utils/is.js'
 import type { Action, Response, ActionHandlerResources } from '../types.js'
 import type Service from '../service/Service.js'
-import type Endpoint from '../service/Endpoint.js'
 
 const debug = debugLib('great')
 
@@ -50,9 +49,6 @@ function combineIndividualResponses(
   }
 }
 
-const isMembersScope = (endpoint?: Endpoint) =>
-  endpoint?.match?.scope === 'members'
-
 const setIdOnActionPayload = (
   action: Action,
   id?: string | string[],
@@ -86,10 +82,7 @@ async function runAsIndividualActions(action: Action, service: Service) {
   return combineIndividualResponses(action, responses)
 }
 
-const doRunIndividualIds = (action: Action, endpoint?: Endpoint) =>
-  Array.isArray(action.payload.id) &&
-  // isAuthorizedAction(action) &&
-  !isMembersScope(endpoint)
+const isMembersAction = (action: Action) => Array.isArray(action.payload.id)
 
 async function runOneOrMany(
   action: Action,
@@ -97,14 +90,13 @@ async function runOneOrMany(
 ): Promise<Response> {
   const endpoint = await service.endpointFromAction(action)
   if (!endpoint) {
-    return createNoEndpointError(action, service.id)
-  }
-
-  if (doRunIndividualIds(action, endpoint)) {
-    // This is an action with an array of ids, but the endpoint we've got is not
-    // a members endpoint. Instead we'll run the action for each id
-    // individually.
-    return runAsIndividualActions(action, service)
+    if (isMembersAction(action)) {
+      // This is an action with an array of ids, and we got no members endpoint,
+      // so instead we'll try and run the action for each id individually.
+      return runAsIndividualActions(action, service)
+    } else {
+      return createNoEndpointError(action, service.id)
+    }
   } else {
     // We've got an endpoint that match the action, so run it
     return mutateAndSend(service, endpoint, action)

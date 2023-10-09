@@ -11,17 +11,24 @@ import createCast from './createCast.js'
 const schemas = new Map()
 schemas.set(
   'comment',
-  new Schema({
-    id: 'comment',
-    shape: { id: 'string', comment: 'string' },
-  }, schemas)
+  new Schema(
+    {
+      id: 'comment',
+      shape: { id: 'string', comment: 'string' },
+    },
+    schemas,
+  ),
 )
 schemas.set(
   'user',
-  new Schema({
-    id: 'user',
-    shape: { id: 'string', name: 'string' }
-  }, schemas))
+  new Schema(
+    {
+      id: 'user',
+      shape: { id: 'string', name: 'string' },
+    },
+    schemas,
+  ),
+)
 
 // Tests
 
@@ -103,17 +110,10 @@ test('should create mapping function from schema', (t) => {
       id: 'ent2',
       type: 'entry',
       title: 'Entry with no name',
-      abstract: undefined,
       age: 244511383,
-      long: undefined,
-      lat: undefined,
-      active: undefined,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk', $ref: 'user' },
-      payload: undefined,
-      data: undefined,
       comments: [{ id: 'comment23', $ref: 'comment' }],
-      props: undefined,
     },
   ]
 
@@ -160,7 +160,6 @@ test('should reverse transform with mapping definition from schema', (t) => {
       age: 244511383,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk' },
-      payload: undefined,
       comments: [{ id: 'comment23', $ref: 'comment' }],
     },
     {
@@ -190,29 +189,18 @@ test('should reverse transform with mapping definition from schema', (t) => {
       id: 'ent2',
       title: 'Entry with no name',
       type: 'entry',
-      abstract: undefined,
       age: 244511383,
-      long: undefined,
-      lat: undefined,
-      active: undefined,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk' },
-      payload: undefined,
       comments: [{ id: 'comment23' }],
     },
     {
       id: 'ent3',
       title: 'Entry with no name',
       type: 'entry',
-      abstract: undefined,
       age: 180735220,
-      long: undefined,
-      lat: undefined,
-      active: undefined,
       createdAt: new Date('2019-03-18T05:14:59Z'),
       author: { id: 'whatson' },
-      payload: undefined,
-      comments: undefined,
     },
   ]
 
@@ -282,7 +270,7 @@ test('should cast missing id to generated unique id', (t) => {
     shape,
     'entry',
     schemas,
-    doGenerateId
+    doGenerateId,
   )(data, isRev) as TypedData
 
   const { id } = ret
@@ -318,14 +306,14 @@ test('should unwrap item from array when field is not expecting array and there 
   t.deepEqual(ret, expected)
 })
 
-test('should set value to undefined for array with more items when not expecting array', (t) => {
+test('should not set value from array with more items when not expecting array', (t) => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
     title: { $type: 'string' },
   }
   const data = { id: 'ent1', title: ['Entry 1', 'Entry 2'] }
-  const expected = { id: 'ent1', $type: 'entry', title: undefined }
+  const expected = { id: 'ent1', $type: 'entry' }
 
   const ret = createCast(shape, 'entry')(data, isRev)
 
@@ -419,14 +407,14 @@ test('should cast non-primitive fields with schema', (t) => {
       id: 'ent3',
       type: 'entry',
       attributes: { title: 'Entry 3', age: 0 },
-      relationships: { author: undefined, comments: undefined },
+      relationships: {},
     },
     {
       $type: 'entry',
       id: 'ent4',
       type: 'entry',
-      attributes: { title: 'Entry 4', age: undefined },
-      relationships: { author: null, comments: undefined },
+      attributes: { title: 'Entry 4' },
+      relationships: { author: null },
     },
   ]
 
@@ -503,7 +491,7 @@ test('should cast non-primitive fields with schema in reverse', (t) => {
       id: 'ent3',
       type: 'entry',
       attributes: { title: 'Entry 3', age: 0 },
-      relationships: { author: undefined, comments: undefined },
+      relationships: {},
     },
   ]
 
@@ -658,13 +646,38 @@ test('should not set createdAt and updatedAt if already set', (t) => {
   t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
 })
 
+test('should no use any defaults when noDefaults is true', (t) => {
+  const noDefaults = true
+  const isRev = false
+  const doGenerateId = true
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+    age: { $type: 'integer', default: 0 },
+    createdAt: { $type: 'date' },
+    updatedAt: { $type: 'date' },
+  }
+  const data = { title: 'Entry 1' }
+
+  const ret = createCast(
+    shape,
+    'entry',
+    schemas,
+    doGenerateId,
+  )(data, isRev, noDefaults) as TypedData
+
+  t.is(ret.id, null)
+  t.is(ret.createdAt, undefined)
+  t.is(ret.updatedAt, undefined)
+  t.is(ret.age, undefined)
+})
+
 test('should skip properties with invalid $type', (t) => {
   const isRev = false
   const shape = expandShape({
     id: 'string',
     title: 'string',
     abstract: null,
-    age: undefined,
     active: 1,
     author: { $type: 78 },
   } as unknown as ShapeDef)
@@ -704,7 +717,7 @@ test('should recast items already cast with another $type', (t) => {
       name: 'John F.',
     },
   ]
-  const expected = [{ id: 'johnf', $type: 'entry', title: undefined }]
+  const expected = [{ id: 'johnf', $type: 'entry' }]
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
@@ -744,7 +757,7 @@ test('should recast items already cast with another $type in reverse', (t) => {
       name: 'John F.',
     },
   ]
-  const expected = [{ id: 'johnf', title: undefined }]
+  const expected = [{ id: 'johnf' }]
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 

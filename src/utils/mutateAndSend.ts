@@ -6,7 +6,7 @@ import type Endpoint from '../service/Endpoint.js'
 export default async function mutateAndSend(
   service: Service,
   endpoint: Endpoint,
-  action: Action
+  action: Action,
 ): Promise<Response> {
   const preparedAction = await service.preflightAction(action, endpoint)
   if (preparedAction.response?.status) {
@@ -15,9 +15,9 @@ export default async function mutateAndSend(
   }
 
   const requestAction = await service.mutateRequest(preparedAction, endpoint)
-  const response = await service.send(requestAction)
+  const response = await service.send(requestAction, endpoint)
   return await service.mutateResponse(
     setResponseOnAction(action, response),
-    endpoint
+    endpoint,
   )
 }

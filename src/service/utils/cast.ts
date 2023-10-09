@@ -5,20 +5,24 @@ import type { Action } from '../../types.js'
 
 export const getCastFn = (
   schemas: Map<string, Schema>,
-  type?: string | string[]
+  type?: string | string[],
 ) => (typeof type === 'string' ? schemas.get(type)?.castFn : undefined)
 
 export const castPayload = (
   action: Action,
   endpoint: Endpoint,
-  castFn?: CastFn
+  castFn?: CastFn,
 ): Action => ({
   ...action,
   payload:
     !endpoint.allowRawRequest && castFn
       ? {
           ...action.payload,
-          data: castFn(action.payload.data),
+          data: castFn(
+            action.payload.data,
+            false,
+            endpoint.castWithoutDefaults,
+          ),
         }
       : action.payload,
 })
@@ -26,14 +30,18 @@ export const castPayload = (
 export const castResponse = (
   action: Action,
   endpoint: Endpoint,
-  castFn?: CastFn
+  castFn?: CastFn,
 ): Action =>
   !endpoint.allowRawResponse && castFn
     ? {
         ...action,
         response: {
           ...action.response,
-          data: castFn(action.response?.data),
+          data: castFn(
+            action.response?.data,
+            false,
+            endpoint.castWithoutDefaults,
+          ),
         },
       }
     : action
