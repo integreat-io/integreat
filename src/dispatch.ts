@@ -39,7 +39,7 @@ export const compose = (...fns: Middleware[]): Middleware =>
   fns.reduce(
     (f, g) =>
       (...args) =>
-        f(g(...args))
+        f(g(...args)),
   )
 
 const shouldQueue = (action: Action, options: HandlerOptions) =>
@@ -47,7 +47,7 @@ const shouldQueue = (action: Action, options: HandlerOptions) =>
 
 function getActionHandlerFromType(
   type: string | symbol | undefined,
-  handlers: Record<string | symbol, ActionHandler>
+  handlers: Record<string | symbol, ActionHandler>,
 ) {
   if (type) {
     // eslint-disable-next-line security/detect-object-injection
@@ -68,7 +68,7 @@ function getActionHandlerFromType(
  */
 function cleanUpActionAndSetIds({
   payload: { service, ...payload },
-  meta: { queue, authorized, ...meta } = {},
+  meta: { queue, auth, ...meta } = {},
   ...action
 }: Action) {
   const id = meta?.id || nanoid()
@@ -83,7 +83,7 @@ function cleanUpActionAndSetIds({
 
 const cleanUpResponseAndSetAccessAndOrigin = (
   response: Response,
-  ident?: Ident
+  ident?: Ident,
 ) => ({
   ...response,
   access: { ident, ...response.access },
@@ -105,7 +105,7 @@ async function mutateIncomingAction(action: Action, getService: GetService) {
         action,
         `Source service '${sourceService}' not found`,
         'dispatch',
-        'badrequest'
+        'badrequest',
       ),
     }
   }
@@ -116,7 +116,7 @@ async function mutateIncomingAction(action: Action, getService: GetService) {
         action,
         `No matching endpoint for incoming mapping on service '${sourceService}'`,
         'dispatch',
-        'badrequest'
+        'badrequest',
       ),
     }
   }
@@ -128,7 +128,7 @@ async function mutateIncomingAction(action: Action, getService: GetService) {
   } else {
     responseAction = await service.mutateIncomingRequest(
       setOptionsOnAction(action, endpoint),
-      endpoint
+      endpoint,
     )
   }
   return { action: responseAction, service, endpoint }
@@ -137,12 +137,12 @@ async function mutateIncomingAction(action: Action, getService: GetService) {
 async function mutateIncomingResponse(
   action: Action,
   service?: Service,
-  endpoint?: Endpoint
+  endpoint?: Endpoint,
 ): Promise<Response> {
   return service && endpoint
     ? await service.mutateIncomingResponse(
         setOptionsOnAction(action, endpoint),
-        endpoint
+        endpoint,
       ) // Mutate if this is an incoming action
     : action.response || {}
 }
@@ -151,7 +151,7 @@ async function handleAction(
   handlerType: string | symbol,
   action: Action,
   resources: ActionHandlerResources,
-  handlers: Record<string, ActionHandler>
+  handlers: Record<string, ActionHandler>,
 ): Promise<Response> {
   // Find handler ...
   const handler = getActionHandlerFromType(handlerType, handlers)
@@ -159,14 +159,16 @@ async function handleAction(
     return createErrorResponse(
       `No handler for ${String(handlerType)} action`,
       'dispatch',
-      'badrequest'
+      'badrequest',
     )
   }
 
   // ... and pass it the action
   return setOrigin(
     await handler(action, resources),
-    typeof handlerType === 'string' ? `handler:${handlerType}` : 'handler:queue'
+    typeof handlerType === 'string'
+      ? `handler:${handlerType}`
+      : 'handler:queue',
   )
 }
 
@@ -210,7 +212,7 @@ export default function createDispatch({
         endpoint: incomingEndpoint,
       } = await mutateIncomingAction(
         cleanUpActionAndSetIds(rawAction),
-        getService
+        getService,
       )
 
       if (action.response?.status) {
@@ -226,7 +228,7 @@ export default function createDispatch({
               QUEUE_SYMBOL,
               action,
               resources,
-              handlers
+              handlers,
             )
           } else {
             // Send action through middleware before sending to the relevant
@@ -235,7 +237,7 @@ export default function createDispatch({
               handleAction(action.type, action, resources, handlers)
             response = setOrigin(
               await middlewareFn(next)(action),
-              'middleware:dispatch'
+              'middleware:dispatch',
             )
           }
         } catch (err) {
@@ -243,7 +245,7 @@ export default function createDispatch({
             `Error thrown in dispatch: ${
               err instanceof Error ? err.message : String(err)
             }`,
-            'dispatch'
+            'dispatch',
           )
         }
       }
@@ -252,9 +254,9 @@ export default function createDispatch({
         await mutateIncomingResponse(
           setResponseOnAction(action, response),
           incomingService,
-          incomingEndpoint
+          incomingEndpoint,
         ),
-        action.meta?.ident
+        action.meta?.ident,
       )
     })
 

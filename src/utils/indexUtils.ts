@@ -6,7 +6,7 @@ export interface ObjectWithId {
 
 export function indexById<T extends ObjectWithId>(
   obj: Record<string, T>,
-  item: T
+  item: T,
 ): Record<string, T> {
   return {
     ...obj,
@@ -16,7 +16,7 @@ export function indexById<T extends ObjectWithId>(
 
 export function lookupById<T>(
   id: string | T,
-  resources?: Record<string, T>
+  resources?: Record<string, T>,
 ): T | undefined {
   // eslint-disable-next-line security/detect-object-injection
   return typeof id === 'string' ? resources && resources[id] : id
@@ -24,7 +24,7 @@ export function lookupById<T>(
 
 export function lookupByIds<T>(
   ids: (string | T)[] = [],
-  resources?: Record<string, T>
+  resources?: Record<string, T>,
 ): T[] {
   return ids.map((id) => lookupById(id, resources)).filter(isNotNullOrUndefined)
 }

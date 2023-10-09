@@ -71,12 +71,14 @@ export interface MatchObject {
 export interface EndpointDef {
   id?: string
   adapters?: (string | Adapter)[]
+  auth?: AuthObject | AuthProp
   match?: MatchObject
   validate?: ValidateObject[]
   mutation?: TransformDefinition
   mutate?: TransformDefinition
   allowRawRequest?: boolean
   allowRawResponse?: boolean
+  castWithoutDefaults?: boolean
   options?: ServiceOptions
 }
 
