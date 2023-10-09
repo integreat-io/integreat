@@ -107,7 +107,12 @@ function getDates(
   shouldHaveUpdatedAt: boolean,
   createdAt: unknown,
   updatedAt: unknown,
+  noDefaults: boolean,
 ) {
+  if (noDefaults) {
+    return {}
+  }
+
   const nextCreatedAt = shouldHaveCreatedAt
     ? createdAt
       ? createdAt // Already has
@@ -155,14 +160,13 @@ const completeItemBeforeCast =
   ): Record<string, unknown> => ({
     id: id ?? (doGenerateId && !noDefaults ? nanoid() : null),
     ...item,
-    ...(noDefaults
-      ? {}
-      : getDates(
-          shouldHaveCreatedAt,
-          shouldHaveUpdatedAt,
-          createdAt,
-          updatedAt,
-        )),
+    ...getDates(
+      shouldHaveCreatedAt,
+      shouldHaveUpdatedAt,
+      createdAt,
+      updatedAt,
+      noDefaults,
+    ),
   })
 
 const castField =
@@ -185,6 +189,14 @@ const entryHasCastFn = (
   entry: [string, CastItemFn | undefined],
 ): entry is [string, CastItemFn] => entry[1] !== undefined
 
+const includeType = (isRev: boolean, type?: string) =>
+  !isRev && typeof type === 'string' ? [['$type', type]] : []
+
+const includeIsNewAndIsDeleted = (item: Record<string, unknown>) => [
+  ...(item.isNew === true ? [['isNew', true]] : []),
+  ...(item.isDeleted === true ? [['isDeleted', true]] : []),
+]
+
 const createCastItemFn =
   (
     completeItem: ReturnType<typeof completeItemBeforeCast>,
@@ -193,19 +205,16 @@ const createCastItemFn =
   ) =>
   (isRev: boolean, noDefaults: boolean) =>
     function castItem(rawItem: unknown) {
-      if (isObject(rawItem)) {
-        const item = completeItem(rawItem, noDefaults)
-        return Object.fromEntries([
-          ...fields
-            .map(castField(item, isRev, noDefaults))
-            .filter(fieldHasValue),
-          ...(!isRev && typeof type === 'string' ? [['$type', type]] : []),
-          ...(item.isNew === true ? [['isNew', true]] : []),
-          ...(item.isDeleted === true ? [['isDeleted', true]] : []),
-        ])
-      } else {
+      if (!isObject(rawItem)) {
         return undefined
       }
+
+      const item = completeItem(rawItem, noDefaults)
+      return Object.fromEntries([
+        ...fields.map(castField(item, isRev, noDefaults)).filter(fieldHasValue),
+        ...includeType(isRev, type),
+        ...includeIsNewAndIsDeleted(item),
+      ])
     }
 
 function createShapeCast(
