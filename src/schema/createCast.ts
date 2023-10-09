@@ -57,7 +57,7 @@ const hasArrayNotation = (key?: string) =>
 const removeArrayNotation = (key: string) =>
   hasArrayNotation(key) ? key.slice(0, key.length - 2) : key
 
-function createFieldCast(
+function createCastFn(
   def: FieldDefinition | Shape | string | undefined,
   schemas: Map<string, Schema>,
 ): CastItemFn | undefined {
@@ -102,13 +102,18 @@ const handleArray = (
     ? (isRev, noDefaults) => fn(isRev, noDefaults) // Return 'unknown' fields as is
     : (isRev, noDefaults) => unwrapSingleArrayItem(fn(isRev, noDefaults)) // Unwrap only item in an array when we don't expect an array
 
-function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
-  const nextCreatedAt = shape.createdAt // Should have
+function getDates(
+  shouldHaveCreatedAt: boolean,
+  shouldHaveUpdatedAt: boolean,
+  createdAt: unknown,
+  updatedAt: unknown,
+) {
+  const nextCreatedAt = shouldHaveCreatedAt
     ? createdAt
       ? createdAt // Already has
       : updatedAt ?? new Date() // Use updatedAt or now
     : undefined
-  const nextUpdatedAt = shape.updatedAt // Should have
+  const nextUpdatedAt = shouldHaveUpdatedAt
     ? updatedAt
       ? updatedAt // Already has
       : nextCreatedAt ?? new Date() // createdAt or now
@@ -120,12 +125,12 @@ function getDates(shape: Shape, createdAt: unknown, updatedAt: unknown) {
   }
 }
 
-function createCastFn(
+function createCastFnHandlingArrays(
   key: string,
   def: FieldDefinition | Shape | string | undefined,
   schemas: Map<string, Schema>,
 ) {
-  const cast = createFieldCast(def, schemas)
+  const cast = createCastFn(def, schemas)
   if (cast) {
     const type = typeFromDef(def)
     return handleArray(
@@ -138,16 +143,27 @@ function createCastFn(
   }
 }
 
-const completeItemBeforeCast = (
-  { id, createdAt, updatedAt, ...item }: Record<string, unknown>,
-  shape: Shape,
-  doGenerateId: boolean,
-  noDefaults: boolean,
-): Record<string, unknown> => ({
-  id: id ?? (doGenerateId && !noDefaults ? nanoid() : null),
-  ...item,
-  ...(noDefaults ? {} : getDates(shape, createdAt, updatedAt)),
-})
+const completeItemBeforeCast =
+  (
+    shouldHaveCreatedAt: boolean,
+    shouldHaveUpdatedAt: boolean,
+    doGenerateId: boolean,
+  ) =>
+  (
+    { id, createdAt, updatedAt, ...item }: Record<string, unknown>,
+    noDefaults: boolean,
+  ): Record<string, unknown> => ({
+    id: id ?? (doGenerateId && !noDefaults ? nanoid() : null),
+    ...item,
+    ...(noDefaults
+      ? {}
+      : getDates(
+          shouldHaveCreatedAt,
+          shouldHaveUpdatedAt,
+          createdAt,
+          updatedAt,
+        )),
+  })
 
 const castField =
   (item: Record<string, unknown>, isRev: boolean, noDefaults: boolean) =>
@@ -158,31 +174,27 @@ const castField =
 
 const fieldHasValue = ([_, value]: [string, unknown]) => value !== undefined
 
-function createShapeCast(
-  shape: Shape,
-  type: string | undefined,
-  schemas: Map<string, Schema>,
-  doGenerateId = false,
-) {
-  const fields = Object.entries(shape)
-    .map(([key, def]) => [
-      removeArrayNotation(key),
-      createCastFn(key, def, schemas),
-    ])
-    .filter(([, cast]) => cast !== undefined) as [
-    key: string,
-    cast: CastItemFn,
-  ][]
+const createFieldCast =
+  (schemas: Map<string, Schema>) =>
+  ([key, def]: [string, FieldDefinition | Shape]): [
+    string,
+    CastItemFn | undefined,
+  ] => [removeArrayNotation(key), createCastFnHandlingArrays(key, def, schemas)]
 
-  return (isRev: boolean, noDefaults: boolean) =>
+const entryHasCastFn = (
+  entry: [string, CastItemFn | undefined],
+): entry is [string, CastItemFn] => entry[1] !== undefined
+
+const createCastItemFn =
+  (
+    completeItem: ReturnType<typeof completeItemBeforeCast>,
+    fields: [string, CastItemFn][],
+    type?: string,
+  ) =>
+  (isRev: boolean, noDefaults: boolean) =>
     function castItem(rawItem: unknown) {
       if (isObject(rawItem)) {
-        const item = completeItemBeforeCast(
-          rawItem,
-          shape,
-          doGenerateId,
-          noDefaults,
-        )
+        const item = completeItem(rawItem, noDefaults)
         return Object.fromEntries([
           ...fields
             .map(castField(item, isRev, noDefaults))
@@ -195,6 +207,25 @@ function createShapeCast(
         return undefined
       }
     }
+
+function createShapeCast(
+  shape: Shape,
+  type: string | undefined,
+  schemas: Map<string, Schema>,
+  doGenerateId = false,
+) {
+  const fields = Object.entries(shape)
+    .map(createFieldCast(schemas))
+    .filter(entryHasCastFn)
+  const shouldHaveCreatedAt = !!shape.createdAt
+  const shouldHaveUpdatedAt = !!shape.updatedAt
+  const completeItem = completeItemBeforeCast(
+    shouldHaveCreatedAt,
+    shouldHaveUpdatedAt,
+    doGenerateId,
+  )
+
+  return createCastItemFn(completeItem, fields, type)
 }
 
 /**
