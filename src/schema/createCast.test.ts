@@ -38,7 +38,7 @@ test('should create mapping function from schema', (t) => {
     id: 'string',
     type: { $type: 'string', const: 'entry' },
     title: { $type: 'string', default: 'Entry with no name' },
-    abstract: { $type: 'string' },
+    abstract: { $type: 'string', default: '' },
     age: 'integer',
     long: 'float',
     lat: 'number',
@@ -110,6 +110,7 @@ test('should create mapping function from schema', (t) => {
       id: 'ent2',
       type: 'entry',
       title: 'Entry with no name',
+      abstract: '',
       age: 244511383,
       createdAt: new Date('2019-03-12T09:40:43Z'),
       author: { id: 'maryk', $ref: 'user' },
@@ -128,7 +129,7 @@ test('should reverse transform with mapping definition from schema', (t) => {
     id: 'string',
     type: { $type: 'string', const: 'entry' },
     title: { $type: 'string', default: 'Entry with no name' },
-    abstract: { $type: 'string' },
+    abstract: { $type: 'string', default: '' },
     age: 'integer',
     long: 'float',
     lat: 'number',
@@ -188,6 +189,7 @@ test('should reverse transform with mapping definition from schema', (t) => {
     {
       id: 'ent2',
       title: 'Entry with no name',
+      abstract: '',
       type: 'entry',
       age: 244511383,
       createdAt: new Date('2019-03-12T09:40:43Z'),
@@ -197,6 +199,7 @@ test('should reverse transform with mapping definition from schema', (t) => {
     {
       id: 'ent3',
       title: 'Entry with no name',
+      abstract: '',
       type: 'entry',
       age: 180735220,
       createdAt: new Date('2019-03-18T05:14:59Z'),
@@ -646,7 +649,7 @@ test('should not set createdAt and updatedAt if already set', (t) => {
   t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
 })
 
-test('should no use any defaults when noDefaults is true', (t) => {
+test('should not use any defaults when noDefaults is true', (t) => {
   const noDefaults = true
   const isRev = false
   const doGenerateId = true
