@@ -114,7 +114,7 @@ export const authenticateCallback = (service: Service, incomingAuth?: Auth[]) =>
     action?: Action | null,
   ) {
     const endpoint = action
-      ? await service.endpointFromAction(action)
+      ? await service.endpointFromAction(action, true)
       : undefined
     const auths = endpoint?.incomingAuth || incomingAuth
     if (auths === undefined) {

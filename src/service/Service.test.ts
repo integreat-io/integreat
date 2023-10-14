@@ -3301,6 +3301,7 @@ test('listen should authenticate action with endpoint auth', async (t) => {
       options: { incoming: { port: 8080 } },
       endpoints: [
         {
+          match: { incoming: true },
           options: { uri: 'http://some.api/1.0' },
           auth: { incoming: 'validating' },
         },
