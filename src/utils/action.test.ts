@@ -242,3 +242,42 @@ test('should prefix origin when one already exists', (t) => {
 
   t.deepEqual(ret, expected)
 })
+
+test('should set origin on response with only error', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    response: { error: 'We failed' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const origin = 'somewhere:bad'
+  const expected = {
+    ...action,
+    response: {
+      error: 'We failed',
+      origin: 'somewhere:bad',
+    },
+  }
+
+  const ret = setOriginOnAction(action, origin)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not set origin on ok response', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    response: { status: 'ok' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const origin = 'somewhere:bad'
+  const expected = {
+    ...action,
+    response: { status: 'ok' },
+  }
+
+  const ret = setOriginOnAction(action, origin)
+
+  t.deepEqual(ret, expected)
+})

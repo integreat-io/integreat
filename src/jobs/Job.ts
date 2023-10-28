@@ -5,8 +5,10 @@ import Step, {
   getLastJobWithResponse,
   prepareMutation,
   mutateResponse,
+  breakSymbol,
 } from './Step.js'
 import { isObject, isOkResponse, isErrorResponse } from '../utils/is.js'
+import { setResponseOnAction } from '../utils/action.js'
 import { setOrigin } from '../utils/response.js'
 import type { DataMapper, InitialState } from 'map-transform/types.js'
 import type {
@@ -146,7 +148,7 @@ export default class Job {
     const meta = generateSubMeta(action.meta || {}, this.id)
 
     for (const step of this.#steps) {
-      const [responses, doBreak] = await step.run(
+      const { [breakSymbol]: doBreak, ...responses } = await step.run(
         meta,
         actionResponses,
         dispatch,
@@ -167,10 +169,9 @@ export default class Job {
 
     if (this.#postmutator) {
       const { response: mutatedResponse } = await mutateResponse(
-        action,
-        `job:${this.id}`,
-        response,
+        setResponseOnAction(action, response),
         actionResponses,
+        `job:${this.id}`,
         this.#postmutator,
       )
       return mutatedResponse || response

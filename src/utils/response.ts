@@ -109,7 +109,9 @@ export const setOrigin = (
   origin: string,
   doPrefix = false,
 ) =>
-  response.status === 'ok' || response.status === 'queued'
+  (typeof response.status !== 'string' && !response.error) ||
+  response.status === 'ok' ||
+  response.status === 'queued'
     ? response
     : {
         ...response,

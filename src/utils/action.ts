@@ -8,7 +8,7 @@ import type Endpoint from '../service/Endpoint.js'
 export function createAction(
   type?: string,
   payload: Payload = {},
-  meta: Meta = {}
+  meta: Meta = {},
 ): Action | null {
   if (!type) {
     return null
@@ -50,7 +50,7 @@ export function setErrorOnAction(
   action: Action,
   error: unknown,
   origin: string,
-  status = 'error'
+  status = 'error',
 ): Action {
   return setResponseOnAction(action, {
     ...action.response,
@@ -67,9 +67,9 @@ export function setErrorOnAction(
 export const setOriginOnAction = (
   action: Action,
   origin: string,
-  doPrefix = false
+  doPrefix = false,
 ) =>
-  typeof action.response?.status === 'string' &&
-  action.response?.status !== 'ok'
+  typeof action.response?.status === 'string' ||
+  typeof action.response?.error === 'string' // There are more cases here, but they are handled in `setOrigin`
     ? { ...action, response: setOrigin(action.response, origin, doPrefix) }
     : action

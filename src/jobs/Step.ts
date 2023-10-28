@@ -2,10 +2,15 @@ import mapTransform from 'map-transform'
 import pLimit from 'p-limit'
 import { ensureArray } from '../utils/array.js'
 import { isObject, isOkResponse } from '../utils/is.js'
-import { setDataOnActionPayload, setResponseOnAction } from '../utils/action.js'
+import {
+  setDataOnActionPayload,
+  setResponseOnAction,
+  setOriginOnAction,
+} from '../utils/action.js'
 import { combineResponses, setOrigin } from '../utils/response.js'
 import validateFilters from '../utils/validateFilters.js'
 import prepareValidator from '../utils/validation.js'
+import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
 import type {
   TransformObject,
   Pipeline,
@@ -23,10 +28,16 @@ import type {
 } from '../types.js'
 import type { JobStepDef } from './types.js'
 
+export const breakSymbol = Symbol('break')
+
 type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType[number]
 
 interface Validator {
   (actionResponses: Record<string, Action>): Promise<[Response | null, boolean]>
+}
+
+export interface ResponsesObject extends Record<string, Action> {
+  [breakSymbol]?: boolean
 }
 
 const adjustValidationResponse = ({
@@ -87,27 +98,10 @@ export function getLastJobWithResponse(
   return undefined
 }
 
-const cleanUpResponse = (
-  response: Response | undefined,
-  origin: string,
-): Response =>
-  response
-    ? setOrigin(
-        {
-          ...response,
-          status:
-            (response.status === 'ok' || !response.status) && response.error
-              ? 'error'
-              : response.status || 'ok',
-          ...(response.error && {
-            error: Array.isArray(response.error)
-              ? response.error.join(' | ')
-              : response.error,
-          }),
-        },
-        String(origin),
-      )
-    : { status: 'ok' }
+const setResponseStatus = (response: Response = {}): Response => ({
+  ...response,
+  status: response.status ? response.status : response.error ? 'error' : 'ok',
+})
 
 const addModify = (mutation: ArrayElement<Pipeline>) =>
   isObject(mutation) ? { $modify: true, ...mutation } : mutation
@@ -142,17 +136,22 @@ async function mutateAction(
 
 export async function mutateResponse(
   action: Action,
-  origin: string,
-  response: Response,
   responses: Record<string, Action>,
+  origin: string,
   postmutator?: DataMapper<InitialState>,
 ): Promise<Action> {
   const { response: mutatedResponse } = await mutateAction(
-    setResponseOnAction(action, response),
+    action,
     postmutator,
     responses,
   )
-  return setResponseOnAction(action, cleanUpResponse(mutatedResponse, origin))
+  return setOriginOnAction(
+    populateActionAfterMutation(
+      action,
+      setResponseOnAction(action, setResponseStatus(mutatedResponse)),
+    ),
+    origin,
+  )
 }
 
 function responseFromSteps(
@@ -173,10 +172,15 @@ function responseFromSteps(
   }
 }
 
-function generateIterateResponse(actionsWithResponses: Action[]) {
+function generateIterateResponse(
+  action: Action,
+  actionsWithResponses: Action[],
+) {
   const errorResponses = actionsWithResponses
     .map(({ response }) => response)
-    .filter((response) => response && !isOkResponse(response))
+    .filter(
+      (response): response is Response => !!response && !isOkResponse(response),
+    )
   const status = errorResponses.length === 0 ? 'ok' : 'error'
   const error = errorResponses
     .map((response) =>
@@ -185,13 +189,11 @@ function generateIterateResponse(actionsWithResponses: Action[]) {
     .filter(Boolean)
     .join(' | ')
   const data = actionsWithResponses.flatMap(({ response }) => response?.data)
-  return {
-    response: {
-      status,
-      data,
-      ...(error && { error, responses: errorResponses }),
-    },
-  } as Action // We're okay with this action having only a response
+  return setResponseOnAction(action, {
+    status,
+    data,
+    ...(error && { error, responses: errorResponses }),
+  })
 }
 
 export const prepareMutation = (
@@ -228,6 +230,52 @@ export function getPrevStepId(
         .filter(Boolean)
         .join(':')
     : prevStep?.id
+}
+
+// Run the action for every item in the `payload.data` array
+async function runIteration(
+  items: unknown[],
+  action: Action,
+  id: string,
+  concurrency: number,
+  runOneAction: (action: Action) => Promise<Action>,
+) {
+  const actions = items.map((item) => setDataOnActionPayload(action, item))
+  const limit = pLimit(concurrency)
+  return Object.fromEntries(
+    (
+      await Promise.all(
+        actions.map((action) => limit(() => runOneAction(action))),
+      )
+    ).map((response, index) => [
+      `${id}_${index}`,
+      setOriginOnAction(response, `${id}_${index}`),
+    ]), // Set the id of each response as key for the object to be created
+  )
+}
+
+// Run all sub steps in parallel
+async function runSubSteps(
+  subSteps: Step[],
+  id: string,
+  actionResponses: Record<string, Action>,
+  dispatch: HandlerDispatch,
+  meta: Meta,
+) {
+  // TODO: Actually run all parallel steps, even if one fails
+  const arrayOfResponses = await Promise.all(
+    subSteps.map((step) => step.run(meta, actionResponses, dispatch)),
+  )
+  const doBreak = arrayOfResponses.some(
+    (response) => response[breakSymbol], // eslint-disable-line security/detect-object-injection
+  )
+  const responsesObj = Object.fromEntries(
+    arrayOfResponses.flatMap((responses) => Object.entries(responses)),
+  )
+  const thisStep = responseFromSteps(responsesObj)
+  return thisStep
+    ? { ...responsesObj, [id]: thisStep, [breakSymbol]: doBreak }
+    : { ...responsesObj, [breakSymbol]: doBreak }
 }
 
 export default class Step {
@@ -272,110 +320,95 @@ export default class Step {
     }
   }
 
-  async runAction(
-    rawAction: Action,
-    idIndex: number | undefined,
+  runAction(
     actionResponses: Record<string, Action>,
     dispatch: HandlerDispatch,
     meta: Meta,
-  ): Promise<[Record<string, Action>, boolean]> {
-    const action = prepareAction(
-      await mutateAction(rawAction, this.#premutator, actionResponses),
-      meta,
-    )
+  ): (rawAction: Action) => Promise<Action> {
+    return async (rawAction) => {
+      const action = prepareAction(
+        await mutateAction(rawAction, this.#premutator, actionResponses),
+        meta,
+      )
 
-    let response
-    try {
-      response = await dispatch(action)
-    } catch (error) {
-      response = {
-        status: 'error',
-        error: error instanceof Error ? error.message : String(error),
+      let response
+      try {
+        response = await dispatch(action)
+      } catch (error) {
+        response = {
+          status: 'error',
+          error: error instanceof Error ? error.message : String(error),
+        }
       }
+      return setResponseOnAction(action, response)
     }
-    const stepId =
-      typeof idIndex === 'number' ? `${this.id}_${idIndex}` : this.id
-    return [
-      {
-        [stepId]: await mutateResponse(
-          action,
-          stepId, // Used as origin
-          response,
-          actionResponses,
-          this.#postmutator,
-        ),
-      },
-      false,
-    ]
   }
 
+  /**
+   * Runs this step.
+   */
   async run(
     meta: Meta,
     actionResponses: Record<string, Action>,
     dispatch: HandlerDispatch,
-  ): Promise<[Record<string, Action>, boolean]> {
+  ): Promise<ResponsesObject> {
+    // First, check if the step validates. Break if not.
     const [validateResponse, doBreak] =
       await this.#validatePreconditions(actionResponses)
     if (validateResponse || doBreak) {
-      return [
-        {
-          [this.id]: {
-            response: setOrigin(validateResponse || {}, this.id),
-          } as Action, // Allow an action with only a response here
-        },
-        doBreak,
-      ]
+      return {
+        [this.id]: {
+          response: setOrigin(validateResponse || {}, this.id),
+        } as Action, // Allow an action with only a response here
+        [breakSymbol]: doBreak,
+      }
     }
 
-    let arrayOfStepResponses: [Record<string, Action>, boolean][]
+    // Validated, so let's run ...
     const action = this.#action
     if (action) {
-      let actions
+      // We have an action
+      const runOneAction = this.runAction(actionResponses, dispatch, meta)
+      let responses: ResponsesObject = {}
+      let responseAction: Action
       if (this.#iterateMutator) {
+        // Run the action once for each item in the `payload.data` array
         const items = ensureArray(await this.#iterateMutator(actionResponses))
-        actions = items.map((item) => setDataOnActionPayload(action, item))
+        responses = await runIteration(
+          items,
+          action,
+          this.id,
+          this.#iterateConcurrency || Infinity,
+          runOneAction,
+        )
+        responseAction = generateIterateResponse(
+          action,
+          Object.values(responses), // Combine the responses from all iterations
+        )
       } else {
-        actions = [action]
+        // Simply run the action
+        responseAction = await runOneAction(action)
       }
-      const limit = pLimit(this.#iterateConcurrency ?? Infinity)
-      arrayOfStepResponses = await Promise.all(
-        actions.map((action, index) =>
-          limit(() =>
-            this.runAction(
-              action,
-              actions.length === 1 ? undefined : index,
-              actionResponses,
-              dispatch,
-              meta,
-            ),
-          ),
+      return {
+        ...responses,
+        [this.id]: await mutateResponse(
+          responseAction,
+          actionResponses,
+          this.id,
+          this.#postmutator,
         ),
-      )
+      }
     } else if (this.#subSteps) {
-      // TODO: Actually run all parallel steps, even if one fails
-      arrayOfStepResponses = await Promise.all(
-        this.#subSteps.map((step) => step.run(meta, actionResponses, dispatch)),
+      // We have sub steps, so run these steps in parallel
+      return await runSubSteps(
+        this.#subSteps,
+        this.id,
+        actionResponses,
+        dispatch,
+        meta,
       )
     } else {
-      return [{}, false]
+      return {}
     }
-
-    const stepResponses = arrayOfStepResponses.reduce(
-      (allResponses, [stepResponses]) => ({
-        ...allResponses,
-        ...stepResponses,
-      }),
-      {},
-    )
-    const thisStep = this.#subSteps
-      ? responseFromSteps(stepResponses)
-      : this.#iterateMutator
-      ? generateIterateResponse(Object.values(stepResponses))
-      : undefined
-
-    return [
-      thisStep ? { ...stepResponses, [this.id]: thisStep } : stepResponses,
-      arrayOfStepResponses.some(([_, doBreak]) => doBreak),
-    ]
   }
 }

@@ -3,7 +3,7 @@ import sinon from 'sinon'
 import { setTimeout } from 'node:timers/promises'
 import integreatTransformers from 'integreat-transformers'
 
-import Step from './Step.js'
+import Step, { breakSymbol } from './Step.js'
 
 // Setup
 
@@ -80,18 +80,15 @@ test('should run action step', async (t) => {
       jobId: 'action1',
     },
   }
-  const expected = [
-    {
-      action1: {
-        ...expectedAction,
-        response: {
-          status: 'ok',
-          data: [{ id: 'ent1', $type: 'entry' }],
-        },
+  const expected = {
+    action1: {
+      ...expectedAction,
+      response: {
+        status: 'ok',
+        data: [{ id: 'ent1', $type: 'entry' }],
       },
     },
-    false,
-  ]
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -157,31 +154,28 @@ test('should run several action steps', async (t) => {
       jobId: 'action1',
     },
   }
-  const expected = [
-    {
-      'getEntry:getDate': {
-        response: {
-          status: 'ok',
-        },
-      },
-      getEntry: {
-        ...expectedAction0,
-        response: {
-          status: 'ok',
-          data: [{ id: 'ent1', $type: 'entry' }],
-        },
-      },
-      getDate: {
-        ...expectedAction1,
-        response: {
-          status: 'ok',
-          data: [{ id: 'updatedAt', $type: 'date' }],
-        },
+  const expected = {
+    'getEntry:getDate': {
+      response: {
+        status: 'ok',
       },
     },
-    false,
-  ]
-
+    getEntry: {
+      ...expectedAction0,
+      response: {
+        status: 'ok',
+        data: [{ id: 'ent1', $type: 'entry' }],
+      },
+    },
+    getDate: {
+      ...expectedAction1,
+      response: {
+        status: 'ok',
+        data: [{ id: 'updatedAt', $type: 'date' }],
+      },
+    },
+    [breakSymbol]: false,
+  }
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
@@ -221,36 +215,34 @@ test('should return error from failing parallel steps', async (t) => {
       },
     },
   ]
-  const expected = [
-    {
-      'setEntry:setDate': {
-        response: {
-          status: 'error',
-          responses: [
-            {
-              status: 'timeout',
-              error: 'Too slow',
-              origin: 'setEntry',
-            },
-          ],
-        },
-      },
-      setEntry: {
-        ...stepDef[0].action,
-        response: { status: 'timeout', error: 'Too slow', origin: 'setEntry' },
-        meta,
-      },
-      setDate: {
-        ...stepDef[1].action,
-        response: {
-          status: 'ok',
-          data: [{ id: 'ent1', $type: 'entry' }],
-        },
-        meta,
+  const expected = {
+    'setEntry:setDate': {
+      response: {
+        status: 'error',
+        responses: [
+          {
+            status: 'timeout',
+            error: 'Too slow',
+            origin: 'setEntry',
+          },
+        ],
       },
     },
-    false,
-  ]
+    setEntry: {
+      ...stepDef[0].action,
+      response: { status: 'timeout', error: 'Too slow', origin: 'setEntry' },
+      meta,
+    },
+    setDate: {
+      ...stepDef[1].action,
+      response: {
+        status: 'ok',
+        data: [{ id: 'ent1', $type: 'entry' }],
+      },
+      meta,
+    },
+    [breakSymbol]: false,
+  }
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
@@ -284,36 +276,34 @@ test('should handle rejection when running steps', async (t) => {
       },
     },
   ]
-  const expected = [
-    {
-      'setEntry:setDate': {
-        response: {
-          status: 'error',
-          responses: [
-            {
-              status: 'error',
-              error: 'Failure!',
-              origin: 'setEntry',
-            },
-          ],
-        },
-      },
-      setEntry: {
-        ...stepDef[0].action,
-        response: { status: 'error', error: 'Failure!', origin: 'setEntry' },
-        meta,
-      },
-      setDate: {
-        ...stepDef[1].action,
-        response: {
-          status: 'ok',
-          data: [{ id: 'ent1', $type: 'entry' }],
-        },
-        meta,
+  const expected = {
+    'setEntry:setDate': {
+      response: {
+        status: 'error',
+        responses: [
+          {
+            status: 'error',
+            error: 'Failure!',
+            origin: 'setEntry',
+          },
+        ],
       },
     },
-    false,
-  ]
+    setEntry: {
+      ...stepDef[0].action,
+      response: { status: 'error', error: 'Failure!', origin: 'setEntry' },
+      meta,
+    },
+    setDate: {
+      ...stepDef[1].action,
+      response: {
+        status: 'ok',
+        data: [{ id: 'ent1', $type: 'entry' }],
+      },
+      meta,
+    },
+    [breakSymbol]: false,
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -341,18 +331,16 @@ test('should not run action when its preconditions fail', async (t) => {
       payload: { type: 'entry' },
     },
   }
-  const expected = [
-    {
-      setEntries: {
-        response: {
-          status: 'noaction',
-          error: 'Did not satisfy condition',
-          origin: 'setEntries',
-        },
+  const expected = {
+    setEntries: {
+      response: {
+        status: 'noaction',
+        error: 'Did not satisfy condition',
+        origin: 'setEntries',
       },
     },
-    false,
-  ]
+    [breakSymbol]: false,
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -388,19 +376,16 @@ test('should return error from several failing conditions in preconditions', asy
       payload: { type: 'entry' },
     },
   }
-  const expected = [
-    {
-      setEntries: {
-        response: {
-          status: 'error',
-          error:
-            '[noaction] Did not satisfy condition | [badrequest] Missing id',
-          origin: 'setEntries',
-        },
+  const expected = {
+    setEntries: {
+      response: {
+        status: 'error',
+        error: '[noaction] Did not satisfy condition | [badrequest] Missing id',
+        origin: 'setEntries',
       },
     },
-    false,
-  ]
+    [breakSymbol]: false,
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -422,19 +407,17 @@ test('should support json schema validation form as conditions', async (t) => {
       payload: { type: 'entry' },
     },
   }
-  const expected = [
-    {
-      setEntries: {
-        response: {
-          status: 'noaction',
-          warning:
-            "'getEntries.response.data' did not pass { type: 'array', minItems: 1 }",
-          origin: 'setEntries',
-        },
+  const expected = {
+    setEntries: {
+      response: {
+        status: 'noaction',
+        warning:
+          "'getEntries.response.data' did not pass { type: 'array', minItems: 1 }",
+        origin: 'setEntries',
       },
     },
-    false,
-  ]
+    [breakSymbol]: false,
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -457,20 +440,17 @@ test('should return data from simple action based on postmutation', async (t) =>
       'response.data': 'response.data[0]',
     },
   }
-  const expected = [
-    {
-      action1: {
-        ...stepDef.action,
-        response: {
-          status: 'ok',
-          data: { id: 'ent1', $type: 'entry' },
-          params: { keep: true },
-        },
-        meta,
+  const expected = {
+    action1: {
+      ...stepDef.action,
+      response: {
+        status: 'ok',
+        data: { id: 'ent1', $type: 'entry' },
+        params: { keep: true },
       },
+      meta,
     },
-    false,
-  ]
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -492,20 +472,17 @@ test('should not use depricated "magic" from responseMutation for postmutation',
       'response.data': 'response.data[0]',
     },
   }
-  const expected = [
-    {
-      action1: {
-        ...stepDef.action,
-        response: {
-          status: 'ok',
-          data: { id: 'ent1', $type: 'entry' },
-          // With the "magic", we should have gotten `params: { keep: true }` here
-        },
-        meta,
+  const expected = {
+    action1: {
+      ...stepDef.action,
+      response: {
+        status: 'ok',
+        data: { id: 'ent1', $type: 'entry' },
+        // With the "magic", we should have gotten `params: { keep: true }` here
       },
+      meta,
     },
-    false,
-  ]
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -525,16 +502,13 @@ test('should return data from simple action based on responseMutation', async (t
       'response.data': 'response.data[0]',
     },
   }
-  const expected = [
-    {
-      action1: {
-        ...stepDef.action,
-        response: { status: 'ok', data: { id: 'ent1', $type: 'entry' } },
-        meta,
-      },
+  const expected = {
+    action1: {
+      ...stepDef.action,
+      response: { status: 'ok', data: { id: 'ent1', $type: 'entry' } },
+      meta,
     },
-    false,
-  ]
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -561,15 +535,12 @@ test('should mutate simple action', async (t) => {
     payload: { type: 'entry', id: 'ent1', flag: true },
     meta: { ...meta, queue: true },
   }
-  const expected = [
-    {
-      action1: {
-        ...expectedAction,
-        response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-      },
+  const expected = {
+    action1: {
+      ...expectedAction,
+      response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
     },
-    false,
-  ]
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -597,15 +568,12 @@ test('should mutate simple action without "magic"', async (t) => {
     payload: { flag: true }, // With "magic", we would have gotten `type: 'entry', id: 'ent1'` here too
     meta: { ...meta, queue: true },
   }
-  const expected = [
-    {
-      action1: {
-        ...expectedAction,
-        response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-      },
+  const expected = {
+    action1: {
+      ...expectedAction,
+      response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
     },
-    false,
-  ]
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -633,15 +601,12 @@ test('should mutate simple action with depricated `muation` property', async (t)
     payload: { type: 'entry', id: 'ent1', flag: true },
     meta: { ...meta, queue: true },
   }
-  const expected = [
-    {
-      action1: {
-        ...expectedAction,
-        response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
-      },
+  const expected = {
+    action1: {
+      ...expectedAction,
+      response: { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] },
     },
-    false,
-  ]
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -702,22 +667,22 @@ test('should mutate action into several actions based on iterate pipeline', asyn
     },
     meta,
   }
-  const expected = [
-    {
-      setItem: {
-        response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-      },
-      setItem_0: {
-        ...expectedAction0,
-        response: { status: 'ok', data: [] },
-      },
-      setItem_1: {
-        ...expectedAction1,
-        response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-      },
+  const expected = {
+    setItem: {
+      type: 'SET',
+      payload: { type: 'entry' },
+      response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
+      meta: undefined,
     },
-    false,
-  ]
+    setItem_0: {
+      ...expectedAction0,
+      response: { status: 'ok', data: [] },
+    },
+    setItem_1: {
+      ...expectedAction1,
+      response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
+    },
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -806,32 +771,32 @@ test('should mutate action into several actions based on iterate path', async (t
     payload: { type: 'entry', data: { id: 'ent3' }, key: 'ent3' },
     meta,
   }
-  const expected = [
-    {
-      setItem: {
-        response: {
-          status: 'ok',
-          data: [
-            { id: 'ent1', title: 'Entry 1' },
-            { id: 'ent3', title: 'Entry 3' },
-          ],
-        },
+  const expected = {
+    setItem: {
+      type: 'SET',
+      payload: { type: 'entry' },
+      response: {
+        status: 'ok',
+        data: [
+          { id: 'ent1', title: 'Entry 1' },
+          { id: 'ent3', title: 'Entry 3' },
+        ],
       },
-      setItem_0: {
-        ...expectedAction0,
-        response: { status: 'ok', data: [{ id: 'ent1', title: 'Entry 1' }] },
-      },
-      setItem_1: {
-        ...expectedAction1,
-        response: { status: 'ok', data: [] },
-      },
-      setItem_2: {
-        ...expectedAction2,
-        response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-      },
+      meta: undefined,
     },
-    false,
-  ]
+    setItem_0: {
+      ...expectedAction0,
+      response: { status: 'ok', data: [{ id: 'ent1', title: 'Entry 1' }] },
+    },
+    setItem_1: {
+      ...expectedAction1,
+      response: { status: 'ok', data: [] },
+    },
+    setItem_2: {
+      ...expectedAction2,
+      response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
+    },
+  }
 
   const step = new Step(stepDef, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
@@ -841,4 +806,54 @@ test('should mutate action into several actions based on iterate path', async (t
   t.deepEqual(dispatch.args[1][0], expectedAction1)
   t.deepEqual(dispatch.args[2][0], expectedAction2)
   t.deepEqual(ret, expected)
+})
+
+test('should run postmutation on combined response after iteration', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [] })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [{ id: 'ent1', title: 'Entry 1' }] })
+    .onCall(1)
+    .resolves({ status: 'ok', data: [{ id: 'ent2', title: 'Entry 2' }] })
+    .onCall(2)
+    .resolves({ status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] })
+  const stepDef = {
+    id: 'setItem',
+    action: { type: 'SET', payload: { type: 'entry' } },
+    iterate: ['action.payload.data.items[]'],
+    iterateConcurrency: 1,
+    postmutation: {
+      response: {
+        $modify: 'response',
+        data: [
+          'response.data[]',
+          { $iterate: true, $modify: true, index: { $transform: 'index' } },
+        ],
+      },
+    },
+  }
+  const data = {
+    items: [
+      { id: 'ent1', include: true },
+      { id: 'ent2', include: false },
+      { id: 'ent3', include: true },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action1', data },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedData = [
+    { id: 'ent1', title: 'Entry 1', index: 0 },
+    { id: 'ent2', title: 'Entry 2', index: 1 }, // The `index` will not be incremented unless the postmutation is run on the combined responses
+    { id: 'ent3', title: 'Entry 3', index: 2 },
+  ]
+
+  const step = new Step(stepDef, mapOptions)
+  const ret = await step.run(meta, { action }, dispatch)
+
+  t.is(dispatch.callCount, 3)
+  t.deepEqual(ret.setItem.response?.data, expectedData)
 })

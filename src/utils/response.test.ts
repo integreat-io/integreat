@@ -217,6 +217,19 @@ test('should set origin on response', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should set origin on response when only error is set', (t) => {
+  const response = { error: 'We failed' }
+  const origin = 'somewhere:bad'
+  const expected = {
+    error: 'We failed',
+    origin: 'somewhere:bad',
+  }
+
+  const ret = setOrigin(response, origin)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should not set origin when one already exists', (t) => {
   const response = {
     status: 'error',
@@ -269,6 +282,26 @@ test('should set prefix as origin when none is set already', (t) => {
   }
 
   const ret = setOrigin(response, origin, doPrefix)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not set origin when no status', (t) => {
+  const response = {}
+  const origin = 'somewhere:bad'
+  const expected = {}
+
+  const ret = setOrigin(response, origin)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not set origin when error is empty string', (t) => {
+  const response = { error: '' }
+  const origin = 'somewhere:bad'
+  const expected = { error: '' }
+
+  const ret = setOrigin(response, origin)
 
   t.deepEqual(ret, expected)
 })
