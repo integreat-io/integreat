@@ -3,6 +3,7 @@ import test from 'ava'
 import {
   createAction,
   setResponseOnAction,
+  setMetaOnAction,
   setErrorOnAction,
   setDataOnActionPayload,
   setOriginOnAction,
@@ -134,6 +135,57 @@ test('should set response on action when no response is given', (t) => {
   }
 
   const ret = setResponseOnAction(action, response)
+
+  t.deepEqual(ret, expected)
+})
+
+// Tests -- setMetaOnAction
+
+test('should set meta on action', (t) => {
+  const action = { type: 'GET', payload: { type: 'entry' } }
+  const meta = { ident: { id: 'johnf' }, queue: true }
+  const expected = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' }, queue: true },
+  }
+
+  const ret = setMetaOnAction(action, meta)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should not override queue from original action', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { queue: true },
+  }
+  const meta = { ident: { id: 'johnf' }, queue: false }
+  const expected = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' }, queue: true },
+  }
+
+  const ret = setMetaOnAction(action, meta)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should remove queue prop when not true', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+  }
+  const meta = { ident: { id: 'johnf' }, queue: false }
+  const expected = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = setMetaOnAction(action, meta)
 
   t.deepEqual(ret, expected)
 })

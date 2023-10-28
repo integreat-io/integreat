@@ -672,7 +672,7 @@ test('should mutate action into several actions based on iterate pipeline', asyn
       type: 'SET',
       payload: { type: 'entry' },
       response: { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] },
-      meta: undefined,
+      meta,
     },
     setItem_0: {
       ...expectedAction0,
@@ -782,7 +782,7 @@ test('should mutate action into several actions based on iterate path', async (t
           { id: 'ent3', title: 'Entry 3' },
         ],
       },
-      meta: undefined,
+      meta,
     },
     setItem_0: {
       ...expectedAction0,

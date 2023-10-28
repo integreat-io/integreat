@@ -9,7 +9,7 @@ const debug = debugLib('great')
  */
 export function createErrorResponse(
   error: unknown,
-  origin: string,
+  origin?: string,
   status = 'error',
   reason?: string,
 ): Response {

@@ -33,6 +33,16 @@ export function setResponseOnAction(action: Action, response?: Response) {
   return { ...action, response: response || {} }
 }
 
+export function setMetaOnAction(action: Action, { queue, ...meta }: Meta) {
+  return {
+    ...action,
+    meta: {
+      ...meta,
+      ...(action.meta?.queue ?? queue ? { queue: true } : {}),
+    },
+  }
+}
+
 /**
  * Set the general options from an endpoint on `action.meta.options`.
  */
@@ -49,7 +59,7 @@ export function setOptionsOnAction(action: Action, endpoint: Endpoint): Action {
 export function setErrorOnAction(
   action: Action,
   error: unknown,
-  origin: string,
+  origin?: string,
   status = 'error',
 ): Action {
   return setResponseOnAction(action, {
