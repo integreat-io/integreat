@@ -33,7 +33,10 @@ export function setResponseOnAction(action: Action, response?: Response) {
   return { ...action, response: response || {} }
 }
 
-export function setMetaOnAction(action: Action, { queue, ...meta }: Meta) {
+export function setMetaOnAction(
+  action: Action,
+  { queue, queuedAt, id, ...meta }: Meta,
+) {
   return {
     ...action,
     meta: {
