@@ -155,6 +155,20 @@ test('should set meta on action', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should include cid but not id in meta on action', (t) => {
+  const action = { type: 'GET', payload: { type: 'entry' } }
+  const meta = { ident: { id: 'johnf' }, id: '12345', cid: '12346' }
+  const expected = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' }, cid: '12346' },
+  }
+
+  const ret = setMetaOnAction(action, meta)
+
+  t.deepEqual(ret, expected)
+})
+
 test('should not override queue from original action', (t) => {
   const action = {
     type: 'GET',
@@ -183,6 +197,23 @@ test('should remove queue prop when not true', (t) => {
     type: 'GET',
     payload: { type: 'entry' },
     meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = setMetaOnAction(action, meta)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should remove queuedAt prop', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+  }
+  const meta = { ident: { id: 'johnf' }, queue: true, queuedAt: 1698935586299 }
+  const expected = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' }, queue: true },
   }
 
   const ret = setMetaOnAction(action, meta)
