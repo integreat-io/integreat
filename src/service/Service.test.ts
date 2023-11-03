@@ -3106,7 +3106,7 @@ test('listen should set sourceService before middleware', async (t) => {
   t.deepEqual(ret, expectedResponse)
 })
 
-test('listen should not set sourceService when already set', async (t) => {
+test('listen should override existing sourceService', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3124,7 +3124,7 @@ test('listen should not set sourceService when already set', async (t) => {
   )
   const expectedAction = {
     type: 'SET',
-    payload: { data: [], sourceService: 'other' },
+    payload: { data: [], sourceService: 'entries' },
     meta: { ident: { id: 'johnf' }, auth: undefined },
   }
   const expectedResponse = { status: 'ok', access: { ident: { id: 'johnf' } } }

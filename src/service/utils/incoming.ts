@@ -22,7 +22,7 @@ const setServiceIdAsSourceServiceOnAction = (
   ...action,
   payload: {
     ...action.payload,
-    sourceService: action.payload.sourceService || serviceId,
+    sourceService: serviceId,
   },
 })
 
