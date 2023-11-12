@@ -64,7 +64,7 @@ test('should get from source service and set on target service', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expectedAction0 = {
     type: 'GET',
@@ -96,11 +96,11 @@ test('should not SET with no data', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data: [] },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected = {
     status: 'noaction',
-    error: 'SYNC: No data to set',
+    warning: 'SYNC: No data to set',
     origin: 'handler:SYNC',
   }
 
@@ -126,7 +126,7 @@ test('should SET with no data when alwaysSet is true', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data: [] },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected2 = {
     type: 'SET',
@@ -157,7 +157,7 @@ test('should split in several SET actions when item count is higher than maxPerS
     setupDispatch({
       GET: { status: 'ok', data: [...data, ...data2] },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'SET',
@@ -201,7 +201,7 @@ test('should split in several SET actions with individual items when setMember i
     setupDispatch({
       GET: { status: 'ok', data: [...data, ...data2] },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'SET',
@@ -254,7 +254,7 @@ test('should use params from from and to', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET',
@@ -298,7 +298,7 @@ test('should override action types', async (t) => {
     setupDispatch({
       GET_ALL: { status: 'ok', data },
       SET_SOME: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET_ALL',
@@ -342,7 +342,7 @@ test('should set page params on payload', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected = {
     type: 'GET',
@@ -382,7 +382,7 @@ test('should not queue SET when doQueueSet is false', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected2 = {
     type: 'SET',
@@ -415,7 +415,7 @@ test('should get from several source services', async (t) => {
         { status: 'ok', data: data2 },
       ],
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET',
@@ -456,7 +456,7 @@ test('should remove untyped data', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data: [undefined, ...data, { id: 'ent0' }] },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET',
@@ -488,7 +488,7 @@ test('should report progress', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch, setProgress })
@@ -524,7 +524,7 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET',
@@ -580,7 +580,7 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET',
@@ -636,7 +636,7 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET',
@@ -692,7 +692,7 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET',
@@ -745,7 +745,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
       GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET_META',
@@ -789,7 +789,7 @@ test('should use metaKey when fetching lastSyncedAt', async (t) => {
       GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET_META',
@@ -826,7 +826,7 @@ test('should not use lastSyncedAt meta when updatedAfter is provided', async (t)
       GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expectedUpdatedAfter = new Date('2021-01-02T01:00:11Z')
   const expectedUpdatedSince = new Date('2021-01-02T01:00:11.001Z')
@@ -862,7 +862,7 @@ test('should use lastSyncedAt meta from several services', async (t) => {
       ],
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -880,17 +880,17 @@ test('should use lastSyncedAt meta from several services', async (t) => {
   t.deepEqual(dispatch.args[2][0].payload.updatedAfter, lastSyncedAt1)
   t.deepEqual(
     dispatch.args[2][0].payload.updatedSince,
-    new Date('2021-01-03T04:48:18.001Z')
+    new Date('2021-01-03T04:48:18.001Z'),
   )
   t.deepEqual(dispatch.args[3][0].payload.updatedAfter, lastSyncedAt2)
   t.deepEqual(
     dispatch.args[3][0].payload.updatedSince,
-    new Date('2021-01-03T02:30:11.001Z')
+    new Date('2021-01-03T02:30:11.001Z'),
   )
   t.deepEqual(dispatch.args[4][0].payload.updatedAfter, lastSyncedAt2)
   t.deepEqual(
     dispatch.args[4][0].payload.updatedSince,
-    new Date('2021-01-03T02:30:11.001Z')
+    new Date('2021-01-03T02:30:11.001Z'),
   )
 })
 
@@ -910,7 +910,7 @@ test('should return error when lastSyncedAt could not be fetched', async (t) => 
       GET_META: { status: 'timeout', error: 'Too slow' },
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected = {
     status: 'error',
@@ -945,7 +945,7 @@ test('should filter away data updated before updatedAfter or after updatedUntil'
         data: [...data, { id: 'ent4', $type: 'entry' }, ...data2, 'invalid'],
       },
       SET: { status: 'ok' },
-    })
+    }),
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -982,7 +982,7 @@ test('should filter away data with different lastSyncedAt for each service', asy
         { status: 'ok', data: data2 },
       ],
       SET: { status: 'ok' },
-    })
+    }),
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -1021,7 +1021,7 @@ test('should not filter away data when filterData is false', async (t) => {
         { status: 'ok', data: data2 },
       ],
       SET: { status: 'ok' },
-    })
+    }),
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -1059,7 +1059,7 @@ test('should treat no updatedAfter as open-ended', async (t) => {
         ],
       },
       SET: { status: 'ok' },
-    })
+    }),
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -1096,7 +1096,7 @@ test('should set updatedUntil to now', async (t) => {
         ],
       },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const before = Date.now()
 
@@ -1129,7 +1129,7 @@ test('should set updatedUntil with positive delta', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const before = Date.now()
 
@@ -1161,7 +1161,7 @@ test('should set updatedUntil with negative delta', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const before = Date.now()
 
@@ -1197,7 +1197,7 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
       ],
       SET: { status: 'ok' },
       SET_META: { status: 'ok' },
-    })
+    }),
   )
   const expected6 = {
     type: 'SET_META',
@@ -1248,7 +1248,7 @@ test('should set lastSyncedAt meta to now when no updatedUntil', async (t) => {
       ],
       SET: { status: 'ok' },
       SET_META: { status: 'ok' },
-    })
+    }),
   )
   const before = Date.now()
 
@@ -1295,7 +1295,7 @@ test('should set lastSyncedAt meta to last updatedAt from data of each service',
       ],
       SET: { status: 'ok' },
       SET_META: { status: 'ok' },
-    })
+    }),
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -1304,11 +1304,11 @@ test('should set lastSyncedAt meta to last updatedAt from data of each service',
   t.is(dispatch.callCount, 7)
   t.deepEqual(
     (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt,
-    new Date('2021-01-05T09:11:13Z')
+    new Date('2021-01-05T09:11:13Z'),
   )
   t.deepEqual(
     (dispatch.args[6][0].payload.meta as Meta).lastSyncedAt,
-    new Date('2021-01-03T23:50:23Z')
+    new Date('2021-01-03T23:50:23Z'),
   )
 })
 
@@ -1349,7 +1349,7 @@ test('should set lastSyncedAt to now when date is in the future', async (t) => {
       ],
       SET: { status: 'ok' },
       SET_META: { status: 'ok' },
-    })
+    }),
   )
   const before = Date.now()
 
@@ -1386,7 +1386,7 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
       ],
       SET: { status: 'ok' },
       SET_META: { status: 'ok' },
-    })
+    }),
   )
   const expected6 = {
     type: 'SET_META',
@@ -1438,7 +1438,7 @@ test('should not get or set lastSyncedAt meta when service id is missing', async
       ],
       SET: { status: 'ok' },
       SET_META: { status: 'ok' },
-    })
+    }),
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -1464,7 +1464,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = created', asy
       GET_META: { status: 'ok', data: { meta: { lastSyncedAt } } },
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected1 = {
     type: 'GET_META',
@@ -1512,7 +1512,7 @@ test('should set lastSyncedAt for created', async (t) => {
       ],
       SET: { status: 'ok' },
       SET_META: { status: 'ok' },
-    })
+    }),
   )
   const expected5 = {
     type: 'SET',
@@ -1572,7 +1572,7 @@ test('should set createdUntil with delta', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const before = Date.now()
 
@@ -1617,7 +1617,7 @@ test('should set lastSyncedAt meta to last createdAt from data of each service',
       ],
       SET: { status: 'ok' },
       SET_META: { status: 'ok' },
-    })
+    }),
   )
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -1626,11 +1626,11 @@ test('should set lastSyncedAt meta to last createdAt from data of each service',
   t.is(dispatch.callCount, 7)
   t.deepEqual(
     (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt,
-    new Date('2021-01-03T18:45:07Z')
+    new Date('2021-01-03T18:45:07Z'),
   )
   t.deepEqual(
     (dispatch.args[6][0].payload.meta as Meta).lastSyncedAt,
-    new Date('2021-01-04T23:49:58Z')
+    new Date('2021-01-04T23:49:58Z'),
   )
 })
 
@@ -1644,7 +1644,7 @@ test('should return error when get action fails', async (t) => {
     setupDispatch({
       GET: createErrorResponse('Fetching failed', 'handler:GET'),
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected = {
     status: 'error',
@@ -1668,7 +1668,7 @@ test('should return error when set action fails', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data },
       SET: createErrorResponse('Service is sleeping', 'handler:SET'),
-    })
+    }),
   )
   const expected = {
     status: 'error',
@@ -1697,7 +1697,7 @@ test('should return error from first SET action with maxPerSet', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data: [...data, ...data2] },
       SET: [{ status: 'timeout' }, { status: 'ok' }],
-    })
+    }),
   )
   const expected = {
     status: 'timeout',
@@ -1726,7 +1726,7 @@ test('should return error from second SET action with maxPerSet', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data: [...data, ...data2] },
       SET: [{ status: 'ok' }, { status: 'timeout' }],
-    })
+    }),
   )
   const expected = {
     status: 'timeout',
@@ -1751,7 +1751,7 @@ test('should return badrequest when missing from and to', async (t) => {
     setupDispatch({
       GET: { status: 'ok', data },
       SET: { status: 'ok' },
-    })
+    }),
   )
   const expected = {
     status: 'badrequest',

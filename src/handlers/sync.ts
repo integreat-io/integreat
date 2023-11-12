@@ -10,7 +10,7 @@ import type {
   Params,
   ActionHandlerResources,
 } from '../types.js'
-import { createErrorResponse } from '../utils/response.js'
+import { setOrigin, createErrorResponse } from '../utils/response.js'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is.js'
 import { ensureArray } from '../utils/array.js'
 import castDate from '../schema/castFns/date.js'
@@ -63,7 +63,7 @@ const createGetMetaAction = (
   targetService: string,
   type?: string | string[],
   metaKey?: string,
-  meta?: Meta
+  meta?: Meta,
 ) => ({
   type: 'GET_META',
   payload: { type, keys: 'lastSyncedAt', metaKey, targetService },
@@ -75,7 +75,7 @@ const createSetMetaAction = (
   targetService: string,
   type?: string | string[],
   metaKey?: string,
-  meta?: Meta
+  meta?: Meta,
 ) => ({
   type: 'SET_META',
   payload: { type, meta: { lastSyncedAt }, metaKey, targetService },
@@ -84,7 +84,7 @@ const createSetMetaAction = (
 
 const createGetAction = (
   { service: targetService, action = 'GET', ...params }: ActionParams,
-  meta?: Meta
+  meta?: Meta,
 ) => ({
   type: action,
   payload: { targetService, ...params },
@@ -95,7 +95,7 @@ const createSetAction = (
   data: unknown,
   { service: targetService, action = 'SET', ...params }: ActionParams,
   doQueueSet: boolean,
-  meta?: Meta
+  meta?: Meta,
 ): Action => ({
   type: action,
   payload: { data, targetService, ...params },
@@ -107,7 +107,7 @@ async function setData(
   data: TypedData[],
   { alwaysSet = false, maxPerSet, setMember, ...params }: ActionParams,
   doQueueSet: boolean,
-  meta?: Meta
+  meta?: Meta,
 ): Promise<Response> {
   let index = data.length === 0 && alwaysSet ? -1 : 0 // Trick to always dispatch SET for `alwaysSet`
   const maxCount = setMember
@@ -120,8 +120,8 @@ async function setData(
         setMember ? data[index] : data.slice(index, index + maxCount), // eslint-disable-line security/detect-object-injection
         params,
         doQueueSet,
-        meta
-      )
+        meta,
+      ),
     )
     if (!response?.status || !['ok', 'queued'].includes(response.status)) {
       const progressMessage =
@@ -138,7 +138,7 @@ async function setData(
 
   return data.length > 0 || alwaysSet
     ? { status: 'ok' }
-    : { status: 'noaction', error: 'SYNC: No data to set' }
+    : { status: 'noaction', warning: 'SYNC: No data to set' }
 }
 
 const setDatePropIf = (date: string | Date | undefined, prop: string) =>
@@ -149,15 +149,15 @@ async function getLastSyncedAt(
   service: string,
   type: string | string[],
   metaKey?: string,
-  meta?: Meta
+  meta?: Meta,
 ) {
   const response = await dispatch(
-    createGetMetaAction(service, type, metaKey, meta)
+    createGetMetaAction(service, type, metaKey, meta),
   )
 
   if (response.status !== 'ok') {
     throw new Error(
-      `Could not fetch last synced date for service '${service}': [${response.status}] ${response.error}`
+      `Could not fetch last synced date for service '${service}': [${response.status}] ${response.error}`,
     )
   }
 
@@ -190,7 +190,7 @@ const setDatesAndType = (
   dispatch: HandlerDispatch,
   type: string | string[],
   syncParams: SyncParams,
-  meta?: Meta
+  meta?: Meta,
 ) =>
   async function setUpdatedDatesAndType(params: Partial<ActionParams>) {
     const {
@@ -230,7 +230,7 @@ const setDatesAndType = (
         params.service,
         type,
         metaKey,
-        meta
+        meta,
       )
     } else if (
       retrieve === 'created' &&
@@ -243,7 +243,7 @@ const setDatesAndType = (
         params.service,
         type,
         metaKey,
-        meta
+        meta,
       )
     }
 
@@ -259,11 +259,11 @@ const setMetaFromParams = (
   dispatch: HandlerDispatch,
   { payload: { type, metaKey }, meta: { id, ...meta } = {} }: Action,
   datesFromData: (Date | undefined)[],
-  gottenDataDate: Date
+  gottenDataDate: Date,
 ) =>
   async function setMetaFromParams(
     { service, updatedUntil, createdUntil }: ActionParams,
-    index: number
+    index: number,
   ) {
     if (service) {
       let lastSyncedAt =
@@ -278,11 +278,11 @@ const setMetaFromParams = (
           service,
           type,
           metaKey as string | undefined,
-          meta
-        )
+          meta,
+        ),
       )
     }
-    return { status: 'noaction' }
+    return { status: 'noaction', warning: 'SYNC: No service to set meta for' }
   }
 
 const paramsAsObject = (params?: string | Partial<ActionParams>) =>
@@ -291,20 +291,20 @@ const paramsAsObject = (params?: string | Partial<ActionParams>) =>
 const generateFromParams = async (
   dispatch: HandlerDispatch,
   type: string | string[],
-  { payload, meta: { id, ...meta } = {} }: Action
+  { payload, meta: { id, ...meta } = {} }: Action,
 ) =>
   Promise.all(
     ensureArray((payload as SyncParams).from)
       .map(paramsAsObject)
       .filter(isNotNullOrUndefined)
       .map(setDatesAndType(dispatch, type, payload, meta))
-      .map((p) => pLimit(1)(() => p)) // Run one promise at a time
+      .map((p) => pLimit(1)(() => p)), // Run one promise at a time
   )
 
 function generateSetDates(
   fromParams: ActionParams[],
   params: Params,
-  dateSet: 'updated' | 'created'
+  dateSet: 'updated' | 'created',
 ) {
   const until = castDate(params[`${dateSet}Until`])
   const before = castDate(params[`${dateSet}Before`])
@@ -336,7 +336,7 @@ function generateSetDates(
 function generateToParams(
   fromParams: ActionParams[],
   type: string | string[],
-  { payload }: Action
+  { payload }: Action,
 ): ActionParams {
   const { to, maxPerSet, setMember, alwaysSet }: SyncParams = payload
   return {
@@ -352,7 +352,7 @@ function generateToParams(
 
 async function extractActionParams(
   action: Action,
-  dispatch: HandlerDispatch
+  dispatch: HandlerDispatch,
 ): Promise<[ActionParams[], ActionParams | undefined]> {
   const { type } = action.payload
   // Require a type
@@ -388,7 +388,7 @@ async function retrieveDataFromOneService(
   dispatch: HandlerDispatch,
   params: ActionParams,
   doFilterData: boolean,
-  meta?: Meta
+  meta?: Meta,
 ) {
   const { updatedAfter, updatedUntil } = params
 
@@ -445,17 +445,17 @@ const fetchDataFromService = (
   fromParams: ActionParams[],
   doFilterData: boolean,
   dispatch: HandlerDispatch,
-  { meta: { id, ...meta } = {} }: Action
+  { meta: { id, ...meta } = {} }: Action,
 ) =>
   Promise.all(
     fromParams.map((params) =>
-      retrieveDataFromOneService(dispatch, params, doFilterData, meta)
-    )
+      retrieveDataFromOneService(dispatch, params, doFilterData, meta),
+    ),
   )
 
 const extractLastSyncedAtDates = (
   dataFromServices: TypedData[][],
-  retrieve?: RetrieveOptions
+  retrieve?: RetrieveOptions,
 ) =>
   dataFromServices.map((data) =>
     data
@@ -463,8 +463,8 @@ const extractLastSyncedAtDates = (
       .reduce(
         (lastDate, date) =>
           !lastDate || (date && date > lastDate) ? date : lastDate,
-        undefined
-      )
+        undefined,
+      ),
   )
 
 /**
@@ -487,7 +487,7 @@ const extractLastSyncedAtDates = (
  */
 export default async function syncHandler(
   inputAction: Action,
-  { dispatch, setProgress }: ActionHandlerResources
+  { dispatch, setProgress }: ActionHandlerResources,
 ): Promise<Response> {
   setProgress(0)
 
@@ -510,7 +510,7 @@ export default async function syncHandler(
       `Failed to prepare params for SYNC: ${
         error instanceof Error ? error.message : String(error)
       }`,
-      'handler:SYNC'
+      'handler:SYNC',
     )
   }
 
@@ -518,7 +518,7 @@ export default async function syncHandler(
     return createErrorResponse(
       'SYNC: `type`, `to`, and `from` parameters are required',
       'handler:SYNC',
-      'badrequest'
+      'badrequest',
     )
   }
 
@@ -532,7 +532,7 @@ export default async function syncHandler(
       fromParams,
       doFilterData,
       dispatch,
-      action
+      action,
     )
     data = dataFromServices.flat().sort(sortByItemDate(retrieve))
     if (setLastSyncedAtFromData) {
@@ -541,7 +541,7 @@ export default async function syncHandler(
   } catch (error) {
     return createErrorResponse(
       `SYNC: Could not get data. ${(error as Error).message}`,
-      'handler:SYNC'
+      'handler:SYNC',
     )
   }
   const gottenDataDate = new Date()
@@ -549,11 +549,13 @@ export default async function syncHandler(
   setProgress(0.5)
 
   const response = await setData(dispatch, data, toParams, doQueueSet, meta)
-  if (response.status !== 'ok') {
+  if (response.status === 'noaction') {
+    return setOrigin(response, 'handler:SYNC')
+  } else if (response.status !== 'ok') {
     return createErrorResponse(
       response?.error,
       'handler:SYNC',
-      response?.status || 'error'
+      response?.status || 'error',
     )
   }
 
@@ -562,8 +564,8 @@ export default async function syncHandler(
   if (retrieve === 'updated' || retrieve === 'created') {
     await Promise.all(
       fromParams.map(
-        setMetaFromParams(dispatch, action, datesFromData, gottenDataDate)
-      )
+        setMetaFromParams(dispatch, action, datesFromData, gottenDataDate),
+      ),
     )
   }
 
