@@ -16,7 +16,7 @@ const isOkOrEmpty = (status: string | null | undefined) =>
 
 function setStatusAndError(
   { error: responseError, ...response }: Partial<Response>,
-  originalStatus: string | null = null
+  originalStatus: string | null = null,
 ): Response {
   const error = joinErrorMessages(responseError)
   const status =
@@ -25,9 +25,10 @@ function setStatusAndError(
       : response.status || originalStatus || undefined
   return error ? { ...response, status, error } : { ...response, status }
 }
+
 export function populateActionAfterMutation(
   action: Action,
-  mappedAction?: Partial<Action>
+  mappedAction?: Partial<Action>,
 ): Action {
   if (!mappedAction) {
     return action

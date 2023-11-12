@@ -126,6 +126,50 @@ test('should run a simple action', async (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should return noaction response from a simple action', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'noaction',
+    error: 'Nothing to get',
+  })
+  const jobDef = {
+    id: 'action1',
+    action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: {
+      ident: { id: 'johnf' },
+      id: 'tVxTISDelftVBZSb8uWac',
+      cid: 'tVxTISDelftVBZSb8uWac',
+      dispatchedAt: 1699813027963,
+      queuedAt: 1699813027963,
+    },
+  }
+  const expectedAction = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent1' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: 'tVxTISDelftVBZSb8uWac',
+      jobId: 'action1',
+    },
+  }
+  const expected = {
+    status: 'noaction',
+    error: 'Nothing to get',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedAction)
+})
+
 test('should run a simple flow with one action', async (t) => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
@@ -744,7 +788,7 @@ test('should not run step where preconditions fail', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'ok',
+    status: 'noaction',
     warning: "Message from steps: 'setEntries' (noaction: No data to set)",
   }
 
@@ -1279,7 +1323,7 @@ test('should support json schema validation in conditions', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'ok',
+    status: 'noaction',
     warning: "Message from steps: 'setEntries' (noaction: No data to set)",
   }
 

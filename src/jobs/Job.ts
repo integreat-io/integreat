@@ -55,7 +55,6 @@ function setMessageAndOrigin(
   return isOkResponse(response)
     ? {
         ...removeOriginAndWarning(response),
-        status: 'ok',
         ...(stepMessages
           ? { warning: `Message from steps: ${stepMessages}` }
           : {}),
