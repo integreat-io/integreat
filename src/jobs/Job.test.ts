@@ -99,6 +99,7 @@ test('should run a simple action', async (t) => {
       id: '12345',
       cid: '23456',
       project: 'test',
+      queue: true, // Should not be passed on to job steps
     },
   }
   const expectedAction = {
@@ -198,7 +199,12 @@ test('should run two actions in sequence', async (t) => {
     payload: {
       jobId: 'action2',
     },
-    meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
+    meta: {
+      ident: { id: 'johnf' },
+      id: '12345',
+      cid: '23456',
+      queue: true, // Should not be passed on to job steps
+    },
   }
   const expectedAction1 = {
     type: 'SET',

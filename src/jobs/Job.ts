@@ -23,14 +23,10 @@ import type { JobDef, JobStepDef } from './types.js'
 const isJobStep = (job: unknown): job is JobStepDef =>
   isObject(job) && isObject(job.action)
 
-const generateSubMeta = (
-  { ident, project, queue, cid }: Meta,
-  jobId: string,
-) => ({
+const generateSubMeta = ({ ident, project, cid }: Meta, jobId: string) => ({
   ident,
   jobId,
   ...(project ? { project } : {}),
-  ...(queue ? { queue } : {}),
   ...(cid ? { cid } : {}),
 })
 
