@@ -57,7 +57,7 @@
     "@types/debug": "^4.1.12",
     "@types/luxon": "^3.3.4",
     "@types/sinon": "^17.0.1",
-    "integreat-adapter-json": "^1.0.0",
+    "integreat-adapter-json": "^1.0.1",
     "integreat-adapter-uri": "^1.0.0",
     "integreat-transformers": "^1.0.5",
     "integreat-transporter-http": "1.2.1",
