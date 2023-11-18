@@ -75,7 +75,7 @@ const setupService = (
           validate,
           mutation: [
             {
-              $direction: 'rev',
+              $direction: 'to',
               payload: {
                 id: 'payload.id',
                 type: 'payload.type',
@@ -87,7 +87,7 @@ const setupService = (
               },
             },
             {
-              $direction: 'fwd',
+              $direction: 'from',
               response: 'response',
               'response.data': [
                 'response.data',
@@ -190,6 +190,57 @@ test('should mutate and set with id to service', async (t) => {
   }
   const src = setupService(
     'http://api11.test/database/{payload.type}:{payload.id}',
+  )
+  const getService = () => src
+
+  const ret = await set(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.true(scope.isDone())
+})
+
+test.only('should mutate and set with member endpoint for single item', async (t) => {
+  const scope = nock('http://api12.test')
+    .post('/database/entry:ent1')
+    .reply(201, { ok: true })
+  const action = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: { id: 'ent1', $type: 'entry' },
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const src = new Service(
+    {
+      id: 'entries',
+      ...jsonServiceDef,
+      endpoints: [
+        {
+          match: { type: 'entry', scope: 'member' },
+          mutation: [
+            {
+              $direction: 'to',
+              $flip: true,
+              payload: {
+                $modify: 'payload',
+                'data.doc': ['payload.data', { $apply: 'entry' }],
+              },
+            },
+          ],
+          options: {
+            uri: 'http://api12.test/database/{payload.type}:{payload.id}',
+            method: 'POST',
+          },
+          allowRawResponse: true,
+        },
+      ],
+    },
+    {
+      schemas,
+      mapOptions,
+    },
   )
   const getService = () => src
 
