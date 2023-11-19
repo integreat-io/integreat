@@ -17,6 +17,10 @@ const mapOptions = {
   },
 }
 
+const setProgress = () => {
+  return undefined
+}
+
 // Tests
 
 test('should create Job instance', (t) => {
@@ -118,7 +122,7 @@ test('should run a simple action', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
@@ -163,7 +167,7 @@ test('should return noaction response from a simple action', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
@@ -202,7 +206,7 @@ test('should run a simple flow with one action', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
@@ -270,7 +274,7 @@ test('should run two actions in sequence', async (t) => {
   const expected = { status: 'ok' } // Won't return data unless specified
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
@@ -333,7 +337,7 @@ test('should not run second action when first in sequence fails', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 1) // Should break after first step
   t.deepEqual(ret, expected)
@@ -380,7 +384,7 @@ test('should continue when action is queued', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 2)
   t.is(ret.status, 'ok', ret.error)
@@ -428,7 +432,7 @@ test('should not treat noaction as error', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 2) // Both actions should run
   t.is(ret.status, 'ok', ret.error)
@@ -491,7 +495,7 @@ test('should run two actions in parallel', async (t) => {
   const expected = { status: 'ok' } // Won't return data unless specified
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
@@ -555,7 +559,7 @@ test('should run all actions in parallel even if one of them fails', async (t) =
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
@@ -617,7 +621,7 @@ test('should not run next step after any parallel steps failed', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 2) // Only the two parallel steps should run
   t.deepEqual(ret, expected)
@@ -683,7 +687,7 @@ test('should return error from all parallel actions', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
@@ -727,10 +731,60 @@ test('should not treat noaction as error in parallel actions', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
+})
+
+test('should report progress when running steps', async (t) => {
+  const setProgress = sinon.stub()
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const jobDef = {
+    id: 'action2',
+    flow: [
+      {
+        id: 'setEntry',
+        action: {
+          type: 'SET',
+          payload: {
+            type: 'entry',
+            id: 'ent1',
+            data: [{ id: 'ent1', $type: 'entry' }],
+          },
+        },
+      },
+      {
+        id: 'setDate',
+        action: {
+          type: 'SET',
+          payload: {
+            type: 'date',
+            id: 'updatedAt',
+          },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action2',
+    },
+    meta: {
+      ident: { id: 'johnf' },
+      id: '12345',
+      cid: '23456',
+    },
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(setProgress.callCount, 2)
+  t.is(setProgress.args[0][0], 1 / 3)
+  t.is(setProgress.args[1][0], 2 / 3)
 })
 
 test('should not run step where preconditions fail', async (t) => {
@@ -793,7 +847,7 @@ test('should not run step where preconditions fail', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1) // Only the first step should run
@@ -871,7 +925,7 @@ test('should not continue flow when failing step is marked with break', async (t
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 0) // No steps should be run
   t.deepEqual(ret, expected)
@@ -940,7 +994,7 @@ test('should continue flow when failing step is _not_ marked with break', async 
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 1) // Next step should run
   t.deepEqual(ret, expected)
@@ -990,7 +1044,7 @@ test('should run second action when its preconditions are fulfilled', async (t) 
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 2) // Both steps run
   t.is(ret.status, 'ok', ret.error)
@@ -1035,7 +1089,7 @@ test('should support truthy condition results', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 2) // Both steps run
   t.is(ret.status, 'ok', ret.error)
@@ -1105,7 +1159,7 @@ test('should validate preconditions in parallel actions', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 1) // Only the first step should run
   t.deepEqual(ret, expected)
@@ -1184,7 +1238,7 @@ test('should return error from preconditions in parallel actions even though oth
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 0) // None should run
   t.deepEqual(ret, expected)
@@ -1269,7 +1323,7 @@ test('should return several errors from preconditions in parallel actions', asyn
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 0) // None should run
   t.deepEqual(ret, expected)
@@ -1328,7 +1382,7 @@ test('should support json schema validation in conditions', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 1) // Only the first step should run
   t.deepEqual(ret, expected)
@@ -1354,7 +1408,7 @@ test('should return noaction when job has an empty flow', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 0)
@@ -1381,7 +1435,7 @@ test('should return error when job has no action or flow', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 0)
@@ -1417,7 +1471,7 @@ test('should return data from simple action based on response postmutation', asy
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
@@ -1450,7 +1504,7 @@ test('should not use "magic" for postmutation', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
@@ -1477,7 +1531,7 @@ test('should return data from simple action based on responseMutation', async (t
   const expected = { id: 'ent1', $type: 'entry' }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, expected)
@@ -1533,7 +1587,7 @@ test('should return data from flow based on mutation', async (t) => {
   const expected = { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 3)
@@ -1567,7 +1621,7 @@ test('should return data based on mutation from original action', async (t) => {
   const expected = [{ id: 'ent1', $type: 'entry' }]
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, expected)
@@ -1620,7 +1674,7 @@ test('should return response with root in responseMutation', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
 })
@@ -1674,7 +1728,7 @@ test('should run responseMutation pipeline on response from step', async (t) => 
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
 })
@@ -1726,7 +1780,7 @@ test('should report error status from mutation without an error message as "unno
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
 })
@@ -1786,7 +1840,7 @@ test('should have the original action available on each step in a flow', async (
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
@@ -1828,7 +1882,7 @@ test('should return mutated response with error message', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
 })
@@ -1870,7 +1924,7 @@ test('should join array of error messsages', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
 })
@@ -1903,7 +1957,7 @@ test('should mutate simple action', async (t) => {
   const expected = { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
@@ -1968,7 +2022,7 @@ test('should mutate action with result from previous action', async (t) => {
   const expected = { status: 'ok' } // Won't return data unless specified
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
@@ -2030,7 +2084,7 @@ test('should mutate action with payload from original action', async (t) => {
   const expected = { status: 'ok' } // Won't return data unless specified
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
@@ -2137,7 +2191,7 @@ test('should mutate action with result from previous and parallel actions', asyn
   const expected = { status: 'ok' } // Won't return data unless specified
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 4)
@@ -2190,7 +2244,7 @@ test('should mutate action with data from the original action', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
@@ -2238,7 +2292,7 @@ test('should mutate with transformers and pipelines', async (t) => {
   const expected = { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
@@ -2272,7 +2326,7 @@ test('should mutate simple action with pipeline', async (t) => {
   const expected = { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 1)
@@ -2339,7 +2393,7 @@ test('should mutate action into several actions based on iterate pipeline', asyn
   const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expectedAction0)
@@ -2383,7 +2437,7 @@ test('should mutate top level action into several actions based on iterate path'
   const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 3)
   t.deepEqual(dispatch.args[0][0], expectedAction0)
@@ -2456,7 +2510,7 @@ test('should combine response data from several actions based on iterate path', 
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 4)
@@ -2505,7 +2559,7 @@ test('should mutate action into several actions based on iterate path in paralle
   const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 3)
   t.deepEqual(dispatch.args[0][0], expectedAction0)
@@ -2550,7 +2604,7 @@ test('should return response with error from data', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
 })
@@ -2580,7 +2634,7 @@ test('should make action response available to mutations as response on the init
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
 })
@@ -2616,7 +2670,7 @@ test('should make flow response available to mutations as response on the initia
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
 })
@@ -2662,7 +2716,7 @@ test('should run all steps even if an iteration step fails', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 3)
   t.deepEqual(ret, expected)
@@ -2747,7 +2801,7 @@ test('should handle several root paths in one pipeline', async (t) => {
   }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch)
+  const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
 })

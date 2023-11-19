@@ -5,7 +5,7 @@ import type Job from '../jobs/Job.js'
 export default (jobs: Map<string, Job>) =>
   async function run(
     action: Action,
-    { dispatch }: ActionHandlerResources
+    { dispatch, setProgress }: ActionHandlerResources,
   ): Promise<Response> {
     const {
       payload: { jobId },
@@ -15,9 +15,9 @@ export default (jobs: Map<string, Job>) =>
       return createErrorResponse(
         `No valid job with id '${jobId}'`,
         'handler:RUN',
-        'notfound'
+        'notfound',
       )
     }
 
-    return await job.run(action, dispatch)
+    return await job.run(action, dispatch, setProgress)
   }
