@@ -15,6 +15,7 @@ export type {
   Response,
   Headers,
   Ident,
+  IdentType,
   Dispatch,
   TypedData,
   Reference,
@@ -51,13 +52,13 @@ export default {
     definitions: Definitions,
     resources: Resources,
     middlewareForDispatch?: Middleware[],
-    middlewareForService?: Middleware[]
+    middlewareForService?: Middleware[],
   ) {
     return new Instance(
       definitions,
       resources,
       middlewareForDispatch,
-      middlewareForService
+      middlewareForService,
     )
   },
 
