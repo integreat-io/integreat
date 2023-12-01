@@ -7,7 +7,7 @@ export type ResponsesAndBreak = [Response[], boolean]
 export default function prepareValidator(
   conditions: ValidateObject[] | undefined,
   mapOptions: MapOptions,
-  defaultErrorStatus = 'badrequest'
+  defaultErrorStatus = 'badrequest',
 ): (action: unknown) => Promise<ResponsesAndBreak> {
   // Always return null when no validation
   if (!Array.isArray(conditions) || conditions.length === 0) {
@@ -28,21 +28,21 @@ export default function prepareValidator(
                 ? failResponse
                 : 'Did not satisfy condition',
           },
-    })
+    }),
   )
 
   return async function validate(action) {
-    const errors = []
+    const failResponses = []
     let doBreak = false
     for (const { validate, failResponse, breakOnFail } of validators) {
       const result = await validate(action)
       if (!result) {
-        errors.push(failResponse)
+        failResponses.push(failResponse)
         if (breakOnFail) {
           doBreak = true
         }
       }
     }
-    return [errors, doBreak]
+    return [failResponses, doBreak]
   }
 }

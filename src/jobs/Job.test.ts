@@ -1329,6 +1329,171 @@ test('should return several errors from preconditions in parallel actions', asyn
   t.deepEqual(ret, expected)
 })
 
+test('should treat a step as failed when postconditions fail', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
+  const jobDef = {
+    id: 'action6',
+    flow: [
+      {
+        id: 'getEntries',
+        action: {
+          type: 'GET',
+          payload: { type: 'entry' },
+        },
+        postconditions: [
+          {
+            condition: ['response.data', { $transform: 'size' }],
+            failResponse: 'Must return data',
+          },
+        ],
+      },
+      {
+        id: 'setEntries',
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action6', the following steps failed: 'getEntries' (error: Must return data)",
+    responses: [
+      {
+        error: 'Must return data',
+        origin: 'job:action6:step:getEntries',
+        status: 'error',
+      },
+    ],
+    origin: 'job:action6',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1) // Only the first step should run
+})
+
+test('should continue flow when postconditions pass', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
+  const jobDef = {
+    id: 'action6',
+    flow: [
+      {
+        id: 'getEntries',
+        action: {
+          type: 'GET',
+          payload: { type: 'entry' },
+        },
+        postconditions: [
+          {
+            condition: ['response.data', { $transform: 'size' }],
+            failResponse: 'Must return data',
+          },
+        ],
+      },
+      {
+        id: 'setEntries',
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 2)
+})
+
+test('should always respond with ok status when postconditions passes', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'notfound', error: 'The value was not in the cache' })
+  const jobDef = {
+    id: 'action6',
+    flow: [
+      {
+        id: 'getEntries',
+        action: {
+          type: 'GET',
+          payload: { type: 'entry' },
+        },
+        postconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'response.status',
+              match: 'notfound',
+            },
+            failResponse: 'Value is already in cache',
+          },
+        ],
+      },
+      {
+        id: 'setEntries',
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+      },
+    ],
+    postmutation: {
+      response: '^^.getEntries.response', // To see what this step responded with
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    warning: 'The value was not in the cache',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 2)
+})
+
 test('should support json schema validation in conditions', async (t) => {
   // Note: We'll remove this in the future
   const dispatch = sinon

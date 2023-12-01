@@ -42,7 +42,7 @@ export interface ResponsesObject extends Record<string, Action> {
   [breakSymbol]?: boolean
 }
 
-const adjustValidationResponse = ({
+const adjustPrevalidationResponse = ({
   break: _,
   message,
   ...response
@@ -53,36 +53,121 @@ const adjustValidationResponse = ({
       : { ...response, error: message }
     : response
 
-function createPreconditionsValidator(
+const setOkStatusOnErrorResponse = ({
+  error,
+  origin,
+  ...response
+}: Response = {}) => ({
+  ...response,
+  status: 'ok',
+  ...(error ? { warning: error } : {}), // Turn an error into a warning
+})
+
+const ensureOkResponse = (response?: Response): Response =>
+  isOkResponse(response) ? response! : setOkStatusOnErrorResponse(response)
+
+const adjustValidationResponse = (
+  responses: Response[],
+  response: Response | undefined,
+) =>
+  responses.length > 0
+    ? combineResponses(responses) // One or more conditions failed, so we'll return the combined response
+    : response
+    ? ensureOkResponse(response) // Always return an ok response when we have a response (only happens for postconditions)
+    : null
+
+const addModify = (mutation: ArrayElement<Pipeline>) =>
+  isObject(mutation) ? { $modify: true, ...mutation } : mutation
+
+// Insert `'$action'` as the first step in a pipeline to get the action we're
+// mutating from.
+const putMutationInPipeline = (
+  mutation: TransformObject | Pipeline,
+  useMagic: boolean,
+) =>
+  Array.isArray(mutation)
+    ? ['$action', ...mutation.map(addModify)]
+    : useMagic
+    ? ['$action', { '.': '.', ...mutation }]
+    : ['$action', addModify(mutation)]
+
+const putMutationInPipelineForCondition = (
+  conditionObject: ValidateObject,
+): ValidateObject => ({
+  ...conditionObject,
+  condition: Array.isArray(conditionObject.condition)
+    ? ['$action', ...conditionObject.condition]
+    : conditionObject.condition
+    ? ['$action', conditionObject.condition]
+    : null,
+})
+
+function createConditionsValidator(
   conditions:
     | ValidateObject[]
     | Record<string, Condition | undefined>
     | undefined,
   mapOptions: MapOptions,
+  isPreconditions: boolean,
   prevStepId?: string,
 ): Validator {
   if (Array.isArray(conditions)) {
-    const validator = prepareValidator(conditions, mapOptions, 'noaction')
+    // Validate condition pipelines
+    const defaultFailStatus = isPreconditions ? 'noaction' : 'error'
+    const validator = prepareValidator(
+      conditions,
+      mapOptions,
+      defaultFailStatus,
+    )
     return async function validate(actionResponses) {
       const [responses, doBreak] = await validator(actionResponses)
-      return [combineResponses(responses), doBreak]
+      const stepResponse = actionResponses.$action?.response
+      const response = adjustValidationResponse(responses, stepResponse)
+      return [response, doBreak]
     }
   } else if (isObject(conditions)) {
+    // Validate through filters. Only used for prevalidations. Will be deprecated
     const validator = validateFilters(conditions, true)
     return async function validate(actionResponses) {
       const responses = await validator(actionResponses)
       const doBreak = responses.some(({ break: doBreak }) => doBreak)
 
       return responses.length > 0
-        ? [adjustValidationResponse(combineResponses(responses)), doBreak] // We only return the first error here
+        ? [adjustPrevalidationResponse(combineResponses(responses)), doBreak] // We only return the first error here
         : [null, false]
     }
-  } else {
+  } else if (isPreconditions) {
+    // Is preconditions and no conditions, so we'll just check if the previous step was ok
     return async function validatePrevWasOk(actionResponses) {
       const prevStep = prevStepId ? actionResponses[prevStepId] : undefined // eslint-disable-line security/detect-object-injection
       return [null, !!prevStep && !isOkResponse(prevStep.response)]
     }
+  } else {
+    // Is postconditions and no conditions, so we'll always return ok
+    return async function validateAlwaysOk(_actionResponses) {
+      return [null, false]
+    }
   }
+}
+
+function createPreconditionsValidator(
+  preconditions: ValidateObject[] | undefined,
+  validationFilters: Record<string, Condition | undefined> | undefined,
+  mapOptions: MapOptions,
+  prevStepId?: string,
+): Validator {
+  const conditions = preconditions || validationFilters
+  return createConditionsValidator(conditions, mapOptions, true, prevStepId)
+}
+
+function createPostconditionsValidator(
+  conditions: ValidateObject[] | undefined,
+  mapOptions: MapOptions,
+): Validator {
+  if (Array.isArray(conditions)) {
+    conditions = conditions.map(putMutationInPipelineForCondition)
+  }
+  return createConditionsValidator(conditions, mapOptions, false)
 }
 
 export function getLastJobWithResponse(
@@ -104,21 +189,6 @@ const setResponseStatus = (response: Response = {}): Response => ({
   ...response,
   status: response.status ? response.status : response.error ? 'error' : 'ok',
 })
-
-const addModify = (mutation: ArrayElement<Pipeline>) =>
-  isObject(mutation) ? { $modify: true, ...mutation } : mutation
-
-// Insert `'$action'` as the first step in a pipeline to get the action we're
-// mutating from.
-const putMutationInPipeline = (
-  mutation: TransformObject | Pipeline,
-  useMagic: boolean,
-) =>
-  Array.isArray(mutation)
-    ? ['$action', ...mutation.map(addModify)]
-    : useMagic
-    ? ['$action', { '.': '.', ...mutation }]
-    : ['$action', addModify(mutation)]
 
 async function mutateAction(
   action: Action,
@@ -237,6 +307,7 @@ export default class Step {
   #action?: Action
   #subSteps?: Step[]
   #validatePreconditions: Validator = async () => [null, false]
+  #validatePostconditions: Validator = async () => [null, false]
   #premutator?: DataMapper<InitialState>
   #postmutator?: DataMapper<InitialState>
   #iterateMutator?: DataMapper<InitialState>
@@ -256,9 +327,14 @@ export default class Step {
     } else {
       this.id = stepDef.id
       this.#validatePreconditions = createPreconditionsValidator(
-        stepDef.preconditions ?? stepDef.conditions,
+        stepDef.preconditions,
+        stepDef.conditions,
         mapOptions,
         prevStepId,
+      )
+      this.#validatePostconditions = createPostconditionsValidator(
+        stepDef.postconditions,
+        mapOptions,
       )
       this.#action = stepDef.action
       const premutation = stepDef.premutation || stepDef.mutation
@@ -384,23 +460,42 @@ export default class Step {
     actionResponses: Record<string, Action>,
     dispatch: HandlerDispatch,
   ): Promise<ResponsesObject> {
-    // First, check if the step validates. Break if not.
-    const [validateResponse, doBreak] =
+    // First, check if the step preconditions are met. Break if configured to.
+    const [preconditionsResponse, doPreBreak] =
       await this.#validatePreconditions(actionResponses)
-    if (validateResponse || doBreak) {
+    if (preconditionsResponse || doPreBreak) {
       return {
         [this.id]: {
-          response: setOrigin(validateResponse || {}, this.id),
+          response: setOrigin(preconditionsResponse || {}, this.id),
         } as Action, // Allow an action with only a response here
-        [breakSymbol]: doBreak,
+        [breakSymbol]: doPreBreak,
       }
     }
 
     // Validated, so let's run the action or sub steps
-    if (this.#action) {
-      return await this.runAction(actionResponses, dispatch, meta)
-    } else {
-      return await this.runSubSteps(actionResponses, dispatch, meta)
+    const responseObject: ResponsesObject = this.#action
+      ? await this.runAction(actionResponses, dispatch, meta)
+      : await this.runSubSteps(actionResponses, dispatch, meta)
+    const thisActionResponse = responseObject[this.id] // This is the action with response for this step
+
+    // Finally, check if the step postconditions are met. Break if configured to.
+    const [postconditionsResponse, doPostBreak] =
+      await this.#validatePostconditions({
+        ...actionResponses,
+        $action: thisActionResponse,
+      })
+    if (postconditionsResponse || doPostBreak) {
+      return {
+        ...responseObject,
+        [this.id]: setResponseOnAction(
+          thisActionResponse,
+          setOrigin(postconditionsResponse || {}, this.id),
+        ),
+        [breakSymbol]: doPostBreak,
+      }
     }
+
+    // No post conditions, so return the action response object
+    return responseObject
   }
 }
