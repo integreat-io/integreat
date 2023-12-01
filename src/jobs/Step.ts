@@ -365,7 +365,7 @@ export default class Step {
 
     const items = ensureArray(await this.#iterateMutator(actionResponses))
     const actions = items.map((item) => setDataOnActionPayload(action, item))
-    const limit = pLimit(this.#iterateConcurrency ?? Infinity)
+    const limit = pLimit(this.#iterateConcurrency ?? 1)
 
     return Object.fromEntries(
       (
