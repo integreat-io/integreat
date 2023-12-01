@@ -3,6 +3,12 @@ import mergeDefinitions from './utils/mergeDefinitions.js'
 import mergeResources from './utils/mergeResources.js'
 import type { Definitions, Resources, Middleware } from './types.js'
 
+export * as authenticators from './authenticators/index.js'
+export * as middleware from './middleware/index.js'
+export { createAction } from './utils/action.js'
+export const transformers = {} // We don't have any built-in transformers right now, but we might in the future
+export { IdentType } from './types.js'
+
 export type {
   Transformer,
   AsyncTransformer,
@@ -15,7 +21,6 @@ export type {
   Response,
   Headers,
   Ident,
-  IdentType,
   Dispatch,
   TypedData,
   Reference,
@@ -38,11 +43,6 @@ export type {
 } from './service/types.js'
 export type { JobDef, JobStepDef } from './jobs/types.js'
 export type { Instance, Definitions, Resources, Middleware }
-
-export * as authenticators from './authenticators/index.js'
-export * as middleware from './middleware/index.js'
-export { createAction } from './utils/action.js'
-export const transformers = {} // We don't have any built-in transformers right now, but we might in the future
 
 export default {
   /**
