@@ -256,6 +256,10 @@ export interface ActionHandler<T = unknown> {
   (action: Action, resources: ActionHandlerResources): Promise<Response<T>>
 }
 
+export interface DefintionFlags {
+  breakByDefault?: boolean
+}
+
 export interface Definitions {
   id?: string
   schemas: SchemaDef[]
@@ -266,6 +270,7 @@ export interface Definitions {
   queueService?: string
   dictionaries?: Dictionaries
   jobs?: JobDef[]
+  flags?: DefintionFlags
 }
 
 export interface Resources {

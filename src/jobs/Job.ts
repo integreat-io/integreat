@@ -105,7 +105,7 @@ export default class Job {
   #postmutator?: DataMapper<InitialState>
   #isFlow = false
 
-  constructor(jobDef: JobDef, mapOptions: MapOptions) {
+  constructor(jobDef: JobDef, mapOptions: MapOptions, breakByDefault = false) {
     this.id = getId(jobDef)
 
     if (Array.isArray(jobDef.flow)) {
@@ -117,11 +117,20 @@ export default class Job {
         )
         .map(
           (stepDef, index, steps) =>
-            new Step(stepDef, mapOptions, getPrevStepId(index, steps)),
+            new Step(
+              stepDef,
+              mapOptions,
+              breakByDefault,
+              getPrevStepId(index, steps),
+            ),
         )
     } else if (isJobStep(jobDef)) {
       this.#steps = [
-        new Step(removePostmutationAndSetId(jobDef, this.id), mapOptions),
+        new Step(
+          removePostmutationAndSetId(jobDef, this.id),
+          mapOptions,
+          breakByDefault,
+        ),
       ] // We'll run the post mutation here when this is a job with an action only
     }
     const postmutation = jobDef.postmutation || jobDef.responseMutation

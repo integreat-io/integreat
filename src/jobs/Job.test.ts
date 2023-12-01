@@ -787,6 +787,61 @@ test('should report progress when running steps', async (t) => {
   t.is(setProgress.args[1][0], 2 / 3)
 })
 
+test('should return noaction when job has an empty flow', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const jobDef = {
+    id: 'action1',
+    flow: [],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'noaction',
+    warning: "Job 'action1' has no action or flow",
+    origin: 'job:action1',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 0)
+})
+
+test('should return error when job has no action or flow', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
+  const jobDef = {
+    id: 'action0',
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action0',
+    },
+    meta: { ident: { id: 'johnf' }, id: '12345', project: 'test' },
+  }
+  const expected = {
+    status: 'noaction',
+    warning: "Job 'action0' has no action or flow",
+    origin: 'job:action0',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 0)
+})
+
+// Tests -- conditions
+
 test('should not run step where preconditions fail', async (t) => {
   const dispatch = sinon
     .stub()
@@ -1553,58 +1608,158 @@ test('should support json schema validation in conditions', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should return noaction when job has an empty flow', async (t) => {
-  const dispatch = sinon.stub().resolves({ status: 'ok' })
+// Tests -- conditions with `breakByDefault`
+
+test('should break on fail when breakByDefault is true', async (t) => {
+  const breakByDefault = true
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
   const jobDef = {
-    id: 'action1',
-    flow: [],
+    id: 'action6',
+    flow: [
+      {
+        id: 'getEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.id',
+              operator: 'exists',
+            },
+            failResponse: {
+              status: 'badrequest',
+              error: 'Must be called with an id',
+            },
+            // No break specified,
+          },
+        ],
+        action: {
+          type: 'GET',
+          payload: { type: 'entry' },
+        },
+      },
+      {
+        id: 'setEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.type',
+              operator: 'exists',
+            },
+          },
+        ],
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+      },
+    ],
   }
   const action = {
     type: 'RUN',
     payload: {
-      jobId: 'action1',
+      jobId: 'action6',
+      type: 'entry',
+      id: undefined,
     },
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'noaction',
-    warning: "Job 'action1' has no action or flow",
-    origin: 'job:action1',
+    status: 'error',
+    error:
+      "Could not finish job 'action6', the following steps failed: 'getEntries' (badrequest: Must be called with an id)",
+    responses: [
+      {
+        status: 'badrequest',
+        error: 'Must be called with an id',
+        origin: 'job:action6:step:getEntries',
+      },
+    ],
+    origin: 'job:action6',
   }
 
-  const job = new Job(jobDef, mapOptions)
+  const job = new Job(jobDef, mapOptions, breakByDefault)
   const ret = await job.run(action, dispatch, setProgress)
 
+  t.is(dispatch.callCount, 0) // No steps should be run
   t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 0)
 })
 
-test('should return error when job has no action or flow', async (t) => {
+test('should not break on fail when break is false', async (t) => {
+  const breakByDefault = true
   const dispatch = sinon
     .stub()
-    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
   const jobDef = {
-    id: 'action0',
+    id: 'action6',
+    flow: [
+      {
+        id: 'getEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.id',
+              operator: 'exists',
+            },
+            failResponse: {
+              status: 'badrequest',
+              error: 'Must be called with an id',
+            },
+            break: false,
+          },
+        ],
+        action: {
+          type: 'GET',
+          payload: { type: 'entry' },
+        },
+      },
+      {
+        id: 'setEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.type',
+              operator: 'exists',
+            },
+          },
+        ],
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+      },
+    ],
   }
   const action = {
     type: 'RUN',
     payload: {
-      jobId: 'action0',
+      jobId: 'action6',
+      type: 'entry',
+      id: undefined,
     },
-    meta: { ident: { id: 'johnf' }, id: '12345', project: 'test' },
+    meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'noaction',
-    warning: "Job 'action0' has no action or flow",
-    origin: 'job:action0',
+    status: 'ok',
+    data: [],
   }
 
-  const job = new Job(jobDef, mapOptions)
+  const job = new Job(jobDef, mapOptions, breakByDefault)
   const ret = await job.run(action, dispatch, setProgress)
 
+  t.is(dispatch.callCount, 1) // Only the second steps should be run
   t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 0)
 })
+
+// Tests -- mutations
 
 test('should return data from simple action based on response postmutation', async (t) => {
   const dispatch = sinon.stub().resolves({
@@ -2499,6 +2654,199 @@ test('should mutate simple action with pipeline', async (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should handle several root paths in one pipeline', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: { id: 'johnf', name: 'John F.' } })
+    .onCall(1)
+    .resolves({
+      status: 'ok',
+      data: [
+        { id: 'ent1', $type: 'entry', section: 'news' },
+        { id: 'ent2', $type: 'entry', section: 'sports' },
+      ],
+    })
+  const jobDef = {
+    id: 'action3',
+    flow: [
+      [
+        {
+          id: 'getEntries',
+          action: {
+            type: 'GET',
+            payload: { type: 'entry' },
+          },
+          mutation: {
+            'payload.since': '^^getLastSyncedDate.response.data.date',
+          },
+        },
+        {
+          id: 'getUser',
+          action: {
+            type: 'GET',
+            payload: { type: 'user', id: 'johnf' },
+          },
+        },
+      ],
+      {
+        id: 'setEntries',
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+        mutation: {
+          'payload.data': '^^getEntries.response.data',
+          'payload.sections': '^^getEntries.response.data.section',
+          'payload.user': '^^getUser.response.data.name',
+          'payload.entriesSince': '^^getLastSyncedDate.response.data.date',
+        },
+        responseMutation: {
+          'response.data': [
+            '^^getEntries.response.data',
+            {
+              entries: '.',
+              user: '^^getUser.response.data',
+            },
+          ],
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    data: {
+      entries: [
+        { id: 'ent1', $type: 'entry', section: 'news' },
+        { id: 'ent2', $type: 'entry', section: 'sports' },
+      ],
+      user: { id: 'johnf', name: 'John F.' },
+    },
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return response with error from data', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: { errorMessage: 'No data' } })
+  const jobDef = {
+    id: 'action7',
+    flow: [
+      {
+        id: 'setDate',
+        action: {
+          type: 'SET',
+          payload: { type: 'date', id: 'updatedAt' },
+        },
+      },
+    ],
+    responseMutation: [
+      {
+        'response.error': '^^setDate.response.data.errorMessage',
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action7',
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error: 'No data',
+    origin: 'job:action7',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should make action response available to mutations as response on the initial action', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'error', error: 'No data' })
+  const jobDef = {
+    id: 'action7',
+    action: {
+      type: 'SET',
+      payload: { type: 'date', id: 'updatedAt' },
+    },
+    responseMutation: [{ 'response.error': '^^action.response.error' }],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action7',
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error: "Could not finish job 'action7': [error] No data",
+    origin: 'job:action7',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should make flow response available to mutations as response on the initial action', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'error', error: 'No data' })
+  const jobDef = {
+    id: 'action7',
+    flow: [
+      {
+        id: 'setDate',
+        action: {
+          type: 'SET',
+          payload: { type: 'date', id: 'updatedAt' },
+        },
+      },
+    ],
+    responseMutation: [{ 'response.error': '^^action.response.error' }],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action7',
+      data: [{ id: 'ent1', $type: 'entry' }],
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action7', the following steps failed: 'setDate' (error: No data)",
+    origin: 'job:action7',
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+})
+
+// Tests -- iterate
+
 test('should mutate action into several actions based on iterate pipeline', async (t) => {
   const dispatch = sinon
     .stub()
@@ -2685,7 +3033,7 @@ test('should combine response data from several actions based on iterate path', 
   t.deepEqual(dispatch.args[3][0], expectedAction3)
 })
 
-test('should mutate action into several actions based on iterate path in parallell steps', async (t) => {
+test('should mutate action into several actions based on iterate path in parallel steps', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [] })
@@ -2733,113 +3081,6 @@ test('should mutate action into several actions based on iterate path in paralle
   t.deepEqual(ret, expected)
 })
 
-test('should return response with error from data', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok', data: { errorMessage: 'No data' } })
-  const jobDef = {
-    id: 'action7',
-    flow: [
-      {
-        id: 'setDate',
-        action: {
-          type: 'SET',
-          payload: { type: 'date', id: 'updatedAt' },
-        },
-      },
-    ],
-    responseMutation: [
-      {
-        'response.error': '^^setDate.response.data.errorMessage',
-      },
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action7',
-      data: [{ id: 'ent1', $type: 'entry' }],
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'error',
-    error: 'No data',
-    origin: 'job:action7',
-  }
-
-  const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch, setProgress)
-
-  t.deepEqual(ret, expected)
-})
-
-test('should make action response available to mutations as response on the initial action', async (t) => {
-  const dispatch = sinon.stub().resolves({ status: 'error', error: 'No data' })
-  const jobDef = {
-    id: 'action7',
-    action: {
-      type: 'SET',
-      payload: { type: 'date', id: 'updatedAt' },
-    },
-    responseMutation: [{ 'response.error': '^^action.response.error' }],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action7',
-      data: [{ id: 'ent1', $type: 'entry' }],
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'error',
-    error: "Could not finish job 'action7': [error] No data",
-    origin: 'job:action7',
-  }
-
-  const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch, setProgress)
-
-  t.deepEqual(ret, expected)
-})
-
-test('should make flow response available to mutations as response on the initial action', async (t) => {
-  const dispatch = sinon.stub().resolves({ status: 'error', error: 'No data' })
-  const jobDef = {
-    id: 'action7',
-    flow: [
-      {
-        id: 'setDate',
-        action: {
-          type: 'SET',
-          payload: { type: 'date', id: 'updatedAt' },
-        },
-      },
-    ],
-    responseMutation: [{ 'response.error': '^^action.response.error' }],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action7',
-      data: [{ id: 'ent1', $type: 'entry' }],
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action7', the following steps failed: 'setDate' (error: No data)",
-    origin: 'job:action7',
-  }
-
-  const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch, setProgress)
-
-  t.deepEqual(ret, expected)
-})
-
 test('should run all steps even if an iteration step fails', async (t) => {
   const dispatch = sinon
     .stub()
@@ -2884,89 +3125,5 @@ test('should run all steps even if an iteration step fails', async (t) => {
   const ret = await job.run(action, dispatch, setProgress)
 
   t.is(dispatch.callCount, 3)
-  t.deepEqual(ret, expected)
-})
-
-test('should handle several root paths in one pipeline', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok' })
-    .onCall(0)
-    .resolves({ status: 'ok', data: { id: 'johnf', name: 'John F.' } })
-    .onCall(1)
-    .resolves({
-      status: 'ok',
-      data: [
-        { id: 'ent1', $type: 'entry', section: 'news' },
-        { id: 'ent2', $type: 'entry', section: 'sports' },
-      ],
-    })
-  const jobDef = {
-    id: 'action3',
-    flow: [
-      [
-        {
-          id: 'getEntries',
-          action: {
-            type: 'GET',
-            payload: { type: 'entry' },
-          },
-          mutation: {
-            'payload.since': '^^getLastSyncedDate.response.data.date',
-          },
-        },
-        {
-          id: 'getUser',
-          action: {
-            type: 'GET',
-            payload: { type: 'user', id: 'johnf' },
-          },
-        },
-      ],
-      {
-        id: 'setEntries',
-        action: {
-          type: 'SET',
-          payload: { type: 'entry' },
-        },
-        mutation: {
-          'payload.data': '^^getEntries.response.data',
-          'payload.sections': '^^getEntries.response.data.section',
-          'payload.user': '^^getUser.response.data.name',
-          'payload.entriesSince': '^^getLastSyncedDate.response.data.date',
-        },
-        responseMutation: {
-          'response.data': [
-            '^^getEntries.response.data',
-            {
-              entries: '.',
-              user: '^^getUser.response.data',
-            },
-          ],
-        },
-      },
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action3',
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'ok',
-    data: {
-      entries: [
-        { id: 'ent1', $type: 'entry', section: 'news' },
-        { id: 'ent2', $type: 'entry', section: 'sports' },
-      ],
-      user: { id: 'johnf', name: 'John F.' },
-    },
-  }
-
-  const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch, setProgress)
-
   t.deepEqual(ret, expected)
 })

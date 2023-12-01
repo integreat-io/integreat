@@ -2040,6 +2040,13 @@ Finally, the `condition` object may have a `break` property set to `true`, to
 signal that the entire job should fail if the condition fails. If `break` is not
 set, the step will just be skipped and the job flow continues.
 
+> [!NOTE]
+> By setting the feature flag `breakByDefault` to `true` (on the `flags` object
+> in the defintions given to `Integreat.create()`), `break` will be `true` by
+> default, and you must set it to `false` to make the flow continue. This will
+> be the default behavior in the next major version of Integreat, so it's a good
+> idea to set the flag to `true` already now.
+
 Note that a step has a default pre-condition, that will make it fail and stop
 the flow if the previous step failed. By specifying your own `preconditions`,
 you override this, and only your conditions will be used.
@@ -2049,9 +2056,9 @@ decide if the step should be regarded as having failed after its action or flow
 has run. The condition pipelines are passed the same object as `postmutation`,
 but _after_ `postmutation` has been applied. Just as for `preconditions`, the
 `break` property is `false` by default, so to stop the entire job, set it to
-`true`. An error will usually cause the job to fail even with `break: false`,
-but the breaking may be handled by the `preconditions` on the next step, as
-describe above.
+`true` (but see note on `breakByDefault` above). An error will usually cause
+the job to fail even with `break: false`, but the breaking may be handled by the
+`preconditions` on the next step, as describe above.
 
 Post-conditions specify what is required for a step to be succeessful, and
 sometimes you may require a certain error as success, e.g. when you're checking

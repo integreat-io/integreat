@@ -109,6 +109,7 @@ function createConditionsValidator(
     | undefined,
   mapOptions: MapOptions,
   isPreconditions: boolean,
+  breakByDefault: boolean,
   prevStepId?: string,
 ): Validator {
   if (Array.isArray(conditions)) {
@@ -118,6 +119,7 @@ function createConditionsValidator(
       conditions,
       mapOptions,
       defaultFailStatus,
+      breakByDefault,
     )
     return async function validate(actionResponses) {
       const [responses, doBreak] = await validator(actionResponses)
@@ -130,7 +132,9 @@ function createConditionsValidator(
     const validator = validateFilters(conditions, true)
     return async function validate(actionResponses) {
       const responses = await validator(actionResponses)
-      const doBreak = responses.some(({ break: doBreak }) => doBreak)
+      const doBreak = responses.some(
+        ({ break: doBreak = breakByDefault }) => doBreak,
+      )
 
       return responses.length > 0
         ? [adjustPrevalidationResponse(combineResponses(responses)), doBreak] // We only return the first error here
@@ -154,20 +158,33 @@ function createPreconditionsValidator(
   preconditions: ValidateObject[] | undefined,
   validationFilters: Record<string, Condition | undefined> | undefined,
   mapOptions: MapOptions,
+  breakByDefault: boolean,
   prevStepId?: string,
 ): Validator {
   const conditions = preconditions || validationFilters
-  return createConditionsValidator(conditions, mapOptions, true, prevStepId)
+  return createConditionsValidator(
+    conditions,
+    mapOptions,
+    true,
+    breakByDefault,
+    prevStepId,
+  )
 }
 
 function createPostconditionsValidator(
   conditions: ValidateObject[] | undefined,
   mapOptions: MapOptions,
+  breakByDefault: boolean,
 ): Validator {
   if (Array.isArray(conditions)) {
     conditions = conditions.map(putMutationInPipelineForCondition)
   }
-  return createConditionsValidator(conditions, mapOptions, false)
+  return createConditionsValidator(
+    conditions,
+    mapOptions,
+    false,
+    breakByDefault,
+  )
 }
 
 export function getLastJobWithResponse(
@@ -312,17 +329,25 @@ export default class Step {
   #postmutator?: DataMapper<InitialState>
   #iterateMutator?: DataMapper<InitialState>
   #iterateConcurrency?: number
+  #breakByDefault: boolean
 
   constructor(
     stepDef: JobStepDef | JobStepDef[],
     mapOptions: MapOptions,
+    breakByDefault = false,
     prevStepId?: string,
   ) {
+    this.#breakByDefault = breakByDefault
     if (Array.isArray(stepDef)) {
       this.id = stepDef.map((step) => step.id).join(':')
       this.#subSteps = stepDef.map(
         (step, index, steps) =>
-          new Step(step, mapOptions, getPrevStepId(index, steps)),
+          new Step(
+            step,
+            mapOptions,
+            breakByDefault,
+            getPrevStepId(index, steps),
+          ),
       )
     } else {
       this.id = stepDef.id
@@ -330,11 +355,13 @@ export default class Step {
         stepDef.preconditions,
         stepDef.conditions,
         mapOptions,
+        breakByDefault,
         prevStepId,
       )
       this.#validatePostconditions = createPostconditionsValidator(
         stepDef.postconditions,
         mapOptions,
+        breakByDefault,
       )
       this.#action = stepDef.action
       const premutation = stepDef.premutation || stepDef.mutation

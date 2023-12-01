@@ -8,6 +8,7 @@ export default function prepareValidator(
   conditions: ValidateObject[] | undefined,
   mapOptions: MapOptions,
   defaultErrorStatus = 'badrequest',
+  breakByDefault = false,
 ): (action: unknown) => Promise<ResponsesAndBreak> {
   // Always return null when no validation
   if (!Array.isArray(conditions) || conditions.length === 0) {
@@ -16,7 +17,7 @@ export default function prepareValidator(
 
   // Prepare validators
   const validators = conditions.map(
-    ({ condition, failResponse, break: breakOnFail = false }) => ({
+    ({ condition, failResponse, break: breakOnFail = breakByDefault }) => ({
       validate: mapTransform(condition, mapOptions),
       breakOnFail,
       failResponse: isObject(failResponse)
