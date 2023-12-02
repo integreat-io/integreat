@@ -365,8 +365,10 @@ specify a few things:
   will not by cast automatically nor will an error be returned if the data is
   not typed.
 - `allowRawResponse`: When set to `true`, response `data` coming from this
-  endpoint will not by cast automatically nor will an error be returned if the
-  data is not typed.
+  endpoint will not be cast automatically nor will an error be returned if the
+  data is not typed. The default is `false`, expcept for incoming endpoints
+  (endpoints where `match` object has `incoming: true`) where the default value
+  is `true`.
 - `castWithoutDefaults`: Set to `true` when you don't want to set default values
   on casted data. This also means no `id` will be generated and no `createdAt`
   or `updatedAt` will be set – when any of these are missing in the data.

@@ -99,5 +99,28 @@ export default {
         },
       ],
     },
+    {
+      match: {
+        action: 'GET',
+        incoming: true,
+        conditions: [
+          {
+            $transform: 'compare',
+            path: 'payload.path',
+            match: '/',
+          },
+        ],
+      },
+      mutation: [
+        {
+          $direction: 'from',
+          response: {
+            $modify: 'response',
+            status: { $value: 'ok' },
+            data: { $value: { status: 'ok' } },
+          },
+        },
+      ],
+    },
   ],
 }

@@ -350,7 +350,7 @@ export default class Service {
     const castedAction = castResponse(action, endpoint, castFn)
     const authorizedAction = await this.#authorizeDataFromService(
       castedAction,
-      endpoint.allowRawResponse,
+      endpoint.allowRawResponse ?? true, // Allow raw response by default
     )
 
     let mutatedAction: Action
