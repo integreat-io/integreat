@@ -439,26 +439,29 @@ test('should not treat noaction as error', async (t) => {
 })
 
 test('should run two actions in parallel', async (t) => {
-  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [] })
+    .onCall(0)
+    .resolves({ status: 'ok', data: { id: 'ent1', $type: 'entry' } })
   const jobDef = {
     id: 'action3',
     flow: [
       [
         {
-          id: 'setEntry',
+          id: 'getEntry',
           action: {
-            type: 'SET',
+            type: 'GET',
             payload: {
               type: 'entry',
               id: 'ent1',
-              data: [{ id: 'ent1', $type: 'entry' }],
             },
           },
         },
         {
-          id: 'setDate',
+          id: 'getDate',
           action: {
-            type: 'SET',
+            type: 'GET',
             payload: {
               type: 'date',
               id: 'updatedAt',
@@ -466,7 +469,25 @@ test('should run two actions in parallel', async (t) => {
           },
         },
       ],
+      {
+        id: 'setEntry',
+        action: {
+          type: 'SET',
+          payload: {
+            type: 'entry',
+          },
+        },
+        premutation: {
+          payload: {
+            $modify: 'payload',
+            data: '^^getEntry.response.data', // Verify that we can access the response from parallel steps
+          },
+        },
+      },
     ],
+    postmutation: {
+      response: '^^getEntry.response', // Verify that we can access the response from parallel steps here too
+    },
   }
   const action = {
     type: 'RUN',
@@ -476,31 +497,39 @@ test('should run two actions in parallel', async (t) => {
     meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
   }
   const expectedAction1 = {
-    type: 'SET',
+    type: 'GET',
     payload: {
       type: 'entry',
       id: 'ent1',
-      data: [{ id: 'ent1', $type: 'entry' }],
     },
     meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
   }
   const expectedAction2 = {
-    type: 'SET',
+    type: 'GET',
     payload: {
       type: 'date',
       id: 'updatedAt',
     },
     meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
   }
-  const expected = { status: 'ok' } // Won't return data unless specified
+  const expectedAction3 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: { id: 'ent1', $type: 'entry' },
+    },
+    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
+  }
+  const expected = { status: 'ok', data: { id: 'ent1', $type: 'entry' } }
 
   const job = new Job(jobDef, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 2)
+  t.is(dispatch.callCount, 3)
   t.deepEqual(dispatch.args[0][0], expectedAction1)
   t.deepEqual(dispatch.args[1][0], expectedAction2)
+  t.deepEqual(dispatch.args[2][0], expectedAction3)
 })
 
 test('should run all actions in parallel even if one of them fails', async (t) => {
