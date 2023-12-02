@@ -2049,7 +2049,11 @@ set, the step will just be skipped and the job flow continues.
 
 Note that a step has a default pre-condition, that will make it fail and stop
 the flow if the previous step failed. By specifying your own `preconditions`,
-you override this, and only your conditions will be used.
+you override this, and only your conditions will be used. But when you set
+`breakByDefault` to `true` (see note above), this default condition will be
+set in the `postconditions` instead, so that you may override it there. This
+way, you may set pre-conditions on a step, whithout overriding the fail-on-error
+behavior of the step before.
 
 `postconditions` is also an array of condition objects, but this is used to
 decide if the step should be regarded as having failed after its action or flow

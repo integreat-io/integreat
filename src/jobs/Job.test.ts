@@ -1759,6 +1759,208 @@ test('should not break on fail when break is false', async (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should not override fail-on-error behavior of previous step when breakByDefault is true', async (t) => {
+  const breakByDefault = true
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'timeout', error: 'Too slow' })
+  const jobDef = {
+    id: 'action2',
+    flow: [
+      {
+        id: 'setEntry',
+        action: {
+          type: 'SET',
+          payload: {
+            type: 'entry',
+            id: 'ent1',
+            data: [{ id: 'ent1', $type: 'entry' }],
+          },
+        },
+      },
+      {
+        id: 'setDate',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.type',
+              match: 'RUN',
+            },
+            failResponse: {
+              status: 'badrequest',
+              error: 'Must only be called from a RUN action',
+            },
+          },
+        ],
+        action: {
+          type: 'SET',
+          payload: {
+            type: 'date',
+            id: 'updatedAt',
+          },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action2',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action2', the following steps failed: 'setEntry' (timeout: Too slow)",
+    responses: [
+      {
+        status: 'timeout',
+        error: 'Too slow',
+        origin: 'job:action2:step:setEntry',
+      },
+    ],
+    origin: 'job:action2',
+  }
+
+  const job = new Job(jobDef, mapOptions, breakByDefault)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1) // Should break after first step
+})
+
+test('should override fail-on-error behavior in postconditions when breakByDefault is true', async (t) => {
+  const breakByDefault = true
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'timeout', error: 'Too slow' })
+  const jobDef = {
+    id: 'action2',
+    flow: [
+      {
+        id: 'setEntry',
+        action: {
+          type: 'SET',
+          payload: {
+            type: 'entry',
+            id: 'ent1',
+            data: [{ id: 'ent1', $type: 'entry' }],
+          },
+        },
+        postconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'response.status',
+              match: 'timeout', // Will only succeed on timeout :S
+            },
+            failResponse: 'This is not a timeout',
+          },
+        ],
+      },
+      {
+        id: 'setDate',
+        action: {
+          type: 'SET',
+          payload: {
+            type: 'date',
+            id: 'updatedAt',
+          },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action2',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+  }
+
+  const job = new Job(jobDef, mapOptions, breakByDefault)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 2) // Should run both steps
+})
+
+test('should override fail-on-error behavior in postconditions when breakByDefault is true and break on ok', async (t) => {
+  const breakByDefault = true
+  const dispatch = sinon.stub().resolves({ status: 'ok' })
+  const jobDef = {
+    id: 'action2',
+    flow: [
+      {
+        id: 'setEntry',
+        action: {
+          type: 'SET',
+          payload: {
+            type: 'entry',
+            id: 'ent1',
+            data: [{ id: 'ent1', $type: 'entry' }],
+          },
+        },
+        postconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'response.status',
+              match: 'timeout', // Will only succeed on timeout :S
+            },
+            failResponse: 'This is not a timeout',
+          },
+        ],
+      },
+      {
+        id: 'setDate',
+        action: {
+          type: 'SET',
+          payload: {
+            type: 'date',
+            id: 'updatedAt',
+          },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action2',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not finish job 'action2', the following steps failed: 'setEntry' (error: This is not a timeout)",
+    origin: 'job:action2',
+    responses: [
+      {
+        error: 'This is not a timeout',
+        origin: 'job:action2:step:setEntry',
+        status: 'error',
+      },
+    ],
+  }
+
+  const job = new Job(jobDef, mapOptions, breakByDefault)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1) // Should run both steps
+})
+
 // Tests -- mutations
 
 test('should return data from simple action based on response postmutation', async (t) => {

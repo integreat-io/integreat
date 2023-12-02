@@ -2,6 +2,7 @@ import mapTransform from 'map-transform'
 import pLimit from 'p-limit'
 import { ensureArray } from '../utils/array.js'
 import { isObject, isOkResponse } from '../utils/is.js'
+import xor from '../utils/xor.js'
 import {
   setDataOnActionPayload,
   setResponseOnAction,
@@ -102,6 +103,14 @@ const putMutationInPipelineForCondition = (
     : null,
 })
 
+const getThisResponse = (actionResponses: Record<string, Action>) =>
+  actionResponses.$action?.response
+
+const getPreviousResponse = (
+  actionResponses: Record<string, Action>,
+  prevStepId?: string,
+) => (prevStepId ? actionResponses[prevStepId]?.response : undefined) // eslint-disable-line security/detect-object-injection
+
 function createConditionsValidator(
   conditions:
     | ValidateObject[]
@@ -123,7 +132,7 @@ function createConditionsValidator(
     )
     return async function validate(actionResponses) {
       const [responses, doBreak] = await validator(actionResponses)
-      const stepResponse = actionResponses.$action?.response
+      const stepResponse = getThisResponse(actionResponses)
       const response = adjustValidationResponse(responses, stepResponse)
       return [response, doBreak]
     }
@@ -140,11 +149,16 @@ function createConditionsValidator(
         ? [adjustPrevalidationResponse(combineResponses(responses)), doBreak] // We only return the first error here
         : [null, false]
     }
-  } else if (isPreconditions) {
-    // Is preconditions and no conditions, so we'll just check if the previous step was ok
+  } else if (xor(isPreconditions, breakByDefault)) {
+    // We're using xor to check for not `isPreconditions` when `breakByDefault` is `true`
+    // We have no conditions, so we'll just check if this or the previous step was ok (the former when `breakByDefault` is `true`)
     return async function validatePrevWasOk(actionResponses) {
-      const prevStep = prevStepId ? actionResponses[prevStepId] : undefined // eslint-disable-line security/detect-object-injection
-      return [null, !!prevStep && !isOkResponse(prevStep.response)]
+      const response = breakByDefault
+        ? getThisResponse(actionResponses)
+        : getPreviousResponse(actionResponses, prevStepId)
+      return response && !isOkResponse(response)
+        ? [response, true]
+        : [null, false]
     }
   } else {
     // Is postconditions and no conditions, so we'll always return ok
