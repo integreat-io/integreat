@@ -831,6 +831,25 @@ A double carret `^^` takes you to the top -- the root -- so after
 Carret notations -- parents and roots -- does not currently work in reverse, but
 they might in a future version.
 
+### Non-values
+
+The behavior of some transformers are based upon certain values being
+non-values. E.g. `{ $alt: [<pipeline 1>, <pipeline 2>] }` will use the value
+from the first pipeline if it returns a value, otherwise the value from the
+second pipeline, meaning it will check for non-values. By default `null`,
+`undefined`, and `''` (empty string) are non-values. By setting the `nonvalues`
+param to an array of values in the defintions object you pass to
+`Integreat.create()`, you may specify your own non-values.
+
+If you don't want empty string to a non-value, for instance, you do this:
+
+```javascript
+const great = Integreat.create({
+  nonvalues: [null, undefined],
+  // ... other definitions
+})
+```
+
 ## Schemas
 
 A central idea to Integreat, is that any integration has two sides; the getting

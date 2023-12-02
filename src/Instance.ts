@@ -152,6 +152,7 @@ function setupServicesAndDispatch(
     defs.mutations,
     resources.transformers,
     defs.dictionaries,
+    defs.nonvalues,
   )
   const services = createServices(
     defs,

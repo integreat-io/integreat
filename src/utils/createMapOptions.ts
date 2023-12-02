@@ -9,7 +9,7 @@ import type Schema from '../schema/Schema.js'
 import type { MapOptions } from '../types.js'
 
 const transformersFromSchemas = (
-  schemas: Map<string, Schema>
+  schemas: Map<string, Schema>,
 ): Record<string, Transformer> =>
   Object.fromEntries(
     [...schemas.values()].map((schema) => [
@@ -18,14 +18,15 @@ const transformersFromSchemas = (
         () =>
         (data, { rev = false }) =>
           schema.castFn(data, rev),
-    ])
+    ]),
   )
 
 export default function createMapOptions(
   schemas: Map<string, Schema>,
   mutations?: Record<string, TransformDefinition>,
   transformers?: Record<string, Transformer | AsyncTransformer>,
-  dictionaries?: Dictionaries
+  dictionaries?: Dictionaries,
+  nonvalues: unknown[] = [undefined, null, ''],
 ): MapOptions {
   return {
     pipelines: { ...mutations }, // TODO: We create a new object here, because MapTransform mutates it. Should really be fixed in MapTransform
@@ -36,7 +37,7 @@ export default function createMapOptions(
     dictionaries,
     fwdAlias: 'from',
     revAlias: 'to',
-    nonvalues: [undefined, null, ''],
+    nonvalues,
     modifyOperationObject,
   }
 }

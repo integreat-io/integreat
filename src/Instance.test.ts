@@ -65,7 +65,7 @@ const mutations = {
       $iterate: true,
       id: 'key',
       title: ['headline', { $transform: 'exclamate' }],
-      text: 'body',
+      text: { $alt: ['body', 'text'] },
       'sections[]': ['type', { $transform: 'map', dictionary: 'section' }],
       unknown: [],
       author: 'creator',
@@ -357,6 +357,47 @@ test('should mutate data', async (t) => {
   t.is(item.text, 'The first article')
   t.deepEqual(item.sections, ['news'])
   t.deepEqual(item.createdAt, new Date('2019-10-11T18:43:00Z'))
+})
+
+test('should use provided nonvalues', async (t) => {
+  const nonvalues = [null, undefined]
+  const data0 = {
+    key: 'ent1',
+    headline: 'Entry 1',
+    body: '',
+    text: 'This will be used if empty string is a nonvalue',
+  }
+  const resourcesWithTransAndSend = {
+    ...resourcesWithTransformer,
+    transporters: {
+      ...resourcesWithTransformer.transporters,
+      http: {
+        ...resourcesWithTransformer.transporters!.http,
+        send: async (action: Action) => ({
+          ...action.response,
+          status: 'ok',
+          data: JSON.stringify([data0]),
+        }),
+      },
+    },
+  }
+
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const great = new Instance(
+    { services, schemas, mutations, dictionaries, nonvalues },
+    resourcesWithTransAndSend,
+  )
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  const item = (ret.data as Record<string, unknown>[])[0]
+  t.is(item.id, 'ent1')
+  t.is(item.text, '')
 })
 
 test('should dispatch scheduled', async (t) => {

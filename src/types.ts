@@ -268,6 +268,7 @@ export interface Definitions {
   mutations?: Record<string, TransformDefinition>
   auths?: AuthDef[]
   identConfig?: IdentConfig
+  nonvalues?: unknown[]
   queueService?: string
   dictionaries?: Dictionaries
   jobs?: JobDef[]
