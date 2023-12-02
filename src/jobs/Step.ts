@@ -343,7 +343,6 @@ export default class Step {
   #postmutator?: DataMapper<InitialState>
   #iterateMutator?: DataMapper<InitialState>
   #iterateConcurrency?: number
-  #breakByDefault: boolean
 
   constructor(
     stepDef: JobStepDef | JobStepDef[],
@@ -351,7 +350,6 @@ export default class Step {
     breakByDefault = false,
     prevStepId?: string,
   ) {
-    this.#breakByDefault = breakByDefault
     if (Array.isArray(stepDef)) {
       this.id = stepDef.map((step) => step.id).join(':')
       this.#subSteps = stepDef.map(

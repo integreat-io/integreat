@@ -2084,6 +2084,8 @@ in this array. The item will be set as payload `data`. `premutation` may be used
 to modify the action before it is dispatched as usual, but note that the
 mutation is applied to every single action, after the `iterate`, so to speak.
 
+This applies to both a job with an action and a step with an action in a flow.
+
 The responses of each action are combined and set as a `response` object on the
 step action (before the iteration), making an iterated step just like any other.
 When all actions are successful, the response will have status `ok`, and the
@@ -2097,6 +2099,10 @@ object.
 Every single iterated action and response will also be available on the step id
 with an index prefix, e.g. `getEntries` will have `getEntries_0`,
 `getEntries_1`, etc.
+
+By default, the iterations are run in sequence, but you may run several in
+parallel by specifying the number of concurrent iterations on the
+`iterateConcurrency` property on the job step. The default is `1`.
 
 ## Queues
 

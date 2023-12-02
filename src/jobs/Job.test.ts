@@ -3049,7 +3049,69 @@ test('should make flow response available to mutations as response on the initia
 
 // Tests -- iterate
 
-test('should mutate action into several actions based on iterate pipeline', async (t) => {
+test('should mutate action on a job into several actions based on iterate pipeline', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [] })
+    .onCall(1)
+    .resolves({ status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] })
+  const jobDef = {
+    id: 'action14',
+    action: { type: 'SET', payload: { type: 'entry' } },
+    iterate: [
+      'action.payload.data.items[]',
+      { $filter: 'compare', path: 'include', match: true },
+    ],
+    mutation: { 'payload.key': 'payload.data.id' },
+    responseMutation: {
+      response: {
+        $modify: 'response',
+        data: '^^action14_1.response.data', // To verify that the actions get postfixed with index
+      },
+    },
+  }
+  const data = {
+    items: [
+      { id: 'ent1', include: true },
+      { id: 'ent2', include: false },
+      { id: 'ent3', include: true },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'action14', data },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction0 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: { id: 'ent1', include: true },
+      key: 'ent1',
+    },
+    meta: { ident: { id: 'johnf' }, jobId: 'action14' },
+  }
+  const expectedAction1 = {
+    type: 'SET',
+    payload: {
+      type: 'entry',
+      data: { id: 'ent3', include: true },
+      key: 'ent3',
+    },
+    meta: { ident: { id: 'johnf' }, jobId: 'action14' },
+  }
+  const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.is(dispatch.callCount, 2)
+  t.deepEqual(dispatch.args[0][0], expectedAction0)
+  t.deepEqual(dispatch.args[1][0], expectedAction1)
+  t.deepEqual(ret, expected)
+})
+
+test('should mutate action in a step into several actions based on iterate pipeline', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [] })
