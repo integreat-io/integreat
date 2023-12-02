@@ -1,4 +1,4 @@
-import { isRootIdent, isAnonIdent } from '../utils/is.js'
+import { isInternalIdent } from '../utils/is.js'
 import type { HandlerDispatch, Middleware, Ident } from '../types.js'
 
 const getIdent = async (ident: Ident, dispatch: HandlerDispatch) => {
@@ -11,11 +11,13 @@ const getIdent = async (ident: Ident, dispatch: HandlerDispatch) => {
   return response.status === 'ok' ? response?.access?.ident || ident : undefined
 }
 
-const isIdentGetable = (ident?: Ident): ident is Ident =>
+// Return true if we should try and complete the ident. Basically, try and
+// complete any ident that has an id or withToken property, is not already
+// completed, and is not an internal type.
+const isIdentCompletable = (ident?: Ident): ident is Ident =>
+  !!(ident?.id || ident?.withToken) &&
   !ident?.isCompleted &&
-  !isRootIdent(ident) &&
-  !isAnonIdent(ident) &&
-  !!(ident?.id || ident?.withToken)
+  !isInternalIdent(ident)
 
 /**
  * Middleware that will complete the identity of the dispatched action.
@@ -36,7 +38,7 @@ const isIdentGetable = (ident?: Ident): ident is Ident =>
  */
 const completeIdent: Middleware = (next) => async (action) => {
   const originalIdent = action.meta?.ident
-  if (isIdentGetable(originalIdent)) {
+  if (isIdentCompletable(originalIdent)) {
     const ident = await getIdent(originalIdent, next)
     return next({ ...action, meta: { ...action.meta, ident } })
   } else {

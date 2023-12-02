@@ -1431,12 +1431,12 @@ Example ident:
   setting the auth rules for a schema, you specify required rules so that to get
   data cast in this schema, an ident with e.g. the role `admin` must be
   provided.
-- `type`: An optional string to signal when this ident is `'ROOT'` or `'ANON'`.
-  This is used internally by Integreat, but in some cases you may want to set
-  this yourself. Make sure, however, that you don't let third-parties set
-  `'ROOT'`. Make sure to also set the id, typically to `'root'` or
-  `'anonymous'`. Not setting any `type` is the same as setting it to `'CUST'`,
-  which is the default.
+- `type`: An optional string to signal when this ident is `'ROOT'`, `'SCHED'`,
+  or `'ANON'`. This is used internally by Integreat, but in some cases you may
+  want to set this yourself. Make sure, however, that you don't let
+  third-parties set `'ROOT'`. Make sure to also set the id, typically to
+  `'root'` or `'anonymous'`. Not setting any `type` is the same as setting it to
+  `'CUST'`, which is the default.
 - `isCompleted`: A flag to signal that an ident has already been completed, so
   that it won't be completed again. Used by the `completeIdent` middleware. You
   should normally not need to set this yourself.

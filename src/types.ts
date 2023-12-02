@@ -66,6 +66,7 @@ export interface TransformFunction<
 export enum IdentType {
   Root = 'ROOT',
   Anon = 'ANON',
+  Scheduler = 'SCHED',
   Custom = 'CUST',
 }
 

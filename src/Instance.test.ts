@@ -5,7 +5,8 @@ import jsonServiceDef from './tests/helpers/jsonServiceDef.js'
 import user from './tests/helpers/defs/schemas/user.js'
 import resources from './tests/helpers/resources/index.js'
 import { QUEUE_SYMBOL } from './handlers/index.js'
-import type {
+import {
+  IdentType,
   Definitions,
   Resources,
   Action,
@@ -377,9 +378,12 @@ test('should dispatch scheduled', async (t) => {
       response: {
         status: 'queued',
         origin: 'dispatch',
-        access: { ident: { id: 'scheduler' } },
+        access: { ident: { id: 'scheduler', type: IdentType.Scheduler } },
       },
-      meta: { ident: { id: 'scheduler' }, queue: true },
+      meta: {
+        ident: { id: 'scheduler', type: IdentType.Scheduler },
+        queue: true,
+      },
     },
   ]
 

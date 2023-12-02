@@ -1,7 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import Job from './jobs/Job.js'
-import type { Action } from './types.js'
+import { IdentType, Action } from './types.js'
 
 import dispatchScheduled from './dispatchScheduled.js'
 
@@ -20,7 +20,10 @@ const action3 = {
   payload: {},
 }
 
-const meta = { ident: { id: 'scheduler' }, queue: true }
+const meta = {
+  ident: { id: 'scheduler', type: IdentType.Scheduler },
+  queue: true,
+}
 const mapOptions = {}
 
 // Tests
@@ -30,7 +33,7 @@ test('should dispatch actions scheduled within a time period', async (t) => {
   const jobs = [
     new Job(
       { id: 'action1', cron: '0,10,15,20,25 * * * *', action: action1 },
-      mapOptions
+      mapOptions,
     ), // Will only trigger once
     new Job({ id: 'action2', cron: '45 * * * *', action: action2 }, mapOptions),
     new Job({ id: 'action3', cron: '25 * * * *', action: action3 }, mapOptions),
@@ -109,7 +112,7 @@ test('should return array of error responses', async (t) => {
   const jobs = [
     new Job(
       { id: 'action1', cron: '0,10,15,20,25 * * * *', action: action1 },
-      mapOptions
+      mapOptions,
     ),
     new Job({ id: 'action2', cron: '45 * * * *', action: action2 }, mapOptions),
     new Job({ id: 'action3', cron: '25 * * * *', action: action3 }, mapOptions),
