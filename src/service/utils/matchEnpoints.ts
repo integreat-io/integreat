@@ -7,14 +7,14 @@ import type { EndpointDef } from '../types.js'
 
 function createConditionsValidator(
   conditions: TransformDefinition[] | undefined,
-  mapOptions: MapOptions
+  mapOptions: MapOptions,
 ): (action: Action) => Promise<boolean> {
   if (!conditions) {
     return async () => true
   }
 
   const validators = conditions.map((condition) =>
-    mapTransform(condition, mapOptions)
+    mapTransform(condition, mapOptions),
   )
   return async function validateConditions(action) {
     for (const validator of validators) {
@@ -34,7 +34,7 @@ const hasParam = (params: Params | undefined, key: string) =>
 
 const matchId = (
   endpoint: EndpointDef,
-  { payload: { endpoint: endpointId } = {} }: Action
+  { payload: { endpoint: endpointId } = {} }: Action,
 ) => !endpointId || endpoint.id === endpointId
 
 const matchType = ({ match = {} }: EndpointDef, { payload }: Action) =>
@@ -48,7 +48,7 @@ const matchScope = ({ match = {} }: EndpointDef, { payload }: Action) =>
       ? Array.isArray(payload.id)
         ? 'members'
         : 'member'
-      : 'collection'
+      : 'collection',
   )
 
 const matchAction = ({ match = {} }: EndpointDef, { type }: Action) =>
@@ -56,17 +56,17 @@ const matchAction = ({ match = {} }: EndpointDef, { type }: Action) =>
 
 const matchParams = (
   { match: { params } = {} }: EndpointDef,
-  { payload }: Action
+  { payload }: Action,
 ) =>
   typeof params !== 'object' ||
   params === null ||
   Object.entries(params).every(
-    ([key, isRequired]) => !isRequired || hasParam(payload, key)
+    ([key, isRequired]) => !isRequired || hasParam(payload, key),
   )
 
 const matchIncoming = (
   { match: { incoming: incomingEndpoint } = {} }: EndpointDef,
-  isIncoming: boolean
+  isIncoming: boolean,
 ) => incomingEndpoint === undefined || incomingEndpoint === isIncoming
 
 /**
@@ -77,15 +77,13 @@ const matchIncoming = (
  */
 export default function isMatch(
   endpoint: EndpointDef,
-  mapOptions: MapOptions
+  mapOptions: MapOptions,
 ): (action: Action, isIncoming?: boolean) => Promise<boolean> {
   const match = endpoint.match || {}
-  const matchFilters = match.filters
-    ? validateFilters(match.filters)
-    : async () => []
+  const matchFilters = match.filters ? validateFilters(match.filters) : () => []
   const matchConditions = createConditionsValidator(
     match.conditions,
-    mapOptions
+    mapOptions,
   )
 
   return async (action, isIncoming = false) =>
@@ -96,5 +94,5 @@ export default function isMatch(
     matchParams(endpoint, action) &&
     matchIncoming(endpoint, isIncoming) &&
     (await matchConditions(action)) &&
-    (await matchFilters(action)).length === 0 // Not too pretty
+    matchFilters(action).length === 0 // Not too pretty
 }

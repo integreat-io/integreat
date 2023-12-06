@@ -140,7 +140,7 @@ function createConditionsValidator(
     // Validate through filters. Only used for prevalidations. Will be deprecated
     const validator = validateFilters(conditions, true)
     return async function validate(actionResponses) {
-      const responses = await validator(actionResponses)
+      const responses = validator(actionResponses)
       const doBreak = responses.some(
         ({ break: doBreak = breakByDefault }) => doBreak,
       )

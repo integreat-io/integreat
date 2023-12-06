@@ -330,7 +330,7 @@ export default class Service {
     const castFn = getCastFn(this.#schemas, mutated.payload.type)
     const casted = castResponse(mutated, endpoint, castFn)
     const withOrigin = setOriginOnAction(casted, 'mutate:response', false)
-    const { response } = await this.#authorizeDataFromService(
+    const { response } = this.#authorizeDataFromService(
       withOrigin,
       endpoint.allowRawResponse,
     )
@@ -348,7 +348,7 @@ export default class Service {
   ): Promise<Response> {
     const castFn = getCastFn(this.#schemas, action.payload.type)
     const castedAction = castResponse(action, endpoint, castFn)
-    const authorizedAction = await this.#authorizeDataFromService(
+    const authorizedAction = this.#authorizeDataFromService(
       castedAction,
       endpoint.allowRawResponse ?? true, // Allow raw response by default
     )
