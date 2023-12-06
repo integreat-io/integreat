@@ -21,7 +21,6 @@ export type {
   Response,
   Headers,
   Ident,
-  IdentType,
   Dispatch,
   TypedData,
   Reference,
