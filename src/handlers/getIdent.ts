@@ -81,6 +81,14 @@ const prepareResponse = (
   }
 }
 
+function extractParams(resources: ActionHandlerResources, ident: Ident) {
+  const { identConfig } = resources.options
+  const { type } = identConfig || {}
+  const propKeys = preparePropKeys(identConfig?.props)
+  const params = prepareParams(ident, propKeys)
+  return { type, propKeys, params }
+}
+
 /**
  * Get an ident item from service, based on the meta.ident object on the action.
  */
@@ -97,9 +105,7 @@ export default async function getIdent(
     )
   }
 
-  const { identConfig } = resources.options
-
-  const { type } = identConfig || {}
+  const { type, propKeys, params } = extractParams(resources, ident)
   if (!type) {
     return createErrorResponse(
       'GET_IDENT: Integreat is not set up with authentication',
@@ -107,8 +113,6 @@ export default async function getIdent(
       'noaction',
     )
   }
-
-  const propKeys = preparePropKeys(identConfig?.props)
   if (typeof ident.withToken === 'string' && !propKeys.tokens) {
     return createErrorResponse(
       "GET_IDENT: The request has an ident with 'withToken', but no tokens key is set in `identConfig`",
@@ -116,8 +120,6 @@ export default async function getIdent(
       'badrequest',
     )
   }
-
-  const params = prepareParams(ident, propKeys)
   if (!params) {
     return createErrorResponse(
       'GET_IDENT: The request has no ident with id or withToken',
