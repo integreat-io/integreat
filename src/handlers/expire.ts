@@ -12,41 +12,47 @@ import type {
 const isTypedDataArray = (value: unknown): value is TypedData[] =>
   Array.isArray(value) && isTypedData(value[0])
 
-const getExpired = async (
-  targetService: string,
-  type: string | string[],
-  endpointId: string,
-  msFromNow: number,
+const getOrDeleteExpired = async (
+  deleteWithParams: boolean,
   dispatch: HandlerDispatch,
+  type: string | string[],
+  msFromNow: number,
+  targetService?: string,
+  endpointId?: string,
   cid?: string,
-  ident?: Ident
+  ident?: Ident,
 ): Promise<Response> => {
   const timestamp = Date.now() + msFromNow
   const isodate = new Date(timestamp).toISOString()
   return dispatch({
-    type: 'GET',
+    type: deleteWithParams ? 'DELETE' : 'GET',
     payload: {
       type,
       timestamp,
       isodate,
-      targetService,
-      endpoint: endpointId,
+      ...(targetService && { targetService }),
+      ...(endpointId && { endpoint: endpointId }),
     },
-    meta: { ident, cid },
+    meta: { ident, cid, ...(deleteWithParams ? { queue: true } : {}) },
   })
 }
 
-const deleteExpired = async (
-  data: TypedData[],
-  targetService: string,
+const deleteExpiredItems = async (
   dispatch: HandlerDispatch,
+  type: string | string[],
+  data: TypedData[],
+  targetService?: string,
   cid?: string,
-  ident?: Ident
+  ident?: Ident,
 ): Promise<Response> => {
   const deleteData = data.map((item) => ({ id: item.id, $type: item.$type }))
   const deleteAction = {
     type: 'DELETE',
-    payload: { data: deleteData, targetService },
+    payload: {
+      type,
+      data: deleteData,
+      ...(targetService && { targetService }),
+    },
     meta: { ident, queue: true, cid },
   }
 
@@ -56,60 +62,60 @@ const deleteExpired = async (
 /**
  * Action to delete expired items.
  *
- * The given `endpoint` is used to retrieve expired items from the `target`
- * service, and may use the paramters `timestamp` or `isodate`, which represents
- * the current time plus the microseconds in `msFromNow`, the former as
- * microseconds since January 1, 1970, the latter as an ISO formatted date and
- * time string.
+ * When `deleteWithParams` is `false` or not set, we'll first `GET` all expired
+ * items, and then send the response data to a `DELETE` action. The `GET` action
+ * is sent with the paramters `timestamp` and `isodate`, which represents the
+ * current time plus the microseconds in `msFromNow`, the former as microseconds
+ * since January 1, 1970, the latter as an ISO formatted date and time string.
+ * If an `endpoint` is specified, it will be passed with the `GET` action.
  *
- * The items are mapped and typed, so the `type` param should be set to one
- * or more types expected from the `endpoint`, and may be a string or an array
- * of strings.
+ * When `deleteWithParams` is `true`, we'll just send a `DELETE` action, but
+ * with the `timestamp` and `isodate` params and no data. If an `endpoint` is
+ * specified, it will be passed with the `DELETE` action.
  */
 export default async function expire(
   action: Action,
-  { dispatch }: ActionHandlerResources
+  { dispatch }: ActionHandlerResources,
 ): Promise<Response> {
   const {
-    payload: { type, endpoint: endpointId, targetService: serviceId },
+    payload: {
+      type,
+      endpoint: endpointId,
+      targetService: serviceId,
+      deleteWithParams = false,
+    },
     meta: { ident, cid } = {},
   } = action
   const msFromNow = (action.payload.msFromNow as number) || 0
 
-  if (!serviceId) {
-    return createErrorResponse(
-      `Can't delete expired without a specified service`,
-      'handler:EXPIRE'
-    )
-  }
-  if (!endpointId) {
-    return createErrorResponse(
-      `Can't delete expired from service '${serviceId}' without an endpoint`,
-      'handler:EXPIRE'
-    )
-  }
   if (!type) {
     return createErrorResponse(
       `Can't delete expired from service '${serviceId}' without one or more specified types`,
       'handler:EXPIRE',
-      'badrequest'
+      'badrequest',
     )
   }
 
-  const expiredResponse = await getExpired(
-    serviceId,
-    type,
-    endpointId,
-    msFromNow,
+  const expiredResponse = await getOrDeleteExpired(
+    !!deleteWithParams,
     dispatch,
+    type,
+    msFromNow,
+    serviceId,
+    endpointId,
     cid,
-    ident
+    ident,
   )
+
+  if (deleteWithParams) {
+    // We're deleting directly with params, so we're done
+    return expiredResponse
+  }
 
   if (expiredResponse.status !== 'ok') {
     return createErrorResponse(
       `Could not get items from service '${serviceId}'. Reason: ${expiredResponse.status} ${expiredResponse.error}`,
-      'handler:EXPIRE'
+      'handler:EXPIRE',
     )
   }
   const data = expiredResponse.data
@@ -117,9 +123,9 @@ export default async function expire(
     return createErrorResponse(
       `No items to expire from service '${serviceId}'`,
       'handler:EXPIRE',
-      'noaction'
+      'noaction',
     )
   }
 
-  return await deleteExpired(data, serviceId, dispatch, cid, ident)
+  return await deleteExpiredItems(dispatch, type, data, serviceId, cid, ident)
 }

@@ -21,7 +21,55 @@ const ident = { id: 'johnf' }
 
 // Tests
 
-test('should dispatch GET to expired endpoint', async (t) => {
+test('should dispatch GET with timestamp and isodate', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
+  const action = {
+    type: 'EXPIRE',
+    payload: { type: 'entry' },
+    meta: { ident, id: '11004', cid: '11005' },
+  }
+  const expected = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      timestamp: theTime,
+      isodate: new Date(theTime).toISOString(),
+    },
+    meta: { ident, cid: '11005' },
+  }
+
+  const ret = await expire(action, { ...handlerResources, dispatch })
+
+  t.is(ret.status, 'noaction', ret.error)
+  t.is(dispatch.callCount, 1) // We're not deleting because there's no data
+  t.deepEqual(dispatch.args[0][0], expected)
+})
+
+test('should dispatch GET with target service', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
+  const action = {
+    type: 'EXPIRE',
+    payload: { type: 'entry', targetService: 'store' },
+    meta: { ident, id: '11004', cid: '11005' },
+  }
+  const expected = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      timestamp: theTime,
+      isodate: new Date(theTime).toISOString(),
+      targetService: 'store',
+    },
+    meta: { ident, cid: '11005' },
+  }
+
+  await expire(action, { ...handlerResources, dispatch })
+
+  t.is(dispatch.callCount, 1) // We're not deleting because there's no data
+  t.deepEqual(dispatch.args[0][0], expected)
+})
+
+test('should dispatch GET to specified endpoint', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const action = {
     type: 'EXPIRE',
@@ -42,6 +90,7 @@ test('should dispatch GET to expired endpoint', async (t) => {
 
   await expire(action, { ...handlerResources, dispatch })
 
+  t.is(dispatch.callCount, 1) // We're not deleting because there's no data
   t.deepEqual(dispatch.args[0][0], expected)
 })
 
@@ -55,17 +104,24 @@ test('should add msFromNow to current timestamp', async (t) => {
       targetService: 'store',
       endpoint: 'getExpired',
     },
+    meta: { ident, id: '11004', cid: '11005' },
   }
   const expected = {
+    type: 'GET',
     payload: {
+      type: 'entry',
       timestamp: theTime + 3600000,
       isodate: new Date(theTime + 3600000).toISOString(),
+      targetService: 'store',
+      endpoint: 'getExpired',
     },
+    meta: { ident, cid: '11005' },
   }
 
   await expire(action, { ...handlerResources, dispatch })
 
-  t.true(dispatch.calledWithMatch(expected))
+  t.is(dispatch.callCount, 1) // We're not deleting because there's no data
+  t.deepEqual(dispatch.args[0][0], expected)
 })
 
 test('should queue DELETE for expired entries', async (t) => {
@@ -84,15 +140,16 @@ test('should queue DELETE for expired entries', async (t) => {
   }
   const expectedDeleteAction = {
     type: 'DELETE',
-    payload: { data, targetService: 'store' },
-    meta: { ident, cid: '11005' },
+    payload: { type: 'entry', data, targetService: 'store' },
+    meta: { ident, cid: '11005', queue: true },
   }
   const expected = { status: 'queued' }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
   t.deepEqual(ret, expected)
-  t.true(dispatch.calledWithMatch(expectedDeleteAction))
+  t.is(dispatch.callCount, 2)
+  t.deepEqual(dispatch.args[1][0], expectedDeleteAction)
 })
 
 test('should queue DELETE with id and type only', async (t) => {
@@ -111,13 +168,23 @@ test('should queue DELETE with id and type only', async (t) => {
   const action = {
     type: 'EXPIRE',
     payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
+    meta: { ident, id: '11004', cid: '11005' },
   }
-  const expected = { payload: { data: [{ id: 'ent1', $type: 'entry' }] } }
+  const expectedDeleteAction = {
+    type: 'DELETE',
+    payload: {
+      type: 'entry',
+      data: [{ id: 'ent1', $type: 'entry' }],
+      targetService: 'store',
+    },
+    meta: { ident, cid: '11005', queue: true },
+  }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'queued', ret.error)
-  t.true(dispatch.calledWithMatch(expected))
+  t.is(dispatch.callCount, 2)
+  t.deepEqual(dispatch.args[1][0], expectedDeleteAction)
 })
 
 test('should not queue when no expired entries', async (t) => {
@@ -163,38 +230,72 @@ test('should not queue when GET returns error', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should return error when no service', async (t) => {
+test('should DELETE with params and no GET when deleteWithParams is true', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
+  dispatch
+    .withArgs(sinon.match({ type: 'DELETE' }))
+    .resolves({ status: 'queued' })
   const action = {
     type: 'EXPIRE',
-    payload: { type: 'entry', endpoint: 'getExpired' },
+    payload: {
+      type: 'entry',
+      targetService: 'store',
+      deleteWithParams: true,
+    },
+    meta: { ident, id: '11004', cid: '11005' },
   }
-  const expected = {
-    status: 'error',
-    error: "Can't delete expired without a specified service",
-    origin: 'handler:EXPIRE',
+  const expectedDeleteAction = {
+    type: 'DELETE',
+    payload: {
+      type: 'entry',
+      timestamp: theTime,
+      isodate: new Date(theTime).toISOString(),
+      targetService: 'store',
+    },
+    meta: { ident, cid: '11005', queue: true },
   }
+  const expected = { status: 'queued' }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
   t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedDeleteAction)
 })
 
-test('should return error when no endpoint', async (t) => {
+test('should DELETE with params and no GET with specified endpoint', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
+  dispatch
+    .withArgs(sinon.match({ type: 'DELETE' }))
+    .resolves({ status: 'queued' })
   const action = {
     type: 'EXPIRE',
-    payload: { type: 'entry', targetService: 'store' },
+    payload: {
+      type: 'entry',
+      targetService: 'store',
+      deleteWithParams: true,
+      endpoint: 'deleteExpired',
+    },
+    meta: { ident, id: '11004', cid: '11005' },
   }
-  const expected = {
-    status: 'error',
-    error: "Can't delete expired from service 'store' without an endpoint",
-    origin: 'handler:EXPIRE',
+  const expectedDeleteAction = {
+    type: 'DELETE',
+    payload: {
+      type: 'entry',
+      timestamp: theTime,
+      isodate: new Date(theTime).toISOString(),
+      targetService: 'store',
+      endpoint: 'deleteExpired',
+    },
+    meta: { ident, cid: '11005', queue: true },
   }
+  const expected = { status: 'queued' }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
 
   t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedDeleteAction)
 })
 
 test('should return error when no type', async (t) => {

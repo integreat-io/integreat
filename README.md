@@ -1796,13 +1796,15 @@ it won't be wrapped in an array.)
 
 #### `EXPIRE`
 
-> [!NOTE]
-> This action will change before we reach v1.0.
+The `EXPIRE` action have two alternative way of operating. If the
+`deleteWithParams` param is `false` or not set, we will first dispatch a `GET`
+action to fetch expired data items from a service, and the then dispatch a
+`DELETE` action with the retrieved data items. If `deleteWithParams` is `true`,
+we will instead dispatch a `DELETE` action right away with the same params we
+would have provided to the `GET` action.
 
-The `EXPIRE` action will `GET` expired data items from a service, and the then
-`DELETE` them.
-
-Here's an example of an `EXPIRE` action:
+Here's an example of an `EXPIRE` action that will dispatch a `GET` and a
+`DELETE`:
 
 ```javascript
 {
@@ -1811,16 +1813,28 @@ Here's an example of an `EXPIRE` action:
     service: 'store',
     type: 'entry',
     endpoint: 'getExpired',
-    msFromNow: 0
+    msFromNow: -24 * 60 * 60 * 1000 // Delete entries older than 24 hours
   }
 }
 ```
 
-The `endpoint` property is required for this action, and needs to specify a
-service endpoint used to fetch expired items. The action dispatched to this
-endpoint will have a `timestamp` property with the current time as microseconds
-since epoc (Januar 1, 1970 UTC), and `isodate` as the current time in the
-extended ISO 8601 format(`YYYY-MM-DDThh:mm:ss.sssZ`).
+Here's an example of an `EXPIRE` action that will dispatch a `DELETE` directly:
+
+```javascript
+{
+  type: 'EXPIRE',
+  payload: {
+    service: 'store',
+    type: 'entry',
+    deleteWithParams: true
+  }
+}
+```
+
+The `GET` action (or the `DELETE` action when `deleteWithParams` is `true`) will
+have a `timestamp` property with the current time as microseconds since epoc
+(Januar 1, 1970 UTC), and `isodate` as the current time in the extended ISO 8601
+format(`YYYY-MM-DDThh:mm:ss.sssZ`).
 
 To have `timestamp` and `isodate` be a time in the future instead, set
 `msFromNow` to a positive number of milliseconds. This will be added to the
