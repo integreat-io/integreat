@@ -16,6 +16,7 @@ export interface JobStepDef {
   iterateConcurrency?: number
   action: Action
   postmutation?: TransformObject | Pipeline
+  postconditions?: ValidateObject[]
   responseMutation?: TransformObject | Pipeline
   // postconditions?: ValidateObject[]
 }

@@ -199,7 +199,7 @@ test('should mutate and set with id to service', async (t) => {
   t.true(scope.isDone())
 })
 
-test.only('should mutate and set with member endpoint for single item', async (t) => {
+test('should mutate and set with member endpoint for single item', async (t) => {
   const scope = nock('http://api12.test')
     .post('/database/entry:ent1')
     .reply(201, { ok: true })

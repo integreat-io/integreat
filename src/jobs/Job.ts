@@ -17,6 +17,7 @@ import type {
   Meta,
   HandlerDispatch,
   MapOptions,
+  SetProgress,
 } from '../types.js'
 import type { JobDef, JobStepDef } from './types.js'
 
@@ -94,6 +95,9 @@ const removePostmutationAndSetId = (
   id: string,
 ) => ({ ...job, id })
 
+const calculateProgress = (index: number, stepsCount: number) =>
+  (index + 1) / (stepsCount + 1)
+
 export default class Job {
   id: string
   schedule?: Schedule
@@ -101,7 +105,7 @@ export default class Job {
   #postmutator?: DataMapper<InitialState>
   #isFlow = false
 
-  constructor(jobDef: JobDef, mapOptions: MapOptions) {
+  constructor(jobDef: JobDef, mapOptions: MapOptions, breakByDefault = false) {
     this.id = getId(jobDef)
 
     if (Array.isArray(jobDef.flow)) {
@@ -113,11 +117,20 @@ export default class Job {
         )
         .map(
           (stepDef, index, steps) =>
-            new Step(stepDef, mapOptions, getPrevStepId(index, steps)),
+            new Step(
+              stepDef,
+              mapOptions,
+              breakByDefault,
+              getPrevStepId(index, steps),
+            ),
         )
     } else if (isJobStep(jobDef)) {
       this.#steps = [
-        new Step(removePostmutationAndSetId(jobDef, this.id), mapOptions),
+        new Step(
+          removePostmutationAndSetId(jobDef, this.id),
+          mapOptions,
+          breakByDefault,
+        ),
       ] // We'll run the post mutation here when this is a job with an action only
     }
     const postmutation = jobDef.postmutation || jobDef.responseMutation
@@ -130,7 +143,11 @@ export default class Job {
     }
   }
 
-  async run(action: Action, dispatch: HandlerDispatch): Promise<Response> {
+  async run(
+    action: Action,
+    dispatch: HandlerDispatch,
+    setProgress: SetProgress,
+  ): Promise<Response> {
     if (this.#steps.length === 0) {
       return {
         status: 'noaction',
@@ -142,12 +159,13 @@ export default class Job {
     let actionResponses: Record<string, Action> = { action } // Include the incoming action in previous responses, to allow mutating from it
     const meta = generateSubMeta(action.meta || {}, this.id)
 
-    for (const step of this.#steps) {
+    for (const [index, step] of this.#steps.entries()) {
       const { [breakSymbol]: doBreak, ...responses } = await step.run(
         meta,
         actionResponses,
         dispatch,
       )
+      setProgress(calculateProgress(index, this.#steps.length))
       actionResponses = { ...actionResponses, ...responses }
       if (doBreak) {
         break

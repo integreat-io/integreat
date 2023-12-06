@@ -59,7 +59,16 @@ export const isDuplicate = <T = unknown>(
   errors: T[],
 ): boolean => errors.indexOf(error) === index
 
+export const isCustomIdent = (ident?: Ident) =>
+  (ident?.type === undefined || ident?.type === IdentType.Custom) &&
+  !ident?.root
+
+export const isInternalIdent = (ident?: Ident) => !isCustomIdent(ident)
+
 export const isRootIdent = (ident?: Ident) =>
   ident?.type === IdentType.Root || ident?.root
+
+export const isSchedulerIdent = (ident?: Ident) =>
+  ident?.type === IdentType.Scheduler
 
 export const isAnonIdent = (ident?: Ident) => ident?.type === IdentType.Anon

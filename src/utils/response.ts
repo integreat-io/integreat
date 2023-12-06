@@ -70,14 +70,14 @@ function getCombinedOrigins(responses: Response[]) {
  * Combine several error responses into one.
  */
 export function combineResponses(responses: Response[]) {
-  const realResponses = responses.filter(isNotNullOrUndefined)
-  if (realResponses.length < 2) {
-    return realResponses[0] // Will yield undefined if no responses
+  responses = responses.filter(isNotNullOrUndefined)
+  if (responses.length < 2) {
+    return responses[0] // Will yield undefined if no responses
   } else {
-    const status = getCombinedStatus(realResponses)
-    const error = getCombinedErrors(realResponses)
-    const warning = getCombinedWarnings(realResponses)
-    const origin = getCombinedOrigins(realResponses)
+    const status = getCombinedStatus(responses)
+    const error = getCombinedErrors(responses)
+    const warning = getCombinedWarnings(responses)
+    const origin = getCombinedOrigins(responses)
     return {
       status,
       ...(error && { error }),

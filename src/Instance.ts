@@ -84,10 +84,14 @@ const createAuthObjects = (
     .map(setUpAuth(authenticators))
     .reduce(indexById, {} as Record<string, Auth>)
 
-function prepareJobs(jobDefs: JobDef[], mapOptions: MapOptions) {
+function prepareJobs(
+  jobDefs: JobDef[],
+  mapOptions: MapOptions,
+  breakByDefault: boolean,
+) {
   const jobs = new Map<string, Job>()
   ensureArray(jobDefs).forEach((jobDef) => {
-    const job = new Job(jobDef, mapOptions)
+    const job = new Job(jobDef, mapOptions, breakByDefault)
     jobs.set(job.id, new Job(jobDef, mapOptions))
   })
   return jobs
@@ -148,6 +152,7 @@ function setupServicesAndDispatch(
     defs.mutations,
     resources.transformers,
     defs.dictionaries,
+    defs.nonvalues,
   )
   const services = createServices(
     defs,
@@ -158,7 +163,8 @@ function setupServicesAndDispatch(
     emit,
   )
 
-  const jobs = prepareJobs(defs.jobs || [], mapOptions)
+  const breakByDefault = defs.flags?.breakByDefault ?? false
+  const jobs = prepareJobs(defs.jobs || [], mapOptions, breakByDefault)
   const dispatch = createDispatch({
     schemas,
     services,

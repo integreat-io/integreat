@@ -1,4 +1,4 @@
-import mapTransform from 'map-transform'
+import { pathGetter } from 'map-transform'
 import { isObject } from '../utils/is.js'
 import type { Authenticator, Action } from '../types.js'
 import type { AuthOptions, Authentication } from '../service/types.js'
@@ -6,6 +6,9 @@ import type { AuthOptions, Authentication } from '../service/types.js'
 export interface ValidateOptions extends AuthOptions {
   identId?: string
 }
+
+// `pathGetter` is requiring state, so give the minimal state needed
+const state = { context: [], value: undefined }
 
 const compareValues = (expected: unknown | unknown[], value: unknown) =>
   expected !== undefined && Array.isArray(expected)
@@ -22,7 +25,7 @@ const getHasPropsCount = (matches: [boolean, boolean][]) =>
 // are all present with the expected values in the given action. The second
 // boolean is `true` if any of the entries in `options` are present in the given
 // action, even though they might not have the expected values.
-async function validateOptions(options: AuthOptions, action: Action | null) {
+function validateOptions(options: AuthOptions, action: Action | null) {
   if (action === null) {
     // There is no action, so we don't have a match and none of the expected
     // props are present
@@ -39,12 +42,13 @@ async function validateOptions(options: AuthOptions, action: Action | null) {
   // Extract the values at the paths from the action, and compare them to the
   // expected values. `matches` wil be an array of [isMatch, hasProp] tuples for
   // each path.
-  const matches: [boolean, boolean][] = await Promise.all(
-    pathAndExpectedArr.map(async function ([path, expected]) {
-      const value = await mapTransform(path)(action)
-      return [compareValues(expected, value), value !== undefined] // [isMatch, hasProp]
-    })
-  )
+  const matches: [boolean, boolean][] = pathAndExpectedArr.map(function ([
+    path,
+    expected,
+  ]) {
+    const value = pathGetter(path)(action, state)
+    return [compareValues(expected, value), value !== undefined] // [isMatch, hasProp]
+  })
 
   // Count up the matches to return the expected flags
   return [
@@ -88,7 +92,7 @@ const optionsAuth: Authenticator = {
   async validate(_authentication, options: ValidateOptions | null, action) {
     const { identId, ...authOptions } = options || {}
 
-    const [isValid, hasProps] = await validateOptions(authOptions, action)
+    const [isValid, hasProps] = validateOptions(authOptions, action)
     if (isValid) {
       return { status: 'ok', access: { ident: { id: identId } } }
     } else {
@@ -132,7 +136,7 @@ const optionsAuth: Authenticator = {
      * options object given on creation.
      */
     asHttpHeaders(
-      authentication: Authentication | null
+      authentication: Authentication | null,
     ): Record<string, unknown> {
       if (isObject(authentication)) {
         const { status, ...options } = authentication

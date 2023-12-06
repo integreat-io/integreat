@@ -28,7 +28,7 @@ test('should mutate incoming action data to error status and mutate response', a
       data: null,
       sourceService: 'api', // Makes this a candidate for incoming mapping
     },
-    meta: { ident: { id: 'root', type: IdentType.Root } },
+    meta: { ident: { id: 'anonymous', type: IdentType.Anon } },
   }
   const expectedResponseData = JSON.stringify({
     code: 'badrequest',
@@ -41,4 +41,23 @@ test('should mutate incoming action data to error status and mutate response', a
   t.is(ret.status, 'badrequest', ret.error)
   t.deepEqual(ret.data, expectedResponseData)
   t.is(send.callCount, 0)
+})
+
+test('should mutate incoming action data to ok status', async (t) => {
+  const action = {
+    type: 'GET',
+    payload: {
+      path: '/',
+      data: '',
+      sourceService: 'api', // Makes this a candidate for incoming mapping
+    },
+    meta: { ident: { id: 'anonymous', type: IdentType.Anon } },
+  }
+  const expected = '{"status":"ok"}'
+
+  const great = Integreat.create(defs, resources)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.data, expected)
 })

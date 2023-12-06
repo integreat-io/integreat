@@ -66,6 +66,7 @@ export interface TransformFunction<
 export enum IdentType {
   Root = 'ROOT',
   Anon = 'ANON',
+  Scheduler = 'SCHED',
   Custom = 'CUST',
 }
 
@@ -256,6 +257,10 @@ export interface ActionHandler<T = unknown> {
   (action: Action, resources: ActionHandlerResources): Promise<Response<T>>
 }
 
+export interface DefintionFlags {
+  breakByDefault?: boolean
+}
+
 export interface Definitions {
   id?: string
   schemas: SchemaDef[]
@@ -263,9 +268,11 @@ export interface Definitions {
   mutations?: Record<string, TransformDefinition>
   auths?: AuthDef[]
   identConfig?: IdentConfig
+  nonvalues?: unknown[]
   queueService?: string
   dictionaries?: Dictionaries
   jobs?: JobDef[]
+  flags?: DefintionFlags
 }
 
 export interface Resources {

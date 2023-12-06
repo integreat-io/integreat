@@ -365,8 +365,10 @@ specify a few things:
   will not by cast automatically nor will an error be returned if the data is
   not typed.
 - `allowRawResponse`: When set to `true`, response `data` coming from this
-  endpoint will not by cast automatically nor will an error be returned if the
-  data is not typed.
+  endpoint will not be cast automatically nor will an error be returned if the
+  data is not typed. The default is `false`, expcept for incoming endpoints
+  (endpoints where `match` object has `incoming: true`) where the default value
+  is `true`.
 - `castWithoutDefaults`: Set to `true` when you don't want to set default values
   on casted data. This also means no `id` will be generated and no `createdAt`
   or `updatedAt` will be set – when any of these are missing in the data.
@@ -828,6 +830,25 @@ A double carret `^^` takes you to the top -- the root -- so after
 
 Carret notations -- parents and roots -- does not currently work in reverse, but
 they might in a future version.
+
+### Non-values
+
+The behavior of some transformers are based upon certain values being
+non-values. E.g. `{ $alt: [<pipeline 1>, <pipeline 2>] }` will use the value
+from the first pipeline if it returns a value, otherwise the value from the
+second pipeline, meaning it will check for non-values. By default `null`,
+`undefined`, and `''` (empty string) are non-values. By setting the `nonvalues`
+param to an array of values in the defintions object you pass to
+`Integreat.create()`, you may specify your own non-values.
+
+If you don't want empty string to a non-value, for instance, you do this:
+
+```javascript
+const great = Integreat.create({
+  nonvalues: [null, undefined],
+  // ... other definitions
+})
+```
 
 ## Schemas
 
@@ -1431,12 +1452,12 @@ Example ident:
   setting the auth rules for a schema, you specify required rules so that to get
   data cast in this schema, an ident with e.g. the role `admin` must be
   provided.
-- `type`: An optional string to signal when this ident is `'ROOT'` or `'ANON'`.
-  This is used internally by Integreat, but in some cases you may want to set
-  this yourself. Make sure, however, that you don't let third-parties set
-  `'ROOT'`. Make sure to also set the id, typically to `'root'` or
-  `'anonymous'`. Not setting any `type` is the same as setting it to `'CUST'`,
-  which is the default.
+- `type`: An optional string to signal when this ident is `'ROOT'`, `'SCHED'`,
+  or `'ANON'`. This is used internally by Integreat, but in some cases you may
+  want to set this yourself. Make sure, however, that you don't let
+  third-parties set `'ROOT'`. Make sure to also set the id, typically to
+  `'root'` or `'anonymous'`. Not setting any `type` is the same as setting it to
+  `'CUST'`, which is the default.
 - `isCompleted`: A flag to signal that an ident has already been completed, so
   that it won't be completed again. Used by the `completeIdent` middleware. You
   should normally not need to set this yourself.
@@ -1775,13 +1796,15 @@ it won't be wrapped in an array.)
 
 #### `EXPIRE`
 
-> [!NOTE]
-> This action will change before we reach v1.0.
+The `EXPIRE` action have two alternative way of operating. If the
+`deleteWithParams` param is `false` or not set, we will first dispatch a `GET`
+action to fetch expired data items from a service, and the then dispatch a
+`DELETE` action with the retrieved data items. If `deleteWithParams` is `true`,
+we will instead dispatch a `DELETE` action right away with the same params we
+would have provided to the `GET` action.
 
-The `EXPIRE` action will `GET` expired data items from a service, and the then
-`DELETE` them.
-
-Here's an example of an `EXPIRE` action:
+Here's an example of an `EXPIRE` action that will dispatch a `GET` and a
+`DELETE`:
 
 ```javascript
 {
@@ -1790,16 +1813,28 @@ Here's an example of an `EXPIRE` action:
     service: 'store',
     type: 'entry',
     endpoint: 'getExpired',
-    msFromNow: 0
+    msFromNow: -24 * 60 * 60 * 1000 // Delete entries older than 24 hours
   }
 }
 ```
 
-The `endpoint` property is required for this action, and needs to specify a
-service endpoint used to fetch expired items. The action dispatched to this
-endpoint will have a `timestamp` property with the current time as microseconds
-since epoc (Januar 1, 1970 UTC), and `isodate` as the current time in the
-extended ISO 8601 format(`YYYY-MM-DDThh:mm:ss.sssZ`).
+Here's an example of an `EXPIRE` action that will dispatch a `DELETE` directly:
+
+```javascript
+{
+  type: 'EXPIRE',
+  payload: {
+    service: 'store',
+    type: 'entry',
+    deleteWithParams: true
+  }
+}
+```
+
+The `GET` action (or the `DELETE` action when `deleteWithParams` is `true`) will
+have a `timestamp` property with the current time as microseconds since epoc
+(Januar 1, 1970 UTC), and `isodate` as the current time in the extended ISO 8601
+format(`YYYY-MM-DDThh:mm:ss.sssZ`).
 
 To have `timestamp` and `isodate` be a time in the future instead, set
 `msFromNow` to a positive number of milliseconds. This will be added to the
@@ -1889,7 +1924,220 @@ intention is not to replace an existing action handler.
 
 ## Jobs
 
-> **Editor's note:** Write this section.
+You define jobs to run one or more actions on a schedule or to add additional
+logic that is not provided by one specific service endpoint. When you dispatch
+several actions, in sequence or in parallel, we call it a "flow".
+
+A simple job running on a schedule, may look like this:
+
+```javascript
+const syncJob = {
+  id: 'syncEntries',
+  cron: '0 */1 * * *', // Every hour
+  action: {
+    type: 'SYNC',
+    payload: {
+      type: 'entry',
+      retrieve: 'updated',
+      from: 'entries',
+      to: 'store',
+    },
+  },
+}
+```
+
+This will dispatch the given `SYNC` action every hour. (The `SYNC` action and
+cron syntax is out of scope in this section. Fron cron expressions,
+(Crontab)[https://crontab.cronhub.io] is a good and practical resource.)
+
+An alternative to running a job on a schedule with `cron`, is to run it by
+dispatching a `RUN` action with the job id in the payload `jobId` param.
+
+A flow may look like this:
+
+```javascript
+const flowJob = {
+  id: 'getEntryFromOtherService',
+  flow: [
+    {
+      id: 'getFromStore',
+      action: {
+        type: 'GET',
+        payload: {
+          type: 'entry',
+          targetService: 'store',
+        },
+      },
+      premutation: {
+        payload: {
+          $modify: 'payload',
+          id: '^^.action.payload.id',
+        },
+      },
+    },
+    {
+      id: 'getFromOtherService',
+      action: {
+        type: 'GET',
+        payload: {
+          type: 'entry',
+          targetService: 'otherService',
+        },
+      },
+      premutation: {
+        payload: {
+          $modify: 'payload',
+          id: '^^.getFromStore.response.data.otherId',
+        },
+      },
+    },
+  ],
+}
+```
+
+Several things are going on here: First, we have a flow with two actions. We
+imagine here that we are going to fetch an entry with an id that is found in the
+`store` service, and use the `otherId` retrieved from that service to get the
+entry from `otherService`. The two steps in `flow` look a lot like a job, and
+in one way they are the same, with some differences, that we will get back to.
+They are run sequentally in the order they appear in the `flow` array.
+
+Secondly, we have a `premutation` on each step. This is given the `action` and
+may mutate it before it is dispatched. As for endpoint mutations, the top level
+has `$modify: true` as default, but we need to modify the sub-objects we
+include, when that is what we want. In the first step, we set the payload `id`
+to the `id` provided in the action that called this job. This job is passed to
+mutations on jobs and steps under the name `'action'`, and we prepend it with
+the root path (`^^`) as it is found on the top level of the data structure we're
+mutating.
+
+The second step is similar, but here we set the payload `id` to the `otherId`
+found in the response data of the first step. The action and the response from a
+step is available to all following steps by the id of the step, in this case
+`'getFromStore'`. We have to prepend with the root path (`^^`) here as well.
+When we say the action and response is available, we find it as an action object
+with any response on a `response` property.
+
+With the action
+`{ type: 'RUN', payload: { jobId: 'getEntryFromOtherService', id: '12345' } }`,
+the first step will dispatch a `GET` for the id `12345`. If that action
+succeeds with the data `{ id: '12345', otherId: '67890' }`, the second step will
+dispatch a `GET` for the id `67890`. The response from the last action is
+returned by default.
+
+If any job step fails, the entire job will fail and the error will be returned,
+unless you set up any `preconditions`, `postconditions`, or `postmutations` to
+alter this default behavior. More on that in the following sections.
+
+### Job and step mutations
+
+Jobs and job steps provide two mechanisms for mutations: `premutation` and
+`postmutation`. They work in a similar way, but `premutation` is used to
+mutate the action of a job or a job step _before_ it is dispatched, and
+`postmutations` is used to mutate the response from a job or a step.
+
+Note that `premutation` will not have an effect on a job with a `flow`, but
+`postmutation` may be used with the response from a flow.
+
+Both mutation pipelines are passed an object that holds the action and response
+of every step that has been run so far, set on a property with the same key as
+the step id. The response is given as a `response` property on the action. The
+action that was dispatched to run the job is also included on the `'action'`
+property. (Thus a step may not have the id `'action'`.) The object also holds
+the action of the step on an internal property, and this is the starting point
+for the mutations. You do not reference the step action directly, just mutate
+was is given in the pipeline data and use the root path `^^` to get to the
+actions and responses of other steps.
+
+For both pipelines, an action object is expected, and in the case of
+`postmutation` the action should have a `response` object which is what will be
+used as the response from the job or step.
+
+### Step conditions
+
+By default, if a step in a flow fails, no more steps are run, and the entire job
+will fail with the response from the failed step. You may however provide your
+own conditions for when a step should be run and when a step should be regarded
+as having failed.
+
+`preconditions` on a step must be an array of condition objects, that must all
+pass in order for the step to be run. A condition object must have a `condition`
+property with an array of mutation pipelines, that must all return truthy for
+the condition to be regarded as passed. Each pipeline is given the same object
+as is given to `premutation` with action and responses from previous steps, but
+without the action to be dispatched. See
+[the section on mutating jobs](#job-and-step-mutations) for more on this.
+
+The condition object may also have a `failResponse` property with a response
+object that will be used as the response from the step if the condition fails.
+
+Finally, the `condition` object may have a `break` property set to `true`, to
+signal that the entire job should fail if the condition fails. If `break` is not
+set, the step will just be skipped and the job flow continues.
+
+> [!NOTE]
+> By setting the feature flag `breakByDefault` to `true` (on the `flags` object
+> in the defintions given to `Integreat.create()`), `break` will be `true` by
+> default, and you must set it to `false` to make the flow continue. This will
+> be the default behavior in the next major version of Integreat, so it's a good
+> idea to set the flag to `true` already now.
+
+Note that a step has a default pre-condition, that will make it fail and stop
+the flow if the previous step failed. By specifying your own `preconditions`,
+you override this, and only your conditions will be used. But when you set
+`breakByDefault` to `true` (see note above), this default condition will be
+set in the `postconditions` instead, so that you may override it there. This
+way, you may set pre-conditions on a step, whithout overriding the fail-on-error
+behavior of the step before.
+
+`postconditions` is also an array of condition objects, but this is used to
+decide if the step should be regarded as having failed after its action or flow
+has run. The condition pipelines are passed the same object as `postmutation`,
+but _after_ `postmutation` has been applied. Just as for `preconditions`, the
+`break` property is `false` by default, so to stop the entire job, set it to
+`true` (but see note on `breakByDefault` above). An error will usually cause
+the job to fail even with `break: false`, but the breaking may be handled by the
+`preconditions` on the next step, as describe above.
+
+Post-conditions specify what is required for a step to be succeessful, and
+sometimes you may require a certain error as success, e.g. when you're checking
+a cache and will only continue if a value is not cached, requiring a `notfound`
+response status. The condition pipeline for this should be straight
+forward, but as you cannot specify the response that will be used when the
+condition _passes_, you may wonder what happens with the error response.
+Integreat will set the status of a passing response to `ok` if it was an error,
+and otherwise leave it as is. Also, when changing an error to an `ok`, any
+`error` property will be changed to a `warning`.
+
+### Dispatching several actions by iterating over an array
+
+Sometimes you will want to dispatch several actions based on a data array, e.g.
+when you have an array of data items, but the relevant endpoint only accepts one
+data item. This may be done with `iterate`, which is a special mutation that is
+must return an array, and the job action will be dispatched once for every item
+in this array. The item will be set as payload `data`. `premutation` may be used
+to modify the action before it is dispatched as usual, but note that the
+mutation is applied to every single action, after the `iterate`, so to speak.
+
+This applies to both a job with an action and a step with an action in a flow.
+
+The responses of each action are combined and set as a `response` object on the
+step action (before the iteration), making an iterated step just like any other.
+When all actions are successful, the response will have status `ok`, and the
+response `data` will be an array of the data from each response in the order
+they where run. When there are errors, Integreat will use any common status, if
+possible, otherwise the status will be `'error'`. The `error` string will
+include all the indidivual errors, separated by a pipe (`|`). The individual
+responses will also be available on a `responses` property on the `response`
+object.
+
+Every single iterated action and response will also be available on the step id
+with an index prefix, e.g. `getEntries` will have `getEntries_0`,
+`getEntries_1`, etc.
+
+By default, the iterations are run in sequence, but you may run several in
+parallel by specifying the number of concurrent iterations on the
+`iterateConcurrency` property on the job step. The default is `1`.
 
 ## Queues
 
@@ -2018,7 +2266,8 @@ const great = Integreat.create(
 - `props`: You may provide alternative field names for the `id`, `roles`, and
   `tokens` for an ident in the schema specified on `type`. When the prop and the
   field has the same name, it may be omitted, though it doesn't hurt to specif
-  it anyway for clarity.
+  it anyway for clarity. For setups that don't need `roles` and/or `tokens`, you
+  may set these to `null`. Omitting them will result in the default field names.
 
 Note that in the example above, the `id` of the data will be used as the ident
 `id`. When the id is not suited for this, you will need another field on the

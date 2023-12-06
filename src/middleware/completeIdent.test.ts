@@ -139,6 +139,23 @@ test('should not complete root ident with the obsolete root flag', async (t) => 
   t.deepEqual(dispatch.args[0][0], action)
 })
 
+test('should not complete scheduler ident ', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'notfound',
+    error: 'who?',
+  })
+  const action = {
+    type: 'GET',
+    payload: {},
+    meta: { ident: { id: 'scheduler', type: IdentType.Scheduler } },
+  }
+
+  await completeIdent(dispatch)(action)
+
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], action)
+})
+
 test('should not complete anonymous ident ', async (t) => {
   const dispatch = sinon.stub().resolves({
     status: 'notfound',

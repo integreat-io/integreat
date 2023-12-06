@@ -34,6 +34,27 @@ const dictionaries = {
 
 // Tests
 
+test('should return default nonvalues', (t) => {
+  const expected = [undefined, null, '']
+  const ret = createMapOptions(new Map(), mutations, transformers)
+
+  t.deepEqual(ret.nonvalues, expected)
+})
+
+test('should return provided nonvalues', (t) => {
+  const nonvalues = [undefined, null]
+  const expected = [undefined, null]
+  const ret = createMapOptions(
+    new Map(),
+    mutations,
+    transformers,
+    undefined,
+    nonvalues,
+  )
+
+  t.deepEqual(ret.nonvalues, expected)
+})
+
 test('should return map options with pipelines from mutations', (t) => {
   const expected = mutations
   const ret = createMapOptions(new Map(), mutations, transformers)

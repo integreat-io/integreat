@@ -137,8 +137,8 @@ export default class Endpoint {
     this.#origin = endpointDef.id
       ? `service:${serviceId}:endpoint:${endpointDef.id}`
       : `service:${serviceId}:endpoint`
-    this.allowRawRequest = endpointDef.allowRawRequest ?? false
-    this.allowRawResponse = endpointDef.allowRawResponse ?? false
+    this.allowRawRequest = endpointDef.allowRawRequest // Don't set a default
+    this.allowRawResponse = endpointDef.allowRawResponse // Don't set a default
     this.castWithoutDefaults = endpointDef.castWithoutDefaults ?? false
     this.match = endpointDef.match
     this.#checkIfMatch = isMatch(endpointDef, mapOptions)

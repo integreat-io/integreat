@@ -691,10 +691,10 @@ test('should mutate action into several actions based on iterate pipeline', asyn
   t.deepEqual(dispatch.args[0][0], expectedAction0)
   t.deepEqual(dispatch.args[1][0], expectedAction1)
   t.deepEqual(ret, expected)
-  t.is(concurrency.max, 2) // Ran in parallel
+  t.is(concurrency.max, 1) // Ran only one at a time
 })
 
-test('should limit the number of concurrently run iterate actions', async (t) => {
+test('should allow a number of iterations to be run in parallel', async (t) => {
   const concurrency = { now: 0, max: 0 }
   const dispatch = sinon
     .stub()
@@ -713,7 +713,7 @@ test('should limit the number of concurrently run iterate actions', async (t) =>
       'action.payload.data.items[]',
       { $filter: 'compare', path: 'include', match: true },
     ],
-    iterateConcurrency: 1,
+    iterateConcurrency: 2,
     mutation: { 'payload.key': 'payload.data.id' },
   }
   const data = {
@@ -733,7 +733,7 @@ test('should limit the number of concurrently run iterate actions', async (t) =>
   await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 2)
-  t.is(concurrency.max, 1) // Ran only one at a time
+  t.is(concurrency.max, 2) // Ran two in parallel
 })
 
 test('should mutate action into several actions based on iterate path', async (t) => {

@@ -1,43 +1,39 @@
 import { validateRoleOrIdent } from './authAction.js'
 import getField from '../../utils/getField.js'
-import { arrayIncludes, filterAsync } from '../../utils/array.js'
+import { arrayIncludes } from '../../utils/array.js'
 import { isTypedData, isNullOrUndefined, isRootIdent } from '../../utils/is.js'
 import type { Action, Response, TypedData, Ident } from '../../types.js'
 import type Schema from '../../schema/Schema.js'
 import type { Access } from '../../schema/types.js'
 
 export interface AuthorizeDataFn {
-  (action: Action, allowRaw?: boolean): Promise<Action>
+  (action: Action, allowRaw?: boolean): Action
 }
 
 const isStringOrArray = (value: unknown): value is string | string[] =>
   typeof value === 'string' || Array.isArray(value)
 
-async function getValueAndCompare(
+function getValueAndCompare(
   item: TypedData,
   fieldPath: string,
   compareValue?: string | string[],
 ) {
-  const values = await getField(item, fieldPath)
+  const values = getField(item, fieldPath)
   return isStringOrArray(values) && arrayIncludes(compareValue, values)
 }
 
-const isIdentFromFieldOrIdentOk = async (
+const isIdentFromFieldOrIdentOk = (
   item: TypedData,
   field?: string,
   present?: string | string[],
-) => field && (await getValueAndCompare(item, field, present))
+) => field && getValueAndCompare(item, field, present)
 
-const isItemAuthorized = async (
-  item: TypedData,
-  access: Access,
-  ident?: Ident,
-) =>
+const isItemAuthorized = (item: TypedData, access: Access, ident?: Ident) =>
   (!access.identFromField && !access.roleFromField) || // No data based auth required
   validateRoleOrIdent(access.role, ident?.roles) || // We are authorized by role
   validateRoleOrIdent(access.ident, ident?.id) || // We are authorized by ident
-  (await isIdentFromFieldOrIdentOk(item, access.identFromField, ident?.id)) || // We are authorized by identFromField, or it's not needed
-  (await isIdentFromFieldOrIdentOk(item, access.roleFromField, ident?.roles)) // We are authorized by roleFromField, or it's not needed
+  isIdentFromFieldOrIdentOk(item, access.identFromField, ident?.id) || // We are authorized by identFromField, or it's not needed
+  isIdentFromFieldOrIdentOk(item, access.roleFromField, ident?.roles) // We are authorized by roleFromField, or it's not needed
 
 const authorizeItem =
   (
@@ -46,7 +42,7 @@ const authorizeItem =
     allowRaw: boolean,
     ident?: Ident,
   ) =>
-  async (item: unknown): Promise<string | undefined> => {
+  (item: unknown): string | undefined => {
     if (!isTypedData(item)) {
       return allowRaw ? undefined : 'RAW_DATA'
     }
@@ -56,7 +52,7 @@ const authorizeItem =
     }
 
     const access = schema.accessForAction(actionType)
-    if (await isItemAuthorized(item, access, ident)) {
+    if (isItemAuthorized(item, access, ident)) {
       // We either are already authorized trough `role` or `ident`, we have no
       // `identFromField` or `roleFromField`, or we have are authorized by one
       // of them
@@ -98,15 +94,12 @@ const generateErrorAndReason = (
  * authorized. Wrap the data in a response object and include a warning if
  * any items were removed.
  */
-async function authorizeDataArrayAndWrapInResponse(
+function authorizeDataArrayAndWrapInResponse(
   data: unknown[],
-  authItemFn: (item: unknown) => Promise<string | undefined>,
+  authItemFn: (item: unknown) => string | undefined,
   isToService: boolean,
 ) {
-  const authed = await filterAsync(
-    data,
-    async (data: unknown) => (await authItemFn(data)) === undefined,
-  )
+  const authed = data.filter((data: unknown) => authItemFn(data) === undefined)
   const warning = generateWarning(data.length - authed.length, isToService)
   return { data: authed, warning }
 }
@@ -115,14 +108,14 @@ async function authorizeDataArrayAndWrapInResponse(
  * Authorize a single data item and wrap it in a response object if successful.
  * If not authorized, we return a `noaccess` response.
  */
-async function authorizeDataItemAndWrapInResponse(
+function authorizeDataItemAndWrapInResponse(
   data: unknown,
-  authItemFn: (item: unknown) => Promise<string | undefined>,
+  authItemFn: (item: unknown) => string | undefined,
   isToService: boolean,
   service?: string,
 ) {
   if (!isNullOrUndefined(data)) {
-    const reason = await authItemFn(data)
+    const reason = authItemFn(data)
     if (typeof reason === 'string') {
       const error = generateErrorAndReason(reason, data, isToService, service)
       return {
@@ -137,12 +130,12 @@ async function authorizeDataItemAndWrapInResponse(
   return { data }
 }
 
-const authorizeDataAndWrapInResponse = async (
+const authorizeDataAndWrapInResponse = (
   data: unknown,
-  authItemFn: (item: unknown) => Promise<string | undefined>,
+  authItemFn: (item: unknown) => string | undefined,
   isToService: boolean,
   service?: string,
-): Promise<Response> =>
+): Response =>
   Array.isArray(data)
     ? authorizeDataArrayAndWrapInResponse(data, authItemFn, isToService)
     : authorizeDataItemAndWrapInResponse(data, authItemFn, isToService, service)
@@ -154,10 +147,7 @@ const authorizeDataBase = (
   schemas: Map<string, Schema>,
   isToService: boolean,
 ) =>
-  async function authorizeData(
-    action: Action,
-    allowRaw = false,
-  ): Promise<Action> {
+  function authorizeData(action: Action, allowRaw = false): Action {
     if (isRootIdent(action.meta?.ident)) {
       return action
     }
@@ -173,7 +163,7 @@ const authorizeDataBase = (
       error,
       reason,
       warning,
-    } = await authorizeDataAndWrapInResponse(
+    } = authorizeDataAndWrapInResponse(
       isToService ? action.payload.data : action.response?.data,
       authorizeItem(schemas, actionType, allowRaw, ident),
       isToService,

@@ -9,13 +9,15 @@ import type {
 
 export type TransformDefinitions = Record<string, string | TransformDefinition>
 
+export interface IdentConfigProps {
+  id?: string
+  roles?: string | null
+  tokens?: string | null
+}
+
 export interface IdentConfig {
   type: string
-  props?: {
-    id?: string
-    roles?: string
-    tokens?: string
-  }
+  props?: IdentConfigProps
 }
 
 export interface ActionMapper {

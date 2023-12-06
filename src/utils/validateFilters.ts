@@ -1,14 +1,20 @@
 import util from 'util'
 import ajv from 'ajv'
-import mapTransform from 'map-transform'
+import { pathGetter } from 'map-transform'
 import { isObject } from './is.js'
-import type { DataMapper } from 'map-transform/types.js'
 import type { Condition, ConditionFailObject } from '../types.js'
 
 const Ajv = ajv.default
 const validator = new Ajv()
 
+interface DataMapper {
+  (data: unknown, state?: unknown): unknown
+}
+
 type FilterAndMessage = [DataMapper, () => ConditionFailObject]
+
+// `pathGetter` is requiring state, so give the minimal state needed
+const state = { context: [], value: undefined }
 
 const cleanCondition = ({ onFail, ...filter }: Condition) => filter
 const cleanFilter = (filter: Condition | boolean) =>
@@ -16,7 +22,7 @@ const cleanFilter = (filter: Condition | boolean) =>
 
 function prepareFilter(
   path: string,
-  filter?: Record<string, unknown> | boolean
+  filter?: Record<string, unknown> | boolean,
 ) {
   if (path === '$or') {
     if (isObject(filter)) {
@@ -24,9 +30,9 @@ function prepareFilter(
     }
   } else if (filter) {
     const val = validator.compile(cleanFilter(filter))
-    const getFromPath = mapTransform(path)
+    const getFromPath = pathGetter(path)
 
-    return async (data: unknown) => val(await getFromPath(data))
+    return (data: unknown) => val(getFromPath(data, state))
   }
   return undefined
 }
@@ -37,7 +43,7 @@ const stringifyFilter = ({ onFail, ...filter }: Condition) =>
 function prepareMessage(
   path: string,
   filter: Condition | boolean | undefined,
-  useFriendlyMessages: boolean
+  useFriendlyMessages: boolean,
 ) {
   if (!useFriendlyMessages) {
     return () => path
@@ -60,7 +66,7 @@ function prepareMessage(
 
 export default function validateFilters(
   filters: Record<string, Condition | boolean | undefined>,
-  useFriendlyMessages = false
+  useFriendlyMessages = false,
 ) {
   const filterFns = Object.entries(filters)
     .map(([path, filter]) => [
@@ -70,17 +76,10 @@ export default function validateFilters(
     .filter(([filter]) => !!filter) as FilterAndMessage[]
   const isOrFilters = filters.$or === true
 
-  return async function validate(
-    data: unknown
-  ): Promise<ConditionFailObject[]> {
-    const state = { context: [], value: data } // Hack because we are using the `filter` transformer here
-    const failObjects = (
-      await Promise.all(
-        filterFns.map(async ([filter, getMessage]) =>
-          (await filter(data, state)) ? undefined : getMessage()
-        )
-      )
-    ).filter(Boolean) as ConditionFailObject[]
+  return function validate(data: unknown): ConditionFailObject[] {
+    const failObjects = filterFns
+      .map(([filter, getMessage]) => (filter(data) ? undefined : getMessage()))
+      .filter(Boolean) as ConditionFailObject[]
     return isOrFilters && failObjects.length < filterFns.length
       ? []
       : failObjects

@@ -10,16 +10,29 @@ import {
   IdentType,
   ActionHandlerResources,
 } from '../types.js'
+import { IdentConfigProps } from '../service/types.js'
 
 interface IdentParams extends Record<string, unknown> {
   id?: string
 }
 
+interface PropKeys {
+  id: string
+  roles: string | null
+  tokens: string | null
+}
+
+const createGetIdentAction = (type: string, params: IdentParams) => ({
+  type: 'GET',
+  payload: { type, ...params },
+  meta: { ident: { id: 'root', root: true, type: IdentType.Root } }, // Set `root` flag here until we can remove it
+})
+
 const preparePropKeys = ({
   id = 'id',
   roles = 'roles',
   tokens = 'tokens',
-} = {}) => ({
+}: IdentConfigProps = {}): PropKeys => ({
   id,
   roles,
   tokens,
@@ -27,14 +40,11 @@ const preparePropKeys = ({
 
 // Will set any key that is not `id` on a params object. Not necessarily the
 // best way to go about this.
-const prepareParams = (
-  ident: Ident,
-  keys: Record<string, string>,
-): IdentParams | null =>
+const prepareParams = (ident: Ident, keys: PropKeys): IdentParams | null =>
   ident.id
     ? { [keys.id]: ident.id }
     : ident.withToken
-    ? { [keys.tokens]: ident.withToken }
+    ? { [keys.tokens!]: ident.withToken } // If we get here, the tokens key is a string
     : null
 
 const wrapOk = (action: Action, data: unknown, ident: Ident): Response => ({
@@ -44,21 +54,21 @@ const wrapOk = (action: Action, data: unknown, ident: Ident): Response => ({
   access: { ident },
 })
 
-const prepareResponse = async (
+const prepareResponse = (
   action: Action,
   response: Response,
   params: IdentParams,
-  propKeys: Record<string, string>,
-): Promise<Response> => {
+  propKeys: PropKeys,
+): Response => {
   const data = getFirstIfArray(response.data)
 
   if (data) {
     const completeIdent = {
-      id: await getField(data, propKeys.id),
-      roles: await getField(data, propKeys.roles),
-      tokens: await getField(data, propKeys.tokens),
+      id: getField(data, propKeys.id) as string | undefined,
+      roles: getField(data, propKeys.roles) as string[] | undefined, // TODO: Do some more validation here
+      tokens: getField(data, propKeys.tokens) as string[] | undefined, // TODO: Do some more validation here
       isCompleted: true,
-    } as Ident // Force type because `getField()` returns `unknown`
+    }
     return wrapOk(action, data, completeIdent)
   } else {
     return createErrorResponse(
@@ -69,6 +79,14 @@ const prepareResponse = async (
       'notfound',
     )
   }
+}
+
+function extractParams(resources: ActionHandlerResources, ident: Ident) {
+  const { identConfig } = resources.options
+  const { type } = identConfig || {}
+  const propKeys = preparePropKeys(identConfig?.props)
+  const params = prepareParams(ident, propKeys)
+  return { type, propKeys, params }
 }
 
 /**
@@ -87,9 +105,7 @@ export default async function getIdent(
     )
   }
 
-  const { identConfig } = resources.options
-
-  const { type } = identConfig || {}
+  const { type, propKeys, params } = extractParams(resources, ident)
   if (!type) {
     return createErrorResponse(
       'GET_IDENT: Integreat is not set up with authentication',
@@ -97,9 +113,13 @@ export default async function getIdent(
       'noaction',
     )
   }
-
-  const propKeys = preparePropKeys(identConfig?.props)
-  const params = prepareParams(ident, propKeys)
+  if (typeof ident.withToken === 'string' && !propKeys.tokens) {
+    return createErrorResponse(
+      "GET_IDENT: The request has an ident with 'withToken', but no tokens key is set in `identConfig`",
+      'handler:GET_IDENT',
+      'badrequest',
+    )
+  }
   if (!params) {
     return createErrorResponse(
       'GET_IDENT: The request has no ident with id or withToken',
@@ -108,12 +128,9 @@ export default async function getIdent(
     )
   }
 
-  const nextAction = {
-    type: 'GET',
-    payload: { type, ...params },
-    meta: { ident: { id: 'root', root: true, type: IdentType.Root } }, // Set `root` flag here until we can remove it
-  }
-  const response = await getHandler(nextAction, resources)
-
-  return await prepareResponse(action, response, params, propKeys)
+  const response = await getHandler(
+    createGetIdentAction(type, params),
+    resources,
+  )
+  return prepareResponse(action, response, params, propKeys)
 }
