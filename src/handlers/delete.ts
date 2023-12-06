@@ -29,7 +29,7 @@ const prepareData = ({ type, id, data }: Payload) =>
  */
 export default async function deleteFn(
   action: Action,
-  { getService }: ActionHandlerResources
+  { getService }: ActionHandlerResources,
 ): Promise<Response> {
   const {
     type,
@@ -44,14 +44,6 @@ export default async function deleteFn(
   }
 
   const data = prepareData(action.payload)
-  if ((Array.isArray(data) && data.length === 0) || !data) {
-    return createErrorResponse(
-      `No items to delete from service '${service.id}'`,
-      'handler:DELETE',
-      'noaction'
-    )
-  }
-
   const endpointDebug = endpointId
     ? `endpoint '${endpointId}'`
     : `endpoint matching ${type} and ${id}`
@@ -63,7 +55,7 @@ export default async function deleteFn(
     return createErrorResponse(
       `No endpoint matching ${nextAction.type} request to service '${serviceId}'.`,
       'handler:DELETE',
-      'badrequest'
+      'badrequest',
     )
   }
 
