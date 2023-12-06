@@ -12,6 +12,22 @@ import type {
 const isTypedDataArray = (value: unknown): value is TypedData[] =>
   Array.isArray(value) && isTypedData(value[0])
 
+const createDeleteAction = (
+  type: string | string[],
+  data: TypedData[],
+  targetService?: string,
+  ident?: Ident,
+  cid?: string,
+) => ({
+  type: 'DELETE',
+  payload: {
+    type,
+    data,
+    ...(targetService && { targetService }),
+  },
+  meta: { ident, queue: true, cid },
+})
+
 const getOrDeleteExpired = async (
   deleteWithParams: boolean,
   dispatch: HandlerDispatch,
@@ -37,26 +53,34 @@ const getOrDeleteExpired = async (
   })
 }
 
-const deleteExpiredItems = async (
+async function deleteItems(
   dispatch: HandlerDispatch,
+  response: Response,
   type: string | string[],
-  data: TypedData[],
-  targetService?: string,
+  serviceId?: string,
   cid?: string,
   ident?: Ident,
-): Promise<Response> => {
-  const deleteData = data.map((item) => ({ id: item.id, $type: item.$type }))
-  const deleteAction = {
-    type: 'DELETE',
-    payload: {
-      type,
-      data: deleteData,
-      ...(targetService && { targetService }),
-    },
-    meta: { ident, queue: true, cid },
+): Promise<Response> {
+  if (response.status !== 'ok') {
+    return createErrorResponse(
+      `Could not get items from service '${serviceId}'. Reason: ${response.status} ${response.error}`,
+      'handler:EXPIRE',
+    )
+  }
+  const data = response.data
+  if (!isTypedDataArray(data)) {
+    return createErrorResponse(
+      `No items to expire from service '${serviceId}'`,
+      'handler:EXPIRE',
+      'noaction',
+    )
   }
 
-  return await dispatch(deleteAction)
+  const deleteData = data.map((item) => ({ id: item.id, $type: item.$type }))
+
+  return await dispatch(
+    createDeleteAction(type, deleteData, serviceId, ident, cid),
+  )
 }
 
 /**
@@ -96,7 +120,7 @@ export default async function expire(
     )
   }
 
-  const expiredResponse = await getOrDeleteExpired(
+  const response = await getOrDeleteExpired(
     !!deleteWithParams,
     dispatch,
     type,
@@ -109,23 +133,9 @@ export default async function expire(
 
   if (deleteWithParams) {
     // We're deleting directly with params, so we're done
-    return expiredResponse
+    return response
+  } else {
+    // We've gotten a response from the `GET` action, so we'll send a `DELETE` if it was successful and returned any data items
+    return await deleteItems(dispatch, response, type, serviceId, cid, ident)
   }
-
-  if (expiredResponse.status !== 'ok') {
-    return createErrorResponse(
-      `Could not get items from service '${serviceId}'. Reason: ${expiredResponse.status} ${expiredResponse.error}`,
-      'handler:EXPIRE',
-    )
-  }
-  const data = expiredResponse.data
-  if (!isTypedDataArray(data)) {
-    return createErrorResponse(
-      `No items to expire from service '${serviceId}'`,
-      'handler:EXPIRE',
-      'noaction',
-    )
-  }
-
-  return await deleteExpiredItems(dispatch, type, data, serviceId, cid, ident)
 }

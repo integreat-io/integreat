@@ -22,6 +22,12 @@ interface PropKeys {
   tokens: string | null
 }
 
+const createGetIdentAction = (type: string, params: IdentParams) => ({
+  type: 'GET',
+  payload: { type, ...params },
+  meta: { ident: { id: 'root', root: true, type: IdentType.Root } }, // Set `root` flag here until we can remove it
+})
+
 const preparePropKeys = ({
   id = 'id',
   roles = 'roles',
@@ -48,23 +54,21 @@ const wrapOk = (action: Action, data: unknown, ident: Ident): Response => ({
   access: { ident },
 })
 
-const prepareResponse = async (
+const prepareResponse = (
   action: Action,
   response: Response,
   params: IdentParams,
   propKeys: PropKeys,
-): Promise<Response> => {
+): Response => {
   const data = getFirstIfArray(response.data)
 
   if (data) {
     const completeIdent = {
-      id: await getField(data, propKeys.id),
-      roles: propKeys.roles ? await getField(data, propKeys.roles) : undefined,
-      tokens: propKeys.tokens
-        ? await getField(data, propKeys.tokens)
-        : undefined,
+      id: getField(data, propKeys.id) as string | undefined,
+      roles: getField(data, propKeys.roles) as string[] | undefined, // TODO: Do some more validation here
+      tokens: getField(data, propKeys.tokens) as string[] | undefined, // TODO: Do some more validation here
       isCompleted: true,
-    } as Ident // Force type because `getField()` returns `unknown`
+    }
     return wrapOk(action, data, completeIdent)
   } else {
     return createErrorResponse(
@@ -122,12 +126,9 @@ export default async function getIdent(
     )
   }
 
-  const nextAction = {
-    type: 'GET',
-    payload: { type, ...params },
-    meta: { ident: { id: 'root', root: true, type: IdentType.Root } }, // Set `root` flag here until we can remove it
-  }
-  const response = await getHandler(nextAction, resources)
-
-  return await prepareResponse(action, response, params, propKeys)
+  const response = await getHandler(
+    createGetIdentAction(type, params),
+    resources,
+  )
+  return prepareResponse(action, response, params, propKeys)
 }

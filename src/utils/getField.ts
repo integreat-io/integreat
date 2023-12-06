@@ -7,5 +7,11 @@ const state = { context: [], value: undefined }
 
 const extractIdFromRef = (data: unknown) => (isReference(data) ? data.id : data)
 
-export default (item: unknown, field: string): unknown | unknown[] =>
-  mapAny(extractIdFromRef, pathGetter(field)(item, state))
+export default (
+  item: unknown,
+  field?: string | null,
+  def: unknown = undefined,
+): unknown | unknown[] =>
+  typeof field === 'string' && field !== ''
+    ? mapAny(extractIdFromRef, pathGetter(field)(item, state))
+    : def
