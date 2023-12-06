@@ -10,16 +10,23 @@ import {
   IdentType,
   ActionHandlerResources,
 } from '../types.js'
+import { IdentConfigProps } from '../service/types.js'
 
 interface IdentParams extends Record<string, unknown> {
   id?: string
+}
+
+interface PropKeys {
+  id: string
+  roles: string | null
+  tokens: string | null
 }
 
 const preparePropKeys = ({
   id = 'id',
   roles = 'roles',
   tokens = 'tokens',
-} = {}) => ({
+}: IdentConfigProps = {}): PropKeys => ({
   id,
   roles,
   tokens,
@@ -27,14 +34,11 @@ const preparePropKeys = ({
 
 // Will set any key that is not `id` on a params object. Not necessarily the
 // best way to go about this.
-const prepareParams = (
-  ident: Ident,
-  keys: Record<string, string>,
-): IdentParams | null =>
+const prepareParams = (ident: Ident, keys: PropKeys): IdentParams | null =>
   ident.id
     ? { [keys.id]: ident.id }
     : ident.withToken
-    ? { [keys.tokens]: ident.withToken }
+    ? { [keys.tokens!]: ident.withToken } // If we get here, the tokens key is a string
     : null
 
 const wrapOk = (action: Action, data: unknown, ident: Ident): Response => ({
@@ -48,15 +52,17 @@ const prepareResponse = async (
   action: Action,
   response: Response,
   params: IdentParams,
-  propKeys: Record<string, string>,
+  propKeys: PropKeys,
 ): Promise<Response> => {
   const data = getFirstIfArray(response.data)
 
   if (data) {
     const completeIdent = {
       id: await getField(data, propKeys.id),
-      roles: await getField(data, propKeys.roles),
-      tokens: await getField(data, propKeys.tokens),
+      roles: propKeys.roles ? await getField(data, propKeys.roles) : undefined,
+      tokens: propKeys.tokens
+        ? await getField(data, propKeys.tokens)
+        : undefined,
       isCompleted: true,
     } as Ident // Force type because `getField()` returns `unknown`
     return wrapOk(action, data, completeIdent)
@@ -99,6 +105,14 @@ export default async function getIdent(
   }
 
   const propKeys = preparePropKeys(identConfig?.props)
+  if (typeof ident.withToken === 'string' && !propKeys.tokens) {
+    return createErrorResponse(
+      "GET_IDENT: The request has an ident with 'withToken', but no tokens key is set in `identConfig`",
+      'handler:GET_IDENT',
+      'badrequest',
+    )
+  }
+
   const params = prepareParams(ident, propKeys)
   if (!params) {
     return createErrorResponse(

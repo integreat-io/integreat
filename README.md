@@ -2266,7 +2266,8 @@ const great = Integreat.create(
 - `props`: You may provide alternative field names for the `id`, `roles`, and
   `tokens` for an ident in the schema specified on `type`. When the prop and the
   field has the same name, it may be omitted, though it doesn't hurt to specif
-  it anyway for clarity.
+  it anyway for clarity. For setups that don't need `roles` and/or `tokens`, you
+  may set these to `null`. Omitting them will result in the default field names.
 
 Note that in the example above, the `id` of the data will be used as the ident
 `id`. When the id is not suited for this, you will need another field on the

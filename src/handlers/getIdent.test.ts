@@ -238,6 +238,80 @@ test('should complete ident with other prop keys', async (t) => {
   t.deepEqual(ret.access?.ident, expectedIdent)
 })
 
+test('should not include roles or tokens when their set to null', async (t) => {
+  nock('http://some.api')
+    .get('/entries')
+    .query({ author: 'johnf' })
+    .reply(200, { data: ent1Data })
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { id: 'johnf' } },
+  }
+  const identConfig = {
+    type: 'entry', // This does not make any sense, but it is just for testing
+    props: {
+      id: 'author',
+      roles: null,
+      tokens: null,
+    },
+  }
+  const options = { identConfig }
+  const getService = () => great.services.entries
+  const expectedIdent = {
+    id: 'johnf',
+    roles: undefined,
+    tokens: undefined,
+    isCompleted: true,
+  }
+
+  const ret = await getIdent(action, {
+    ...handlerResources,
+    getService,
+    options,
+  })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.access?.ident, expectedIdent)
+})
+
+test('should respond with an error when we have an ident with `withToken` and no tokens property', async (t) => {
+  const great = Integreat.create(defs, resources)
+  const dispatch = sinon.spy(great.services.users, 'send')
+  const getService = () => great.services.users
+  const scope = nock('http://some.api')
+    .get('/users')
+    .query({ tokens: 'twitter|23457' })
+    .reply(200, { data: johnfData })
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { withToken: 'twitter|23457' } },
+  }
+  const identConfig = {
+    type: 'entry', // This does not make any sense, but it is just for testing
+    props: {
+      id: 'author',
+      tokens: null, // No tokens property
+    },
+  }
+  const options = { identConfig }
+
+  const ret = await getIdent(action, {
+    ...handlerResources,
+    getService,
+    options,
+  })
+
+  t.is(ret.status, 'badrequest', ret.error)
+  t.is(
+    ret.error,
+    "GET_IDENT: The request has an ident with 'withToken', but no tokens key is set in `identConfig`",
+  )
+  t.is(dispatch.callCount, 0)
+  t.false(scope.isDone())
+})
+
 test('should return notfound when unknown service', async (t) => {
   nock('http://some.api')
     .get('/users')
