@@ -14,7 +14,16 @@ const queueService = {
   transporter: 'queue',
   auth: true,
   options: { namespace: 'entriesQueue' },
-  endpoints: [{ match: {} }],
+  endpoints: [
+    { match: {} },
+    {
+      match: { incoming: true },
+      mutation: {
+        $direction: 'from',
+        meta: { $modify: true, queue: { $value: true } },
+      },
+    },
+  ],
 }
 
 const defsWithQueue = {
@@ -37,12 +46,6 @@ const entry1Item = {
   title: 'Entry 1',
 }
 
-const action = {
-  type: 'SET',
-  payload: { type: 'entry', data: entry1Item },
-  meta: { ident: { id: 'johnf' }, queue: true, id: '11004' },
-}
-
 // Tests
 
 test('should send action to queue', async (t) => {
@@ -57,6 +60,11 @@ test('should send action to queue', async (t) => {
       },
     },
   }
+  const action = {
+    type: 'SET',
+    payload: { type: 'entry', data: entry1Item },
+    meta: { ident: { id: 'johnf' }, queue: true, id: '11004' },
+  }
 
   const great = Integreat.create(defsWithQueue, resourcesWithQueue)
   const before = Date.now()
@@ -70,6 +78,7 @@ test('should send action to queue', async (t) => {
   t.deepEqual(queuedAction.payload, action.payload)
   t.deepEqual(queuedAction.meta.ident, { id: 'johnf' })
   t.true(isAuthorizedAction(queuedAction))
+  t.falsy(queuedAction.meta.queue)
   t.is(queuedAction.meta.id, '11004')
   t.is(queuedAction.meta.cid, '11004')
   t.is(typeof queuedAction.meta?.queuedAt, 'number')
@@ -77,14 +86,40 @@ test('should send action to queue', async (t) => {
   t.true((queuedAction.meta?.queuedAt as number) <= after)
 })
 
+test('should send action to queue when queue flag is set in incoming request mutation', async (t) => {
+  const send = sinon.stub().resolves({ status: 'ok' })
+  const resourcesWithQueue = {
+    ...resources,
+    transporters: {
+      ...resources.transporters,
+      queue: {
+        ...baseTransporter,
+        send,
+      },
+    },
+  }
+  const action = {
+    type: 'SET',
+    payload: { type: 'entry', data: entry1Item, sourceService: 'queue' },
+    meta: { ident: { id: 'johnf' }, id: '11004' },
+  }
+
+  const great = Integreat.create(defsWithQueue, resourcesWithQueue)
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'queued', ret.error)
+  t.is(send.callCount, 1)
+})
+
 test('should dispatch action as normal when queue service is unknown', async (t) => {
-  const dispatchedAction = {
-    ...action,
+  const action = {
+    type: 'SET',
+    payload: { type: 'entry', data: entry1Item },
     meta: { ident: { id: 'johnf' }, queue: true },
   }
 
   const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(dispatchedAction)
+  const ret = await great.dispatch(action)
 
   t.is(ret.status, 'noaccess', ret.error) // `noaccess` means we have reached the `entries` service
 })

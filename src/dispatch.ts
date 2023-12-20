@@ -42,8 +42,16 @@ export const compose = (...fns: Middleware[]): Middleware =>
         f(g(...args)),
   )
 
-const shouldQueue = (action: Action, options: HandlerOptions) =>
-  action.meta?.queue === true && !!options.queueService
+// Uses `queue` flag from mutated action if it is set, otherwise uses falls
+// back to `queue` flag from original action. Also requires that a queue service
+// is configured.
+const shouldQueue = (
+  mutatedAction: Action,
+  originalAction: Action,
+  options: HandlerOptions,
+) =>
+  !!options.queueService &&
+  (mutatedAction.meta?.queue ?? originalAction.meta?.queue)
 
 function getActionHandlerFromType(
   type: string | symbol | undefined,
@@ -68,7 +76,7 @@ function getActionHandlerFromType(
  */
 function cleanUpActionAndSetIds({
   payload: { service, ...payload },
-  meta: { queue, auth, ...meta } = {},
+  meta: { auth, ...meta } = {},
   ...action
 }: Action) {
   const id = meta?.id || nanoid()
@@ -91,6 +99,11 @@ const cleanUpResponseAndSetAccessAndOrigin = (
     ? { origin: response.origin || 'dispatch' }
     : {}),
 })
+
+const removeQueueFlag = ({
+  meta: { queue, ...meta } = {},
+  ...action
+}: Action) => ({ ...action, meta })
 
 async function mutateIncomingAction(action: Action, getService: GetService) {
   const { sourceService } = action.payload
@@ -194,10 +207,10 @@ export default function createDispatch({
       : (next: HandlerDispatch) => async (action: Action) => next(action)
 
   // Create dispatch function
-  const dispatch = (rawAction: Action | null) =>
+  const dispatch = (originalAction: Action | null) =>
     pProgress(async (setProgress) => {
-      debug('Dispatch: %o', rawAction)
-      if (!rawAction) {
+      debug('Dispatch: %o', originalAction)
+      if (!originalAction) {
         return {
           status: 'noaction',
           error: 'Dispatched no action',
@@ -207,13 +220,14 @@ export default function createDispatch({
 
       let response
       const {
-        action,
+        action: mutatedAction,
         service: incomingService,
         endpoint: incomingEndpoint,
       } = await mutateIncomingAction(
-        cleanUpActionAndSetIds(rawAction),
+        cleanUpActionAndSetIds(originalAction),
         getService,
       )
+      const action = removeQueueFlag(mutatedAction)
 
       if (action.response?.status) {
         response = action.response
@@ -221,7 +235,7 @@ export default function createDispatch({
         const resources = { dispatch, getService, options, setProgress }
 
         try {
-          if (shouldQueue(rawAction, options)) {
+          if (shouldQueue(mutatedAction, originalAction, options)) {
             // Use queue handler if queue flag is set and there is a queue
             // service. Bypass middleware
             response = await handleAction(
