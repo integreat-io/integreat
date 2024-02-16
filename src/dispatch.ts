@@ -105,6 +105,11 @@ const removeQueueFlag = ({
   ...action
 }: Action) => ({ ...action, meta })
 
+const removeSourceService = ({
+  payload: { sourceService, ...payload } = {},
+  ...action
+}: Action) => ({ ...action, payload })
+
 async function mutateIncomingAction(action: Action, getService: GetService) {
   const { sourceService } = action.payload
   if (typeof sourceService !== 'string') {
@@ -144,7 +149,7 @@ async function mutateIncomingAction(action: Action, getService: GetService) {
       endpoint,
     )
   }
-  return { action: responseAction, service, endpoint }
+  return { action: removeSourceService(responseAction), service, endpoint }
 }
 
 async function mutateIncomingResponse(

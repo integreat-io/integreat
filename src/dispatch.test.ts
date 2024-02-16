@@ -570,7 +570,6 @@ test('should mutate incoming from source service', async (t) => {
     id: 'ent1',
     type: 'entry',
     data: undefined,
-    sourceService: 'api',
     targetService: 'entries',
     flag: true,
     uri: 'http://some.api/1.0',
