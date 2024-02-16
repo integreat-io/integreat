@@ -19,6 +19,7 @@ export type {
   Payload,
   Meta,
   Response,
+  Paging,
   Headers,
   Ident,
   Dispatch,
