@@ -195,7 +195,7 @@ test('should handle failure in flow', async (t) => {
   t.is(ret.status, 'error', ret.error)
   t.is(
     ret.error,
-    "Could not finish job 'action2', the following steps failed: 'setEntry' (timeout: Too slow)"
+    "Could not finish job 'action2', the following steps failed: 'setEntry' (timeout: Too slow)",
   )
   t.deepEqual(ret.responses, expectedErrorResponses)
 })
@@ -409,8 +409,8 @@ test('should return error from a sub-flow started with RUN and make it available
           },
         ],
       },
-      mapOptions
-    )
+      mapOptions,
+    ),
   )
   const runFn = run(jobs)
   const dispatch = sinon

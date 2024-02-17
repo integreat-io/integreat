@@ -74,8 +74,8 @@ const adjustValidationResponse = (
   responses.length > 0
     ? combineResponses(responses) // One or more conditions failed, so we'll return the combined response
     : response
-    ? ensureOkResponse(response) // Always return an ok response when we have a response (only happens for postconditions)
-    : null
+      ? ensureOkResponse(response) // Always return an ok response when we have a response (only happens for postconditions)
+      : null
 
 const addModify = (mutation: ArrayElement<Pipeline>) =>
   isObject(mutation) ? { $modify: true, ...mutation } : mutation
@@ -89,8 +89,8 @@ const putMutationInPipeline = (
   Array.isArray(mutation)
     ? ['$action', ...mutation.map(addModify)]
     : useMagic
-    ? ['$action', { '.': '.', ...mutation }]
-    : ['$action', addModify(mutation)]
+      ? ['$action', { '.': '.', ...mutation }]
+      : ['$action', addModify(mutation)]
 
 const putMutationInPipelineForCondition = (
   conditionObject: ValidateObject,
@@ -99,8 +99,8 @@ const putMutationInPipelineForCondition = (
   condition: Array.isArray(conditionObject.condition)
     ? ['$action', ...conditionObject.condition]
     : conditionObject.condition
-    ? ['$action', conditionObject.condition]
-    : null,
+      ? ['$action', conditionObject.condition]
+      : null,
 })
 
 const getThisResponse = (actionResponses: Record<string, Action>) =>
@@ -254,6 +254,7 @@ export async function mutateResponse(
       setResponseOnAction(action, setResponseStatus(mutatedResponse)),
     ),
     origin,
+    true, // Prefix any existing origin
   )
 }
 

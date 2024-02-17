@@ -19,8 +19,8 @@ export function createErrorResponse(
       error instanceof Error
         ? error.message
         : typeof error === 'string'
-        ? error
-        : 'Unknown error',
+          ? error
+          : 'Unknown error',
     ...(reason ? { reason } : {}),
     ...(origin ? { origin } : {}),
   }
@@ -93,7 +93,7 @@ const generateOrigin = (
   doPrefix: boolean,
 ) =>
   responseOrigin
-    ? doPrefix
+    ? doPrefix && origin !== responseOrigin // Don't prefix an origin with itself
       ? `${origin}:${responseOrigin}` // Prefix existing origin
       : responseOrigin // Keep existing origin as-is
     : origin

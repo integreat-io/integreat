@@ -249,6 +249,73 @@ test('should return error from failing parallel steps', async (t) => {
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2)
 })
+test('should return override origin with step id', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
+    .onCall(0)
+    .resolves({ status: 'timeout', error: 'Too slow', origin: 'handler:SET' })
+  const stepDef = [
+    {
+      id: 'setEntry',
+      action: {
+        type: 'SET',
+        payload: {
+          type: 'entry',
+          id: 'ent1',
+          data: [{ id: 'ent1', $type: 'entry' }],
+        },
+      },
+    },
+    {
+      id: 'setDate',
+      action: {
+        type: 'SET',
+        payload: {
+          type: 'date',
+          id: 'updatedAt',
+        },
+      },
+    },
+  ]
+  const expected = {
+    'setEntry:setDate': {
+      response: {
+        status: 'error',
+        responses: [
+          {
+            status: 'timeout',
+            error: 'Too slow',
+            origin: 'setEntry:handler:SET',
+          },
+        ],
+      },
+    },
+    setEntry: {
+      ...stepDef[0].action,
+      response: {
+        status: 'timeout',
+        error: 'Too slow',
+        origin: 'setEntry:handler:SET',
+      },
+      meta,
+    },
+    setDate: {
+      ...stepDef[1].action,
+      response: {
+        status: 'ok',
+        data: [{ id: 'ent1', $type: 'entry' }],
+      },
+      meta,
+    },
+    [breakSymbol]: false,
+  }
+  const step = new Step(stepDef, mapOptions)
+  const ret = await step.run(meta, { action }, dispatch)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 2)
+})
 
 test('should handle rejection when running steps', async (t) => {
   const dispatch = sinon
