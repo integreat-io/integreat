@@ -639,7 +639,7 @@ test('should use queue timestamp from mutate incoming action', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  await dispatch({ handlers, services, schemas, options })(action)
 
   t.is(queueHandler.callCount, 1)
   const calledAction = queueHandler.args[0][0] as Action

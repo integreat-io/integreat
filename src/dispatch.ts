@@ -243,7 +243,6 @@ export default function createDispatch({
         response = action.response
       } else {
         const resources = { dispatch, getService, options, setProgress }
-        const queue = action.meta?.queue ?? originalAction.meta?.queue
 
         try {
           if (shouldQueue(action, options)) {
