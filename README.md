@@ -1298,7 +1298,7 @@ Current meta properties reserved by Integreat:
   you want the action to be queued, but executed as soon as possible. Set to a
   UNIX timestamp (number) to schedule for a later time. If no queue is set up,
   the action will be dispatched right away. More on this under
-  [the section on queues](#queue).
+  [the section on queues](#queues).
 - `queuedAt`: Timestamp for when the action was pushed to the queue (set by
   Integreat).
 - `options`: Used for passing the processed service endpoint options object to
