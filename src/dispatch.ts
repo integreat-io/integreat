@@ -45,13 +45,8 @@ export const compose = (...fns: Middleware[]): Middleware =>
 // Uses `queue` flag from mutated action if it is set, otherwise uses falls
 // back to `queue` flag from original action. Also requires that a queue service
 // is configured.
-const shouldQueue = (
-  mutatedAction: Action,
-  originalAction: Action,
-  options: HandlerOptions,
-) =>
-  !!options.queueService &&
-  (mutatedAction.meta?.queue ?? originalAction.meta?.queue)
+const shouldQueue = (mutatedAction: Action, options: HandlerOptions) =>
+  !!options.queueService && mutatedAction.meta?.queue
 
 function getActionHandlerFromType(
   type: string | symbol | undefined,
@@ -105,10 +100,17 @@ const removeQueueFlag = ({
   ...action
 }: Action) => ({ ...action, meta })
 
-const removeSourceService = ({
-  payload: { sourceService, ...payload } = {},
-  ...action
-}: Action) => ({ ...action, payload })
+const adjustActionAfterIncomingMutation = (
+  { payload: { sourceService, ...payload } = {}, ...action }: Action,
+  originalAction: Action,
+) => ({
+  ...action,
+  payload,
+  meta: {
+    ...action.meta,
+    queue: action.meta?.queue ?? originalAction.meta?.queue,
+  },
+})
 
 async function mutateIncomingAction(action: Action, getService: GetService) {
   const { sourceService } = action.payload
@@ -139,17 +141,20 @@ async function mutateIncomingAction(action: Action, getService: GetService) {
     }
   }
 
-  let responseAction
+  let mutatedAction
   const validateResponse = await endpoint.validateAction(action)
   if (validateResponse) {
-    responseAction = setResponseOnAction(action, validateResponse)
+    mutatedAction = setResponseOnAction(action, validateResponse)
   } else {
-    responseAction = await service.mutateIncomingRequest(
-      setOptionsOnAction(action, endpoint),
-      endpoint,
+    mutatedAction = adjustActionAfterIncomingMutation(
+      await service.mutateIncomingRequest(
+        setOptionsOnAction(action, endpoint),
+        endpoint,
+      ),
+      action,
     )
   }
-  return { action: removeSourceService(responseAction), service, endpoint }
+  return { action: mutatedAction, service, endpoint }
 }
 
 async function mutateIncomingResponse(
@@ -225,22 +230,23 @@ export default function createDispatch({
 
       let response
       const {
-        action: mutatedAction,
+        action,
         service: incomingService,
         endpoint: incomingEndpoint,
       } = await mutateIncomingAction(
         cleanUpActionAndSetIds(originalAction),
         getService,
       )
-      const action = removeQueueFlag(mutatedAction)
 
       if (action.response?.status) {
+        // Stop here if the mutation set a response
         response = action.response
       } else {
         const resources = { dispatch, getService, options, setProgress }
+        const queue = action.meta?.queue ?? originalAction.meta?.queue
 
         try {
-          if (shouldQueue(mutatedAction, originalAction, options)) {
+          if (shouldQueue(action, options)) {
             // Use queue handler if queue flag is set and there is a queue
             // service. Bypass middleware
             response = await handleAction(
@@ -255,7 +261,7 @@ export default function createDispatch({
             const next = async (action: Action) =>
               handleAction(action.type, action, resources, handlers)
             response = setOrigin(
-              await middlewareFn(next)(action),
+              await middlewareFn(next)(removeQueueFlag(action)),
               'middleware:dispatch',
             )
           }

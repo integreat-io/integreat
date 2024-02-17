@@ -78,7 +78,7 @@ test('should send action to queue', async (t) => {
   t.deepEqual(queuedAction.payload, action.payload)
   t.deepEqual(queuedAction.meta.ident, { id: 'johnf' })
   t.true(isAuthorizedAction(queuedAction))
-  t.falsy(queuedAction.meta.queue)
+  t.true(queuedAction.meta.queue)
   t.is(queuedAction.meta.id, '11004')
   t.is(queuedAction.meta.cid, '11004')
   t.is(typeof queuedAction.meta?.queuedAt, 'number')

@@ -73,6 +73,10 @@ const services = {
                 }, // None of these should be available
                 flag: 'meta.options.someFlag',
               },
+              meta: {
+                $modify: 'meta',
+                queue: { $value: 1708201154626 },
+              },
             },
             {
               $direction: 'to',
@@ -146,7 +150,36 @@ test('should route action with queue flag to queue handler', async (t) => {
   t.is(setHandler.callCount, 0)
   t.is(queueHandler.callCount, 1)
   const handlerAction = queueHandler.args[0][0]
-  t.falsy(handlerAction.meta?.queue)
+  t.true(handlerAction.meta?.queue)
+})
+
+test('should route action with queue timestamp to queue handler', async (t) => {
+  const options = { queueService: 'queue' }
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' }, queue: 1708201154626 },
+  }
+  const setHandler = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] })
+  const queueHandler = sinon.stub().resolves({ status: 'queued' })
+  const handlers = {
+    SET: setHandler,
+    [QUEUE_SYMBOL]: queueHandler,
+  }
+
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+
+  t.is(ret.status, 'queued')
+  t.is(setHandler.callCount, 0)
+  t.is(queueHandler.callCount, 1)
+  const handlerAction = queueHandler.args[0][0]
+  t.is(handlerAction.meta?.queue, 1708201154626)
 })
 
 test('should not route to queue handler when no queue service', async (t) => {
@@ -589,6 +622,28 @@ test('should mutate incoming from source service', async (t) => {
   t.deepEqual(calledAction.meta?.options, expectedActionOptions)
   t.deepEqual(calledAction.payload, expectedActionPayload)
   t.deepEqual(ret, expectedResponse)
+})
+
+test('should use queue timestamp from mutate incoming action', async (t) => {
+  const options = { queueService: 'queue' }
+  const queueHandler = sinon.stub().resolves({ status: 'queued' })
+  const handlers = { [QUEUE_SYMBOL]: queueHandler }
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      sourceService: 'api',
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = await dispatch({ handlers, services, schemas, options })(action)
+
+  t.is(queueHandler.callCount, 1)
+  const calledAction = queueHandler.args[0][0] as Action
+  t.is(calledAction.meta?.queue, 1708201154626)
 })
 
 test('should validate incoming action with source service endpoint', async (t) => {
