@@ -2921,7 +2921,7 @@ test('mutateIncomingRequest should set origin when mutation results in an error 
 
 // Tests -- listen
 
-test('listen should call transporter.listen', async (t) => {
+test('listen should call transporter.listen and set listen flag', async (t) => {
   const listenStub = sinon.stub().resolves({ status: 'ok' })
   const emit = () => undefined
   const resources = {
@@ -2960,6 +2960,7 @@ test('listen should call transporter.listen', async (t) => {
   t.is(connection.status, 'ok')
   t.is(typeof listenStub.args[0][2], 'function') // We check that the authentication callback is called in another test
   t.is(listenStub.args[0][3], emit)
+  t.true(service.isListening)
 })
 
 test('listen should not call transporter.listen when transport.shouldListen returns false', async (t) => {
@@ -2998,6 +2999,7 @@ test('listen should not call transporter.listen when transport.shouldListen retu
 
   t.deepEqual(ret, expectedResponse)
   t.is(listenStub.callCount, 0)
+  t.false(service.isListening)
 })
 
 test('listen should use service middleware', async (t) => {
@@ -3361,6 +3363,7 @@ test('listen should reject authentication when validate() returns an error', asy
   t.is(dispatchStub.callCount, 1)
   t.deepEqual(dispatchStub.args[0][0], expectedAction)
   t.deepEqual(ret, expectedResponse)
+  t.false(service.isListening)
 })
 
 test('listen should reject authentication when second validate() returns an error', async (t) => {
@@ -3390,6 +3393,7 @@ test('listen should reject authentication when second validate() returns an erro
 
   t.deepEqual(ret, expectedResponse)
   t.is(dispatchStub.callCount, 1)
+  t.false(service.isListening)
 })
 
 test('listen should accept an incoming ident with withTokens only', async (t) => {
@@ -3554,6 +3558,7 @@ test('listen should return noaction from authenticate() when no incoming auth', 
 
   t.deepEqual(ret, expectedResponse)
   t.is(dispatchStub.callCount, 1)
+  t.false(service.isListening)
 })
 
 test('listen should return error when connection fails', async (t) => {
@@ -3593,6 +3598,7 @@ test('listen should return error when connection fails', async (t) => {
   const ret = await service.listen(dispatch)
 
   t.deepEqual(ret, expectedResponse)
+  t.false(service.isListening)
 })
 
 test('listen should return error when authentication fails', async (t) => {
@@ -3615,6 +3621,7 @@ test('listen should return error when authentication fails', async (t) => {
   const ret = await service.listen(dispatch)
 
   t.deepEqual(ret, expectedResponse)
+  t.false(service.isListening)
 })
 
 test('listen should do nothing when transporter has no listen method', async (t) => {
@@ -3650,6 +3657,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
   const ret = await service.listen(dispatch)
 
   t.deepEqual(ret, expectedResponse)
+  t.false(service.isListening)
 })
 
 test('listen should return error when no connection', async (t) => {
@@ -3687,6 +3695,7 @@ test('listen should return error when no connection', async (t) => {
   const ret = await service.listen(dispatch)
 
   t.deepEqual(ret, expectedResponse)
+  t.false(service.isListening)
 })
 
 test('listen should return noaction when incoming action is null', async (t) => {
@@ -3767,6 +3776,7 @@ test('close should disconnect transporter', async (t) => {
   const connection = disconnectStub.args[0][0]
   t.truthy(connection)
   t.is(connection.status, 'ok')
+  t.false(service.isListening)
 })
 
 test('close should probihit closed connection from behind used again', async (t) => {
@@ -3828,6 +3838,7 @@ test('close should just return ok when no connection', async (t) => {
   const ret = await service.close()
 
   t.deepEqual(ret, expected)
+  t.false(service.isListening)
 })
 
 test.todo('should not allow unauthorized access when auth is true')
