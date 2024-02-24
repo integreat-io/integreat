@@ -18,6 +18,10 @@ import type Service from './service/Service.js'
 import type { SchemaDef } from './schema/types.js'
 import type { JobDef } from './jobs/types.js'
 
+export interface EmitFn {
+  (eventType: string, ...args: unknown[]): void
+}
+
 export type MapOptions = Options
 
 export interface Reference {
@@ -205,7 +209,7 @@ export interface Transporter {
     options: TransporterOptions,
     authentication: Record<string, unknown> | null,
     connection: Connection | null,
-    emit: (eventType: string, ...args: unknown[]) => void,
+    emit: EmitFn,
   ) => Promise<Connection | null>
   send: (action: Action, connection: Connection | null) => Promise<Response>
   shouldListen?: (options: TransporterOptions) => boolean
@@ -213,6 +217,7 @@ export interface Transporter {
     dispatch: Dispatch,
     connection: Connection | null,
     authenticate: AuthenticateExternal,
+    emit: EmitFn,
   ) => Promise<Response>
   disconnect: (connection: Connection | null) => Promise<void>
 }

@@ -2923,6 +2923,7 @@ test('mutateIncomingRequest should set origin when mutation results in an error 
 
 test('listen should call transporter.listen', async (t) => {
   const listenStub = sinon.stub().resolves({ status: 'ok' })
+  const emit = () => undefined
   const resources = {
     ...jsonResources,
     transporters: {
@@ -2935,6 +2936,7 @@ test('listen should call transporter.listen', async (t) => {
     mapOptions,
     schemas,
     auths,
+    emit,
   }
   const service = new Service(
     {
@@ -2952,10 +2954,12 @@ test('listen should call transporter.listen', async (t) => {
 
   t.deepEqual(ret, expectedResponse)
   t.is(listenStub.callCount, 1)
-  t.is(typeof listenStub.args[0][0], 'function') // We check that the dispatch function is called in the next test
+  t.is(typeof listenStub.args[0][0], 'function') // We check that the dispatch function is called in another test
   const connection = listenStub.args[0][1]
   t.truthy(connection)
   t.is(connection.status, 'ok')
+  t.is(typeof listenStub.args[0][2], 'function') // We check that the authentication callback is called in another test
+  t.is(listenStub.args[0][3], emit)
 })
 
 test('listen should not call transporter.listen when transport.shouldListen returns false', async (t) => {
