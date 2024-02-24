@@ -1,4 +1,4 @@
-import type { Transporter } from '../types.js'
+import type { Transporter, EmitFn } from '../types.js'
 import type { TransporterOptions } from './types.js'
 
 export interface ConnectionObject extends Record<string, unknown> {
@@ -13,12 +13,12 @@ export default class Connection {
   #transporter: Transporter
   #options: TransporterOptions
   #connection: ConnectionObject | null
-  #emit: (eventType: string, ...args: unknown[]) => void
+  #emit: EmitFn
 
   constructor(
     transporter: Transporter,
     options: TransporterOptions,
-    emit: (eventType: string, ...args: unknown[]) => void
+    emit: EmitFn,
   ) {
     this.#transporter = transporter
     this.#options = options
@@ -32,7 +32,7 @@ export default class Connection {
         this.#options,
         auth || null,
         this.#connection?.status === 'ok' ? this.#connection : null,
-        this.#emit
+        this.#emit,
       )) || { status: 'ok' }
     } else {
       this.#connection = { status: 'ok' }
