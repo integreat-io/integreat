@@ -262,7 +262,7 @@ export interface ActionHandler<T = unknown> {
   (action: Action, resources: ActionHandlerResources): Promise<Response<T>>
 }
 
-export interface DefintionFlags {
+export interface DefinitionFlags {
   breakByDefault?: boolean
 }
 
@@ -277,7 +277,7 @@ export interface Definitions {
   queueService?: string
   dictionaries?: Dictionaries
   jobs?: JobDef[]
-  flags?: DefintionFlags
+  flags?: DefinitionFlags
 }
 
 export interface Resources {

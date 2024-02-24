@@ -1,4 +1,5 @@
 import test from 'ava'
+import type { Definitions } from '../types.js'
 
 import mergeDefinitions from './mergeDefinitions.js'
 
@@ -149,9 +150,65 @@ test('should merge three definitions', (t) => {
       type: 'user',
       props: { tokens: 'secrets' },
     },
+    flags: {},
   }
 
   const ret = mergeDefinitions(def1, def2, def3)
+
+  t.deepEqual(ret, expected)
+})
+test('should merge flags so that true trumps all else', (t) => {
+  const def1 = {
+    auths: [entriesAuth],
+    schemas: [entrySchema],
+    services: [entriesService],
+    mutations: { 'entries-entry': entryMutation },
+    dictionaries: { currencies },
+    jobs: [job1],
+    identConfig: {
+      type: 'unknown',
+    },
+    flags: {
+      breakByDefault: true,
+    },
+  }
+  const def2 = {
+    services: [queueService],
+    queueService: 'queue',
+    jobs: [],
+    flags: {
+      breakByDefault: false,
+    },
+  }
+  const expectedFlags = {
+    breakByDefault: true,
+  }
+
+  const ret = mergeDefinitions(def1, def2)
+
+  t.deepEqual(ret.flags, expectedFlags)
+})
+
+test('should disregard empty definition', (t) => {
+  const def1 = {
+    auths: [entriesAuth],
+    schemas: [entrySchema],
+    services: [entriesService],
+    mutations: { 'entries-entry': entryMutation },
+    dictionaries: { currencies },
+    jobs: [job1],
+    identConfig: {
+      type: 'unknown',
+    },
+  }
+  const def2 = undefined
+  const expected = {
+    ...def1,
+    queueService: undefined,
+    flags: {},
+  }
+
+  const ret = mergeDefinitions(def1, def2 as unknown as Partial<Definitions>)
 
   t.deepEqual(ret, expected)
 })
