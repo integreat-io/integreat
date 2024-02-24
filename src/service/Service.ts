@@ -29,6 +29,7 @@ import type {
   Adapter,
   Authenticator,
   MapOptions,
+  EmitFn,
 } from '../types.js'
 import type {
   EndpointDef,
@@ -49,7 +50,7 @@ export interface Resources {
   schemas: Map<string, Schema>
   mapOptions?: MapOptions
   middleware?: Middleware[]
-  emit?: (eventType: string, ...args: unknown[]) => void
+  emit?: EmitFn
 }
 
 const areWeMissingAdapters = (
@@ -124,6 +125,8 @@ export default class Service {
   #authorizeDataToService
   #middleware: Middleware
 
+  #emit: EmitFn
+
   constructor(
     {
       id: serviceId,
@@ -152,6 +155,7 @@ export default class Service {
 
     this.id = serviceId
     this.meta = meta
+    this.#emit = emit
 
     this.#schemas = schemas
 
@@ -486,6 +490,7 @@ export default class Service {
       dispatchIncoming(dispatch, this.#middleware, this.id),
       this.#connection.object,
       authenticateCallback(this, this.#incomingAuth),
+      this.#emit,
     )
   }
 
