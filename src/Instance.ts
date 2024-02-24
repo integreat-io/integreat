@@ -24,6 +24,7 @@ import type {
   Authenticator,
   MapOptions,
   ActionHandler,
+  EmitFn,
 } from './types.js'
 import type { AuthDef } from './service/types.js'
 import type { SchemaDef } from './schema/types.js'
@@ -117,7 +118,7 @@ function createServices(
   schemas: Map<string, Schema>,
   mapOptions: MapOptions,
   middlewareForService: Middleware[],
-  emit: (eventName: string | symbol, ...args: unknown[]) => boolean,
+  emit: EmitFn,
 ) {
   const authenticators = setIdOnAuthenticators(resources.authenticators || {})
   const auths = createAuthObjects(defs.auths || [], authenticators)
@@ -145,7 +146,7 @@ function setupServicesAndDispatch(
   schemas: Map<string, Schema>,
   middlewareForDispatch: Middleware[],
   middlewareForService: Middleware[],
-  emit: (eventName: string | symbol, ...args: unknown[]) => boolean,
+  emit: EmitFn,
 ) {
   const mapOptions = createMapOptions(
     schemas,
