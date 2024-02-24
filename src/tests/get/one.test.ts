@@ -62,6 +62,7 @@ test('should get one entry from service', async (t) => {
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, expected)
+  t.true((ret.data as TypedData).createdAt instanceof Date)
 })
 
 test('should get one entry from service with sub schemas', async (t) => {
