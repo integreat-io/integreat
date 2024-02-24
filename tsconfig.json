@@ -24,10 +24,5 @@
     },
     "outDir": "./dist"
   },
-  "include": ["src/**/*"],
-  "ts-node": {
-    "transpileOnly": true,
-    "files": true,
-    "experimentalResolver": true
-  }
+  "include": ["src/**/*"]
 }
