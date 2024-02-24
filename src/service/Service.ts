@@ -112,6 +112,8 @@ export default class Service {
   id: string
   meta?: string
 
+  isListening: boolean
+
   #schemas: Map<string, Schema>
   #options: TransporterOptions
   #endpoints: Endpoint[]
@@ -156,6 +158,7 @@ export default class Service {
     this.id = serviceId
     this.meta = meta
     this.#emit = emit
+    this.isListening = false
 
     this.#schemas = schemas
 
@@ -486,12 +489,15 @@ export default class Service {
     }
 
     debug('Calling transporter listen() ...')
-    return this.#transporter.listen(
+    const listenResponse = await this.#transporter.listen(
       dispatchIncoming(dispatch, this.#middleware, this.id),
       this.#connection.object,
       authenticateCallback(this, this.#incomingAuth),
       this.#emit,
     )
+
+    this.isListening = listenResponse.status === 'ok'
+    return listenResponse
   }
 
   /**
@@ -508,6 +514,7 @@ export default class Service {
       debug('No connection to disconnect')
     }
 
+    this.isListening = false
     return { status: 'ok' }
   }
 }
