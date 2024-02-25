@@ -30,6 +30,7 @@ import type {
 import type { AuthDef } from './service/types.js'
 import type { SchemaDef } from './schema/types.js'
 import type { JobDef } from './jobs/types.js'
+import type { PProgress } from 'p-progress'
 
 export const setUpAuth = (authenticators?: Record<string, Authenticator>) =>
   function setUpAuth(def: AuthDef) {
@@ -175,6 +176,7 @@ function setupServicesAndDispatch(
     middleware: middlewareForDispatch,
     options: handlerOptionsFromDefs(defs),
     actionIds: dispatchedActionId,
+    emit,
   })
   const dispatchScheduled = createDispatchScheduled(
     dispatch,
@@ -191,7 +193,7 @@ export default class Instance extends EventEmitter {
   identType?: string
   queueService?: string
 
-  dispatch: Dispatch
+  #dispatch: Dispatch
   dispatchScheduled: (from: Date, to: Date) => Promise<Action[]>
   #dispatchedActionId: Set<string>
 
@@ -226,8 +228,12 @@ export default class Instance extends EventEmitter {
     )
 
     this.services = services
-    this.dispatch = dispatch
+    this.#dispatch = dispatch
     this.dispatchScheduled = dispatchScheduled
+  }
+
+  dispatch(action: Action | null): PProgress<Response> {
+    return this.#dispatch(action)
   }
 
   get dispatchedCount() {

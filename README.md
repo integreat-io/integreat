@@ -181,11 +181,6 @@ The `response` object will look like this:
 }
 ```
 
-Integreat will keep track of how many actions have been dispatched and are
-currently being process. The Instance object (`great` in the example above) has
-a `dispatchedCount` property that gives you the number dispatched actions
-waiting to be completed.
-
 # Integreat concepts
 
 As mentioned in the introduction, the building blocks of Integreat are services,
@@ -1158,6 +1153,13 @@ with status, data, error message, etc.
 Note that in a mutation pipeline, action handler, or middleware, the
 response object is provided as a fourth property on the action. You will most
 likely meet this at least when setting up mutations.
+
+Integreat will keep track of how many actions have been dispatched and are
+currently being process. The Instance object (`great` in
+[the example](#basic-example) at the beginning of this README) has a
+`dispatchedCount` property that gives you the number dispatched actions waiting
+to be completed. Every time all dispatched are completed, a `done` event will be
+emitted.
 
 ### Payload properties
 
