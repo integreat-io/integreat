@@ -20,6 +20,7 @@ import type {
   ActionHandlerResources,
   GetService,
   HandlerOptions,
+  EmitFn,
 } from './types.js'
 import type Service from './service/Service.js'
 import type Schema from './schema/Schema.js'
@@ -34,6 +35,7 @@ export interface Resources {
   middleware?: Middleware[]
   options: HandlerOptions
   actionIds: Set<string>
+  emit: EmitFn
 }
 
 export const compose = (...fns: Middleware[]): Middleware =>
@@ -212,6 +214,7 @@ export default function createDispatch({
   middleware = [],
   options,
   actionIds,
+  emit,
 }: Resources): Dispatch {
   // Prepare resources for the dispatch function
   const getService = setupGetService(schemas, services)
@@ -289,6 +292,10 @@ export default function createDispatch({
         action.meta?.ident,
       )
       actionIds.delete(actionId) // Remove action id from list of running actions
+      if (actionIds.size === 0) {
+        // Emit 'done' event when we have cleared the list of running actions
+        emit('done')
+      }
       return cleanedUpResponse
     })
 

@@ -99,7 +99,8 @@ const services = {
 
 const options = {}
 const actionIds = new Set<string>()
-const resources = { services, schemas, options, actionIds }
+const emit = () => undefined
+const resources = { services, schemas, options, actionIds, emit }
 
 // Tests
 
@@ -402,6 +403,45 @@ test('should add action id to list of dispatched actions and remove it when done
   t.true(actionIds.has('action1')) // Should have id while action is running
   await p
   t.false(actionIds.has('action1')) // Id is removed when action is done
+})
+test.only('should emit done event when we clear the last action id', async (t) => {
+  const emit = sinon.stub()
+  const actionIds = new Set<string>()
+  const action = (index: number) => ({
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' }, id: `action${index}` },
+  })
+  let count = 0
+  const ms = [200, 50, 100]
+  const handlers = {
+    GET: async () => {
+      await new Promise((resolve) =>
+        setTimeout(resolve, ms[count++], undefined),
+      )
+      return { status: 'ok', data: [] }
+    },
+  }
+
+  const callCount0 = emit.callCount
+  const p0 = dispatch({ ...resources, handlers, actionIds, emit })(action(0))
+  const callCount1 = emit.callCount
+  const p1 = dispatch({ ...resources, handlers, actionIds, emit })(action(1))
+  const callCount2 = emit.callCount
+  const p2 = dispatch({ ...resources, handlers, actionIds, emit })(action(2))
+  await p0
+  await p1
+  await p2
+
+  t.is(callCount0, 0)
+  t.is(callCount1, 0)
+  t.is(callCount2, 0)
+  t.is(emit.callCount, 1)
+  t.is(emit.args[0][0], 'done')
 })
 
 test('should map payload property service to targetService', async (t) => {
