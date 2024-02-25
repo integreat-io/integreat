@@ -343,7 +343,7 @@ test('should return noaction when members action has empty id array', async (t) 
   const getService = () => svc
   const expected = {
     status: 'noaction',
-    error: 'GET action was dispatched with empty array of ids',
+    warning: 'GET action was dispatched with empty array of ids',
     origin: 'handler:GET',
   }
 

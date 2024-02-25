@@ -200,7 +200,8 @@ test('should not set metadata on service when no meta type', async (t) => {
   }
   const expected = {
     status: 'noaction',
-    error: "Service 'store' doesn't support metadata (setting was 'undefined')",
+    warning:
+      "Service 'store' doesn't support metadata (setting was 'undefined')",
     origin: 'handler:SET_META',
   }
 
@@ -229,8 +230,8 @@ test('should set metadata on other service', async (t) => {
     service === 'entries'
       ? great.services.entries
       : service === 'store' || type === 'meta'
-      ? great.services.store
-      : undefined
+        ? great.services.store
+        : undefined
   const action = {
     type: 'SET_META',
     payload: {
@@ -262,14 +263,13 @@ test('should return status noaction when meta is set to an unknown schema', asyn
   }
   const expected = {
     status: 'noaction',
-    error: "Service 'store' doesn't support metadata (setting was 'unknown')",
+    warning: "Service 'store' doesn't support metadata (setting was 'unknown')",
     origin: 'handler:SET_META',
   }
 
   const ret = await setMeta(action, { ...handlerResources, getService })
 
   t.deepEqual(ret, expected)
-  t.is(typeof ret.error, 'string')
 })
 
 test('should refuse setting metadata on service when not authorized', async (t) => {

@@ -2991,7 +2991,7 @@ test('listen should not call transporter.listen when transport.shouldListen retu
   )
   const expectedResponse = {
     status: 'noaction',
-    error: 'Transporter is not configured to listen',
+    warning: 'Transporter is not configured to listen',
     origin: 'service:entries',
   }
 
@@ -3549,7 +3549,7 @@ test('listen should return noaction from authenticate() when no incoming auth', 
   )
   const expectedResponse = {
     status: 'noaction',
-    error:
+    warning:
       "Could not authenticate. Service 'entries' has no incoming authenticator",
     origin: 'auth:service:entries',
   }
@@ -3650,7 +3650,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
   )
   const expectedResponse = {
     status: 'noaction',
-    error: 'Transporter has no listen method',
+    warning: 'Transporter has no listen method',
     origin: 'service:entries',
   }
 

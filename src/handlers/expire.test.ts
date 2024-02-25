@@ -198,7 +198,7 @@ test('should not queue when no expired entries', async (t) => {
   }
   const expected = {
     status: 'noaction',
-    error: "No items to expire from service 'store'",
+    warning: "No items to expire from service 'store'",
     origin: 'handler:EXPIRE',
   }
 

@@ -45,6 +45,20 @@ test('should extract error message from Error', (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should create a response with warning', (t) => {
+  const message = 'Nothing too important'
+  const status = 'noaction'
+  const expected = {
+    status: 'noaction',
+    warning: 'Nothing too important',
+    origin: 'somewhere',
+  }
+
+  const ret = createErrorResponse(message, 'somewhere', status)
+
+  t.deepEqual(ret, expected)
+})
+
 // Tests -- combineResponses
 
 test('should combine two error responses', (t) => {
