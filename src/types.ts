@@ -219,6 +219,7 @@ export interface Transporter {
     authenticate: AuthenticateExternal,
     emit: EmitFn,
   ) => Promise<Response>
+  stopListening?: (connection: Connection | null) => Promise<Response>
   disconnect: (connection: Connection | null) => Promise<void>
 }
 
