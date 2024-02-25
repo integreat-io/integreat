@@ -151,6 +151,33 @@ test('should dispatch with resources', async (t) => {
   t.deepEqual(resource.options, expectedOptions)
 })
 
+test('should expose dispatched actions count', async (t) => {
+  const action = { type: 'TEST', payload: {} }
+  const handler = async function testHandler() {
+    await new Promise((resolve) => setTimeout(resolve, 100, undefined))
+    return { status: 'ok' }
+  }
+  const handlers = { TEST: handler }
+  const identConfig = { type: 'account' }
+
+  const great = new Instance(
+    { services, schemas, mutations, identConfig, queueService: 'queue' },
+    { ...resourcesWithTransformer, handlers },
+  )
+  const count0 = great.dispatchedCount
+  great.dispatch(action)
+  const count1 = great.dispatchedCount
+  great.dispatch(action)
+  const count2 = great.dispatchedCount
+  const p = great.dispatch(action)
+
+  t.is(count0, 0)
+  t.is(count1, 1)
+  t.is(count2, 2)
+  await p
+  t.is(great.dispatchedCount, 0)
+})
+
 test('should dispatch with builtin action handler', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok', data: '[]' })
   const resourcesWithTransAndSend = {

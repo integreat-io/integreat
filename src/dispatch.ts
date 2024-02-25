@@ -33,6 +33,7 @@ export interface Resources {
   services: Record<string, Service>
   middleware?: Middleware[]
   options: HandlerOptions
+  actionIds: Set<string>
 }
 
 export const compose = (...fns: Middleware[]): Middleware =>
@@ -69,12 +70,14 @@ function getActionHandlerFromType(
  * anymore, as we're using a symbol for marking actions as authorized. We're
  * still keeping it for now for good measures.
  */
-function cleanUpActionAndSetIds({
-  payload: { service, ...payload },
-  meta: { auth, ...meta } = {},
-  ...action
-}: Action) {
-  const id = meta?.id || nanoid()
+function cleanUpActionAndSetIds(
+  {
+    payload: { service, ...payload },
+    meta: { auth, ...meta } = {},
+    ...action
+  }: Action,
+  id: string,
+) {
   const cid = meta?.cid || id
 
   return {
@@ -208,6 +211,7 @@ export default function createDispatch({
   services = {},
   middleware = [],
   options,
+  actionIds,
 }: Resources): Dispatch {
   // Prepare resources for the dispatch function
   const getService = setupGetService(schemas, services)
@@ -227,6 +231,8 @@ export default function createDispatch({
           origin: 'dispatch',
         }
       }
+      const actionId = originalAction.meta?.id ?? nanoid() // Get id from action or generate an id
+      actionIds.add(actionId) // Add action id to list of running actions
 
       let response
       const {
@@ -234,7 +240,7 @@ export default function createDispatch({
         service: incomingService,
         endpoint: incomingEndpoint,
       } = await mutateIncomingAction(
-        cleanUpActionAndSetIds(originalAction),
+        cleanUpActionAndSetIds(originalAction, actionId),
         getService,
       )
 
@@ -274,7 +280,7 @@ export default function createDispatch({
         }
       }
 
-      return cleanUpResponseAndSetAccessAndOrigin(
+      const cleanedUpResponse = cleanUpResponseAndSetAccessAndOrigin(
         await mutateIncomingResponse(
           setResponseOnAction(action, response),
           incomingService,
@@ -282,6 +288,8 @@ export default function createDispatch({
         ),
         action.meta?.ident,
       )
+      actionIds.delete(actionId) // Remove action id from list of running actions
+      return cleanedUpResponse
     })
 
   return dispatch
