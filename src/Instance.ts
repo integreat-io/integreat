@@ -9,6 +9,7 @@ import createMapOptions from './utils/createMapOptions.js'
 import { lookupById } from './utils/indexUtils.js'
 import createDispatch from './dispatch.js'
 import listen from './listen.js'
+import stopListening from './stopListening.js'
 import close from './close.js'
 import { indexById } from './utils/indexUtils.js'
 import Job from './jobs/Job.js'
@@ -226,6 +227,10 @@ export default class Instance extends EventEmitter {
 
   async listen(): Promise<Response> {
     return listen(Object.values(this.services), this.dispatch)
+  }
+
+  async stopListening(): Promise<Response> {
+    return stopListening(Object.values(this.services))
   }
 
   async close(): Promise<Response> {

@@ -3738,6 +3738,126 @@ test('listen should return noaction when incoming action is null', async (t) => 
   t.deepEqual(ret, expected)
 })
 
+// Tests -- stopListening
+
+test('stopListening should stop listening to transporter', async (t) => {
+  const stopListeningStub = sinon.stub().resolves({ status: 'ok' })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters!.http,
+        listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
+        stopListening: stopListeningStub,
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources,
+  )
+  const expected = { status: 'ok' }
+
+  await service.listen(dispatch)
+  const ret = await service.stopListening()
+
+  t.deepEqual(ret, expected)
+  t.is(stopListeningStub.callCount, 1)
+  const connection = stopListeningStub.args[0][0]
+  t.truthy(connection)
+  t.is(connection.status, 'ok')
+  t.false(service.isListening)
+})
+
+test('stopListening should do nothing when transporter does not have a stopListening method', async (t) => {
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters!.http,
+        listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
+        stopListening: undefined,
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources,
+  )
+  const expected = {
+    status: 'noaction',
+    warning:
+      "Service 'entries' only allows stopping listening by closing the connection",
+    origin: 'service:entries',
+  }
+
+  await service.listen(dispatch)
+  const ret = await service.stopListening()
+
+  t.deepEqual(ret, expected)
+  t.true(service.isListening)
+})
+
+test('stopListening should do nothing when no connection', async (t) => {
+  const stopListeningStub = sinon.stub().resolves({ status: 'ok' })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: {
+        ...jsonResources.transporters!.http,
+        listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
+        stopListening: stopListeningStub,
+      },
+    },
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: 'granting',
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    resources,
+  )
+  const expected = {
+    status: 'noaction',
+    warning: "Service 'entries' does not have an open connection",
+    origin: 'service:entries',
+  }
+
+  await service.close() // Close to make sure there's no connection
+  const ret = await service.stopListening()
+
+  t.deepEqual(ret, expected)
+  t.is(stopListeningStub.callCount, 0)
+  t.false(service.isListening)
+})
+
 // Tests -- close
 
 test('close should disconnect transporter', async (t) => {
