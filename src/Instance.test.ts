@@ -660,6 +660,15 @@ test('should have listen method', async (t) => {
   t.is(typeof great.listen, 'function')
 })
 
+test('should have stopListening method', async (t) => {
+  const great = new Instance(
+    { services, schemas, mutations },
+    resourcesWithTransformer,
+  )
+
+  t.is(typeof great.stopListening, 'function')
+})
+
 test('should have close method', async (t) => {
   const great = new Instance(
     { services, schemas, mutations },

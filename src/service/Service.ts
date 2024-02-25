@@ -501,6 +501,36 @@ export default class Service {
   }
 
   /**
+   * Will stop listening to the transporter.
+   */
+  async stopListening(): Promise<Response> {
+    debug(`Stop listening to service '${this.id}'`)
+
+    if (typeof this.#transporter.stopListening === 'function') {
+      if (this.#connection) {
+        this.#transporter.stopListening(this.#connection.object)
+        this.isListening = false
+        debug('Stopped')
+        return { status: 'ok' }
+      } else {
+        debug('No connection to stop listening to')
+        return createErrorResponse(
+          `Service '${this.id}' does not have an open connection`,
+          `service:${this.id}`,
+          'noaction',
+        )
+      }
+    } else {
+      debug(`Service '${this.id}' has no \`stopListening()\` method`)
+      return createErrorResponse(
+        `Service '${this.id}' only allows stopping listening by closing the connection`,
+        `service:${this.id}`,
+        'noaction',
+      )
+    }
+  }
+
+  /**
    * Will disconnect the transporter
    */
   async close(): Promise<Response> {
@@ -509,7 +539,7 @@ export default class Service {
     if (this.#connection) {
       await this.#transporter.disconnect(this.#connection.object)
       this.#connection = null
-      debug(`Closed`)
+      debug('Closed')
     } else {
       debug('No connection to disconnect')
     }
