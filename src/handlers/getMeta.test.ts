@@ -338,7 +338,8 @@ test('should return noaction when when no meta type is set', async (t) => {
   }
   const expected = {
     status: 'noaction',
-    error: "Service 'store' doesn't support metadata (setting was 'undefined')",
+    warning:
+      "Service 'store' doesn't support metadata (setting was 'undefined')",
     origin: 'handler:GET_META',
   }
 
@@ -363,8 +364,8 @@ test('should get metadata from other service', async (t) => {
     service === 'entries'
       ? great.services.entries
       : service === 'store' || type === 'meta'
-      ? great.services.store
-      : undefined
+        ? great.services.store
+        : undefined
   const action = {
     type: 'GET_META',
     payload: {
@@ -396,7 +397,7 @@ test('should return noaction when meta is set to an unknown type', async (t) => 
   }
   const expected = {
     status: 'noaction',
-    error: "Service 'store' doesn't support metadata (setting was 'unknown')",
+    warning: "Service 'store' doesn't support metadata (setting was 'unknown')",
     origin: 'handler:GET_META',
   }
 

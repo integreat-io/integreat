@@ -43,8 +43,11 @@ export const isAction = (action: unknown): action is Action =>
   typeof action.type === 'string' &&
   isObject(action.payload)
 
+export const isOkStatus = (status?: string) =>
+  typeof status === 'string' && OK_STATUSES.includes(status)
+
 export const isOkResponse = (response?: Response) =>
-  typeof response?.status === 'string' && OK_STATUSES.includes(response.status)
+  isOkStatus(response?.status)
 
 export const isErrorResponse = (response?: Response) =>
   typeof response?.status === 'string' && !OK_STATUSES.includes(response.status)

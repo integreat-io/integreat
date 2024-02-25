@@ -1,5 +1,10 @@
 import debugLib from 'debug'
-import { isErrorResponse, isNotNullOrUndefined, isDuplicate } from './is.js'
+import {
+  isOkStatus,
+  isErrorResponse,
+  isNotNullOrUndefined,
+  isDuplicate,
+} from './is.js'
 import type { Response } from '../types.js'
 
 const debug = debugLib('great')
@@ -13,14 +18,17 @@ export function createErrorResponse(
   status = 'error',
   reason?: string,
 ): Response {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+        ? error
+        : undefined
   return {
     status,
-    error:
-      error instanceof Error
-        ? error.message
-        : typeof error === 'string'
-          ? error
-          : 'Unknown error',
+    ...(isOkStatus(status)
+      ? { warning: message }
+      : { error: message ?? 'Unknown error' }),
     ...(reason ? { reason } : {}),
     ...(origin ? { origin } : {}),
   }

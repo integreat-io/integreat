@@ -138,7 +138,7 @@ test('should return noaction when no props', async (t) => {
   }
   const expected = {
     status: 'noaction',
-    error: 'GET_IDENT: The request has no ident with id or withToken',
+    warning: 'GET_IDENT: The request has no ident with id or withToken',
     origin: 'handler:GET_IDENT',
   }
 
@@ -155,7 +155,7 @@ test('should return noaction when null', async (t) => {
   }
   const expected = {
     status: 'noaction',
-    error: 'GET_IDENT: The request has no ident',
+    warning: 'GET_IDENT: The request has no ident',
     origin: 'handler:GET_IDENT',
   }
 
@@ -173,7 +173,7 @@ test('should return noaction when no ident options', async (t) => {
   const options = {}
   const expected = {
     status: 'noaction',
-    error: 'GET_IDENT: Integreat is not set up with authentication',
+    warning: 'GET_IDENT: Integreat is not set up with authentication',
     origin: 'handler:GET_IDENT',
   }
 
