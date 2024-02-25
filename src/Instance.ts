@@ -148,6 +148,7 @@ function setupServicesAndDispatch(
   middlewareForDispatch: Middleware[],
   middlewareForService: Middleware[],
   emit: EmitFn,
+  dispatchedActionId: Set<string>,
 ) {
   const mapOptions = createMapOptions(
     schemas,
@@ -173,6 +174,7 @@ function setupServicesAndDispatch(
     handlers: combineHandlers(resources.handlers || {}, jobs),
     middleware: middlewareForDispatch,
     options: handlerOptionsFromDefs(defs),
+    actionIds: dispatchedActionId,
   })
   const dispatchScheduled = createDispatchScheduled(
     dispatch,
@@ -191,6 +193,7 @@ export default class Instance extends EventEmitter {
 
   dispatch: Dispatch
   dispatchScheduled: (from: Date, to: Date) => Promise<Action[]>
+  #dispatchedActionId: Set<string>
 
   constructor(
     defs: Definitions,
@@ -210,6 +213,7 @@ export default class Instance extends EventEmitter {
     this.identType = defs.identConfig?.type
     this.queueService = defs.queueService
     this.schemas = prepareSchemas(defs.schemas)
+    this.#dispatchedActionId = new Set<string>()
 
     const { services, dispatch, dispatchScheduled } = setupServicesAndDispatch(
       defs,
@@ -218,11 +222,16 @@ export default class Instance extends EventEmitter {
       middlewareForDispatch,
       middlewareForService,
       this.emit.bind(this),
+      this.#dispatchedActionId,
     )
 
     this.services = services
     this.dispatch = dispatch
     this.dispatchScheduled = dispatchScheduled
+  }
+
+  get dispatchedCount() {
+    return this.#dispatchedActionId.size
   }
 
   async listen(): Promise<Response> {

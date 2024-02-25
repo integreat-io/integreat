@@ -181,6 +181,11 @@ The `response` object will look like this:
 }
 ```
 
+Integreat will keep track of how many actions have been dispatched and are
+currently being process. The Instance object (`great` in the example above) has
+a `dispatchedCount` property that gives you the number dispatched actions
+waiting to be completed.
+
 # Integreat concepts
 
 As mentioned in the introduction, the building blocks of Integreat are services,
@@ -250,8 +255,8 @@ from first to last until one of them returns an ident or an error other than
 
 > [!NOTE]
 > When connecting to a service for listening, the `outgoing` auth is
-> used. `incoming` is only used for validating the actions being dispatched "back"
-> from the service.
+> used. `incoming` is only used for validating the actions being dispatched
+> "back" from the service.
 
 In `options`, you may provide options for transporters and adapters. It is
 merged with the `options` object on the endpoint. See

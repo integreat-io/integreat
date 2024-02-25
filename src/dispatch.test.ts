@@ -96,7 +96,10 @@ const services = {
     { mapOptions, schemas, transporters: { http: httpTransporter } },
   ),
 }
+
 const options = {}
+const actionIds = new Set<string>()
+const resources = { services, schemas, options, actionIds }
 
 // Tests
 
@@ -119,7 +122,7 @@ test('should route to relevant action handler', async (t) => {
     access: { ident: { id: 'johnf' } },
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.deepEqual(ret, expected)
 })
@@ -144,7 +147,7 @@ test('should route action with queue flag to queue handler', async (t) => {
     [QUEUE_SYMBOL]: queueHandler,
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, options, handlers })(action)
 
   t.is(ret.status, 'queued')
   t.is(setHandler.callCount, 0)
@@ -173,7 +176,7 @@ test('should route action with queue timestamp to queue handler', async (t) => {
     [QUEUE_SYMBOL]: queueHandler,
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, options, handlers })(action)
 
   t.is(ret.status, 'queued')
   t.is(setHandler.callCount, 0)
@@ -202,7 +205,7 @@ test('should not route to queue handler when no queue service', async (t) => {
     [QUEUE_SYMBOL]: queueHandler,
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, options, handlers })(action)
 
   t.is(ret.status, 'ok')
   t.is(queueHandler.callCount, 0)
@@ -229,7 +232,7 @@ test('should set dispatchedAt meta', async (t) => {
   const getSpy = sinon.spy(handlers, 'GET')
 
   const before = Date.now()
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
   const after = Date.now()
 
   t.is(ret.status, 'ok')
@@ -259,7 +262,7 @@ test('should override any present dispatchedAt meta', async (t) => {
   const getSpy = sinon.spy(handlers, 'GET')
 
   const before = Date.now()
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
   const after = Date.now()
 
   t.is(ret.status, 'ok')
@@ -288,7 +291,7 @@ test('should remove auth object in meta if set', async (t) => {
   }
   const getSpy = sinon.spy(handlers, 'GET')
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.is(ret.status, 'ok')
   t.is(getSpy.callCount, 1)
@@ -313,7 +316,7 @@ test('should set id and cid in meta when not already set', async (t) => {
   }
   const getSpy = sinon.spy(handlers, 'GET')
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.is(ret.status, 'ok')
   t.is(getSpy.callCount, 1)
@@ -340,7 +343,7 @@ test('should not touch id and cid from action', async (t) => {
   }
   const getSpy = sinon.spy(handlers, 'GET')
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.is(ret.status, 'ok')
   t.is(getSpy.callCount, 1)
@@ -367,13 +370,38 @@ test('should set cid to same value as id when not already set', async (t) => {
   }
   const getSpy = sinon.spy(handlers, 'GET')
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.is(ret.status, 'ok')
   t.is(getSpy.callCount, 1)
   const calledAction = getSpy.args[0][0] as Action
   t.is(calledAction.meta?.id, '11004')
   t.is(calledAction.meta?.cid, '11004')
+})
+
+test('should add action id to list of dispatched actions and remove it when done', async (t) => {
+  const actionIds = new Set<string>()
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' }, id: 'action1' },
+  }
+  const handlers = {
+    GET: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100, undefined))
+      return { status: 'ok', data: [{ id: 'ent1', type: 'entry' }] }
+    },
+  }
+
+  const p = dispatch({ ...resources, handlers, actionIds })(action)
+
+  t.true(actionIds.has('action1')) // Should have id while action is running
+  await p
+  t.false(actionIds.has('action1')) // Id is removed when action is done
 })
 
 test('should map payload property service to targetService', async (t) => {
@@ -392,7 +420,7 @@ test('should map payload property service to targetService', async (t) => {
         : { status: 'error', error: 'Service not set' }, // Will be triggered when no `targetService`
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
@@ -418,7 +446,7 @@ test('should set origin when handler return error response with no origin', asyn
     origin: 'handler:GET',
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.deepEqual(ret, expected)
 })
@@ -432,7 +460,7 @@ test('should return status noaction when no action', async (t) => {
     origin: 'dispatch',
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.deepEqual(ret, expected)
 })
@@ -447,7 +475,7 @@ test('should return badrequest when unknown action', async (t) => {
     origin: 'dispatch',
     access: { ident: undefined },
   }
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, services, handlers })(action)
 
   t.deepEqual(ret, expected)
 })
@@ -465,7 +493,7 @@ test('should call action handler with action, dispatch, getService, and options'
     meta: { ident, id: '11004', cid: '11004' },
   }
 
-  await dispatch({ handlers, services, schemas, options })(action)
+  await dispatch({ ...resources, services, schemas, options, handlers })(action)
 
   t.is(getHandler.callCount, 1)
   const dispatchedAction = getHandler.args[0][0]
@@ -474,10 +502,10 @@ test('should call action handler with action, dispatch, getService, and options'
   t.deepEqual(dispatchedAction.meta.ident, ident)
   t.is(dispatchedAction.meta.id, '11004')
   t.is(dispatchedAction.meta.cid, '11004')
-  const resources = getHandler.args[0][1]
-  t.is(typeof resources.dispatch, 'function')
-  t.is(typeof resources.getService, 'function')
-  t.is(resources.options, options)
+  const passedResources = getHandler.args[0][1]
+  t.is(typeof passedResources.dispatch, 'function')
+  t.is(typeof passedResources.getService, 'function')
+  t.is(passedResources.options, options)
 })
 
 test('should call middleware', async (t) => {
@@ -495,13 +523,7 @@ test('should call middleware', async (t) => {
       status: `(${(await next(action)).status})`,
     }),
   ]
-  const ret = await dispatch({
-    handlers,
-    services,
-    schemas,
-    middleware,
-    options,
-  })(action)
+  const ret = await dispatch({ ...resources, handlers, middleware })(action)
 
   t.is(ret.status, '<(fromAction)>')
 })
@@ -519,13 +541,7 @@ test('should allow middleware to abort middleware chain', async (t) => {
     access: { ident: undefined },
   }
 
-  const ret = await dispatch({
-    handlers,
-    services,
-    schemas,
-    middleware,
-    options,
-  })(action)
+  const ret = await dispatch({ ...resources, handlers, middleware })(action)
 
   t.deepEqual(ret, expected)
   t.is(handler.callCount, 0)
@@ -545,13 +561,7 @@ test('should dispatch to middleware from action handlers', async (t) => {
     }),
   ]
 
-  const ret = await dispatch({
-    handlers,
-    services,
-    schemas,
-    middleware,
-    options,
-  })(action)
+  const ret = await dispatch({ ...resources, handlers, middleware })(action)
 
   t.is(ret.status, '<<fromAction>>')
 })
@@ -573,7 +583,7 @@ test('should support progress reporting', async (t) => {
     },
   }
 
-  const p = dispatch({ handlers, services, schemas, options })(action)
+  const p = dispatch({ ...resources, handlers })(action)
   p.onProgress(progressStub)
   const ret = await p
 
@@ -615,7 +625,7 @@ test('should mutate incoming from source service', async (t) => {
     params: { flag: true },
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.is(getHandler.callCount, 1)
   const calledAction = getHandler.args[0][0] as Action
@@ -639,7 +649,7 @@ test('should use queue timestamp from mutate incoming action', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  await dispatch({ handlers, services, schemas, options })(action)
+  await dispatch({ ...resources, options, handlers })(action)
 
   t.is(queueHandler.callCount, 1)
   const calledAction = queueHandler.args[0][0] as Action
@@ -671,7 +681,7 @@ test('should validate incoming action with source service endpoint', async (t) =
     params: { flag: true },
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.is(getHandler.callCount, 0) // Return right away
   t.deepEqual(ret, expectedResponse)
@@ -697,7 +707,7 @@ test('should return error when source service is not found', async (t) => {
     access: { ident: undefined },
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.deepEqual(ret, expected)
 })
@@ -721,7 +731,7 @@ test('should return error when no endoint on source service matches', async (t) 
     access: { ident: undefined },
   }
 
-  const ret = await dispatch({ handlers, services, schemas, options })(action)
+  const ret = await dispatch({ ...resources, handlers })(action)
 
   t.deepEqual(ret, expected)
 })
@@ -743,13 +753,7 @@ test('should return error instead of throwing', async (t) => {
     access: { ident: { id: 'johnf' } },
   }
 
-  const ret = await dispatch({
-    handlers,
-    services,
-    schemas,
-    middleware,
-    options,
-  })(action)
+  const ret = await dispatch({ ...resources, handlers, middleware })(action)
 
   t.deepEqual(ret, expected)
 })
