@@ -404,7 +404,7 @@ test('should add action id to list of dispatched actions and remove it when done
   await p
   t.false(actionIds.has('action1')) // Id is removed when action is done
 })
-test.only('should emit done event when we clear the last action id', async (t) => {
+test('should emit done event when we clear the last action id', async (t) => {
   const emit = sinon.stub()
   const actionIds = new Set<string>()
   const action = (index: number) => ({
