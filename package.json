@@ -62,7 +62,7 @@
     "integreat-adapter-uri": "^1.0.0",
     "integreat-transformers": "^1.0.5",
     "integreat-transporter-http": "^1.4.0-rc.0",
-    "nock": "^13.5.3",
+    "nock": "^13.5.4",
     "sinon": "^17.0.1"
   }
 }
