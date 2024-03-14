@@ -44,7 +44,7 @@
     "debug": "^4.3.4",
     "deepmerge-ts": "^5.1.0",
     "map-any": "^1.0.0",
-    "map-transform": "^1.4.0",
+    "map-transform": "^1.5.0",
     "ms": "^2.1.3",
     "nanoid": "^5.0.6",
     "p-limit": "^5.0.0",
@@ -56,13 +56,13 @@
     "@integreat/ts-dev-setup": "^6.0.1",
     "@types/debug": "^4.1.12",
     "@types/luxon": "^3.4.2",
-    "@types/node": "^20.11.20",
+    "@types/node": "^20.11.27",
     "@types/sinon": "^17.0.3",
     "integreat-adapter-json": "^1.0.1",
     "integreat-adapter-uri": "^1.0.0",
     "integreat-transformers": "^1.0.5",
     "integreat-transporter-http": "^1.3.0",
-    "nock": "^13.5.3",
+    "nock": "^13.5.4",
     "sinon": "^17.0.1"
   }
 }
