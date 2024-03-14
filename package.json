@@ -18,7 +18,7 @@
     }
   },
   "scripts": {
-    "test": "npm run build && c8 --reporter=text-summary ava --config ./ava-dist.config.cjs",
+    "test": "npm run build && c8 --reporter=text-summary ava --config ./ava-dist.config.js",
     "test:watch": "npm run dev",
     "dev": "ava --watch",
     "build": "tsc",

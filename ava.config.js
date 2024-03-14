@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   environmentVariables: {
     TSIMP_DIAG: 'ignore',
   },
