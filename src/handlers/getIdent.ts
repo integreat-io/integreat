@@ -44,8 +44,8 @@ const prepareParams = (ident: Ident, keys: PropKeys): IdentParams | null =>
   ident.id
     ? { [keys.id]: ident.id }
     : ident.withToken
-    ? { [keys.tokens!]: ident.withToken } // If we get here, the tokens key is a string
-    : null
+      ? { [keys.tokens!]: ident.withToken } // If we get here, the tokens key is a string
+      : null
 
 const wrapOk = (action: Action, data: unknown, ident: Ident): Response => ({
   ...action.response,
@@ -59,17 +59,23 @@ const prepareResponse = (
   response: Response,
   params: IdentParams,
   propKeys: PropKeys,
+  { options: { identConfig } }: ActionHandlerResources,
 ): Response => {
   const data = getFirstIfArray(response.data)
 
   if (data) {
-    const completeIdent = {
-      id: getField(data, propKeys.id) as string | undefined,
-      roles: getField(data, propKeys.roles) as string[] | undefined, // TODO: Do some more validation here
-      tokens: getField(data, propKeys.tokens) as string[] | undefined, // TODO: Do some more validation here
+    const includeTokensInIdent = identConfig?.includeTokensInIdent ?? true
+    const id = getField(data, propKeys.id) as string | undefined
+    const tokens = includeTokensInIdent
+      ? (getField(data, propKeys.tokens) as string[] | undefined) // TODO: Do some more validation here
+      : undefined
+    const roles = getField(data, propKeys.roles) as string[] | undefined // TODO: Do some more validation here
+    return wrapOk(action, data, {
+      id,
+      ...(roles && { roles }),
+      ...(tokens && { tokens }),
       isCompleted: true,
-    }
-    return wrapOk(action, data, completeIdent)
+    })
   } else {
     return createErrorResponse(
       `Could not find ident with params ${util.inspect(params)}, error: ${
@@ -132,5 +138,5 @@ export default async function getIdent(
     createGetIdentAction(type, params),
     resources,
   )
-  return prepareResponse(action, response, params, propKeys)
+  return prepareResponse(action, response, params, propKeys, resources)
 }
