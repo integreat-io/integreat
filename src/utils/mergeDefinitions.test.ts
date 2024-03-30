@@ -108,6 +108,7 @@ const job2 = {
 
 test('should merge three definitions', (t) => {
   const def1 = {
+    id: 'dontUse',
     auths: [entriesAuth],
     schemas: [entrySchema],
     services: [entriesService],
@@ -119,6 +120,7 @@ test('should merge three definitions', (t) => {
     },
   }
   const def2 = {
+    id: 'correctId',
     services: [queueService],
     queueService: 'queue',
     jobs: [],
@@ -136,6 +138,7 @@ test('should merge three definitions', (t) => {
     },
   }
   const expected = {
+    id: 'correctId',
     auths: [entriesAuth, usersAuth],
     schemas: [entrySchema, userSchema],
     services: [entriesService, queueService, usersService],
@@ -204,6 +207,7 @@ test('should disregard empty definition', (t) => {
   const def2 = undefined
   const expected = {
     ...def1,
+    id: undefined,
     queueService: undefined,
     flags: {},
   }
