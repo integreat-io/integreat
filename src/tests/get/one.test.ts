@@ -132,6 +132,7 @@ test('should get one user from service', async (t) => {
       { id: 'news', $ref: 'feed' },
       { id: 'social', $ref: 'feed' },
     ],
+    meta: { accounts: [] },
   }
 
   const great = Integreat.create(defs, resources)

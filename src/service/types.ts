@@ -18,7 +18,7 @@ export interface IdentConfigProps {
 export interface IdentConfig {
   type: string
   props?: IdentConfigProps
-  includeTokensInIdent?: boolean
+  mapping?: Record<string, string | null>
 }
 
 export interface ActionMapper {

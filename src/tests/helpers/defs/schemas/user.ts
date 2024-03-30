@@ -12,6 +12,9 @@ export default {
     createdBy: 'user',
     createdAt: 'date',
     updatedAt: 'date',
+    meta: {
+      accounts: 'string[]',
+    },
   },
   access: {
     identFromField: 'id',

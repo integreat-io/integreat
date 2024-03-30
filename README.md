@@ -1451,7 +1451,7 @@ Example ident:
   services may be used as ident ids, as long as they are unique among these
   services.
 - `tokens`: A list of values that may identify this ident in other services. For
-  example, an api that uses Twitter OAuth to identify its users, may provide
+  example, an api that uses GitHub OAuth to identify its users, may provide
   the `'github|23456'` token in the example above, which will be replaced with
   this ident when it enters Integreat.
 - `roles`: A list of roles or permissions given to this ident. The roles are
@@ -1468,6 +1468,10 @@ Example ident:
 - `isCompleted`: A flag to signal that an ident has already been completed, so
   that it won't be completed again. Used by the `completeIdent` middleware. You
   should normally not need to set this yourself.
+
+The ident may also hold other custom properties, defined in the
+`identConfig.mapping` in the definitions passed when created a new Integreat
+instance. See description under [Idents](#idents).
 
 Actions are authenticated by setting an ident on the `meta.ident` property. It's
 up to the code dispatching an action to get hold of the properties of an ident
@@ -2272,13 +2276,17 @@ const great = Integreat.create(
   needs to have a `service` specified.
 - `props`: You may provide alternative field names for the `id`, `roles`, and
   `tokens` for an ident in the schema specified on `type`. When the prop and the
-  field has the same name, it may be omitted, though it doesn't hurt to specif
+  field has the same name, it may be omitted, though it doesn't hurt to specify
   it anyway for clarity. For setups that don't need `roles` and/or `tokens`, you
   may set these to `null`. Omitting them will result in the default field names.
-- `includeTokensInIdent`: Default is `true`, which means that any tokens of a
-  user is included when the ident is completed. Set this to `false` to not have
-  tokens be a part of the ident. Tokens may still be used to match an ident with
-  a user, but will not be a part of the resulting ident.
+- `mapping`: When `id`, `roles`, or `tokens` is found on other paths in the
+  returned user data than the field names set in `props` (or by default), you
+  may set additional mapping here, to specify at what dot notation path to find
+  the value. You may also provide other props that will be include on the
+  completed ident. The key represent the key to set the value on in the ident,
+  and the value is a dot notation path into the cast user data to fetch the
+  values from. To not include one of the default props in the actual ident, set
+  it's path on `mapping` to `null`.
 
 Note that in the example above, the `id` of the data will be used as the ident
 `id`. When the id is not suited for this, you will need another field on the

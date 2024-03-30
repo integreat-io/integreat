@@ -237,6 +237,164 @@ test('should complete ident with other prop keys', async (t) => {
   t.deepEqual(ret.access?.ident, expectedIdent)
 })
 
+test('should include other props in ident', async (t) => {
+  const great = Integreat.create(defs, resources)
+  const dispatch = sinon.spy(great.services.users, 'send')
+  const getService = () => great.services.users
+  const scope = nock('http://some.api')
+    .get('/users')
+    .query({ tokens: 'twitter|23456' })
+    .reply(200, { data: johnfData })
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { withToken: 'twitter|23456' } },
+  }
+  const identConfig = {
+    type: 'user',
+    props: {
+      id: 'id',
+      roles: 'roles',
+      tokens: undefined,
+    },
+    mapping: {
+      allowedFeeds: 'feeds',
+    },
+  }
+  const options = { identConfig }
+  const expected = {
+    ident: {
+      ...johnfIdent,
+      allowedFeeds: ['news', 'social'],
+      isCompleted: true,
+    },
+  }
+  const expectedIdent = { id: 'root', root: true, type: IdentType.Root }
+
+  const ret = await getIdent(action, {
+    ...handlerResources,
+    getService,
+    options,
+  })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.access, expected)
+  t.is((ret.data as TypedData).id, 'johnf')
+  t.is(dispatch.callCount, 1)
+  const dispatchedAction = dispatch.args[0][0]
+  t.is(dispatchedAction.type, 'GET')
+  t.is(dispatchedAction.payload.tokens, 'twitter|23456')
+  t.is(dispatchedAction.payload.type, 'user')
+  t.deepEqual(dispatchedAction.meta?.ident, expectedIdent)
+  t.true(scope.isDone())
+})
+
+test('should support dot notation paths', async (t) => {
+  const great = Integreat.create(defs, resources)
+  const dispatch = sinon.spy(great.services.users, 'send')
+  const getService = () => great.services.users
+  const johnFWithMeta = {
+    ...johnfData,
+    meta: {
+      accounts: ['acc1', 'acc2'],
+    },
+  }
+  const scope = nock('http://some.api')
+    .get('/users')
+    .query({ tokens: 'facebook|12345' })
+    .reply(200, { data: johnFWithMeta })
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { withToken: 'facebook|12345' } },
+  }
+  const identConfig = {
+    type: 'user',
+    props: {
+      id: 'id',
+    },
+    mapping: {
+      roles: 'roles',
+      tokens: 'tokens',
+      accounts: 'meta.accounts',
+    },
+  }
+  const options = { identConfig }
+  const expected = {
+    ident: {
+      ...johnfIdent,
+      accounts: ['acc1', 'acc2'],
+      isCompleted: true,
+    },
+  }
+  const expectedIdent = { id: 'root', root: true, type: IdentType.Root }
+
+  const ret = await getIdent(action, {
+    ...handlerResources,
+    getService,
+    options,
+  })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.access, expected)
+  t.is((ret.data as TypedData).id, 'johnf')
+  t.is(dispatch.callCount, 1)
+  const dispatchedAction = dispatch.args[0][0]
+  t.is(dispatchedAction.type, 'GET')
+  t.is(dispatchedAction.payload.tokens, 'facebook|12345')
+  t.is(dispatchedAction.payload.type, 'user')
+  t.deepEqual(dispatchedAction.meta?.ident, expectedIdent)
+  t.true(scope.isDone())
+})
+
+test('should complete ident with token but not include it in ident when tokens mapping is null', async (t) => {
+  const great = Integreat.create(defs, resources)
+  const dispatch = sinon.spy(great.services.users, 'send')
+  const getService = () => great.services.users
+  const scope = nock('http://some.api')
+    .get('/users')
+    .query({ tokens: 'twitter|23456' })
+    .reply(200, { data: johnfData })
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { withToken: 'twitter|23456' } },
+  }
+  const identConfig = {
+    type: 'user', // This does not make any sense, but it is just for testing
+    props: {
+      id: 'id',
+      roles: 'roles',
+      tokens: 'tokens',
+    },
+    mapping: {
+      tokens: null,
+    },
+  }
+  const options = { identConfig }
+  const expected = {
+    ident: { id: 'johnf', roles: ['editor'], isCompleted: true },
+  }
+  const expectedIdent = { id: 'root', root: true, type: IdentType.Root }
+
+  const ret = await getIdent(action, {
+    ...handlerResources,
+    getService,
+    options,
+  })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.access, expected)
+  t.is((ret.data as TypedData).id, 'johnf')
+  t.is(dispatch.callCount, 1)
+  const dispatchedAction = dispatch.args[0][0]
+  t.is(dispatchedAction.type, 'GET')
+  t.is(dispatchedAction.payload.tokens, 'twitter|23456')
+  t.is(dispatchedAction.payload.type, 'user')
+  t.deepEqual(dispatchedAction.meta?.ident, expectedIdent)
+  t.true(scope.isDone())
+})
+
 test('should not include roles or tokens when their set to null', async (t) => {
   nock('http://some.api')
     .get('/entries')
@@ -270,52 +428,6 @@ test('should not include roles or tokens when their set to null', async (t) => {
 
   t.is(ret.status, 'ok', ret.error)
   t.deepEqual(ret.access?.ident, expectedIdent)
-})
-
-test('should complete ident with token but not include it in ident when includeTokensInIdent is false', async (t) => {
-  const great = Integreat.create(defs, resources)
-  const dispatch = sinon.spy(great.services.users, 'send')
-  const getService = () => great.services.users
-  const scope = nock('http://some.api')
-    .get('/users')
-    .query({ tokens: 'twitter|23456' })
-    .reply(200, { data: johnfData })
-  const action = {
-    type: 'GET_IDENT',
-    payload: {},
-    meta: { ident: { withToken: 'twitter|23456' } },
-  }
-  const identConfig = {
-    type: 'user', // This does not make any sense, but it is just for testing
-    props: {
-      id: 'id',
-      roles: 'roles',
-      tokens: 'tokens',
-    },
-    includeTokensInIdent: false,
-  }
-  const options = { identConfig }
-  const expected = {
-    ident: { id: 'johnf', roles: ['editor'], isCompleted: true },
-  }
-  const expectedIdent = { id: 'root', root: true, type: IdentType.Root }
-
-  const ret = await getIdent(action, {
-    ...handlerResources,
-    getService,
-    options,
-  })
-
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.access, expected)
-  t.is((ret.data as TypedData).id, 'johnf')
-  t.is(dispatch.callCount, 1)
-  const dispatchedAction = dispatch.args[0][0]
-  t.is(dispatchedAction.type, 'GET')
-  t.is(dispatchedAction.payload.tokens, 'twitter|23456')
-  t.is(dispatchedAction.payload.type, 'user')
-  t.deepEqual(dispatchedAction.meta?.ident, expectedIdent)
-  t.true(scope.isDone())
 })
 
 test('should respond with an error when we have an ident with `withToken` and no tokens property', async (t) => {
