@@ -61,7 +61,7 @@
     "integreat-adapter-json": "^1.0.1",
     "integreat-adapter-uri": "^1.0.0",
     "integreat-transformers": "^1.0.5",
-    "integreat-transporter-http": "^1.4.0-rc.0",
+    "integreat-transporter-http": "^1.4.0-rc.1",
     "nock": "^13.5.4",
     "sinon": "^17.0.1"
   }
