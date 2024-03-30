@@ -2275,6 +2275,10 @@ const great = Integreat.create(
   field has the same name, it may be omitted, though it doesn't hurt to specif
   it anyway for clarity. For setups that don't need `roles` and/or `tokens`, you
   may set these to `null`. Omitting them will result in the default field names.
+- `includeTokensInIdent`: Default is `true`, which means that any tokens of a
+  user is included when the ident is completed. Set this to `false` to not have
+  tokens be a part of the ident. Tokens may still be used to match an ident with
+  a user, but will not be a part of the resulting ident.
 
 Note that in the example above, the `id` of the data will be used as the ident
 `id`. When the id is not suited for this, you will need another field on the
