@@ -29,6 +29,7 @@ const mergeDefs = (
   def: Partial<Definitions>,
 ): Definitions => ({
   ...defs,
+  id: def.id || defs.id,
   auths: mergeArrays(defs.auths, def.auths),
   schemas: mergeArrays(defs.schemas, def.schemas),
   services: mergeArrays(defs.services, def.services),
@@ -44,6 +45,7 @@ export default function mergeDefinitions(
   ...defs: Partial<Definitions>[]
 ): Definitions {
   return defs.filter(isObject).reduce<Definitions>(mergeDefs, {
+    id: undefined,
     auths: [],
     schemas: [],
     services: [],
