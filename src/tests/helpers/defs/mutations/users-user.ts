@@ -11,4 +11,5 @@ export default {
   roles: ['roles[]', { $transform: 'map', dictionary: 'userRole' }],
   tokens: 'tokens[]',
   feeds: 'feeds[]',
+  'meta.accounts': 'meta.accounts[]',
 }

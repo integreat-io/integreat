@@ -3,14 +3,16 @@ import getHandler from './get.js'
 import getField from '../utils/getField.js'
 import { createErrorResponse } from '../utils/response.js'
 import { getFirstIfArray } from '../utils/array.js'
+import { isTypedData } from '../utils/is.js'
 import {
+  IdentType,
   Action,
   Response,
   Ident,
-  IdentType,
   ActionHandlerResources,
+  TypedData,
 } from '../types.js'
-import { IdentConfigProps } from '../service/types.js'
+import type { IdentConfigProps } from '../service/types.js'
 
 interface IdentParams extends Record<string, unknown> {
   id?: string
@@ -54,27 +56,38 @@ const wrapOk = (action: Action, data: unknown, ident: Ident): Response => ({
   access: { ident },
 })
 
+const setPropOnIdent = (data: TypedData) =>
+  function setPropOnIdent(
+    props: Record<string, unknown>,
+    [key, path]: [string, unknown],
+    _index: number,
+  ) {
+    if (typeof path === 'string') {
+      const value = getField(data, path)
+      if (value !== undefined) {
+        return { ...props, [key]: value }
+      }
+    }
+    return props
+  }
+
 const prepareResponse = (
   action: Action,
   response: Response,
   params: IdentParams,
-  propKeys: PropKeys,
-  { options: { identConfig } }: ActionHandlerResources,
+  mapping: Record<string, unknown>,
 ): Response => {
   const data = getFirstIfArray(response.data)
 
-  if (data) {
-    const includeTokensInIdent = identConfig?.includeTokensInIdent ?? true
-    const id = getField(data, propKeys.id) as string | undefined
-    const tokens = includeTokensInIdent
-      ? (getField(data, propKeys.tokens) as string[] | undefined) // TODO: Do some more validation here
-      : undefined
-    const roles = getField(data, propKeys.roles) as string[] | undefined // TODO: Do some more validation here
+  if (isTypedData(data)) {
+    const identProps = Object.entries(mapping).reduce<Record<string, unknown>>(
+      setPropOnIdent(data),
+      {},
+    )
     return wrapOk(action, data, {
-      id,
-      ...(roles && { roles }),
-      ...(tokens && { tokens }),
-      isCompleted: true,
+      id: undefined, // Always include id. Will be overridden if it is present in `identProps`
+      ...identProps,
+      isCompleted: true, // Set `isCompleted` so we don't try to complete again
     })
   } else {
     return createErrorResponse(
@@ -92,7 +105,8 @@ function extractParams(resources: ActionHandlerResources, ident: Ident) {
   const { type } = identConfig || {}
   const propKeys = preparePropKeys(identConfig?.props)
   const params = prepareParams(ident, propKeys)
-  return { type, propKeys, params }
+  const mapping = { ...propKeys, ...identConfig?.mapping }
+  return { type, propKeys, params, mapping }
 }
 
 /**
@@ -111,7 +125,7 @@ export default async function getIdent(
     )
   }
 
-  const { type, propKeys, params } = extractParams(resources, ident)
+  const { type, propKeys, params, mapping } = extractParams(resources, ident)
   if (!type) {
     return createErrorResponse(
       'GET_IDENT: Integreat is not set up with authentication',
@@ -138,5 +152,5 @@ export default async function getIdent(
     createGetIdentAction(type, params),
     resources,
   )
-  return prepareResponse(action, response, params, propKeys, resources)
+  return prepareResponse(action, response, params, mapping)
 }
