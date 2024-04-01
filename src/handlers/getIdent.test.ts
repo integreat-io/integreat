@@ -130,6 +130,31 @@ test('should complete ident with id when more props are present', async (t) => {
   t.is((ret.data as TypedData).id, 'johnf')
 })
 
+test('should not complete ident with isCompleted', async (t) => {
+  const great = Integreat.create(defs, resources)
+  const dispatch = sinon.spy(great.services.users, 'send')
+  const getService = () => great.services.users
+  const scope = nock('http://some.api')
+    .get('/users/lucyk')
+    .reply(200, { data: { id: 'lucyk' } })
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { id: 'lucyk', isCompleted: true } }, // Already completed
+  }
+  const expected = {
+    ident: { id: 'lucyk', isCompleted: true },
+  }
+
+  const ret = await getIdent(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.deepEqual(ret.access, expected)
+  t.is((ret.data as TypedData).id, 'lucyk')
+  t.is(dispatch.callCount, 0)
+  t.false(scope.isDone()) // Should not have attempted to get from api
+})
+
 test('should return noaction when no props', async (t) => {
   const action = {
     type: 'GET_IDENT',

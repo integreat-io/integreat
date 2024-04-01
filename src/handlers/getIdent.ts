@@ -125,6 +125,10 @@ export default async function getIdent(
     )
   }
 
+  if (ident.isCompleted) {
+    return wrapOk(action, ident, ident) // Return the ident as-is
+  }
+
   const { type, propKeys, params, mapping } = extractParams(resources, ident)
   if (!type) {
     return createErrorResponse(
