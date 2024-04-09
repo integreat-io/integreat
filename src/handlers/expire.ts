@@ -15,12 +15,14 @@ const isTypedDataArray = (value: unknown): value is TypedData[] =>
 const createDeleteAction = (
   type: string | string[],
   data: TypedData[],
+  params: Record<string, unknown>,
   targetService?: string,
   ident?: Ident,
   cid?: string,
 ) => ({
   type: 'DELETE',
   payload: {
+    ...params,
     type,
     data,
     ...(targetService && { targetService }),
@@ -33,6 +35,7 @@ const getOrDeleteExpired = async (
   dispatch: HandlerDispatch,
   type: string | string[],
   msFromNow: number,
+  params: Record<string, unknown>,
   targetService?: string,
   endpointId?: string,
   cid?: string,
@@ -43,6 +46,7 @@ const getOrDeleteExpired = async (
   return dispatch({
     type: deleteWithParams ? 'DELETE' : 'GET',
     payload: {
+      ...params,
       type,
       timestamp,
       isodate,
@@ -57,6 +61,7 @@ async function deleteItems(
   dispatch: HandlerDispatch,
   response: Response,
   type: string | string[],
+  params: Record<string, unknown>,
   serviceId?: string,
   cid?: string,
   ident?: Ident,
@@ -79,7 +84,7 @@ async function deleteItems(
   const deleteData = data.map((item) => ({ id: item.id, $type: item.$type }))
 
   return await dispatch(
-    createDeleteAction(type, deleteData, serviceId, ident, cid),
+    createDeleteAction(type, deleteData, params, serviceId, ident, cid),
   )
 }
 
@@ -107,10 +112,11 @@ export default async function expire(
       endpoint: endpointId,
       targetService: serviceId,
       deleteWithParams = false,
+      msFromNow,
+      ...params
     },
     meta: { ident, cid } = {},
   } = action
-  const msFromNow = (action.payload.msFromNow as number) || 0
 
   if (!type) {
     return createErrorResponse(
@@ -124,7 +130,8 @@ export default async function expire(
     !!deleteWithParams,
     dispatch,
     type,
-    msFromNow,
+    typeof msFromNow === 'number' ? msFromNow : 0,
+    params,
     serviceId,
     endpointId,
     cid,
@@ -136,6 +143,14 @@ export default async function expire(
     return response
   } else {
     // We've gotten a response from the `GET` action, so we'll send a `DELETE` if it was successful and returned any data items
-    return await deleteItems(dispatch, response, type, serviceId, cid, ident)
+    return await deleteItems(
+      dispatch,
+      response,
+      type,
+      params,
+      serviceId,
+      cid,
+      ident,
+    )
   }
 }

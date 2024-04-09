@@ -94,6 +94,31 @@ test('should dispatch GET to specified endpoint', async (t) => {
   t.deepEqual(dispatch.args[0][0], expected)
 })
 
+test('should include other parameters in delete action', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
+  const action = {
+    type: 'EXPIRE',
+    payload: { type: 'entry', projectId: 'proj1' },
+    meta: { ident, id: '11004', cid: '11005' },
+  }
+  const expected = {
+    type: 'GET',
+    payload: {
+      type: 'entry',
+      timestamp: theTime,
+      isodate: new Date(theTime).toISOString(),
+      projectId: 'proj1',
+    },
+    meta: { ident, cid: '11005' },
+  }
+
+  const ret = await expire(action, { ...handlerResources, dispatch })
+
+  t.is(ret.status, 'noaction', ret.error)
+  t.is(dispatch.callCount, 1) // We're not deleting because there's no data
+  t.deepEqual(dispatch.args[0][0], expected)
+})
+
 test('should add msFromNow to current timestamp', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const action = {
@@ -135,12 +160,22 @@ test('should queue DELETE for expired entries', async (t) => {
     .resolves({ status: 'queued' })
   const action = {
     type: 'EXPIRE',
-    payload: { type: 'entry', targetService: 'store', endpoint: 'getExpired' },
+    payload: {
+      type: 'entry',
+      targetService: 'store',
+      endpoint: 'getExpired',
+      projectId: 'proj1',
+    },
     meta: { ident, id: '11004', cid: '11005' },
   }
   const expectedDeleteAction = {
     type: 'DELETE',
-    payload: { type: 'entry', data, targetService: 'store' },
+    payload: {
+      type: 'entry',
+      data,
+      targetService: 'store',
+      projectId: 'proj1',
+    },
     meta: { ident, cid: '11005', queue: true },
   }
   const expected = { status: 'queued' }
@@ -241,6 +276,7 @@ test('should DELETE with params and no GET when deleteWithParams is true', async
       type: 'entry',
       targetService: 'store',
       deleteWithParams: true,
+      projectId: 'proj1',
     },
     meta: { ident, id: '11004', cid: '11005' },
   }
@@ -251,6 +287,7 @@ test('should DELETE with params and no GET when deleteWithParams is true', async
       timestamp: theTime,
       isodate: new Date(theTime).toISOString(),
       targetService: 'store',
+      projectId: 'proj1',
     },
     meta: { ident, cid: '11005', queue: true },
   }
