@@ -9,7 +9,12 @@ import { deepMergeItems } from '../utils/deep.js'
 import { isErrorResponse, isTypedData } from '../utils/is.js'
 import type Endpoint from '../service/Endpoint.js'
 import type Service from '../service/Service.js'
-import type { Action, Response, ActionHandlerResources } from '../types.js'
+import type {
+  Action,
+  Response,
+  ActionHandlerResources,
+  HandlerDispatch,
+} from '../types.js'
 
 const debug = debugLib('great')
 
@@ -28,7 +33,11 @@ function isUpdateEndpoint(endpoint?: Endpoint): endpoint is Endpoint {
     : actionType === 'UPDATE'
 }
 
-async function dispatchAction(service: Service, action: Action) {
+async function dispatchAction(
+  service: Service,
+  action: Action,
+  dispatch: HandlerDispatch,
+) {
   const endpoint = await service.endpointFromAction(action)
   if (!endpoint) {
     return createErrorResponse(
@@ -39,7 +48,7 @@ async function dispatchAction(service: Service, action: Action) {
       'badrequest',
     )
   }
-  const response = await mutateAndSend(service, endpoint, action)
+  const response = await mutateAndSend(service, endpoint, action, dispatch)
   if (isErrorResponse(response)) {
     return { ...response, error: `UPDATE failed: ${response.error}` }
   } else {
@@ -66,9 +75,13 @@ function keepCreatedAt(original: unknown, merged: unknown) {
   }
 }
 
-async function updateWithGetAndSet(service: Service, action: Action) {
+async function updateWithGetAndSet(
+  service: Service,
+  action: Action,
+  dispatch: HandlerDispatch,
+) {
   const getAction = createGetAction(action)
-  const getResponse = await dispatchAction(service, getAction)
+  const getResponse = await dispatchAction(service, getAction, dispatch)
   if (isErrorResponse(getResponse)) {
     return getResponse
   }
@@ -84,7 +97,7 @@ async function updateWithGetAndSet(service: Service, action: Action) {
   }
 
   const setAction = createSetAction(action, data)
-  return await dispatchAction(service, setAction)
+  return await dispatchAction(service, setAction, dispatch)
 }
 
 /**
@@ -92,7 +105,7 @@ async function updateWithGetAndSet(service: Service, action: Action) {
  */
 export default async function update(
   action: Action,
-  { getService }: ActionHandlerResources,
+  { getService, dispatch }: ActionHandlerResources,
 ): Promise<Response> {
   const {
     data,
@@ -114,8 +127,8 @@ export default async function update(
   const endpoint = await service.endpointFromAction(nextAction)
 
   if (isUpdateEndpoint(endpoint)) {
-    return await mutateAndSend(service, endpoint, nextAction)
+    return await mutateAndSend(service, endpoint, nextAction, dispatch)
   } else {
-    return await updateWithGetAndSet(service, nextAction)
+    return await updateWithGetAndSet(service, nextAction, dispatch)
   }
 }

@@ -19,17 +19,17 @@ const prepareData = ({ type, id, data }: Payload) =>
   type && id
     ? { id, $type: type } // Delete one action -- return as data
     : Array.isArray(data)
-    ? data.filter(isTypedData) // Filter away anything that is not cast data items
-    : isTypedData(data)
-    ? data
-    : undefined
+      ? data.filter(isTypedData) // Filter away anything that is not cast data items
+      : isTypedData(data)
+        ? data
+        : undefined
 
 /**
  * Delete several items from a service, based on the given payload.
  */
 export default async function deleteFn(
   action: Action,
-  { getService }: ActionHandlerResources,
+  { getService, dispatch }: ActionHandlerResources,
 ): Promise<Response> {
   const {
     type,
@@ -59,5 +59,5 @@ export default async function deleteFn(
     )
   }
 
-  return await mutateAndSend(service, endpoint, nextAction)
+  return await mutateAndSend(service, endpoint, nextAction, dispatch)
 }

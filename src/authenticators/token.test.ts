@@ -1,4 +1,5 @@
 import test from 'ava'
+import dispatch from '../tests/helpers/dispatch.js'
 
 import authenticator from './token.js'
 
@@ -22,7 +23,7 @@ test('authenticate should return granted when token is set', async (t) => {
     type: undefined,
   }
 
-  const ret = await authenticator.authenticate(options, action)
+  const ret = await authenticator.authenticate(options, action, dispatch)
 
   t.deepEqual(ret, expected)
 })
@@ -31,7 +32,7 @@ test('authenticate should return refused when token is not set', async (t) => {
   const options = {}
   const expected = { status: 'refused' }
 
-  const ret = await authenticator.authenticate(options, action)
+  const ret = await authenticator.authenticate(options, action, dispatch)
 
   t.deepEqual(ret, expected)
 })

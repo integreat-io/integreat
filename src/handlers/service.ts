@@ -12,7 +12,7 @@ import type { Action, ActionHandlerResources, Response } from '../types.js'
  */
 export default async function service(
   action: Action,
-  { getService }: ActionHandlerResources,
+  { getService, dispatch }: ActionHandlerResources,
 ): Promise<Response> {
   const serviceId = action.payload.targetService
   const service = getService(undefined, serviceId)
@@ -21,7 +21,7 @@ export default async function service(
   }
 
   const nextAction = setAuthorizedMark(action) // TODO: Should we validate more than this?
-  const response = await service.send(nextAction, null)
+  const response = await service.send(nextAction, null, dispatch)
 
   return response?.status
     ? response

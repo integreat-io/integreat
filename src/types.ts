@@ -178,6 +178,7 @@ export interface Authenticator<
   authenticate: (
     options: AuthOptions | null,
     action: Action | null,
+    dispatch: HandlerDispatch,
   ) => Promise<T>
   isAuthenticated: (
     authentication: T | null,
@@ -188,6 +189,7 @@ export interface Authenticator<
     authentication: T | null,
     options: AuthOptions | null,
     action: Action | null,
+    dispatch: HandlerDispatch,
   ) => Promise<Response>
   authentication: {
     [asFunction: string]: (authentication: T | null) => Record<string, unknown>

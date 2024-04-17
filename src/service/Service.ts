@@ -24,6 +24,7 @@ import type {
   Action,
   Response,
   Dispatch,
+  HandlerDispatch,
   Middleware,
   Transporter,
   Adapter,
@@ -234,7 +235,11 @@ export default class Service {
    * returned instead of the action being sent to the service. The response
    * should be run through the response mutation, though.
    */
-  async preflightAction(action: Action, endpoint: Endpoint): Promise<Action> {
+  async preflightAction(
+    action: Action,
+    endpoint: Endpoint,
+    dispatch: HandlerDispatch,
+  ): Promise<Action> {
     const outgoingAuth = endpoint.outgoingAuth
     let preparedAction = authorizeAction(this.#schemas, !!outgoingAuth)(action)
     if (preparedAction.response?.status) {
@@ -247,7 +252,7 @@ export default class Service {
     }
 
     if (endpoint.options?.transporter.authInData && outgoingAuth) {
-      await outgoingAuth.authenticate(preparedAction)
+      await outgoingAuth.authenticate(preparedAction, dispatch)
       preparedAction = outgoingAuth.applyToAction(
         preparedAction,
         this.#transporter,
@@ -391,7 +396,11 @@ export default class Service {
    * The given action is sent to the service via the relevant transporter,
    * and the response from the service is returned.
    */
-  async send(action: Action, endpoint: Endpoint | null): Promise<Response> {
+  async send(
+    action: Action,
+    endpoint: Endpoint | null,
+    dispatch: HandlerDispatch,
+  ): Promise<Response> {
     // Do nothing if the action response already has a status
     if (action.response?.status) {
       return action.response
@@ -415,7 +424,7 @@ export default class Service {
     // When an authentication is defined: Authenticate and apply result to action
     const outgoingAuth = endpoint?.outgoingAuth
     if (outgoingAuth && !action.meta?.auth) {
-      await outgoingAuth.authenticate(action)
+      await outgoingAuth.authenticate(action, dispatch)
       action = outgoingAuth.applyToAction(action, this.#transporter)
       if (action.response?.status) {
         return setOrigin(action.response, `service:${this.id}`, true)
@@ -467,7 +476,10 @@ export default class Service {
       )
     }
 
-    if (this.#outgoingAuth && !(await this.#outgoingAuth.authenticate(null))) {
+    if (
+      this.#outgoingAuth &&
+      !(await this.#outgoingAuth.authenticate(null, dispatch))
+    ) {
       debug('Could not authenticate')
       return setOrigin(
         this.#outgoingAuth.getResponseFromAuth(),
@@ -492,7 +504,7 @@ export default class Service {
     const listenResponse = await this.#transporter.listen(
       dispatchIncoming(dispatch, this.#middleware, this.id),
       this.#connection.object,
-      authenticateCallback(this, this.#incomingAuth),
+      authenticateCallback(this, dispatch, this.#incomingAuth),
       this.#emit,
     )
 

@@ -1,4 +1,5 @@
 import test from 'ava'
+import dispatch from '../tests/helpers/dispatch.js'
 
 import authenticator from './options.js'
 
@@ -22,7 +23,7 @@ const authentication = { status: 'granted' }
 test('authenticate should always grant and return options', async (t) => {
   const expected = { status: 'granted', username: 'bill', password: 'secret' }
 
-  const ret = await authenticator.authenticate(options, action)
+  const ret = await authenticator.authenticate(options, action, dispatch)
 
   t.deepEqual(ret, expected)
 })
@@ -71,7 +72,12 @@ test('validate should return response with the ident given by identId when all o
   }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  const ret = await authenticator.validate!(authentication, options, action)
+  const ret = await authenticator.validate!(
+    authentication,
+    options,
+    action,
+    dispatch,
+  )
 
   t.deepEqual(ret, expected)
 })
@@ -84,7 +90,12 @@ test('validate should return response with the ident when one value in an array 
   }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  const ret = await authenticator.validate!(authentication, options, action)
+  const ret = await authenticator.validate!(
+    authentication,
+    options,
+    action,
+    dispatch,
+  )
 
   t.deepEqual(ret, expected)
 })
@@ -93,7 +104,12 @@ test('validate should return response with the ident when options has no props t
   const options = { identId: 'johnf' }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  const ret = await authenticator.validate!(authentication, options, action)
+  const ret = await authenticator.validate!(
+    authentication,
+    options,
+    action,
+    dispatch,
+  )
 
   t.deepEqual(ret, expected)
 })
@@ -110,7 +126,12 @@ test('validate should return autherror error when some options are found, but th
     reason: 'invalidauth',
   }
 
-  const ret = await authenticator.validate!(authentication, options, action)
+  const ret = await authenticator.validate!(
+    authentication,
+    options,
+    action,
+    dispatch,
+  )
 
   t.deepEqual(ret, expected)
 })
@@ -126,7 +147,12 @@ test('validate should return autherror error when none of the options in an arra
     reason: 'invalidauth',
   }
 
-  const ret = await authenticator.validate!(authentication, options, action)
+  const ret = await authenticator.validate!(
+    authentication,
+    options,
+    action,
+    dispatch,
+  )
 
   t.deepEqual(ret, expected)
 })
@@ -139,7 +165,12 @@ test('validate should return noaccess error when none of the options are found i
     reason: 'noauth',
   }
 
-  const ret = await authenticator.validate!(authentication, options, action)
+  const ret = await authenticator.validate!(
+    authentication,
+    options,
+    action,
+    dispatch,
+  )
 
   t.deepEqual(ret, expected)
 })
@@ -154,7 +185,12 @@ test('validate should return noaccess error when no authentication or action are
     reason: 'noauth',
   }
 
-  const ret = await authenticator.validate!(authentication, options, action)
+  const ret = await authenticator.validate!(
+    authentication,
+    options,
+    action,
+    dispatch,
+  )
 
   t.deepEqual(ret, expected)
 })

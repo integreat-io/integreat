@@ -1,5 +1,11 @@
 import type { AuthOptions, Authentication } from './types.js'
-import type { Authenticator, Action, Response, Transporter } from '../types.js'
+import type {
+  Authenticator,
+  Action,
+  Response,
+  Transporter,
+  HandlerDispatch,
+} from '../types.js'
 import { isObject } from '../utils/is.js'
 import { createErrorResponse } from '../utils/response.js'
 
@@ -7,13 +13,13 @@ const MAX_RETRIES = 1
 
 const shouldRetry = (
   authentication: Authentication | null,
-  retryCount: number
+  retryCount: number,
 ) => authentication?.status === 'timeout' && retryCount < MAX_RETRIES
 
 const getAuthKey = (
   authenticator: Authenticator,
   options: AuthOptions | null,
-  action: Action | null
+  action: Action | null,
 ) =>
   typeof authenticator.extractAuthKey === 'function'
     ? authenticator.extractAuthKey(options, action) || ''
@@ -30,7 +36,7 @@ export default class Auth {
     id: string,
     authenticator: Authenticator,
     options?: AuthOptions,
-    overrideAuthAsMethod?: string
+    overrideAuthAsMethod?: string,
   ) {
     this.id = id
     this.#authenticator = authenticator
@@ -38,7 +44,10 @@ export default class Auth {
     this.#overrideAuthAsMethod = overrideAuthAsMethod
   }
 
-  async authenticate(action: Action | null): Promise<boolean> {
+  async authenticate(
+    action: Action | null,
+    dispatch: HandlerDispatch,
+  ): Promise<boolean> {
     const authKey = getAuthKey(this.#authenticator, this.#options, action)
     let authentication = this.#authentications.get(authKey)
 
@@ -53,7 +62,8 @@ export default class Auth {
     do {
       authentication = await this.#authenticator.authenticate(
         this.#options,
-        action
+        action,
+        dispatch,
       )
     } while (shouldRetry(authentication, attempt++))
 
@@ -63,16 +73,15 @@ export default class Auth {
 
   async validate(
     authentication: Authentication,
-    action: Action | null
+    action: Action | null,
+    dispatch: HandlerDispatch,
   ): Promise<Response> {
     if (typeof this.#authenticator.validate !== 'function') {
       // Authenticator doesn't support validation, so return error
       return createErrorResponse(
-        `Could not authenticate. Authenticator '${
-          this.#authenticator.id
-        }' doesn't support validation`,
+        `Could not authenticate. Authenticator '${this.#authenticator.id}' doesn't support validation`,
         this.id,
-        'autherror'
+        'autherror',
       )
     }
 
@@ -81,7 +90,7 @@ export default class Auth {
       return createErrorResponse(
         'Authentication was refused',
         this.id,
-        'noaccess'
+        'noaccess',
       )
     }
 
@@ -89,7 +98,8 @@ export default class Auth {
     const response = await this.#authenticator.validate(
       authentication,
       this.#options,
-      action
+      action,
+      dispatch,
     )
 
     if (response.status === 'ok' && response.access?.ident) {
@@ -101,20 +111,25 @@ export default class Auth {
         `Authentication was refused. ${response.error}`,
         this.id,
         response.status || 'autherror',
-        response.reason
+        response.reason,
       )
     }
   }
 
   async authenticateAndGetAuthObject(
     action: Action | null,
-    authAsMethod: string
+    authAsMethod: string,
+    dispatch: HandlerDispatch,
   ): Promise<Record<string, unknown> | null> {
     // eslint-disable-next-line security/detect-object-injection
     const fn = this.#authenticator.authentication[authAsMethod]
 
     if (typeof fn === 'function') {
-      const auth = await this.#authenticator.authenticate(this.#options, action)
+      const auth = await this.#authenticator.authenticate(
+        this.#options,
+        action,
+        dispatch,
+      )
       if (auth.status === 'granted') {
         return fn(auth)
       } else {
@@ -128,7 +143,7 @@ export default class Auth {
   getAuthObject(
     transporter: Transporter,
     action: Action | null,
-    providedAuthKey?: string
+    providedAuthKey?: string,
   ): Record<string, unknown> | null {
     const authKey =
       providedAuthKey ?? getAuthKey(this.#authenticator, this.#options, action) // Use provided auth key or extract it from action

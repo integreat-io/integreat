@@ -25,7 +25,7 @@ export default async function queue(
   }
 
   const nextAction = prepareQueuedAction(action)
-  const response = await service.send(nextAction, null)
+  const response = await service.send(nextAction, null, dispatch)
   const status = response?.status === 'ok' ? 'queued' : response?.status
 
   return setOrigin(

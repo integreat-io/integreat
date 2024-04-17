@@ -8,7 +8,12 @@ import {
 } from '../utils/response.js'
 import mutateAndSend from '../utils/mutateAndSend.js'
 import { isObject } from '../utils/is.js'
-import type { Action, Response, ActionHandlerResources } from '../types.js'
+import type {
+  Action,
+  Response,
+  ActionHandlerResources,
+  HandlerDispatch,
+} from '../types.js'
 import type Service from '../service/Service.js'
 
 const debug = debugLib('great')
@@ -64,7 +69,11 @@ const createNoEndpointError = (action: Action, serviceId: string) =>
     'badrequest',
   )
 
-async function runAsIndividualActions(action: Action, service: Service) {
+async function runAsIndividualActions(
+  action: Action,
+  service: Service,
+  dispatch: HandlerDispatch,
+) {
   const actions = (action.payload.id as string[]).map((individualId) =>
     setIdOnActionPayload(action, individualId),
   )
@@ -75,7 +84,9 @@ async function runAsIndividualActions(action: Action, service: Service) {
 
   const responses = await Promise.all(
     actions.map((individualAction) =>
-      pLimit(1)(() => mutateAndSend(service, endpoint, individualAction)),
+      pLimit(1)(() =>
+        mutateAndSend(service, endpoint, individualAction, dispatch),
+      ),
     ),
   )
 
@@ -87,19 +98,20 @@ const isMembersAction = (action: Action) => Array.isArray(action.payload.id)
 async function runOneOrMany(
   action: Action,
   service: Service,
+  dispatch: HandlerDispatch,
 ): Promise<Response> {
   const endpoint = await service.endpointFromAction(action)
   if (!endpoint) {
     if (isMembersAction(action)) {
       // This is an action with an array of ids, and we got no members endpoint,
       // so instead we'll try and run the action for each id individually.
-      return runAsIndividualActions(action, service)
+      return runAsIndividualActions(action, service, dispatch)
     } else {
       return createNoEndpointError(action, service.id)
     }
   } else {
     // We've got an endpoint that match the action, so run it
-    return mutateAndSend(service, endpoint, action)
+    return mutateAndSend(service, endpoint, action, dispatch)
   }
 }
 
@@ -108,7 +120,7 @@ async function runOneOrMany(
  */
 export default async function get(
   action: Action,
-  { getService }: ActionHandlerResources,
+  { getService, dispatch }: ActionHandlerResources,
 ): Promise<Response> {
   const {
     type,
@@ -137,5 +149,5 @@ export default async function get(
 
   const nextAction = setIdOnActionPayload(action, id)
 
-  return await runOneOrMany(nextAction, service)
+  return await runOneOrMany(nextAction, service, dispatch)
 }
