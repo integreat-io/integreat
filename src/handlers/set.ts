@@ -24,7 +24,7 @@ export function getTypeAndId(action: Action, data: unknown) {
 export const setIdAndTypeOnAction = (
   action: Action,
   id?: string | string[],
-  type?: string | string[]
+  type?: string | string[],
 ) => ({
   ...action,
   payload: { ...action.payload, id, type },
@@ -35,7 +35,7 @@ export const setIdAndTypeOnAction = (
  */
 export default async function set(
   action: Action,
-  { getService }: ActionHandlerResources
+  { getService, dispatch }: ActionHandlerResources,
 ): Promise<Response> {
   const {
     data,
@@ -58,9 +58,9 @@ export default async function set(
     return createErrorResponse(
       `No endpoint matching ${action.type} request to service '${serviceId}'.`,
       'handler:SET',
-      'badrequest'
+      'badrequest',
     )
   }
 
-  return await mutateAndSend(service, endpoint, nextAction)
+  return await mutateAndSend(service, endpoint, nextAction, dispatch)
 }

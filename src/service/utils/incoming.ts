@@ -95,10 +95,11 @@ async function runAuths(
   auths: Auth[],
   authentication: Authentication,
   action: Action | null,
+  dispatch: Dispatch,
 ) {
   let response: Response | undefined = undefined
   for (const auth of auths) {
-    response = await auth.validate(authentication, action)
+    response = await auth.validate(authentication, action, dispatch)
     if (response.status !== 'noaccess' && response.access?.ident) {
       return response
     }
@@ -108,7 +109,11 @@ async function runAuths(
 
 // Passed to the transporter.listen() method. Transporters will call this to
 // get the ident to used when dispatching incoming actions.
-export const authenticateCallback = (service: Service, incomingAuth?: Auth[]) =>
+export const authenticateCallback = (
+  service: Service,
+  dispatch: Dispatch,
+  incomingAuth?: Auth[],
+) =>
   async function authenticateFromListen(
     authentication: Authentication,
     action?: Action | null,
@@ -124,7 +129,12 @@ export const authenticateCallback = (service: Service, incomingAuth?: Auth[]) =>
         'noaction',
       )
     } else {
-      const response = await runAuths(auths, authentication, action || null)
+      const response = await runAuths(
+        auths,
+        authentication,
+        action || null,
+        dispatch,
+      )
       return setOrigin(
         markIdentAsKnown(response),
         `auth:service:${service.id}`,
