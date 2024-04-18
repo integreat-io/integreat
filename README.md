@@ -709,6 +709,14 @@ here, which will provide the transporter with an authorized ident.
 
 Available authenticators:
 
+- `action`: Will dispatch an action and use the response data to create an
+  authentication. The `options` should have the action type as `action`, and the
+  entire payload as `payload`. The response data should have an `auth` object,
+  that will be used directly, and an optional `expire` that is a timestamp on
+  which the auth will expire, in milleseconds since Epoc (1970-01-01). If no
+  `expire` is returned, the `expireIn` option will be used if present. It is
+  given as milliseconds before the auth should expire, or a `ms` string like
+  `'1h'`.
 - `http`: Supports http native authentications, like `Basic` and `Bearer`. It's
   included with the
   [HTTP transporter](https://github.com/integreat-io/integreat-transporter-http).
