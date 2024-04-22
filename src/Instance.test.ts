@@ -33,6 +33,11 @@ const services = [
       },
     ],
   },
+  {
+    id: 'queue',
+    transporter: 'http', // We use http here for convenience, as this service is never used
+    endpoints: [],
+  },
 ]
 
 const schemas = [
@@ -131,6 +136,25 @@ test('should throw when no schemas', (t) => {
       resourcesWithTransformer,
     )
   })
+})
+
+test('should throw when queueService is not referencing an included service', (t) => {
+  const identConfig = { type: 'account' }
+  const error = t.throws(() => {
+    new Instance(
+      {
+        id: 'great1',
+        services,
+        schemas,
+        mutations,
+        identConfig,
+        queueService: 'unknown',
+      },
+      resourcesWithTransformer,
+    )
+  })
+
+  t.true(error instanceof Error)
 })
 
 test('should dispatch with resources', async (t) => {
@@ -456,7 +480,7 @@ test('should dispatch scheduled', async (t) => {
   ]
 
   const great = new Instance(
-    { services, schemas, mutations, jobs, queueService: 'queue' }, // We don't have a queue service, but we've mocked the queue handler
+    { services, schemas, mutations, jobs, queueService: 'queue' },
     { ...resourcesWithTransformer, handlers },
   )
   const ret = await great.dispatchScheduled(fromDate, toDate)
@@ -478,7 +502,7 @@ test('should generate id when job def is missing one', async (t) => {
   const toDate = new Date('2021-05-11T14:59Z')
 
   const great = new Instance(
-    { services, schemas, mutations, jobs, queueService: 'queue' }, // We don't have a queue service, but we've mocked the queue handler
+    { services, schemas, mutations, jobs, queueService: 'queue' },
     { ...resourcesWithTransformer, handlers },
   )
   const ret = await great.dispatchScheduled(fromDate, toDate)

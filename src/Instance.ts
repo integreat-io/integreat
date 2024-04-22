@@ -27,7 +27,7 @@ import type {
   ActionHandler,
   EmitFn,
 } from './types.js'
-import type { AuthDef } from './service/types.js'
+import type { AuthDef, ServiceDef } from './service/types.js'
 import type { SchemaDef } from './schema/types.js'
 import type { JobDef } from './jobs/types.js'
 
@@ -112,6 +112,9 @@ const handlerOptionsFromDefs = (defs: Definitions) => ({
   identConfig: defs.identConfig,
   queueService: defs.queueService,
 })
+
+const hasService = (services: ServiceDef[], id: string) =>
+  services.some((service) => service.id === id)
 
 function createServices(
   defs: Definitions,
@@ -205,8 +208,13 @@ export default class Instance extends EventEmitter {
     super()
 
     if (!Array.isArray(defs.services) || !Array.isArray(defs.schemas)) {
+      throw new TypeError('Please provide at least one service and one schema')
+    } else if (
+      typeof defs.queueService === 'string' &&
+      !hasService(defs.services, defs.queueService)
+    ) {
       throw new TypeError(
-        'Please provide Integreat with at least services and schemas',
+        `Please make sure the provided queue service id '${defs.queueService}' is among the services in your setup`,
       )
     }
 

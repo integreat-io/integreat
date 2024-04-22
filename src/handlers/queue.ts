@@ -1,4 +1,4 @@
-import { setOrigin } from '../utils/response.js'
+import { createErrorResponse, setOrigin } from '../utils/response.js'
 import { setAuthorizedMark } from '../service/utils/authAction.js'
 import type { Action, ActionHandlerResources, Response } from '../types.js'
 
@@ -21,7 +21,9 @@ export default async function queue(
 ): Promise<Response> {
   const service = getService(undefined, queueService)
   if (!service) {
-    return dispatch(action)
+    return createErrorResponse(
+      `Could not queue to unknown service '${queueService}'`,
+    )
   }
 
   const nextAction = prepareQueuedAction(action)

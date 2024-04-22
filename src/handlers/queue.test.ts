@@ -49,7 +49,7 @@ test('should send action to queue', async (t) => {
       ...queueDefs,
       transporter: queueTransporter,
     },
-    { schemas, mapOptions }
+    { schemas, mapOptions },
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
@@ -80,7 +80,7 @@ test('should override present queuedAt', async (t) => {
       ...queueDefs,
       transporter: queueTransporter,
     },
-    { schemas, mapOptions }
+    { schemas, mapOptions },
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
@@ -116,7 +116,7 @@ test('should return error from queue', async (t) => {
       ...queueDefs,
       transporter: queueTransporter,
     },
-    { schemas, mapOptions }
+    { schemas, mapOptions },
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
@@ -138,7 +138,7 @@ test('should return error when queue does not respond status', async (t) => {
       ...queueDefs,
       transporter: baseTransporter,
     },
-    { schemas, mapOptions }
+    { schemas, mapOptions },
   )
   sinon.stub(queueService, 'send').resolves({}) // Intentionally no status
   const getService = (_type?: string | string[], service?: string) =>
@@ -154,11 +154,14 @@ test('should return error when queue does not respond status', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should dispatch action when queue service is unknown', async (t) => {
+test('should return error when queue service is unknown', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const options = { queueService: 'unknown' }
   const getService = (_type?: string | string[], _service?: string) => undefined
-  const expected = { status: 'ok' }
+  const expected = {
+    status: 'error',
+    error: "Could not queue to unknown service 'unknown'",
+  }
 
   const ret = await queue(action, {
     ...handlerResources,
@@ -168,6 +171,5 @@ test('should dispatch action when queue service is unknown', async (t) => {
   })
 
   t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], action)
+  t.is(dispatch.callCount, 0)
 })
