@@ -215,6 +215,37 @@ test('should not route to queue handler when no queue service', async (t) => {
   t.falsy(handlerAction.meta?.queue)
 })
 
+test('should not route to queue handler when queue service is configured with an unknown service', async (t) => {
+  const options = { queueService: 'unknown' }
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' }, queue: true },
+  }
+  const setHandler = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] })
+  const queueHandler = sinon.stub().resolves({
+    status: 'error',
+    error: "Could not queue to unknown service 'unknown'",
+  })
+  const handlers = {
+    SET: setHandler,
+    [QUEUE_SYMBOL]: queueHandler,
+  }
+
+  const ret = await dispatch({ ...resources, options, handlers })(action)
+
+  t.is(ret.status, 'error')
+  t.is(ret.error, "Could not queue to unknown service 'unknown'")
+  t.is(queueHandler.callCount, 1)
+  t.is(setHandler.callCount, 0)
+})
+
 test('should set dispatchedAt meta', async (t) => {
   const action = {
     type: 'GET',
