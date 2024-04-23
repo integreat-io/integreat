@@ -19,6 +19,7 @@ export interface IdentConfig {
   type: string
   props?: IdentConfigProps
   mapping?: Record<string, string | null>
+  completeIdent?: boolean
 }
 
 export interface ActionMapper {

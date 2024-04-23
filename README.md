@@ -1921,7 +1921,10 @@ async function (action, { dispatch, getService, setProgress, options }) { ... }
 - `options`: This is an object with a few settings: `queueService` is the id of
   the service set up as the default queue, and `identConfig` is the config
   object used for mapping ident schemas to ids, roles, and tokens (see
-  [the `completeIdent` middleware](#completeIdent-middleware)).
+  [the `completeIdent` middleware](#completeIdent-middleware)). In addition to
+  the middleware, you may now set `identConfig.completeIdent` to `true` to have
+  Integreat complete idents on dispatch and from the authentication callback
+  used for incoming actions.
 
 Your action handler must return a [response object](#action-response). If your
 handler just relays to another action handler, it may pass on the response
@@ -2206,8 +2209,8 @@ incoming actions from its `listen()` method. In that case, it's just as any
 other service with no need for any special handling.
 
 > [!NOTE]
-> Queueing actions are actually done through an action handler, but this handler
-> is not available from outside Integreat.
+> Queueing actions are actually done through an action handler, but this
+> handler is not available from outside Integreat.
 
 ## Middleware
 
@@ -2337,6 +2340,11 @@ the ident item loaded from the designated schema. If the ident has an `id`,
 the ident with this id is loaded, otherwise a `withToken` is used to load the
 ident with the specified token. If no ident is found, the original ident is
 kept.
+
+> [!NOTE]
+> You may now alternatively set `identConfig.completeIdent` to `true` to have
+> Integreat complete idents on dispatch and from the authentication callback
+> used on incoming actions.
 
 ### Writing middleware
 

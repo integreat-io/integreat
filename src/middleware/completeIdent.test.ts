@@ -1,8 +1,8 @@
 import test from 'ava'
 import sinon from 'sinon'
+import { IdentType, type Action } from '../types.js'
 
 import completeIdent from './completeIdent.js'
-import { IdentType, type Action } from '../types.js'
 
 // Tests
 
@@ -55,7 +55,7 @@ test('should complete ident with token', async (t) => {
   t.deepEqual(action1.meta?.ident, expectedIdent1)
 })
 
-test('should complete ident with arary of tokens', async (t) => {
+test('should complete ident with array of tokens', async (t) => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     access: { ident: { id: 'johnf', roles: ['editor'], isCompleted: true } },
@@ -198,14 +198,15 @@ test('should complete ident with ident from action when ok response has no ident
 test('should pass on action when no ident', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const action = { type: 'GET', payload: { type: 'entry' } }
+  const expected = { ...action, meta: { ident: undefined } }
 
   await completeIdent(dispatch)(action)
 
   t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], action)
+  t.deepEqual(dispatch.args[0][0], expected)
 })
 
-test('should remove ident on action when ident is not found', async (t) => {
+test('should set error response when ident is not found', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'notfound', error: 'Not found' })
@@ -218,7 +219,13 @@ test('should remove ident on action when ident is not found', async (t) => {
   const expected = {
     type: 'GET',
     payload: {},
-    meta: { ident: undefined },
+    response: {
+      status: 'noaccess',
+      error: "Ident 'unknown' was not found. [notfound] Not found",
+      reason: 'unknownident',
+      origin: 'auth:ident',
+    },
+    meta: { ident: { id: 'unknown' } },
   }
 
   await completeIdent(dispatch)(action)

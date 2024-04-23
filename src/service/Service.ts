@@ -35,6 +35,7 @@ import type {
 import type {
   EndpointDef,
   ServiceDef,
+  IdentConfig,
   TransporterOptions,
   PreparedOptions,
   AuthObject,
@@ -51,6 +52,7 @@ export interface Resources {
   schemas: Map<string, Schema>
   mapOptions?: MapOptions
   middleware?: Middleware[]
+  identConfig?: IdentConfig
   emit?: EmitFn
 }
 
@@ -122,6 +124,7 @@ export default class Service {
 
   #outgoingAuth?: Auth
   #incomingAuth?: Auth[]
+  #shouldCompleteIdent: boolean
   #connection: Connection | null
 
   #authorizeDataFromService
@@ -149,6 +152,7 @@ export default class Service {
       schemas,
       mapOptions = {},
       middleware = [],
+      identConfig,
       emit = () => undefined, // Provide a fallback for tests
     }: Resources,
   ) {
@@ -175,6 +179,7 @@ export default class Service {
     const incomingAuthResolver = resolveIncomingAuth(authenticators, auths)
     this.#outgoingAuth = outgoingAuthResolver(auth)
     this.#incomingAuth = incomingAuthResolver(auth)
+    this.#shouldCompleteIdent = identConfig?.completeIdent ?? false
 
     this.#authorizeDataFromService = authorizeData.fromService(schemas)
     this.#authorizeDataToService = authorizeData.toService(schemas)
@@ -504,7 +509,12 @@ export default class Service {
     const listenResponse = await this.#transporter.listen(
       dispatchIncoming(dispatch, this.#middleware, this.id),
       this.#connection.object,
-      authenticateCallback(this, dispatch, this.#incomingAuth),
+      authenticateCallback(
+        this,
+        dispatch,
+        this.#shouldCompleteIdent,
+        this.#incomingAuth,
+      ),
       this.#emit,
     )
 
