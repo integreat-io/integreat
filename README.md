@@ -1555,6 +1555,9 @@ The action ...
 
 See [the section on pagination](#pagination) for more on the paging properties.
 
+Note that `GET_ALL` requires a `pageSize` param, and will return a `badrequest`
+response if one is not set.
+
 #### `SET`
 
 Send data to a service. The data to send is provided in the payload `data`

@@ -535,7 +535,7 @@ test('should not look for loop when noLoopCheck is true', async (t) => {
   t.is((ret.data as TypedData[]).length, 4)
 })
 
-test('should return error', async (t) => {
+test('should pass on error', async (t) => {
   const dispatch = sinon.stub().resolves({
     status: 'notfound',
     error: 'Unknown endpoint',
@@ -580,7 +580,7 @@ test('should treat null data as no data', async (t) => {
   t.deepEqual(ret.data, [])
 })
 
-test('should dispatch action without pageSize', async (t) => {
+test('should return badrequest when action has no pageSize', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok', data: [] })
   const action = {
     type: 'GET_ALL',
@@ -590,19 +590,14 @@ test('should dispatch action without pageSize', async (t) => {
     },
     meta: { ident: { id: 'johnf' }, project: 'jetkids' },
   }
-  const expectedAction = {
-    type: 'GET',
-    payload: {
-      type: 'event',
-      page: 1,
-    },
-    meta: { ident: { id: 'johnf' }, project: 'jetkids' },
+  const expected = {
+    status: 'badrequest',
+    origin: 'handler:GET_ALL',
+    error: 'GET_ALL requires a pageSize',
   }
-  const expected = { status: 'ok', data: [] }
 
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.is(dispatch.callCount, 0)
   t.deepEqual(ret, expected)
 })
