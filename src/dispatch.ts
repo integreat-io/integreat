@@ -9,6 +9,7 @@ import {
   setOptionsOnAction,
 } from './utils/action.js'
 import { createErrorResponse, setOrigin } from './utils/response.js'
+import { completeIdentOnAction } from './utils/completeIdent.js'
 import type {
   Dispatch,
   HandlerDispatch,
@@ -51,6 +52,9 @@ export const compose = (...fns: Middleware[]): Middleware =>
 const shouldQueue = (mutatedAction: Action, options: HandlerOptions) =>
   !!options.queueService && mutatedAction.meta?.queue
 
+const shouldCompleteIdent = (action: Action, options: HandlerOptions) =>
+  options.identConfig?.completeIdent && action.type !== 'GET_IDENT'
+
 function getActionHandlerFromType(
   type: string | symbol | undefined,
   handlers: Record<string | symbol, ActionHandler>,
@@ -79,7 +83,7 @@ function cleanUpActionAndSetIds(
     ...action
   }: Action,
   id: string,
-) {
+): Action {
   const cid = meta?.cid || id
 
   return {
@@ -237,16 +241,18 @@ export default function createDispatch({
       const actionId = originalAction.meta?.id ?? nanoid() // Get id from action or generate an id
       actionIds.add(actionId) // Add action id to list of running actions
 
-      let response
+      let cleanedUpAction = cleanUpActionAndSetIds(originalAction, actionId) // Clean up action and set id
+      if (shouldCompleteIdent(cleanedUpAction, options)) {
+        cleanedUpAction = await completeIdentOnAction(cleanedUpAction, dispatch) // Complete ident on action if configured to
+      }
+
       const {
         action,
         service: incomingService,
         endpoint: incomingEndpoint,
-      } = await mutateIncomingAction(
-        cleanUpActionAndSetIds(originalAction, actionId),
-        getService,
-      )
+      } = await mutateIncomingAction(cleanedUpAction, getService)
 
+      let response
       if (action.response?.status) {
         // Stop here if the mutation set a response
         response = action.response

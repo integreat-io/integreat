@@ -4,6 +4,7 @@ import httpTransporter from 'integreat-transporter-http'
 import Service from './service/Service.js'
 import Schema from './schema/Schema.js'
 import { QUEUE_SYMBOL } from './handlers/index.js'
+import createMapOptions from './utils/createMapOptions.js'
 import type {
   Action,
   Middleware,
@@ -12,7 +13,6 @@ import type {
 } from './types.js'
 
 import dispatch from './dispatch.js'
-import createMapOptions from './utils/createMapOptions.js'
 
 // Setup
 
@@ -635,6 +635,104 @@ test('should dispatch to middleware from action handlers', async (t) => {
   const ret = await dispatch({ ...resources, handlers, middleware })(action)
 
   t.is(ret.status, '<<fromAction>>')
+})
+
+test('should complete ident', async (t) => {
+  const getHandler = sinon.stub().resolves({ status: 'ok' })
+  const getIdentHandler = sinon.stub().resolves({
+    status: 'ok',
+    access: { ident: { id: 'johnf', roles: ['editor'], isCompleted: true } },
+  })
+  const handlers = { GET: getHandler, GET_IDENT: getIdentHandler }
+  const options = {
+    identConfig: { type: 'account', completeIdent: true },
+  }
+  const action = {
+    type: 'GET',
+    payload: {},
+    meta: { ident: { id: 'johnf' }, id: '11004', cid: '11004' },
+  }
+  const expectedIdent = { id: 'johnf', roles: ['editor'], isCompleted: true }
+
+  const ret = await dispatch({
+    ...resources,
+    services,
+    schemas,
+    options,
+    handlers,
+  })(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(getIdentHandler.callCount, 1)
+  t.is(getHandler.callCount, 1)
+  const dispatchedAction = getHandler.args[0][0]
+  t.is(dispatchedAction.type, 'GET')
+  t.deepEqual(dispatchedAction.payload, {})
+  t.deepEqual(dispatchedAction.meta.ident, expectedIdent)
+})
+
+test('should not complete an already completed ident', async (t) => {
+  const getHandler = sinon.stub().resolves({ status: 'ok' })
+  const getIdentHandler = sinon.stub().resolves({
+    status: 'ok',
+    access: { ident: { id: 'johnf', roles: ['editor'], isCompleted: true } },
+  })
+  const handlers = { GET: getHandler, GET_IDENT: getIdentHandler }
+  const options = {
+    identConfig: { type: 'account', completeIdent: true },
+  }
+  const action = {
+    type: 'GET',
+    payload: {},
+    meta: {
+      ident: { id: 'johnf', isCompleted: true },
+      id: '11004',
+      cid: '11004',
+    },
+  }
+  const expectedIdent = { id: 'johnf', isCompleted: true }
+
+  const ret = await dispatch({
+    ...resources,
+    services,
+    schemas,
+    options,
+    handlers,
+  })(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(getIdentHandler.callCount, 0)
+  t.is(getHandler.callCount, 1)
+  const dispatchedAction = getHandler.args[0][0]
+  t.deepEqual(dispatchedAction.meta.ident, expectedIdent)
+})
+
+test('should pass on error response from complete ident', async (t) => {
+  const getHandler = sinon.stub().resolves({ status: 'ok' })
+  const getIdentHandler = sinon.stub().resolves({
+    status: 'notfound',
+    error: 'Not found',
+  })
+  const handlers = { GET: getHandler, GET_IDENT: getIdentHandler }
+  const options = {
+    identConfig: { type: 'account', completeIdent: true },
+  }
+  const ident = { id: 'johnf' }
+  const action = {
+    type: 'GET',
+    payload: {},
+    meta: { ident, id: '11004', cid: '11004' },
+  }
+
+  const ret = await dispatch({
+    ...resources,
+    services,
+    schemas,
+    options,
+    handlers,
+  })(action)
+
+  t.is(ret.status, 'noaccess', ret.error)
 })
 
 test('should support progress reporting', async (t) => {

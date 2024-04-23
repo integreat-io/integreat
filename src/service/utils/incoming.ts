@@ -3,6 +3,7 @@ import pProgress, { ProgressNotifier } from 'p-progress'
 import { setErrorOnAction } from '../../utils/action.js'
 import { createErrorResponse, setOrigin } from '../../utils/response.js'
 import { isObject } from '../../utils/is.js'
+import { completeIdent } from '../../utils/completeIdent.js'
 import type { Authentication } from '../types.js'
 import type {
   Action,
@@ -112,6 +113,7 @@ async function runAuths(
 export const authenticateCallback = (
   service: Service,
   dispatch: Dispatch,
+  shouldCompleteIdent: boolean,
   incomingAuth?: Auth[],
 ) =>
   async function authenticateFromListen(
@@ -129,12 +131,15 @@ export const authenticateCallback = (
         'noaction',
       )
     } else {
-      const response = await runAuths(
+      let response = await runAuths(
         auths,
         authentication,
         action || null,
         dispatch,
       )
+      if (shouldCompleteIdent) {
+        response = await completeIdent(response.access?.ident, dispatch)
+      }
       return setOrigin(
         markIdentAsKnown(response),
         `auth:service:${service.id}`,

@@ -79,7 +79,7 @@ const prepareResponse = (
 ): Response => {
   const data = getFirstIfArray(response.data)
 
-  if (isTypedData(data)) {
+  if (response.status === 'ok' && isTypedData(data)) {
     const identProps = Object.entries(mapping).reduce<Record<string, unknown>>(
       setPropOnIdent(data),
       {},
@@ -89,13 +89,23 @@ const prepareResponse = (
       ...identProps,
       isCompleted: true, // Set `isCompleted` so we don't try to complete again
     })
-  } else {
+  } else if (
+    typeof response.status === 'string' &&
+    ['ok', 'notfound'].includes(response.status) // When we get 'ok' here, it's because the data was not typed data'
+  ) {
     return createErrorResponse(
-      `Could not find ident with params ${util.inspect(params)}, error: ${
-        response.error
+      `Could not find ident with params ${util.inspect(params)}. [notfound] ${
+        response.error || 'Did not return the expected data'
       }`,
       'handler:GET_IDENT',
       'notfound',
+    )
+  } else {
+    return createErrorResponse(
+      `Could not get ident with params ${util.inspect(params)}. [${response.status}] ${
+        response.error
+      }`,
+      'handler:GET_IDENT',
     )
   }
 }

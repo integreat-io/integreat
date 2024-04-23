@@ -217,7 +217,26 @@ test('should return notfound when ident not found', async (t) => {
   const expected = {
     status: 'notfound',
     error:
-      "Could not find ident with params { id: 'unknown' }, error: Could not find the url users/unknown",
+      "Could not find ident with params { id: 'unknown' }. [notfound] Could not find the url users/unknown",
+    origin: 'handler:GET_IDENT',
+  }
+
+  const ret = await getIdent(action, handlerResources)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return notfound when response has no data', async (t) => {
+  nock('http://some.api').get('/users/unknown').reply(200)
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { id: 'unknown' } },
+  }
+  const expected = {
+    status: 'notfound',
+    error:
+      "Could not find ident with params { id: 'unknown' }. [notfound] Did not return the expected data",
     origin: 'handler:GET_IDENT',
   }
 
@@ -492,7 +511,7 @@ test('should respond with an error when we have an ident with `withToken` and no
   t.false(scope.isDone())
 })
 
-test('should return notfound when unknown service', async (t) => {
+test('should return error when unknown service', async (t) => {
   nock('http://some.api')
     .get('/users')
     .query({ tokens: 'twitter|23456' })
@@ -504,13 +523,32 @@ test('should return notfound when unknown service', async (t) => {
     meta: { ident: { withToken: 'twitter|23456' } },
   }
   const expected = {
-    status: 'notfound',
+    status: 'error',
     error:
-      "Could not find ident with params { tokens: 'twitter|23456' }, error: No service exists for type 'user'",
+      "Could not get ident with params { tokens: 'twitter|23456' }. [error] No service exists for type 'user'",
     origin: 'handler:GET_IDENT',
   }
 
   const ret = await getIdent(action, { ...handlerResources, getService })
+
+  t.deepEqual(ret, expected)
+})
+
+test('should return error when fetching fails', async (t) => {
+  nock('http://some.api').get('/users/unknown').reply(500)
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { id: 'unknown' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Could not get ident with params { id: 'unknown' }. [error] Server returned 500 for users/unknown",
+    origin: 'handler:GET_IDENT',
+  }
+
+  const ret = await getIdent(action, handlerResources)
 
   t.deepEqual(ret, expected)
 })

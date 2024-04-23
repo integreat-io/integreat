@@ -118,6 +118,7 @@ const mutations = {
 }
 
 const mapOptions = createMapOptions(schemas, mutations)
+const identConfig = { type: 'account' }
 
 const endpoints = [
   {
@@ -347,6 +348,7 @@ test('should return service object with id and meta', (t) => {
 
   const service = new Service(def, {
     ...jsonResources,
+    identConfig,
     mapOptions,
     schemas,
   })
@@ -3318,6 +3320,103 @@ test('listen should fall back to ident authenticator on true', async (t) => {
   const dispatchedAction = dispatchStub.args[0][0]
   t.deepEqual(dispatchedAction.payload, expectedPayload)
   t.deepEqual(dispatchedAction.meta?.ident, expectedActionIdent)
+})
+
+test('listen should complete ident in authenticate callback', async (t) => {
+  const dispatchStub = sinon
+    .stub()
+    .callsFake(dispatch)
+    .onCall(0)
+    .resolves({
+      status: 'ok',
+      access: { ident: { id: 'johnf', roles: ['editor'], isCompleted: true } },
+    })
+  const identConfig = { type: 'account', completeIdent: true }
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: 'validating' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    { ...mockResources({}, action, true), identConfig },
+  )
+  const expectedResponse = {
+    status: 'ok',
+    access: { ident: { id: 'johnf', roles: ['editor'], isCompleted: true } },
+  }
+  const expectedGetIdentAction = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { id: 'johnf' }, cache: true },
+  }
+  const expectedActionWithIdent = {
+    ...action,
+    payload: { ...action.payload, sourceService: 'entries' },
+    meta: {
+      ident: { id: 'johnf', roles: ['editor'], isCompleted: true },
+      auth: undefined,
+    },
+  }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.is(dispatchStub.callCount, 2)
+  t.deepEqual(dispatchStub.args[0][0], expectedGetIdentAction)
+  t.deepEqual(dispatchStub.args[1][0], expectedActionWithIdent)
+  t.deepEqual(ret, expectedResponse)
+})
+
+test('listen should respond with noaccess when ident is not found', async (t) => {
+  const dispatchStub = sinon
+    .stub()
+    .callsFake(dispatch)
+    .onCall(0)
+    .resolves({ status: 'notfound', error: 'Could not find ident' })
+  const identConfig = { type: 'account', completeIdent: true }
+  const action = {
+    type: 'SET',
+    payload: { data: [], sourceService: 'entries' },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: 'validating' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    { ...mockResources({}, action, true), identConfig },
+  )
+  const expectedResponse = {
+    status: 'noaccess',
+    error: "Ident 'johnf' was not found. [notfound] Could not find ident",
+    reason: 'unknownident',
+    origin: 'auth:service:entries:auth:ident',
+  }
+  const expectedGetIdentAction = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { id: 'johnf' }, cache: true },
+  }
+  const expectedActionWithIdent = {
+    ...action,
+    payload: { ...action.payload, sourceService: 'entries' },
+    response: expectedResponse,
+    meta: { ident: undefined },
+  }
+
+  const ret = await service.listen(dispatchStub)
+
+  t.deepEqual(ret, expectedResponse)
+  t.is(dispatchStub.callCount, 2)
+  t.deepEqual(dispatchStub.args[0][0], expectedGetIdentAction)
+  t.deepEqual(dispatchStub.args[1][0], expectedActionWithIdent)
 })
 
 test('listen should authenticate action with endpoint auth', async (t) => {
