@@ -344,13 +344,16 @@ export default class Step {
   #postmutator?: DataMapper<InitialState>
   #iterateMutator?: DataMapper<InitialState>
   #iterateConcurrency?: number
+  #isJob: boolean
 
   constructor(
     stepDef: JobStepDef | JobStepDef[],
     mapOptions: MapOptions,
     breakByDefault = false,
     prevStepId?: string,
+    isJob = false, // Signal that this is a job, not a step in a flow
   ) {
+    this.#isJob = isJob
     if (Array.isArray(stepDef)) {
       this.id = stepDef.map((step) => step.id).join(':')
       this.#subSteps = stepDef.map(
@@ -440,24 +443,34 @@ export default class Step {
     const action = setMetaOnAction(this.#action, meta)
 
     // Run the action for every item in the array return by the iterate mutator.
-    const responses = await this.runIteration(actionResponses, dispatch, meta)
+    const iterateResponses = await this.runIteration(
+      actionResponses,
+      dispatch,
+      meta,
+    )
 
     // If we got any responses, combine them into one response. Otherwise
     // just run the action, as no responses means there were no iterate mutator,
     // so nothing has been run yet.
-    const responseAction = responses
-      ? generateIterateResponse(action, responses)
+    const responseAction = iterateResponses
+      ? generateIterateResponse(action, iterateResponses)
       : await runOneAction(
           await mutateAction(action, this.#premutator, actionResponses),
           dispatch,
         )
 
+    // If this is a job (not a step in a flow), we make the original action and
+    // its response available
+    if (this.#isJob) {
+      actionResponses.action = responseAction
+    }
+
     // Mutate the response and return together with any individual responses
     return {
-      ...responses,
+      ...iterateResponses,
       [this.id]: await mutateResponse(
         responseAction,
-        actionResponses,
+        { ...actionResponses, ...iterateResponses }, // Provide iterate responses to mutation
         this.id,
         this.#postmutator,
       ),

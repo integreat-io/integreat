@@ -1578,6 +1578,88 @@ test('should always respond with ok status when postconditions passes', async (t
   t.is(dispatch.callCount, 2)
 })
 
+test('should run postconditions on action job', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: null })
+  const jobDef = {
+    id: 'action10',
+    action: {
+      type: 'GET',
+      payload: { type: 'entry' },
+    },
+    postconditions: [
+      {
+        condition: 'response.data',
+        failResponse: { status: 'notfound', error: 'Not found' },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action10',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error: "Could not finish job 'action10': [notfound] Not found",
+    origin: 'job:action10',
+    responses: [
+      {
+        error: 'Not found',
+        origin: 'job:action10:step:action10',
+        status: 'notfound',
+      },
+    ],
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1)
+})
+
+test('should run postmutation before postconditions on action job', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: null })
+  const jobDef = {
+    id: 'action10',
+    action: {
+      type: 'GET',
+      payload: { type: 'entry' },
+    },
+    postmutation: {
+      response: {
+        $modify: 'response',
+        data: { id: { $value: 'ent1' } }, // Just to check that we run this first
+      },
+    },
+    postconditions: [
+      {
+        condition: 'response.data',
+        failResponse: { status: 'notfound', error: 'Not found' },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action10',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    data: { id: 'ent1' },
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1)
+})
+
 test('should support json schema validation in conditions', async (t) => {
   // Note: We'll remove this in the future
   const dispatch = sinon
@@ -2491,6 +2573,42 @@ test('should mutate simple action', async (t) => {
       payload: { type: 'entry', id: 'ent1' },
       meta: { queue: true },
     },
+    premutation: { payload: { $modify: 'payload', flag: { $value: true } } },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expectedAction = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent1', flag: true },
+    meta: { ident: { id: 'johnf' }, jobId: 'action1', queue: true },
+  }
+  const expected = { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0], expectedAction)
+  t.deepEqual(ret, expected)
+})
+
+test('should mutate simple action with depricated mutation prop', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
+  const jobDef = {
+    id: 'action1',
+    action: {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent1' },
+      meta: { queue: true },
+    },
     mutation: { 'payload.flag': { $value: true } },
   }
   const action = {
@@ -2885,6 +3003,35 @@ test('should mutate simple action with pipeline', async (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should not run job when preconditions does not hold', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
+  const jobDef = {
+    id: 'action1',
+    preconditions: [{ condition: 'payload.type' }],
+    action: {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent1' },
+      meta: { queue: true },
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = { status: 'noaction', error: 'Did not satisfy condition' }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 0)
+})
+
 test('should handle several root paths in one pipeline', async (t) => {
   const dispatch = sinon
     .stub()
@@ -3032,6 +3179,13 @@ test('should make action response available to mutations as response on the init
     status: 'error',
     error: "Could not finish job 'action7': [error] No data",
     origin: 'job:action7',
+    responses: [
+      {
+        error: 'No data',
+        origin: 'job:action7:step:action7',
+        status: 'error',
+      },
+    ],
   }
 
   const job = new Job(jobDef, mapOptions)
