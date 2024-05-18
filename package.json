@@ -1,15 +1,10 @@
 {
   "name": "integreat",
-  "version": "1.6.0-rc.7",
+  "version": "1.6.0-rc.8",
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <kjellmorten@integreat.io> (https://integreat.io/)",
   "license": "ISC",
-  "keywords": [
-    "integreat",
-    "integration",
-    "data",
-    "api"
-  ],
+  "keywords": ["integreat", "integration", "data", "api"],
   "type": "module",
   "exports": {
     ".": {
