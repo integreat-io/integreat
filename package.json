@@ -4,7 +4,12 @@
   "description": "Node.js integration layer",
   "author": "Kjell-Morten Bratsberg Thorsen <kjellmorten@integreat.io> (https://integreat.io/)",
   "license": "ISC",
-  "keywords": ["integreat", "integration", "data", "api"],
+  "keywords": [
+    "integreat",
+    "integration",
+    "data",
+    "api"
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -58,6 +63,6 @@
     "integreat-transformers": "^1.0.5",
     "integreat-transporter-http": "^1.4.0-rc.1",
     "nock": "^13.5.4",
-    "sinon": "^17.0.1"
+    "sinon": "^18.0.0"
   }
 }
