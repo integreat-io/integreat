@@ -19,10 +19,13 @@ import type {
   MapOptions,
   SetProgress,
 } from '../types.js'
-import type { JobDef, JobStepDef } from './types.js'
+import type { JobDef, JobStepDef, JobDefWithFlow } from './types.js'
 
-const isJobStep = (job: unknown): job is JobStepDef =>
+const isActionJob = (job: unknown): job is JobStepDef =>
   isObject(job) && isObject(job.action)
+
+const isFlowJob = (job: unknown): job is JobDefWithFlow =>
+  isObject(job) && Array.isArray(job.flow)
 
 const generateSubMeta = ({ ident, project, cid }: Meta, jobId: string) => ({
   ident,
@@ -90,11 +93,6 @@ function getResponse(
 const getId = (jobDef: JobDef) =>
   typeof jobDef.id === 'string' && jobDef.id ? jobDef.id : nanoid()
 
-const removePostmutationAndSetId = (
-  { postmutation, responseMutation, ...job }: JobStepDef,
-  id: string,
-) => ({ ...job, id })
-
 const calculateProgress = (index: number, stepsCount: number) =>
   (index + 1) / (stepsCount + 1)
 
@@ -108,12 +106,12 @@ export default class Job {
   constructor(jobDef: JobDef, mapOptions: MapOptions, breakByDefault = false) {
     this.id = getId(jobDef)
 
-    if (Array.isArray(jobDef.flow)) {
+    if (isFlowJob(jobDef)) {
       this.#isFlow = true
       this.#steps = jobDef.flow
         .filter(
           (step): step is JobStepDef | JobStepDef[] =>
-            Array.isArray(step) || isJobStep(step),
+            Array.isArray(step) || isActionJob(step),
         )
         .map(
           (stepDef, index, steps) =>
@@ -124,19 +122,25 @@ export default class Job {
               getPrevStepId(index, steps),
             ),
         )
-    } else if (isJobStep(jobDef)) {
+
+      // We only set the postmutator when we have a flow.
+      const postmutation = jobDef.postmutation || jobDef.responseMutation
+      this.#postmutator = postmutation
+        ? prepareMutation(postmutation, mapOptions, !!jobDef.responseMutation) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
+        : undefined
+    } else if (isActionJob(jobDef)) {
       this.#steps = [
         new Step(
-          removePostmutationAndSetId(jobDef, this.id),
+          { ...jobDef, id: jobDef.id },
           mapOptions,
           breakByDefault,
+          undefined,
+          true, // Signal that this is a job (not a step in a flow)
         ),
-      ] // We'll run the post mutation here when this is a job with an action only
+      ]
+      // We don't set the postmutator here for action jobs, as it is
+      // handled in the job step instead.
     }
-    const postmutation = jobDef.postmutation || jobDef.responseMutation
-    this.#postmutator = postmutation
-      ? prepareMutation(postmutation, mapOptions, !!jobDef.responseMutation) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
-      : undefined
 
     if (jobDef.cron && this.#steps.length > 0) {
       this.schedule = new Schedule(jobDef)
@@ -178,9 +182,12 @@ export default class Job {
       actionResponses,
       this.#isFlow,
     )
-    actionResponses = { ...actionResponses, action: { ...action, response } }
 
     if (this.#postmutator) {
+      // Note that only a job with a flow will have postmutator. For
+      // a job with an action, the post mutation is passed on to the
+      // step logic.
+      actionResponses = { ...actionResponses, action: { ...action, response } }
       const { response: mutatedResponse } = await mutateResponse(
         setResponseOnAction(action, response),
         actionResponses,
