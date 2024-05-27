@@ -32,7 +32,7 @@ export interface Authentication extends Record<string, unknown> {
   status: string
   error?: string
   authKey?: string
-  expire?: number | null
+  expire?: number
 }
 
 export interface AuthDef {
