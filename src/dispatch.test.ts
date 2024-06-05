@@ -599,6 +599,31 @@ test('should call middleware', async (t) => {
   t.is(ret.status, '<(fromAction)>')
 })
 
+test('should call middleware before queueing', async (t) => {
+  const action = { type: 'TEST', payload: {}, meta: { queue: true } }
+  const queueHandler = sinon.stub().resolves({ status: 'queued' })
+  const handlers = {
+    TEST: async () => ({ status: 'fromAction' }),
+    [QUEUE_SYMBOL]: queueHandler,
+  }
+  const options = { queueService: 'queue' }
+  const middleware: Middleware[] = [
+    (next) => async (action) => ({
+      ...action.response,
+      status: `<${(await next(action)).status}>`,
+    }),
+    (next) => async (action) => ({
+      ...action.response,
+      status: `(${(await next(action)).status})`,
+    }),
+  ]
+  const ret = await dispatch({ ...resources, options, handlers, middleware })(
+    action,
+  )
+
+  t.is(ret.status, '<(queued)>')
+})
+
 test('should allow middleware to abort middleware chain', async (t) => {
   const action = { type: 'TEST', payload: {} }
   const handler = sinon.stub().resolves({ status: 'ok' })

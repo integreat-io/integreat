@@ -46,12 +46,6 @@ export const compose = (...fns: Middleware[]): Middleware =>
         f(g(...args)),
   )
 
-// Uses `queue` flag from mutated action if it is set, otherwise uses falls
-// back to `queue` flag from original action. Also requires that a queue service
-// is configured.
-const shouldQueue = (mutatedAction: Action, options: HandlerOptions) =>
-  !!options.queueService && mutatedAction.meta?.queue
-
 const shouldCompleteIdent = (action: Action, options: HandlerOptions) =>
   options.identConfig?.completeIdent && action.type !== 'GET_IDENT'
 
@@ -204,6 +198,21 @@ async function handleAction(
   )
 }
 
+function prepareActionForQueue(
+  action: Action,
+  options: HandlerOptions,
+): [Action, boolean] {
+  if (action.meta?.queue) {
+    if (options.queueService) {
+      return [action, true]
+    } else {
+      return [removeQueueFlag(action), false]
+    }
+  } else {
+    return [action, false]
+  }
+}
+
 /**
  * Setup and return dispatch function. The dispatch function will pass an action
  * through the middleware before sending it to the relevant action handler. When
@@ -257,28 +266,27 @@ export default function createDispatch({
         // Stop here if the mutation set a response
         response = action.response
       } else {
-        const resources = { dispatch, getService, options, setProgress }
-
         try {
-          if (shouldQueue(action, options)) {
-            // Use queue handler if queue flag is set and there is a queue
-            // service. Bypass middleware
-            response = await handleAction(
-              QUEUE_SYMBOL,
+          // We'll queue if there is a queue service and the action has the
+          // queue flag. If we're not queueing, any queue flag will be removed
+          // from the action
+          const [nextAction, doQueue] = prepareActionForQueue(action, options)
+
+          // Prepare a next function that will pass the action on to the
+          // relevant handler.
+          const next = async (action: Action) =>
+            handleAction(
+              doQueue ? QUEUE_SYMBOL : action.type,
               action,
-              resources,
+              { dispatch, getService, options, setProgress },
               handlers,
             )
-          } else {
-            // Send action through middleware before sending to the relevant
-            // handler
-            const next = async (action: Action) =>
-              handleAction(action.type, action, resources, handlers)
-            response = setOrigin(
-              await middlewareFn(next)(removeQueueFlag(action)),
-              'middleware:dispatch',
-            )
-          }
+          // Pass the action through the middleware, before invoking the next
+          // function.
+          response = setOrigin(
+            await middlewareFn(next)(nextAction),
+            'middleware:dispatch',
+          )
         } catch (err) {
           response = createErrorResponse(
             `Error thrown in dispatch: ${
