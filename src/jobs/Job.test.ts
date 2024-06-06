@@ -1660,6 +1660,41 @@ test('should run postmutation before postconditions on action job', async (t) =>
   t.is(dispatch.callCount, 1)
 })
 
+test('should make original action available to postmutation on action job', async (t) => {
+  const dispatch = sinon.stub().resolves({ status: 'ok', data: null })
+  const jobDef = {
+    id: 'action10',
+    action: {
+      type: 'GET',
+      payload: { type: 'entry' },
+    },
+    postmutation: {
+      response: {
+        $modify: 'response',
+        data: { id: { $value: 'ent1' }, title: '^^.action.payload.title' }, // Just to check that we run this first
+      },
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action10',
+      title: 'Entry 1',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    data: { id: 'ent1', title: 'Entry 1' },
+  }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 1)
+})
+
 test('should support json schema validation in conditions', async (t) => {
   // Note: We'll remove this in the future
   const dispatch = sinon

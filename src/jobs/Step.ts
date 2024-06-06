@@ -459,10 +459,11 @@ export default class Step {
           dispatch,
         )
 
-    // If this is a job (not a step in a flow), we make the original action and
-    // its response available
+    // If this is a job (not a step in a flow), this will be the response from
+    // the job, and we set it here as the response to the original action, to
+    // make it available in post mutation.
     if (this.#isJob) {
-      actionResponses.action = responseAction
+      actionResponses.action.response = responseAction.response
     }
 
     // Mutate the response and return together with any individual responses
