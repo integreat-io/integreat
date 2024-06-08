@@ -27,11 +27,16 @@ const isActionJob = (job: unknown): job is JobStepDef =>
 const isFlowJob = (job: unknown): job is JobDefWithFlow =>
   isObject(job) && Array.isArray(job.flow)
 
-const generateSubMeta = ({ ident, project, cid }: Meta, jobId: string) => ({
+const generateSubMeta = (
+  { ident, project, cid }: Meta,
+  jobId: string,
+  gid?: string,
+) => ({
   ident,
   jobId,
   ...(project ? { project } : {}),
   ...(cid ? { cid } : {}),
+  ...(gid ? { gid } : {}),
 })
 
 const messageFromStep = (isFlow: boolean) => (response: Response) => {
@@ -151,6 +156,7 @@ export default class Job {
     action: Action,
     dispatch: HandlerDispatch,
     setProgress: SetProgress,
+    gid?: string,
   ): Promise<Response> {
     if (this.#steps.length === 0) {
       return {
@@ -161,7 +167,7 @@ export default class Job {
     }
 
     let actionResponses: Record<string, Action> = { action } // Include the incoming action in previous responses, to allow mutating from it
-    const meta = generateSubMeta(action.meta || {}, this.id)
+    const meta = generateSubMeta(action.meta || {}, this.id, gid)
 
     for (const [index, step] of this.#steps.entries()) {
       const { [breakSymbol]: doBreak, ...responses } = await step.run(

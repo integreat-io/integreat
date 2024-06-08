@@ -16,7 +16,10 @@ const extractLastId = (data: unknown, field = 'id') =>
       data[data.length - 1] && data[data.length - 1][field]
     : undefined
 
-const cleanMeta = ({ id, ...meta }: Meta = {}) => meta
+const prepareMetaForSubActions = ({ id, ...meta }: Meta = {}): Meta => ({
+  ...meta,
+  gid: id,
+})
 
 const createAction = (
   page: number,
@@ -93,7 +96,7 @@ export default async function getAll(
         action.payload,
         paging,
         data,
-        cleanMeta(action.meta),
+        prepareMetaForSubActions(action.meta),
       ),
     )
     if (response?.status !== 'ok') {

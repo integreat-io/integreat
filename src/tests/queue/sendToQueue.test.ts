@@ -63,7 +63,7 @@ test('should send action to queue', async (t) => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
-    meta: { ident: { id: 'johnf' }, queue: true, id: '11004' },
+    meta: { ident: { id: 'johnf' }, queue: true, id: '11004', gid: '11003' },
   }
 
   const great = Integreat.create(defsWithQueue, resourcesWithQueue)
@@ -81,6 +81,7 @@ test('should send action to queue', async (t) => {
   t.true(queuedAction.meta.queue)
   t.is(queuedAction.meta.id, '11004')
   t.is(queuedAction.meta.cid, '11004')
+  t.is(queuedAction.meta.gid, '11003')
   t.is(typeof queuedAction.meta?.queuedAt, 'number')
   t.true((queuedAction.meta?.queuedAt as number) >= before)
   t.true((queuedAction.meta?.queuedAt as number) <= after)

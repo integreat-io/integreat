@@ -155,13 +155,18 @@ test('should set meta on action', (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('should include cid but not id in meta on action', (t) => {
+test('should include cid and gid but not id in meta on action', (t) => {
   const action = { type: 'GET', payload: { type: 'entry' } }
-  const meta = { ident: { id: 'johnf' }, id: '12345', cid: '12346' }
+  const meta = {
+    ident: { id: 'johnf' },
+    id: '12345',
+    cid: '12346',
+    gid: '12344',
+  }
   const expected = {
     type: 'GET',
     payload: { type: 'entry' },
-    meta: { ident: { id: 'johnf' }, cid: '12346' },
+    meta: { ident: { id: 'johnf' }, cid: '12346', gid: '12344' },
   }
 
   const ret = setMetaOnAction(action, meta)

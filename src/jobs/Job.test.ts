@@ -816,6 +816,77 @@ test('should report progress when running steps', async (t) => {
   t.is(setProgress.args[1][0], 2 / 3)
 })
 
+test('should set gid on all actions dispatched by the job', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [] })
+    .onCall(0)
+    .resolves({ status: 'ok', data: { id: 'ent1', $type: 'entry' } })
+  const jobDef = {
+    id: 'action3',
+    flow: [
+      [
+        {
+          id: 'getEntry',
+          action: {
+            type: 'GET',
+            payload: {
+              type: 'entry',
+              id: 'ent1',
+            },
+          },
+        },
+        {
+          id: 'getDate',
+          action: {
+            type: 'GET',
+            payload: {
+              type: 'date',
+              id: 'updatedAt',
+            },
+          },
+        },
+      ],
+      {
+        id: 'setEntry',
+        action: {
+          type: 'SET',
+          payload: {
+            type: 'entry',
+          },
+        },
+        premutation: {
+          payload: {
+            $modify: 'payload',
+            data: '^^getEntry.response.data', // Verify that we can access the response from parallel steps
+          },
+        },
+      },
+    ],
+    postmutation: {
+      response: '^^getEntry.response', // Verify that we can access the response from parallel steps here too
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+    },
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
+  }
+  const gid = '34567'
+  const expected = { status: 'ok', data: { id: 'ent1', $type: 'entry' } }
+
+  const job = new Job(jobDef, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress, gid)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 3)
+  t.deepEqual(dispatch.args[0][0].meta.gid, gid)
+  t.deepEqual(dispatch.args[1][0].meta.gid, gid)
+  t.deepEqual(dispatch.args[2][0].meta.gid, gid)
+})
+
 test('should return noaction when job has an empty flow', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobDef = {
@@ -3300,6 +3371,7 @@ test('should mutate action on a job into several actions based on iterate pipeli
     payload: { jobId: 'action14', data },
     meta: { ident: { id: 'johnf' } },
   }
+  const gid = '34567'
   const expectedAction0 = {
     type: 'SET',
     payload: {
@@ -3307,7 +3379,7 @@ test('should mutate action on a job into several actions based on iterate pipeli
       data: { id: 'ent1', include: true },
       key: 'ent1',
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action14' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action14', gid },
   }
   const expectedAction1 = {
     type: 'SET',
@@ -3316,12 +3388,12 @@ test('should mutate action on a job into several actions based on iterate pipeli
       data: { id: 'ent3', include: true },
       key: 'ent3',
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action14' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action14', gid },
   }
   const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
   const job = new Job(jobDef, mapOptions)
-  const ret = await job.run(action, dispatch, setProgress)
+  const ret = await job.run(action, dispatch, setProgress, gid)
 
   t.is(dispatch.callCount, 2)
   t.deepEqual(dispatch.args[0][0], expectedAction0)

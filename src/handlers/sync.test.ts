@@ -69,12 +69,18 @@ test('should get from source service and set on target service', async (t) => {
   const expectedAction0 = {
     type: 'GET',
     payload: { type: 'entry', targetService: 'entries' },
-    meta: { ident, project: 'project1', cid: '12345' },
+    meta: { ident, project: 'project1', cid: '12345', gid: 'sync1' },
   }
   const expectedAction1 = {
     type: 'SET',
     payload: { type: 'entry', data, targetService: 'store' },
-    meta: { ident, project: 'project1', cid: '12345', queue: true },
+    meta: {
+      ident,
+      project: 'project1',
+      cid: '12345',
+      gid: 'sync1',
+      queue: true,
+    },
   }
   const expected = { status: 'ok' }
 
@@ -120,7 +126,7 @@ test('should SET with no data when alwaysSet is true', async (t) => {
       to: 'store',
       alwaysSet: true,
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -128,10 +134,10 @@ test('should SET with no data when alwaysSet is true', async (t) => {
       SET: { status: 'ok' },
     }),
   )
-  const expected2 = {
+  const expected1 = {
     type: 'SET',
     payload: { type: 'entry', data: [], targetService: 'store' },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -139,7 +145,7 @@ test('should SET with no data when alwaysSet is true', async (t) => {
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
   t.is(dispatch.args[0][0].type, 'GET')
-  t.deepEqual(dispatch.args[1][0], expected2)
+  t.deepEqual(dispatch.args[1][0], expected1)
 })
 
 test('should split in several SET actions when item count is higher than maxPerSet', async (t) => {
@@ -151,7 +157,7 @@ test('should split in several SET actions when item count is higher than maxPerS
       to: 'store',
       maxPerSet: 2,
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -166,7 +172,7 @@ test('should split in several SET actions when item count is higher than maxPerS
       data: [data[0], data2[0]],
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
   const expected2 = {
     type: 'SET',
@@ -175,7 +181,7 @@ test('should split in several SET actions when item count is higher than maxPerS
       data: [data[1]],
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -195,7 +201,7 @@ test('should split in several SET actions with individual items when setMember i
       to: 'store',
       setMember: true,
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -210,7 +216,7 @@ test('should split in several SET actions with individual items when setMember i
       data: data[0],
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
   const expected2 = {
     type: 'SET',
@@ -219,7 +225,7 @@ test('should split in several SET actions with individual items when setMember i
       data: data2[0],
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
   const expected3 = {
     type: 'SET',
@@ -228,7 +234,7 @@ test('should split in several SET actions with individual items when setMember i
       data: data[1],
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -248,7 +254,7 @@ test('should use params from from and to', async (t) => {
       from: { service: 'entries', type: 'special', onlyPublic: true },
       to: { service: 'store', type: 'other', overwrite: false },
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -256,16 +262,16 @@ test('should use params from from and to', async (t) => {
       SET: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expected0 = {
     type: 'GET',
     payload: {
       type: 'special',
       onlyPublic: true,
       targetService: 'entries',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected2 = {
+  const expected1 = {
     type: 'SET',
     payload: {
       type: 'other',
@@ -273,15 +279,15 @@ test('should use params from from and to', async (t) => {
       overwrite: false,
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0], expected2)
+  t.deepEqual(dispatch.args[0][0], expected0)
+  t.deepEqual(dispatch.args[1][0], expected1)
 })
 
 test('should override action types', async (t) => {
@@ -292,7 +298,7 @@ test('should override action types', async (t) => {
       from: { service: 'entries', action: 'GET_ALL' },
       to: { service: 'store', action: 'SET_SOME' },
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -300,23 +306,23 @@ test('should override action types', async (t) => {
       SET_SOME: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expected0 = {
     type: 'GET_ALL',
     payload: { type: 'entry', targetService: 'entries' },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected2 = {
+  const expected1 = {
     type: 'SET_SOME',
     payload: { type: 'entry', data, targetService: 'store' },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0], expected2)
+  t.deepEqual(dispatch.args[0][0], expected0)
+  t.deepEqual(dispatch.args[1][0], expected1)
 })
 
 test('should set page params on payload', async (t) => {
@@ -336,7 +342,7 @@ test('should set page params on payload', async (t) => {
       },
       to: 'store',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -357,7 +363,7 @@ test('should set page params on payload', async (t) => {
       pageBefore: 'ent5',
       pageId: 'page1',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
@@ -376,7 +382,7 @@ test('should not queue SET when doQueueSet is false', async (t) => {
       to: 'store',
       doQueueSet: false,
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -384,17 +390,17 @@ test('should not queue SET when doQueueSet is false', async (t) => {
       SET: { status: 'ok' },
     }),
   )
-  const expected2 = {
+  const expected1 = {
     type: 'SET',
     payload: { type: 'entry', data, targetService: 'store' },
-    meta: { ident, project: 'project1', queue: false },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: false },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[1][0], expected2)
+  t.deepEqual(dispatch.args[1][0], expected1)
 })
 
 test('should get from several source services', async (t) => {
@@ -406,7 +412,7 @@ test('should get from several source services', async (t) => {
       to: 'store',
       targetService: 'store',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -417,40 +423,40 @@ test('should get from several source services', async (t) => {
       SET: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expected0 = {
     type: 'GET',
     payload: { type: 'entry', targetService: 'entries' },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected2 = {
+  const expected1 = {
     type: 'GET',
     payload: { type: 'entry', targetService: 'otherEntries' },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected3 = {
+  const expected2 = {
     type: 'SET',
     payload: {
       type: 'entry',
       data: [data[0], data2[0], data[1]],
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 3)
-  t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0], expected2)
-  t.deepEqual(dispatch.args[2][0], expected3)
+  t.deepEqual(dispatch.args[0][0], expected0)
+  t.deepEqual(dispatch.args[1][0], expected1)
+  t.deepEqual(dispatch.args[2][0], expected2)
 })
 
 test('should remove untyped data', async (t) => {
   const action = {
     type: 'SYNC',
     payload: { type: 'entry', from: 'entries', to: 'store' },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -458,23 +464,23 @@ test('should remove untyped data', async (t) => {
       SET: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expected0 = {
     type: 'GET',
     payload: { type: 'entry', targetService: 'entries' },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected2 = {
+  const expected1 = {
     type: 'SET',
     payload: { type: 'entry', data, targetService: 'store' },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0], expected2)
+  t.deepEqual(dispatch.args[0][0], expected0)
+  t.deepEqual(dispatch.args[1][0], expected1)
 })
 
 test('should report progress', async (t) => {
@@ -518,7 +524,7 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
       updatedAfter,
       updatedUntil,
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -526,7 +532,7 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
       SET: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expected0 = {
     type: 'GET',
     payload: {
       type: 'entry',
@@ -536,9 +542,9 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
       updatedBefore,
       targetService: 'entries',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected2 = {
+  const expected1 = {
     type: 'SET',
     payload: {
       type: 'entry',
@@ -549,15 +555,15 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
       updatedBefore,
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0], expected2)
+  t.deepEqual(dispatch.args[0][0], expected0)
+  t.deepEqual(dispatch.args[1][0], expected1)
 })
 
 test('should pass on updatedSince and updatedBefore, and set updatedAfter and updatedUntil', async (t) => {
@@ -574,7 +580,7 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
       updatedSince,
       updatedBefore,
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -582,7 +588,7 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
       SET: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expected0 = {
     type: 'GET',
     payload: {
       type: 'entry',
@@ -592,9 +598,9 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
       updatedBefore,
       targetService: 'entries',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected2 = {
+  const expected1 = {
     type: 'SET',
     payload: {
       type: 'entry',
@@ -605,15 +611,15 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
       updatedBefore,
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0], expected2)
+  t.deepEqual(dispatch.args[0][0], expected0)
+  t.deepEqual(dispatch.args[1][0], expected1)
 })
 
 test('should cast string values in updatedAfter and updatedUntil to Date', async (t) => {
@@ -630,7 +636,7 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
       updatedAfter: '2021-01-03T02:11:07Z',
       updatedUntil: '2021-01-18T02:14:34Z',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -638,7 +644,7 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
       SET: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expected0 = {
     type: 'GET',
     payload: {
       type: 'entry',
@@ -648,9 +654,9 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
       updatedBefore,
       targetService: 'entries',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected2 = {
+  const expected1 = {
     type: 'SET',
     payload: {
       type: 'entry',
@@ -661,15 +667,15 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
       updatedBefore,
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0], expected2)
+  t.deepEqual(dispatch.args[0][0], expected0)
+  t.deepEqual(dispatch.args[1][0], expected1)
 })
 
 test('should cast string values in updatedSince and updatedBefore to Date', async (t) => {
@@ -686,7 +692,7 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
       updatedSince: '2021-01-03T02:11:07Z',
       updatedBefore: '2021-01-18T02:14:34Z',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -694,7 +700,7 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
       SET: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expected0 = {
     type: 'GET',
     payload: {
       type: 'entry',
@@ -704,9 +710,9 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
       updatedBefore,
       targetService: 'entries',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected2 = {
+  const expected1 = {
     type: 'SET',
     payload: {
       type: 'entry',
@@ -717,15 +723,15 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
       updatedBefore,
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', gid: 'sync1', queue: true },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expected1)
-  t.deepEqual(dispatch.args[1][0], expected2)
+  t.deepEqual(dispatch.args[0][0], expected0)
+  t.deepEqual(dispatch.args[1][0], expected1)
 })
 
 test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', async (t) => {
@@ -747,7 +753,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
       SET: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expectedAction0 = {
     type: 'GET_META',
     payload: {
       type: 'entry',
@@ -755,7 +761,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
       metaKey: undefined,
       targetService: 'entries',
     },
-    meta: { ident, cid: '12345', project: 'project1' },
+    meta: { ident, cid: '12345', gid: 'sync1', project: 'project1' },
   }
   const expectedUpdatedAfter = new Date(lastSyncedAt)
   const expectedUpdatedSince = new Date('2021-01-03T04:48:18.001Z')
@@ -764,7 +770,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 4)
-  t.deepEqual(dispatch.args[0][0], expected1)
+  t.deepEqual(dispatch.args[0][0], expectedAction0)
   t.deepEqual(dispatch.args[1][0].payload.updatedAfter, expectedUpdatedAfter)
   t.deepEqual(dispatch.args[1][0].payload.updatedSince, expectedUpdatedSince)
   t.deepEqual(dispatch.args[2][0].payload.updatedAfter, expectedUpdatedAfter)
@@ -782,7 +788,7 @@ test('should use metaKey when fetching lastSyncedAt', async (t) => {
       retrieve: 'updated',
       metaKey: 'sports',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -791,7 +797,7 @@ test('should use metaKey when fetching lastSyncedAt', async (t) => {
       SET: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expectedAction0 = {
     type: 'GET_META',
     payload: {
       type: 'entry',
@@ -799,13 +805,13 @@ test('should use metaKey when fetching lastSyncedAt', async (t) => {
       metaKey: 'sports',
       targetService: 'entries',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(dispatch.args[0][0], expected1)
+  t.deepEqual(dispatch.args[0][0], expectedAction0)
 })
 
 test('should not use lastSyncedAt meta when updatedAfter is provided', async (t) => {
@@ -1199,7 +1205,7 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
       SET_META: { status: 'ok' },
     }),
   )
-  const expected6 = {
+  const expected5 = {
     type: 'SET_META',
     payload: {
       type: 'entry',
@@ -1207,9 +1213,9 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
       metaKey: undefined,
       targetService: 'entries',
     },
-    meta: { ident, cid: '12345', project: 'project1' },
+    meta: { ident, cid: '12345', gid: 'sync1', project: 'project1' },
   }
-  const expected7 = {
+  const expected6 = {
     type: 'SET_META',
     payload: {
       type: 'entry',
@@ -1217,15 +1223,15 @@ test('should set lastSyncedAt meta to updatedUntil', async (t) => {
       metaKey: undefined,
       targetService: 'other',
     },
-    meta: { ident, cid: '12345', project: 'project1' },
+    meta: { ident, cid: '12345', gid: 'sync1', project: 'project1' },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
-  t.deepEqual(dispatch.args[5][0], expected6)
-  t.deepEqual(dispatch.args[6][0], expected7)
+  t.deepEqual(dispatch.args[5][0], expected5)
+  t.deepEqual(dispatch.args[6][0], expected6)
 })
 
 test('should set lastSyncedAt meta to now when no updatedUntil', async (t) => {
@@ -1375,7 +1381,7 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
       metaKey: 'sports',
       updatedUntil: new Date('2021-01-05T00:00:00Z'),
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -1388,7 +1394,7 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
       SET_META: { status: 'ok' },
     }),
   )
-  const expected6 = {
+  const expected5 = {
     type: 'SET_META',
     payload: {
       type: 'entry',
@@ -1396,9 +1402,9 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
       metaKey: 'sports',
       targetService: 'entries',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected7 = {
+  const expected6 = {
     type: 'SET_META',
     payload: {
       type: 'entry',
@@ -1406,15 +1412,15 @@ test('should use metaKey when setting lastSyncedAt', async (t) => {
       metaKey: 'sports',
       targetService: 'other',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
-  t.deepEqual(dispatch.args[5][0], expected6)
-  t.deepEqual(dispatch.args[6][0], expected7)
+  t.deepEqual(dispatch.args[5][0], expected5)
+  t.deepEqual(dispatch.args[6][0], expected6)
 })
 
 test('should not get or set lastSyncedAt meta when service id is missing', async (t) => {
@@ -1466,7 +1472,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = created', asy
       SET: { status: 'ok' },
     }),
   )
-  const expected1 = {
+  const expectedAction0 = {
     type: 'GET_META',
     payload: {
       type: 'entry',
@@ -1474,7 +1480,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = created', asy
       metaKey: undefined,
       targetService: 'entries',
     },
-    meta: { ident, cid: '12345', project: 'project1' },
+    meta: { ident, cid: '12345', gid: 'sync1', project: 'project1' },
   }
   const expectedCreatedAfter = new Date(lastSyncedAt)
   const expectedCreatedSince = new Date('2021-01-03T04:48:18.001Z')
@@ -1483,7 +1489,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = created', asy
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 4)
-  t.deepEqual(dispatch.args[0][0], expected1)
+  t.deepEqual(dispatch.args[0][0], expectedAction0)
   t.deepEqual(dispatch.args[1][0].payload.createdAfter, expectedCreatedAfter)
   t.deepEqual(dispatch.args[1][0].payload.createdSince, expectedCreatedSince)
   t.deepEqual(dispatch.args[2][0].payload.createdAfter, expectedCreatedAfter)
@@ -1501,7 +1507,7 @@ test('should set lastSyncedAt for created', async (t) => {
       metaKey: 'sports',
       createdUntil: new Date('2021-01-05T00:00:00Z'),
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', id: 'sync1' },
   }
   const dispatch = sinon.spy(
     setupDispatch({
@@ -1514,7 +1520,7 @@ test('should set lastSyncedAt for created', async (t) => {
       SET_META: { status: 'ok' },
     }),
   )
-  const expected5 = {
+  const expected4 = {
     type: 'SET',
     payload: {
       type: 'entry',
@@ -1523,9 +1529,9 @@ test('should set lastSyncedAt for created', async (t) => {
       createdUntil: new Date('2021-01-05 00:00:00Z'),
       targetService: 'store',
     },
-    meta: { ident, project: 'project1', queue: true },
+    meta: { ident, project: 'project1', queue: true, gid: 'sync1' },
   }
-  const expected6 = {
+  const expected5 = {
     type: 'SET_META',
     payload: {
       type: 'entry',
@@ -1533,9 +1539,9 @@ test('should set lastSyncedAt for created', async (t) => {
       metaKey: 'sports',
       targetService: 'entries',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
-  const expected7 = {
+  const expected6 = {
     type: 'SET_META',
     payload: {
       type: 'entry',
@@ -1543,16 +1549,16 @@ test('should set lastSyncedAt for created', async (t) => {
       metaKey: 'sports',
       targetService: 'other',
     },
-    meta: { ident, project: 'project1' },
+    meta: { ident, project: 'project1', gid: 'sync1' },
   }
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   t.is(ret.status, 'ok', ret.error)
   t.is(dispatch.callCount, 7)
-  t.deepEqual(dispatch.args[4][0], expected5)
-  t.deepEqual(dispatch.args[5][0], expected6)
-  t.deepEqual(dispatch.args[6][0], expected7)
+  t.deepEqual(dispatch.args[4][0], expected4)
+  t.deepEqual(dispatch.args[5][0], expected5)
+  t.deepEqual(dispatch.args[6][0], expected6)
 })
 
 test('should set createdUntil with delta', async (t) => {

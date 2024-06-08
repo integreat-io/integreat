@@ -26,7 +26,7 @@ test('should dispatch GET with timestamp and isodate', async (t) => {
   const action = {
     type: 'EXPIRE',
     payload: { type: 'entry' },
-    meta: { ident, id: '11004', cid: '11005' },
+    meta: { ident, id: '11004', cid: '11005', gid: '11004' },
   }
   const expected = {
     type: 'GET',
@@ -35,7 +35,7 @@ test('should dispatch GET with timestamp and isodate', async (t) => {
       timestamp: theTime,
       isodate: new Date(theTime).toISOString(),
     },
-    meta: { ident, cid: '11005' },
+    meta: { ident, cid: '11005', gid: '11004' },
   }
 
   const ret = await expire(action, { ...handlerResources, dispatch })
@@ -278,7 +278,7 @@ test('should DELETE with params and no GET when deleteWithParams is true', async
       deleteWithParams: true,
       projectId: 'proj1',
     },
-    meta: { ident, id: '11004', cid: '11005' },
+    meta: { ident, id: '11004', cid: '11005', gid: '11004' },
   }
   const expectedDeleteAction = {
     type: 'DELETE',
@@ -289,7 +289,7 @@ test('should DELETE with params and no GET when deleteWithParams is true', async
       targetService: 'store',
       projectId: 'proj1',
     },
-    meta: { ident, cid: '11005', queue: true },
+    meta: { ident, cid: '11005', gid: '11004', queue: true },
   }
   const expected = { status: 'queued' }
 

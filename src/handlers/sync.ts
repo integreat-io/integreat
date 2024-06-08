@@ -59,6 +59,11 @@ interface MetaData {
   }
 }
 
+const prepareMetaForSubActions = ({ id, ...meta }: Meta = {}): Meta => ({
+  ...meta,
+  gid: id,
+})
+
 const createGetMetaAction = (
   targetService: string,
   type?: string | string[],
@@ -188,11 +193,11 @@ function setCounterPart(params: ActionParams, dateSet: 'updated' | 'created') {
 
 const setDatesAndType = (
   dispatch: HandlerDispatch,
-  type: string | string[],
-  syncParams: SyncParams,
+  payload: Payload,
   meta?: Meta,
 ) =>
   async function setUpdatedDatesAndType(params: Partial<ActionParams>) {
+    const type = payload.type! // We know it's not undefined
     const {
       retrieve,
       updatedAfter,
@@ -204,7 +209,7 @@ const setDatesAndType = (
       createdUntil,
       createdBefore,
       metaKey,
-    } = syncParams
+    } = payload as SyncParams
     const nextParams: ActionParams = {
       ...setDatePropIf(updatedAfter, 'updatedAfter'),
       ...setDatePropIf(updatedSince, 'updatedSince'),
@@ -257,7 +262,8 @@ const setDatesAndType = (
 
 const setMetaFromParams = (
   dispatch: HandlerDispatch,
-  { payload: { type, metaKey }, meta: { id, ...meta } = {} }: Action,
+  { payload: { type, metaKey } }: Action,
+  meta: Meta,
   datesFromData: (Date | undefined)[],
   gottenDataDate: Date,
 ) =>
@@ -290,14 +296,14 @@ const paramsAsObject = (params?: string | Partial<ActionParams>) =>
 
 const generateFromParams = async (
   dispatch: HandlerDispatch,
-  type: string | string[],
-  { payload, meta: { id, ...meta } = {} }: Action,
+  payload: Payload,
+  meta: Meta,
 ) =>
   Promise.all(
     ensureArray((payload as SyncParams).from)
       .map(paramsAsObject)
       .filter(isNotNullOrUndefined)
-      .map(setDatesAndType(dispatch, type, payload, meta))
+      .map(setDatesAndType(dispatch, payload, meta))
       .map((p) => pLimit(1)(() => p)), // Run one promise at a time
   )
 
@@ -335,12 +341,11 @@ function generateSetDates(
 
 function generateToParams(
   fromParams: ActionParams[],
-  type: string | string[],
-  { payload }: Action,
+  payload: Payload,
 ): ActionParams {
-  const { to, maxPerSet, setMember, alwaysSet }: SyncParams = payload
+  const { to, maxPerSet, setMember, alwaysSet, type }: SyncParams = payload
   return {
-    type,
+    type: type!, // We know it's not undefined
     alwaysSet,
     maxPerSet,
     setMember,
@@ -351,20 +356,20 @@ function generateToParams(
 }
 
 async function extractActionParams(
-  action: Action,
+  { payload }: Action,
+  meta: Meta,
   dispatch: HandlerDispatch,
 ): Promise<[ActionParams[], ActionParams | undefined]> {
-  const { type } = action.payload
   // Require a type
-  if (!type) {
+  if (!payload.type) {
     return [[], undefined]
   }
 
   // Make from an array of params objects and fetch updatedAfter or createdAfter
   // from meta when needed
-  const fromParams = await generateFromParams(dispatch, type, action)
+  const fromParams = await generateFromParams(dispatch, payload, meta)
 
-  return [fromParams, generateToParams(fromParams, type, action)]
+  return [fromParams, generateToParams(fromParams, payload)]
 }
 
 const dateFieldFromRetrieve = (retrieve?: RetrieveOptions) =>
@@ -411,10 +416,10 @@ const msFromDelta = (delta: string) =>
   delta === 'now'
     ? 0
     : delta[0] === '+'
-    ? ms(delta.slice(1))
-    : delta[0] === '-'
-    ? ms(delta)
-    : undefined
+      ? ms(delta.slice(1))
+      : delta[0] === '-'
+        ? ms(delta)
+        : undefined
 
 function generateUntilDate(date: unknown) {
   if (typeof date === 'string') {
@@ -445,7 +450,7 @@ const fetchDataFromService = (
   fromParams: ActionParams[],
   doFilterData: boolean,
   dispatch: HandlerDispatch,
-  { meta: { id, ...meta } = {} }: Action,
+  meta: Meta,
 ) =>
   Promise.all(
     fromParams.map((params) =>
@@ -499,12 +504,12 @@ export default async function syncHandler(
       doFilterData = true,
       doQueueSet = true,
     },
-    meta: { id, ...meta } = {},
   } = action
+  const meta = prepareMetaForSubActions(action.meta)
 
   let fromParams, toParams
   try {
-    ;[fromParams, toParams] = await extractActionParams(action, dispatch)
+    ;[fromParams, toParams] = await extractActionParams(action, meta, dispatch)
   } catch (error) {
     return createErrorResponse(
       `Failed to prepare params for SYNC: ${
@@ -532,7 +537,7 @@ export default async function syncHandler(
       fromParams,
       doFilterData,
       dispatch,
-      action,
+      meta,
     )
     data = dataFromServices.flat().sort(sortByItemDate(retrieve))
     if (setLastSyncedAtFromData) {
@@ -564,7 +569,13 @@ export default async function syncHandler(
   if (retrieve === 'updated' || retrieve === 'created') {
     await Promise.all(
       fromParams.map(
-        setMetaFromParams(dispatch, action, datesFromData, gottenDataDate),
+        setMetaFromParams(
+          dispatch,
+          action,
+          meta,
+          datesFromData,
+          gottenDataDate,
+        ),
       ),
     )
   }

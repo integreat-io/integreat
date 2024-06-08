@@ -9,6 +9,7 @@ export default (jobs: Map<string, Job>) =>
   ): Promise<Response> {
     const {
       payload: { jobId },
+      meta: { id } = {},
     } = action
     const job = typeof jobId === 'string' ? jobs.get(jobId) : undefined
     if (!job) {
@@ -19,5 +20,5 @@ export default (jobs: Map<string, Job>) =>
       )
     }
 
-    return await job.run(action, dispatch, setProgress)
+    return await job.run(action, dispatch, setProgress, id)
   }

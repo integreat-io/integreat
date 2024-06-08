@@ -451,7 +451,7 @@ test('should handle one complete page with next null', async (t) => {
   t.is(ret.status, 'ok', ret.error)
 })
 
-test('should use original cid for all sub actions, but remove id', async (t) => {
+test('should use original cid for all sub actions, use id as gid, and remove id', async (t) => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [] })
@@ -476,12 +476,43 @@ test('should use original cid for all sub actions, but remove id', async (t) => 
   t.is(dispatch.callCount, 3)
   t.is(dispatch.args[0][0].meta?.id, undefined)
   t.is(dispatch.args[0][0].meta?.cid, '23456')
+  t.is(dispatch.args[0][0].meta?.gid, '12345')
   t.is(dispatch.args[1][0].meta?.id, undefined)
   t.is(dispatch.args[1][0].meta?.cid, '23456')
+  t.is(dispatch.args[1][0].meta?.gid, '12345')
   t.is(dispatch.args[2][0].meta?.id, undefined)
   t.is(dispatch.args[2][0].meta?.cid, '23456')
+  t.is(dispatch.args[2][0].meta?.gid, '12345')
   t.is(ret.status, 'ok', ret.error)
   t.is((ret.data as TypedData[]).length, 5)
+})
+
+test('should override gid of the original action', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [] })
+    .onFirstCall()
+    .resolves({ status: 'ok', data: [event('ev0')] })
+  const action = {
+    type: 'GET_ALL',
+    payload: {
+      type: 'event',
+      page: 1,
+      pageSize: 2,
+    },
+    meta: {
+      ident: { id: 'johnf' },
+      id: '12345',
+      cid: '23456',
+      gid: '12344', // Override this
+    },
+  }
+
+  const ret = await getAll(action, { ...handlerResources, dispatch })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(dispatch.callCount, 1)
+  t.is(dispatch.args[0][0].meta?.gid, '12345')
 })
 
 test('should recognize loop and return error', async (t) => {
