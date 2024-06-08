@@ -1303,10 +1303,18 @@ Current meta properties reserved by Integreat:
 - `id`: The id of the action itself. You may set this yourself or let Integreat
   generate a universally unique id for you. Useful for logging and may be used
   by queues.
-- `cid`: A correlation id that may be used to group actions that belong
-  together, primarily for logging purposes. You may set this yourself or
-  Integreat will set it to the same as the `id`. Some Integreat action handlers
-  will dispatch sub actions using the `cid` from the original action.
+- `cid`: Correlation id. When dispatching an action without `meta.cid`,
+  Integreat will set it to the same as the `meta.id`. All actions that are then
+  dispatched as a consequence of that action (e.g. a `SYNC` or `GET_META`), will
+  have the same `cid`. The `cid` may then be used to group actions belonging
+  together, e.g. when displaying logs. The dispatching code set the `cid` on an
+  action, e.g. to correlate an action and the actions it dispatches, with other
+  operations outside Integreat.
+- `gid`: Group id. This has some of the same purpose as `cid`, as it may be used
+  to group actions that belong together, but `gid` is not always set, and will
+  be used for smaller groups of actions than `cid`. Right now, `RUN`, `SYNC`,
+  and `GET_ALL` will use the `id` of the original action as `gid` for all
+  actions they dispatched.
 - `dispatchedAt`: Timestamp for when the action was dispatched (set by
   Integreat).
 - `queue`: Signals to Integreat that an action may be queued. Set to `true` when

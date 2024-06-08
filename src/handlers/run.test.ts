@@ -55,6 +55,7 @@ test('should run a simple action', async (t) => {
       ident: { id: 'johnf' },
       project: 'test',
       cid: '23456',
+      gid: '12345', // The id of the `RUN` action should be used as `gid` for all following actions
       jobId: 'action1',
     },
   }
@@ -72,6 +73,39 @@ test('should run a simple action', async (t) => {
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
   t.deepEqual(ret, expected)
+})
+
+test('should override gid from original action', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
+  })
+  const jobs = createJobsMap({
+    id: 'action1',
+    action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
+  })
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: {
+      ident: { id: 'johnf' },
+      id: '12345',
+      cid: '23456',
+      gid: '12340', // Override this
+      project: 'test',
+    },
+  }
+
+  const ret = await run(jobs)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(dispatch.callCount, 1)
+  t.deepEqual(dispatch.args[0][0].meta.gid, '12345')
 })
 
 test('should run flow', async (t) => {
@@ -116,7 +150,12 @@ test('should run flow', async (t) => {
       id: 'ent1',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action2' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      gid: '12345',
+      jobId: 'action2',
+    },
   }
   const expectedAction2 = {
     type: 'SET',
@@ -124,7 +163,12 @@ test('should run flow', async (t) => {
       type: 'date',
       id: 'updatedAt',
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action2' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      gid: '12345',
+      jobId: 'action2',
+    },
   }
   const expected = { status: 'ok' } // Won't return data unless specified
 
