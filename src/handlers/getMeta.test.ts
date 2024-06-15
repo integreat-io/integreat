@@ -78,6 +78,37 @@ test('should get metadata for service', async (t) => {
   t.deepEqual(ret, expected)
 })
 
+test('should pass on action type and meta id', async (t) => {
+  nock('http://api1.test')
+    .get('/database/GET_META/12345/meta:store')
+    .reply(200, { id: 'meta:store', _rev: '000001', ...metadata })
+  const endpoints = [
+    {
+      options: {
+        uri: 'http://api1.test/database/{type}/{meta.id}/{+payload.id}', // Weird way to verify that the action has the wanted type and meta
+      },
+    },
+  ]
+  const great = Integreat.create(defs(endpoints), resources)
+  const getService = () => great.services.store
+  const action = {
+    type: 'GET_META',
+    payload: {
+      keys: 'lastSyncedAt',
+      targetService: 'store',
+    },
+    meta: { ident, id: '12345' },
+  }
+  const expected = {
+    status: 'ok',
+    data: { service: 'store', meta: { lastSyncedAt } },
+  }
+
+  const ret = await getMeta(action, { ...handlerResources, getService })
+
+  t.deepEqual(ret, expected)
+})
+
 test('should get several metadata for service', async (t) => {
   nock('http://api2.test')
     .get('/database/meta:store')

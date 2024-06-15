@@ -89,6 +89,40 @@ test('should set metadata on service', async (t) => {
   t.true(scope.isDone())
 })
 
+test('should pass on action type and meta id', async (t) => {
+  const scope = nock('http://api1.test')
+    .put('/database/SET_META/12345/meta:store', {
+      id: 'meta:store',
+      lastSyncedAt: lastSyncedAt.toISOString(),
+      status: 'busy',
+    })
+    .reply(200, { okay: true, id: 'meta:store', rev: '000001' })
+  const endpoints = [
+    {
+      options: {
+        uri: 'http://api1.test/database/{type}/{meta.id}/{+payload.id}', // Weird way to verify that the action has the wanted type and meta
+      },
+      mutation,
+    },
+  ]
+  const great = Integreat.create(defs(endpoints), resources)
+  const getService = (type?: string | string[], service?: string) =>
+    service === 'store' || type === 'meta' ? great.services.store : undefined
+  const action = {
+    type: 'SET_META',
+    payload: {
+      meta: { lastSyncedAt, status: 'busy' },
+      targetService: 'store',
+    },
+    meta: { ident, id: '12345' },
+  }
+
+  const ret = await setMeta(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.true(scope.isDone())
+})
+
 test('should set metadata on service with type', async (t) => {
   const scope = nock('http://api1.test')
     .put('/database/meta:store:product', {
