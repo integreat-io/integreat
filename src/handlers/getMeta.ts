@@ -19,7 +19,7 @@ const extractMeta = (meta: unknown, keys: unknown): Record<string, unknown> =>
           .reduce(
             // eslint-disable-next-line security/detect-object-injection
             (ret, key) => ({ ...ret, [key]: (meta && meta[key]) || null }),
-            {}
+            {},
           )
       : extractMeta(meta, extractAllMetaFields(meta))
     : {}
@@ -30,7 +30,7 @@ const joinTypes = (types?: string | string[]) =>
 export const generateMetaId = (
   serviceId?: string,
   type?: string | string[],
-  metaKey?: string
+  metaKey?: string,
 ): string =>
   ['meta', serviceId, joinTypes(type), metaKey].filter(Boolean).join(':')
 
@@ -39,7 +39,7 @@ export const generateMetaId = (
  */
 export default async function getMeta(
   action: Action,
-  resources: ActionHandlerResources
+  resources: ActionHandlerResources,
 ): Promise<Response> {
   debug('Action: GET_META')
 
@@ -51,7 +51,6 @@ export default async function getMeta(
       targetService: serviceId,
       endpoint: endpointId,
     },
-    meta: { ident } = {},
   } = action
   const metaId = generateMetaId(serviceId, type, metaKey as string | undefined)
   const { getService } = resources
@@ -61,7 +60,7 @@ export default async function getMeta(
     debug(`GET_META: Service '${serviceId}' doesn't exist`)
     return createErrorResponse(
       `Service '${serviceId}' doesn't exist`,
-      'handler:GET_META'
+      'handler:GET_META',
     )
   }
 
@@ -73,7 +72,7 @@ export default async function getMeta(
     return createErrorResponse(
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'handler:GET_META',
-      'noaction'
+      'noaction',
     )
   }
 
@@ -85,13 +84,12 @@ export default async function getMeta(
     keys,
     service.id,
     metaService.id,
-    endpointDebug
+    endpointDebug,
   )
 
   const nextAction = {
-    type: 'GET',
+    ...action,
     payload: { keys, type: metaType, id: metaId, endpoint: endpointId },
-    meta: { ident: ident },
   }
   const response = await getHandler(nextAction, resources)
 
