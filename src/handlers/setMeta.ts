@@ -62,6 +62,7 @@ export default async function setMeta(
 
   const setAction = {
     ...action,
+    type: 'SET',
     payload: {
       id: metaId,
       type: metaType,

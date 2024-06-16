@@ -80,7 +80,7 @@ test('should get metadata for service', async (t) => {
 
 test('should pass on action type and meta id', async (t) => {
   nock('http://api1.test')
-    .get('/database/GET_META/12345/meta:store')
+    .get('/database/GET/12345/meta:store')
     .reply(200, { id: 'meta:store', _rev: '000001', ...metadata })
   const endpoints = [
     {

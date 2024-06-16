@@ -91,7 +91,7 @@ test('should set metadata on service', async (t) => {
 
 test('should pass on action type and meta id', async (t) => {
   const scope = nock('http://api1.test')
-    .put('/database/SET_META/12345/meta:store', {
+    .put('/database/SET/12345/meta:store', {
       id: 'meta:store',
       lastSyncedAt: lastSyncedAt.toISOString(),
       status: 'busy',
