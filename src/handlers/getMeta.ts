@@ -89,6 +89,7 @@ export default async function getMeta(
 
   const nextAction = {
     ...action,
+    type: 'GET',
     payload: { keys, type: metaType, id: metaId, endpoint: endpointId },
   }
   const response = await getHandler(nextAction, resources)
