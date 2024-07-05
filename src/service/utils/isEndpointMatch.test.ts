@@ -2,7 +2,7 @@ import test from 'ava'
 import mapTransform from 'map-transform'
 import { IdentType } from '../../types.js'
 
-import isMatch from './matchEnpoints.js'
+import isMatch from './isEndpointMatch.js'
 
 // Setup
 
