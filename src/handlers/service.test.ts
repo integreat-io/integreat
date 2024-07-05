@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
+import mapTransform from 'map-transform'
 import Service from '../service/Service.js'
 import { isAuthorizedAction } from '../service/utils/authAction.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
@@ -37,7 +38,7 @@ test('should send action straight to service', async (t) => {
       ...serviceDefs,
       transporter,
     },
-    { schemas, mapOptions }
+    { schemas, mapTransform, mapOptions },
   )
   const action = {
     type: 'SERVICE',
@@ -63,14 +64,14 @@ test('should send action straight to service', async (t) => {
 })
 
 test('should return error when service does not return a status', async (t) => {
-  const send = async () => ({} as Response) // We intentionally don't wan't a status here
+  const send = async () => ({}) as Response // We intentionally don't wan't a status here
   const transporter = { ...baseTransporter, send }
   const someService = new Service(
     {
       ...serviceDefs,
       transporter,
     },
-    { schemas, mapOptions }
+    { schemas, mapTransform, mapOptions },
   )
   const action = {
     type: 'SERVICE',

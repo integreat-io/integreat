@@ -1,5 +1,6 @@
 import test from 'ava'
 import nock from 'nock'
+import mapTransform from 'map-transform'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import Service from '../service/Service.js'
 import Schema from '../schema/Schema.js'
@@ -40,7 +41,7 @@ const pipelines = {
 
 const mapOptions = createMapOptions(schemas, pipelines)
 const setupService = (defs: ServiceDef) =>
-  new Service(defs, { schemas, mapOptions })
+  new Service(defs, { schemas, mapTransform, mapOptions })
 
 test.after.always(() => {
   nock.restore()

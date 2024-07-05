@@ -1,6 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import pProgress from 'p-progress'
+import mapTransform from 'map-transform'
 import dispatch from '../tests/helpers/dispatch.js'
 import jsonResources from '../tests/helpers/resources/index.js'
 import Schema from '../schema/Schema.js'
@@ -333,6 +334,7 @@ const mockResources = (
       },
     },
   },
+  mapTransform,
   mapOptions,
   schemas,
   auths,
@@ -349,6 +351,7 @@ test('should return service object with id and meta', (t) => {
   const service = new Service(def, {
     ...jsonResources,
     identConfig,
+    mapTransform,
     mapOptions,
     schemas,
   })
@@ -361,6 +364,7 @@ test('should throw when no id', (t) => {
   t.throws(() => {
     new Service({ transporter: 'http' } as unknown as ServiceDef, {
       ...jsonResources,
+      mapTransform,
       mapOptions,
       schemas,
     })
@@ -374,6 +378,7 @@ test('should throw when service references unknown transporter', (t) => {
   const def = { id: 'entries', transporter: 'unknown', endpoints, meta: 'meta' }
   const resources = {
     ...jsonResources,
+    mapTransform,
     mapOptions,
     schemas,
   }
@@ -396,6 +401,7 @@ test('should throw when service references unknown adapters', (t) => {
   }
   const resources = {
     ...jsonResources,
+    mapTransform,
     mapOptions,
     schemas,
   }
@@ -421,6 +427,7 @@ test('should throw when endpoint references unknown adapters', (t) => {
   }
   const resources = {
     ...jsonResources,
+    mapTransform,
     mapOptions,
     schemas,
   }
@@ -459,6 +466,7 @@ test('endpointFromAction should return an endpoint for the action', async (t) =>
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -487,6 +495,7 @@ test('endpointFromAction should return undefined when no match', async (t) => {
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -526,6 +535,7 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -553,6 +563,7 @@ test('preflightAction should set authorizedByIntegreat (symbol) flag', async (t)
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       auths,
@@ -580,6 +591,7 @@ test('preflightAction should authorize action without type', async (t) => {
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       auths,
@@ -607,6 +619,7 @@ test('preflightAction should refuse based on schema', async (t) => {
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       auths,
@@ -644,6 +657,7 @@ test('preflightAction should authorize when no auth is specified', async (t) => 
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       auths,
@@ -671,6 +685,7 @@ test('preflightAction should not touch action when endpoint validation succeeds'
       endpoints: [{ ...endpoints[3], validate: [{ condition: 'payload.id' }] }],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       auths,
@@ -700,6 +715,7 @@ test('preflightAction should set error response when validate fails', async (t) 
       endpoints: [{ ...endpoints[3], validate: [{ condition: 'payload.id' }] }],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       auths,
@@ -734,6 +750,7 @@ test('preflightAction should authorize before validation', async (t) => {
       endpoints: [{ ...endpoints[3], validate: [{ condition: 'payload.id' }] }],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       auths,
@@ -774,6 +791,7 @@ test('preflightAction should make auth available to mutations when authInData is
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       auths,
@@ -808,6 +826,7 @@ test('preflightAction should use auth from endpoint when available', async (t) =
       endpoints: [{ ...endpoints[3], auth: 'granting' }],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       auths,
@@ -844,6 +863,7 @@ test('preflightAction should respond with error when authInData is true and auth
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       auths,
@@ -905,6 +925,7 @@ test('send should use service middleware', async (t) => {
   })
   const resources = {
     ...jsonResources,
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -1129,6 +1150,7 @@ test('send should fail when not authorized', async (t) => {
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -1163,6 +1185,7 @@ test('send should provide auth and options', async (t) => {
       ...jsonResources.transporters,
       http: { ...jsonResources.transporters!.http, send },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -1224,6 +1247,7 @@ test('send should not authorize when action has already got meta.auth', async (t
       ...jsonResources.transporters,
       http: { ...jsonResources.transporters!.http, send },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -1295,6 +1319,7 @@ test('send should connect before sending request', async (t) => {
       ...jsonResources.transporters,
       http: { ...jsonResources.transporters!.http, connect, send },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -1351,6 +1376,7 @@ test('send should store connection', async (t) => {
         send: async (_action: Action) => ({ status: 'ok', data: {} }),
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
   }
@@ -1395,6 +1421,7 @@ test('send should return error when connection fails', async (t) => {
         send: async (_action: Action) => ({ status: 'ok', data: {} }),
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
   }
@@ -1443,6 +1470,7 @@ test('send should pass on error response from service', async (t) => {
         }),
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
   }
@@ -1485,6 +1513,7 @@ test('send should pass on error response from service and prefix origin', async 
         }),
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
   }
@@ -1525,6 +1554,7 @@ test('send should return with error when transport throws', async (t) => {
         },
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
   }
@@ -1566,6 +1596,7 @@ test('send should do nothing when action has a response', async (t) => {
         }),
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
   }
@@ -1617,6 +1648,7 @@ test('mutateResponse should mutate data array from service', async (t) => {
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -1686,6 +1718,7 @@ test('mutateResponse should mutate data object from service', async (t) => {
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -1734,6 +1767,7 @@ test('mutateResponse should not use defaults when castWithoutDefaults is true', 
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -1787,6 +1821,7 @@ test('mutateResponse should set origin when mutation results in an error respons
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -1838,6 +1873,7 @@ test('mutateResponse should use service adapters', async (t) => {
       ],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -1909,6 +1945,7 @@ test('mutateResponse should use endpoint adapters', async (t) => {
       ],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2003,6 +2040,7 @@ test('mutateResponse should use both service and endpoint adapters', async (t) =
       ],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2053,6 +2091,7 @@ test('mutateResponse should not cast data array from service when allowRawRespon
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2119,6 +2158,7 @@ test('mutateResponse should mutate null to undefined', async (t) => {
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2160,6 +2200,7 @@ test('should authorize typed data in array from service', async (t) => {
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2209,6 +2250,7 @@ test('should authorize typed data object from service', async (t) => {
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2263,6 +2305,7 @@ test('mutateResponse should return error when transformer throws', async (t) => 
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2312,6 +2355,7 @@ test('mutateIncomingResponse should mutate and authorize data in response to inc
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2361,6 +2405,7 @@ test('mutateIncomingResponse should set origin when mutation results in an error
       transporter: 'http',
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2422,6 +2467,7 @@ test('mutateRequest should set endpoint options and cast and mutate request data
       ],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2495,6 +2541,7 @@ test('mutateRequest should authorize data array going to service', async (t) => 
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2542,6 +2589,7 @@ test('mutateRequest should authorize data object going to service', async (t) =>
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2595,6 +2643,7 @@ test('mutateRequest should use mutation pipeline', async (t) => {
       ],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2635,6 +2684,7 @@ test('mutateRequest set origin when mutation results in an error response', asyn
       ],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2682,6 +2732,7 @@ test('mutateRequest should return error when transformer throws', async (t) => {
       ],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2742,6 +2793,7 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
       ],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2816,6 +2868,7 @@ test('mutateIncomingRequest should mutate and use type from mutated action to ca
       endpoints,
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2878,7 +2931,7 @@ test('mutateIncomingRequest should not use defaults when castWithoutDefaults is 
       auth: 'granting',
       endpoints,
     },
-    { mapOptions, schemas, ...jsonResources },
+    { mapTransform, mapOptions, schemas, ...jsonResources },
   )
   const action = setAuthorizedMark({
     type: 'SET',
@@ -2924,6 +2977,7 @@ test('mutateIncomingRequest should set origin when mutation results in an error 
       ],
     },
     {
+      mapTransform,
       mapOptions,
       schemas,
       ...jsonResources,
@@ -2962,6 +3016,7 @@ test('listen should call transporter.listen and set listen flag', async (t) => {
         listen: listenStub,
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -3004,6 +3059,7 @@ test('listen should not call transporter.listen when transport.shouldListen retu
         listen: listenStub,
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -3052,6 +3108,7 @@ test('listen should use service middleware', async (t) => {
         },
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -3188,6 +3245,7 @@ test('should support progress reporting', async (t) => {
         listen: listenStub,
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -3727,6 +3785,7 @@ test('listen should return error when connection fails', async (t) => {
         }),
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -3786,6 +3845,7 @@ test('listen should do nothing when transporter has no listen method', async (t)
         listen: undefined,
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -3823,6 +3883,7 @@ test('listen should return error when no connection', async (t) => {
         listen: listenStub,
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -3864,6 +3925,7 @@ test('listen should return noaction when incoming action is null', async (t) => 
         },
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -3904,6 +3966,7 @@ test('stopListening should stop listening to transporter', async (t) => {
         stopListening: stopListeningStub,
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -3942,6 +4005,7 @@ test('stopListening should do nothing when transporter does not have a stopListe
         stopListening: undefined,
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -3982,6 +4046,7 @@ test('stopListening should do nothing when no connection', async (t) => {
         stopListening: stopListeningStub,
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -4024,6 +4089,7 @@ test('close should disconnect transporter', async (t) => {
         disconnect: disconnectStub,
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -4062,6 +4128,7 @@ test('close should probihit closed connection from behind used again', async (t)
         disconnect: async () => undefined,
       },
     },
+    mapTransform,
     mapOptions,
     schemas,
     auths,
@@ -4091,6 +4158,7 @@ test('close should probihit closed connection from behind used again', async (t)
 test('close should just return ok when no connection', async (t) => {
   const resources = {
     ...jsonResources,
+    mapTransform,
     mapOptions,
     schemas,
     auths,

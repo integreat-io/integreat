@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
+import mapTransform from 'map-transform'
 import Service from '../service/Service.js'
 import { isAuthorizedAction } from '../service/utils/authAction.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
@@ -49,7 +50,7 @@ test('should send action to queue', async (t) => {
       ...queueDefs,
       transporter: queueTransporter,
     },
-    { schemas, mapOptions },
+    { schemas, mapTransform, mapOptions },
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
@@ -80,7 +81,7 @@ test('should override present queuedAt', async (t) => {
       ...queueDefs,
       transporter: queueTransporter,
     },
-    { schemas, mapOptions },
+    { schemas, mapTransform, mapOptions },
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
@@ -116,7 +117,7 @@ test('should return error from queue', async (t) => {
       ...queueDefs,
       transporter: queueTransporter,
     },
-    { schemas, mapOptions },
+    { schemas, mapTransform, mapOptions },
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
@@ -138,7 +139,7 @@ test('should return error when queue does not respond status', async (t) => {
       ...queueDefs,
       transporter: baseTransporter,
     },
-    { schemas, mapOptions },
+    { schemas, mapTransform, mapOptions },
   )
   sinon.stub(queueService, 'send').resolves({}) // Intentionally no status
   const getService = (_type?: string | string[], service?: string) =>

@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
+import mapTransform from 'map-transform'
 import Job from './jobs/Job.js'
 import { IdentType, Action } from './types.js'
 
@@ -33,10 +34,19 @@ test('should dispatch actions scheduled within a time period', async (t) => {
   const jobs = [
     new Job(
       { id: 'action1', cron: '0,10,15,20,25 * * * *', action: action1 },
+      mapTransform,
       mapOptions,
     ), // Will only trigger once
-    new Job({ id: 'action2', cron: '45 * * * *', action: action2 }, mapOptions),
-    new Job({ id: 'action3', cron: '25 * * * *', action: action3 }, mapOptions),
+    new Job(
+      { id: 'action2', cron: '45 * * * *', action: action2 },
+      mapTransform,
+      mapOptions,
+    ),
+    new Job(
+      { id: 'action3', cron: '25 * * * *', action: action3 },
+      mapTransform,
+      mapOptions,
+    ),
   ]
   const fromDate = new Date('2021-05-11T11:03Z')
   const toDate = new Date('2021-05-11T11:26Z')
@@ -58,8 +68,8 @@ test('should dispatch actions scheduled within a time period', async (t) => {
 test('should do nothing when none is scheduled within period', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'queued' })
   const jobs = [
-    new Job({ cron: '55 * * * *', action: action1 }, mapOptions),
-    new Job({ cron: '45 * * * *', action: action2 }, mapOptions),
+    new Job({ cron: '55 * * * *', action: action1 }, mapTransform, mapOptions),
+    new Job({ cron: '45 * * * *', action: action2 }, mapTransform, mapOptions),
   ]
   const fromDate = new Date('2021-05-11T11:03Z')
   const toDate = new Date('2021-05-11T11:26Z')
@@ -87,9 +97,13 @@ test('should do nothing when no schedules', async (t) => {
 test('should skip schedule without cron string or action', async (t) => {
   const dispatch = sinon.stub().resolves({ status: 'queued' })
   const jobs = [
-    new Job({ id: 'action1', action: action1 }, mapOptions),
-    new Job({ id: 'action0', cron: '15 * * * *' }, mapOptions),
-    new Job({ id: 'action2', cron: '12 * * * *', action: action2 }, mapOptions),
+    new Job({ id: 'action1', action: action1 }, mapTransform, mapOptions),
+    new Job({ id: 'action0', cron: '15 * * * *' }, mapTransform, mapOptions),
+    new Job(
+      { id: 'action2', cron: '12 * * * *', action: action2 },
+      mapTransform,
+      mapOptions,
+    ),
   ]
   const fromDate = new Date('2021-05-11T11:03Z')
   const toDate = new Date('2021-05-11T11:26Z')
@@ -112,10 +126,19 @@ test('should return array of error responses', async (t) => {
   const jobs = [
     new Job(
       { id: 'action1', cron: '0,10,15,20,25 * * * *', action: action1 },
+      mapTransform,
       mapOptions,
     ),
-    new Job({ id: 'action2', cron: '45 * * * *', action: action2 }, mapOptions),
-    new Job({ id: 'action3', cron: '25 * * * *', action: action3 }, mapOptions),
+    new Job(
+      { id: 'action2', cron: '45 * * * *', action: action2 },
+      mapTransform,
+      mapOptions,
+    ),
+    new Job(
+      { id: 'action3', cron: '25 * * * *', action: action3 },
+      mapTransform,
+      mapOptions,
+    ),
   ]
   const fromDate = new Date('2021-05-11T11:03Z')
   const toDate = new Date('2021-05-11T14:03Z')

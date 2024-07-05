@@ -1,5 +1,6 @@
 import test from 'ava'
 import nock from 'nock'
+import mapTransform from 'map-transform'
 import transformers from 'integreat-transformers'
 import Service from '../service/Service.js'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
@@ -158,6 +159,7 @@ const setupService = (
     },
     {
       schemas,
+      mapTransform,
       mapOptions: createMapOptions(schemas, pipelines, transformers),
     },
   )

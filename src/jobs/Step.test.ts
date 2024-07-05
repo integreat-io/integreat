@@ -1,6 +1,7 @@
 import test from 'ava'
 import sinon from 'sinon'
 import { setTimeout } from 'node:timers/promises'
+import mapTransform from 'map-transform'
 import integreatTransformers from 'integreat-transformers'
 
 import Step, { breakSymbol } from './Step.js'
@@ -53,7 +54,7 @@ test('should create Step instance', (t) => {
     action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
   }
 
-  const ret = new Step(stepDef, mapOptions)
+  const ret = new Step(stepDef, mapTransform, mapOptions)
 
   t.is(ret.id, 'getEntry')
   t.is(typeof ret.run, 'function')
@@ -90,7 +91,7 @@ test('should run action step', async (t) => {
     },
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.deepEqual(ret, expected)
@@ -176,7 +177,7 @@ test('should run several action steps', async (t) => {
     },
     [breakSymbol]: false,
   }
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.deepEqual(ret, expected)
@@ -243,7 +244,7 @@ test('should return error from failing parallel steps', async (t) => {
     },
     [breakSymbol]: false,
   }
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.deepEqual(ret, expected)
@@ -310,7 +311,7 @@ test('should return override origin with step id', async (t) => {
     },
     [breakSymbol]: false,
   }
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.deepEqual(ret, expected)
@@ -372,7 +373,7 @@ test('should handle rejection when running steps', async (t) => {
     [breakSymbol]: false,
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.deepEqual(ret, expected)
@@ -409,7 +410,7 @@ test('should not run action when its preconditions fail', async (t) => {
     [breakSymbol]: false,
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 0) // Should not run action
@@ -454,7 +455,7 @@ test('should return error from several failing conditions in preconditions', asy
     [breakSymbol]: false,
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 0) // Should not run action
@@ -486,7 +487,7 @@ test('should support json schema validation form as conditions', async (t) => {
     [breakSymbol]: false,
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 0) // Should not run action
@@ -519,7 +520,7 @@ test('should return data from simple action based on postmutation', async (t) =>
     },
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.deepEqual(ret, expected)
@@ -551,7 +552,7 @@ test('should not use depricated "magic" from responseMutation for postmutation',
     },
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.deepEqual(ret, expected)
@@ -577,7 +578,7 @@ test('should return data from simple action based on responseMutation', async (t
     },
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.deepEqual(ret, expected)
@@ -609,7 +610,7 @@ test('should mutate simple action', async (t) => {
     },
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 1)
@@ -642,7 +643,7 @@ test('should mutate simple action without "magic"', async (t) => {
     },
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 1)
@@ -675,7 +676,7 @@ test('should mutate simple action with depricated `muation` property', async (t)
     },
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 1)
@@ -751,7 +752,7 @@ test('should mutate action into several actions based on iterate pipeline', asyn
     },
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 2)
@@ -796,7 +797,7 @@ test('should allow a number of iterations to be run in parallel', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 2)
@@ -865,7 +866,7 @@ test('should mutate action into several actions based on iterate path', async (t
     },
   }
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 3)
@@ -918,7 +919,7 @@ test('should run postmutation on combined response after iteration', async (t) =
     { id: 'ent3', title: 'Entry 3', index: 2 },
   ]
 
-  const step = new Step(stepDef, mapOptions)
+  const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
   t.is(dispatch.callCount, 3)

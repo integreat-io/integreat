@@ -1,11 +1,16 @@
-import mapTransform from 'map-transform'
 import { isObject } from './is.js'
-import type { ValidateObject, MapOptions, Response } from '../types.js'
+import type {
+  ValidateObject,
+  MapOptions,
+  Response,
+  MapTransform,
+} from '../types.js'
 
 export type ResponsesAndBreak = [Response[], boolean]
 
 export default function prepareValidator(
   conditions: ValidateObject[] | undefined,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   defaultErrorStatus = 'badrequest',
   breakByDefault = false,

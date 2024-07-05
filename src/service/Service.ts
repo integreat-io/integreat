@@ -31,6 +31,7 @@ import type {
   Authenticator,
   MapOptions,
   EmitFn,
+  MapTransform,
 } from '../types.js'
 import type {
   EndpointDef,
@@ -50,6 +51,7 @@ export interface Resources {
   authenticators?: Record<string, Authenticator>
   auths?: Record<string, Auth>
   schemas: Map<string, Schema>
+  mapTransform: MapTransform
   mapOptions?: MapOptions
   middleware?: Middleware[]
   identConfig?: IdentConfig
@@ -77,6 +79,7 @@ function setUpEndpoint(
   serviceOutgoingAuth: Auth | undefined,
   serviceIncomingAuth: Auth[] | undefined,
   serviceOptions: PreparedOptions,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   mutation: TransformDefinition | undefined,
   serviceAdapters: Adapter[],
@@ -98,6 +101,7 @@ function setUpEndpoint(
       endpointDef,
       serviceId,
       options,
+      mapTransform,
       mapOptions,
       mutation,
       serviceAdapters,
@@ -150,6 +154,7 @@ export default class Service {
       authenticators = {},
       auths,
       schemas,
+      mapTransform,
       mapOptions = {},
       middleware = [],
       identConfig,
@@ -200,6 +205,7 @@ export default class Service {
         this.#outgoingAuth,
         this.#incomingAuth,
         serviceOptions,
+        mapTransform,
         mapOptions,
         mutation,
         serviceAdapters,

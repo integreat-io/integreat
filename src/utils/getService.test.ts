@@ -1,4 +1,5 @@
 import test from 'ava'
+import mapTransform from 'map-transform'
 import Schema from '../schema/Schema.js'
 import Service from '../service/Service.js'
 import type { Transporter } from '../types.js'
@@ -8,7 +9,10 @@ import getService from './getService.js'
 // Setup
 
 const schemas = new Map()
-schemas.set('entry', new Schema({ id: 'entry', plural: 'entries', service: 'entries' }))
+schemas.set(
+  'entry',
+  new Schema({ id: 'entry', plural: 'entries', service: 'entries' }),
+)
 
 const transporters = {
   http: {} as Transporter,
@@ -20,7 +24,7 @@ const entries = new Service(
     transporter: 'http',
     endpoints: [],
   },
-  { schemas, transporters }
+  { schemas, transporters, mapTransform },
 )
 
 // Tests

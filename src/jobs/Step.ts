@@ -1,4 +1,3 @@
-import mapTransform from 'map-transform'
 import pLimit from 'p-limit'
 import { ensureArray } from '../utils/array.js'
 import { isObject, isOkResponse } from '../utils/is.js'
@@ -26,6 +25,7 @@ import type {
   Meta,
   HandlerDispatch,
   Condition,
+  MapTransform,
   MapOptions,
   ValidateObject,
 } from '../types.js'
@@ -116,6 +116,7 @@ function createConditionsValidator(
     | ValidateObject[]
     | Record<string, Condition | undefined>
     | undefined,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   isPreconditions: boolean,
   breakByDefault: boolean,
@@ -126,6 +127,7 @@ function createConditionsValidator(
     const defaultFailStatus = isPreconditions ? 'noaction' : 'error'
     const validator = prepareValidator(
       conditions,
+      mapTransform,
       mapOptions,
       defaultFailStatus,
       breakByDefault,
@@ -171,6 +173,7 @@ function createConditionsValidator(
 function createPreconditionsValidator(
   preconditions: ValidateObject[] | undefined,
   validationFilters: Record<string, Condition | undefined> | undefined,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   breakByDefault: boolean,
   prevStepId?: string,
@@ -178,6 +181,7 @@ function createPreconditionsValidator(
   const conditions = preconditions || validationFilters
   return createConditionsValidator(
     conditions,
+    mapTransform,
     mapOptions,
     true,
     breakByDefault,
@@ -187,6 +191,7 @@ function createPreconditionsValidator(
 
 function createPostconditionsValidator(
   conditions: ValidateObject[] | undefined,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   breakByDefault: boolean,
 ): Validator {
@@ -195,6 +200,7 @@ function createPostconditionsValidator(
   }
   return createConditionsValidator(
     conditions,
+    mapTransform,
     mapOptions,
     false,
     breakByDefault,
@@ -300,11 +306,16 @@ function generateIterateResponse(action: Action, responses: ResponsesObject) {
 
 export const prepareMutation = (
   pipeline: TransformObject | Pipeline,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   useMagic = false,
 ) => mapTransform(putMutationInPipeline(pipeline, useMagic), mapOptions)
 
-function getIterateMutator(step: JobStepDef, mapOptions: MapOptions) {
+function getIterateMutator(
+  step: JobStepDef,
+  mapTransform: MapTransform,
+  mapOptions: MapOptions,
+) {
   const pipeline = step.iterate || step.iteratePath
   if (pipeline) {
     return mapTransform(pipeline, mapOptions)
@@ -348,6 +359,7 @@ export default class Step {
 
   constructor(
     stepDef: JobStepDef | JobStepDef[],
+    mapTransform: MapTransform,
     mapOptions: MapOptions,
     breakByDefault = false,
     prevStepId?: string,
@@ -360,6 +372,7 @@ export default class Step {
         (step, index, steps) =>
           new Step(
             step,
+            mapTransform,
             mapOptions,
             breakByDefault,
             getPrevStepId(index, steps),
@@ -370,12 +383,14 @@ export default class Step {
       this.#validatePreconditions = createPreconditionsValidator(
         stepDef.preconditions,
         stepDef.conditions,
+        mapTransform,
         mapOptions,
         breakByDefault,
         prevStepId,
       )
       this.#validatePostconditions = createPostconditionsValidator(
         stepDef.postconditions,
+        mapTransform,
         mapOptions,
         breakByDefault,
       )
@@ -383,12 +398,26 @@ export default class Step {
       const premutation = stepDef.premutation || stepDef.mutation
       const postmutation = stepDef.postmutation || stepDef.responseMutation
       this.#premutator = premutation
-        ? prepareMutation(premutation, mapOptions, !!stepDef.mutation) // Set a flag for `mutation`, to signal that we want to use the obsolete "magic"
+        ? prepareMutation(
+            premutation,
+            mapTransform,
+            mapOptions,
+            !!stepDef.mutation,
+          ) // Set a flag for `mutation`, to signal that we want to use the obsolete "magic"
         : undefined
       this.#postmutator = postmutation
-        ? prepareMutation(postmutation, mapOptions, !!stepDef.responseMutation) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
+        ? prepareMutation(
+            postmutation,
+            mapTransform,
+            mapOptions,
+            !!stepDef.responseMutation,
+          ) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
         : undefined
-      this.#iterateMutator = getIterateMutator(stepDef, mapOptions)
+      this.#iterateMutator = getIterateMutator(
+        stepDef,
+        mapTransform,
+        mapOptions,
+      )
       this.#iterateConcurrency = stepDef.iterateConcurrency
     }
   }

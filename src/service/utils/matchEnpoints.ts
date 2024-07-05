@@ -1,13 +1,13 @@
-import mapTransform from 'map-transform'
 import validateFilters from '../../utils/validateFilters.js'
 import { arrayIncludes } from '../../utils/array.js'
 import type { TransformDefinition } from 'map-transform/types.js'
-import type { Action, MapOptions, Params } from '../../types.js'
 import type { EndpointDef } from '../types.js'
+import type { Action, MapOptions, Params, MapTransform } from '../../types.js'
 
 function createConditionsValidator(
   conditions: TransformDefinition[] | undefined,
   mapOptions: MapOptions,
+  mapTransform: MapTransform,
 ): (action: Action) => Promise<boolean> {
   if (!conditions) {
     return async () => true
@@ -77,6 +77,7 @@ const matchIncoming = (
  */
 export default function isMatch(
   endpoint: EndpointDef,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
 ): (action: Action, isIncoming?: boolean) => Promise<boolean> {
   const match = endpoint.match || {}
@@ -84,6 +85,7 @@ export default function isMatch(
   const matchConditions = createConditionsValidator(
     match.conditions,
     mapOptions,
+    mapTransform,
   )
 
   return async (action, isIncoming = false) =>

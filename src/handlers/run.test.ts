@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
+import mapTransform from 'map-transform'
 import integreatTransformers from 'integreat-transformers'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import Job from '../jobs/Job.js'
@@ -21,7 +22,7 @@ const mapOptions = {
 
 const createJobsMap = (jobDef: JobDef, mo = mapOptions) => {
   const jobs = new Map()
-  jobs.set(jobDef.id, new Job(jobDef, mo))
+  jobs.set(jobDef.id, new Job(jobDef, mapTransform, mo))
   return jobs
 }
 
@@ -453,6 +454,7 @@ test('should return error from a sub-flow started with RUN and make it available
           },
         ],
       },
+      mapTransform,
       mapOptions,
     ),
   )

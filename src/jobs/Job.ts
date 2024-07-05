@@ -16,6 +16,7 @@ import type {
   Response,
   Meta,
   HandlerDispatch,
+  MapTransform,
   MapOptions,
   SetProgress,
 } from '../types.js'
@@ -108,7 +109,12 @@ export default class Job {
   #postmutator?: DataMapper<InitialState>
   #isFlow = false
 
-  constructor(jobDef: JobDef, mapOptions: MapOptions, breakByDefault = false) {
+  constructor(
+    jobDef: JobDef,
+    mapTransform: MapTransform,
+    mapOptions: MapOptions,
+    breakByDefault = false,
+  ) {
     this.id = getId(jobDef)
 
     if (isFlowJob(jobDef)) {
@@ -122,6 +128,7 @@ export default class Job {
           (stepDef, index, steps) =>
             new Step(
               stepDef,
+              mapTransform,
               mapOptions,
               breakByDefault,
               getPrevStepId(index, steps),
@@ -131,12 +138,18 @@ export default class Job {
       // We only set the postmutator when we have a flow.
       const postmutation = jobDef.postmutation || jobDef.responseMutation
       this.#postmutator = postmutation
-        ? prepareMutation(postmutation, mapOptions, !!jobDef.responseMutation) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
+        ? prepareMutation(
+            postmutation,
+            mapTransform,
+            mapOptions,
+            !!jobDef.responseMutation,
+          ) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
         : undefined
     } else if (isActionJob(jobDef)) {
       this.#steps = [
         new Step(
           { ...jobDef, id: jobDef.id },
+          mapTransform,
           mapOptions,
           breakByDefault,
           undefined,

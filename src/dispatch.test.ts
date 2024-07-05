@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
+import mapTransform from 'map-transform'
 import httpTransporter from 'integreat-transporter-http'
 import Service from './service/Service.js'
 import Schema from './schema/Schema.js'
@@ -93,7 +94,12 @@ const services = {
         },
       ],
     },
-    { mapOptions, schemas, transporters: { http: httpTransporter } },
+    {
+      mapTransform,
+      mapOptions,
+      schemas,
+      transporters: { http: httpTransporter },
+    },
   ),
 }
 

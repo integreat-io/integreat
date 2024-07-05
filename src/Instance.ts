@@ -1,4 +1,5 @@
 import EventEmitter from 'node:events'
+import defaultMapTransform from 'map-transform'
 import Auth from './service/Auth.js'
 import builtinHandlers from './handlers/index.js'
 import runFn from './handlers/run.js'
@@ -26,6 +27,7 @@ import type {
   MapOptions,
   ActionHandler,
   EmitFn,
+  MapTransform,
 } from './types.js'
 import type { AuthDef, ServiceDef } from './service/types.js'
 import type { SchemaDef } from './schema/types.js'
@@ -88,13 +90,14 @@ const createAuthObjects = (
 
 function prepareJobs(
   jobDefs: JobDef[],
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   breakByDefault: boolean,
 ) {
   const jobs = new Map<string, Job>()
   ensureArray(jobDefs).forEach((jobDef) => {
-    const job = new Job(jobDef, mapOptions, breakByDefault)
-    jobs.set(job.id, new Job(jobDef, mapOptions))
+    const job = new Job(jobDef, mapTransform, mapOptions, breakByDefault)
+    jobs.set(job.id, new Job(jobDef, mapTransform, mapOptions))
   })
   return jobs
 }
@@ -120,6 +123,7 @@ function createServices(
   defs: Definitions,
   resources: Resources,
   schemas: Map<string, Schema>,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   middlewareForService: Middleware[],
   emit: EmitFn,
@@ -136,6 +140,7 @@ function createServices(
           authenticators: authenticators,
           auths,
           schemas,
+          mapTransform,
           mapOptions,
           middleware: middlewareForService,
           emit,
@@ -153,6 +158,7 @@ function setupServicesAndDispatch(
   emit: EmitFn,
   dispatchedActionId: Set<string>,
 ) {
+  const mapTransformFn = resources.mapTransform ?? defaultMapTransform // Use provided mapTransform or fall back to ours
   const mapOptions = createMapOptions(
     schemas,
     defs.mutations,
@@ -164,13 +170,19 @@ function setupServicesAndDispatch(
     defs,
     resources,
     schemas,
+    mapTransformFn,
     mapOptions,
     middlewareForService,
     emit,
   )
 
   const breakByDefault = defs.flags?.breakByDefault ?? false
-  const jobs = prepareJobs(defs.jobs || [], mapOptions, breakByDefault)
+  const jobs = prepareJobs(
+    defs.jobs || [],
+    mapTransformFn,
+    mapOptions,
+    breakByDefault,
+  )
   const dispatch = createDispatch({
     schemas,
     services,
