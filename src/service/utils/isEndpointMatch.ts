@@ -75,7 +75,7 @@ const matchIncoming = (
  * scope, which should match before action, but the order here is taken care of
  * by the required sorting.
  */
-export default function isMatch(
+export default function isEndpointMatch(
   endpoint: EndpointDef,
   mapTransform: MapTransform,
   mapOptions: MapOptions,

@@ -1,7 +1,7 @@
 /* eslint-disable security/detect-object-injection */
 import { transform } from 'map-transform'
 import compareEndpoints from './utils/compareEndpoints.js'
-import isMatch from './utils/matchEnpoints.js'
+import isEndpointMatch from './utils/isEndpointMatch.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
 import { ensureArray } from '../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../utils/is.js'
@@ -149,7 +149,7 @@ export default class Endpoint {
     this.allowRawResponse = endpointDef.allowRawResponse // Don't set a default
     this.castWithoutDefaults = endpointDef.castWithoutDefaults ?? false
     this.match = endpointDef.match
-    this.#checkIfMatch = isMatch(endpointDef, mapTransform, mapOptions)
+    this.#checkIfMatch = isEndpointMatch(endpointDef, mapTransform, mapOptions)
     this.options = options
 
     this.#validator = prepareValidator(
