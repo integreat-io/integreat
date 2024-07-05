@@ -1,5 +1,5 @@
 /* eslint-disable security/detect-object-injection */
-import mapTransform, { transform } from 'map-transform'
+import { transform } from 'map-transform'
 import compareEndpoints from './utils/compareEndpoints.js'
 import isMatch from './utils/matchEnpoints.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
@@ -15,7 +15,13 @@ import type {
   AsyncDataMapperWithOptions,
 } from 'map-transform/types.js'
 import type Auth from './Auth.js'
-import type { Action, Response, Adapter, MapOptions } from '../types.js'
+import type {
+  Action,
+  Response,
+  Adapter,
+  MapOptions,
+  MapTransform,
+} from '../types.js'
 import type {
   EndpointDef,
   ServiceOptions,
@@ -74,6 +80,7 @@ function prepareActionMutation(
   endpointMutation: TransformDefinition | undefined,
   serviceAdapterTransformer: AsyncDataMapperWithOptions[],
   endpointAdapterTransformer: AsyncDataMapperWithOptions[],
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
 ) {
   // Prepare service and endpoint mutations as separate mutate functions that
@@ -126,6 +133,7 @@ export default class Endpoint {
     endpointDef: EndpointDef,
     serviceId: string,
     options: PreparedOptions,
+    mapTransform: MapTransform,
     mapOptions: MapOptions,
     serviceMutation?: TransformDefinition,
     serviceAdapters: Adapter[] = [],
@@ -141,16 +149,21 @@ export default class Endpoint {
     this.allowRawResponse = endpointDef.allowRawResponse // Don't set a default
     this.castWithoutDefaults = endpointDef.castWithoutDefaults ?? false
     this.match = endpointDef.match
-    this.#checkIfMatch = isMatch(endpointDef, mapOptions)
+    this.#checkIfMatch = isMatch(endpointDef, mapTransform, mapOptions)
     this.options = options
 
-    this.#validator = prepareValidator(endpointDef.validate, mapOptions)
+    this.#validator = prepareValidator(
+      endpointDef.validate,
+      mapTransform,
+      mapOptions,
+    )
 
     this.#mutateAction = prepareActionMutation(
       serviceMutation,
       endpointDef.mutation || endpointDef.mutate,
       serviceAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
       endpointAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
+      mapTransform,
       mapOptions,
     )
 

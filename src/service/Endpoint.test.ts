@@ -1,5 +1,6 @@
 import test from 'ava'
 import sinon from 'sinon'
+import mapTransform from 'map-transform'
 import jsonAdapter from 'integreat-adapter-json'
 import jsonTransformer from 'integreat-adapter-json/transformer.js'
 import uriTransformer from 'integreat-adapter-uri/transformer.js'
@@ -182,7 +183,7 @@ test('should set id, allowRawRequest, allowRawResponse, and castWithoutDefaults 
     castWithoutDefaults: true,
   }
 
-  const ret = new Endpoint(endpointDef, serviceId, options, {})
+  const ret = new Endpoint(endpointDef, serviceId, options, mapTransform, {})
 
   t.is(ret.id, 'endpoint1')
   t.true(ret.allowRawRequest)
@@ -204,6 +205,7 @@ test('should expose given outgoing and incoming auth', (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     {},
     undefined,
     undefined,
@@ -223,7 +225,7 @@ test('should set match on endpoint', (t) => {
     match: { scope: 'member' },
   }
 
-  const ret = new Endpoint(endpointDef, serviceId, options, {})
+  const ret = new Endpoint(endpointDef, serviceId, options, mapTransform, {})
 
   t.deepEqual(ret.match, { scope: 'member' })
 })
@@ -246,7 +248,13 @@ test('should return true when endpoint is a match to an action with conditions',
       data: { draft: false },
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   t.true(await endpoint.isMatch(action))
 })
@@ -266,7 +274,13 @@ test('should return false when endpoint is not a match to an action with conditi
       type: 'entry',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   t.false(await endpoint.isMatch(action))
 })
@@ -283,7 +297,13 @@ test('should return true when endpoint is a match to an action with filter', asy
       data: { draft: false },
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   t.true(await endpoint.isMatch(action))
 })
@@ -299,7 +319,13 @@ test('should return false when no match to action', async (t) => {
       type: 'entry',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   t.false(await endpoint.isMatch(action))
 })
@@ -316,7 +342,13 @@ test('should return null when no validation', async (t) => {
       type: 'entry',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.validateAction(action)
 
@@ -334,7 +366,13 @@ test('should return null when validate is empty array', async (t) => {
       type: 'entry',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.validateAction(action)
 
@@ -353,7 +391,13 @@ test('should return null when validation passes', async (t) => {
       id: 'ent1',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.validateAction(action)
 
@@ -372,7 +416,13 @@ test('should return null when validation with several conditions passes', async 
       id: 'ent1',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.validateAction(action)
 
@@ -391,7 +441,13 @@ test('should return badrequest response when validation fails', async (t) => {
       // No id
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const expectedResponse = {
     status: 'badrequest',
     error: 'Did not satisfy condition',
@@ -415,7 +471,13 @@ test('should return badrequest response when one of several conditions fails', a
       // No id
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const expectedResponse = {
     status: 'badrequest',
     error: 'Did not satisfy condition',
@@ -444,7 +506,13 @@ test('should return failResponse when provided', async (t) => {
       // No id
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const expectedResponse = {
     status: 'error',
     error: 'This is no good',
@@ -477,7 +545,13 @@ test('should return response from several failed failResponse', async (t) => {
       // No id
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const expectedResponse = {
     status: 'error',
     error: '[error] This is no good | [notfound] Something is gone',
@@ -506,7 +580,13 @@ test('should treat failResponse as error message when provided as a string', asy
       // No id
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const expectedResponse = {
     status: 'badrequest',
     error: 'This is no good',
@@ -548,7 +628,13 @@ test('should mutate response from service with endpoint mutation', async (t) => 
     },
   }
   const clock = sinon.useFakeTimers(theTime)
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.mutate(actionWithResponse, false)
 
@@ -566,7 +652,13 @@ test('should treat `mutate` as an alias of endpoint mutation', async (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.mutate(actionWithResponse, false)
 
@@ -609,6 +701,7 @@ test('should run prepareOptions() on options before giving them to adapter', asy
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -643,6 +736,7 @@ test('should provide prepareOptions() with empty object when no adapter options'
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -688,7 +782,13 @@ test('should mutate action props from response', async (t) => {
   }
   const expectedPaging = { next: { offset: 'page2', type: 'entry' } }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithProps, false)
 
   t.is(ret.response?.status, 'badrequest')
@@ -737,6 +837,7 @@ test('should mutate response from service with service and endpoint mutations', 
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     serviceMutation,
   )
@@ -771,6 +872,7 @@ test('should mutate response from service with service mutation only', async (t)
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     serviceMutation,
   )
@@ -804,6 +906,7 @@ test('should mutate response from service with service adapter', async (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -842,6 +945,7 @@ test('should mutate response from service with both service and endpoint adapter
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     serviceAdapters,
@@ -882,6 +986,7 @@ test('should run service mutation _before_ endpoint adapters', async (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     serviceMutation,
     serviceAdapters,
@@ -915,6 +1020,7 @@ test('should mutate response from service with service adapter and no mutation p
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -943,7 +1049,13 @@ test('should return error when no action', async (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const error = await t.throwsAsync(endpoint.mutate(undefined as any, false))
@@ -969,6 +1081,7 @@ test('should mutate response to service (incoming) with service adapter', async 
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -1011,6 +1124,7 @@ test('should throw when mutations are applying unknown pipeline/mutation', async
         endpointDef,
         serviceId,
         options,
+        mapTransform,
         mapOptions,
         serviceMutation,
       ),
@@ -1047,7 +1161,13 @@ test('should keep action props not mapped from response', async (t) => {
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithProps, false)
 
   t.is(ret.response?.status, 'error')
@@ -1079,7 +1199,13 @@ test('should set status to error for response with an error', async (t) => {
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithProps, false)
 
   t.is(ret.response?.status, 'error')
@@ -1102,7 +1228,13 @@ test('should mutate to undefined from response when unknown path', async (t) => 
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithResponse, false)
 
   t.deepEqual(ret, expected)
@@ -1124,7 +1256,13 @@ test('should mutate to empty array from service when unknown path and expecting 
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithResponse, false)
 
   t.deepEqual(ret, expected)
@@ -1136,7 +1274,13 @@ test('should not mutate from service when no mutation pipeline', async (t) => {
   }
   const expected = actionWithResponse
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithResponse, false)
 
   t.deepEqual(ret, expected)
@@ -1152,7 +1296,13 @@ test('should not mutate response from service when direction is rev', async (t) 
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = actionWithResponse
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.mutate(actionWithResponse, false)
 
@@ -1186,7 +1336,13 @@ test('should mutate request with endpoint mutation', async (t) => {
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(action, true)
 
   t.deepEqual(ret, expected)
@@ -1273,6 +1429,7 @@ test('should mutate request with service mutation', async (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     serviceMutation,
   )
@@ -1303,7 +1460,13 @@ test('should mutate request with root array path', async (t) => {
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(action, true)
 
   t.deepEqual(ret, expected)
@@ -1315,7 +1478,13 @@ test('should not mutate to service when no mutation pipeline', async (t) => {
   }
   const expected = action
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(action, true)
 
   t.deepEqual(ret, expected)
@@ -1337,7 +1506,13 @@ test('should not mutate request with mutation when direction is set to fwd', asy
       data: undefined,
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.mutate(actionWithoutRequestData, true)
 
@@ -1362,7 +1537,13 @@ test('should mutate request from service (incoming)', async (t) => {
       },
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const isRev = false
 
   const ret = await endpoint.mutate(incomingAction, isRev)
@@ -1405,6 +1586,7 @@ test('should mutate request with adapter', async (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -1445,6 +1627,7 @@ test('should mutate request with several adapters', async (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -1478,6 +1661,7 @@ test('should mutate request from service (incoming) with adapter', async (t) => 
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -1566,7 +1750,7 @@ test('should find matching endpoint', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
+    (defs) => new Endpoint(defs, serviceId, options, mapTransform, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
@@ -1597,7 +1781,7 @@ test('should match by id', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
+    (defs) => new Endpoint(defs, serviceId, options, mapTransform, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
@@ -1626,7 +1810,7 @@ test('should match scope all', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
+    (defs) => new Endpoint(defs, serviceId, options, mapTransform, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
@@ -1656,7 +1840,7 @@ test('should treat scope all as no scope', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
+    (defs) => new Endpoint(defs, serviceId, options, mapTransform, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 

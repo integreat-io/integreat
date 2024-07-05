@@ -451,6 +451,40 @@ test('should use provided nonvalues', async (t) => {
   t.is(item.text, '')
 })
 
+test('should provided map-transform', async (t) => {
+  const mockMapTransform = () => async (data: unknown) => data // Don't transform anything
+  const resourcesWithMapTransform = {
+    ...resourcesWithTransformer,
+    transporters: {
+      ...resourcesWithTransformer.transporters,
+      http: {
+        ...resourcesWithTransformer.transporters!.http,
+        send: async (action: Action) => ({
+          ...action.response,
+          status: 'ok',
+          data: JSON.stringify({ id: 'ent1' }),
+        }),
+      },
+    },
+    mapTransform: mockMapTransform,
+  }
+
+  const action = {
+    type: 'GET',
+    payload: { id: 'ent1', type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const great = new Instance(
+    { services, schemas, mutations, dictionaries },
+    resourcesWithMapTransform,
+  )
+  const ret = await great.dispatch(action)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(ret.data, undefined) // When we get `undefined`, we know nothing was transformed, i.e. our map-transform mock was used
+})
+
 test('should dispatch scheduled', async (t) => {
   const queueStub = sinon.stub().resolves({ status: 'queued' })
   const handlers = { [QUEUE_SYMBOL]: queueStub }

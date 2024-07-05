@@ -5,6 +5,8 @@ import type {
   AsyncTransformer,
   TransformDefinition,
   Options,
+  DataMapper,
+  InitialState,
 } from 'map-transform/types.js'
 import type {
   ServiceDef,
@@ -17,6 +19,11 @@ import type {
 import type Service from './service/Service.js'
 import type { SchemaDef } from './schema/types.js'
 import type { JobDef } from './jobs/types.js'
+
+export type MapTransform = (
+  def: TransformDefinition,
+  options?: Options,
+) => DataMapper<InitialState>
 
 export interface EmitFn {
   (eventType: string, ...args: unknown[]): void
@@ -290,4 +297,5 @@ export interface Resources {
   handlers?: Record<string, ActionHandler>
   authenticators?: Record<string, Authenticator>
   transformers?: Record<string, Transformer | AsyncTransformer>
+  mapTransform?: MapTransform
 }

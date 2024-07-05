@@ -1,4 +1,5 @@
 import test from 'ava'
+import mapTransform from 'map-transform'
 import integreatTransformers from 'integreat-transformers'
 import type { ValidateObject } from '../types.js'
 
@@ -37,7 +38,7 @@ test('should return empty error array when validations succeeds', async (t) => {
   }
   const expected = [[], false]
 
-  const validator = prepareValidator(conditions, mapOptions)
+  const validator = prepareValidator(conditions, mapTransform, mapOptions)
   const ret = await validator(action)
 
   t.deepEqual(ret, expected)
@@ -76,7 +77,7 @@ test('should return error response when validations fails', async (t) => {
     false,
   ]
 
-  const validator = prepareValidator(conditions, mapOptions)
+  const validator = prepareValidator(conditions, mapTransform, mapOptions)
   const ret = await validator(action)
 
   t.deepEqual(ret, expected)
@@ -119,7 +120,7 @@ test('should return several error responses when validations fails', async (t) =
     false,
   ]
 
-  const validator = prepareValidator(conditions, mapOptions)
+  const validator = prepareValidator(conditions, mapTransform, mapOptions)
   const ret = await validator(action)
 
   t.deepEqual(ret, expected)
@@ -163,7 +164,7 @@ test('should set break to true if any of the failing conditions has break set to
     true,
   ]
 
-  const validator = prepareValidator(conditions, mapOptions)
+  const validator = prepareValidator(conditions, mapTransform, mapOptions)
   const ret = await validator(action)
 
   t.deepEqual(ret, expected)
@@ -190,7 +191,7 @@ test('should return error response when validations fails without failResponse',
     false,
   ]
 
-  const validator = prepareValidator(conditions, mapOptions)
+  const validator = prepareValidator(conditions, mapTransform, mapOptions)
   const ret = await validator(action)
 
   t.deepEqual(ret, expected)
@@ -218,7 +219,12 @@ test('should use given error status when validations fails without failResponse'
     false,
   ]
 
-  const validator = prepareValidator(conditions, mapOptions, defaultErrorStatus)
+  const validator = prepareValidator(
+    conditions,
+    mapTransform,
+    mapOptions,
+    defaultErrorStatus,
+  )
   const ret = await validator(action)
 
   t.deepEqual(ret, expected)
@@ -229,7 +235,7 @@ test('should return empty error arrays when validation is empty array', async (t
   const action = { type: 'GET', payload: { type: 'entry' } }
   const expected = [[], false]
 
-  const validator = prepareValidator(conditions, mapOptions)
+  const validator = prepareValidator(conditions, mapTransform, mapOptions)
   const ret = await validator(action)
 
   t.deepEqual(ret, expected)
@@ -240,7 +246,7 @@ test('should return empty error arrays when no validation', async (t) => {
   const action = { type: 'GET', payload: { type: 'entry' } }
   const expected = [[], false]
 
-  const validator = prepareValidator(conditions, mapOptions)
+  const validator = prepareValidator(conditions, mapTransform, mapOptions)
   const ret = await validator(action)
 
   t.deepEqual(ret, expected)

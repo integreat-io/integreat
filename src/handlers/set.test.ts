@@ -1,5 +1,6 @@
 import test from 'ava'
 import nock from 'nock'
+import mapTransform from 'map-transform'
 import Service from '../service/Service.js'
 import jsonServiceDef from '../tests/helpers/jsonServiceDef.js'
 import Schema from '../schema/Schema.js'
@@ -106,6 +107,7 @@ const setupService = (
     },
     {
       schemas,
+      mapTransform,
       mapOptions,
     },
   )
@@ -239,6 +241,7 @@ test('should mutate and set with member endpoint for single item', async (t) => 
     },
     {
       schemas,
+      mapTransform,
       mapOptions,
     },
   )
