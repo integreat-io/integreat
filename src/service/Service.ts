@@ -32,6 +32,7 @@ import type {
   MapOptions,
   EmitFn,
   MapTransform,
+  Meta,
 } from '../types.js'
 import type {
   EndpointDef,
@@ -111,6 +112,14 @@ function setUpEndpoint(
     )
   }
 }
+
+const preserveMetaProps = (
+  action: Action,
+  { id, cid, gid, ident }: Meta = {},
+) => ({
+  ...action,
+  meta: { id, cid, gid, ident, ...action.meta },
+})
 
 /**
  * Create a service with the given id and transporter.
@@ -283,7 +292,7 @@ export default class Service {
     const castFn = getCastFn(this.#schemas, action.payload.type)
     const actionWithOptions = setOptionsOnAction(action, endpoint)
     const castedAction = castPayload(actionWithOptions, endpoint, castFn)
-    const authorizedAction = await this.#authorizeDataToService(
+    const authorizedAction = this.#authorizeDataToService(
       castedAction,
       endpoint.allowRawRequest,
     )
@@ -314,7 +323,10 @@ export default class Service {
   ): Promise<Action> {
     let mutated: Action
     try {
-      mutated = await endpoint.mutate(action, false /* isRev */)
+      mutated = preserveMetaProps(
+        await endpoint.mutate(action, false /* isRev */),
+        action.meta,
+      )
     } catch (error) {
       return setErrorOnAction(
         action,
