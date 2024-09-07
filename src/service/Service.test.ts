@@ -2958,6 +2958,134 @@ test('mutateIncomingRequest should not use defaults when castWithoutDefaults is 
   t.is(data[0].one, undefined)
 })
 
+test('mutateIncomingRequest should keep ident, id, cid, and gid even when mutation removes them', async (t) => {
+  const service = new Service(
+    {
+      id: 'api',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints: [
+        {
+          id: 'endpoint3',
+          match: { action: 'SET', incoming: true },
+          mutation: [
+            {
+              $direction: 'from',
+              type: { $value: 'RUN' },
+              payload: {
+                jobId: { $value: 'theJob' },
+              },
+              meta: { queue: { $value: true } }, // This will remove ids, ident etc.
+            },
+          ],
+        },
+      ],
+    },
+    {
+      mapTransform,
+      mapOptions,
+      schemas,
+      ...jsonResources,
+    },
+  )
+  const action = setAuthorizedMark({
+    type: 'SET',
+    payload: {
+      path: '/runTheJob',
+      sourceService: 'api',
+    },
+    meta: {
+      id: '12345',
+      cid: '12346',
+      gid: '12347',
+      ident: { id: 'johnf', roles: ['admin'] },
+      options: { uri: 'http://some.api/1.0' },
+    },
+  })
+  const endpoint = await service.endpointFromAction(
+    action,
+    true /* isIncoming */,
+  )
+  const expectedMeta = {
+    id: '12345',
+    cid: '12346',
+    gid: '12347',
+    ident: { id: 'johnf', roles: ['admin'] },
+    queue: true,
+  }
+
+  const ret = await service.mutateIncomingRequest(action, endpoint!)
+
+  t.is(ret.type, 'RUN')
+  t.deepEqual(ret.meta, expectedMeta)
+})
+
+test('mutateIncomingRequest should allow mutation to override ident, id, cid, and gid', async (t) => {
+  const service = new Service(
+    {
+      id: 'api',
+      transporter: 'http',
+      auth: 'granting',
+      endpoints: [
+        {
+          id: 'endpoint3',
+          match: { action: 'SET', incoming: true },
+          mutation: [
+            {
+              $direction: 'from',
+              type: { $value: 'RUN' },
+              payload: {
+                jobId: { $value: 'theJob' },
+              },
+              meta: {
+                id: { $value: '14' },
+                cid: { $value: '15' },
+                gid: { $value: '16' },
+                ident: { id: { $value: 'mysteryUser' } },
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      mapTransform,
+      mapOptions,
+      schemas,
+      ...jsonResources,
+    },
+  )
+  const action = setAuthorizedMark({
+    type: 'SET',
+    payload: {
+      path: '/runTheJob',
+      sourceService: 'api',
+    },
+    meta: {
+      id: '12345',
+      cid: '12346',
+      gid: '12347',
+      ident: { id: 'johnf', roles: ['admin'] },
+      options: { uri: 'http://some.api/1.0' },
+    },
+  })
+  const endpoint = await service.endpointFromAction(
+    action,
+    true /* isIncoming */,
+  )
+  const expectedMeta = {
+    id: '14',
+    cid: '15',
+    gid: '16',
+    ident: { id: 'mysteryUser' },
+  }
+
+  const ret = await service.mutateIncomingRequest(action, endpoint!)
+
+  t.is(ret.type, 'RUN')
+  t.deepEqual(ret.meta, expectedMeta)
+})
+
 test('mutateIncomingRequest should set origin when mutation results in an error response', async (t) => {
   const service = new Service(
     {
