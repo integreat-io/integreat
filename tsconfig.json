@@ -18,6 +18,7 @@
     "alwaysStrict": true,
     "skipLibCheck": true,
     "removeComments": true,
+    "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
       "*": ["node_modules/*"]
