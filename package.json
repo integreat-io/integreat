@@ -63,6 +63,6 @@
     "integreat-transformers": "^1.1.0",
     "integreat-transporter-http": "^1.4.0-rc.11",
     "nock": "^13.5.5",
-    "sinon": "^18.0.0"
+    "sinon": "^18.0.1"
   }
 }
