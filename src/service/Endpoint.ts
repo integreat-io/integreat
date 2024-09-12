@@ -1,5 +1,4 @@
 /* eslint-disable security/detect-object-injection */
-import { transform } from 'map-transform'
 import compareEndpoints from './utils/compareEndpoints.js'
 import isEndpointMatch from './utils/isEndpointMatch.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
@@ -98,15 +97,20 @@ function prepareActionMutation(
     mapOptions,
   )
 
+  // TODO: Consider rewriting without the `{ $transform }` operations
   // Prepare the pipeline, with service adapters, service mutation, endpoint
   // adapters and endpoint mutation – in that order. Note that we run the
   // mutations with a transformer that makes sure the result is a valid action
   // and that the status and error are set correctly.
   const pipeline = [
-    ...serviceAdapterTransformer.map((transformer) => transform(transformer)),
-    transform(runMutationAndPopulateAction(serviceMutator)),
-    ...endpointAdapterTransformer.map((transformer) => transform(transformer)),
-    transform(runMutationAndPopulateAction(endpointMutator)),
+    ...serviceAdapterTransformer.map((transformer) => ({
+      $transform: transformer,
+    })),
+    { $transform: runMutationAndPopulateAction(serviceMutator) },
+    ...endpointAdapterTransformer.map((transformer) => ({
+      $transform: transformer,
+    })),
+    { $transform: runMutationAndPopulateAction(endpointMutator) },
   ]
   return mapTransform(pipeline, mapOptions)
 }
