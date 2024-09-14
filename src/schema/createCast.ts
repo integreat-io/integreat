@@ -48,8 +48,8 @@ const typeFromDef = (prop?: string | FieldDefinition | Shape) =>
   isFieldDefinition(prop)
     ? prop.$type
     : typeof prop === 'string'
-    ? prop
-    : undefined
+      ? prop
+      : undefined
 
 const hasArrayNotation = (key?: string) =>
   typeof key === 'string' && key.endsWith('[]')
@@ -99,8 +99,8 @@ const handleArray = (
           ? undefined
           : ensureArray(value).map(fn(isRev, noDefaults)) // Ensure that an array is returned
     : type === 'unknown'
-    ? (isRev, noDefaults) => fn(isRev, noDefaults) // Return 'unknown' fields as is
-    : (isRev, noDefaults) => unwrapSingleArrayItem(fn(isRev, noDefaults)) // Unwrap only item in an array when we don't expect an array
+      ? (isRev, noDefaults) => fn(isRev, noDefaults) // Return 'unknown' fields as is
+      : (isRev, noDefaults) => unwrapSingleArrayItem(fn(isRev, noDefaults)) // Unwrap only item in an array when we don't expect an array
 
 function getDates(
   shouldHaveCreatedAt: boolean,
@@ -116,12 +116,12 @@ function getDates(
   const nextCreatedAt = shouldHaveCreatedAt
     ? createdAt
       ? createdAt // Already has
-      : updatedAt ?? new Date() // Use updatedAt or now
+      : (updatedAt ?? new Date()) // Use updatedAt or now
     : undefined
   const nextUpdatedAt = shouldHaveUpdatedAt
     ? updatedAt
       ? updatedAt // Already has
-      : nextCreatedAt ?? new Date() // createdAt or now
+      : (nextCreatedAt ?? new Date()) // createdAt or now
     : undefined
 
   return {
@@ -155,16 +155,16 @@ const completeItemBeforeCast =
     doGenerateId: boolean,
   ) =>
   (
-    { id, createdAt, updatedAt, ...item }: Record<string, unknown>,
+    item: Record<string, unknown>,
     noDefaults: boolean,
   ): Record<string, unknown> => ({
-    id: id ?? (doGenerateId && !noDefaults ? nanoid() : null),
     ...item,
+    id: item.id ?? (doGenerateId && !noDefaults ? nanoid() : null),
     ...getDates(
       shouldHaveCreatedAt,
       shouldHaveUpdatedAt,
-      createdAt,
-      updatedAt,
+      item.createdAt,
+      item.updatedAt,
       noDefaults,
     ),
   })
