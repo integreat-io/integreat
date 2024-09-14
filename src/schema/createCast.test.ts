@@ -675,6 +675,34 @@ test('should not use any defaults when noDefaults is true', (t) => {
   t.is(ret.age, undefined)
 })
 
+test('should still keep existing dates when noDefaults is true', (t) => {
+  const noDefaults = true
+  const isRev = false
+  const doGenerateId = true
+  const shape = {
+    id: { $type: 'string' },
+    title: { $type: 'string' },
+    age: { $type: 'integer', default: 0 },
+    createdAt: { $type: 'date' },
+    updatedAt: { $type: 'date' },
+  }
+  const createdAt = new Date()
+  const updatedAt = new Date()
+  const data = { title: 'Entry 1', createdAt, updatedAt }
+
+  const ret = createCast(
+    shape,
+    'entry',
+    schemas,
+    doGenerateId,
+  )(data, isRev, noDefaults) as TypedData
+
+  t.is(ret.id, null)
+  t.deepEqual(ret.createdAt, createdAt)
+  t.deepEqual(ret.updatedAt, updatedAt)
+  t.is(ret.age, undefined)
+})
+
 test('should skip properties with invalid $type', (t) => {
   const isRev = false
   const shape = expandShape({
