@@ -1,5 +1,13 @@
-import type { Authenticator } from '../types.js'
-import type { Authentication } from '../service/types.js'
+import type { Authenticator, Action } from '../types.js'
+import type { Authentication, AuthOptions } from '../service/types.js'
+import { isObject } from '../utils/is.js'
+
+export interface TokenOptions extends AuthOptions {
+  token?: string | string[] | null
+  type?: string
+  encode?: boolean
+  identId?: string
+}
 
 interface TokenAuthentication extends Authentication {
   token?: string | null
@@ -16,7 +24,7 @@ export interface TokenHeaders extends Record<string, unknown> {
   Authorization?: string
 }
 
-const getTypeAndToken = (authentication: TokenAuthentication | null) => {
+function getTypeAndToken(authentication: TokenAuthentication | null) {
   const { status, token, type, encode } = authentication || {}
   if (status !== 'granted' || !token) {
     return {}
@@ -27,10 +35,38 @@ const getTypeAndToken = (authentication: TokenAuthentication | null) => {
   }
 }
 
+function getAuthHeader(action: Action | null) {
+  const headers = action?.payload?.headers
+  if (isObject(headers)) {
+    return headers.authorization || headers.Authorization
+  }
+
+  return undefined
+}
+
+const compareAuthHeader = (
+  header: string,
+  type?: string,
+  token?: string | null,
+) => header === (type ? `${type} ${token}` : token)
+
+function isValidAuthHeader(
+  header?: string | string[],
+  type?: string,
+  token?: string | string[] | null,
+) {
+  if (typeof header === 'string') {
+    return Array.isArray(token)
+      ? token.some((tok) => compareAuthHeader(header, type, tok))
+      : compareAuthHeader(header, type, token)
+  }
+  return false
+}
+
 /**
  * The token strategy. The token is given as an option.
  */
-const tokenAuth: Authenticator = {
+const tokenAuth: Authenticator<TokenAuthentication, TokenOptions> = {
   /**
    * Authenticate and return authentication object if authentication was
    * successful.
@@ -38,7 +74,10 @@ const tokenAuth: Authenticator = {
    * but in the token strategy, we just set the token from the options object.
    */
   async authenticate(options) {
-    const { token = null, type, encode = false } = options || {}
+    const { type, encode = false } = options || {}
+    const token = Array.isArray(options?.token)
+      ? options.token[0]
+      : options?.token
     return token
       ? { status: 'granted', token, type, encode }
       : { status: 'refused' }
@@ -55,6 +94,27 @@ const tokenAuth: Authenticator = {
       authentication.status === 'granted' &&
       authentication.token
     )
+  },
+
+  async validate(_authentication, options: TokenOptions | null, action) {
+    const { identId, type, token } = options || {}
+    const authHeader = getAuthHeader(action)
+
+    if (isValidAuthHeader(authHeader, type, token)) {
+      return { status: 'ok', access: { ident: { id: identId } } }
+    } else {
+      return authHeader
+        ? {
+            status: 'autherror',
+            error: 'Invalid credentials',
+            reason: 'invalidauth',
+          }
+        : {
+            status: 'noaccess',
+            error: 'Authentication required',
+            reason: 'noauth',
+          }
+    }
   },
 
   authentication: {
