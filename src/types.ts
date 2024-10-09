@@ -184,7 +184,7 @@ export interface Authenticator<
     action: Action | null,
   ) => string | undefined
   authenticate: (
-    options: AuthOptions | null,
+    options: U | null,
     action: Action | null,
     dispatch: HandlerDispatch,
   ) => Promise<T>
@@ -195,7 +195,7 @@ export interface Authenticator<
   ) => boolean
   validate?: (
     authentication: T | null,
-    options: AuthOptions | null,
+    options: U | null,
     action: Action | null,
     dispatch: HandlerDispatch,
   ) => Promise<Response>
