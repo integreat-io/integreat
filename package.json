@@ -60,9 +60,9 @@
     "@types/sinon": "^17.0.3",
     "integreat-adapter-json": "^1.0.1",
     "integreat-adapter-uri": "^1.0.0",
-    "integreat-transformers": "^1.1.0",
+    "integreat-transformers": "^1.2.0",
     "integreat-transporter-http": "^1.4.0-rc.11",
     "nock": "^13.5.5",
-    "sinon": "^18.0.1"
+    "sinon": "^19.0.2"
   }
 }
