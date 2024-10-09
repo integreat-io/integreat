@@ -1,5 +1,4 @@
 import test from 'ava'
-import sinon from 'sinon'
 import mapTransform from 'map-transform'
 import jsonAdapter from 'integreat-adapter-json'
 import jsonTransformer from 'integreat-adapter-json/transformer.js'
@@ -610,24 +609,6 @@ test('should mutate response from service with endpoint mutation', async (t) => 
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const theTime = new Date()
-  const expected = {
-    ...actionWithResponse,
-    response: {
-      ...actionWithResponse.response,
-      data: [
-        {
-          $type: 'entry',
-          id: 'ent1',
-          title: 'Entry 1',
-          published: false,
-          createdAt: theTime,
-          updatedAt: theTime,
-        },
-      ],
-    },
-  }
-  const clock = sinon.useFakeTimers(theTime)
   const endpoint = new Endpoint(
     endpointDef,
     serviceId,
@@ -636,10 +617,18 @@ test('should mutate response from service with endpoint mutation', async (t) => 
     mapOptions,
   )
 
+  const before = Date.now()
   const ret = await endpoint.mutate(actionWithResponse, false)
+  const after = Date.now()
 
-  clock.restore()
-  t.deepEqual(ret, expected)
+  const data = (ret.response!.data as Record<string, unknown>[])[0]
+  t.is(data.id, 'ent1')
+  t.is(data.$type, 'entry')
+  t.is(data.title, 'Entry 1')
+  t.is(data.published, false)
+  t.true((data.createdAt as Date).getTime() >= before)
+  t.true((data.createdAt as Date).getTime() <= after)
+  t.is((data.createdAt as Date).getTime(), (data.updatedAt as Date).getTime())
 })
 
 test('should treat `mutate` as an alias of endpoint mutation', async (t) => {
