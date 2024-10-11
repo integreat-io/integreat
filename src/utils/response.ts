@@ -56,7 +56,7 @@ function getCombinedErrors(responses: Response[]) {
     .filter((response) => response.error || isErrorResponse(response))
     .map((response) => `[${response.status}] ${response.error}`)
     .filter(isDuplicate)
-  return errors.length === 1 ? responses[0].error : errors.join(' | ')
+  return errors.join(' | ') // Note: When we have only one error, we might want to return it without the [status] prefix, but it's ok for now.
 }
 
 const getCombinedWarnings = (responses: Response[]) =>

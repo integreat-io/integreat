@@ -606,7 +606,7 @@ test('should return failResponse when validation fails for individual member end
   const expected = {
     status: 'badrequest',
     error:
-      'One or more of the requests for ids ent1,ent2,ent3 failed with the following error(s): We need a source!',
+      'One or more of the requests for ids ent1,ent2,ent3 failed with the following error(s): [badrequest] We need a source!',
     origin: 'validate:service:entries:endpoint',
   }
 

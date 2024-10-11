@@ -1,6 +1,6 @@
 import pLimit from 'p-limit'
 import { ensureArray } from '../utils/array.js'
-import { isObject, isOkResponse } from '../utils/is.js'
+import { isObject, isOkResponse, isOkStatus } from '../utils/is.js'
 import xor from '../utils/xor.js'
 import {
   setDataOnActionPayload,
@@ -43,6 +43,13 @@ export interface ResponsesObject extends Record<string, Action> {
   [breakSymbol]?: boolean
 }
 
+export const statusFromResponses = (responses: Response[]) =>
+  responses.reduce(
+    (status: string | undefined, response) =>
+      status === response.status || !status ? response.status : 'error',
+    undefined,
+  )
+
 const adjustPrevalidationResponse = ({
   break: _,
   message,
@@ -67,12 +74,19 @@ const setOkStatusOnErrorResponse = ({
 const ensureOkResponse = (response?: Response): Response =>
   isOkResponse(response) ? response! : setOkStatusOnErrorResponse(response)
 
+const removeError = ({ error, ...response }: Response) => response
+
+const adjustNoActionResponse = (response: Response) =>
+  response.status === 'noaction' && response.error
+    ? removeError({ ...response, warning: response.error })
+    : response
+
 const adjustValidationResponse = (
   responses: Response[],
   response: Response | undefined,
 ) =>
   responses.length > 0
-    ? combineResponses(responses) // One or more conditions failed, so we'll return the combined response
+    ? combineResponses(responses.map(adjustNoActionResponse)) // One or more conditions failed, so we'll return the combined response
     : response
       ? ensureOkResponse(response) // Always return an ok response when we have a response (only happens for postconditions)
       : null
@@ -269,13 +283,17 @@ function responseFromSteps(
 ): Action | undefined {
   const errorResponses = Object.values(actionResponses)
     .map(({ response }) => response)
-    .filter((response): response is Response => !isOkResponse(response))
+    .filter(
+      (response): response is Response =>
+        !isOkResponse(response) || !!response?.warning,
+    )
   if (errorResponses.length === 0) {
     return { response: { status: 'ok' } } as Action // Allow an action with only a response here
   } else {
+    const status = statusFromResponses(errorResponses)
     return {
       response: {
-        status: 'error',
+        status: isOkStatus(status) ? 'ok' : status,
         responses: errorResponses,
       },
     } as Action // Allow an action with only a response here
