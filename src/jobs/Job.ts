@@ -40,14 +40,51 @@ const generateSubMeta = (
   ...(gid ? { gid } : {}),
 })
 
+const messageFromResponse = (response: Response) =>
+  response.error || response.warning || 'Unknown error'
+
+const messageForJob = (response: Response, jobId: string, isFlow: boolean) =>
+  isFlow
+    ? `${messageFromResponse(response)} (Job '${jobId}', step '${response.origin}')`
+    : `${messageFromResponse(response)} (Job '${jobId}')`
+
 const messageFromStep = (isFlow: boolean) => (response: Response) => {
-  const message = response.error || response.warning || 'Unknown error'
   return isErrorResponse(response) || response.warning
     ? isFlow
-      ? `'${response.origin}' (${response.status}: ${message})`
-      : `[${response.status}] ${message}`
+      ? `- '${response.origin}': ${messageFromResponse(response)} (${response.status})`
+      : `- ${messageFromResponse(response)} (${response.status})`
     : undefined
 }
+
+function generateJobMessage(
+  responses: Response[],
+  jobId: string,
+  isFlow: boolean,
+  isOk: boolean,
+) {
+  if (responses.length > 1) {
+    const stepMessage = responses
+      .map(messageFromStep(isFlow))
+      .filter(Boolean)
+      .join('\n')
+    return isOk
+      ? `Message from steps:\n${stepMessage}`
+      : isFlow
+        ? `Steps failed (Job '${jobId}'):\n${stepMessage}`
+        : `Could not finish job '${jobId}': ${stepMessage}`
+  } else {
+    return !isOk || responses[0].warning
+      ? messageForJob(responses[0], jobId, isFlow)
+      : undefined
+  }
+}
+
+const statusFromResponses = (responses: Response[]) =>
+  responses.reduce(
+    (status: string | undefined, response) =>
+      status === response.status || !status ? response.status : 'error',
+    undefined,
+  )
 
 const removeOriginAndWarning = ({ origin, warning, ...response }: Response) =>
   response
@@ -58,28 +95,26 @@ function setMessageAndOrigin(
   isFlow: boolean,
 ): Response {
   const responses = response.responses || [response]
-  const stepMessages = responses
-    .map(messageFromStep(isFlow))
-    .filter(Boolean)
-    .join(', ')
-  return isOkResponse(response)
-    ? {
-        ...removeOriginAndWarning(response),
-        ...(stepMessages
-          ? { warning: `Message from steps: ${stepMessages}` }
-          : {}),
-      }
-    : {
-        ...removeOriginAndWarning(response),
-        status: isOkResponse(response) ? 'ok' : 'error',
-        error: isFlow
-          ? `Could not finish job '${jobId}', the following steps failed: ${stepMessages}`
-          : `Could not finish job '${jobId}': ${stepMessages}`,
-        responses: responses.map((response) =>
-          setOrigin(response, `job:${jobId}:step`, true),
-        ),
-        origin: `job:${jobId}`,
-      }
+  const isOk = isOkResponse(response)
+  const bareResponse = removeOriginAndWarning(response)
+  const jobMessage = generateJobMessage(responses, jobId, isFlow, isOk)
+
+  if (isOk) {
+    return {
+      ...bareResponse,
+      ...(jobMessage ? { warning: jobMessage } : {}),
+    }
+  } else {
+    return {
+      ...bareResponse,
+      status: statusFromResponses(responses),
+      error: jobMessage,
+      origin: `job:${jobId}`,
+      responses: responses.map((response) =>
+        setOrigin(response, `job:${jobId}:step`, true),
+      ),
+    }
+  }
 }
 
 function getResponse(
