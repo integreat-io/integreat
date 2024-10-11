@@ -97,7 +97,7 @@ function prepareJobs(
   const jobs = new Map<string, Job>()
   ensureArray(jobDefs).forEach((jobDef) => {
     const job = new Job(jobDef, mapTransform, mapOptions, breakByDefault)
-    jobs.set(job.id, new Job(jobDef, mapTransform, mapOptions))
+    jobs.set(job.id, job)
   })
   return jobs
 }
