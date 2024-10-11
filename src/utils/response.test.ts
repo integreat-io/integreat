@@ -114,7 +114,7 @@ test('should return error from responses if they are the same', (t) => {
   ]
   const expected = {
     status: 'badrequest',
-    error: 'Makes no sense',
+    error: '[badrequest] Makes no sense',
   }
 
   const ret = combineResponses(responses)

@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import Schedule from './Schedule.js'
 import Step, {
+  statusFromResponses,
   getPrevStepId,
   getLastJobWithResponse,
   prepareMutation,
@@ -79,15 +80,11 @@ function generateJobMessage(
   }
 }
 
-const statusFromResponses = (responses: Response[]) =>
-  responses.reduce(
-    (status: string | undefined, response) =>
-      status === response.status || !status ? response.status : 'error',
-    undefined,
-  )
-
 const removeOriginAndWarning = ({ origin, warning, ...response }: Response) =>
   response
+
+const setOriginOnResponses = (responses: Response[], jobId: string) =>
+  responses.map((response) => setOrigin(response, `job:${jobId}:step`, true))
 
 function setMessageAndOrigin(
   response: Response,
@@ -97,22 +94,33 @@ function setMessageAndOrigin(
   const responses = response.responses || [response]
   const isOk = isOkResponse(response)
   const bareResponse = removeOriginAndWarning(response)
-  const jobMessage = generateJobMessage(responses, jobId, isFlow, isOk)
+  const errorResponses = responses.filter(isErrorResponse)
+  const jobError =
+    errorResponses.length > 0
+      ? generateJobMessage(errorResponses, jobId, isFlow, isOk)
+      : undefined
+  const warningResponses = responses.filter((resp) => resp.warning)
+  const jobWarning =
+    warningResponses.length > 0
+      ? generateJobMessage(warningResponses, jobId, isFlow, isOk)
+      : undefined
 
   if (isOk) {
     return {
       ...bareResponse,
-      ...(jobMessage ? { warning: jobMessage } : {}),
+      ...(jobWarning ? { warning: jobWarning } : {}),
+      ...(response.responses
+        ? { responses: setOriginOnResponses(response.responses, jobId) }
+        : {}),
     }
   } else {
     return {
       ...bareResponse,
       status: statusFromResponses(responses),
-      error: jobMessage,
+      error: jobError,
+      ...(jobWarning ? { warning: jobWarning } : {}),
       origin: `job:${jobId}`,
-      responses: responses.map((response) =>
-        setOrigin(response, `job:${jobId}:step`, true),
-      ),
+      responses: setOriginOnResponses(responses, jobId),
     }
   }
 }

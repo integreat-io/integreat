@@ -788,7 +788,7 @@ test('should return different errors from parallel actions', async (t) => {
   t.is(dispatch.callCount, 2)
 })
 
-test.failing('should return warnings from parallel steps', async (t) => {
+test('should return warnings from parallel steps', async (t) => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     warning: 'Should not get here',
@@ -842,29 +842,27 @@ test.failing('should return warnings from parallel steps', async (t) => {
   }
   const expected = {
     status: 'ok',
-    error:
-      "Message from steps:\n- 'setEntry': Not that good, but ok (ok)\n- 'setDate': You could have skipped this step (ok)",
+    warning:
+      "Message from steps:\n- 'setEntry': Do not set entry (noaction)\n- 'setDate': Do not set date (noaction)",
     responses: [
       {
-        status: 'badrequest',
-        error: 'What?',
+        status: 'noaction',
+        warning: 'Do not set entry',
         origin: 'job:action3:step:setEntry',
       },
       {
-        status: 'timeout',
-        error: 'Too slow',
+        status: 'noaction',
+        warning: 'Do not set date',
         origin: 'job:action3:step:setDate',
       },
     ],
-
-    origin: 'job:action3',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 2)
+  t.is(dispatch.callCount, 0)
 })
 
 test('should not treat noaction as error in parallel actions', async (t) => {
@@ -1524,11 +1522,17 @@ test('should return error from preconditions in parallel actions even though oth
   const expected = {
     status: 'error',
     error: "Needs an id (Job 'action3', step 'setEntry')",
+    warning: "Did not satisfy condition (Job 'action3', step 'setDate')",
     responses: [
       {
         status: 'error',
         error: 'Needs an id',
         origin: 'job:action3:step:setEntry',
+      },
+      {
+        status: 'noaction',
+        warning: 'Did not satisfy condition',
+        origin: 'job:action3:step:setDate',
       },
     ],
     origin: 'job:action3',
@@ -3265,7 +3269,10 @@ test('should not run job when preconditions does not hold', async (t) => {
     },
     meta: { ident: { id: 'johnf' } },
   }
-  const expected = { status: 'noaction', error: 'Did not satisfy condition' }
+  const expected = {
+    status: 'noaction',
+    warning: "Did not satisfy condition (Job 'action1')",
+  }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)

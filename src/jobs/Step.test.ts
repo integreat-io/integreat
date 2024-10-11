@@ -219,7 +219,7 @@ test('should return error from failing parallel steps', async (t) => {
   const expected = {
     'setEntry:setDate': {
       response: {
-        status: 'error',
+        status: 'timeout',
         responses: [
           {
             status: 'timeout',
@@ -282,7 +282,7 @@ test('should return override origin with step id', async (t) => {
   const expected = {
     'setEntry:setDate': {
       response: {
-        status: 'error',
+        status: 'timeout',
         responses: [
           {
             status: 'timeout',
@@ -403,7 +403,7 @@ test('should not run action when its preconditions fail', async (t) => {
     setEntries: {
       response: {
         status: 'noaction',
-        error: 'Did not satisfy condition',
+        warning: 'Did not satisfy condition',
         origin: 'setEntries',
       },
     },
@@ -448,7 +448,8 @@ test('should return error from several failing conditions in preconditions', asy
     setEntries: {
       response: {
         status: 'error',
-        error: '[noaction] Did not satisfy condition | [badrequest] Missing id',
+        error: '[badrequest] Missing id',
+        warning: 'Did not satisfy condition',
         origin: 'setEntries',
       },
     },
