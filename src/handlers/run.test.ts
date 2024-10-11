@@ -237,11 +237,8 @@ test('should handle failure in flow', async (t) => {
   ]
 
   t.is(dispatch.callCount, 1) // Should break after first step
-  t.is(ret.status, 'error', ret.error)
-  t.is(
-    ret.error,
-    "Could not finish job 'action2', the following steps failed: 'setEntry' (timeout: Too slow)",
-  )
+  t.is(ret.status, 'timeout', ret.error)
+  t.is(ret.error, "Too slow (Job 'action2', step 'setEntry')")
   t.deepEqual(ret.responses, expectedErrorResponses)
 })
 
@@ -473,7 +470,7 @@ test('should return error from a sub-flow started with RUN and make it available
   const expected = {
     status: 'error',
     error:
-      "Could not finish job 'action9', the following steps failed: 'job:action10:step:setEntries' (error: Need at least one data item)",
+      "Need at least one data item (Job 'action9', step 'job:action10:step:setEntries')",
     responses: [
       {
         status: 'error',

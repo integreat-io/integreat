@@ -324,9 +324,8 @@ test('should not run second action when first in sequence fails', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action2', the following steps failed: 'setEntry' (timeout: Too slow)",
+    status: 'timeout',
+    error: "Too slow (Job 'action2', step 'setEntry')",
     responses: [
       {
         status: 'timeout',
@@ -575,9 +574,8 @@ test('should run all actions in parallel even if one of them fails', async (t) =
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action3', the following steps failed: 'setEntry' (timeout: Too slow)",
+    status: 'timeout',
+    error: "Too slow (Job 'action3', step 'setEntry')",
     responses: [
       {
         status: 'timeout',
@@ -637,9 +635,8 @@ test('should not run next step after any parallel steps failed', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action6', the following steps failed: 'getEntries' (timeout: Too slow)",
+    status: 'timeout',
+    error: "Too slow (Job 'action6', step 'getEntries')",
     responses: [
       {
         status: 'timeout',
@@ -697,13 +694,160 @@ test('should return error from all parallel actions', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'error',
+    status: 'timeout',
     error:
-      "Could not finish job 'action3', the following steps failed: 'setEntry' (timeout: Too slow), 'setDate' (timeout: Too slow)",
+      "Steps failed (Job 'action3'):\n- 'setEntry': Too slow (timeout)\n- 'setDate': Too slow (timeout)",
     responses: [
       {
         status: 'timeout',
         error: 'Too slow',
+        origin: 'job:action3:step:setEntry',
+      },
+      {
+        status: 'timeout',
+        error: 'Too slow',
+        origin: 'job:action3:step:setDate',
+      },
+    ],
+
+    origin: 'job:action3',
+  }
+
+  const job = new Job(jobDef, mapTransform, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 2)
+})
+
+test('should return different errors from parallel actions', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'timeout', error: 'Too slow' })
+    .onFirstCall()
+    .resolves({ status: 'badrequest', error: 'What?' })
+  const jobDef = {
+    id: 'action3',
+    flow: [
+      [
+        {
+          id: 'setEntry',
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'entry',
+              id: 'ent1',
+              data: [{ id: 'ent1', $type: 'entry' }],
+            },
+          },
+        },
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'date',
+              id: 'updatedAt',
+            },
+          },
+        },
+      ],
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'error',
+    error:
+      "Steps failed (Job 'action3'):\n- 'setEntry': What? (badrequest)\n- 'setDate': Too slow (timeout)",
+    responses: [
+      {
+        status: 'badrequest',
+        error: 'What?',
+        origin: 'job:action3:step:setEntry',
+      },
+      {
+        status: 'timeout',
+        error: 'Too slow',
+        origin: 'job:action3:step:setDate',
+      },
+    ],
+
+    origin: 'job:action3',
+  }
+
+  const job = new Job(jobDef, mapTransform, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 2)
+})
+
+test.failing('should return warnings from parallel steps', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+    warning: 'Should not get here',
+  })
+  const jobDef = {
+    id: 'action3',
+    flow: [
+      [
+        {
+          id: 'setEntry',
+          preconditions: [
+            {
+              condition: 'action.payload.doSetEntry',
+              failResponse: 'Do not set entry',
+            },
+          ],
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'entry',
+              id: 'ent1',
+              data: [{ id: 'ent1', $type: 'entry' }],
+            },
+          },
+        },
+        {
+          id: 'setDate',
+          preconditions: [
+            {
+              condition: 'action.payload.doSetDate',
+              failResponse: 'Do not set date',
+            },
+          ],
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'date',
+              id: 'updatedAt',
+            },
+          },
+        },
+      ],
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    error:
+      "Message from steps:\n- 'setEntry': Not that good, but ok (ok)\n- 'setDate': You could have skipped this step (ok)",
+    responses: [
+      {
+        status: 'badrequest',
+        error: 'What?',
         origin: 'job:action3:step:setEntry',
       },
       {
@@ -999,7 +1143,7 @@ test('should not run step where preconditions fail', async (t) => {
   }
   const expected = {
     status: 'noaction',
-    warning: "Message from steps: 'setEntries' (noaction: No data to set)",
+    warning: "No data to set (Job 'action6', step 'setEntries')",
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -1067,9 +1211,8 @@ test('should not continue flow when failing step is marked with break', async (t
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action6', the following steps failed: 'getEntries' (badrequest: Must be called with an id)",
+    status: 'badrequest',
+    error: "Must be called with an id (Job 'action6', step 'getEntries')",
     responses: [
       {
         status: 'badrequest',
@@ -1302,8 +1445,7 @@ test('should validate preconditions in parallel actions', async (t) => {
   }
   const expected = {
     status: 'error',
-    error:
-      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: Needs an id)",
+    error: "Needs an id (Job 'action3', step 'setEntry')",
     responses: [
       {
         status: 'error',
@@ -1381,8 +1523,7 @@ test('should return error from preconditions in parallel actions even though oth
   }
   const expected = {
     status: 'error',
-    error:
-      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: Needs an id)",
+    error: "Needs an id (Job 'action3', step 'setEntry')",
     responses: [
       {
         status: 'error',
@@ -1462,7 +1603,7 @@ test('should return several errors from preconditions in parallel actions', asyn
   const expected = {
     status: 'error',
     error:
-      "Could not finish job 'action3', the following steps failed: 'setEntry' (error: No id), 'setDate' (error: No type)",
+      "Steps failed (Job 'action3'):\n- 'setEntry': No id (error)\n- 'setDate': No type (error)",
     responses: [
       {
         status: 'error',
@@ -1525,8 +1666,7 @@ test('should treat a step as failed when postconditions fail', async (t) => {
   }
   const expected = {
     status: 'error',
-    error:
-      "Could not finish job 'action6', the following steps failed: 'getEntries' (error: Must return data)",
+    error: "Must return data (Job 'action6', step 'getEntries')",
     responses: [
       {
         error: 'Must return data',
@@ -1673,8 +1813,8 @@ test('should run postconditions on action job', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'error',
-    error: "Could not finish job 'action10': [notfound] Not found",
+    status: 'notfound',
+    error: "Not found (Job 'action10')",
     origin: 'job:action10',
     responses: [
       {
@@ -1816,7 +1956,7 @@ test('should support json schema validation in conditions', async (t) => {
   }
   const expected = {
     status: 'noaction',
-    warning: "Message from steps: 'setEntries' (noaction: No data to set)",
+    warning: "No data to set (Job 'action6', step 'setEntries')",
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -1887,9 +2027,8 @@ test('should break on fail when breakByDefault is true', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action6', the following steps failed: 'getEntries' (badrequest: Must be called with an id)",
+    status: 'badrequest',
+    error: "Must be called with an id (Job 'action6', step 'getEntries')",
     responses: [
       {
         status: 'badrequest',
@@ -2031,9 +2170,8 @@ test('should not override fail-on-error behavior of previous step when breakByDe
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action2', the following steps failed: 'setEntry' (timeout: Too slow)",
+    status: 'timeout',
+    error: "Too slow (Job 'action2', step 'setEntry')",
     responses: [
       {
         status: 'timeout',
@@ -2160,8 +2298,7 @@ test('should override fail-on-error behavior in postconditions when breakByDefau
   }
   const expected = {
     status: 'error',
-    error:
-      "Could not finish job 'action2', the following steps failed: 'setEntry' (error: This is not a timeout)",
+    error: "This is not a timeout (Job 'action2', step 'setEntry')",
     origin: 'job:action2',
     responses: [
       {
@@ -2455,8 +2592,7 @@ test('should run responseMutation pipeline on response from step', async (t) => 
   }
   const expected = {
     status: 'error',
-    error:
-      "Could not finish job 'action8', the following steps failed: 'getEntries' (error: Error from step)",
+    error: "Error from step (Job 'action8', step 'getEntries')",
     responses: [
       {
         status: 'error',
@@ -2508,8 +2644,7 @@ test('should report error status from mutation without an error message as "unno
   }
   const expected = {
     status: 'error',
-    error:
-      "Could not finish job 'action8', the following steps failed: 'getEntries' (error: Unknown error)",
+    error: "Unknown error (Job 'action8', step 'getEntries')",
     responses: [
       {
         status: 'error',
@@ -3284,7 +3419,7 @@ test('should make action response available to mutations as response on the init
   }
   const expected = {
     status: 'error',
-    error: "Could not finish job 'action7': [error] No data",
+    error: "No data (Job 'action7')",
     origin: 'job:action7',
     responses: [
       {
@@ -3326,8 +3461,7 @@ test('should make flow response available to mutations as response on the initia
   }
   const expected = {
     status: 'error',
-    error:
-      "Could not finish job 'action7', the following steps failed: 'setDate' (error: No data)",
+    error: "No data (Job 'action7', step 'setDate')",
     origin: 'job:action7',
   }
 
@@ -3662,9 +3796,8 @@ test('should run all steps even if an iteration step fails', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
   const expected = {
-    status: 'error',
-    error:
-      "Could not finish job 'action11', the following steps failed: 'setItem_1' (badrequest: Too cool)",
+    status: 'badrequest',
+    error: "Too cool (Job 'action11', step 'setItem_1')",
     data: [{ id: 'ent1', $type: 'entry' }, undefined],
     responses: [
       {
