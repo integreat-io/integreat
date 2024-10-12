@@ -1,5 +1,5 @@
 import pLimit from 'p-limit'
-import { ensureArray } from '../utils/array.js'
+import { ensureArray, unwrapArrayOfOne } from '../utils/array.js'
 import { isObject, isOkResponse, isOkStatus } from '../utils/is.js'
 import xor from '../utils/xor.js'
 import {
@@ -384,9 +384,10 @@ export default class Step {
     isJob = false, // Signal that this is a job, not a step in a flow
   ) {
     this.#isJob = isJob
-    if (Array.isArray(stepDef)) {
-      this.id = stepDef.map((step) => step.id).join(':')
-      this.#subSteps = stepDef.map(
+    const def = unwrapArrayOfOne(stepDef)
+    if (Array.isArray(def)) {
+      this.id = def.map((step) => step.id).join(':')
+      this.#subSteps = def.map(
         (step, index, steps) =>
           new Step(
             step,
@@ -397,46 +398,37 @@ export default class Step {
           ),
       )
     } else {
-      this.id = stepDef.id
+      this.id = def.id
       this.#validatePreconditions = createPreconditionsValidator(
-        stepDef.preconditions,
-        stepDef.conditions,
+        def.preconditions,
+        def.conditions,
         mapTransform,
         mapOptions,
         breakByDefault,
         prevStepId,
       )
       this.#validatePostconditions = createPostconditionsValidator(
-        stepDef.postconditions,
+        def.postconditions,
         mapTransform,
         mapOptions,
         breakByDefault,
       )
-      this.#action = stepDef.action
-      const premutation = stepDef.premutation || stepDef.mutation
-      const postmutation = stepDef.postmutation || stepDef.responseMutation
+      this.#action = def.action
+      const premutation = def.premutation || def.mutation
+      const postmutation = def.postmutation || def.responseMutation
       this.#premutator = premutation
-        ? prepareMutation(
-            premutation,
-            mapTransform,
-            mapOptions,
-            !!stepDef.mutation,
-          ) // Set a flag for `mutation`, to signal that we want to use the obsolete "magic"
+        ? prepareMutation(premutation, mapTransform, mapOptions, !!def.mutation) // Set a flag for `mutation`, to signal that we want to use the obsolete "magic"
         : undefined
       this.#postmutator = postmutation
         ? prepareMutation(
             postmutation,
             mapTransform,
             mapOptions,
-            !!stepDef.responseMutation,
+            !!def.responseMutation,
           ) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
         : undefined
-      this.#iterateMutator = getIterateMutator(
-        stepDef,
-        mapTransform,
-        mapOptions,
-      )
-      this.#iterateConcurrency = stepDef.iterateConcurrency
+      this.#iterateMutator = getIterateMutator(def, mapTransform, mapOptions)
+      this.#iterateConcurrency = def.iterateConcurrency
     }
   }
 
