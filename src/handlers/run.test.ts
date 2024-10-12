@@ -477,7 +477,7 @@ test('should return error from a sub-flow started with RUN and make it available
         origin: 'job:action9:step:job:action10:step:setEntries',
       },
     ],
-    origin: 'job:action9',
+    origin: 'job:action9:step:job:action10:step:setEntries',
   }
 
   const ret = await runFn(action, { ...handlerResources, dispatch })

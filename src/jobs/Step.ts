@@ -266,6 +266,7 @@ export async function mutateResponse(
   responses: Record<string, Action>,
   origin: string,
   postmutator?: DataMapper<InitialState>,
+  prefixOrigin = false,
 ): Promise<Action> {
   const { response: mutatedResponse } = await mutateAction(
     action,
@@ -278,7 +279,7 @@ export async function mutateResponse(
       setResponseOnAction(action, setResponseStatus(mutatedResponse)),
     ),
     origin,
-    true, // Prefix any existing origin
+    prefixOrigin,
   )
 }
 
@@ -517,6 +518,7 @@ export default class Step {
         { ...actionResponses, ...iterateResponses }, // Provide iterate responses to mutation
         this.id,
         this.#postmutator,
+        true,
       ),
     }
   }

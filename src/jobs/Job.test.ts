@@ -333,7 +333,7 @@ test('should not run second action when first in sequence fails', async (t) => {
         origin: 'job:action2:step:setEntry',
       },
     ],
-    origin: 'job:action2',
+    origin: 'job:action2:step:setEntry',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -684,7 +684,7 @@ test('should run all actions in parallel even if one of them fails', async (t) =
         origin: 'job:action3:step:setEntry',
       },
     ],
-    origin: 'job:action3',
+    origin: 'job:action3:step:setEntry',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -745,7 +745,7 @@ test('should not run next step after any parallel steps failed', async (t) => {
         origin: 'job:action6:step:getEntries',
       },
     ],
-    origin: 'job:action6',
+    origin: 'job:action6:step:getEntries',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -1242,7 +1242,7 @@ test('should not continue flow when failing step is marked with break', async (t
         origin: 'job:action6:step:getEntries',
       },
     ],
-    origin: 'job:action6',
+    origin: 'job:action6:step:getEntries',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -1552,7 +1552,7 @@ test('should validate preconditions in parallel actions', async (t) => {
         origin: 'job:action3:step:setEntry',
       },
     ],
-    origin: 'job:action3',
+    origin: 'job:action3:step:setEntry',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -1635,7 +1635,7 @@ test('should return error from preconditions in parallel actions even though oth
         origin: 'job:action3:step:setDate',
       },
     ],
-    origin: 'job:action3',
+    origin: 'job:action3:step:setEntry',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -1861,7 +1861,7 @@ test('should treat a step as failed when postconditions fail', async (t) => {
         status: 'error',
       },
     ],
-    origin: 'job:action6',
+    origin: 'job:action6:step:getEntries',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -2002,7 +2002,7 @@ test('should run postconditions on action job', async (t) => {
   const expected = {
     status: 'notfound',
     error: 'Not found',
-    origin: 'job:action10',
+    origin: 'job:action10:step:action10',
     responses: [
       {
         error: 'Not found',
@@ -2218,7 +2218,7 @@ test('should not override fail-on-error behavior of previous step when failOnErr
         origin: 'job:action2:step:setEntry',
       },
     ],
-    origin: 'job:action2',
+    origin: 'job:action2:step:setEntry',
   }
 
   const job = new Job(
@@ -2348,7 +2348,7 @@ test('should override fail-on-error behavior in postconditions when failOnErrorI
   const expected = {
     status: 'error',
     error: 'This is not a timeout',
-    origin: 'job:action2',
+    origin: 'job:action2:step:setEntry',
     responses: [
       {
         error: 'This is not a timeout',
@@ -2804,7 +2804,7 @@ test('should run responseMutation pipeline on response from step', async (t) => 
         origin: 'job:action8:step:getEntries',
       },
     ],
-    origin: 'job:action8',
+    origin: 'job:action8:step:getEntries',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -2855,7 +2855,7 @@ test('should report error status from mutation without an error message as "unno
         origin: 'job:action8:step:getEntries',
       },
     ],
-    origin: 'job:action8',
+    origin: 'job:action8:step:getEntries',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -3595,7 +3595,7 @@ test('should make action response available to mutations as response on the init
   const expected = {
     status: 'error',
     error: 'No data',
-    origin: 'job:action7',
+    origin: 'job:action7:step:action7',
     responses: [
       {
         error: 'No data',
@@ -3981,7 +3981,7 @@ test('should run all steps even if an iteration step fails', async (t) => {
         origin: 'job:action11:step:setItem_1',
       },
     ],
-    origin: 'job:action11',
+    origin: 'job:action11:step:setItem_1',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)

@@ -113,11 +113,15 @@ function setMessageAndOrigin(
       errorResponses.length > 0
         ? generateJobMessage(errorResponses, jobId, isFlow, isOk)
         : undefined
+    const origin =
+      errorResponses.length === 1
+        ? `job:${jobId}:step:${errorResponses[0].origin}`
+        : `job:${jobId}`
     return {
       ...bareResponse,
       status: statusFromResponses(responses),
       error: jobError,
-      origin: `job:${jobId}`,
+      origin,
       responses: setOriginOnResponses(responses, jobId),
     }
   }
