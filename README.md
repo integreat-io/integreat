@@ -2086,7 +2086,7 @@ For both pipelines, an action object is expected, and in the case of
 `postmutation` the action should have a `response` object which is what will be
 used as the response from the job or step.
 
-### Step conditions
+### Job and step conditions
 
 By default, if a step in a flow fails, no more steps are run, and the entire job
 will fail with the response from the failed step. You may however provide your
@@ -2146,6 +2146,11 @@ condition _passes_, you may wonder what happens with the error response.
 Integreat will set the status of a passing response to `ok` if it was an error,
 and any `error` property will be changed to a `warning`. Besides from that, the
 response will be unchanged.
+
+Jobs may have `preconditions` too, and it will work in the same way as for a
+step, determining whether a job will run of not. `break` will have no effect
+for a condition on a job. Jobs may not have `postconditions`, but you can
+mutate the response with `postmutation` and accomplish the same.
 
 ### Dispatching several actions by iterating over an array
 

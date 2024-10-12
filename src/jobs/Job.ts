@@ -1,12 +1,14 @@
 import { nanoid } from 'nanoid'
 import Schedule from './Schedule.js'
 import Step, {
+  createPreconditionsValidator,
   statusFromResponses,
   getPrevStepId,
   getLastJobWithResponse,
   prepareMutation,
   mutateResponse,
   breakSymbol,
+  Validator,
 } from './Step.js'
 import { isObject, isOkResponse, isErrorResponse } from '../utils/is.js'
 import { setResponseOnAction } from '../utils/action.js'
@@ -149,6 +151,7 @@ export default class Job {
   id: string
   schedule?: Schedule
   #steps: Step[] = []
+  #validatePreconditions: Validator = async () => [null, false]
   #postmutator?: DataMapper<InitialState>
   #isFlow = false
 
@@ -178,7 +181,15 @@ export default class Job {
             ),
         )
 
-      // We only set the postmutator when we have a flow.
+      // We only set the preconditions and the postmutator when we have a flow.
+      this.#validatePreconditions = createPreconditionsValidator(
+        jobDef.preconditions,
+        undefined,
+        mapTransform,
+        mapOptions,
+        failOnErrorInPostconditions,
+        undefined,
+      )
       const postmutation = jobDef.postmutation || jobDef.responseMutation
       this.#postmutator = postmutation
         ? prepareMutation(
@@ -191,7 +202,7 @@ export default class Job {
     } else if (isActionJob(jobDef)) {
       this.#steps = [
         new Step(
-          { ...jobDef, id: jobDef.id },
+          jobDef,
           mapTransform,
           mapOptions,
           failOnErrorInPostconditions,
@@ -223,27 +234,29 @@ export default class Job {
     }
 
     let actionResponses: Record<string, Action> = { action } // Include the incoming action in previous responses, to allow mutating from it
-    const meta = generateSubMeta(action.meta || {}, this.id, gid)
 
-    for (const [index, step] of this.#steps.entries()) {
-      const { [breakSymbol]: doBreak, ...responses } = await step.run(
-        meta,
-        actionResponses,
-        dispatch,
-      )
-      setProgress(calculateProgress(index, this.#steps.length))
-      actionResponses = { ...actionResponses, ...responses }
-      if (doBreak) {
-        break
+    const [preconditionsResponse] =
+      await this.#validatePreconditions(actionResponses)
+
+    if (!preconditionsResponse) {
+      const meta = generateSubMeta(action.meta || {}, this.id, gid)
+      for (const [index, step] of this.#steps.entries()) {
+        const { [breakSymbol]: doBreak, ...responses } = await step.run(
+          meta,
+          actionResponses,
+          dispatch,
+        )
+        setProgress(calculateProgress(index, this.#steps.length))
+        actionResponses = { ...actionResponses, ...responses }
+        if (doBreak) {
+          break
+        }
       }
     }
 
-    const response = getResponse(
-      this.id,
-      this.#steps,
-      actionResponses,
-      this.#isFlow,
-    )
+    const response =
+      preconditionsResponse ??
+      getResponse(this.id, this.#steps, actionResponses, this.#isFlow)
 
     if (this.#postmutator) {
       // Note that only a job with a flow will have postmutator. For
