@@ -274,6 +274,7 @@ export interface ActionHandler<T = unknown> {
 }
 
 export interface DefinitionFlags {
+  failOnErrorInPostconditions?: boolean
   breakByDefault?: boolean
 }
 

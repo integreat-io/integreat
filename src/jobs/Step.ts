@@ -133,9 +133,10 @@ function createConditionsValidator(
   mapTransform: MapTransform,
   mapOptions: MapOptions,
   isPreconditions: boolean,
-  breakByDefault: boolean,
+  failOnErrorInPostconditions: boolean,
   prevStepId?: string,
 ): Validator {
+  const breakByDefault = !isPreconditions && failOnErrorInPostconditions // Break by default in postconditions when failing on errors are handled there
   if (Array.isArray(conditions)) {
     // Validate condition pipelines
     const defaultFailStatus = isPreconditions ? 'noaction' : 'error'
@@ -165,11 +166,14 @@ function createConditionsValidator(
         ? [adjustPrevalidationResponse(combineResponses(responses)), doBreak] // We only return the first error here
         : [null, false]
     }
-  } else if (xor(isPreconditions, breakByDefault)) {
-    // We're using xor to check for not `isPreconditions` when `breakByDefault` is `true`
-    // We have no conditions, so we'll just check if this or the previous step was ok (the former when `breakByDefault` is `true`)
+  } else if (xor(isPreconditions, failOnErrorInPostconditions)) {
+    // We're using xor to check for not `isPreconditions` when
+    // `failOnErrorInPostconditions` is `true`. We have no conditions, so we'll
+    // just check if this step was ok (when `failOnErrorInPostconditions` is
+    // `true`) or the previous step was ok (when `failOnErrorInPostconditions`
+    // is `false`).
     return async function validatePrevWasOk(actionResponses) {
-      const response = breakByDefault
+      const response = failOnErrorInPostconditions
         ? getThisResponse(actionResponses)
         : getPreviousResponse(actionResponses, prevStepId)
       return response && !isOkResponse(response)
@@ -189,7 +193,7 @@ function createPreconditionsValidator(
   validationFilters: Record<string, Condition | undefined> | undefined,
   mapTransform: MapTransform,
   mapOptions: MapOptions,
-  breakByDefault: boolean,
+  failOnErrorInPostconditions: boolean,
   prevStepId?: string,
 ): Validator {
   const conditions = preconditions || validationFilters
@@ -198,7 +202,7 @@ function createPreconditionsValidator(
     mapTransform,
     mapOptions,
     true,
-    breakByDefault,
+    failOnErrorInPostconditions,
     prevStepId,
   )
 }
@@ -207,7 +211,7 @@ function createPostconditionsValidator(
   conditions: ValidateObject[] | undefined,
   mapTransform: MapTransform,
   mapOptions: MapOptions,
-  breakByDefault: boolean,
+  failOnErrorInPostconditions: boolean,
 ): Validator {
   if (Array.isArray(conditions)) {
     conditions = conditions.map(putMutationInPipelineForCondition)
@@ -217,7 +221,7 @@ function createPostconditionsValidator(
     mapTransform,
     mapOptions,
     false,
-    breakByDefault,
+    failOnErrorInPostconditions,
   )
 }
 
@@ -379,7 +383,7 @@ export default class Step {
     stepDef: JobStepDef | JobStepDef[],
     mapTransform: MapTransform,
     mapOptions: MapOptions,
-    breakByDefault = false,
+    failOnErrorInPostconditions = false,
     prevStepId?: string,
     isJob = false, // Signal that this is a job, not a step in a flow
   ) {
@@ -393,7 +397,7 @@ export default class Step {
             step,
             mapTransform,
             mapOptions,
-            breakByDefault,
+            failOnErrorInPostconditions,
             getPrevStepId(index, steps),
           ),
       )
@@ -404,14 +408,14 @@ export default class Step {
         def.conditions,
         mapTransform,
         mapOptions,
-        breakByDefault,
+        failOnErrorInPostconditions,
         prevStepId,
       )
       this.#validatePostconditions = createPostconditionsValidator(
         def.postconditions,
         mapTransform,
         mapOptions,
-        breakByDefault,
+        failOnErrorInPostconditions,
       )
       this.#action = def.action
       const premutation = def.premutation || def.mutation

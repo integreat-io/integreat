@@ -92,11 +92,16 @@ function prepareJobs(
   jobDefs: JobDef[],
   mapTransform: MapTransform,
   mapOptions: MapOptions,
-  breakByDefault: boolean,
+  failOnErrorInPostconditions: boolean,
 ) {
   const jobs = new Map<string, Job>()
   ensureArray(jobDefs).forEach((jobDef) => {
-    const job = new Job(jobDef, mapTransform, mapOptions, breakByDefault)
+    const job = new Job(
+      jobDef,
+      mapTransform,
+      mapOptions,
+      failOnErrorInPostconditions,
+    )
     jobs.set(job.id, job)
   })
   return jobs
@@ -176,12 +181,15 @@ function setupServicesAndDispatch(
     emit,
   )
 
-  const breakByDefault = defs.flags?.breakByDefault ?? false
+  const failOnErrorInPostconditions =
+    defs.flags?.failOnErrorInPostconditions ??
+    defs.flags?.breakByDefault ?? // Depricated alias of `failOnErrorInPostcondition``
+    false
   const jobs = prepareJobs(
     defs.jobs || [],
     mapTransformFn,
     mapOptions,
-    breakByDefault,
+    failOnErrorInPostconditions,
   )
   const dispatch = createDispatch({
     schemas,

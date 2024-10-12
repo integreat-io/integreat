@@ -889,83 +889,6 @@ test('should return different errors from parallel actions', async (t) => {
   t.is(dispatch.callCount, 2)
 })
 
-test('should return warnings from parallel steps', async (t) => {
-  const dispatch = sinon.stub().resolves({
-    status: 'ok',
-    warning: 'Should not get here',
-  })
-  const jobDef = {
-    id: 'action3',
-    flow: [
-      [
-        {
-          id: 'setEntry',
-          preconditions: [
-            {
-              condition: 'action.payload.doSetEntry',
-              failResponse: 'Do not set entry',
-            },
-          ],
-          action: {
-            type: 'SET',
-            payload: {
-              type: 'entry',
-              id: 'ent1',
-              data: [{ id: 'ent1', $type: 'entry' }],
-            },
-          },
-        },
-        {
-          id: 'setDate',
-          preconditions: [
-            {
-              condition: 'action.payload.doSetDate',
-              failResponse: 'Do not set date',
-            },
-          ],
-          action: {
-            type: 'SET',
-            payload: {
-              type: 'date',
-              id: 'updatedAt',
-            },
-          },
-        },
-      ],
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action3',
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'ok',
-    warning:
-      "Message from steps:\n- 'setEntry': Do not set entry (noaction)\n- 'setDate': Do not set date (noaction)",
-    responses: [
-      {
-        status: 'noaction',
-        warning: 'Do not set entry',
-        origin: 'job:action3:step:setEntry',
-      },
-      {
-        status: 'noaction',
-        warning: 'Do not set date',
-        origin: 'job:action3:step:setDate',
-      },
-    ],
-  }
-
-  const job = new Job(jobDef, mapTransform, mapOptions)
-  const ret = await job.run(action, dispatch, setProgress)
-
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 0)
-})
-
 test('should not treat noaction as error in parallel actions', async (t) => {
   const dispatch = sinon
     .stub()
@@ -1351,7 +1274,7 @@ test('should continue flow when failing step is _not_ marked with break', async 
               status: 'badrequest',
               error: 'Must be called with an id',
             },
-            break: false,
+            // break: false, -- the default
           },
         ],
         action: {
@@ -1446,6 +1369,83 @@ test('should run second action when its preconditions are fulfilled', async (t) 
 
   t.is(dispatch.callCount, 2) // Both steps run
   t.is(ret.status, 'ok', ret.error)
+})
+
+test('should return warnings from parallel steps', async (t) => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+    warning: 'Should not get here',
+  })
+  const jobDef = {
+    id: 'action3',
+    flow: [
+      [
+        {
+          id: 'setEntry',
+          preconditions: [
+            {
+              condition: 'action.payload.doSetEntry',
+              failResponse: 'Do not set entry',
+            },
+          ],
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'entry',
+              id: 'ent1',
+              data: [{ id: 'ent1', $type: 'entry' }],
+            },
+          },
+        },
+        {
+          id: 'setDate',
+          preconditions: [
+            {
+              condition: 'action.payload.doSetDate',
+              failResponse: 'Do not set date',
+            },
+          ],
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'date',
+              id: 'updatedAt',
+            },
+          },
+        },
+      ],
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    warning:
+      "Message from steps:\n- 'setEntry': Do not set entry (noaction)\n- 'setDate': Do not set date (noaction)",
+    responses: [
+      {
+        status: 'noaction',
+        warning: 'Do not set entry',
+        origin: 'job:action3:step:setEntry',
+      },
+      {
+        status: 'noaction',
+        warning: 'Do not set date',
+        origin: 'job:action3:step:setDate',
+      },
+    ],
+  }
+
+  const job = new Job(jobDef, mapTransform, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 0)
 })
 
 test('should support truthy condition results', async (t) => {
@@ -2071,158 +2071,10 @@ test('should support json schema validation in conditions', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-// Tests -- conditions with `breakByDefault`
+// Tests -- conditions with `failOnErrorInPostconditions`
 
-test('should break on fail when breakByDefault is true', async (t) => {
-  const breakByDefault = true
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok' })
-    .onCall(0)
-    .resolves({ status: 'ok', data: [] })
-  const jobDef = {
-    id: 'action6',
-    flow: [
-      {
-        id: 'getEntries',
-        preconditions: [
-          {
-            condition: {
-              $transform: 'compare',
-              path: 'action.payload.id',
-              operator: 'exists',
-            },
-            failResponse: {
-              status: 'badrequest',
-              error: 'Must be called with an id',
-            },
-            // No break specified,
-          },
-        ],
-        action: {
-          type: 'GET',
-          payload: { type: 'entry' },
-        },
-      },
-      {
-        id: 'setEntries',
-        preconditions: [
-          {
-            condition: {
-              $transform: 'compare',
-              path: 'action.payload.type',
-              operator: 'exists',
-            },
-          },
-        ],
-        action: {
-          type: 'SET',
-          payload: { type: 'entry' },
-        },
-      },
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action6',
-      type: 'entry',
-      id: undefined,
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'badrequest',
-    error: "Must be called with an id (Job 'action6', step 'getEntries')",
-    responses: [
-      {
-        status: 'badrequest',
-        error: 'Must be called with an id',
-        origin: 'job:action6:step:getEntries',
-      },
-    ],
-    origin: 'job:action6',
-  }
-
-  const job = new Job(jobDef, mapTransform, mapOptions, breakByDefault)
-  const ret = await job.run(action, dispatch, setProgress)
-
-  t.is(dispatch.callCount, 0) // No steps should be run
-  t.deepEqual(ret, expected)
-})
-
-test('should not break on fail when break is false', async (t) => {
-  const breakByDefault = true
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok' })
-    .onCall(0)
-    .resolves({ status: 'ok', data: [] })
-  const jobDef = {
-    id: 'action6',
-    flow: [
-      {
-        id: 'getEntries',
-        preconditions: [
-          {
-            condition: {
-              $transform: 'compare',
-              path: 'action.payload.id',
-              operator: 'exists',
-            },
-            failResponse: {
-              status: 'badrequest',
-              error: 'Must be called with an id',
-            },
-            break: false,
-          },
-        ],
-        action: {
-          type: 'GET',
-          payload: { type: 'entry' },
-        },
-      },
-      {
-        id: 'setEntries',
-        preconditions: [
-          {
-            condition: {
-              $transform: 'compare',
-              path: 'action.payload.type',
-              operator: 'exists',
-            },
-          },
-        ],
-        action: {
-          type: 'SET',
-          payload: { type: 'entry' },
-        },
-      },
-    ],
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action6',
-      type: 'entry',
-      id: undefined,
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'ok',
-    data: [],
-  }
-
-  const job = new Job(jobDef, mapTransform, mapOptions, breakByDefault)
-  const ret = await job.run(action, dispatch, setProgress)
-
-  t.is(dispatch.callCount, 1) // Only the second steps should be run
-  t.deepEqual(ret, expected)
-})
-
-test('should not override fail-on-error behavior of previous step when breakByDefault is true', async (t) => {
-  const breakByDefault = true
+test('should not override fail-on-error behavior of previous step when failOnErrorInPostconditions is true', async (t) => {
+  const failOnErrorInPostconditions = true
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok' })
@@ -2287,15 +2139,20 @@ test('should not override fail-on-error behavior of previous step when breakByDe
     origin: 'job:action2',
   }
 
-  const job = new Job(jobDef, mapTransform, mapOptions, breakByDefault)
+  const job = new Job(
+    jobDef,
+    mapTransform,
+    mapOptions,
+    failOnErrorInPostconditions,
+  )
   const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1) // Should break after first step
 })
 
-test('should override fail-on-error behavior in postconditions when breakByDefault is true', async (t) => {
-  const breakByDefault = true
+test('should override fail-on-error behavior in postconditions when failOnErrorInPostconditions is true', async (t) => {
+  const failOnErrorInPostconditions = true
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok' })
@@ -2348,15 +2205,20 @@ test('should override fail-on-error behavior in postconditions when breakByDefau
     status: 'ok',
   }
 
-  const job = new Job(jobDef, mapTransform, mapOptions, breakByDefault)
+  const job = new Job(
+    jobDef,
+    mapTransform,
+    mapOptions,
+    failOnErrorInPostconditions,
+  )
   const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 2) // Should run both steps
 })
 
-test('should override fail-on-error behavior in postconditions when breakByDefault is true and break on ok', async (t) => {
-  const breakByDefault = true
+test('should override fail-on-error behavior in postconditions when failOnErrorInPostconditions is true and break on ok', async (t) => {
+  const failOnErrorInPostconditions = true
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobDef = {
     id: 'action2',
@@ -2414,11 +2276,166 @@ test('should override fail-on-error behavior in postconditions when breakByDefau
     ],
   }
 
-  const job = new Job(jobDef, mapTransform, mapOptions, breakByDefault)
+  const job = new Job(
+    jobDef,
+    mapTransform,
+    mapOptions,
+    failOnErrorInPostconditions,
+  )
   const ret = await job.run(action, dispatch, setProgress)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1) // Should run both steps
+})
+
+test('should not break by default for preconditions', async (t) => {
+  const failOnErrorInPostconditions = true
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
+  const jobDef = {
+    id: 'action6',
+    flow: [
+      {
+        id: 'getEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.id',
+              operator: 'exists',
+            },
+            failResponse: {
+              status: 'badrequest',
+              error: 'Must be called with an id',
+            },
+            // No break specified,
+          },
+        ],
+        action: {
+          type: 'GET',
+          payload: { type: 'entry' },
+        },
+      },
+      {
+        id: 'setEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.type',
+              operator: 'exists',
+            },
+          },
+        ],
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+      type: 'entry',
+      id: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    data: [],
+  }
+
+  const job = new Job(
+    jobDef,
+    mapTransform,
+    mapOptions,
+    failOnErrorInPostconditions,
+  )
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.is(dispatch.callCount, 1) // Step number two was still run
+  t.deepEqual(ret, expected)
+})
+
+test('should not break on fail when break is false', async (t) => {
+  const failOnErrorInPostconditions = true
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
+  const jobDef = {
+    id: 'action6',
+    flow: [
+      {
+        id: 'getEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.id',
+              operator: 'exists',
+            },
+            failResponse: {
+              status: 'badrequest',
+              error: 'Must be called with an id',
+            },
+            break: false,
+          },
+        ],
+        action: {
+          type: 'GET',
+          payload: { type: 'entry' },
+        },
+      },
+      {
+        id: 'setEntries',
+        preconditions: [
+          {
+            condition: {
+              $transform: 'compare',
+              path: 'action.payload.type',
+              operator: 'exists',
+            },
+          },
+        ],
+        action: {
+          type: 'SET',
+          payload: { type: 'entry' },
+        },
+      },
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action6',
+      type: 'entry',
+      id: undefined,
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'ok',
+    data: [],
+  }
+
+  const job = new Job(
+    jobDef,
+    mapTransform,
+    mapOptions,
+    failOnErrorInPostconditions,
+  )
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.is(dispatch.callCount, 1) // Only the second steps should be run
+  t.deepEqual(ret, expected)
 })
 
 // Tests -- mutations
