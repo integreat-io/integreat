@@ -160,7 +160,40 @@ test('should merge three definitions', (t) => {
 
   t.deepEqual(ret, expected)
 })
+
 test('should merge flags so that true trumps all else', (t) => {
+  const def1 = {
+    auths: [entriesAuth],
+    schemas: [entrySchema],
+    services: [entriesService],
+    mutations: { 'entries-entry': entryMutation },
+    dictionaries: { currencies },
+    jobs: [job1],
+    identConfig: {
+      type: 'unknown',
+    },
+    flags: {
+      failOnErrorInPostconditions: true,
+    },
+  }
+  const def2 = {
+    services: [queueService],
+    queueService: 'queue',
+    jobs: [],
+    flags: {
+      failOnErrorInPostconditions: false,
+    },
+  }
+  const expectedFlags = {
+    failOnErrorInPostconditions: true,
+  }
+
+  const ret = mergeDefinitions(def1, def2)
+
+  t.deepEqual(ret.flags, expectedFlags)
+})
+
+test('should merge breakByDefault as failOnErrorInPostconditions', (t) => {
   const def1 = {
     auths: [entriesAuth],
     schemas: [entrySchema],
@@ -180,11 +213,11 @@ test('should merge flags so that true trumps all else', (t) => {
     queueService: 'queue',
     jobs: [],
     flags: {
-      breakByDefault: false,
+      failOnErrorInPostconditions: false,
     },
   }
   const expectedFlags = {
-    breakByDefault: true,
+    failOnErrorInPostconditions: true,
   }
 
   const ret = mergeDefinitions(def1, def2)

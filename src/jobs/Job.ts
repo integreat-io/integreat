@@ -156,7 +156,7 @@ export default class Job {
     jobDef: JobDef,
     mapTransform: MapTransform,
     mapOptions: MapOptions,
-    breakByDefault = false,
+    failOnErrorInPostconditions = false,
   ) {
     this.id = getId(jobDef)
 
@@ -173,7 +173,7 @@ export default class Job {
               stepDef,
               mapTransform,
               mapOptions,
-              breakByDefault,
+              failOnErrorInPostconditions,
               getPrevStepId(index, steps),
             ),
         )
@@ -194,7 +194,7 @@ export default class Job {
           { ...jobDef, id: jobDef.id },
           mapTransform,
           mapOptions,
-          breakByDefault,
+          failOnErrorInPostconditions,
           undefined,
           true, // Signal that this is a job (not a step in a flow)
         ),

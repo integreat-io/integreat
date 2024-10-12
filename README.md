@@ -2108,19 +2108,15 @@ Finally, the `condition` object may have a `break` property set to `true`, to
 signal that the entire job should fail if the condition fails. If `break` is not
 set, the step will just be skipped and the job flow continues.
 
-> [!NOTE]
-> By setting the feature flag `breakByDefault` to `true` (on the `flags` object
-> in the defintions given to `Integreat.create()`), `break` will be `true` by
-> default, and you must set it to `false` to make the flow continue. This will
-> be the default behavior in the next major version of Integreat, so it's a good
-> idea to set the flag to `true` already now.
-
 Note that a step has a default pre-condition, that will make it fail and stop
 the flow if the previous step failed. By specifying your own `preconditions`,
-you override this, and only your conditions will be used. But when you set
-`breakByDefault` to `true` (see note above), this default condition will be
-set in the `postconditions` instead, so that you may override it there. This
-way, you may set pre-conditions on a step, whithout overriding the fail-on-error
+you override this, and only your conditions will be used. This is not always
+what you want, as setting preconditions does not necessarily mean that you want
+to disregard errors from the previous step. By setting the
+`failOnErrorInPostconditions` flag to `true` (on the `flags` object in the
+defintions given to `Integreat.create()`), this default condition will be set
+in the `postconditions` instead, so that you may override it there. This way,
+you may set pre-conditions on a step, whithout overriding the fail-on-error
 behavior of the step before.
 
 `postconditions` is also an array of condition objects, but this is used to
@@ -2132,6 +2128,15 @@ but _after_ `postmutation` has been applied. Just as for `preconditions`, the
 the job to fail even with `break: false`, but the breaking may be handled by the
 `preconditions` on the next step, as describe above.
 
+> [!NOTE]
+> By setting the feature flag `failOnErrorInPostconditions` (or the depricated
+> alias `failByDefault`) to `true` (on the `flags` object in the defintions
+> given to `Integreat.create()`), `break` will be `true` by default for
+> postconditions, and you must set it to `false` to make the flow continue. This
+> will be the default behavior in the next major version of Integreat, so it's
+> a good idea to set the flag to `true` already now. Note that postconditions
+> will never break by default, regardless of this flag.
+
 Post-conditions specify what is required for a step to be succeessful, and
 sometimes you may require a certain error as success, e.g. when you're checking
 a cache and will only continue if a value is not cached, requiring a `notfound`
@@ -2139,8 +2144,8 @@ response status. The condition pipeline for this should be straight
 forward, but as you cannot specify the response that will be used when the
 condition _passes_, you may wonder what happens with the error response.
 Integreat will set the status of a passing response to `ok` if it was an error,
-and otherwise leave it as is. Also, when changing an error to an `ok`, any
-`error` property will be changed to a `warning`.
+and any `error` property will be changed to a `warning`. Besides from that, the
+response will be unchanged.
 
 ### Dispatching several actions by iterating over an array
 

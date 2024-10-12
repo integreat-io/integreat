@@ -11,15 +11,21 @@ const mergeArrays = <T>(arr1?: T[], arr2?: T[]): T[] => [
 const isFlagSet = (flags: DefinitionFlags, flag?: keyof DefinitionFlags) =>
   Boolean(flag && flags[flag]) // eslint-disable-line security/detect-object-injection
 
+const resolveFlagAlias = (key: string) =>
+  key === 'breakByDefault' ? 'failOnErrorInPostconditions' : key
+
 const mergeFlags = (defs: DefinitionFlags, def?: DefinitionFlags) =>
   def
     ? {
         ...defs,
         ...Object.fromEntries(
-          Object.entries(def).filter(
-            ([key, value]) =>
-              value === true || !isFlagSet(defs, key as keyof DefinitionFlags), // Only set the flag if the flag is true or if it doesn't exist yet
-          ),
+          Object.entries(def)
+            .map(([key, value]) => [resolveFlagAlias(key), value])
+            .filter(
+              ([key, value]) =>
+                value === true ||
+                !isFlagSet(defs, key as keyof DefinitionFlags), // Only set the flag if the flag is true or if it doesn't exist yet
+            ),
         ),
       }
     : defs
