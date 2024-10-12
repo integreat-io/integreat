@@ -46,11 +46,6 @@ const generateSubMeta = (
 const messageFromResponse = (response: Response) =>
   response.error || response.warning || 'Unknown error'
 
-const messageForJob = (response: Response, jobId: string, isFlow: boolean) =>
-  isFlow
-    ? `${messageFromResponse(response)} (Job '${jobId}', step '${response.origin}')`
-    : `${messageFromResponse(response)} (Job '${jobId}')`
-
 const messageFromStep = (isFlow: boolean) => (response: Response) => {
   return isErrorResponse(response) || response.warning
     ? isFlow
@@ -73,11 +68,11 @@ function generateJobMessage(
     return isOk
       ? `Message from steps:\n${stepMessage}`
       : isFlow
-        ? `Steps failed (Job '${jobId}'):\n${stepMessage}`
+        ? `Steps failed:\n${stepMessage}`
         : `Could not finish job '${jobId}': ${stepMessage}`
   } else {
     return !isOk || responses[0].warning
-      ? messageForJob(responses[0], jobId, isFlow)
+      ? messageFromResponse(responses[0])
       : undefined
   }
 }
@@ -96,18 +91,14 @@ function setMessageAndOrigin(
   const responses = response.responses || [response]
   const isOk = isOkResponse(response)
   const bareResponse = removeOriginAndWarning(response)
-  const errorResponses = responses.filter(isErrorResponse)
-  const jobError =
-    errorResponses.length > 0
-      ? generateJobMessage(errorResponses, jobId, isFlow, isOk)
-      : undefined
-  const warningResponses = responses.filter((resp) => resp.warning)
-  const jobWarning =
-    warningResponses.length > 0
-      ? generateJobMessage(warningResponses, jobId, isFlow, isOk)
-      : undefined
 
   if (isOk) {
+    // We have an ok response
+    const warningResponses = responses.filter((resp) => resp.warning)
+    const jobWarning =
+      warningResponses.length > 0
+        ? generateJobMessage(warningResponses, jobId, isFlow, isOk)
+        : undefined
     return {
       ...bareResponse,
       ...(jobWarning ? { warning: jobWarning } : {}),
@@ -116,11 +107,16 @@ function setMessageAndOrigin(
         : {}),
     }
   } else {
+    // We have an error response
+    const errorResponses = responses.filter(isErrorResponse)
+    const jobError =
+      errorResponses.length > 0
+        ? generateJobMessage(errorResponses, jobId, isFlow, isOk)
+        : undefined
     return {
       ...bareResponse,
       status: statusFromResponses(responses),
       error: jobError,
-      ...(jobWarning ? { warning: jobWarning } : {}),
       origin: `job:${jobId}`,
       responses: setOriginOnResponses(responses, jobId),
     }
