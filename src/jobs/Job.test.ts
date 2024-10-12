@@ -325,7 +325,7 @@ test('should not run second action when first in sequence fails', async (t) => {
   }
   const expected = {
     status: 'timeout',
-    error: "Too slow (Job 'action2', step 'setEntry')",
+    error: 'Too slow',
     responses: [
       {
         status: 'timeout',
@@ -676,7 +676,7 @@ test('should run all actions in parallel even if one of them fails', async (t) =
   }
   const expected = {
     status: 'timeout',
-    error: "Too slow (Job 'action3', step 'setEntry')",
+    error: 'Too slow',
     responses: [
       {
         status: 'timeout',
@@ -737,7 +737,7 @@ test('should not run next step after any parallel steps failed', async (t) => {
   }
   const expected = {
     status: 'timeout',
-    error: "Too slow (Job 'action6', step 'getEntries')",
+    error: 'Too slow',
     responses: [
       {
         status: 'timeout',
@@ -797,7 +797,7 @@ test('should return error from all parallel actions', async (t) => {
   const expected = {
     status: 'timeout',
     error:
-      "Steps failed (Job 'action3'):\n- 'setEntry': Too slow (timeout)\n- 'setDate': Too slow (timeout)",
+      "Steps failed:\n- 'setEntry': Too slow (timeout)\n- 'setDate': Too slow (timeout)",
     responses: [
       {
         status: 'timeout',
@@ -865,7 +865,7 @@ test('should return different errors from parallel actions', async (t) => {
   const expected = {
     status: 'error',
     error:
-      "Steps failed (Job 'action3'):\n- 'setEntry': What? (badrequest)\n- 'setDate': Too slow (timeout)",
+      "Steps failed:\n- 'setEntry': What? (badrequest)\n- 'setDate': Too slow (timeout)",
     responses: [
       {
         status: 'badrequest',
@@ -1165,7 +1165,7 @@ test('should not run step where preconditions fail', async (t) => {
   }
   const expected = {
     status: 'noaction',
-    warning: "No data to set (Job 'action6', step 'setEntries')",
+    warning: 'No data to set',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -1234,7 +1234,7 @@ test('should not continue flow when failing step is marked with break', async (t
   }
   const expected = {
     status: 'badrequest',
-    error: "Must be called with an id (Job 'action6', step 'getEntries')",
+    error: 'Must be called with an id',
     responses: [
       {
         status: 'badrequest',
@@ -1544,7 +1544,7 @@ test('should validate preconditions in parallel actions', async (t) => {
   }
   const expected = {
     status: 'error',
-    error: "Needs an id (Job 'action3', step 'setEntry')",
+    error: 'Needs an id',
     responses: [
       {
         status: 'error',
@@ -1622,8 +1622,7 @@ test('should return error from preconditions in parallel actions even though oth
   }
   const expected = {
     status: 'error',
-    error: "Needs an id (Job 'action3', step 'setEntry')",
-    warning: "Did not satisfy condition (Job 'action3', step 'setDate')",
+    error: 'Needs an id',
     responses: [
       {
         status: 'error',
@@ -1708,7 +1707,7 @@ test('should return several errors from preconditions in parallel actions', asyn
   const expected = {
     status: 'error',
     error:
-      "Steps failed (Job 'action3'):\n- 'setEntry': No id (error)\n- 'setDate': No type (error)",
+      "Steps failed:\n- 'setEntry': No id (error)\n- 'setDate': No type (error)",
     responses: [
       {
         status: 'error',
@@ -1753,7 +1752,7 @@ test('should not run job with action when preconditions does not hold', async (t
   }
   const expected = {
     status: 'noaction',
-    warning: "Did not satisfy condition (Job 'action1')",
+    warning: 'Did not satisfy condition',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -1854,7 +1853,7 @@ test('should treat a step as failed when postconditions fail', async (t) => {
   }
   const expected = {
     status: 'error',
-    error: "Must return data (Job 'action6', step 'getEntries')",
+    error: 'Must return data',
     responses: [
       {
         error: 'Must return data',
@@ -2002,7 +2001,7 @@ test('should run postconditions on action job', async (t) => {
   }
   const expected = {
     status: 'notfound',
-    error: "Not found (Job 'action10')",
+    error: 'Not found',
     origin: 'job:action10',
     responses: [
       {
@@ -2144,7 +2143,7 @@ test('should support json schema validation in conditions', async (t) => {
   }
   const expected = {
     status: 'noaction',
-    warning: "No data to set (Job 'action6', step 'setEntries')",
+    warning: 'No data to set',
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -2211,7 +2210,7 @@ test('should not override fail-on-error behavior of previous step when failOnErr
   }
   const expected = {
     status: 'timeout',
-    error: "Too slow (Job 'action2', step 'setEntry')",
+    error: 'Too slow',
     responses: [
       {
         status: 'timeout',
@@ -2348,7 +2347,7 @@ test('should override fail-on-error behavior in postconditions when failOnErrorI
   }
   const expected = {
     status: 'error',
-    error: "This is not a timeout (Job 'action2', step 'setEntry')",
+    error: 'This is not a timeout',
     origin: 'job:action2',
     responses: [
       {
@@ -2797,7 +2796,7 @@ test('should run responseMutation pipeline on response from step', async (t) => 
   }
   const expected = {
     status: 'error',
-    error: "Error from step (Job 'action8', step 'getEntries')",
+    error: 'Error from step',
     responses: [
       {
         status: 'error',
@@ -2849,7 +2848,7 @@ test('should report error status from mutation without an error message as "unno
   }
   const expected = {
     status: 'error',
-    error: "Unknown error (Job 'action8', step 'getEntries')",
+    error: 'Unknown error',
     responses: [
       {
         status: 'error',
@@ -3595,7 +3594,7 @@ test('should make action response available to mutations as response on the init
   }
   const expected = {
     status: 'error',
-    error: "No data (Job 'action7')",
+    error: 'No data',
     origin: 'job:action7',
     responses: [
       {
@@ -3637,7 +3636,7 @@ test('should make flow response available to mutations as response on the initia
   }
   const expected = {
     status: 'error',
-    error: "No data (Job 'action7', step 'setDate')",
+    error: 'No data',
     origin: 'job:action7',
   }
 
@@ -3973,7 +3972,7 @@ test('should run all steps even if an iteration step fails', async (t) => {
   }
   const expected = {
     status: 'badrequest',
-    error: "Too cool (Job 'action11', step 'setItem_1')",
+    error: 'Too cool',
     data: [{ id: 'ent1', $type: 'entry' }, undefined],
     responses: [
       {
