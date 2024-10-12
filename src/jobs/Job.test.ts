@@ -1731,6 +1731,89 @@ test('should return several errors from preconditions in parallel actions', asyn
   t.deepEqual(ret, expected)
 })
 
+test('should not run job with action when preconditions does not hold', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
+  const jobDef = {
+    id: 'action1',
+    preconditions: [{ condition: 'payload.type' }],
+    action: {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent1' },
+      meta: { queue: true },
+    },
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'noaction',
+    warning: "Did not satisfy condition (Job 'action1')",
+  }
+
+  const job = new Job(jobDef, mapTransform, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.deepEqual(ret, expected)
+  t.is(dispatch.callCount, 0)
+})
+
+test('should not run job with flow when preconditions does not hold', async (t) => {
+  const dispatch = sinon
+    .stub()
+    .resolves({ status: 'ok' })
+    .onCall(0)
+    .resolves({ status: 'ok', data: [] })
+  const jobDef = {
+    id: 'action3',
+    preconditions: [{ condition: 'payload.type' }],
+    flow: [
+      [
+        {
+          id: 'setEntry',
+          action: {
+            type: 'SET',
+            payload: {
+              type: 'entry',
+              id: 'ent1',
+              data: [{ id: 'ent1', $type: 'entry' }],
+            },
+          },
+        },
+        {
+          id: 'setDate',
+          action: {
+            type: 'SET',
+            payload: { type: 'date', id: 'updatedAt' },
+          },
+        },
+      ],
+    ],
+  }
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action3',
+    },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    status: 'noaction',
+    warning: 'Did not satisfy condition',
+  }
+
+  const job = new Job(jobDef, mapTransform, mapOptions)
+  const ret = await job.run(action, dispatch, setProgress)
+
+  t.is(dispatch.callCount, 0) // None should run
+  t.deepEqual(ret, expected)
+})
+
 test('should treat a step as failed when postconditions fail', async (t) => {
   const dispatch = sinon
     .stub()
@@ -3365,38 +3448,6 @@ test('should mutate simple action with pipeline', async (t) => {
   t.is(dispatch.callCount, 1)
   t.deepEqual(dispatch.args[0][0], expectedAction)
   t.deepEqual(ret, expected)
-})
-
-test('should not run job when preconditions does not hold', async (t) => {
-  const dispatch = sinon
-    .stub()
-    .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
-  const jobDef = {
-    id: 'action1',
-    preconditions: [{ condition: 'payload.type' }],
-    action: {
-      type: 'GET',
-      payload: { type: 'entry', id: 'ent1' },
-      meta: { queue: true },
-    },
-  }
-  const action = {
-    type: 'RUN',
-    payload: {
-      jobId: 'action1',
-    },
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = {
-    status: 'noaction',
-    warning: "Did not satisfy condition (Job 'action1')",
-  }
-
-  const job = new Job(jobDef, mapTransform, mapOptions)
-  const ret = await job.run(action, dispatch, setProgress)
-
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 0)
 })
 
 test('should handle several root paths in one pipeline', async (t) => {

@@ -35,7 +35,7 @@ export const breakSymbol = Symbol('break')
 
 type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType[number]
 
-interface Validator {
+export interface Validator {
   (actionResponses: Record<string, Action>): Promise<[Response | null, boolean]>
 }
 
@@ -188,7 +188,7 @@ function createConditionsValidator(
   }
 }
 
-function createPreconditionsValidator(
+export function createPreconditionsValidator(
   preconditions: ValidateObject[] | undefined,
   validationFilters: Record<string, Condition | undefined> | undefined,
   mapTransform: MapTransform,
