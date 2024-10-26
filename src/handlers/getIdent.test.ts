@@ -155,6 +155,31 @@ test('should not complete ident with isCompleted', async (t) => {
   t.false(scope.isDone()) // Should not have attempted to get from api
 })
 
+test('should pass on  cid when getting ident', async (t) => {
+  const great = Integreat.create(defs, resources)
+  const dispatch = sinon.spy(great.services.users, 'send')
+  const getService = () => great.services.users
+  const scope = nock('http://some.api')
+    .get('/users')
+    .query({ tokens: 'twitter|23456' })
+    .reply(200, { data: johnfData })
+  const action = {
+    type: 'GET_IDENT',
+    payload: {},
+    meta: { ident: { withToken: 'twitter|23456' }, id: '12345', cid: '12346' },
+  }
+
+  const ret = await getIdent(action, { ...handlerResources, getService })
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is((ret.data as TypedData).id, 'johnf')
+  t.is(dispatch.callCount, 1)
+  const dispatchedAction = dispatch.args[0][0]
+  t.is(dispatchedAction.meta?.cid, '12346')
+  t.is(dispatchedAction.meta?.id, undefined)
+  t.true(scope.isDone())
+})
+
 test('should return noaction when no props', async (t) => {
   const action = {
     type: 'GET_IDENT',

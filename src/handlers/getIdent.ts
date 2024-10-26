@@ -24,10 +24,14 @@ interface PropKeys {
   tokens: string | null
 }
 
-const createGetIdentAction = (type: string, params: IdentParams) => ({
+const createGetIdentAction = (
+  type: string,
+  params: IdentParams,
+  cid?: string,
+) => ({
   type: 'GET',
   payload: { type, ...params },
-  meta: { ident: { id: 'root', root: true, type: IdentType.Root } }, // Set `root` flag here until we can remove it
+  meta: { ident: { id: 'root', root: true, type: IdentType.Root }, cid }, // Set `root` flag here until we can remove it
 })
 
 const preparePropKeys = ({
@@ -163,7 +167,7 @@ export default async function getIdent(
   }
 
   const response = await getHandler(
-    createGetIdentAction(type, params),
+    createGetIdentAction(type, params, action.meta?.cid),
     resources,
   )
   return prepareResponse(action, response, params, mapping)
