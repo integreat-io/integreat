@@ -1,6 +1,6 @@
 import Auth from '../Auth.js'
 import pProgress, { ProgressNotifier } from 'p-progress'
-import { setErrorOnAction } from '../../utils/action.js'
+import { setErrorOnAction, setActionIds } from '../../utils/action.js'
 import { createErrorResponse, setOrigin } from '../../utils/response.js'
 import { isObject } from '../../utils/is.js'
 import { completeIdent } from '../../utils/completeIdent.js'
@@ -159,7 +159,7 @@ export function dispatchIncoming(
     pProgress<Response>(async (setProgress) => {
       if (action) {
         const authorizedAction = await authorizeIncoming(
-          setServiceIdAsSourceServiceOnAction(action, serviceId),
+          setServiceIdAsSourceServiceOnAction(setActionIds(action), serviceId),
           serviceId,
         )
         const response = await middleware(

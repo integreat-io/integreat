@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid'
 import pProgress from 'p-progress'
 import debugLib from 'debug'
 import { QUEUE_SYMBOL } from './handlers/index.js'
@@ -7,6 +6,7 @@ import {
   setErrorOnAction,
   setResponseOnAction,
   setOptionsOnAction,
+  setActionIds,
 } from './utils/action.js'
 import { createErrorResponse, setOrigin } from './utils/response.js'
 import { completeIdentOnAction } from './utils/completeIdent.js'
@@ -65,26 +65,18 @@ function getActionHandlerFromType(
 
 /**
  * Rename `service` to `targetService` and set id and cid if not already set.
- *
- * Note: We're also removing `meta.authorized`.This is really not needed
- * anymore, as we're using a symbol for marking actions as authorized. We're
- * still keeping it for now for good measures.
+ * We're also removing `meta.auth`
  */
-function cleanUpActionAndSetIds(
-  {
-    payload: { service, ...payload },
-    meta: { auth, ...meta } = {},
-    ...action
-  }: Action,
-  id: string,
-): Action {
-  const cid = meta?.cid || id
-
-  return {
+function cleanUpActionAndSetIds({
+  payload: { service, ...payload },
+  meta: { auth, ...meta } = {},
+  ...action
+}: Action): Action {
+  return setActionIds({
     ...action,
     payload: { ...(service && { targetService: service }), ...payload },
-    meta: { ...meta, id, cid, dispatchedAt: Date.now() },
-  }
+    meta: { ...meta, dispatchedAt: Date.now() },
+  })
 }
 
 const cleanUpResponseAndSetAccessAndOrigin = (
@@ -247,10 +239,12 @@ export default function createDispatch({
           origin: 'dispatch',
         }
       }
-      const actionId = originalAction.meta?.id ?? nanoid() // Get id from action or generate an id
+
+      // Clean up action and set id
+      let cleanedUpAction = cleanUpActionAndSetIds(originalAction)
+      const actionId = cleanedUpAction.meta!.id as string // This is a string
       actionIds.add(actionId) // Add action id to list of running actions
 
-      let cleanedUpAction = cleanUpActionAndSetIds(originalAction, actionId) // Clean up action and set id
       if (shouldCompleteIdent(cleanedUpAction, options)) {
         cleanedUpAction = await completeIdentOnAction(cleanedUpAction, dispatch) // Complete ident on action if configured to
       }
