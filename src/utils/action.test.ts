@@ -7,6 +7,7 @@ import {
   setErrorOnAction,
   setDataOnActionPayload,
   setOriginOnAction,
+  setActionIds,
 } from './action.js'
 
 // Tests -- createAction
@@ -368,4 +369,80 @@ test('should not set origin on ok response', (t) => {
   const ret = setOriginOnAction(action, origin)
 
   t.deepEqual(ret, expected)
+})
+
+// Tests -- setActionIds
+
+test('should set id and cid on action', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    response: { status: 'ok' },
+    meta: { ident: { id: 'johnf' } },
+  }
+
+  const ret = setActionIds(action)
+
+  const id = ret.meta?.id
+  t.is(typeof id, 'string')
+  t.is(id!.length, 21)
+  t.is(ret.meta?.cid, id)
+  t.is(ret.type, 'GET')
+  t.deepEqual(ret.payload, action.payload)
+  t.deepEqual(ret.meta?.ident, { id: 'johnf' })
+})
+
+test('should use id as cid', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    response: { status: 'ok' },
+    meta: { ident: { id: 'johnf' }, id: '12345' },
+  }
+  const expected = {
+    ...action,
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '12345' },
+  }
+
+  const ret = setActionIds(action)
+
+  t.deepEqual(ret, expected)
+})
+
+test('should set id when cid is present', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    response: { status: 'ok' },
+    meta: { ident: { id: 'johnf' }, cid: '12346' },
+  }
+
+  const ret = setActionIds(action)
+
+  const id = ret.meta?.id
+  t.is(typeof id, 'string')
+  t.is(id!.length, 21)
+  t.is(ret.meta?.cid, '12346')
+  t.not(ret.meta?.cid, id)
+  t.is(ret.type, 'GET')
+  t.deepEqual(ret.payload, action.payload)
+  t.deepEqual(ret.meta?.ident, { id: 'johnf' })
+})
+
+test('should not overwrite id and cid', (t) => {
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    response: { status: 'ok' },
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '123456' },
+  }
+  const expected = {
+    ...action,
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '123456' },
+  }
+
+  const ret = setActionIds(action)
+
+  t.deepEqual(ret, expected)
+  t.is(ret, action) // Should not touch action at all when id and cid are set
 })

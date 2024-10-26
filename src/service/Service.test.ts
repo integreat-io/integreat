@@ -3263,7 +3263,7 @@ test('listen should use service middleware', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('listen should set sourceService', async (t) => {
+test('listen should set sourceService, id, and cid', async (t) => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3279,17 +3279,20 @@ test('listen should set sourceService', async (t) => {
     },
     mockResources({}, action),
   )
-  const expectedAction = {
-    type: 'SET',
-    payload: { data: [], sourceService: 'entries' },
-    meta: { ident: { id: 'johnf' }, auth: undefined },
-  }
+  const expectedPayload = { data: [], sourceService: 'entries' }
   const expectedResponse = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
   const ret = await service.listen(dispatchStub)
 
   t.is(dispatchStub.callCount, 1)
-  t.deepEqual(dispatchStub.args[0][0], expectedAction)
+  const dispatchedAction = dispatchStub.args[0][0]
+  t.is(dispatchedAction.type, 'SET')
+  t.deepEqual(dispatchedAction.payload, expectedPayload)
+  t.deepEqual(dispatchedAction.meta.ident, { id: 'johnf' })
+  t.is(dispatchedAction.meta.auth, undefined)
+  t.is(typeof dispatchedAction.meta.id, 'string')
+  t.is(dispatchedAction.meta.id.length, 21)
+  t.is(dispatchedAction.meta.cid, dispatchedAction.meta.id)
   t.deepEqual(ret, expectedResponse)
 })
 
@@ -3342,17 +3345,12 @@ test('listen should override existing sourceService', async (t) => {
     },
     mockResources({}, action),
   )
-  const expectedAction = {
-    type: 'SET',
-    payload: { data: [], sourceService: 'entries' },
-    meta: { ident: { id: 'johnf' }, auth: undefined },
-  }
   const expectedResponse = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
   const ret = await service.listen(dispatchStub)
 
   t.is(dispatchStub.callCount, 1)
-  t.deepEqual(dispatchStub.args[0][0], expectedAction)
+  t.is(dispatchStub.args[0][0].payload.sourceService, 'entries')
   t.deepEqual(ret, expectedResponse)
 })
 
@@ -3541,20 +3539,13 @@ test('listen should complete ident in authenticate callback', async (t) => {
     payload: {},
     meta: { ident: { id: 'johnf' }, cache: true },
   }
-  const expectedActionWithIdent = {
-    ...action,
-    payload: { ...action.payload, sourceService: 'entries' },
-    meta: {
-      ident: { id: 'johnf', roles: ['editor'], isCompleted: true },
-      auth: undefined,
-    },
-  }
+  const expectedIdent = { id: 'johnf', roles: ['editor'], isCompleted: true }
 
   const ret = await service.listen(dispatchStub)
 
   t.is(dispatchStub.callCount, 2)
   t.deepEqual(dispatchStub.args[0][0], expectedGetIdentAction)
-  t.deepEqual(dispatchStub.args[1][0], expectedActionWithIdent)
+  t.deepEqual(dispatchStub.args[1][0].meta.ident, expectedIdent)
   t.deepEqual(ret, expectedResponse)
 })
 
@@ -3590,19 +3581,13 @@ test('listen should respond with noaccess when ident is not found', async (t) =>
     payload: {},
     meta: { ident: { id: 'johnf' }, cache: true },
   }
-  const expectedActionWithIdent = {
-    ...action,
-    payload: { ...action.payload, sourceService: 'entries' },
-    response: expectedResponse,
-    meta: { ident: undefined },
-  }
 
   const ret = await service.listen(dispatchStub)
 
   t.deepEqual(ret, expectedResponse)
   t.is(dispatchStub.callCount, 2)
   t.deepEqual(dispatchStub.args[0][0], expectedGetIdentAction)
-  t.deepEqual(dispatchStub.args[1][0], expectedActionWithIdent)
+  t.is(dispatchStub.args[1][0].meta.ident, undefined)
 })
 
 test('listen should authenticate action with endpoint auth', async (t) => {
@@ -3664,16 +3649,13 @@ test('listen should reject authentication when validate() returns an error', asy
     reason: 'becauseisayso',
     origin: 'auth:service:entries:invalidating',
   }
-  const expectedAction = {
-    ...action,
-    response: expectedResponse,
-    meta: { ident: undefined },
-  }
 
   const ret = await service.listen(dispatchStub)
 
   t.is(dispatchStub.callCount, 1)
-  t.deepEqual(dispatchStub.args[0][0], expectedAction)
+  const dispatchedAction = dispatchStub.args[0][0]
+  t.deepEqual(dispatchedAction.response, expectedResponse)
+  t.is(dispatchedAction.meta.ident, undefined)
   t.deepEqual(ret, expectedResponse)
   t.false(service.isListening)
 })
