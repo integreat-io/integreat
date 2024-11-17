@@ -1404,6 +1404,8 @@ codes:
   sync
 - `notfound`: Tried to get or modify a resource that does not exist
 - `timeout`: The attempt to perform the action timed out
+- `toomany`: Too many actions/requests were sent. This is normally used for
+  rate limiting errors from a service.
 - `autherror`: An authentication request failed
 - `noaccess`: Authentication is required or the provided auth is not enough
 - `badrequest`: Request data is not as expected
