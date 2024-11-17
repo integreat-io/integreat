@@ -64,6 +64,7 @@ export default class Auth {
         this.#options,
         action,
         dispatch,
+        authentication || null,
       )
     } while (shouldRetry(authentication, attempt++))
 
@@ -129,6 +130,7 @@ export default class Auth {
         this.#options,
         action,
         dispatch,
+        null,
       )
       if (auth.status === 'granted') {
         return fn(auth)
