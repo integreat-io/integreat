@@ -187,6 +187,7 @@ export interface Authenticator<
     options: U | null,
     action: Action | null,
     dispatch: HandlerDispatch,
+    authentication: T | null,
   ) => Promise<T>
   isAuthenticated: (
     authentication: T | null,

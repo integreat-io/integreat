@@ -42,7 +42,7 @@ test('authenticate should dispatch action and return response data as authentica
     meta: { ident: { id: 'johnf' }, cid: '10001', project: 'proj1' },
   }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
@@ -61,7 +61,7 @@ test('authenticate should dispatch with anonymous when no action is proviced', a
     meta: { ident: { id: 'anonymous', type: IdentType.Anon } },
   }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
@@ -78,7 +78,7 @@ test('authenticate should return authentication without expire', async (t) => {
     auth: { token: 't0k3n' },
   }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
@@ -96,7 +96,7 @@ test('authenticate should use default expire when none is returned in the data',
   }
   const before = Date.now()
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   const after = Date.now()
   t.is(ret.status, 'granted')
@@ -118,7 +118,7 @@ test('authenticate should use default expire as ms string when none is returned 
   }
   const before = Date.now()
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   const after = Date.now()
   t.is(ret.status, 'granted')
@@ -139,7 +139,7 @@ test('authenticate should return authentication with empty auth', async (t) => {
     expire: 1715959020000,
   }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
@@ -152,7 +152,7 @@ test('authenticate should refuse when dispatch responds with no data', async (t)
     error: 'Auth action responded without a valid data object',
   }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
@@ -167,7 +167,7 @@ test('authenticate should refuse when dispatch responds with invalid auth data',
     error: 'Auth action responded without a valid data object',
   }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
@@ -182,7 +182,7 @@ test('authenticate should refuse when dispatch responds with error', async (t) =
     error: 'Auth action failed. [timeout] Too slow',
   }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 1)
@@ -198,7 +198,7 @@ test('authenticate should refuse when not a valid action', async (t) => {
     error: 'The options did not define a valid action',
   }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
   t.is(dispatch.callCount, 0)

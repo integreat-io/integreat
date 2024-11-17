@@ -23,7 +23,7 @@ test('authenticate should return granted when token is set', async (t) => {
     type: undefined,
   }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
 })
@@ -37,7 +37,7 @@ test('authenticate should return first token when array of tokens is given', asy
     type: undefined,
   }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
 })
@@ -46,7 +46,7 @@ test('authenticate should return refused when token is not set', async (t) => {
   const options = {}
   const expected = { status: 'refused' }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
 })

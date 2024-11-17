@@ -200,6 +200,23 @@ test("should pass on action to authenticator's authenticate", async (t) => {
 
   t.is(stubbedAuthenticator.authenticate.callCount, 1)
   t.deepEqual(stubbedAuthenticator.authenticate.args[0][1], action)
+  t.deepEqual(stubbedAuthenticator.authenticate.args[0][3], null) // No previous authentication object
+})
+
+test("should pass on previous authentication to authenticator's authenticate", async (t) => {
+  const stubbedAuthenticator = {
+    ...authenticator,
+    isAuthenticated: () => false,
+    authenticate: sinon.stub().callsFake(authenticator.authenticate),
+  }
+  const auth = new Auth(id, stubbedAuthenticator, options)
+  const expectedAuth = { status: 'granted', token: 't0k3n', expired: undefined }
+
+  await auth.authenticate(action, dispatch)
+  await auth.authenticate(action, dispatch)
+
+  t.is(stubbedAuthenticator.authenticate.callCount, 2)
+  t.deepEqual(stubbedAuthenticator.authenticate.args[1][3], expectedAuth)
 })
 
 test('should retry once on timeout', async (t) => {

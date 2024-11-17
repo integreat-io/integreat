@@ -19,7 +19,7 @@ const options = {}
 test('authenticate should always grant', async (t) => {
   const expected = { status: 'granted' }
 
-  const ret = await authenticator.authenticate(options, action, dispatch)
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   t.deepEqual(ret, expected)
 })
