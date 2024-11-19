@@ -78,6 +78,7 @@ export enum IdentType {
   Root = 'ROOT',
   Anon = 'ANON',
   Scheduler = 'SCHED',
+  System = 'SYST',
   Custom = 'CUST',
 }
 
