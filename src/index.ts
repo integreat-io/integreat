@@ -13,6 +13,7 @@ export type {
   AsyncTransformer,
   TransformDefinition,
 } from 'map-transform/types.js'
+export { IdentType } from './types.js'
 export type {
   Action,
   Payload,
@@ -21,7 +22,6 @@ export type {
   Paging,
   Headers,
   Ident,
-  IdentType,
   Dispatch,
   TypedData,
   Reference,

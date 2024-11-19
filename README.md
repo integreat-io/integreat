@@ -1478,8 +1478,8 @@ Example ident:
   data cast in this schema, an ident with e.g. the role `admin` must be
   provided.
 - `type`: An optional string to signal when this ident is `'ROOT'`, `'SCHED'`,
-  or `'ANON'`. This is used internally by Integreat, but in some cases you may
-  want to set this yourself. Make sure, however, that you don't let
+  `'SYST'`, or `'ANON'`. This is used internally by Integreat, but in some cases
+  you may want to set this yourself. Make sure, however, that you don't let
   third-parties set `'ROOT'`. Make sure to also set the id, typically to
   `'root'` or `'anonymous'`. Not setting any `type` is the same as setting it to
   `'CUST'`, which is the default.
