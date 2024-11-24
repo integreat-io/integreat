@@ -27,6 +27,10 @@ declare namespace integreat {
   export interface Meta {
     queue?: boolean | number
     ident?: Ident
+    project?: string
+    id?: string
+    cid?: string
+    gid?: string
     [key: string]: unknown
   }
 
