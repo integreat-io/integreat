@@ -51,6 +51,7 @@
     "later": "^1.2.0",
     "map-any": "^0.2.1",
     "map-transform": "^0.3.12",
+    "nanoid": "^3.3.7",
     "p-limit": "^2.3.0",
     "p-progress": "^0.5.1",
     "ramda": "^0.27.2",
