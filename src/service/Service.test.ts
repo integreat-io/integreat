@@ -1260,16 +1260,8 @@ test('send should not set targetService when doSetTargetService is false', async
   const service = new Service(
     {
       id: 'queue', // Should not set this id
-      endpoints: [
-        {
-          options: { uri: 'http://some.api/1.0', value: 'Value from endpoint' },
-        },
-      ],
-      options: {
-        value: 'Value from service',
-        transporter: { secret: 's3cr3t' },
-        adapters: { json: { someFlag: true } },
-      },
+      endpoints: [{}],
+      options: {},
       transporter: 'http',
       auth: 'granting',
     },
@@ -1310,6 +1302,66 @@ test('send should not set targetService when doSetTargetService is false', async
     dispatch,
     doSetTargetService,
   )
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(send.callCount, 1)
+  t.deepEqual(send.args[0][0], expected)
+})
+
+test('send should not set targetService when doSetTargetService is false in meta options', async (t) => {
+  const send = sinon.stub().resolves({ status: 'ok', data: {} })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: { ...jsonResources.transporters!.http, send },
+    },
+    mapTransform,
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = new Service(
+    {
+      id: 'queue', // Should not set this id
+      endpoints: [{}],
+      options: {},
+      transporter: 'http',
+      auth: 'granting',
+    },
+    resources,
+  )
+  const action = setAuthorizedMark({
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      source: 'thenews',
+      targetService: 'entries',
+    },
+    meta: {
+      ident: { id: 'johnf' },
+      options: {
+        uri: 'http://some.api/1.0',
+        secret: 's3cr3t',
+        doSetTargetService: false,
+      },
+    },
+  })
+  const endpoint = await service.endpointFromAction(action)
+  const expected = {
+    ...action,
+    meta: {
+      ...action.meta,
+      auth: { Authorization: 'Bearer t0k3n' },
+      options: {
+        uri: 'http://some.api/1.0',
+        secret: 's3cr3t',
+      },
+    },
+  }
+
+  const ret = await service.send(action, endpoint!, dispatch)
 
   t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)

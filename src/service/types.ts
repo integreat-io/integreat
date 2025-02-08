@@ -50,6 +50,7 @@ export interface AuthObject {
 }
 
 export interface TransporterOptions extends Record<string, unknown> {
+  doSetTargetService?: boolean
   incoming?: Record<string, unknown>
 }
 

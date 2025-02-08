@@ -293,6 +293,12 @@ action payload with the `targetService` (or shorthand `service`) property, but
 if not, the default service of the schema specified with the payload `type`
 property, will be used.
 
+The `targetService` property will be set on the the action payload when it is
+sent to the transporter, before it goes through the middleware. There are two
+exceptions to this, however. `targetService` will not be set for a queued action
+(and it will not be removed if it is already set), and it will not be set for
+actions where the `meta.options.doSetTargetService` flag is set to `false`.
+
 The matching to an endpoint is done by finding the endpoint whose `match` object
 matches the action with most accuracy. The rules of the endpoint matching is
 describe in more details [below](#match-properties).
