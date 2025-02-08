@@ -56,7 +56,7 @@
     "@integreat/ts-dev-setup": "^6.0.2",
     "@types/debug": "^4.1.12",
     "@types/luxon": "^3.4.2",
-    "@types/node": "^20.14.9",
+    "@types/node": "^22.13.1",
     "@types/sinon": "^17.0.3",
     "integreat-adapter-json": "^1.0.1",
     "integreat-adapter-uri": "^1.0.0",
