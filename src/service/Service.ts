@@ -72,10 +72,29 @@ const createEndpointAdapterError = (endpoint: EndpointDef, serviceId: string) =>
     endpoint.id ? `Endpoint '${endpoint.id}'` : 'An endpoint'
   } on service '${serviceId}' references one or more unknown adapters`
 
+const shouldSetTargetService = (action: Action, flag: boolean) =>
+  flag && action.meta?.options?.doSetTargetService !== false
+
 const setTargetService = (action: Action, targetService: string) => ({
   ...action,
   payload: { ...action.payload, targetService },
 })
+
+const removeSetTargetServiceFlagFromOptions = ({
+  doSetTargetService,
+  ...options
+}: TransporterOptions) => options
+
+const removeSetTargetServiceFlag = (action: Action) =>
+  typeof action.meta?.options?.doSetTargetService === 'boolean'
+    ? {
+        ...action,
+        meta: {
+          ...action.meta,
+          options: removeSetTargetServiceFlagFromOptions(action.meta.options),
+        },
+      }
+    : action
 
 function setUpEndpoint(
   serviceId: string,
@@ -461,9 +480,10 @@ export default class Service {
     }
 
     // Set target service on action, unless we're told not to
-    if (doSetTargetService) {
+    if (shouldSetTargetService(action, doSetTargetService)) {
       action = setTargetService(action, this.id)
     }
+    action = removeSetTargetServiceFlag(action)
 
     return setOrigin(
       await this.#middleware(
