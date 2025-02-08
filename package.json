@@ -42,7 +42,7 @@
     "ajv": "^8.16.0",
     "cron-parser": "^4.9.0",
     "debug": "^4.3.5",
-    "deepmerge-ts": "^5.1.0",
+    "deepmerge-ts": "^7.1.4",
     "map-any": "^1.0.0",
     "map-transform": "^1.5.1",
     "ms": "^2.1.3",
