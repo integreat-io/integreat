@@ -72,6 +72,11 @@ const createEndpointAdapterError = (endpoint: EndpointDef, serviceId: string) =>
     endpoint.id ? `Endpoint '${endpoint.id}'` : 'An endpoint'
   } on service '${serviceId}' references one or more unknown adapters`
 
+const setTargetService = (action: Action, targetService: string) => ({
+  ...action,
+  payload: { ...action.payload, targetService },
+})
+
 function setUpEndpoint(
   serviceId: string,
   adapters: Record<string, Adapter>,
@@ -423,6 +428,7 @@ export default class Service {
     action: Action,
     endpoint: Endpoint | null,
     dispatch: HandlerDispatch,
+    doSetTargetService = true,
   ): Promise<Response> {
     // Do nothing if the action response already has a status
     if (action.response?.status) {
@@ -452,6 +458,11 @@ export default class Service {
       if (action.response?.status) {
         return setOrigin(action.response, `service:${this.id}`, true)
       }
+    }
+
+    // Set target service on action, unless we're told not to
+    if (doSetTargetService) {
+      action = setTargetService(action, this.id)
     }
 
     return setOrigin(

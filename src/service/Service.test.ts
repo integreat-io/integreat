@@ -1177,7 +1177,7 @@ test('send should fail when not authorized', async (t) => {
   t.deepEqual(ret, expected)
 })
 
-test('send should provide auth and options', async (t) => {
+test('send should provide auth, options, and targetService', async (t) => {
   const send = sinon.stub().resolves({ status: 'ok', data: {} })
   const resources = {
     ...jsonResources,
@@ -1221,7 +1221,11 @@ test('send should provide auth and options', async (t) => {
   })
   const endpoint = await service.endpointFromAction(action)
   const expected = {
-    ...action,
+    type: 'GET',
+    payload: {
+      ...action.payload,
+      targetService: 'entries',
+    },
     meta: {
       ...action.meta,
       auth: { Authorization: 'Bearer t0k3n' },
@@ -1233,6 +1237,79 @@ test('send should provide auth and options', async (t) => {
   }
 
   const ret = await service.send(action, endpoint!, dispatch)
+
+  t.is(ret.status, 'ok', ret.error)
+  t.is(send.callCount, 1)
+  t.deepEqual(send.args[0][0], expected)
+})
+
+test('send should not set targetService when doSetTargetService is false', async (t) => {
+  const doSetTargetService = false
+  const send = sinon.stub().resolves({ status: 'ok', data: {} })
+  const resources = {
+    ...jsonResources,
+    transporters: {
+      ...jsonResources.transporters,
+      http: { ...jsonResources.transporters!.http, send },
+    },
+    mapTransform,
+    mapOptions,
+    schemas,
+    auths,
+  }
+  const service = new Service(
+    {
+      id: 'queue', // Should not set this id
+      endpoints: [
+        {
+          options: { uri: 'http://some.api/1.0', value: 'Value from endpoint' },
+        },
+      ],
+      options: {
+        value: 'Value from service',
+        transporter: { secret: 's3cr3t' },
+        adapters: { json: { someFlag: true } },
+      },
+      transporter: 'http',
+      auth: 'granting',
+    },
+    resources,
+  )
+  const action = setAuthorizedMark({
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      source: 'thenews',
+      targetService: 'entries',
+    },
+    meta: {
+      ident: { id: 'johnf' },
+      options: {
+        uri: 'http://some.api/1.0',
+        secret: 's3cr3t',
+      },
+    },
+  })
+  const endpoint = await service.endpointFromAction(action)
+  const expected = {
+    ...action,
+    meta: {
+      ...action.meta,
+      auth: { Authorization: 'Bearer t0k3n' },
+      options: {
+        uri: 'http://some.api/1.0',
+        secret: 's3cr3t',
+      },
+    },
+  }
+
+  const ret = await service.send(
+    action,
+    endpoint!,
+    dispatch,
+    doSetTargetService,
+  )
 
   t.is(ret.status, 'ok', ret.error)
   t.is(send.callCount, 1)
@@ -1284,7 +1361,8 @@ test('send should not authorize when action has already got meta.auth', async (t
   })
   const endpoint = await service.endpointFromAction(action)
   const expected = {
-    ...action,
+    type: 'GET',
+    payload: { ...action.payload, targetService: 'entries' },
     meta: {
       ...action.meta,
       auth: { token: 'ourT0k3n' },
