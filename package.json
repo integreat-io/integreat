@@ -18,14 +18,15 @@
     }
   },
   "scripts": {
-    "test": "npm run build && c8 --reporter=text-summary ava --config ./ava-dist.config.js",
+    "test": "node --import tsx --test --enable-source-maps --experimental-test-coverage --test-reporter node-test-reporter 'src/**/*.test.ts'",
     "test:watch": "npm run dev",
-    "dev": "ava --watch",
+    "dev": "node --import tsx --test --enable-source-maps --test-reporter node-test-reporter --watch 'src/**/*.test.ts' || exit 0",
     "build": "tsc",
-    "prepare": "npm run build",
-    "coverage": "c8 report",
+    "prepublishOnly": "npm run build",
     "lint": "eslint --ext .ts src",
-    "verify": "npm run lint && npm test"
+    "format": "prettier src/**/*.ts",
+    "typecheck": "tsc --noEmit --strict",
+    "verify": "npm run lint && npm run typecheck && npm test"
   },
   "repository": {
     "type": "git",
@@ -53,7 +54,7 @@
     "rfdc": "^1.4.1"
   },
   "devDependencies": {
-    "@integreat/ts-dev-setup": "^6.0.4",
+    "@integreat/ts-dev-setup": "^8.1.1",
     "@types/debug": "^4.1.12",
     "@types/luxon": "^3.4.2",
     "@types/node": "^22.13.5",
