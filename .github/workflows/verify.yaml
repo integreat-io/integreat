@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.19, 20.x]
+        node-version: [22.x, 23.x]
 
     steps:
       - uses: actions/checkout@v3
@@ -27,3 +27,21 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+
+  verify_legacy:
+    name: Lint and test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.19, 20.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run test:legacy
