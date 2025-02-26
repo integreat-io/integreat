@@ -31,6 +31,14 @@ test('should get first and second page of entries from service', async () => {
     payload: { type: 'entry' },
     meta: { ident: { id: 'johnf' } },
   }
+  const expectedPaging1 = {
+    prev: undefined,
+    next: { type: 'entry', offset: 'page2' },
+  }
+  const expectedPaging2 = {
+    prev: { type: 'entry', offset: 'page1' },
+    next: undefined,
+  }
 
   const ret1 = await great.dispatch(action1)
   const action2 = { ...action1, payload: ret1.paging?.next }
@@ -39,15 +47,18 @@ test('should get first and second page of entries from service', async () => {
   const ret3 = await great.dispatch(action3 as Action)
 
   assert.equal(ret1.status, 'ok', ret1.error)
+  assert.deepEqual(ret1.paging, expectedPaging1)
   const data1 = ret1.data as TypedData[]
   assert.equal(data1.length, 2)
   assert.equal(data1[0].id, 'ent1')
   assert.equal(data1[1].id, 'ent2')
+  assert.deepEqual(ret2.paging, expectedPaging2)
   assert.equal(ret2.status, 'ok', ret2.error)
   const data2 = ret2.data as TypedData[]
   assert.equal(data2.length, 1)
   assert.equal(data2[0].id, 'ent3')
   assert.equal(ret3.status, 'ok', ret3.error)
+  assert.deepEqual(ret3.paging, expectedPaging1)
   const data3 = ret3.data as TypedData[]
   assert.equal(data3.length, 2)
   assert.equal(data3[0].id, 'ent1')
