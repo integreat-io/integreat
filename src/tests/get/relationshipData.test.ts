@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import defsBase from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
@@ -37,7 +38,7 @@ const defs = {
 
 // Tests
 
-test('should get all entries from service', async (t) => {
+test('should get all entries from service', async () => {
   nock('http://some.api')
     .get('/entries/ent1')
     .reply(200, {
@@ -74,11 +75,11 @@ test('should get all entries from service', async (t) => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok', ret.error)
   const data = ret.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'ent1')
-  t.deepEqual(data[0].author, expectedRel)
+  assert.equal(data.length, 1)
+  assert.equal(data[0].id, 'ent1')
+  assert.deepEqual(data[0].author, expectedRel)
 
   nock.restore()
 })

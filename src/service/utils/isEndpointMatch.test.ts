@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import mapTransform from 'map-transform'
 import { IdentType } from '../../types.js'
 
@@ -116,317 +117,323 @@ const mapOptions = {}
 
 // Tests
 
-test('should match catch-all endpoint', async (t) => {
+test('should match catch-all endpoint', async () => {
   const endpoint = endpointCatchAll
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should match with action', async (t) => {
+test('should match with action', async () => {
   const endpoint = endpointGet
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with action', async (t) => {
+test('should mismatch with action', async () => {
   const endpoint = endpointDelete
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with action array', async (t) => {
+test('should match with action array', async () => {
   const endpoint = endpointSetAndDelete
   const action = {
     type: 'SET',
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with action array', async (t) => {
+test('should mismatch with action array', async () => {
   const endpoint = endpointSetAndDelete
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with member scope', async (t) => {
+test('should match with member scope', async () => {
   const endpoints = endpointMember
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with member scope', async (t) => {
+test('should mismatch with member scope', async () => {
   const endpoints = endpointCollection
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry' },
   }
 
-  t.false(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action),
+    false,
+  )
 })
 
-test('should match with members scope', async (t) => {
+test('should match with members scope', async () => {
   const endpoint = endpointMembers
   const action = {
     type: 'GET',
     payload: { id: ['ent1', 'ent2'], type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with members scope', async (t) => {
+test('should mismatch with members scope', async () => {
   const endpoint = endpointMember
   const action = {
     type: 'GET',
     payload: { id: ['ent1', 'ent2'], type: 'entry' },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with collection scope', async (t) => {
+test('should match with collection scope', async () => {
   const endpoint = endpointCollection
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with collection scope', async (t) => {
+test('should mismatch with collection scope', async () => {
   const endpoint = endpointMember
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with scope array', async (t) => {
+test('should match with scope array', async () => {
   const endpoint = endpointMemberAndCollection
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with scope array', async (t) => {
+test('should mismatch with scope array', async () => {
   const endpoint = endpointMemberAndCollection
   const action = {
     type: 'GET',
     payload: { type: 'entry', id: ['ent1', 'ent2'] },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with type', async (t) => {
+test('should match with type', async () => {
   const endpoint = endpointEntry
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with type', async (t) => {
+test('should mismatch with type', async () => {
   const endpoint = endpointEntry
   const action = {
     type: 'GET',
     payload: { type: 'user' },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with type array', async (t) => {
+test('should match with type array', async () => {
   const endpoint = endpointEntryAndItem
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with type array', async (t) => {
+test('should mismatch with type array', async () => {
   const endpoint = endpointEntryAndItem
   const action = {
     type: 'GET',
     payload: { type: 'user' },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with action type array', async (t) => {
+test('should match with action type array', async () => {
   const endpoint = endpointEntry
   const action = {
     type: 'GET',
     payload: { type: ['user', 'entry'] },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with action type array', async (t) => {
+test('should mismatch with action type array', async () => {
   const endpoint = endpointEntry
   const action = {
     type: 'GET',
     payload: { type: ['user', 'unknown'] },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with endpoint id', async (t) => {
+test('should match with endpoint id', async () => {
   const endpoint = endpointWithId
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', endpoint: 'endpoint1' },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with endpoint id', async (t) => {
+test('should mismatch with endpoint id', async () => {
   const endpoint = endpointEntry
   const action = {
     type: 'GET',
     payload: { id: 'ent1', type: 'entry', endpoint: 'endpoint1' },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with required param', async (t) => {
+test('should match with required param', async () => {
   const endpoint = endpointGetWithAuthor
   const action = {
     type: 'GET',
     payload: { author: 'johnf', type: 'entry' },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with required param', async (t) => {
+test('should mismatch with required param', async () => {
   const endpoint = endpointGetWithAuthor
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with optional param', async (t) => {
+test('should match with optional param', async () => {
   const endpoints = endpointGetWithOptionalAuthor
   const action = {
     type: 'GET',
     payload: { author: 'johnf', type: 'entry' },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should match without optional param', async (t) => {
+test('should match without optional param', async () => {
   const endpoints = endpointGetWithOptionalAuthor
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should match with filter', async (t) => {
+test('should match with filter', async () => {
   const endpoint = endpointSetWithFilter
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with filter', async (t) => {
+test('should mismatch with filter', async () => {
   const endpoint = endpointSetWithFilter
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with several filters', async (t) => {
+test('should match with several filters', async () => {
   const endpoints = endpointSetWithFilters
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with several filters', async (t) => {
+test('should mismatch with several filters', async () => {
   const endpoints = endpointSetWithFilters
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
   }
 
-  t.false(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action),
+    false,
+  )
 })
 
-test('should match with one of several filters', async (t) => {
+test('should match with one of several filters', async () => {
   const endpoints = endpointSetWithOrFilters
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should match with no filters', async (t) => {
+test('should match with no filters', async () => {
   const endpoints = endpointSetWithNoFilters
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should match with params filter', async (t) => {
+test('should match with params filter', async () => {
   const endpoints = endpointSetWithParamFilter
   const action = {
     type: 'SET',
@@ -436,10 +443,10 @@ test('should match with params filter', async (t) => {
     },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with params filter', async (t) => {
+test('should mismatch with params filter', async () => {
   const endpoints = endpointSetWithParamFilter
   const action = {
     type: 'SET',
@@ -449,10 +456,13 @@ test('should mismatch with params filter', async (t) => {
     },
   }
 
-  t.false(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action),
+    false,
+  )
 })
 
-test('should match with meta filter', async (t) => {
+test('should match with meta filter', async () => {
   const endpoints = endpointSetWithMetaFilter
   const action = {
     type: 'SET',
@@ -460,10 +470,10 @@ test('should match with meta filter', async (t) => {
     meta: { ident: { id: 'root', type: IdentType.Root } },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with meta filter', async (t) => {
+test('should mismatch with meta filter', async () => {
   const endpoints = endpointSetWithMetaFilter
   const action = {
     type: 'SET',
@@ -471,60 +481,66 @@ test('should mismatch with meta filter', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action),
+    false,
+  )
 })
 
-test('should match with condition', async (t) => {
+test('should match with condition', async () => {
   const endpoint = endpointSetWithCondition
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
   }
 
-  t.true(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with condition', async (t) => {
+test('should mismatch with condition', async () => {
   const endpoint = endpointSetWithCondition
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
   }
 
-  t.false(await isMatch(endpoint, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoint, mapTransform, mapOptions)(action), false)
 })
 
-test('should match with several conditions', async (t) => {
+test('should match with several conditions', async () => {
   const endpoints = endpointSetWithConditions
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: false } },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with several conditions', async (t) => {
+test('should mismatch with several conditions', async () => {
   const endpoints = endpointSetWithConditions
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 2', draft: false } },
   }
 
-  t.false(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action),
+    false,
+  )
 })
 
-test('should match with no conditions', async (t) => {
+test('should match with no conditions', async () => {
   const endpoints = endpointSetWithNoConditions
   const action = {
     type: 'SET',
     payload: { data: { $type: 'entry', title: 'Entry 1', draft: true } },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should match with params condition', async (t) => {
+test('should match with params condition', async () => {
   const endpoints = endpointSetWithParamCondition
   const action = {
     type: 'SET',
@@ -534,10 +550,10 @@ test('should match with params condition', async (t) => {
     },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with params condition', async (t) => {
+test('should mismatch with params condition', async () => {
   const endpoints = endpointSetWithParamCondition
   const action = {
     type: 'SET',
@@ -547,10 +563,13 @@ test('should mismatch with params condition', async (t) => {
     },
   }
 
-  t.false(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action),
+    false,
+  )
 })
 
-test('should match with meta condition', async (t) => {
+test('should match with meta condition', async () => {
   const endpoints = endpointSetWithMetaCondition
   const action = {
     type: 'SET',
@@ -558,10 +577,10 @@ test('should match with meta condition', async (t) => {
     meta: { ident: { id: 'root', type: IdentType.Root } },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(await isMatch(endpoints, mapTransform, mapOptions)(action), true)
 })
 
-test('should mismatch with meta condition', async (t) => {
+test('should mismatch with meta condition', async () => {
   const endpoints = endpointSetWithMetaCondition
   const action = {
     type: 'SET',
@@ -569,10 +588,13 @@ test('should mismatch with meta condition', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(await isMatch(endpoints, mapTransform, mapOptions)(action))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action),
+    false,
+  )
 })
 
-test('incoming should match incoming endpoint', async (t) => {
+test('incoming should match incoming endpoint', async () => {
   const endpoints = endpointSetWithIncoming
   const action = {
     type: 'SET',
@@ -580,10 +602,13 @@ test('incoming should match incoming endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action, true))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action, true),
+    true,
+  )
 })
 
-test('non-incoming should not match incoming endpoint', async (t) => {
+test('non-incoming should not match incoming endpoint', async () => {
   const endpoints = endpointSetWithIncoming
   const action = {
     type: 'SET',
@@ -591,10 +616,13 @@ test('non-incoming should not match incoming endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(await isMatch(endpoints, mapTransform, mapOptions)(action, false))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action, false),
+    false,
+  )
 })
 
-test('non-incoming should match non-incoming endpoint', async (t) => {
+test('non-incoming should match non-incoming endpoint', async () => {
   const endpoints = endpointSetWithNonIncoming
   const action = {
     type: 'SET',
@@ -602,10 +630,13 @@ test('non-incoming should match non-incoming endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action, false))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action, false),
+    true,
+  )
 })
 
-test('incoming should not match non-incoming endpoint', async (t) => {
+test('incoming should not match non-incoming endpoint', async () => {
   const endpoints = endpointSetWithNonIncoming
   const action = {
     type: 'SET',
@@ -613,10 +644,13 @@ test('incoming should not match non-incoming endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.false(await isMatch(endpoints, mapTransform, mapOptions)(action, true))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action, true),
+    false,
+  )
 })
 
-test('incoming should match non-incoming endpoint', async (t) => {
+test('incoming should match non-incoming endpoint', async () => {
   const endpoints = endpointGet
   const action = {
     type: 'GET',
@@ -624,5 +658,8 @@ test('incoming should match non-incoming endpoint', async (t) => {
     meta: { ident: { id: 'johnf' } },
   }
 
-  t.true(await isMatch(endpoints, mapTransform, mapOptions)(action, true))
+  assert.equal(
+    await isMatch(endpoints, mapTransform, mapOptions)(action, true),
+    true,
+  )
 })

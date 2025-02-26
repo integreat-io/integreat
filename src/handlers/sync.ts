@@ -197,7 +197,7 @@ const setDatesAndType = (
   meta?: Meta,
 ) =>
   async function setUpdatedDatesAndType(params: Partial<ActionParams>) {
-    const type = payload.type! // We know it's not undefined
+    const type = payload.type as string | string[] // We know it's not undefined
     const {
       retrieve,
       updatedAfter,
@@ -345,7 +345,7 @@ function generateToParams(
 ): ActionParams {
   const { to, maxPerSet, setMember, alwaysSet, type }: SyncParams = payload
   return {
-    type: type!, // We know it's not undefined
+    type: type as string | string[], // We know it's not undefined
     alwaysSet,
     maxPerSet,
     setMember,

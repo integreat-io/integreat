@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import dispatch from '../tests/helpers/dispatch.js'
 
 import authenticator from './token.js'
@@ -15,7 +16,7 @@ const options = { token: 'someToken' }
 
 // Tests -- authenticate
 
-test('authenticate should return granted when token is set', async (t) => {
+test('authenticate should return granted when token is set', async () => {
   const expected = {
     status: 'granted',
     token: 'someToken',
@@ -25,10 +26,10 @@ test('authenticate should return granted when token is set', async (t) => {
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('authenticate should return first token when array of tokens is given', async (t) => {
+test('authenticate should return first token when array of tokens is given', async () => {
   const options = { token: ['someToken', 'someOtherToken'] }
   const expected = {
     status: 'granted',
@@ -39,35 +40,41 @@ test('authenticate should return first token when array of tokens is given', asy
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('authenticate should return refused when token is not set', async (t) => {
+test('authenticate should return refused when token is not set', async () => {
   const options = {}
   const expected = { status: 'refused' }
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- isAuthenticated
 
-test('isAuthenticated should return false when no authentication', (t) => {
+test('isAuthenticated should return false when no authentication', () => {
   const authentication = null
 
-  t.false(authenticator.isAuthenticated(authentication, options, action))
+  assert.equal(
+    authenticator.isAuthenticated(authentication, options, action),
+    false,
+  )
 })
 
-test('isAuthenticated should return true when authentication is granted and token is set', (t) => {
+test('isAuthenticated should return true when authentication is granted and token is set', () => {
   const authentication = { status: 'granted', token: 'someToken' }
 
-  t.true(authenticator.isAuthenticated(authentication, options, action))
+  assert.equal(
+    authenticator.isAuthenticated(authentication, options, action),
+    true,
+  )
 })
 
 // Test - validate
 
-test('validate should return response with the ident given by identId when token is given in the action headers', async (t) => {
+test('validate should return response with the ident given by identId when token is given in the action headers', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -79,17 +86,17 @@ test('validate should return response with the ident given by identId when token
   const authentication = { status: 'granted' }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return response with the ident given by identId when auth header is lowercase', async (t) => {
+test('validate should return response with the ident given by identId when auth header is lowercase', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -101,17 +108,17 @@ test('validate should return response with the ident given by identId when auth 
   const authentication = { status: 'granted' }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return response with the ident given by identId when token is given with no type', async (t) => {
+test('validate should return response with the ident given by identId when token is given with no type', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -123,17 +130,17 @@ test('validate should return response with the ident given by identId when token
   const authentication = { status: 'granted' }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return response with the ident given by identId when token match one of several possible', async (t) => {
+test('validate should return response with the ident given by identId when token match one of several possible', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -149,17 +156,17 @@ test('validate should return response with the ident given by identId when token
   const authentication = { status: 'granted' }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return autherror when wrong token is given in the action headers', async (t) => {
+test('validate should return autherror when wrong token is given in the action headers', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -175,17 +182,17 @@ test('validate should return autherror when wrong token is given in the action h
     reason: 'invalidauth',
   }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return autherror when wrong type is given in the action headers', async (t) => {
+test('validate should return autherror when wrong type is given in the action headers', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -201,17 +208,17 @@ test('validate should return autherror when wrong type is given in the action he
     reason: 'invalidauth',
   }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return autherror when no auth header is given in the action headers', async (t) => {
+test('validate should return autherror when no auth header is given in the action headers', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -227,19 +234,19 @@ test('validate should return autherror when no auth header is given in the actio
     reason: 'noauth',
   }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- asHttpHeaders
 
-test('asHttpHeaders should return auth header with token', (t) => {
+test('asHttpHeaders should return auth header with token', () => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
@@ -249,10 +256,10 @@ test('asHttpHeaders should return auth header with token', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should return auth header with given type', (t) => {
+test('asHttpHeaders should return auth header with given type', () => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
@@ -262,10 +269,10 @@ test('asHttpHeaders should return auth header with given type', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should return auth header without type', (t) => {
+test('asHttpHeaders should return auth header without type', () => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
@@ -274,10 +281,10 @@ test('asHttpHeaders should return auth header without type', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should base64 encode token when options say so', (t) => {
+test('asHttpHeaders should base64 encode token when options say so', () => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
@@ -288,18 +295,18 @@ test('asHttpHeaders should base64 encode token when options say so', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should return empty object when no token', (t) => {
+test('asHttpHeaders should return empty object when no token', () => {
   const authentication = { status: 'granted' }
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, {})
+  assert.deepEqual(ret, {})
 })
 
-test('asHttpHeaders should return empty object when not granted', (t) => {
+test('asHttpHeaders should return empty object when not granted', () => {
   const authentication = {
     status: 'refused',
     token: 'someToken',
@@ -309,12 +316,12 @@ test('asHttpHeaders should return empty object when not granted', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- asObject
 
-test('asObject should return token and type', (t) => {
+test('asObject should return token and type', () => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
@@ -324,10 +331,10 @@ test('asObject should return token and type', (t) => {
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asObject should encode token', (t) => {
+test('asObject should encode token', () => {
   const authentication = {
     status: 'granted',
     token: 'someToken',
@@ -338,10 +345,10 @@ test('asObject should encode token', (t) => {
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when not granted', (t) => {
+test('asObject should return empty object when not granted', () => {
   const authentication = {
     status: 'refused',
     token: 'someToken',
@@ -351,10 +358,10 @@ test('asObject should return empty object when not granted', (t) => {
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when no token', (t) => {
+test('asObject should return empty object when no token', () => {
   const authentication = {
     status: 'granted',
     token: null,
@@ -365,14 +372,14 @@ test('asObject should return empty object when no token', (t) => {
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when no authentication', (t) => {
+test('asObject should return empty object when no authentication', () => {
   const authentication = null
   const expected = {}
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })

@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import jsonAdapter from 'integreat-adapter-json'
 import jsonServiceDef from './tests/helpers/jsonServiceDef.js'
@@ -12,6 +13,7 @@ import {
   Action,
   HandlerDispatch,
   TypedData,
+  Transporter,
 } from './types.js'
 
 import Instance from './Instance.js'
@@ -95,7 +97,7 @@ const resourcesWithTransformer = {
 
 // Tests
 
-test('should return object with id, dispatch, on, schemas, services, identType, and queueService', (t) => {
+test('should return object with id, dispatch, on, schemas, services, identType, and queueService', () => {
   const identConfig = { type: 'account' }
   const great = new Instance(
     {
@@ -109,19 +111,19 @@ test('should return object with id, dispatch, on, schemas, services, identType, 
     resourcesWithTransformer,
   )
 
-  t.is(great.id, 'great1')
-  t.is(typeof great.dispatch, 'function')
-  t.is(typeof great.on, 'function')
-  t.truthy(great.schemas)
-  t.truthy(great.schemas.get('entry'))
-  t.truthy(great.services)
-  t.truthy(great.services.entries)
-  t.is(great.identType, 'account')
-  t.is(great.queueService, 'queue')
+  assert.equal(great.id, 'great1')
+  assert.equal(typeof great.dispatch, 'function')
+  assert.equal(typeof great.on, 'function')
+  assert.equal(!!great.schemas, true)
+  assert.equal(!!great.schemas.get('entry'), true)
+  assert.equal(!!great.services, true)
+  assert.equal(!!great.services.entries, true)
+  assert.equal(great.identType, 'account')
+  assert.equal(great.queueService, 'queue')
 })
 
-test('should throw when no services', (t) => {
-  t.throws(() => {
+test('should throw when no services', () => {
+  assert.throws(() => {
     new Instance(
       { schemas } as unknown as Definitions,
       resourcesWithTransformer,
@@ -129,8 +131,8 @@ test('should throw when no services', (t) => {
   })
 })
 
-test('should throw when no schemas', (t) => {
-  t.throws(() => {
+test('should throw when no schemas', () => {
+  assert.throws(() => {
     new Instance(
       { services } as unknown as Definitions,
       resourcesWithTransformer,
@@ -138,9 +140,11 @@ test('should throw when no schemas', (t) => {
   })
 })
 
-test('should throw when queueService is not referencing an included service', (t) => {
+test('should throw when queueService is not referencing an included service', () => {
   const identConfig = { type: 'account' }
-  const error = t.throws(() => {
+  const expectedError = { name: 'TypeError' }
+
+  assert.throws(() => {
     new Instance(
       {
         id: 'great1',
@@ -152,12 +156,10 @@ test('should throw when queueService is not referencing an included service', (t
       },
       resourcesWithTransformer,
     )
-  })
-
-  t.true(error instanceof Error)
+  }, expectedError)
 })
 
-test('should dispatch with resources', async (t) => {
+test('should dispatch with resources', async () => {
   const action = { type: 'TEST', payload: {} }
   const handler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { TEST: handler }
@@ -170,12 +172,12 @@ test('should dispatch with resources', async (t) => {
   )
   await great.dispatch(action)
 
-  t.is(handler.callCount, 1) // If the action handler was called, the action was dispatched
+  assert.equal(handler.callCount, 1) // If the action handler was called, the action was dispatched
   const resource = handler.args[0][1]
-  t.deepEqual(resource.options, expectedOptions)
+  assert.deepEqual(resource.options, expectedOptions)
 })
 
-test('should expose dispatched actions count', async (t) => {
+test('should expose dispatched actions count', async () => {
   const action = { type: 'TEST', payload: {} }
   const handler = async function testHandler() {
     await new Promise((resolve) => setTimeout(resolve, 100, undefined))
@@ -195,23 +197,23 @@ test('should expose dispatched actions count', async (t) => {
   const count2 = great.dispatchedCount
   const p = great.dispatch(action)
 
-  t.is(count0, 0)
-  t.is(count1, 1)
-  t.is(count2, 2)
+  assert.equal(count0, 0)
+  assert.equal(count1, 1)
+  assert.equal(count2, 2)
   await p
-  t.is(great.dispatchedCount, 0)
+  assert.equal(great.dispatchedCount, 0)
 })
 
-test('should dispatch with builtin action handler', async (t) => {
+test('should dispatch with builtin action handler', async () => {
   const send = sinon.stub().resolves({ status: 'ok', data: '[]' })
   const resourcesWithTransAndSend = {
     ...resourcesWithTransformer,
     transporters: {
       ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTransformer.transporters!.http,
+        ...resourcesWithTransformer.transporters?.http,
         send,
-      },
+      } as Transporter,
     },
   }
   const action = { type: 'GET', payload: { type: 'entry' } }
@@ -222,10 +224,10 @@ test('should dispatch with builtin action handler', async (t) => {
   )
   await great.dispatch(action)
 
-  t.is(send.callCount, 1) // If the send method was called, the GET action was dispatched
+  assert.equal(send.callCount, 1) // If the send method was called, the GET action was dispatched
 })
 
-test('should use adapters', async (t) => {
+test('should use adapters', async () => {
   const send = sinon
     .stub()
     .resolves({ status: 'ok', data: '[{"key":"ent1","headline":"Entry 1"}]' })
@@ -240,9 +242,9 @@ test('should use adapters', async (t) => {
     transporters: {
       ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTransformer.transporters!.http,
+        ...resourcesWithTransformer.transporters?.http,
         send,
-      },
+      } as Transporter,
     },
     adapters: {
       json: jsonAdapter,
@@ -256,15 +258,15 @@ test('should use adapters', async (t) => {
   )
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok', ret.error)
   const data = ret.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'ent1')
-  t.is(data[0].title, 'Entry 1!')
-  t.is(data[0].$type, 'entry')
+  assert.equal(data.length, 1)
+  assert.equal(data[0].id, 'ent1')
+  assert.equal(data[0].title, 'Entry 1!')
+  assert.equal(data[0].$type, 'entry')
 })
 
-test('should set adapter id', async (t) => {
+test('should set adapter id', async () => {
   const send = sinon
     .stub()
     .resolves({ status: 'ok', data: '[{"key":"ent1","headline":"Entry 1"}]' })
@@ -280,9 +282,9 @@ test('should set adapter id', async (t) => {
     transporters: {
       ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTransformer.transporters!.http,
+        ...resourcesWithTransformer.transporters?.http,
         send,
-      },
+      } as Transporter,
     },
     adapters: {
       json: {
@@ -311,34 +313,33 @@ test('should set adapter id', async (t) => {
   )
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.true(ret.params?.setByPrepare)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.params?.setByPrepare, true)
 })
 
-test('should throw when trying to use an unknown transporter', async (t) => {
+test('should throw when trying to use an unknown transporter', async () => {
   const servicesWithUnknownTransporter = [
     {
       ...services[0],
       transporter: 'unknown',
     },
   ]
+  const expectedError = {
+    name: 'TypeError',
+    message: "Service 'entries' references unknown transporter 'unknown'",
+  }
 
-  const error = t.throws(
+  assert.throws(
     () =>
       new Instance(
         { services: servicesWithUnknownTransporter, schemas, mutations },
         resourcesWithTransformer,
       ),
-  )
-
-  t.true(error instanceof Error)
-  t.is(
-    error?.message,
-    "Service 'entries' references unknown transporter 'unknown'",
+    expectedError,
   )
 })
 
-test('should call middleware', async (t) => {
+test('should call middleware', async () => {
   const action = { type: 'TEST', payload: {} }
   const otherAction = sinon.stub().resolves({ status: 'ok' })
   const handlers = {
@@ -360,11 +361,11 @@ test('should call middleware', async (t) => {
   )
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(otherAction.callCount, 1) // If other action handler was called, middleware changed action
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(otherAction.callCount, 1) // If other action handler was called, middleware changed action
 })
 
-test('should mutate data', async (t) => {
+test('should mutate data', async () => {
   const data0 = {
     key: 'ent1',
     headline: 'Entry 1',
@@ -377,13 +378,13 @@ test('should mutate data', async (t) => {
     transporters: {
       ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTransformer.transporters!.http,
+        ...resourcesWithTransformer.transporters?.http,
         send: async (action: Action) => ({
           ...action.response,
           status: 'ok',
           data: JSON.stringify([data0]),
         }),
-      },
+      } as Transporter,
     },
   }
 
@@ -399,18 +400,18 @@ test('should mutate data', async (t) => {
   )
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok', ret.error)
   const data = ret.data as Record<string, unknown>[]
-  t.is(data.length, 1)
+  assert.equal(data.length, 1)
   const item = data[0]
-  t.is(item.id, 'ent1')
-  t.is(item.title, 'Entry 1!')
-  t.is(item.text, 'The first article')
-  t.deepEqual(item.sections, ['news'])
-  t.deepEqual(item.createdAt, new Date('2019-10-11T18:43:00Z'))
+  assert.equal(item.id, 'ent1')
+  assert.equal(item.title, 'Entry 1!')
+  assert.equal(item.text, 'The first article')
+  assert.deepEqual(item.sections, ['news'])
+  assert.deepEqual(item.createdAt, new Date('2019-10-11T18:43:00Z'))
 })
 
-test('should use provided nonvalues', async (t) => {
+test('should use provided nonvalues', async () => {
   const nonvalues = [null, undefined]
   const data0 = {
     key: 'ent1',
@@ -423,13 +424,13 @@ test('should use provided nonvalues', async (t) => {
     transporters: {
       ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTransformer.transporters!.http,
+        ...resourcesWithTransformer.transporters?.http,
         send: async (action: Action) => ({
           ...action.response,
           status: 'ok',
           data: JSON.stringify([data0]),
         }),
-      },
+      } as Transporter,
     },
   }
 
@@ -445,26 +446,26 @@ test('should use provided nonvalues', async (t) => {
   )
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok', ret.error)
   const item = (ret.data as Record<string, unknown>[])[0]
-  t.is(item.id, 'ent1')
-  t.is(item.text, '')
+  assert.equal(item.id, 'ent1')
+  assert.equal(item.text, '')
 })
 
-test('should provided map-transform', async (t) => {
+test('should provided map-transform', async () => {
   const mockMapTransform = () => async (data: unknown) => data // Don't transform anything
   const resourcesWithMapTransform = {
     ...resourcesWithTransformer,
     transporters: {
       ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTransformer.transporters!.http,
+        ...resourcesWithTransformer.transporters?.http,
         send: async (action: Action) => ({
           ...action.response,
           status: 'ok',
           data: JSON.stringify({ id: 'ent1' }),
         }),
-      },
+      } as Transporter,
     },
     mapTransform: mockMapTransform,
   }
@@ -481,11 +482,11 @@ test('should provided map-transform', async (t) => {
   )
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(ret.data, undefined) // When we get `undefined`, we know nothing was transformed, i.e. our map-transform mock was used
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.data, undefined) // When we get `undefined`, we know nothing was transformed, i.e. our map-transform mock was used
 })
 
-test('should dispatch scheduled', async (t) => {
+test('should dispatch scheduled', async () => {
   const queueStub = sinon.stub().resolves({ status: 'queued' })
   const handlers = { [QUEUE_SYMBOL]: queueStub }
   const jobs = [
@@ -519,10 +520,10 @@ test('should dispatch scheduled', async (t) => {
   )
   const ret = await great.dispatchScheduled(fromDate, toDate)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should generate id when job def is missing one', async (t) => {
+test('should generate id when job def is missing one', async () => {
   const queueStub = sinon.stub().resolves({ status: 'queued' })
   const handlers = { [QUEUE_SYMBOL]: queueStub }
   const jobs = [
@@ -541,13 +542,13 @@ test('should generate id when job def is missing one', async (t) => {
   )
   const ret = await great.dispatchScheduled(fromDate, toDate)
 
-  t.is(ret.length, 1)
-  t.is(ret[0].type, 'RUN')
-  t.is(typeof ret[0].payload.jobId, 'string')
-  t.is((ret[0].payload.jobId as string).length, 21)
+  assert.equal(ret.length, 1)
+  assert.equal(ret[0].type, 'RUN')
+  assert.equal(typeof ret[0].payload.jobId, 'string')
+  assert.equal((ret[0].payload.jobId as string).length, 21)
 })
 
-test('should skip jobs without schedule', async (t) => {
+test('should skip jobs without schedule', async () => {
   const jobs = [{ id: 'someAction', action: { type: 'TEST', payload: {} } }]
   const fromDate = new Date('2021-05-11T14:32Z')
   const toDate = new Date('2021-05-11T14:59Z')
@@ -558,10 +559,10 @@ test('should skip jobs without schedule', async (t) => {
   )
   const ret = await great.dispatchScheduled(fromDate, toDate)
 
-  t.deepEqual(ret, [])
+  assert.deepEqual(ret, [])
 })
 
-test('should set up RUN handler with jobs', async (t) => {
+test('should set up RUN handler with jobs', async () => {
   const handler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { TEST: handler }
   const jobs = [
@@ -591,17 +592,17 @@ test('should set up RUN handler with jobs', async (t) => {
   )
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(handler.callCount, 1)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(handler.callCount, 1)
   const dispatchedAction = handler.args[0][0]
-  t.is(dispatchedAction.type, 'TEST')
-  t.deepEqual(dispatchedAction.payload, { timestamp: nowDate })
-  t.deepEqual(dispatchedAction.meta.ident, { id: 'johnf' })
-  t.is(dispatchedAction.meta.cid, '23456')
-  t.is(dispatchedAction.meta.jobId, 'theJob')
+  assert.equal(dispatchedAction.type, 'TEST')
+  assert.deepEqual(dispatchedAction.payload, { timestamp: nowDate })
+  assert.deepEqual(dispatchedAction.meta.ident, { id: 'johnf' })
+  assert.equal(dispatchedAction.meta.cid, '23456')
+  assert.equal(dispatchedAction.meta.jobId, 'theJob')
 })
 
-test('should use auth', async (t) => {
+test('should use auth', async () => {
   const authenticators = {
     mock: {
       authenticate: async (options: Record<string, unknown> | null) => ({
@@ -617,9 +618,9 @@ test('should use auth', async (t) => {
     transporters: {
       ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTransformer.transporters!.http,
+        ...resourcesWithTransformer.transporters?.http,
         send: async () => ({ status: 'ok', data: '[]' }),
-      },
+      } as Transporter,
     },
   }
   const authServices = [
@@ -647,10 +648,10 @@ test('should use auth', async (t) => {
   )
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'noaccess', ret.error)
+  assert.equal(ret.status, 'noaccess', ret.error)
 })
 
-test('should set id on authenticators', async (t) => {
+test('should set id on authenticators', async () => {
   const dispatchMock = sinon.stub().resolves({ status: 'ok' })
   const authenticators = {
     mock: {
@@ -669,14 +670,14 @@ test('should set id on authenticators', async (t) => {
     transporters: {
       ...resourcesWithTransformer.transporters,
       http: {
-        ...resourcesWithTransformer.transporters!.http,
+        ...resourcesWithTransformer.transporters?.http,
         send: async () => ({ status: 'ok', data: '[]' }),
         shouldListen: () => true,
         listen: async (_dispatch, _connect, authenticate) => {
           return await authenticate({ status: 'granted' }, action)
           // We return auth response right away, as we know it will fail
         },
-      },
+      } as Transporter,
     },
   }
   const authServices = [
@@ -699,14 +700,14 @@ test('should set id on authenticators', async (t) => {
   )
   const ret = await great.services.entries.listen(dispatchMock)
 
-  t.is(ret.status, 'autherror', ret.error)
-  t.is(
+  assert.equal(ret.status, 'autherror', ret.error)
+  assert.equal(
     ret.error,
     "Could not authenticate. Authenticator 'mock' doesn't support validation", // The fact that we get `'mock'` here means that the authenticator id was set
   )
 })
 
-test('should throw when trying to use an unknown authenticator', async (t) => {
+test('should throw when trying to use an unknown authenticator', async () => {
   const authServices = [
     {
       ...services[0],
@@ -720,45 +721,45 @@ test('should throw when trying to use an unknown authenticator', async (t) => {
       options: {},
     },
   ]
+  const expectedError = {
+    name: 'Error',
+    message:
+      "Auth config 'mauth' references an unknown authenticator id 'unknown'",
+  }
 
-  const error = t.throws(
+  assert.throws(
     () =>
       new Instance(
         { services: authServices, schemas, mutations, auths },
         resourcesWithTransformer,
       ),
-  )
-
-  t.true(error instanceof Error)
-  t.is(
-    error?.message,
-    "Auth config 'mauth' references an unknown authenticator id 'unknown'",
+    expectedError,
   )
 })
 
-test('should have listen method', async (t) => {
+test('should have listen method', async () => {
   const great = new Instance(
     { services, schemas, mutations },
     resourcesWithTransformer,
   )
 
-  t.is(typeof great.listen, 'function')
+  assert.equal(typeof great.listen, 'function')
 })
 
-test('should have stopListening method', async (t) => {
+test('should have stopListening method', async () => {
   const great = new Instance(
     { services, schemas, mutations },
     resourcesWithTransformer,
   )
 
-  t.is(typeof great.stopListening, 'function')
+  assert.equal(typeof great.stopListening, 'function')
 })
 
-test('should have close method', async (t) => {
+test('should have close method', async () => {
   const great = new Instance(
     { services, schemas, mutations },
     resourcesWithTransformer,
   )
 
-  t.is(typeof great.close, 'function')
+  assert.equal(typeof great.close, 'function')
 })

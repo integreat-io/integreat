@@ -50,7 +50,7 @@ const prepareParams = (ident: Ident, keys: PropKeys): IdentParams | null =>
   ident.id
     ? { [keys.id]: ident.id }
     : ident.withToken
-      ? { [keys.tokens!]: ident.withToken } // If we get here, the tokens key is a string
+      ? { [keys.tokens as string]: ident.withToken } // If we get here, the tokens key is a string
       : null
 
 const wrapOk = (action: Action, data: unknown, ident: Ident): Response => ({

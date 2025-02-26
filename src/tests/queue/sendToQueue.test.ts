@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import { isAuthorizedAction } from '../../service/utils/authAction.js'
 import defs from '../helpers/defs/index.js'
@@ -48,7 +49,7 @@ const entry1Item = {
 
 // Tests
 
-test('should send action to queue', async (t) => {
+test('should send action to queue', async () => {
   const send = sinon.stub().resolves({ status: 'ok' })
   const resourcesWithQueue = {
     ...resources,
@@ -71,23 +72,23 @@ test('should send action to queue', async (t) => {
   const ret = await great.dispatch(action)
   const after = Date.now()
 
-  t.is(ret.status, 'queued', ret.error)
-  t.is(send.callCount, 1)
+  assert.equal(ret.status, 'queued', ret.error)
+  assert.equal(send.callCount, 1)
   const queuedAction = send.args[0][0]
-  t.is(queuedAction.type, 'SET')
-  t.deepEqual(queuedAction.payload, action.payload)
-  t.deepEqual(queuedAction.meta.ident, { id: 'johnf' })
-  t.true(isAuthorizedAction(queuedAction))
-  t.true(queuedAction.meta.queue)
-  t.is(queuedAction.meta.id, '11004')
-  t.is(queuedAction.meta.cid, '11004')
-  t.is(queuedAction.meta.gid, '11003')
-  t.is(typeof queuedAction.meta?.queuedAt, 'number')
-  t.true((queuedAction.meta?.queuedAt as number) >= before)
-  t.true((queuedAction.meta?.queuedAt as number) <= after)
+  assert.equal(queuedAction.type, 'SET')
+  assert.deepEqual(queuedAction.payload, action.payload)
+  assert.deepEqual(queuedAction.meta.ident, { id: 'johnf' })
+  assert.equal(isAuthorizedAction(queuedAction), true)
+  assert.equal(queuedAction.meta.queue, true)
+  assert.equal(queuedAction.meta.id, '11004')
+  assert.equal(queuedAction.meta.cid, '11004')
+  assert.equal(queuedAction.meta.gid, '11003')
+  assert.equal(typeof queuedAction.meta?.queuedAt, 'number')
+  assert.equal((queuedAction.meta?.queuedAt as number) >= before, true)
+  assert.equal((queuedAction.meta?.queuedAt as number) <= after, true)
 })
 
-test('should send action to queue when queue flag is set in incoming request mutation', async (t) => {
+test('should send action to queue when queue flag is set in incoming request mutation', async () => {
   const send = sinon.stub().resolves({ status: 'ok' })
   const resourcesWithQueue = {
     ...resources,
@@ -108,11 +109,11 @@ test('should send action to queue when queue flag is set in incoming request mut
   const great = Integreat.create(defsWithQueue, resourcesWithQueue)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'queued', ret.error)
-  t.is(send.callCount, 1)
+  assert.equal(ret.status, 'queued', ret.error)
+  assert.equal(send.callCount, 1)
 })
 
-test('should dispatch action as normal when queue service is unknown', async (t) => {
+test('should dispatch action as normal when queue service is unknown', async () => {
   const action = {
     type: 'SET',
     payload: { type: 'entry', data: entry1Item },
@@ -122,5 +123,5 @@ test('should dispatch action as normal when queue service is unknown', async (t)
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'noaccess', ret.error) // `noaccess` means we have reached the `entries` service
+  assert.equal(ret.status, 'noaccess', ret.error) // `noaccess` means we have reached the `entries` service
 })

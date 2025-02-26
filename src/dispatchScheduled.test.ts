@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import mapTransform from 'map-transform'
 import Job from './jobs/Job.js'
@@ -29,7 +30,7 @@ const mapOptions = {}
 
 // Tests
 
-test('should dispatch actions scheduled within a time period', async (t) => {
+test('should dispatch actions scheduled within a time period', async () => {
   const dispatch = sinon.stub().resolves({ status: 'queued' })
   const jobs = [
     new Job(
@@ -59,13 +60,13 @@ test('should dispatch actions scheduled within a time period', async (t) => {
 
   const ret = await dispatchScheduled(dispatch, jobs)(fromDate, toDate)
 
-  t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expectedAction1)
-  t.deepEqual(dispatch.args[1][0], expectedAction3)
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 2)
+  assert.deepEqual(dispatch.args[0][0], expectedAction1)
+  assert.deepEqual(dispatch.args[1][0], expectedAction3)
+  assert.deepEqual(ret, expected)
 })
 
-test('should do nothing when none is scheduled within period', async (t) => {
+test('should do nothing when none is scheduled within period', async () => {
   const dispatch = sinon.stub().resolves({ status: 'queued' })
   const jobs = [
     new Job({ cron: '55 * * * *', action: action1 }, mapTransform, mapOptions),
@@ -77,11 +78,11 @@ test('should do nothing when none is scheduled within period', async (t) => {
 
   const ret = await dispatchScheduled(dispatch, jobs)(fromDate, toDate)
 
-  t.is(dispatch.callCount, 0)
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 0)
+  assert.deepEqual(ret, expected)
 })
 
-test('should do nothing when no schedules', async (t) => {
+test('should do nothing when no schedules', async () => {
   const dispatch = sinon.stub().resolves({ status: 'queued' })
   const jobs: Job[] = []
   const fromDate = new Date('2021-05-11T11:03Z')
@@ -90,11 +91,11 @@ test('should do nothing when no schedules', async (t) => {
 
   const ret = await dispatchScheduled(dispatch, jobs)(fromDate, toDate)
 
-  t.is(dispatch.callCount, 0)
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 0)
+  assert.deepEqual(ret, expected)
 })
 
-test('should skip schedule without cron string or action', async (t) => {
+test('should skip schedule without cron string or action', async () => {
   const dispatch = sinon.stub().resolves({ status: 'queued' })
   const jobs = [
     new Job({ id: 'action1', action: action1 }, mapTransform, mapOptions),
@@ -112,12 +113,12 @@ test('should skip schedule without cron string or action', async (t) => {
 
   const ret = await dispatchScheduled(dispatch, jobs)(fromDate, toDate)
 
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedActon2)
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0], expectedActon2)
+  assert.deepEqual(ret, expected)
 })
 
-test('should return array of error responses', async (t) => {
+test('should return array of error responses', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'queued' })
@@ -156,6 +157,6 @@ test('should return array of error responses', async (t) => {
 
   const ret = await dispatchScheduled(dispatch, jobs)(fromDate, toDate)
 
-  t.is(dispatch.callCount, 3)
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 3)
+  assert.deepEqual(ret, expected)
 })

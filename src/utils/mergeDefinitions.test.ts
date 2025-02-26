@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import type { Definitions } from '../types.js'
 
 import mergeDefinitions from './mergeDefinitions.js'
@@ -106,7 +107,7 @@ const job2 = {
 
 // Tests
 
-test('should merge three definitions', (t) => {
+test('should merge three definitions', () => {
   const def1 = {
     id: 'dontUse',
     auths: [entriesAuth],
@@ -158,10 +159,10 @@ test('should merge three definitions', (t) => {
 
   const ret = mergeDefinitions(def1, def2, def3)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should merge flags so that true trumps all else', (t) => {
+test('should merge flags so that true trumps all else', () => {
   const def1 = {
     auths: [entriesAuth],
     schemas: [entrySchema],
@@ -190,10 +191,10 @@ test('should merge flags so that true trumps all else', (t) => {
 
   const ret = mergeDefinitions(def1, def2)
 
-  t.deepEqual(ret.flags, expectedFlags)
+  assert.deepEqual(ret.flags, expectedFlags)
 })
 
-test('should merge breakByDefault as failOnErrorInPostconditions', (t) => {
+test('should merge breakByDefault as failOnErrorInPostconditions', () => {
   const def1 = {
     auths: [entriesAuth],
     schemas: [entrySchema],
@@ -222,10 +223,10 @@ test('should merge breakByDefault as failOnErrorInPostconditions', (t) => {
 
   const ret = mergeDefinitions(def1, def2)
 
-  t.deepEqual(ret.flags, expectedFlags)
+  assert.deepEqual(ret.flags, expectedFlags)
 })
 
-test('should disregard empty definition', (t) => {
+test('should disregard empty definition', () => {
   const def1 = {
     auths: [entriesAuth],
     schemas: [entrySchema],
@@ -247,5 +248,5 @@ test('should disregard empty definition', (t) => {
 
   const ret = mergeDefinitions(def1, def2 as unknown as Partial<Definitions>)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })

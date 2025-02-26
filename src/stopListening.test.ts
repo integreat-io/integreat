@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import type Service from './service/Service.js'
 
@@ -8,7 +9,7 @@ import stopListening from './stopListening.js'
 
 // Tests
 
-test('should stop listening to all services that supports listening', async (t) => {
+test('should stop listening to all services that supports listening', async () => {
   const stopListening0 = sinon.stub().resolves({ status: 'ok' })
   const stopListening1 = sinon.stub().resolves({ status: 'ok' })
   const services = [
@@ -19,12 +20,12 @@ test('should stop listening to all services that supports listening', async (t) 
 
   const ret = await stopListening(services)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(stopListening0.callCount, 1)
-  t.is(stopListening1.callCount, 1)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(stopListening0.callCount, 1)
+  assert.equal(stopListening1.callCount, 1)
 })
 
-test('should return errors from individual services', async (t) => {
+test('should return errors from individual services', async () => {
   const stopListening0 = sinon.stub().resolves({ status: 'ok' })
   const stopListening1 = sinon
     .stub()
@@ -44,7 +45,7 @@ test('should return errors from individual services', async (t) => {
 
   const ret = await stopListening(services)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(stopListening0.callCount, 1)
-  t.is(stopListening1.callCount, 1)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(stopListening0.callCount, 1)
+  assert.equal(stopListening1.callCount, 1)
 })

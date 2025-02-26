@@ -35,9 +35,9 @@ export const breakSymbol = Symbol('break')
 
 type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType[number]
 
-export interface Validator {
-  (actionResponses: Record<string, Action>): Promise<[Response | null, boolean]>
-}
+export type Validator = (
+  actionResponses: Record<string, Action>,
+) => Promise<[Response | null, boolean]>
 
 export interface ResponsesObject extends Record<string, Action> {
   [breakSymbol]?: boolean
@@ -58,7 +58,7 @@ const adjustPrevalidationResponse = ({
   message
     ? isOkResponse(response)
       ? { ...response, warning: message }
-      : { ...response, error: message }
+      : { ...(response as Response), error: message }
     : response
 
 const setOkStatusOnErrorResponse = ({
@@ -72,7 +72,7 @@ const setOkStatusOnErrorResponse = ({
 })
 
 const ensureOkResponse = (response?: Response): Response =>
-  isOkResponse(response) ? response! : setOkStatusOnErrorResponse(response)
+  isOkResponse(response) ? response : setOkStatusOnErrorResponse(response)
 
 const removeError = ({ error, ...response }: Response) => response
 

@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import mapTransform from 'map-transform'
 import httpTransporter from 'integreat-transporter-http'
@@ -110,7 +111,7 @@ const resources = { services, schemas, options, actionIds, emit }
 
 // Tests
 
-test('should route to relevant action handler', async (t) => {
+test('should route to relevant action handler', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -131,10 +132,10 @@ test('should route to relevant action handler', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should route action with queue flag to queue handler', async (t) => {
+test('should route action with queue flag to queue handler', async () => {
   const options = { queueService: 'queue' }
   const action = {
     type: 'SET',
@@ -156,14 +157,14 @@ test('should route action with queue flag to queue handler', async (t) => {
 
   const ret = await dispatch({ ...resources, options, handlers })(action)
 
-  t.is(ret.status, 'queued')
-  t.is(setHandler.callCount, 0)
-  t.is(queueHandler.callCount, 1)
+  assert.equal(ret.status, 'queued')
+  assert.equal(setHandler.callCount, 0)
+  assert.equal(queueHandler.callCount, 1)
   const handlerAction = queueHandler.args[0][0]
-  t.true(handlerAction.meta?.queue)
+  assert.equal(handlerAction.meta?.queue, true)
 })
 
-test('should route action with queue timestamp to queue handler', async (t) => {
+test('should route action with queue timestamp to queue handler', async () => {
   const options = { queueService: 'queue' }
   const action = {
     type: 'SET',
@@ -185,14 +186,14 @@ test('should route action with queue timestamp to queue handler', async (t) => {
 
   const ret = await dispatch({ ...resources, options, handlers })(action)
 
-  t.is(ret.status, 'queued')
-  t.is(setHandler.callCount, 0)
-  t.is(queueHandler.callCount, 1)
+  assert.equal(ret.status, 'queued')
+  assert.equal(setHandler.callCount, 0)
+  assert.equal(queueHandler.callCount, 1)
   const handlerAction = queueHandler.args[0][0]
-  t.is(handlerAction.meta?.queue, 1708201154626)
+  assert.equal(handlerAction.meta?.queue, 1708201154626)
 })
 
-test('should not route to queue handler when no queue service', async (t) => {
+test('should not route to queue handler when no queue service', async () => {
   const options = { queueService: undefined }
   const action = {
     type: 'SET',
@@ -214,14 +215,14 @@ test('should not route to queue handler when no queue service', async (t) => {
 
   const ret = await dispatch({ ...resources, options, handlers })(action)
 
-  t.is(ret.status, 'ok')
-  t.is(queueHandler.callCount, 0)
-  t.is(setHandler.callCount, 1)
+  assert.equal(ret.status, 'ok')
+  assert.equal(queueHandler.callCount, 0)
+  assert.equal(setHandler.callCount, 1)
   const handlerAction = setHandler.args[0][0]
-  t.falsy(handlerAction.meta?.queue)
+  assert.equal(!!handlerAction.meta?.queue, false)
 })
 
-test('should not route to queue handler when queue service is configured with an unknown service', async (t) => {
+test('should not route to queue handler when queue service is configured with an unknown service', async () => {
   const options = { queueService: 'unknown' }
   const action = {
     type: 'SET',
@@ -246,13 +247,13 @@ test('should not route to queue handler when queue service is configured with an
 
   const ret = await dispatch({ ...resources, options, handlers })(action)
 
-  t.is(ret.status, 'error')
-  t.is(ret.error, "Could not queue to unknown service 'unknown'")
-  t.is(queueHandler.callCount, 1)
-  t.is(setHandler.callCount, 0)
+  assert.equal(ret.status, 'error')
+  assert.equal(ret.error, "Could not queue to unknown service 'unknown'")
+  assert.equal(queueHandler.callCount, 1)
+  assert.equal(setHandler.callCount, 0)
 })
 
-test('should set dispatchedAt meta', async (t) => {
+test('should set dispatchedAt meta', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -273,15 +274,15 @@ test('should set dispatchedAt meta', async (t) => {
   const ret = await dispatch({ ...resources, handlers })(action)
   const after = Date.now()
 
-  t.is(ret.status, 'ok')
-  t.is(getSpy.callCount, 1)
+  assert.equal(ret.status, 'ok')
+  assert.equal(getSpy.callCount, 1)
   const calledAction = getSpy.args[0][0] as Action
-  t.is(typeof calledAction.meta?.dispatchedAt, 'number')
-  t.true((calledAction.meta?.dispatchedAt as number) >= before)
-  t.true((calledAction.meta?.dispatchedAt as number) <= after)
+  assert.equal(typeof calledAction.meta?.dispatchedAt, 'number')
+  assert.equal((calledAction.meta?.dispatchedAt as number) >= before, true)
+  assert.equal((calledAction.meta?.dispatchedAt as number) <= after, true)
 })
 
-test('should override any present dispatchedAt meta', async (t) => {
+test('should override any present dispatchedAt meta', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -303,15 +304,15 @@ test('should override any present dispatchedAt meta', async (t) => {
   const ret = await dispatch({ ...resources, handlers })(action)
   const after = Date.now()
 
-  t.is(ret.status, 'ok')
-  t.is(getSpy.callCount, 1)
+  assert.equal(ret.status, 'ok')
+  assert.equal(getSpy.callCount, 1)
   const calledAction = getSpy.args[0][0] as Action
-  t.is(typeof calledAction.meta?.dispatchedAt, 'number')
-  t.true((calledAction.meta?.dispatchedAt as number) >= before)
-  t.true((calledAction.meta?.dispatchedAt as number) <= after)
+  assert.equal(typeof calledAction.meta?.dispatchedAt, 'number')
+  assert.equal((calledAction.meta?.dispatchedAt as number) >= before, true)
+  assert.equal((calledAction.meta?.dispatchedAt as number) <= after, true)
 })
 
-test('should remove auth object in meta if set', async (t) => {
+test('should remove auth object in meta if set', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -331,13 +332,13 @@ test('should remove auth object in meta if set', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.is(ret.status, 'ok')
-  t.is(getSpy.callCount, 1)
+  assert.equal(ret.status, 'ok')
+  assert.equal(getSpy.callCount, 1)
   const calledAction = getSpy.args[0][0] as Action
-  t.is(calledAction.meta?.auth, undefined)
+  assert.equal(calledAction.meta?.auth, undefined)
 })
 
-test('should set id and cid in meta when not already set', async (t) => {
+test('should set id and cid in meta when not already set', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -356,14 +357,14 @@ test('should set id and cid in meta when not already set', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.is(ret.status, 'ok')
-  t.is(getSpy.callCount, 1)
+  assert.equal(ret.status, 'ok')
+  assert.equal(getSpy.callCount, 1)
   const calledAction = getSpy.args[0][0] as Action
-  t.is(typeof calledAction.meta?.id, 'string')
-  t.is(calledAction.meta?.cid, calledAction.meta?.id)
+  assert.equal(typeof calledAction.meta?.id, 'string')
+  assert.equal(calledAction.meta?.cid, calledAction.meta?.id)
 })
 
-test('should not touch id and cid from action', async (t) => {
+test('should not touch id and cid from action', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -383,14 +384,14 @@ test('should not touch id and cid from action', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.is(ret.status, 'ok')
-  t.is(getSpy.callCount, 1)
+  assert.equal(ret.status, 'ok')
+  assert.equal(getSpy.callCount, 1)
   const calledAction = getSpy.args[0][0] as Action
-  t.is(calledAction.meta?.id, '11004')
-  t.is(calledAction.meta?.cid, '11005')
+  assert.equal(calledAction.meta?.id, '11004')
+  assert.equal(calledAction.meta?.cid, '11005')
 })
 
-test('should set cid to same value as id when not already set', async (t) => {
+test('should set cid to same value as id when not already set', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -410,14 +411,14 @@ test('should set cid to same value as id when not already set', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.is(ret.status, 'ok')
-  t.is(getSpy.callCount, 1)
+  assert.equal(ret.status, 'ok')
+  assert.equal(getSpy.callCount, 1)
   const calledAction = getSpy.args[0][0] as Action
-  t.is(calledAction.meta?.id, '11004')
-  t.is(calledAction.meta?.cid, '11004')
+  assert.equal(calledAction.meta?.id, '11004')
+  assert.equal(calledAction.meta?.cid, '11004')
 })
 
-test('should add action id to list of dispatched actions and remove it when done', async (t) => {
+test('should add action id to list of dispatched actions and remove it when done', async () => {
   const actionIds = new Set<string>()
   const action = {
     type: 'GET',
@@ -437,11 +438,11 @@ test('should add action id to list of dispatched actions and remove it when done
 
   const p = dispatch({ ...resources, handlers, actionIds })(action)
 
-  t.true(actionIds.has('action1')) // Should have id while action is running
+  assert.equal(actionIds.has('action1'), true) // Should have id while action is running
   await p
-  t.false(actionIds.has('action1')) // Id is removed when action is done
+  assert.equal(actionIds.has('action1'), false) // Id is removed when action is done
 })
-test('should emit done event when we clear the last action id', async (t) => {
+test('should emit done event when we clear the last action id', async () => {
   const emit = sinon.stub()
   const actionIds = new Set<string>()
   const action = (index: number) => ({
@@ -474,14 +475,14 @@ test('should emit done event when we clear the last action id', async (t) => {
   await p1
   await p2
 
-  t.is(callCount0, 0)
-  t.is(callCount1, 0)
-  t.is(callCount2, 0)
-  t.is(emit.callCount, 1)
-  t.is(emit.args[0][0], 'done')
+  assert.equal(callCount0, 0)
+  assert.equal(callCount1, 0)
+  assert.equal(callCount2, 0)
+  assert.equal(emit.callCount, 1)
+  assert.equal(emit.args[0][0], 'done')
 })
 
-test('should map payload property service to targetService', async (t) => {
+test('should map payload property service to targetService', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -499,11 +500,11 @@ test('should map payload property service to targetService', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
 })
 
-test('should set origin when handler return error response with no origin', async (t) => {
+test('should set origin when handler return error response with no origin', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -525,10 +526,10 @@ test('should set origin when handler return error response with no origin', asyn
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should return status noaction when no action', async (t) => {
+test('should return status noaction when no action', async () => {
   const action = null
   const handlers = {}
   const expected = {
@@ -539,10 +540,10 @@ test('should return status noaction when no action', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should return badrequest when unknown action', async (t) => {
+test('should return badrequest when unknown action', async () => {
   const action = { type: 'UNKNOWN', payload: {} }
   const services = {}
   const handlers = {}
@@ -554,10 +555,10 @@ test('should return badrequest when unknown action', async (t) => {
   }
   const ret = await dispatch({ ...resources, services, handlers })(action)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should call action handler with action, dispatch, getService, and options', async (t) => {
+test('should call action handler with action, dispatch, getService, and options', async () => {
   const getHandler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { GET: getHandler }
   const services = {}
@@ -572,20 +573,20 @@ test('should call action handler with action, dispatch, getService, and options'
 
   await dispatch({ ...resources, services, schemas, options, handlers })(action)
 
-  t.is(getHandler.callCount, 1)
+  assert.equal(getHandler.callCount, 1)
   const dispatchedAction = getHandler.args[0][0]
-  t.is(dispatchedAction.type, 'GET')
-  t.deepEqual(dispatchedAction.payload, {})
-  t.deepEqual(dispatchedAction.meta.ident, ident)
-  t.is(dispatchedAction.meta.id, '11004')
-  t.is(dispatchedAction.meta.cid, '11004')
+  assert.equal(dispatchedAction.type, 'GET')
+  assert.deepEqual(dispatchedAction.payload, {})
+  assert.deepEqual(dispatchedAction.meta.ident, ident)
+  assert.equal(dispatchedAction.meta.id, '11004')
+  assert.equal(dispatchedAction.meta.cid, '11004')
   const passedResources = getHandler.args[0][1]
-  t.is(typeof passedResources.dispatch, 'function')
-  t.is(typeof passedResources.getService, 'function')
-  t.is(passedResources.options, options)
+  assert.equal(typeof passedResources.dispatch, 'function')
+  assert.equal(typeof passedResources.getService, 'function')
+  assert.equal(passedResources.options, options)
 })
 
-test('should call middleware', async (t) => {
+test('should call middleware', async () => {
   const action = { type: 'TEST', payload: {} }
   const handlers = {
     TEST: async () => ({ status: 'fromAction' }),
@@ -602,10 +603,10 @@ test('should call middleware', async (t) => {
   ]
   const ret = await dispatch({ ...resources, handlers, middleware })(action)
 
-  t.is(ret.status, '<(fromAction)>')
+  assert.equal(ret.status, '<(fromAction)>')
 })
 
-test('should call middleware before queueing', async (t) => {
+test('should call middleware before queueing', async () => {
   const action = { type: 'TEST', payload: {}, meta: { queue: true } }
   const queueHandler = sinon.stub().resolves({ status: 'queued' })
   const handlers = {
@@ -627,10 +628,10 @@ test('should call middleware before queueing', async (t) => {
     action,
   )
 
-  t.is(ret.status, '<(queued)>')
+  assert.equal(ret.status, '<(queued)>')
 })
 
-test('should allow middleware to abort middleware chain', async (t) => {
+test('should allow middleware to abort middleware chain', async () => {
   const action = { type: 'TEST', payload: {} }
   const handler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { TEST: handler }
@@ -645,11 +646,11 @@ test('should allow middleware to abort middleware chain', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers, middleware })(action)
 
-  t.deepEqual(ret, expected)
-  t.is(handler.callCount, 0)
+  assert.deepEqual(ret, expected)
+  assert.equal(handler.callCount, 0)
 })
 
-test('should dispatch to middleware from action handlers', async (t) => {
+test('should dispatch to middleware from action handlers', async () => {
   const action = { type: 'DISPATCHER', payload: {}, meta: {} }
   const handlers: Record<string, ActionHandler> = {
     TEST: async () => ({ status: 'fromAction' }),
@@ -665,10 +666,10 @@ test('should dispatch to middleware from action handlers', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers, middleware })(action)
 
-  t.is(ret.status, '<<fromAction>>')
+  assert.equal(ret.status, '<<fromAction>>')
 })
 
-test('should complete ident', async (t) => {
+test('should complete ident', async () => {
   const getHandler = sinon.stub().resolves({ status: 'ok' })
   const getIdentHandler = sinon.stub().resolves({
     status: 'ok',
@@ -693,16 +694,16 @@ test('should complete ident', async (t) => {
     handlers,
   })(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(getIdentHandler.callCount, 1)
-  t.is(getHandler.callCount, 1)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(getIdentHandler.callCount, 1)
+  assert.equal(getHandler.callCount, 1)
   const dispatchedAction = getHandler.args[0][0]
-  t.is(dispatchedAction.type, 'GET')
-  t.deepEqual(dispatchedAction.payload, {})
-  t.deepEqual(dispatchedAction.meta.ident, expectedIdent)
+  assert.equal(dispatchedAction.type, 'GET')
+  assert.deepEqual(dispatchedAction.payload, {})
+  assert.deepEqual(dispatchedAction.meta.ident, expectedIdent)
 })
 
-test('should not complete an already completed ident', async (t) => {
+test('should not complete an already completed ident', async () => {
   const getHandler = sinon.stub().resolves({ status: 'ok' })
   const getIdentHandler = sinon.stub().resolves({
     status: 'ok',
@@ -731,14 +732,14 @@ test('should not complete an already completed ident', async (t) => {
     handlers,
   })(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(getIdentHandler.callCount, 0)
-  t.is(getHandler.callCount, 1)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(getIdentHandler.callCount, 0)
+  assert.equal(getHandler.callCount, 1)
   const dispatchedAction = getHandler.args[0][0]
-  t.deepEqual(dispatchedAction.meta.ident, expectedIdent)
+  assert.deepEqual(dispatchedAction.meta.ident, expectedIdent)
 })
 
-test('should pass on error response from complete ident', async (t) => {
+test('should pass on error response from complete ident', async () => {
   const getHandler = sinon.stub().resolves({ status: 'ok' })
   const getIdentHandler = sinon.stub().resolves({
     status: 'notfound',
@@ -763,10 +764,10 @@ test('should pass on error response from complete ident', async (t) => {
     handlers,
   })(action)
 
-  t.is(ret.status, 'noaccess', ret.error)
+  assert.equal(ret.status, 'noaccess', ret.error)
 })
 
-test('should support progress reporting', async (t) => {
+test('should support progress reporting', async () => {
   const progressStub = sinon.stub()
   const action = {
     type: 'GET',
@@ -787,13 +788,13 @@ test('should support progress reporting', async (t) => {
   p.onProgress(progressStub)
   const ret = await p
 
-  t.is(ret.status, 'ok')
-  t.is(progressStub.callCount, 2)
-  t.is(progressStub.args[0][0], 0.5)
-  t.is(progressStub.args[1][0], 1)
+  assert.equal(ret.status, 'ok')
+  assert.equal(progressStub.callCount, 2)
+  assert.equal(progressStub.args[0][0], 0.5)
+  assert.equal(progressStub.args[1][0], 1)
 })
 
-test('should mutate incoming from source service', async (t) => {
+test('should mutate incoming from source service', async () => {
   const getHandler = sinon.stub().resolves({
     status: 'ok',
     data: [{ id: 'ent1', $type: 'entry', title: 'Entry 1' }],
@@ -827,14 +828,14 @@ test('should mutate incoming from source service', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.is(getHandler.callCount, 1)
+  assert.equal(getHandler.callCount, 1)
   const calledAction = getHandler.args[0][0] as Action
-  t.deepEqual(calledAction.meta?.options, expectedActionOptions)
-  t.deepEqual(calledAction.payload, expectedActionPayload)
-  t.deepEqual(ret, expectedResponse)
+  assert.deepEqual(calledAction.meta?.options, expectedActionOptions)
+  assert.deepEqual(calledAction.payload, expectedActionPayload)
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('should use queue timestamp from mutate incoming action', async (t) => {
+test('should use queue timestamp from mutate incoming action', async () => {
   const options = { queueService: 'queue' }
   const queueHandler = sinon.stub().resolves({ status: 'queued' })
   const handlers = { [QUEUE_SYMBOL]: queueHandler }
@@ -851,12 +852,12 @@ test('should use queue timestamp from mutate incoming action', async (t) => {
 
   await dispatch({ ...resources, options, handlers })(action)
 
-  t.is(queueHandler.callCount, 1)
+  assert.equal(queueHandler.callCount, 1)
   const calledAction = queueHandler.args[0][0] as Action
-  t.is(calledAction.meta?.queue, 1708201154626)
+  assert.equal(calledAction.meta?.queue, 1708201154626)
 })
 
-test('should validate incoming action with source service endpoint', async (t) => {
+test('should validate incoming action with source service endpoint', async () => {
   const getHandler = sinon.stub().resolves({
     status: 'ok',
     data: [{ id: 'ent1', $type: 'entry', title: 'Entry 1' }],
@@ -883,11 +884,11 @@ test('should validate incoming action with source service endpoint', async (t) =
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.is(getHandler.callCount, 0) // Return right away
-  t.deepEqual(ret, expectedResponse)
+  assert.equal(getHandler.callCount, 0) // Return right away
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('should return error when source service is not found', async (t) => {
+test('should return error when source service is not found', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -909,10 +910,10 @@ test('should return error when source service is not found', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should return error when no endoint on source service matches', async (t) => {
+test('should return error when no endoint on source service matches', async () => {
   const action = {
     type: 'GET',
     payload: {
@@ -933,10 +934,10 @@ test('should return error when no endoint on source service matches', async (t) 
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should return error instead of throwing', async (t) => {
+test('should return error instead of throwing', async () => {
   const action = { type: 'TEST', payload: {}, meta: { ident: { id: 'johnf' } } }
   const handlers = {
     TEST: async () => ({ status: 'fromAction' }),
@@ -955,5 +956,5 @@ test('should return error instead of throwing', async (t) => {
 
   const ret = await dispatch({ ...resources, handlers, middleware })(action)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })

@@ -28,9 +28,10 @@ import type {
   PreparedOptions,
 } from './types.js'
 
-export interface PrepareOptions {
-  (options: ServiceOptions, serviceId: string): ServiceOptions
-}
+export type PrepareOptions = (
+  options: ServiceOptions,
+  serviceId: string,
+) => ServiceOptions
 
 const prepareMatch = ({ scope, ...match }: MatchObject) =>
   scope === 'all' || !scope ? match : { scope, ...match }

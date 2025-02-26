@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import Schema from '../../schema/Schema.js'
 import { IdentType } from '../../types.js'
 import type { SchemaDef } from '../../schema/types.js'
@@ -15,7 +16,7 @@ schemas.set('user', new Schema({ id: 'user', access: { role: 'admin' } }))
 
 // Tests
 
-test('should grant request when no type', (t) => {
+test('should grant request when no type', () => {
   const action = {
     type: 'GET',
     payload: { service: 'entries' },
@@ -24,13 +25,13 @@ test('should grant request when no type', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
-  t.is(ret.type, action.type)
-  t.deepEqual(ret.payload, action.payload)
-  t.deepEqual(ret.meta?.ident, action.meta.ident)
+  assert.equal(isAuthorizedAction(ret), true)
+  assert.equal(ret.type, action.type)
+  assert.deepEqual(ret.payload, action.payload)
+  assert.deepEqual(ret.meta?.ident, action.meta.ident)
 })
 
-test('should grant request when authorized and schema allows all', (t) => {
+test('should grant request when authorized and schema allows all', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry', access: 'all' }))
   const action = {
@@ -41,10 +42,10 @@ test('should grant request when authorized and schema allows all', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse request when schema allows none', (t) => {
+test('should refuse request when schema allows none', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry', access: 'none' }))
   const action = {
@@ -61,11 +62,11 @@ test('should refuse request when schema allows none', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should refuse request when schema has no access method', (t) => {
+test('should refuse request when schema has no access method', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry' }))
   const action = {
@@ -82,11 +83,11 @@ test('should refuse request when schema has no access method', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant request when schema has an identFromField method', (t) => {
+test('should grant request when schema has an identFromField method', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -100,10 +101,10 @@ test('should grant request when schema has an identFromField method', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse request when schema has an identFromField method but no ident', (t) => {
+test('should refuse request when schema has an identFromField method but no ident', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -123,11 +124,11 @@ test('should refuse request when schema has an identFromField method but no iden
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant request when schema has a roleFromField method', (t) => {
+test('should grant request when schema has a roleFromField method', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -141,10 +142,10 @@ test('should grant request when schema has a roleFromField method', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse request when schema has an roleFromField method but no ident', (t) => {
+test('should refuse request when schema has an roleFromField method but no ident', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -164,11 +165,11 @@ test('should refuse request when schema has an roleFromField method but no ident
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should not override existing error', (t) => {
+test('should not override existing error', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry', access: 'none' }))
   const action = {
@@ -184,11 +185,11 @@ test('should not override existing error', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, action.response)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, action.response)
 })
 
-test('should override ok status', (t) => {
+test('should override ok status', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry', access: 'none' }))
   const action = {
@@ -206,11 +207,11 @@ test('should override ok status', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant reqest for action without auth', (t) => {
+test('should grant reqest for action without auth', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry' }))
   const requireAuth = false
@@ -221,10 +222,10 @@ test('should grant reqest for action without auth', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse request for specified auth even when auth is not required', (t) => {
+test('should refuse request for specified auth even when auth is not required', () => {
   const requireAuth = false
   const action = {
     type: 'GET',
@@ -239,11 +240,11 @@ test('should refuse request for specified auth even when auth is not required', 
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant request with ident when schema requires auth', (t) => {
+test('should grant request with ident when schema requires auth', () => {
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -252,10 +253,10 @@ test('should grant request with ident when schema requires auth', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse request without ident when schema requires authentication', (t) => {
+test('should refuse request without ident when schema requires authentication', () => {
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -269,11 +270,11 @@ test('should refuse request without ident when schema requires authentication', 
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should refuse request with empty ident id when schema requires authentication', (t) => {
+test('should refuse request with empty ident id when schema requires authentication', () => {
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -288,12 +289,12 @@ test('should refuse request with empty ident id when schema requires authenticat
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.meta?.ident, { id: '' })
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.meta?.ident, { id: '' })
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should refuse request when type does not match a schema', (t) => {
+test('should refuse request when type does not match a schema', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry' }))
   const action = {
@@ -310,11 +311,11 @@ test('should refuse request when type does not match a schema', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should refuse with allow prop on access object', (t) => {
+test('should refuse with allow prop on access object', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry', access: { allow: 'none' } }))
   const action = {
@@ -331,11 +332,11 @@ test('should refuse with allow prop on access object', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should refuse for unknown allow prop', (t) => {
+test('should refuse for unknown allow prop', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -355,11 +356,11 @@ test('should refuse for unknown allow prop', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant by role', (t) => {
+test('should grant by role', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry', access: { role: 'admin' } }))
   const action = {
@@ -369,10 +370,10 @@ test('should grant by role', (t) => {
   }
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse by role', (t) => {
+test('should refuse by role', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry', access: { role: 'admin' } }))
   const action = {
@@ -389,11 +390,11 @@ test('should refuse by role', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant by role array', (t) => {
+test('should grant by role array', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -410,10 +411,10 @@ test('should grant by role array', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse by role array', (t) => {
+test('should refuse by role array', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -436,11 +437,11 @@ test('should refuse by role array', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant by ident', (t) => {
+test('should grant by ident', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry', access: { ident: 'ident1' } }))
   const action = {
@@ -451,10 +452,10 @@ test('should grant by ident', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse by ident', (t) => {
+test('should refuse by ident', () => {
   const schemas = new Map()
   schemas.set('entry', new Schema({ id: 'entry', access: { ident: 'ident1' } }))
   const action = {
@@ -471,11 +472,11 @@ test('should refuse by ident', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should refuse by ident array', (t) => {
+test('should refuse by ident array', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -498,11 +499,11 @@ test('should refuse by ident array', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant by ident, even when refused by role', (t) => {
+test('should grant by ident, even when refused by role', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -516,10 +517,10 @@ test('should grant by ident, even when refused by role', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should grant by role, even when refused by ident', (t) => {
+test('should grant by role, even when refused by ident', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -533,10 +534,10 @@ test('should grant by role, even when refused by ident', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should grant for identFromField, even when refused by role', (t) => {
+test('should grant for identFromField, even when refused by role', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -553,10 +554,10 @@ test('should grant for identFromField, even when refused by role', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should grant for roleFromField, even when refused by ident', (t) => {
+test('should grant for roleFromField, even when refused by ident', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -573,10 +574,10 @@ test('should grant for roleFromField, even when refused by ident', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse for unknown access prop', (t) => {
+test('should refuse for unknown access prop', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -599,11 +600,11 @@ test('should refuse for unknown access prop', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant by action access', (t) => {
+test('should grant by action access', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -620,10 +621,10 @@ test('should grant by action access', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should grant by action access with short form and using action prefix', (t) => {
+test('should grant by action access with short form and using action prefix', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -640,10 +641,10 @@ test('should grant by action access with short form and using action prefix', (t
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse by action access', (t) => {
+test('should refuse by action access', () => {
   const schemas = new Map()
   schemas.set(
     'entry',
@@ -666,11 +667,11 @@ test('should refuse by action access', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant with several types', (t) => {
+test('should grant with several types', () => {
   const action = {
     type: 'GET',
     payload: { type: ['entry', 'user'] },
@@ -679,10 +680,10 @@ test('should grant with several types', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should refuse with several types', (t) => {
+test('should refuse with several types', () => {
   const action = {
     type: 'GET',
     payload: { type: ['entry', 'user'] },
@@ -697,11 +698,11 @@ test('should refuse with several types', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('should grant request for root', (t) => {
+test('should grant request for root', () => {
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -710,10 +711,10 @@ test('should grant request for root', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('should grant request for root with obsolete root flag', (t) => {
+test('should grant request for root with obsolete root flag', () => {
   const action = {
     type: 'GET',
     payload: { type: 'entry' },
@@ -722,7 +723,7 @@ test('should grant request for root with obsolete root flag', (t) => {
 
   const ret = authorizeAction(schemas, requireAuth)(action)
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
 test.todo('should grant unset allow when auth is not required')

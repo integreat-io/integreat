@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import { IdentType } from '../types.js'
 
@@ -15,7 +16,7 @@ const action = {
 
 // Tests -- authenticate
 
-test('authenticate should dispatch action and return response data as authentication', async (t) => {
+test('authenticate should dispatch action and return response data as authentication', async () => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     data: { auth: { token: 't0k3n' }, expire: 1715959020000 },
@@ -44,12 +45,12 @@ test('authenticate should dispatch action and return response data as authentica
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedAuthAction)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0], expectedAuthAction)
 })
 
-test('authenticate should dispatch with anonymous when no action is proviced', async (t) => {
+test('authenticate should dispatch with anonymous when no action is proviced', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: { auth: { token: 't0k3n' } } })
@@ -63,12 +64,12 @@ test('authenticate should dispatch with anonymous when no action is proviced', a
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedAuthAction)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0], expectedAuthAction)
 })
 
-test('authenticate should return authentication without expire', async (t) => {
+test('authenticate should return authentication without expire', async () => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     data: { auth: { token: 't0k3n' } }, // No expire
@@ -80,11 +81,11 @@ test('authenticate should return authentication without expire', async (t) => {
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
 })
 
-test('authenticate should use default expire when none is returned in the data', async (t) => {
+test('authenticate should use default expire when none is returned in the data', async () => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     data: { auth: { token: 't0k3n' } }, // No expire
@@ -99,14 +100,14 @@ test('authenticate should use default expire when none is returned in the data',
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   const after = Date.now()
-  t.is(ret.status, 'granted')
-  t.is(typeof ret.expire, 'number')
-  t.true(ret.expire! >= before + 3600000)
-  t.true(ret.expire! <= after + 3600000)
-  t.is(dispatch.callCount, 1)
+  assert.equal(ret.status, 'granted')
+  assert.equal(typeof ret.expire, 'number')
+  assert.equal((ret.expire as number) >= before + 3600000, true)
+  assert.equal((ret.expire as number) <= after + 3600000, true)
+  assert.equal(dispatch.callCount, 1)
 })
 
-test('authenticate should use default expire as ms string when none is returned in the data', async (t) => {
+test('authenticate should use default expire as ms string when none is returned in the data', async () => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     data: { auth: { token: 't0k3n' } }, // No expire
@@ -121,14 +122,14 @@ test('authenticate should use default expire as ms string when none is returned 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
   const after = Date.now()
-  t.is(ret.status, 'granted')
-  t.is(typeof ret.expire, 'number')
-  t.true(ret.expire! >= before + 3600000)
-  t.true(ret.expire! <= after + 3600000)
-  t.is(dispatch.callCount, 1)
+  assert.equal(ret.status, 'granted')
+  assert.equal(typeof ret.expire, 'number')
+  assert.equal((ret.expire as number) >= before + 3600000, true)
+  assert.equal((ret.expire as number) <= after + 3600000, true)
+  assert.equal(dispatch.callCount, 1)
 })
 
-test('authenticate should return authentication with empty auth', async (t) => {
+test('authenticate should return authentication with empty auth', async () => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     data: { expire: 1715959020000 }, // No auth
@@ -141,11 +142,11 @@ test('authenticate should return authentication with empty auth', async (t) => {
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
 })
 
-test('authenticate should refuse when dispatch responds with no data', async (t) => {
+test('authenticate should refuse when dispatch responds with no data', async () => {
   const dispatch = sinon.stub().resolves({ status: 'ok' }) // No data
   const expected = {
     status: 'refused',
@@ -154,11 +155,11 @@ test('authenticate should refuse when dispatch responds with no data', async (t)
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
 })
 
-test('authenticate should refuse when dispatch responds with invalid auth data', async (t) => {
+test('authenticate should refuse when dispatch responds with invalid auth data', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: { auth: 'What?' } }) // Invalid auth data
@@ -169,11 +170,11 @@ test('authenticate should refuse when dispatch responds with invalid auth data',
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
 })
 
-test('authenticate should refuse when dispatch responds with error', async (t) => {
+test('authenticate should refuse when dispatch responds with error', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'timeout', error: 'Too slow' })
@@ -184,11 +185,11 @@ test('authenticate should refuse when dispatch responds with error', async (t) =
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
 })
 
-test('authenticate should refuse when not a valid action', async (t) => {
+test('authenticate should refuse when not a valid action', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: { auth: { token: 't0k3n' } } })
@@ -200,53 +201,68 @@ test('authenticate should refuse when not a valid action', async (t) => {
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 0)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 0)
 })
 
 // Tests -- isAuthenticated
 
-test('isAuthenticated should return true when authentication is granted and auth is set', (t) => {
+test('isAuthenticated should return true when authentication is granted and auth is set', () => {
   const authentication = { status: 'granted', auth: { token: 't0k3n' } }
 
-  t.true(authenticator.isAuthenticated(authentication, options, action))
+  assert.equal(
+    authenticator.isAuthenticated(authentication, options, action),
+    true,
+  )
 })
 
-test('isAuthenticated should return true even when auth is object is null', (t) => {
+test('isAuthenticated should return true even when auth is object is null', () => {
   const authentication = { status: 'granted', auth: null }
 
-  t.true(authenticator.isAuthenticated(authentication, options, action))
+  assert.equal(
+    authenticator.isAuthenticated(authentication, options, action),
+    true,
+  )
 })
 
-test('isAuthenticated should return true when expire is in the future', (t) => {
+test('isAuthenticated should return true when expire is in the future', () => {
   const authentication = {
     status: 'granted',
     auth: { token: 't0k3n' },
     expire: Date.now() + 3600000,
   }
 
-  t.true(authenticator.isAuthenticated(authentication, options, action))
+  assert.equal(
+    authenticator.isAuthenticated(authentication, options, action),
+    true,
+  )
 })
 
-test('isAuthenticated should return false when expire is in the past', (t) => {
+test('isAuthenticated should return false when expire is in the past', () => {
   const authentication = {
     status: 'granted',
     auth: { token: 't0k3n' },
     expire: Date.now() - 3600000,
   }
 
-  t.false(authenticator.isAuthenticated(authentication, options, action))
+  assert.equal(
+    authenticator.isAuthenticated(authentication, options, action),
+    false,
+  )
 })
 
-test('isAuthenticated should return false when no authentication', (t) => {
+test('isAuthenticated should return false when no authentication', () => {
   const authentication = null
 
-  t.false(authenticator.isAuthenticated(authentication, options, action))
+  assert.equal(
+    authenticator.isAuthenticated(authentication, options, action),
+    false,
+  )
 })
 
 // Tests -- asObject
 
-test('asObject should return auth object', (t) => {
+test('asObject should return auth object', () => {
   const authentication = {
     status: 'granted',
     auth: { token: 't0k3n' },
@@ -255,10 +271,10 @@ test('asObject should return auth object', (t) => {
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when not granted', (t) => {
+test('asObject should return empty object when not granted', () => {
   const authentication = {
     status: 'refused',
     auth: { token: 't0k3n' },
@@ -267,10 +283,10 @@ test('asObject should return empty object when not granted', (t) => {
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when no auth object', (t) => {
+test('asObject should return empty object when no auth object', () => {
   const authentication = {
     status: 'granted',
     auth: null,
@@ -279,10 +295,10 @@ test('asObject should return empty object when no auth object', (t) => {
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when expired', (t) => {
+test('asObject should return empty object when expired', () => {
   const authentication = {
     status: 'granted',
     auth: { token: 't0k3n' },
@@ -292,21 +308,21 @@ test('asObject should return empty object when expired', (t) => {
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when no authentication', (t) => {
+test('asObject should return empty object when no authentication', () => {
   const authentication = null
   const expected = {}
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- asHttpHeaders
 
-test('asHttpHeaders should return auth object', (t) => {
+test('asHttpHeaders should return auth object', () => {
   const authentication = {
     status: 'granted',
     auth: { Authorization: 't0k3n' },
@@ -315,10 +331,10 @@ test('asHttpHeaders should return auth object', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should return empty object when not granted', (t) => {
+test('asHttpHeaders should return empty object when not granted', () => {
   const authentication = {
     status: 'refused',
     auth: { Authorization: 't0k3n' },
@@ -327,10 +343,10 @@ test('asHttpHeaders should return empty object when not granted', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should return empty object when no auth object', (t) => {
+test('asHttpHeaders should return empty object when no auth object', () => {
   const authentication = {
     status: 'granted',
     auth: null,
@@ -339,10 +355,10 @@ test('asHttpHeaders should return empty object when no auth object', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should return empty object when expired', (t) => {
+test('asHttpHeaders should return empty object when expired', () => {
   const authentication = {
     status: 'granted',
     auth: { token: 't0k3n' },
@@ -352,14 +368,14 @@ test('asHttpHeaders should return empty object when expired', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should return empty object when no authentication', (t) => {
+test('asHttpHeaders should return empty object when no authentication', () => {
   const authentication = null
   const expected = {}
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })

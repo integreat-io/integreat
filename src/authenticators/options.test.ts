@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import dispatch from '../tests/helpers/dispatch.js'
 
 import authenticator from './options.js'
@@ -20,17 +21,17 @@ const authentication = { status: 'granted' }
 
 // Tests - authenticate
 
-test('authenticate should always grant and return options', async (t) => {
+test('authenticate should always grant and return options', async () => {
   const expected = { status: 'granted', username: 'bill', password: 'secret' }
 
   const ret = await authenticator.authenticate(options, action, dispatch, null)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests - isAuthenticated
 
-test('isAuthenticated should return true when granted', (t) => {
+test('isAuthenticated should return true when granted', () => {
   const authentication = {
     status: 'granted',
     username: 'bill',
@@ -39,10 +40,10 @@ test('isAuthenticated should return true when granted', (t) => {
 
   const ret = authenticator.isAuthenticated(authentication, options, action)
 
-  t.true(ret)
+  assert.equal(ret, true)
 })
 
-test('isAuthenticated should return false when not granted', (t) => {
+test('isAuthenticated should return false when not granted', () => {
   const authentication = {
     status: 'refused',
     username: 'bill',
@@ -51,20 +52,20 @@ test('isAuthenticated should return false when not granted', (t) => {
 
   const ret = authenticator.isAuthenticated(authentication, options, action)
 
-  t.false(ret)
+  assert.equal(ret, false)
 })
 
-test('isAuthenticated should return false when no authentication', (t) => {
+test('isAuthenticated should return false when no authentication', () => {
   const authentication = null
 
   const ret = authenticator.isAuthenticated(authentication, options, action)
 
-  t.false(ret)
+  assert.equal(ret, false)
 })
 
 // Test - validate
 
-test('validate should return response with the ident given by identId when all options are found in the provided action', async (t) => {
+test('validate should return response with the ident given by identId when all options are found in the provided action', async () => {
   const options = {
     identId: 'johnf',
     'payload.headers.X-API-Key': 't0k3n',
@@ -72,17 +73,17 @@ test('validate should return response with the ident given by identId when all o
   }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return response with the ident when one value in an array in options match', async (t) => {
+test('validate should return response with the ident when one value in an array in options match', async () => {
   const options = {
     identId: 'johnf',
     'payload.headers.X-API-Key': 't0k3n',
@@ -90,31 +91,31 @@ test('validate should return response with the ident when one value in an array 
   }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return response with the ident when options has no props to match', async (t) => {
+test('validate should return response with the ident when options has no props to match', async () => {
   const options = { identId: 'johnf' }
   const expected = { status: 'ok', access: { ident: { id: 'johnf' } } }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return autherror error when some options are found, but their values does not match', async (t) => {
+test('validate should return autherror error when some options are found, but their values does not match', async () => {
   const options = {
     identId: 'johnf',
     'payload.headers.X-API-Key': '0th3r',
@@ -126,17 +127,17 @@ test('validate should return autherror error when some options are found, but th
     reason: 'invalidauth',
   }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return autherror error when none of the options in an array match', async (t) => {
+test('validate should return autherror error when none of the options in an array match', async () => {
   const options = {
     identId: 'johnf',
     'payload.headers.X-API-Key': ['0th3r', '1th3r'],
@@ -147,17 +148,17 @@ test('validate should return autherror error when none of the options in an arra
     reason: 'invalidauth',
   }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return noaccess error when none of the options are found in the provided action', async (t) => {
+test('validate should return noaccess error when none of the options are found in the provided action', async () => {
   const options = { identId: 'johnf', 'payload.headers.Other-Key': 't0k3n' }
   const expected = {
     status: 'noaccess',
@@ -165,17 +166,17 @@ test('validate should return noaccess error when none of the options are found i
     reason: 'noauth',
   }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('validate should return noaccess error when no authentication or action are provided', async (t) => {
+test('validate should return noaccess error when no authentication or action are provided', async () => {
   const options = { identId: 'johnf', 'payload.headers.X-API-Key': 't0k3n' }
   const authentication = null
   const action = null
@@ -185,19 +186,19 @@ test('validate should return noaccess error when no authentication or action are
     reason: 'noauth',
   }
 
-  const ret = await authenticator.validate!(
+  const ret = await authenticator.validate?.(
     authentication,
     options,
     action,
     dispatch,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests - asHttpHeaders
 
-test('asHttpHeaders should return the options object', (t) => {
+test('asHttpHeaders should return the options object', () => {
   const authentication = {
     status: 'granted',
     'X-API-Key': 't0k3n',
@@ -206,10 +207,10 @@ test('asHttpHeaders should return the options object', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asHttpHeaders should return empty object when not granted', (t) => {
+test('asHttpHeaders should return empty object when not granted', () => {
   const authentication = {
     status: 'refused',
     'X-API-Key': 't0k3n',
@@ -218,12 +219,12 @@ test('asHttpHeaders should return empty object when not granted', (t) => {
 
   const ret = authenticator.authentication.asHttpHeaders(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests - asObject
 
-test('asObject should return the options object', (t) => {
+test('asObject should return the options object', () => {
   const authentication = {
     status: 'granted',
     username: 'bill',
@@ -233,10 +234,10 @@ test('asObject should return the options object', (t) => {
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('asObject should return empty object when not granted', (t) => {
+test('asObject should return empty object when not granted', () => {
   const authentication = {
     status: 'refused',
     username: 'bill',
@@ -246,5 +247,5 @@ test('asObject should return empty object when not granted', (t) => {
 
   const ret = authenticator.authentication.asObject(authentication)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })

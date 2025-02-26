@@ -22,9 +22,7 @@ export interface IdentConfig {
   completeIdent?: boolean
 }
 
-export interface ActionMapper {
-  (action: Action): Action
-}
+export type ActionMapper = (action: Action) => Action
 
 export type AuthOptions = Record<string, unknown>
 

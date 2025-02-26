@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import httpTransporter from 'integreat-transporter-http'
 import type { Transporter } from '../types.js'
@@ -16,7 +17,7 @@ const emit = () => undefined
 
 // Tests
 
-test('should call transporter connect method and return true', async (t) => {
+test('should call transporter connect method and return true', async () => {
   const connect = sinon.stub().resolves({ status: 'ok' })
   const transporter = {
     ...httpTransporter,
@@ -27,14 +28,14 @@ test('should call transporter connect method and return true', async (t) => {
   const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
-  t.is(connect.callCount, 1)
-  t.deepEqual(connect.args[0][0], expectedOptions)
-  t.deepEqual(connect.args[0][1], auth)
-  t.is(connect.args[0][2], null)
-  t.true(ret)
+  assert.equal(connect.callCount, 1)
+  assert.deepEqual(connect.args[0][0], expectedOptions)
+  assert.deepEqual(connect.args[0][1], auth)
+  assert.equal(connect.args[0][2], null)
+  assert.equal(ret, true)
 })
 
-test('should call transporter connect method with previous connection', async (t) => {
+test('should call transporter connect method with previous connection', async () => {
   const serviceConnection = { status: 'ok' }
   const connect = sinon.stub().resolves(serviceConnection)
   const transporter = {
@@ -46,12 +47,12 @@ test('should call transporter connect method with previous connection', async (t
   await connection.connect(auth)
   await connection.connect(auth)
 
-  t.is(connect.callCount, 2)
-  t.is(connect.args[0][2], null)
-  t.is(connect.args[1][2], serviceConnection)
+  assert.equal(connect.callCount, 2)
+  assert.equal(connect.args[0][2], null)
+  assert.equal(connect.args[1][2], serviceConnection)
 })
 
-test('should return false when connection fails', async (t) => {
+test('should return false when connection fails', async () => {
   const connect = sinon.stub().resolves({ status: 'error', error: 'Failure!' })
   const transporter = {
     ...httpTransporter,
@@ -61,11 +62,11 @@ test('should return false when connection fails', async (t) => {
   const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
-  t.is(connect.callCount, 1)
-  t.false(ret)
+  assert.equal(connect.callCount, 1)
+  assert.equal(ret, false)
 })
 
-test('should return true when connection status is noaction', async (t) => {
+test('should return true when connection status is noaction', async () => {
   const transporter = {
     ...httpTransporter,
     connect: async () => ({ status: 'noaction' }),
@@ -74,10 +75,10 @@ test('should return true when connection status is noaction', async (t) => {
   const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
-  t.true(ret)
+  assert.equal(ret, true)
 })
 
-test('should return true when service returns null', async (t) => {
+test('should return true when service returns null', async () => {
   const transporter = {
     ...httpTransporter,
     connect: async () => null,
@@ -86,19 +87,19 @@ test('should return true when service returns null', async (t) => {
   const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
-  t.true(ret)
+  assert.equal(ret, true)
 })
 
-test('should return true when service has no connect method', async (t) => {
+test('should return true when service has no connect method', async () => {
   const transporter = {} as unknown as Transporter
 
   const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
-  t.true(ret)
+  assert.equal(ret, true)
 })
 
-test('should call transporter connect method with null after connection failure', async (t) => {
+test('should call transporter connect method with null after connection failure', async () => {
   const connect = sinon.stub().resolves({ status: 'error', error: 'Failure!' })
   const transporter = {
     ...httpTransporter,
@@ -109,12 +110,12 @@ test('should call transporter connect method with null after connection failure'
   await connection.connect(auth)
   await connection.connect(auth)
 
-  t.is(connect.callCount, 2)
-  t.is(connect.args[0][2], null)
-  t.is(connect.args[1][2], null)
+  assert.equal(connect.callCount, 2)
+  assert.equal(connect.args[0][2], null)
+  assert.equal(connect.args[1][2], null)
 })
 
-test('should get connection status and error', async (t) => {
+test('should get connection status and error', async () => {
   const transporter = {
     ...httpTransporter,
     connect: async () => ({
@@ -127,11 +128,11 @@ test('should get connection status and error', async (t) => {
   const connection = new Connection(transporter, options, emit)
   await connection.connect(auth)
 
-  t.is(connection.status, 'error')
-  t.is(connection.error, 'Failure!')
+  assert.equal(connection.status, 'error')
+  assert.equal(connection.error, 'Failure!')
 })
 
-test('should get null for error when no error', async (t) => {
+test('should get null for error when no error', async () => {
   const transporter = {
     ...httpTransporter,
     connect: async () => ({
@@ -143,11 +144,11 @@ test('should get null for error when no error', async (t) => {
   const connection = new Connection(transporter, options, emit)
   await connection.connect(auth)
 
-  t.is(connection.status, 'ok')
-  t.is(connection.error, null)
+  assert.equal(connection.status, 'ok')
+  assert.equal(connection.error, null)
 })
 
-test('should get null for status when no connection', async (t) => {
+test('should get null for status when no connection', async () => {
   const transporter = {
     ...httpTransporter,
     connect: async () => ({
@@ -158,11 +159,11 @@ test('should get null for status when no connection', async (t) => {
 
   const connection = new Connection(transporter, options, emit)
 
-  t.is(connection.status, null)
-  t.is(connection.error, null)
+  assert.equal(connection.status, null)
+  assert.equal(connection.error, null)
 })
 
-test('should get service connection object', async (t) => {
+test('should get service connection object', async () => {
   const serviceConnection = { status: 'ok', internalStuff: {} }
   const transporter = {
     ...httpTransporter,
@@ -172,10 +173,10 @@ test('should get service connection object', async (t) => {
   const connection = new Connection(transporter, options, emit)
   await connection.connect(auth)
 
-  t.deepEqual(connection.object, serviceConnection)
+  assert.deepEqual(connection.object, serviceConnection)
 })
 
-test('should call transporter disconnect with connection object and remove local object', async (t) => {
+test('should call transporter disconnect with connection object and remove local object', async () => {
   const serviceConnection = { status: 'ok', internalStuff: {} }
   const disconnect = sinon.stub().resolves(undefined)
   const transporter = {
@@ -188,12 +189,12 @@ test('should call transporter disconnect with connection object and remove local
   await connection.connect(auth)
   await connection.disconnect()
 
-  t.is(disconnect.callCount, 1)
-  t.deepEqual(disconnect.args[0][0], serviceConnection)
-  t.is(connection.object, null)
+  assert.equal(disconnect.callCount, 1)
+  assert.deepEqual(disconnect.args[0][0], serviceConnection)
+  assert.equal(connection.object, null)
 })
 
-test('should just remove local object when transporter has no disconnect method', async (t) => {
+test('should just remove local object when transporter has no disconnect method', async () => {
   const serviceConnection = { status: 'ok', internalStuff: {} }
   const transporter = {
     connect: async () => serviceConnection,
@@ -203,10 +204,10 @@ test('should just remove local object when transporter has no disconnect method'
   await connection.connect(auth)
   await connection.disconnect()
 
-  t.is(connection.object, null)
+  assert.equal(connection.object, null)
 })
 
-test('should provide connect method with an emitter method', async (t) => {
+test('should provide connect method with an emitter method', async () => {
   const emit = sinon.stub()
   const transporter: Transporter = {
     ...httpTransporter,
@@ -219,8 +220,8 @@ test('should provide connect method with an emitter method', async (t) => {
   const connection = new Connection(transporter, options, emit)
   const ret = await connection.connect(auth)
 
-  t.is(emit.callCount, 1)
-  t.is(emit.args[0][0], 'error')
-  t.deepEqual(emit.args[0][1], new Error('We failed'))
-  t.true(ret)
+  assert.equal(emit.callCount, 1)
+  assert.equal(emit.args[0][0], 'error')
+  assert.deepEqual(emit.args[0][1], new Error('We failed'))
+  assert.equal(ret, true)
 })

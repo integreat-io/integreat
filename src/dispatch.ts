@@ -242,7 +242,7 @@ export default function createDispatch({
 
       // Clean up action and set id
       let cleanedUpAction = cleanUpActionAndSetIds(originalAction)
-      const actionId = cleanedUpAction.meta!.id as string // This is a string
+      const actionId = cleanedUpAction.meta?.id as string // This is a string
       actionIds.add(actionId) // Add action id to list of running actions
 
       if (shouldCompleteIdent(cleanedUpAction, options)) {

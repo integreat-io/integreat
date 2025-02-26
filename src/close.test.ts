@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import type Service from './service/Service.js'
 import type { Action } from './types.js'
@@ -21,7 +22,7 @@ const serviceMethods = {
 
 // Tests
 
-test('should close all services', async (t) => {
+test('should close all services', async () => {
   const closeStub1 = sinon.stub().resolves({ status: 'ok' })
   const closeStub2 = sinon.stub().resolves({ status: 'ok' })
   const services = [
@@ -40,12 +41,12 @@ test('should close all services', async (t) => {
 
   const ret = await close(services)
 
-  t.deepEqual(ret, expected)
-  t.is(closeStub1.callCount, 1)
-  t.is(closeStub2.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(closeStub1.callCount, 1)
+  assert.equal(closeStub2.callCount, 1)
 })
 
-test('should return error when services failed to close', async (t) => {
+test('should return error when services failed to close', async () => {
   const closeStub1 = sinon
     .stub()
     .resolves({ status: 'timeout', error: 'Took too long' })
@@ -78,8 +79,8 @@ test('should return error when services failed to close', async (t) => {
 
   const ret = await close(services)
 
-  t.deepEqual(ret, expected)
-  t.is(closeStub1.callCount, 1)
-  t.is(closeStub2.callCount, 1)
-  t.is(closeStub3.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(closeStub1.callCount, 1)
+  assert.equal(closeStub2.callCount, 1)
+  assert.equal(closeStub3.callCount, 1)
 })

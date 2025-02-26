@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import dispatch from './tests/helpers/dispatch.js'
 import type Service from './service/Service.js'
@@ -22,7 +23,7 @@ const serviceMethods = {
 
 // Tests
 
-test('should run listen method on all services', async (t) => {
+test('should run listen method on all services', async () => {
   const listenStub1 = sinon.stub().resolves({ status: 'ok' })
   const listenStub2 = sinon.stub().resolves({ status: 'ok' })
   const services = [
@@ -41,13 +42,13 @@ test('should run listen method on all services', async (t) => {
 
   const ret = await listen(services, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(listenStub1.callCount, 1)
-  t.is(listenStub1.args[0][0], dispatch)
-  t.is(listenStub2.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(listenStub1.callCount, 1)
+  assert.equal(listenStub1.args[0][0], dispatch)
+  assert.equal(listenStub2.callCount, 1)
 })
 
-test('should stop and return error when listen fails', async (t) => {
+test('should stop and return error when listen fails', async () => {
   const listenStub1 = sinon
     .stub()
     .resolves({ status: 'error', error: 'Could not go on' })
@@ -71,12 +72,12 @@ test('should stop and return error when listen fails', async (t) => {
 
   const ret = await listen(services, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(listenStub1.callCount, 1)
-  t.is(listenStub2.callCount, 0)
+  assert.deepEqual(ret, expected)
+  assert.equal(listenStub1.callCount, 1)
+  assert.equal(listenStub2.callCount, 0)
 })
 
-test('should not treat noaction as error', async (t) => {
+test('should not treat noaction as error', async () => {
   const listenStub1 = sinon
     .stub()
     .resolves({ status: 'noaction', error: 'Transporter has no listen method' })
@@ -97,7 +98,7 @@ test('should not treat noaction as error', async (t) => {
 
   const ret = await listen(services, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(listenStub1.callCount, 1)
-  t.is(listenStub2.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(listenStub1.callCount, 1)
+  assert.equal(listenStub2.callCount, 1)
 })

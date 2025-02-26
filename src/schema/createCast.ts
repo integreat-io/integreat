@@ -18,9 +18,10 @@ import { ensureArray } from '../utils/array.js'
 import type Schema from './Schema.js'
 import type { CastFn, Shape, FieldDefinition } from './types.js'
 
-interface CastItemFn {
-  (isRev: boolean, noDefaults: boolean): (value: unknown) => unknown
-}
+type CastItemFn = (
+  isRev: boolean,
+  noDefaults: boolean,
+) => (value: unknown) => unknown
 
 function castFnFromType(type: string, schemas: Map<string, Schema>) {
   switch (type) {
@@ -245,7 +246,7 @@ function createShapeCast(
 export default function createCast(
   shape: Shape,
   type: string,
-  schemas: Map<string, Schema> = new Map(),
+  schemas: Map<string, Schema> = new Map<string, Schema>(),
   doGenerateId = false,
 ): CastFn {
   const castShape = createShapeCast(shape, type, schemas, doGenerateId)

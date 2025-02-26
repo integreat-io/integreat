@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import expandShape from './expandShape.js'
 import Schema from './Schema.js'
 import type { ShapeDef } from './types.js'
@@ -32,7 +33,7 @@ schemas.set(
 
 // Tests
 
-test('should create mapping function from schema', (t) => {
+test('should create mapping function from schema', () => {
   const isRev = false
   const shape = expandShape({
     id: 'string',
@@ -120,10 +121,10 @@ test('should create mapping function from schema', (t) => {
 
   const ret = createCast(shape, 'entry')(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should reverse transform with mapping definition from schema', (t) => {
+test('should reverse transform with mapping definition from schema', () => {
   const isRev = true
   const shape = expandShape({
     id: 'string',
@@ -209,10 +210,10 @@ test('should reverse transform with mapping definition from schema', (t) => {
 
   const ret = createCast(shape, 'entry')(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should be iteratable', (t) => {
+test('should be iteratable', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -243,10 +244,10 @@ test('should be iteratable', (t) => {
 
   const ret = createCast(shape, 'entry')(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should cast missing id to null', (t) => {
+test('should cast missing id to null', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -257,10 +258,10 @@ test('should cast missing id to null', (t) => {
 
   const ret = createCast(shape, 'entry')(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should cast missing id to generated unique id', (t) => {
+test('should cast missing id to generated unique id', () => {
   const isRev = false
   const doGenerateId = true
   const shape = {
@@ -277,11 +278,11 @@ test('should cast missing id to generated unique id', (t) => {
   )(data, isRev) as TypedData
 
   const { id } = ret
-  t.is(typeof id, 'string')
-  t.true((id as string).length >= 21) // We don't know what the id will be, but it should be at least 21 chars
+  assert.equal(typeof id, 'string')
+  assert.equal((id as string).length >= 21, true) // We don't know what the id will be, but it should be at least 21 chars
 })
 
-test('should unwrap value from { $value } object', (t) => {
+test('should unwrap value from { $value } object', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -292,10 +293,10 @@ test('should unwrap value from { $value } object', (t) => {
 
   const ret = createCast(shape, 'entry')(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should unwrap item from array when field is not expecting array and there is only one item', (t) => {
+test('should unwrap item from array when field is not expecting array and there is only one item', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -306,10 +307,10 @@ test('should unwrap item from array when field is not expecting array and there 
 
   const ret = createCast(shape, 'entry')(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not set value from array with more items when not expecting array', (t) => {
+test('should not set value from array with more items when not expecting array', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -320,10 +321,10 @@ test('should not set value from array with more items when not expecting array',
 
   const ret = createCast(shape, 'entry')(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not cast null', (t) => {
+test('should not cast null', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -334,10 +335,10 @@ test('should not cast null', (t) => {
 
   const ret = createCast(shape, 'entry')(data, isRev)
 
-  t.is(ret, expected)
+  assert.equal(ret, expected)
 })
 
-test('should cast non-primitive fields with schema', (t) => {
+test('should cast non-primitive fields with schema', () => {
   const isRev = false
   const shape = expandShape({
     id: 'string',
@@ -423,10 +424,10 @@ test('should cast non-primitive fields with schema', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should cast non-primitive fields with schema in reverse', (t) => {
+test('should cast non-primitive fields with schema in reverse', () => {
   const isRev = true
   const shape = expandShape({
     id: 'string',
@@ -500,10 +501,10 @@ test('should cast non-primitive fields with schema in reverse', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should set createdAt and updatedAt if not set and present in schema', (t) => {
+test('should set createdAt and updatedAt if not set and present in schema', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -520,14 +521,14 @@ test('should set createdAt and updatedAt if not set and present in schema', (t) 
   const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
   const after = Date.now()
-  t.true(ret.createdAt instanceof Date)
-  t.true((ret.createdAt as Date).getTime() <= after)
-  t.true(ret.updatedAt instanceof Date)
-  t.true((ret.createdAt as Date).getTime() >= before)
-  t.deepEqual(ret.createdAt, ret.updatedAt)
+  assert.equal(ret.createdAt instanceof Date, true)
+  assert.equal((ret.createdAt as Date).getTime() <= after, true)
+  assert.equal(ret.updatedAt instanceof Date, true)
+  assert.equal((ret.createdAt as Date).getTime() >= before, true)
+  assert.deepEqual(ret.createdAt, ret.updatedAt)
 })
 
-test('should set only createdAt if not set and present in schema', (t) => {
+test('should set only createdAt if not set and present in schema', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -543,13 +544,13 @@ test('should set only createdAt if not set and present in schema', (t) => {
   const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
   const after = Date.now()
-  t.true(ret.createdAt instanceof Date)
-  t.true((ret.createdAt as Date).getTime() >= before)
-  t.true((ret.createdAt as Date).getTime() <= after)
-  t.is(ret.updatedAt, undefined)
+  assert.equal(ret.createdAt instanceof Date, true)
+  assert.equal((ret.createdAt as Date).getTime() >= before, true)
+  assert.equal((ret.createdAt as Date).getTime() <= after, true)
+  assert.equal(ret.updatedAt, undefined)
 })
 
-test('should set only updatedAt if not set and present in schema', (t) => {
+test('should set only updatedAt if not set and present in schema', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -565,13 +566,13 @@ test('should set only updatedAt if not set and present in schema', (t) => {
   const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
   const after = Date.now()
-  t.true(ret.updatedAt instanceof Date)
-  t.true((ret.updatedAt as Date).getTime() >= before)
-  t.true((ret.updatedAt as Date).getTime() <= after)
-  t.is(ret.createdAt, undefined)
+  assert.equal(ret.updatedAt instanceof Date, true)
+  assert.equal((ret.updatedAt as Date).getTime() >= before, true)
+  assert.equal((ret.updatedAt as Date).getTime() <= after, true)
+  assert.equal(ret.createdAt, undefined)
 })
 
-test('should set updatedAt equal to createdAt', (t) => {
+test('should set updatedAt equal to createdAt', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -587,11 +588,11 @@ test('should set updatedAt equal to createdAt', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
-  t.deepEqual(ret.updatedAt, new Date('2023-03-18T14:03:44Z'))
-  t.deepEqual(ret.createdAt, new Date('2023-03-18T14:03:44Z'))
+  assert.deepEqual(ret.updatedAt, new Date('2023-03-18T14:03:44Z'))
+  assert.deepEqual(ret.createdAt, new Date('2023-03-18T14:03:44Z'))
 })
 
-test('should set createdAt equal to updatedAt', (t) => {
+test('should set createdAt equal to updatedAt', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -607,11 +608,11 @@ test('should set createdAt equal to updatedAt', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
-  t.deepEqual(ret.createdAt, new Date('2023-03-18T17:15:18Z'))
-  t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
+  assert.deepEqual(ret.createdAt, new Date('2023-03-18T17:15:18Z'))
+  assert.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
 })
 
-test('should not set dates if not present in schema', (t) => {
+test('should not set dates if not present in schema', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -624,11 +625,11 @@ test('should not set dates if not present in schema', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
-  t.is(ret.createdAt, undefined)
-  t.is(ret.updatedAt, undefined)
+  assert.equal(ret.createdAt, undefined)
+  assert.equal(ret.updatedAt, undefined)
 })
 
-test('should not set createdAt and updatedAt if already set', (t) => {
+test('should not set createdAt and updatedAt if already set', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -645,11 +646,11 @@ test('should not set createdAt and updatedAt if already set', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev) as TypedData
 
-  t.deepEqual(ret.createdAt, new Date('2023-03-18T14:03:44Z'))
-  t.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
+  assert.deepEqual(ret.createdAt, new Date('2023-03-18T14:03:44Z'))
+  assert.deepEqual(ret.updatedAt, new Date('2023-03-18T17:15:18Z'))
 })
 
-test('should not use any defaults when noDefaults is true', (t) => {
+test('should not use any defaults when noDefaults is true', () => {
   const noDefaults = true
   const isRev = false
   const doGenerateId = true
@@ -669,13 +670,13 @@ test('should not use any defaults when noDefaults is true', (t) => {
     doGenerateId,
   )(data, isRev, noDefaults) as TypedData
 
-  t.is(ret.id, null)
-  t.is(ret.createdAt, undefined)
-  t.is(ret.updatedAt, undefined)
-  t.is(ret.age, undefined)
+  assert.equal(ret.id, null)
+  assert.equal(ret.createdAt, undefined)
+  assert.equal(ret.updatedAt, undefined)
+  assert.equal(ret.age, undefined)
 })
 
-test('should still keep existing dates when noDefaults is true', (t) => {
+test('should still keep existing dates when noDefaults is true', () => {
   const noDefaults = true
   const isRev = false
   const doGenerateId = true
@@ -697,13 +698,13 @@ test('should still keep existing dates when noDefaults is true', (t) => {
     doGenerateId,
   )(data, isRev, noDefaults) as TypedData
 
-  t.is(ret.id, null)
-  t.deepEqual(ret.createdAt, createdAt)
-  t.deepEqual(ret.updatedAt, updatedAt)
-  t.is(ret.age, undefined)
+  assert.equal(ret.id, null)
+  assert.deepEqual(ret.createdAt, createdAt)
+  assert.deepEqual(ret.updatedAt, updatedAt)
+  assert.equal(ret.age, undefined)
 })
 
-test('should skip properties with invalid $type', (t) => {
+test('should skip properties with invalid $type', () => {
   const isRev = false
   const shape = expandShape({
     id: 'string',
@@ -732,10 +733,10 @@ test('should skip properties with invalid $type', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should recast items already cast with another $type', (t) => {
+test('should recast items already cast with another $type', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -752,10 +753,10 @@ test('should recast items already cast with another $type', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should pass on items already cast with this $type', (t) => {
+test('should pass on items already cast with this $type', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -772,10 +773,10 @@ test('should pass on items already cast with this $type', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should recast items already cast with another $type in reverse', (t) => {
+test('should recast items already cast with another $type in reverse', () => {
   const isRev = true
   const shape = {
     id: { $type: 'string' },
@@ -792,10 +793,10 @@ test('should recast items already cast with another $type in reverse', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not set $type when casting in reverse', (t) => {
+test('should not set $type when casting in reverse', () => {
   const isRev = true
   const shape = {
     id: { $type: 'string' },
@@ -817,10 +818,10 @@ test('should not set $type when casting in reverse', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should keep isNew and isDeleted when true', (t) => {
+test('should keep isNew and isDeleted when true', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -846,10 +847,10 @@ test('should keep isNew and isDeleted when true', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should remove isNew and isDeleted when false', (t) => {
+test('should remove isNew and isDeleted when false', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -873,10 +874,10 @@ test('should remove isNew and isDeleted when false', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should keep isNew and isDeleted when true in reverse', (t) => {
+test('should keep isNew and isDeleted when true in reverse', () => {
   const isRev = true
   const shape = {
     id: { $type: 'string' },
@@ -901,10 +902,10 @@ test('should keep isNew and isDeleted when true in reverse', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should remove isNew and isDeleted when false in reverse', (t) => {
+test('should remove isNew and isDeleted when false in reverse', () => {
   const isRev = true
   const shape = {
     id: { $type: 'string' },
@@ -927,10 +928,10 @@ test('should remove isNew and isDeleted when false in reverse', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not cast null or undefined', (t) => {
+test('should not cast null or undefined', () => {
   const isRev = false
   const shape = {
     id: { $type: 'string' },
@@ -947,10 +948,10 @@ test('should not cast null or undefined', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not cast null or undefined in reverse', (t) => {
+test('should not cast null or undefined in reverse', () => {
   const isRev = true
   const shape = {
     id: { $type: 'string' },
@@ -966,5 +967,5 @@ test('should not cast null or undefined in reverse', (t) => {
 
   const ret = createCast(shape, 'entry', schemas)(data, isRev)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })

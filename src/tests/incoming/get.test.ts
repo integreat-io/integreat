@@ -1,9 +1,15 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import ent1Data from '../helpers/data/entry1.js'
-import { type Action, type TypedData, IdentType } from '../../types.js'
+import {
+  IdentType,
+  type Action,
+  type TypedData,
+  type Transporter,
+} from '../../types.js'
 
 import Integreat from '../../index.js'
 
@@ -14,9 +20,9 @@ const updatedAt = '2017-11-24T07:11:43.000Z'
 
 // Tests
 
-test('should use incoming endpoint over non-incoming', async (t) => {
+test('should use incoming endpoint over non-incoming', async () => {
   const send = sinon
-    .stub(resources.transporters!.http, 'send')
+    .stub(resources.transporters?.http as Transporter, 'send')
     .callsFake(async (_action: Action) => ({
       status: 'ok',
       data: JSON.stringify({ data: { ...ent1Data, createdAt, updatedAt } }),
@@ -56,29 +62,29 @@ test('should use incoming endpoint over non-incoming', async (t) => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(send.callCount, 1)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(send.callCount, 1)
   const sentAction = send.args[0][0]
-  t.is(sentAction.type, 'GET')
-  t.is(sentAction.payload.id, 'ent1')
-  t.is(sentAction.payload.type, 'entry')
-  t.deepEqual(ret, expectedResponse)
+  assert.equal(sentAction.type, 'GET')
+  assert.equal(sentAction.payload.id, 'ent1')
+  assert.equal(sentAction.payload.type, 'entry')
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('should use non-incoming endpoint over incoming', async (t) => {
+test('should use non-incoming endpoint over incoming', async () => {
   const resourcesWithSend = {
     ...resources,
     transporters: {
       ...resources.transporters,
       http: {
-        ...resources.transporters!.http,
+        ...resources.transporters?.http,
         send: async (_action: Action) => ({
           status: 'ok',
           data: JSON.stringify({
             data: { ...ent1Data, createdAt, updatedAt },
           }),
         }),
-      },
+      } as Transporter,
     },
   }
   const action = {
@@ -94,8 +100,8 @@ test('should use non-incoming endpoint over incoming', async (t) => {
   const great = Integreat.create(defs, resourcesWithSend)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(typeof ret.data, 'object')
-  t.is((ret.data as TypedData).$type, 'entry')
-  t.is((ret.data as TypedData).id, 'ent1')
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(typeof ret.data, 'object')
+  assert.equal((ret.data as TypedData).$type, 'entry')
+  assert.equal((ret.data as TypedData).id, 'ent1')
 })

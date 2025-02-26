@@ -1,10 +1,11 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 
 import expandShape from './expandShape.js'
 
 // Tests
 
-test('should expand shortcuts in shape', (t) => {
+test('should expand shortcuts in shape', () => {
   const shape = {
     id: 'string',
     type: { $type: 'string', const: 'entry' },
@@ -46,10 +47,10 @@ test('should expand shortcuts in shape', (t) => {
 
   const ret = expandShape(shape)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should add id if missing', (t) => {
+test('should add id if missing', () => {
   const shape = {
     title: { $type: 'string', default: 'Entry with no name' },
   }
@@ -60,56 +61,53 @@ test('should add id if missing', (t) => {
 
   const ret = expandShape(shape)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should throw when id is not a string', (t) => {
+test('should throw when id is not a string', () => {
   const shape = {
     id: { $type: 'integer' },
     title: { $type: 'string', default: 'Entry with no name' },
   }
+  const expectedError = { name: 'Error', message: "'id' must be a string" }
 
-  const error = t.throws(() => expandShape(shape))
-
-  t.is((error as Error).message, "'id' must be a string")
+  assert.throws(() => expandShape(shape), expectedError)
 })
 
-test('should throw when createdAt is not a date', (t) => {
+test('should throw when createdAt is not a date', () => {
   const shape = {
     id: { $type: 'string' },
     title: { $type: 'string', default: 'Entry with no name' },
     createdAt: { $type: 'integer' },
   }
+  const expectedError = { name: 'Error', message: "'createdAt' must be a date" }
 
-  const error = t.throws(() => expandShape(shape))
-
-  t.is((error as Error).message, "'createdAt' must be a date")
+  assert.throws(() => expandShape(shape), expectedError)
 })
 
-test('should throw when updatedAt is not a date', (t) => {
+test('should throw when updatedAt is not a date', () => {
   const shape = {
     id: { $type: 'string' },
     title: { $type: 'string', default: 'Entry with no name' },
     updatedAt: { $type: 'integer' },
   }
+  const expectedError = { name: 'Error', message: "'updatedAt' must be a date" }
 
-  const error = t.throws(() => expandShape(shape))
-
-  t.is((error as Error).message, "'updatedAt' must be a date")
+  assert.throws(() => expandShape(shape), expectedError)
 })
 
-test('should do all tests before throwing', (t) => {
+test('should do all tests before throwing', () => {
   const shape = {
     id: { $type: 'integer' },
     title: { $type: 'string', default: 'Entry with no name' },
     createdAt: { $type: 'integer' },
     updatedAt: { $type: 'integer' },
   }
+  const expectedError = {
+    name: 'Error',
+    message:
+      "'id' must be a string. 'createdAt' must be a date. 'updatedAt' must be a date",
+  }
 
-  const error = t.throws(() => expandShape(shape))
-
-  t.is(
-    (error as Error).message,
-    "'id' must be a string. 'createdAt' must be a date. 'updatedAt' must be a date"
-  )
+  assert.throws(() => expandShape(shape), expectedError)
 })

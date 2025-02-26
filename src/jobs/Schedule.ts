@@ -1,4 +1,4 @@
-import cronParser from 'cron-parser'
+import { CronExpressionParser } from 'cron-parser'
 import { isDate } from '../utils/is.js'
 import type { JobDef } from './types.js'
 
@@ -23,12 +23,14 @@ export default class Schedule {
       }
 
       const options = { currentDate: start, endDate: end, tz: this.tz }
-      const interval = cronParser.parseExpression(this.cron, options)
+      const interval = CronExpressionParser.parse(this.cron, options)
 
       try {
         interval.next() // Will throw if not within interval
         return true // Did not throw, so the schedule should run
-      } catch {} // Threw, so fall back to false below
+      } catch {
+        return false
+      }
     }
 
     return false // Not a cron string or the job should not run within the given interval

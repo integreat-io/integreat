@@ -25,9 +25,7 @@ export type MapTransform = (
   options?: Options,
 ) => DataMapper<InitialState>
 
-export interface EmitFn {
-  (eventType: string, ...args: unknown[]): void
-}
+export type EmitFn = (eventType: string, ...args: unknown[]) => void
 
 export type MapOptions = Options
 
@@ -63,16 +61,12 @@ export interface Condition extends Record<string, unknown> {
   onFail?: ConditionFailObject | string
 }
 
-export interface DataFunction {
-  (): unknown
-}
+export type DataFunction = () => unknown
 
-export interface TransformFunction<
+export type TransformFunction<
   T extends Record<string, unknown> = Record<string, unknown>,
   U = unknown,
-> {
-  (operands: T): (value: unknown) => U
-}
+> = (operands: T) => (value: unknown) => U
 
 export enum IdentType {
   Root = 'ROOT',
@@ -158,18 +152,16 @@ export interface Action<P extends Payload = Payload, ResponseData = unknown> {
   meta?: Meta
 }
 
-export interface Dispatch<T = unknown> {
-  (action: Action | null): PProgress<Response<T>>
-}
+export type Dispatch<T = unknown> = (
+  action: Action | null,
+) => PProgress<Response<T>>
 
 // Dispatch without PProgress
-export interface HandlerDispatch<T = unknown> {
-  (action: Action): Promise<Response<T>>
-}
+export type HandlerDispatch<T = unknown> = (
+  action: Action,
+) => Promise<Response<T>>
 
-export interface Middleware {
-  (next: HandlerDispatch): HandlerDispatch
-}
+export type Middleware = (next: HandlerDispatch) => HandlerDispatch
 
 export interface Connection extends Record<string, unknown> {
   status: string
@@ -201,14 +193,16 @@ export interface Authenticator<
     action: Action | null,
     dispatch: HandlerDispatch,
   ) => Promise<Response>
-  authentication: {
-    [asFunction: string]: (authentication: T | null) => Record<string, unknown>
-  }
+  authentication: Record<
+    string,
+    (authentication: T | null) => Record<string, unknown>
+  >
 }
 
-export interface AuthenticateExternal {
-  (authentication: Authentication, action?: Action | null): Promise<Response>
-}
+export type AuthenticateExternal = (
+  authentication: Authentication,
+  action?: Action | null,
+) => Promise<Response>
 
 export interface Transporter {
   defaultAuthAsMethod?: string | null // Preferred alias of `authentication`
@@ -251,13 +245,12 @@ export interface Adapter {
   ) => Promise<Action>
 }
 
-export interface GetService {
-  (type?: string | string[], serviceId?: string): Service | undefined
-}
+export type GetService = (
+  type?: string | string[],
+  serviceId?: string,
+) => Service | undefined
 
-export interface SetProgress {
-  (progress: number): void
-}
+export type SetProgress = (progress: number) => void
 
 export interface HandlerOptions {
   identConfig?: IdentConfig
@@ -271,9 +264,10 @@ export interface ActionHandlerResources {
   options: HandlerOptions
 }
 
-export interface ActionHandler<T = unknown> {
-  (action: Action, resources: ActionHandlerResources): Promise<Response<T>>
-}
+export type ActionHandler<T = unknown> = (
+  action: Action,
+  resources: ActionHandlerResources,
+) => Promise<Response<T>>
 
 export interface DefinitionFlags {
   failOnErrorInPostconditions?: boolean

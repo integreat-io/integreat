@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import mapTransform from 'map-transform'
 import Service from '../service/Service.js'
@@ -30,7 +31,7 @@ const baseTransporter: Transporter = {
 
 // Tests
 
-test('should send action straight to service', async (t) => {
+test('should send action straight to service', async () => {
   const send = sinon.stub().resolves({ status: 'ok' })
   const transporter = { ...baseTransporter, send }
   const someService = new Service(
@@ -54,16 +55,16 @@ test('should send action straight to service', async (t) => {
 
   const ret = await service(action, { ...handlerResources, getService })
 
-  t.deepEqual(ret, expected)
-  t.is(send.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(send.callCount, 1)
   const sentAction = send.args[0][0]
-  t.is(sentAction.type, action.type)
-  t.deepEqual(sentAction.payload, action.payload)
-  t.deepEqual(sentAction.meta.ident, action.meta.ident)
-  t.true(isAuthorizedAction(sentAction))
+  assert.equal(sentAction.type, action.type)
+  assert.deepEqual(sentAction.payload, action.payload)
+  assert.deepEqual(sentAction.meta.ident, action.meta.ident)
+  assert.equal(isAuthorizedAction(sentAction), true)
 })
 
-test('should return error when service does not return a status', async (t) => {
+test('should return error when service does not return a status', async () => {
   const send = async () => ({}) as Response // We intentionally don't wan't a status here
   const transporter = { ...baseTransporter, send }
   const someService = new Service(
@@ -91,10 +92,10 @@ test('should return error when service does not return a status', async (t) => {
 
   const ret = await service(action, { ...handlerResources, getService })
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should return error when service is unknown', async (t) => {
+test('should return error when service is unknown', async () => {
   const action = {
     type: 'SERVICE',
     payload: {
@@ -112,5 +113,5 @@ test('should return error when service is unknown', async (t) => {
 
   const ret = await service(action, { ...handlerResources, getService })
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })

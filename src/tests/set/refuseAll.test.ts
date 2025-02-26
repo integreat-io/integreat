@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import resources from '../helpers/resources/index.js'
 import defs from '../helpers/defs/index.js'
@@ -22,7 +23,7 @@ const entry1Item = {
 
 // Tests
 
-test('should refuse request to set entry with no ident', async (t) => {
+test('should refuse request to set entry with no ident', async () => {
   nock('http://some.api')
     .get('/users/johnf')
     .reply(200, { data: { ...johnfData } })
@@ -37,8 +38,8 @@ test('should refuse request to set entry with no ident', async (t) => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'noaccess', ret.error)
-  t.is(typeof ret.error, 'string')
+  assert.equal(ret.status, 'noaccess', ret.error)
+  assert.equal(typeof ret.error, 'string')
 
   nock.restore()
 })

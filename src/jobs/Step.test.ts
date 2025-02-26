@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import { setTimeout } from 'node:timers/promises'
 import mapTransform from 'map-transform'
@@ -48,7 +49,7 @@ const meta = {
 
 // Tests
 
-test('should create Step instance', (t) => {
+test('should create Step instance', () => {
   const stepDef = {
     id: 'getEntry',
     action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
@@ -56,13 +57,13 @@ test('should create Step instance', (t) => {
 
   const ret = new Step(stepDef, mapTransform, mapOptions)
 
-  t.is(ret.id, 'getEntry')
-  t.is(typeof ret.run, 'function')
+  assert.equal(ret.id, 'getEntry')
+  assert.equal(typeof ret.run, 'function')
 })
 
 // Tests -- run
 
-test('should run action step', async (t) => {
+test('should run action step', async () => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     data: [{ id: 'ent1', $type: 'entry' }],
@@ -94,12 +95,12 @@ test('should run action step', async (t) => {
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedAction)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0], expectedAction)
 })
 
-test('should run several action steps', async (t) => {
+test('should run several action steps', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok' })
@@ -180,14 +181,14 @@ test('should run several action steps', async (t) => {
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expectedAction0)
-  t.deepEqual(dispatch.args[1][0], expectedAction1)
-  t.is(step.id, 'getEntry:getDate')
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 2)
+  assert.deepEqual(dispatch.args[0][0], expectedAction0)
+  assert.deepEqual(dispatch.args[1][0], expectedAction1)
+  assert.equal(step.id, 'getEntry:getDate')
 })
 
-test('should return error from failing parallel steps', async (t) => {
+test('should return error from failing parallel steps', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
@@ -247,10 +248,10 @@ test('should return error from failing parallel steps', async (t) => {
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 2)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 2)
 })
-test('should return override origin with step id', async (t) => {
+test('should return override origin with step id', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
@@ -314,11 +315,11 @@ test('should return override origin with step id', async (t) => {
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 2)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 2)
 })
 
-test('should handle rejection when running steps', async (t) => {
+test('should handle rejection when running steps', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
@@ -376,11 +377,11 @@ test('should handle rejection when running steps', async (t) => {
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 2)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 2)
 })
 
-test('should not run action when its preconditions fail', async (t) => {
+test('should not run action when its preconditions fail', async () => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const stepDef = {
     id: 'setEntries',
@@ -413,11 +414,11 @@ test('should not run action when its preconditions fail', async (t) => {
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.is(dispatch.callCount, 0) // Should not run action
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 0) // Should not run action
+  assert.deepEqual(ret, expected)
 })
 
-test('should return error from several failing conditions in preconditions', async (t) => {
+test('should return error from several failing conditions in preconditions', async () => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const stepDef = {
     id: 'setEntries',
@@ -459,11 +460,11 @@ test('should return error from several failing conditions in preconditions', asy
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.is(dispatch.callCount, 0) // Should not run action
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 0) // Should not run action
+  assert.deepEqual(ret, expected)
 })
 
-test('should support json schema validation form as conditions', async (t) => {
+test('should support json schema validation form as conditions', async () => {
   // Note: We'll remove this in the future
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const stepDef = {
@@ -491,11 +492,11 @@ test('should support json schema validation form as conditions', async (t) => {
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.is(dispatch.callCount, 0) // Should not run action
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 0) // Should not run action
+  assert.deepEqual(ret, expected)
 })
 
-test('should return data from simple action based on postmutation', async (t) => {
+test('should return data from simple action based on postmutation', async () => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     data: [{ id: 'ent1', $type: 'entry' }],
@@ -524,11 +525,11 @@ test('should return data from simple action based on postmutation', async (t) =>
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
 })
 
-test('should not use depricated "magic" from responseMutation for postmutation', async (t) => {
+test('should not use depricated "magic" from responseMutation for postmutation', async () => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     data: [{ id: 'ent1', $type: 'entry' }],
@@ -556,11 +557,11 @@ test('should not use depricated "magic" from responseMutation for postmutation',
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
 })
 
-test('should return data from simple action based on responseMutation', async (t) => {
+test('should return data from simple action based on responseMutation', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
@@ -582,11 +583,11 @@ test('should return data from simple action based on responseMutation', async (t
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
 })
 
-test('should mutate simple action', async (t) => {
+test('should mutate simple action', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
@@ -614,12 +615,12 @@ test('should mutate simple action', async (t) => {
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0], expectedAction)
+  assert.deepEqual(ret, expected)
 })
 
-test('should mutate simple action without "magic"', async (t) => {
+test('should mutate simple action without "magic"', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
@@ -647,12 +648,12 @@ test('should mutate simple action without "magic"', async (t) => {
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0], expectedAction)
+  assert.deepEqual(ret, expected)
 })
 
-test('should mutate simple action with depricated `muation` property', async (t) => {
+test('should mutate simple action with depricated `muation` property', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
@@ -680,12 +681,12 @@ test('should mutate simple action with depricated `muation` property', async (t)
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0], expectedAction)
+  assert.deepEqual(ret, expected)
 })
 
-test('should mutate action into several actions based on iterate pipeline', async (t) => {
+test('should mutate action into several actions based on iterate pipeline', async () => {
   const concurrency = { now: 0, max: 0 }
   const dispatch = sinon
     .stub()
@@ -756,14 +757,14 @@ test('should mutate action into several actions based on iterate pipeline', asyn
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expectedAction0)
-  t.deepEqual(dispatch.args[1][0], expectedAction1)
-  t.deepEqual(ret, expected)
-  t.is(concurrency.max, 1) // Ran only one at a time
+  assert.equal(dispatch.callCount, 2)
+  assert.deepEqual(dispatch.args[0][0], expectedAction0)
+  assert.deepEqual(dispatch.args[1][0], expectedAction1)
+  assert.deepEqual(ret, expected)
+  assert.equal(concurrency.max, 1) // Ran only one at a time
 })
 
-test('should allow a number of iterations to be run in parallel', async (t) => {
+test('should allow a number of iterations to be run in parallel', async () => {
   const concurrency = { now: 0, max: 0 }
   const dispatch = sinon
     .stub()
@@ -801,11 +802,11 @@ test('should allow a number of iterations to be run in parallel', async (t) => {
   const step = new Step(stepDef, mapTransform, mapOptions)
   await step.run(meta, { action }, dispatch)
 
-  t.is(dispatch.callCount, 2)
-  t.is(concurrency.max, 2) // Ran two in parallel
+  assert.equal(dispatch.callCount, 2)
+  assert.equal(concurrency.max, 2) // Ran two in parallel
 })
 
-test('should mutate action into several actions based on iterate path', async (t) => {
+test('should mutate action into several actions based on iterate path', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [] })
@@ -870,14 +871,14 @@ test('should mutate action into several actions based on iterate path', async (t
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.is(dispatch.callCount, 3)
-  t.deepEqual(dispatch.args[0][0], expectedAction0)
-  t.deepEqual(dispatch.args[1][0], expectedAction1)
-  t.deepEqual(dispatch.args[2][0], expectedAction2)
-  t.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 3)
+  assert.deepEqual(dispatch.args[0][0], expectedAction0)
+  assert.deepEqual(dispatch.args[1][0], expectedAction1)
+  assert.deepEqual(dispatch.args[2][0], expectedAction2)
+  assert.deepEqual(ret, expected)
 })
 
-test('should run postmutation on combined response after iteration', async (t) => {
+test('should run postmutation on combined response after iteration', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [] })
@@ -923,6 +924,6 @@ test('should run postmutation on combined response after iteration', async (t) =
   const step = new Step(stepDef, mapTransform, mapOptions)
   const ret = await step.run(meta, { action }, dispatch)
 
-  t.is(dispatch.callCount, 3)
-  t.deepEqual(ret.setItem.response?.data, expectedData)
+  assert.equal(dispatch.callCount, 3)
+  assert.deepEqual(ret.setItem.response?.data, expectedData)
 })

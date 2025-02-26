@@ -16,18 +16,17 @@ export const isObject = (value: unknown): value is Record<string, unknown> =>
 export const isDate = (value: unknown): value is Date =>
   Object.prototype.toString.call(value) === '[object Date]'
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export const isEmptyObject = (value: unknown): value is {} =>
+export const isEmptyObject = (value: unknown): value is object =>
   isObject(value) && Object.keys(value).length === 0
 
 export const isTypedData = (value: unknown): value is TypedData =>
-  isObject(value) && value.hasOwnProperty('$type')
+  isObject(value) && Object.prototype.hasOwnProperty.call(value, '$type')
 
 export const isReference = (value: unknown): value is Reference =>
-  isObject(value) && value.hasOwnProperty('$ref')
+  isObject(value) && Object.prototype.hasOwnProperty.call(value, '$ref')
 
 export const isShape = (value: unknown): value is ShapeDef =>
-  isObject(value) && !value.hasOwnProperty('$type')
+  isObject(value) && !Object.prototype.hasOwnProperty.call(value, '$type')
 
 export const isFieldDefinition = (value: unknown): value is FieldDefinition =>
   isObject(value) && typeof value.$type === 'string'
@@ -46,7 +45,7 @@ export const isAction = (action: unknown): action is Action =>
 export const isOkStatus = (status?: string) =>
   typeof status === 'string' && OK_STATUSES.includes(status)
 
-export const isOkResponse = (response?: Response) =>
+export const isOkResponse = (response?: Response): response is Response =>
   isOkStatus(response?.status)
 
 export const isErrorResponse = (response?: Response) =>

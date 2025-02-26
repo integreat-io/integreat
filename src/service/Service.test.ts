@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import pProgress from 'p-progress'
 import mapTransform from 'map-transform'
@@ -22,7 +23,9 @@ import {
   HandlerDispatch,
   Adapter,
   IdentType,
+  Transporter,
 } from '../types.js'
+import type Endpoint from './Endpoint.js'
 
 import Service, { Resources } from './Service.js'
 
@@ -222,7 +225,7 @@ const testAuth: Authenticator = {
   }),
   authentication: {
     asObject: (authentication) =>
-      isObject(authentication?.ident) ? authentication!.ident : {},
+      isObject(authentication?.ident) ? authentication?.ident : {},
   },
 }
 
@@ -247,9 +250,9 @@ const dispatchAuth: Authenticator = {
       : { status: 'rejected', error: 'Dispatch failed' },
   authentication: {
     asObject: (authentication) =>
-      isObject(authentication?.ident) ? authentication!.ident : {},
+      isObject(authentication?.ident) ? authentication?.ident : {},
     asHttpHeaders: (authentication) =>
-      isObject(authentication?.ident) ? authentication!.ident : {},
+      isObject(authentication?.ident) ? authentication?.ident : {},
   },
 }
 
@@ -314,7 +317,7 @@ const mockResources = (
   transporters: {
     ...jsonResources.transporters,
     http: {
-      ...jsonResources.transporters!.http,
+      ...jsonResources.transporters?.http,
       send: async (_action) => ({ status: 'ok', data }),
       listen: async (dispatch, _connection, authenticate) => {
         // This mock implementation of listen() will immediately dispatch the
@@ -332,7 +335,7 @@ const mockResources = (
           return await dispatch(action)
         }
       },
-    },
+    } as Transporter,
   },
   mapTransform,
   mapOptions,
@@ -342,7 +345,7 @@ const mockResources = (
 
 // Tests
 
-test('should return service object with id and meta', (t) => {
+test('should return service object with id and meta', () => {
   const endpoints = [
     { id: 'endpoint1', options: { uri: 'http://some.api/1.0' } },
   ]
@@ -356,12 +359,12 @@ test('should return service object with id and meta', (t) => {
     schemas,
   })
 
-  t.is(service.id, 'entries')
-  t.is(service.meta, 'meta')
+  assert.equal(service.id, 'entries')
+  assert.equal(service.meta, 'meta')
 })
 
-test('should throw when no id', (t) => {
-  t.throws(() => {
+test('should throw when no id', () => {
+  assert.throws(() => {
     new Service({ transporter: 'http' } as unknown as ServiceDef, {
       ...jsonResources,
       mapTransform,
@@ -371,7 +374,7 @@ test('should throw when no id', (t) => {
   })
 })
 
-test('should throw when service references unknown transporter', (t) => {
+test('should throw when service references unknown transporter', () => {
   const endpoints = [
     { id: 'endpoint1', options: { uri: 'http://some.api/1.0' } },
   ]
@@ -382,13 +385,12 @@ test('should throw when service references unknown transporter', (t) => {
     mapOptions,
     schemas,
   }
+  const expectedError = { name: 'TypeError' }
 
-  const error = t.throws(() => new Service(def, resources))
-
-  t.true(error instanceof Error)
+  assert.throws(() => new Service(def, resources), expectedError)
 })
 
-test('should throw when service references unknown adapters', (t) => {
+test('should throw when service references unknown adapters', () => {
   const endpoints = [
     { id: 'endpoint1', options: { uri: 'http://some.api/1.0' } },
   ]
@@ -405,13 +407,12 @@ test('should throw when service references unknown adapters', (t) => {
     mapOptions,
     schemas,
   }
+  const expectedError = { name: 'TypeError' }
 
-  const error = t.throws(() => new Service(def, resources))
-
-  t.true(error instanceof Error)
+  assert.throws(() => new Service(def, resources), expectedError)
 })
 
-test('should throw when endpoint references unknown adapters', (t) => {
+test('should throw when endpoint references unknown adapters', () => {
   const endpoints = [
     {
       id: 'endpoint1',
@@ -431,13 +432,12 @@ test('should throw when endpoint references unknown adapters', (t) => {
     mapOptions,
     schemas,
   }
+  const expectedError = { name: 'TypeError' }
 
-  const error = t.throws(() => new Service(def, resources))
-
-  t.true(error instanceof Error)
+  assert.throws(() => new Service(def, resources), expectedError)
 })
 
-test('should throw when auth object references unknown authenticator', async (t) => {
+test('should throw when auth object references unknown authenticator', async () => {
   const def = {
     id: 'entries',
     auth: {
@@ -450,15 +450,14 @@ test('should throw when auth object references unknown authenticator', async (t)
     endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
   }
   const resources = mockResources({})
+  const expectedError = { name: 'Error' }
 
-  const error = t.throws(() => new Service(def, resources))
-
-  t.true(error instanceof Error)
+  assert.throws(() => new Service(def, resources), expectedError)
 })
 
 // Tests -- endpointFromAction
 
-test('endpointFromAction should return an endpoint for the action', async (t) => {
+test('endpointFromAction should return an endpoint for the action', async () => {
   const service = new Service(
     {
       id: 'entries',
@@ -483,11 +482,10 @@ test('endpointFromAction should return an endpoint for the action', async (t) =>
 
   const ret = await service.endpointFromAction(action)
 
-  t.truthy(ret)
-  t.is(ret?.id, 'endpoint2')
+  assert.equal(ret?.id, 'endpoint2')
 })
 
-test('endpointFromAction should return undefined when no match', async (t) => {
+test('endpointFromAction should return undefined when no match', async () => {
   const service = new Service(
     {
       id: 'entries',
@@ -511,10 +509,10 @@ test('endpointFromAction should return undefined when no match', async (t) => {
 
   const ret = await service.endpointFromAction(action)
 
-  t.is(ret, undefined)
+  assert.equal(ret, undefined)
 })
 
-test('endpointFromAction should pick the most specified endpoint', async (t) => {
+test('endpointFromAction should pick the most specified endpoint', async () => {
   const endpoints = [
     {
       id: 'endpoint1',
@@ -549,12 +547,12 @@ test('endpointFromAction should pick the most specified endpoint', async (t) => 
 
   const ret = await service.endpointFromAction(action)
 
-  t.is(ret?.id, 'endpoint2')
+  assert.equal(ret?.id, 'endpoint2')
 })
 
 // Tests -- preflightAction
 
-test('preflightAction should set authorizedByIntegreat (symbol) flag', async (t) => {
+test('preflightAction should set authorizedByIntegreat (symbol) flag', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -577,12 +575,16 @@ test('preflightAction should set authorizedByIntegreat (symbol) flag', async (t)
   }
 
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.preflightAction(action, endpoint!, dispatch)
+  const ret = await service.preflightAction(
+    action,
+    endpoint as Endpoint,
+    dispatch,
+  )
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('preflightAction should authorize action without type', async (t) => {
+test('preflightAction should authorize action without type', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -605,12 +607,16 @@ test('preflightAction should authorize action without type', async (t) => {
   }
 
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.preflightAction(action, endpoint!, dispatch)
+  const ret = await service.preflightAction(
+    action,
+    endpoint as Endpoint,
+    dispatch,
+  )
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('preflightAction should refuse based on schema', async (t) => {
+test('preflightAction should refuse based on schema', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -642,13 +648,17 @@ test('preflightAction should refuse based on schema', async (t) => {
   }
 
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.preflightAction(action, endpoint!, dispatch)
+  const ret = await service.preflightAction(
+    action,
+    endpoint as Endpoint,
+    dispatch,
+  )
 
-  t.false(isAuthorizedAction(ret))
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(isAuthorizedAction(ret), false)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('preflightAction should authorize when no auth is specified', async (t) => {
+test('preflightAction should authorize when no auth is specified', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -671,12 +681,16 @@ test('preflightAction should authorize when no auth is specified', async (t) => 
   }
 
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.preflightAction(action, endpoint!, dispatch)
+  const ret = await service.preflightAction(
+    action,
+    endpoint as Endpoint,
+    dispatch,
+  )
 
-  t.true(isAuthorizedAction(ret))
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('preflightAction should not touch action when endpoint validation succeeds', async (t) => {
+test('preflightAction should not touch action when endpoint validation succeeds', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -699,14 +713,18 @@ test('preflightAction should not touch action when endpoint validation succeeds'
   }
 
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.preflightAction(action, endpoint!, dispatch)
+  const ret = await service.preflightAction(
+    action,
+    endpoint as Endpoint,
+    dispatch,
+  )
 
-  t.is(ret.response, undefined)
-  t.is(ret.type, 'GET')
-  t.deepEqual(ret.payload, action.payload)
+  assert.equal(ret.response, undefined)
+  assert.equal(ret.type, 'GET')
+  assert.deepEqual(ret.payload, action.payload)
 })
 
-test('preflightAction should set error response when validate fails', async (t) => {
+test('preflightAction should set error response when validate fails', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -734,14 +752,18 @@ test('preflightAction should set error response when validate fails', async (t) 
   }
 
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.preflightAction(action, endpoint!, dispatch)
+  const ret = await service.preflightAction(
+    action,
+    endpoint as Endpoint,
+    dispatch,
+  )
 
-  t.deepEqual(ret.response, expectedResponse)
-  t.is(ret.type, 'GET')
-  t.deepEqual(ret.payload, action.payload)
+  assert.deepEqual(ret.response, expectedResponse)
+  assert.equal(ret.type, 'GET')
+  assert.deepEqual(ret.payload, action.payload)
 })
 
-test('preflightAction should authorize before validation', async (t) => {
+test('preflightAction should authorize before validation', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -773,14 +795,18 @@ test('preflightAction should authorize before validation', async (t) => {
   }
 
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.preflightAction(action, endpoint!, dispatch)
+  const ret = await service.preflightAction(
+    action,
+    endpoint as Endpoint,
+    dispatch,
+  )
 
-  t.deepEqual(ret.response, expectedResponse)
-  t.is(ret.type, 'GET')
-  t.deepEqual(ret.payload, action.payload)
+  assert.deepEqual(ret.response, expectedResponse)
+  assert.equal(ret.type, 'GET')
+  assert.deepEqual(ret.payload, action.payload)
 })
 
-test('preflightAction should make auth available to mutations when authInData is true', async (t) => {
+test('preflightAction should make auth available to mutations when authInData is true', async () => {
   const authInData = true
   const service = new Service(
     {
@@ -806,16 +832,20 @@ test('preflightAction should make auth available to mutations when authInData is
   const expectedAuth = { id: 'user', type: IdentType.Custom } // The auth returns the ident
 
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.preflightAction(action, endpoint!, dispatch)
+  const ret = await service.preflightAction(
+    action,
+    endpoint as Endpoint,
+    dispatch,
+  )
 
-  t.is(ret.response?.status, undefined, ret.response?.error)
-  t.deepEqual(ret.meta?.auth, expectedAuth)
-  t.is(ret.type, 'GET')
-  t.deepEqual(ret.payload, action.payload)
-  t.true(isAuthorizedAction(ret))
+  assert.equal(ret.response?.status, undefined, ret.response?.error)
+  assert.deepEqual(ret.meta?.auth, expectedAuth)
+  assert.equal(ret.type, 'GET')
+  assert.deepEqual(ret.payload, action.payload)
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('preflightAction should use auth from endpoint when available', async (t) => {
+test('preflightAction should use auth from endpoint when available', async () => {
   const authInData = true
   const service = new Service(
     {
@@ -843,16 +873,20 @@ test('preflightAction should use auth from endpoint when available', async (t) =
   }
 
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.preflightAction(action, endpoint!, dispatch)
+  const ret = await service.preflightAction(
+    action,
+    endpoint as Endpoint,
+    dispatch,
+  )
 
-  t.is(ret.response?.status, undefined, ret.response?.error)
-  t.deepEqual(ret.meta?.auth, expectedAuth)
-  t.is(ret.type, 'GET')
-  t.deepEqual(ret.payload, action.payload)
-  t.true(isAuthorizedAction(ret))
+  assert.equal(ret.response?.status, undefined, ret.response?.error)
+  assert.deepEqual(ret.meta?.auth, expectedAuth)
+  assert.equal(ret.type, 'GET')
+  assert.deepEqual(ret.payload, action.payload)
+  assert.equal(isAuthorizedAction(ret), true)
 })
 
-test('preflightAction should respond with error when authInData is true and auth fails', async (t) => {
+test('preflightAction should respond with error when authInData is true and auth fails', async () => {
   const authInData = true
   const service = new Service(
     {
@@ -877,21 +911,25 @@ test('preflightAction should respond with error when authInData is true and auth
   }
 
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.preflightAction(action, endpoint!, dispatch)
+  const ret = await service.preflightAction(
+    action,
+    endpoint as Endpoint,
+    dispatch,
+  )
 
-  t.is(ret.response?.status, 'noaccess', ret.response?.error)
-  t.is(
+  assert.equal(ret.response?.status, 'noaccess', ret.response?.error)
+  assert.equal(
     ret.response?.error,
     "Authentication attempt for auth 'refusing' was refused.",
   )
-  t.is(ret.meta?.auth, undefined)
-  t.is(ret.type, 'GET')
-  t.deepEqual(ret.payload, action.payload)
+  assert.equal(ret.meta?.auth, undefined)
+  assert.equal(ret.type, 'GET')
+  assert.deepEqual(ret.payload, action.payload)
 })
 
 // Tests -- send
 
-test('send should retrieve data from service', async (t) => {
+test('send should retrieve data from service', async () => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -914,12 +952,12 @@ test('send should retrieve data from service', async (t) => {
   const endpoint = await service.endpointFromAction(action)
   const expected = { status: 'ok', data }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should use service middleware', async (t) => {
+test('send should use service middleware', async () => {
   const failMiddleware = () => async (_action: Action) => ({
     status: 'badresponse',
   })
@@ -954,12 +992,12 @@ test('send should use service middleware', async (t) => {
     origin: 'middleware:service:entries',
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should return error when no connection', async (t) => {
+test('send should return error when no connection', async () => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -987,12 +1025,12 @@ test('send should return error when no connection', async (t) => {
   }
 
   await service.close() // Close connection to set it to null
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should try to authenticate and return with error when it fails', async (t) => {
+test('send should try to authenticate and return with error when it fails', async () => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -1019,12 +1057,12 @@ test('send should try to authenticate and return with error when it fails', asyn
     origin: 'service:entries',
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should authenticate with auth id on `outgoing` prop', async (t) => {
+test('send should authenticate with auth id on `outgoing` prop', async () => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -1047,12 +1085,12 @@ test('send should authenticate with auth id on `outgoing` prop', async (t) => {
   const endpoint = await service.endpointFromAction(action)
   const expected = { status: 'ok', data }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should authenticate with auth def', async (t) => {
+test('send should authenticate with auth def', async () => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -1075,12 +1113,12 @@ test('send should authenticate with auth def', async (t) => {
   const endpoint = await service.endpointFromAction(action)
   const expected = { status: 'ok', data }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should authenticate with auth def on `outgoing` prop', async (t) => {
+test('send should authenticate with auth def on `outgoing` prop', async () => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -1103,12 +1141,12 @@ test('send should authenticate with auth def on `outgoing` prop', async (t) => {
   const endpoint = await service.endpointFromAction(action)
   const expected = { status: 'ok', data }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should authenticate with auth from endpoint', async (t) => {
+test('send should authenticate with auth from endpoint', async () => {
   const data = {
     content: {
       data: { items: [{ key: 'ent1', header: 'Entry 1', two: 2 }] },
@@ -1136,12 +1174,12 @@ test('send should authenticate with auth from endpoint', async (t) => {
   const endpoint = await service.endpointFromAction(action)
   const expected = { status: 'ok', data }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should fail when not authorized', async (t) => {
+test('send should fail when not authorized', async () => {
   const service = new Service(
     {
       id: 'entries',
@@ -1172,18 +1210,18 @@ test('send should fail when not authorized', async (t) => {
     origin: 'internal:service:entries',
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should provide auth, options, and targetService', async (t) => {
+test('send should provide auth, options, and targetService', async () => {
   const send = sinon.stub().resolves({ status: 'ok', data: {} })
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
-      http: { ...jsonResources.transporters!.http, send },
+      http: { ...jsonResources.transporters?.http, send } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1236,21 +1274,21 @@ test('send should provide auth, options, and targetService', async (t) => {
     },
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(send.callCount, 1)
-  t.deepEqual(send.args[0][0], expected)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(send.callCount, 1)
+  assert.deepEqual(send.args[0][0], expected)
 })
 
-test('send should not set targetService when doSetTargetService is false', async (t) => {
+test('send should not set targetService when doSetTargetService is false', async () => {
   const doSetTargetService = false
   const send = sinon.stub().resolves({ status: 'ok', data: {} })
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
-      http: { ...jsonResources.transporters!.http, send },
+      http: { ...jsonResources.transporters?.http, send } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1298,23 +1336,23 @@ test('send should not set targetService when doSetTargetService is false', async
 
   const ret = await service.send(
     action,
-    endpoint!,
+    endpoint as Endpoint,
     dispatch,
     doSetTargetService,
   )
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(send.callCount, 1)
-  t.deepEqual(send.args[0][0], expected)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(send.callCount, 1)
+  assert.deepEqual(send.args[0][0], expected)
 })
 
-test('send should not set targetService when doSetTargetService is false in meta options', async (t) => {
+test('send should not set targetService when doSetTargetService is false in meta options', async () => {
   const send = sinon.stub().resolves({ status: 'ok', data: {} })
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
-      http: { ...jsonResources.transporters!.http, send },
+      http: { ...jsonResources.transporters?.http, send } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1361,20 +1399,20 @@ test('send should not set targetService when doSetTargetService is false in meta
     },
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(send.callCount, 1)
-  t.deepEqual(send.args[0][0], expected)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(send.callCount, 1)
+  assert.deepEqual(send.args[0][0], expected)
 })
 
-test('send should not authorize when action has already got meta.auth', async (t) => {
+test('send should not authorize when action has already got meta.auth', async () => {
   const send = sinon.stub().resolves({ status: 'ok', data: {} })
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
-      http: { ...jsonResources.transporters!.http, send },
+      http: { ...jsonResources.transporters?.http, send } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1425,14 +1463,14 @@ test('send should not authorize when action has already got meta.auth', async (t
     },
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(send.callCount, 1)
-  t.deepEqual(send.args[0][0], expected)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(send.callCount, 1)
+  assert.deepEqual(send.args[0][0], expected)
 })
 
-test('send should connect before sending request', async (t) => {
+test('send should connect before sending request', async () => {
   const connect = async (
     options: TransporterOptions,
     authentication: Record<string, unknown> | null | undefined,
@@ -1447,7 +1485,11 @@ test('send should connect before sending request', async (t) => {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
-      http: { ...jsonResources.transporters!.http, connect, send },
+      http: {
+        ...jsonResources.transporters?.http,
+        connect,
+        send,
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1487,24 +1529,24 @@ test('send should connect before sending request', async (t) => {
     token: 'Bearer t0k3n',
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(send.callCount, 1)
-  t.deepEqual(send.args[0][1], expected)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(send.callCount, 1)
+  assert.deepEqual(send.args[0][1], expected)
 })
 
-test('send should store connection', async (t) => {
+test('send should store connection', async () => {
   const connect = sinon.stub().returns({ status: 'ok' })
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         connect,
         send: async (_action: Action) => ({ status: 'ok', data: {} }),
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1532,24 +1574,24 @@ test('send should store connection', async (t) => {
   })
   const endpoint = await service.endpointFromAction(action)
 
-  await service.send(action, endpoint!, dispatch)
-  await service.send(action, endpoint!, dispatch)
+  await service.send(action, endpoint as Endpoint, dispatch)
+  await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.is(connect.callCount, 2)
-  t.deepEqual(connect.args[0][2], null)
-  t.deepEqual(connect.args[1][2], { status: 'ok' })
+  assert.equal(connect.callCount, 2)
+  assert.deepEqual(connect.args[0][2], null)
+  assert.deepEqual(connect.args[1][2], { status: 'ok' })
 })
 
-test('send should return error when connection fails', async (t) => {
+test('send should return error when connection fails', async () => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         connect: async () => ({ status: 'notfound', error: 'Not found' }),
         send: async (_action: Action) => ({ status: 'ok', data: {} }),
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1582,23 +1624,23 @@ test('send should return error when connection fails', async (t) => {
     origin: 'service:entries',
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should pass on error response from service', async (t) => {
+test('send should pass on error response from service', async () => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         send: async (_action: Action) => ({
           status: 'badrequest',
           error: 'Real bad request',
         }),
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1624,24 +1666,24 @@ test('send should pass on error response from service', async (t) => {
     origin: 'service:entries',
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should pass on error response from service and prefix origin', async (t) => {
+test('send should pass on error response from service and prefix origin', async () => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         send: async (_action: Action) => ({
           status: 'badrequest',
           error: 'Real bad request',
           origin: 'somewhere',
         }),
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1667,22 +1709,22 @@ test('send should pass on error response from service and prefix origin', async 
     origin: 'service:entries:somewhere',
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should return with error when transport throws', async (t) => {
+test('send should return with error when transport throws', async () => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         send: async (_action: Action) => {
           throw new Error('We did not expect this')
         },
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1708,23 +1750,23 @@ test('send should return with error when transport throws', async (t) => {
     origin: 'service:entries',
   }
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('send should do nothing when action has a response', async (t) => {
+test('send should do nothing when action has a response', async () => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         send: async (_action: Action) => ({
           status: 'error',
           error: 'Should not be called',
         }),
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -1751,14 +1793,14 @@ test('send should do nothing when action has a response', async (t) => {
   const endpoint = await service.endpointFromAction(action)
   const expected = action.response
 
-  const ret = await service.send(action, endpoint!, dispatch)
+  const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- mutateResponse
 
-test('mutateResponse should mutate data array from service', async (t) => {
+test('mutateResponse should mutate data array from service', async () => {
   const theDate = new Date()
   const service = new Service(
     {
@@ -1824,12 +1866,12 @@ test('mutateResponse should mutate data array from service', async (t) => {
     ],
   }
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('mutateResponse should mutate data object from service', async (t) => {
+test('mutateResponse should mutate data object from service', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -1869,15 +1911,15 @@ test('mutateResponse should mutate data object from service', async (t) => {
   }
   const endpoint = await service.endpointFromAction(action)
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
   const data = ret.data as TypedData
-  t.false(Array.isArray(data))
-  t.is(data.id, 'johnf')
-  t.is(data.$type, 'account')
+  assert.equal(Array.isArray(data), false)
+  assert.equal(data.id, 'johnf')
+  assert.equal(data.$type, 'account')
 })
 
-test('mutateResponse should not use defaults when castWithoutDefaults is true', async (t) => {
+test('mutateResponse should not use defaults when castWithoutDefaults is true', async () => {
   const service = new Service(
     {
       id: 'entries',
@@ -1925,16 +1967,16 @@ test('mutateResponse should not use defaults when castWithoutDefaults is true', 
   }
   const endpoint = await service.endpointFromAction(action)
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
   const data = ret.data as TypedData[]
-  t.is(data[0].id, null)
-  t.is(data[0].createdAt, undefined)
-  t.is(data[0].updatedAt, undefined)
-  t.is(data[0].one, undefined)
+  assert.equal(data[0].id, null)
+  assert.equal(data[0].createdAt, undefined)
+  assert.equal(data[0].updatedAt, undefined)
+  assert.equal(data[0].one, undefined)
 })
 
-test('mutateResponse should set origin when mutation results in an error response', async (t) => {
+test('mutateResponse should set origin when mutation results in an error response', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -1977,12 +2019,12 @@ test('mutateResponse should set origin when mutation results in an error respons
     origin: 'mutate:response',
   }
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('mutateResponse should use service adapters', async (t) => {
+test('mutateResponse should use service adapters', async () => {
   const theDate = new Date()
   const service = new Service(
     {
@@ -2049,12 +2091,12 @@ test('mutateResponse should use service adapters', async (t) => {
     ],
   }
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('mutateResponse should use endpoint adapters', async (t) => {
+test('mutateResponse should use endpoint adapters', async () => {
   const theDate = new Date()
   const service = new Service(
     {
@@ -2121,14 +2163,14 @@ test('mutateResponse should use endpoint adapters', async (t) => {
     ],
   }
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('mutateResponse should use both service and endpoint adapters', async (t) => {
+test('mutateResponse should use both service and endpoint adapters', async () => {
   const mockAdapter: Adapter = {
-    ...jsonResources.adapters!.json, // Borrow methods from json adapter
+    ...(jsonResources.adapters?.json as Adapter), // Borrow methods from json adapter
     async normalize(action, _options) {
       const data = action.response?.data
       return isObject(data)
@@ -2192,15 +2234,15 @@ test('mutateResponse should use both service and endpoint adapters', async (t) =
     meta: { ident: { id: 'johnf' } },
   }
   const endpoint = await service.endpointFromAction(action)
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
   const data = ret.data as TypedData[]
-  t.is(data.length, 2)
-  t.is(data[0].id, 'ent1')
-  t.is(data[1].id, 'ent1')
+  assert.equal(data.length, 2)
+  assert.equal(data[0].id, 'ent1')
+  assert.equal(data[1].id, 'ent1')
 })
 
-test('mutateResponse should not cast data array from service when allowRawResponse is true', async (t) => {
+test('mutateResponse should not cast data array from service when allowRawResponse is true', async () => {
   const theDate = new Date()
   const service = new Service(
     {
@@ -2267,12 +2309,12 @@ test('mutateResponse should not cast data array from service when allowRawRespon
     ],
   }
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('mutateResponse should mutate null to undefined', async (t) => {
+test('mutateResponse should mutate null to undefined', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -2309,12 +2351,12 @@ test('mutateResponse should mutate null to undefined', async (t) => {
     data: undefined,
   }
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should authorize typed data in array from service', async (t) => {
+test('should authorize typed data in array from service', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -2352,19 +2394,19 @@ test('should authorize typed data in array from service', async (t) => {
   }
   const endpoint = await service.endpointFromAction(action)
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
-  t.is(ret.status, 'ok')
+  assert.equal(ret.status, 'ok')
   const data = ret.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'johnf')
-  t.is(
+  assert.equal(data.length, 1)
+  assert.equal(data[0].id, 'johnf')
+  assert.equal(
     ret.warning,
     '1 item was removed from response data due to lack of access',
   )
 })
 
-test('should authorize typed data object from service', async (t) => {
+test('should authorize typed data object from service', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -2406,12 +2448,12 @@ test('should authorize typed data object from service', async (t) => {
     data: undefined,
   }
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('mutateResponse should return error when transformer throws', async (t) => {
+test('mutateResponse should return error when transformer throws', async () => {
   const willThrow = () => () => () => {
     throw new Error('Transformer error')
   }
@@ -2462,14 +2504,14 @@ test('mutateResponse should return error when transformer throws', async (t) => 
     origin: 'mutate:response',
   }
 
-  const ret = await service.mutateResponse(action, endpoint!)
+  const ret = await service.mutateResponse(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- mutateIncomingResponse
 
-test('mutateIncomingResponse should mutate and authorize data in response to incoming request', async (t) => {
+test('mutateIncomingResponse should mutate and authorize data in response to incoming request', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -2505,19 +2547,19 @@ test('mutateIncomingResponse should mutate and authorize data in response to inc
   }
   const endpoint = await service.endpointFromAction(action)
 
-  const ret = await service.mutateIncomingResponse(action, endpoint!)
+  const ret = await service.mutateIncomingResponse(action, endpoint as Endpoint)
 
-  t.is(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok', ret.error)
   const accounts = (ret.data as TypedData).accounts as TypedData[]
-  t.is(accounts.length, 1)
-  t.is(accounts[0].id, 'johnf')
-  t.is(
+  assert.equal(accounts.length, 1)
+  assert.equal(accounts[0].id, 'johnf')
+  assert.equal(
     ret.warning,
     '1 item was removed from response data due to lack of access',
   )
 })
 
-test('mutateIncomingResponse should set origin when mutation results in an error response', async (t) => {
+test('mutateIncomingResponse should set origin when mutation results in an error response', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -2560,14 +2602,14 @@ test('mutateIncomingResponse should set origin when mutation results in an error
     origin: 'mutate:response:incoming',
   }
 
-  const ret = await service.mutateIncomingResponse(action, endpoint!)
+  const ret = await service.mutateIncomingResponse(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- mutateRequest
 
-test('mutateRequest should set endpoint options and cast and mutate request data', async (t) => {
+test('mutateRequest should set endpoint options and cast and mutate request data', async () => {
   const theDate = new Date()
   const service = new Service(
     {
@@ -2657,12 +2699,12 @@ test('mutateRequest should set endpoint options and cast and mutate request data
     },
   }
 
-  const ret = await service.mutateRequest(action, endpoint!)
+  const ret = await service.mutateRequest(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expectedAction)
+  assert.deepEqual(ret, expectedAction)
 })
 
-test('mutateRequest should authorize data array going to service', async (t) => {
+test('mutateRequest should authorize data array going to service', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -2702,15 +2744,15 @@ test('mutateRequest should authorize data array going to service', async (t) => 
     warning: '1 item was removed from request data due to lack of access',
   }
 
-  const ret = await service.mutateRequest(action, endpoint!)
+  const ret = await service.mutateRequest(action, endpoint as Endpoint)
 
   const accounts = (ret.payload.data as TypedData).accounts as TypedData[]
-  t.is(accounts.length, 1)
-  t.is(accounts[0].id, 'johnf')
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(accounts.length, 1)
+  assert.equal(accounts[0].id, 'johnf')
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('mutateRequest should authorize data object going to service', async (t) => {
+test('mutateRequest should authorize data object going to service', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -2745,13 +2787,13 @@ test('mutateRequest should authorize data object going to service', async (t) =>
     origin: 'auth:data',
   }
 
-  const ret = await service.mutateRequest(action, endpoint!)
+  const ret = await service.mutateRequest(action, endpoint as Endpoint)
 
-  t.is((ret.payload.data as TypedData).accounts, undefined)
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal((ret.payload.data as TypedData).accounts, undefined)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('mutateRequest should use mutation pipeline', async (t) => {
+test('mutateRequest should use mutation pipeline', async () => {
   const service = new Service(
     {
       id: 'entries',
@@ -2789,12 +2831,12 @@ test('mutateRequest should use mutation pipeline', async (t) => {
     StupidSoapOperator: { StupidSoapEmptyArgs: {} },
   }
 
-  const ret = await service.mutateRequest(action, endpoint!)
+  const ret = await service.mutateRequest(action, endpoint as Endpoint)
 
-  t.deepEqual(ret.payload.data, expectedData)
+  assert.deepEqual(ret.payload.data, expectedData)
 })
 
-test('mutateRequest set origin when mutation results in an error response', async (t) => {
+test('mutateRequest set origin when mutation results in an error response', async () => {
   const service = new Service(
     {
       id: 'entries',
@@ -2831,12 +2873,12 @@ test('mutateRequest set origin when mutation results in an error response', asyn
     origin: 'mutate:request',
   }
 
-  const ret = await service.mutateRequest(action, endpoint!)
+  const ret = await service.mutateRequest(action, endpoint as Endpoint)
 
-  t.deepEqual(ret.response, expectedResponse)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('mutateRequest should return error when transformer throws', async (t) => {
+test('mutateRequest should return error when transformer throws', async () => {
   const willThrow = () => () => () => {
     throw new Error('Transformer error')
   }
@@ -2883,14 +2925,14 @@ test('mutateRequest should return error when transformer throws', async (t) => {
     },
   }
 
-  const ret = await service.mutateRequest(action, endpoint!)
+  const ret = await service.mutateRequest(action, endpoint as Endpoint)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- mutateIncomingRequest
 
-test('mutateIncomingRequest should mutate and authorize data coming from service', async (t) => {
+test('mutateIncomingRequest should mutate and authorize data coming from service', async () => {
   const service = new Service(
     {
       id: 'accounts',
@@ -2955,17 +2997,17 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
     warning: '1 item was removed from request data due to lack of access',
   }
 
-  const ret = await service.mutateIncomingRequest(action, endpoint!)
+  const ret = await service.mutateIncomingRequest(action, endpoint as Endpoint)
 
-  t.is(ret.response?.status, undefined, ret.response?.error)
+  assert.equal(ret.response?.status, undefined, ret.response?.error)
   const data = ret.payload.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'johnf')
-  t.is(data[0].$type, 'account')
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(data.length, 1)
+  assert.equal(data[0].id, 'johnf')
+  assert.equal(data[0].$type, 'account')
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('mutateIncomingRequest should mutate and use type from mutated action to cast items', async (t) => {
+test('mutateIncomingRequest should mutate and use type from mutated action to cast items', async () => {
   const endpoints = [
     {
       match: { incoming: true },
@@ -3026,17 +3068,17 @@ test('mutateIncomingRequest should mutate and use type from mutated action to ca
     warning: '1 item was removed from request data due to lack of access',
   }
 
-  const ret = await service.mutateIncomingRequest(action, endpoint!)
+  const ret = await service.mutateIncomingRequest(action, endpoint as Endpoint)
 
-  t.is(ret.response?.status, undefined, ret.response?.error)
+  assert.equal(ret.response?.status, undefined, ret.response?.error)
   const data = ret.payload.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'johnf')
-  t.is(data[0].$type, 'account')
-  t.deepEqual(ret.response, expectedResponse)
+  assert.equal(data.length, 1)
+  assert.equal(data[0].id, 'johnf')
+  assert.equal(data[0].$type, 'account')
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
-test('mutateIncomingRequest should not use defaults when castWithoutDefaults is true', async (t) => {
+test('mutateIncomingRequest should not use defaults when castWithoutDefaults is true', async () => {
   const endpoints = [
     {
       match: { incoming: true },
@@ -3077,18 +3119,18 @@ test('mutateIncomingRequest should not use defaults when castWithoutDefaults is 
     true /* isIncoming */,
   )
 
-  const ret = await service.mutateIncomingRequest(action, endpoint!)
+  const ret = await service.mutateIncomingRequest(action, endpoint as Endpoint)
 
-  t.is(ret.response?.status, undefined, ret.response?.error)
+  assert.equal(ret.response?.status, undefined, ret.response?.error)
   const data = ret.payload.data as TypedData[]
-  t.is(data[0].id, null)
-  t.is(data[0].title, 'Entry 1')
-  t.is(data[0].createdAt, undefined)
-  t.is(data[0].updatedAt, undefined)
-  t.is(data[0].one, undefined)
+  assert.equal(data[0].id, null)
+  assert.equal(data[0].title, 'Entry 1')
+  assert.equal(data[0].createdAt, undefined)
+  assert.equal(data[0].updatedAt, undefined)
+  assert.equal(data[0].one, undefined)
 })
 
-test('mutateIncomingRequest should keep ident, id, cid, and gid even when mutation removes them', async (t) => {
+test('mutateIncomingRequest should keep ident, id, cid, and gid even when mutation removes them', async () => {
   const service = new Service(
     {
       id: 'api',
@@ -3144,13 +3186,13 @@ test('mutateIncomingRequest should keep ident, id, cid, and gid even when mutati
     queue: true,
   }
 
-  const ret = await service.mutateIncomingRequest(action, endpoint!)
+  const ret = await service.mutateIncomingRequest(action, endpoint as Endpoint)
 
-  t.is(ret.type, 'RUN')
-  t.deepEqual(ret.meta, expectedMeta)
+  assert.equal(ret.type, 'RUN')
+  assert.deepEqual(ret.meta, expectedMeta)
 })
 
-test('mutateIncomingRequest should allow mutation to override ident, id, cid, and gid', async (t) => {
+test('mutateIncomingRequest should allow mutation to override ident, id, cid, and gid', async () => {
   const service = new Service(
     {
       id: 'api',
@@ -3210,13 +3252,13 @@ test('mutateIncomingRequest should allow mutation to override ident, id, cid, an
     ident: { id: 'mysteryUser' },
   }
 
-  const ret = await service.mutateIncomingRequest(action, endpoint!)
+  const ret = await service.mutateIncomingRequest(action, endpoint as Endpoint)
 
-  t.is(ret.type, 'RUN')
-  t.deepEqual(ret.meta, expectedMeta)
+  assert.equal(ret.type, 'RUN')
+  assert.deepEqual(ret.meta, expectedMeta)
 })
 
-test('mutateIncomingRequest should set origin when mutation results in an error response', async (t) => {
+test('mutateIncomingRequest should set origin when mutation results in an error response', async () => {
   const service = new Service(
     {
       id: 'entries',
@@ -3255,14 +3297,14 @@ test('mutateIncomingRequest should set origin when mutation results in an error 
     origin: 'mutate:request:incoming',
   }
 
-  const ret = await service.mutateIncomingRequest(action, endpoint!)
+  const ret = await service.mutateIncomingRequest(action, endpoint as Endpoint)
 
-  t.deepEqual(ret.response, expectedResponse)
+  assert.deepEqual(ret.response, expectedResponse)
 })
 
 // Tests -- listen
 
-test('listen should call transporter.listen and set listen flag', async (t) => {
+test('listen should call transporter.listen and set listen flag', async () => {
   const listenStub = sinon.stub().resolves({ status: 'ok' })
   const emit = () => undefined
   const resources = {
@@ -3270,9 +3312,9 @@ test('listen should call transporter.listen and set listen flag', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: listenStub,
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -3294,28 +3336,27 @@ test('listen should call transporter.listen and set listen flag', async (t) => {
 
   const ret = await service.listen(dispatch)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(listenStub.callCount, 1)
-  t.is(typeof listenStub.args[0][0], 'function') // We check that the dispatch function is called in another test
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(listenStub.callCount, 1)
+  assert.equal(typeof listenStub.args[0][0], 'function') // We check that the dispatch function is called in another test
   const connection = listenStub.args[0][1]
-  t.truthy(connection)
-  t.is(connection.status, 'ok')
-  t.is(typeof listenStub.args[0][2], 'function') // We check that the authentication callback is called in another test
-  t.is(listenStub.args[0][3], emit)
-  t.true(service.isListening)
+  assert.equal(connection.status, 'ok')
+  assert.equal(typeof listenStub.args[0][2], 'function') // We check that the authentication callback is called in another test
+  assert.equal(listenStub.args[0][3], emit)
+  assert.equal(service.isListening, true)
 })
 
-test('listen should not call transporter.listen when transport.shouldListen returns false', async (t) => {
+test('listen should not call transporter.listen when transport.shouldListen returns false', async () => {
   const listenStub = sinon.stub().resolves({ status: 'ok' })
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         shouldListen: () => false,
         listen: listenStub,
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -3340,12 +3381,12 @@ test('listen should not call transporter.listen when transport.shouldListen retu
 
   const ret = await service.listen(dispatch)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(listenStub.callCount, 0)
-  t.false(service.isListening)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(listenStub.callCount, 0)
+  assert.equal(service.isListening, false)
 })
 
-test('listen should use service middleware', async (t) => {
+test('listen should use service middleware', async () => {
   const failMiddleware = () => async (_action: Action) => ({
     status: 'badresponse',
   })
@@ -3359,12 +3400,12 @@ test('listen should use service middleware', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: async (dispatch: Dispatch) => {
           listenDispatch = dispatch
           return { status: 'ok' }
         },
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -3388,12 +3429,12 @@ test('listen should use service middleware', async (t) => {
   }
 
   await service.listen(dispatch)
-  const ret = await listenDispatch!(action)
+  const ret = await listenDispatch?.(action)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('listen should set sourceService, id, and cid', async (t) => {
+test('listen should set sourceService, id, and cid', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3414,19 +3455,19 @@ test('listen should set sourceService, id, and cid', async (t) => {
 
   const ret = await service.listen(dispatchStub)
 
-  t.is(dispatchStub.callCount, 1)
+  assert.equal(dispatchStub.callCount, 1)
   const dispatchedAction = dispatchStub.args[0][0]
-  t.is(dispatchedAction.type, 'SET')
-  t.deepEqual(dispatchedAction.payload, expectedPayload)
-  t.deepEqual(dispatchedAction.meta.ident, { id: 'johnf' })
-  t.is(dispatchedAction.meta.auth, undefined)
-  t.is(typeof dispatchedAction.meta.id, 'string')
-  t.is(dispatchedAction.meta.id.length, 21)
-  t.is(dispatchedAction.meta.cid, dispatchedAction.meta.id)
-  t.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchedAction.type, 'SET')
+  assert.deepEqual(dispatchedAction.payload, expectedPayload)
+  assert.deepEqual(dispatchedAction.meta.ident, { id: 'johnf' })
+  assert.equal(dispatchedAction.meta.auth, undefined)
+  assert.equal(typeof dispatchedAction.meta.id, 'string')
+  assert.equal(dispatchedAction.meta.id.length, 21)
+  assert.equal(dispatchedAction.meta.cid, dispatchedAction.meta.id)
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('listen should set sourceService before middleware', async (t) => {
+test('listen should set sourceService before middleware', async () => {
   const sourceServiceMiddleware = () => async (action: Action) => ({
     status: 'ok',
     params: { sourceService: action.payload.sourceService }, // To verify that we got `sourceService`
@@ -3456,10 +3497,10 @@ test('listen should set sourceService before middleware', async (t) => {
 
   const ret = await service.listen(dispatch)
 
-  t.deepEqual(ret, expectedResponse)
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('listen should override existing sourceService', async (t) => {
+test('listen should override existing sourceService', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3479,12 +3520,12 @@ test('listen should override existing sourceService', async (t) => {
 
   const ret = await service.listen(dispatchStub)
 
-  t.is(dispatchStub.callCount, 1)
-  t.is(dispatchStub.args[0][0].payload.sourceService, 'entries')
-  t.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
+  assert.equal(dispatchStub.args[0][0].payload.sourceService, 'entries')
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('should support progress reporting', async (t) => {
+test('should support progress reporting', async () => {
   const dispatch = (_action: Action | null) =>
     pProgress<Response>(async (setProgress) => {
       setProgress(0.5)
@@ -3497,9 +3538,9 @@ test('should support progress reporting', async (t) => {
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: listenStub,
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -3536,13 +3577,13 @@ test('should support progress reporting', async (t) => {
   p.onProgress(progressStub)
   const ret = await p
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(progressStub.callCount, 2)
-  t.is(progressStub.args[0][0], 0.5)
-  t.is(progressStub.args[1][0], 1)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(progressStub.callCount, 2)
+  assert.equal(progressStub.args[0][0], 0.5)
+  assert.equal(progressStub.args[1][0], 1)
 })
 
-test('listen should authenticate action when called back from service', async (t) => {
+test('listen should authenticate action when called back from service', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3566,14 +3607,14 @@ test('listen should authenticate action when called back from service', async (t
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 1)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
   const dispatchedAction = dispatchStub.args[0][0]
-  t.deepEqual(dispatchedAction.payload, expectedPayload)
-  t.is(dispatchedAction.meta?.ident?.id, 'johnf')
+  assert.deepEqual(dispatchedAction.payload, expectedPayload)
+  assert.equal(dispatchedAction.meta?.ident?.id, 'johnf')
 })
 
-test('listen should authenticate action with second auth', async (t) => {
+test('listen should authenticate action with second auth', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3597,14 +3638,14 @@ test('listen should authenticate action with second auth', async (t) => {
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 1)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
   const dispatchedAction = dispatchStub.args[0][0]
-  t.deepEqual(dispatchedAction.payload, expectedPayload)
-  t.is(dispatchedAction.meta?.ident?.id, 'johnf')
+  assert.deepEqual(dispatchedAction.payload, expectedPayload)
+  assert.equal(dispatchedAction.meta?.ident?.id, 'johnf')
 })
 
-test('listen should fall back to ident authenticator on true', async (t) => {
+test('listen should fall back to ident authenticator on true', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3629,14 +3670,14 @@ test('listen should fall back to ident authenticator on true', async (t) => {
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 1)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
   const dispatchedAction = dispatchStub.args[0][0]
-  t.deepEqual(dispatchedAction.payload, expectedPayload)
-  t.deepEqual(dispatchedAction.meta?.ident, expectedActionIdent)
+  assert.deepEqual(dispatchedAction.payload, expectedPayload)
+  assert.deepEqual(dispatchedAction.meta?.ident, expectedActionIdent)
 })
 
-test('listen should complete ident in authenticate callback', async (t) => {
+test('listen should complete ident in authenticate callback', async () => {
   const dispatchStub = sinon
     .stub()
     .callsFake(dispatch)
@@ -3673,13 +3714,13 @@ test('listen should complete ident in authenticate callback', async (t) => {
 
   const ret = await service.listen(dispatchStub)
 
-  t.is(dispatchStub.callCount, 2)
-  t.deepEqual(dispatchStub.args[0][0], expectedGetIdentAction)
-  t.deepEqual(dispatchStub.args[1][0].meta.ident, expectedIdent)
-  t.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 2)
+  assert.deepEqual(dispatchStub.args[0][0], expectedGetIdentAction)
+  assert.deepEqual(dispatchStub.args[1][0].meta.ident, expectedIdent)
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('listen should respond with noaccess when ident is not found', async (t) => {
+test('listen should respond with noaccess when ident is not found', async () => {
   const dispatchStub = sinon
     .stub()
     .callsFake(dispatch)
@@ -3714,13 +3755,13 @@ test('listen should respond with noaccess when ident is not found', async (t) =>
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 2)
-  t.deepEqual(dispatchStub.args[0][0], expectedGetIdentAction)
-  t.is(dispatchStub.args[1][0].meta.ident, undefined)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 2)
+  assert.deepEqual(dispatchStub.args[0][0], expectedGetIdentAction)
+  assert.equal(dispatchStub.args[1][0].meta.ident, undefined)
 })
 
-test('listen should authenticate action with endpoint auth', async (t) => {
+test('listen should authenticate action with endpoint auth', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3750,14 +3791,14 @@ test('listen should authenticate action with endpoint auth', async (t) => {
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 1)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
   const dispatchedAction = dispatchStub.args[0][0]
-  t.deepEqual(dispatchedAction.payload, expectedPayload)
-  t.is(dispatchedAction.meta?.ident?.id, 'johnf')
+  assert.deepEqual(dispatchedAction.payload, expectedPayload)
+  assert.equal(dispatchedAction.meta?.ident?.id, 'johnf')
 })
 
-test('listen should reject authentication when validate() returns an error', async (t) => {
+test('listen should reject authentication when validate() returns an error', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3782,15 +3823,15 @@ test('listen should reject authentication when validate() returns an error', asy
 
   const ret = await service.listen(dispatchStub)
 
-  t.is(dispatchStub.callCount, 1)
+  assert.equal(dispatchStub.callCount, 1)
   const dispatchedAction = dispatchStub.args[0][0]
-  t.deepEqual(dispatchedAction.response, expectedResponse)
-  t.is(dispatchedAction.meta.ident, undefined)
-  t.deepEqual(ret, expectedResponse)
-  t.false(service.isListening)
+  assert.deepEqual(dispatchedAction.response, expectedResponse)
+  assert.equal(dispatchedAction.meta.ident, undefined)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(service.isListening, false)
 })
 
-test('listen should pass on dispatch to auth callback', async (t) => {
+test('listen should pass on dispatch to auth callback', async () => {
   const action = {
     type: 'SET',
     payload: { data: [], sourceService: 'entries' },
@@ -3812,11 +3853,11 @@ test('listen should pass on dispatch to auth callback', async (t) => {
 
   const ret = await service.listen(dispatch)
 
-  t.deepEqual(ret, expectedResponse)
-  t.true(service.isListening)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(service.isListening, true)
 })
 
-test('listen should reject authentication when second validate() returns an error', async (t) => {
+test('listen should reject authentication when second validate() returns an error', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3841,12 +3882,12 @@ test('listen should reject authentication when second validate() returns an erro
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 1)
-  t.false(service.isListening)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
+  assert.equal(service.isListening, false)
 })
 
-test('listen should accept an incoming ident with withTokens only', async (t) => {
+test('listen should accept an incoming ident with withTokens only', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3869,11 +3910,11 @@ test('listen should accept an incoming ident with withTokens only', async (t) =>
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 1)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
 })
 
-test('listen should accept an incoming ident with withTokens array', async (t) => {
+test('listen should accept an incoming ident with withTokens array', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3896,11 +3937,11 @@ test('listen should accept an incoming ident with withTokens array', async (t) =
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 1)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
 })
 
-test('listen should authenticate with anonymous when auth is true', async (t) => {
+test('listen should authenticate with anonymous when auth is true', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3923,11 +3964,11 @@ test('listen should authenticate with anonymous when auth is true', async (t) =>
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 1)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
 })
 
-test('listen should remove ident not given by us', async (t) => {
+test('listen should remove ident not given by us', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3951,11 +3992,11 @@ test('listen should remove ident not given by us', async (t) => {
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 1)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
 })
 
-test('listen should remove incoming auth on meta', async (t) => {
+test('listen should remove incoming auth on meta', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -3975,13 +4016,13 @@ test('listen should remove incoming auth on meta', async (t) => {
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret.status, 'ok', ret.error)
-  t.is(dispatchStub.callCount, 1)
+  assert.deepEqual(ret.status, 'ok', ret.error)
+  assert.equal(dispatchStub.callCount, 1)
   const dispatchedAction = dispatchStub.args[0][0]
-  t.is(dispatchedAction.meta?.auth, undefined)
+  assert.equal(dispatchedAction.meta?.auth, undefined)
 })
 
-test('listen should return noaction from authenticate() when no incoming auth', async (t) => {
+test('listen should return noaction from authenticate() when no incoming auth', async () => {
   const dispatchStub = sinon.stub().callsFake(dispatch)
   const action = {
     type: 'SET',
@@ -4006,24 +4047,24 @@ test('listen should return noaction from authenticate() when no incoming auth', 
 
   const ret = await service.listen(dispatchStub)
 
-  t.deepEqual(ret, expectedResponse)
-  t.is(dispatchStub.callCount, 1)
-  t.false(service.isListening)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(dispatchStub.callCount, 1)
+  assert.equal(service.isListening, false)
 })
 
-test('listen should return error when connection fails', async (t) => {
+test('listen should return error when connection fails', async () => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: async () => ({ status: 'ok' }),
         connect: async () => ({
           status: 'timeout',
           error: 'Connection attempt timed out',
         }),
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -4048,11 +4089,11 @@ test('listen should return error when connection fails', async (t) => {
 
   const ret = await service.listen(dispatch)
 
-  t.deepEqual(ret, expectedResponse)
-  t.false(service.isListening)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(service.isListening, false)
 })
 
-test('listen should return error when authentication fails', async (t) => {
+test('listen should return error when authentication fails', async () => {
   const service = new Service(
     {
       id: 'entries',
@@ -4071,19 +4112,19 @@ test('listen should return error when authentication fails', async (t) => {
 
   const ret = await service.listen(dispatch)
 
-  t.deepEqual(ret, expectedResponse)
-  t.false(service.isListening)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(service.isListening, false)
 })
 
-test('listen should do nothing when transporter has no listen method', async (t) => {
+test('listen should do nothing when transporter has no listen method', async () => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: undefined,
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -4108,20 +4149,20 @@ test('listen should do nothing when transporter has no listen method', async (t)
 
   const ret = await service.listen(dispatch)
 
-  t.deepEqual(ret, expectedResponse)
-  t.false(service.isListening)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(service.isListening, false)
 })
 
-test('listen should return error when no connection', async (t) => {
+test('listen should return error when no connection', async () => {
   const listenStub = sinon.stub().resolves({ status: 'ok' })
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: listenStub,
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -4147,23 +4188,23 @@ test('listen should return error when no connection', async (t) => {
   await service.close() // Closing will set the connection to null
   const ret = await service.listen(dispatch)
 
-  t.deepEqual(ret, expectedResponse)
-  t.false(service.isListening)
+  assert.deepEqual(ret, expectedResponse)
+  assert.equal(service.isListening, false)
 })
 
-test('listen should return noaction when incoming action is null', async (t) => {
+test('listen should return noaction when incoming action is null', async () => {
   let listenDispatch: Dispatch | undefined
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: async (dispatch: Dispatch) => {
           listenDispatch = dispatch
           return { status: 'ok' }
         },
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -4187,24 +4228,24 @@ test('listen should return noaction when incoming action is null', async (t) => 
   }
 
   await service.listen(dispatch)
-  const ret = await listenDispatch!(null)
+  const ret = await listenDispatch?.(null)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- stopListening
 
-test('stopListening should stop listening to transporter', async (t) => {
+test('stopListening should stop listening to transporter', async () => {
   const stopListeningStub = sinon.stub().resolves({ status: 'ok' })
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
         stopListening: stopListeningStub,
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -4226,24 +4267,23 @@ test('stopListening should stop listening to transporter', async (t) => {
   await service.listen(dispatch)
   const ret = await service.stopListening()
 
-  t.deepEqual(ret, expected)
-  t.is(stopListeningStub.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(stopListeningStub.callCount, 1)
   const connection = stopListeningStub.args[0][0]
-  t.truthy(connection)
-  t.is(connection.status, 'ok')
-  t.false(service.isListening)
+  assert.equal(connection.status, 'ok')
+  assert.equal(service.isListening, false)
 })
 
-test('stopListening should do nothing when transporter does not have a stopListening method', async (t) => {
+test('stopListening should do nothing when transporter does not have a stopListening method', async () => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
         stopListening: undefined,
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -4270,21 +4310,21 @@ test('stopListening should do nothing when transporter does not have a stopListe
   await service.listen(dispatch)
   const ret = await service.stopListening()
 
-  t.deepEqual(ret, expected)
-  t.true(service.isListening)
+  assert.deepEqual(ret, expected)
+  assert.equal(service.isListening, true)
 })
 
-test('stopListening should do nothing when no connection', async (t) => {
+test('stopListening should do nothing when no connection', async () => {
   const stopListeningStub = sinon.stub().resolves({ status: 'ok' })
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
         stopListening: stopListeningStub,
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -4310,24 +4350,24 @@ test('stopListening should do nothing when no connection', async (t) => {
   await service.close() // Close to make sure there's no connection
   const ret = await service.stopListening()
 
-  t.deepEqual(ret, expected)
-  t.is(stopListeningStub.callCount, 0)
-  t.false(service.isListening)
+  assert.deepEqual(ret, expected)
+  assert.equal(stopListeningStub.callCount, 0)
+  assert.equal(service.isListening, false)
 })
 
 // Tests -- close
 
-test('close should disconnect transporter', async (t) => {
+test('close should disconnect transporter', async () => {
   const disconnectStub = sinon.stub().resolves({ status: 'ok' })
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
         disconnect: disconnectStub,
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -4349,24 +4389,23 @@ test('close should disconnect transporter', async (t) => {
   await service.listen(dispatch)
   const ret = await service.close()
 
-  t.deepEqual(ret, expected)
-  t.is(disconnectStub.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(disconnectStub.callCount, 1)
   const connection = disconnectStub.args[0][0]
-  t.truthy(connection)
-  t.is(connection.status, 'ok')
-  t.false(service.isListening)
+  assert.equal(connection.status, 'ok')
+  assert.equal(service.isListening, false)
 })
 
-test('close should probihit closed connection from behind used again', async (t) => {
+test('close should probihit closed connection from behind used again', async () => {
   const resources = {
     ...jsonResources,
     transporters: {
       ...jsonResources.transporters,
       http: {
-        ...jsonResources.transporters!.http,
+        ...jsonResources.transporters?.http,
         listen: async () => ({ status: 'ok' }), // To make sure the connection is connected
         disconnect: async () => undefined,
-      },
+      } as Transporter,
     },
     mapTransform,
     mapOptions,
@@ -4392,10 +4431,10 @@ test('close should probihit closed connection from behind used again', async (t)
   await service.close()
   const ret = await service.listen(dispatch)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('close should just return ok when no connection', async (t) => {
+test('close should just return ok when no connection', async () => {
   const resources = {
     ...jsonResources,
     mapTransform,
@@ -4417,8 +4456,8 @@ test('close should just return ok when no connection', async (t) => {
   await service.close() // Closing will set the connection to null
   const ret = await service.close()
 
-  t.deepEqual(ret, expected)
-  t.false(service.isListening)
+  assert.deepEqual(ret, expected)
+  assert.equal(service.isListening, false)
 })
 
 test.todo('should not allow unauthorized access when auth is true')

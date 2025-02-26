@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
@@ -16,7 +17,7 @@ const entries2 = [entry3Data]
 
 // Tests
 
-test('should get first and second page of entries from service', async (t) => {
+test('should get first and second page of entries from service', async () => {
   nock('http://some.api')
     .get('/entries')
     .reply(200, { data: entries1, next: 'page2', prev: null })
@@ -37,20 +38,20 @@ test('should get first and second page of entries from service', async (t) => {
   const action3 = { ...action1, payload: ret2.paging?.prev }
   const ret3 = await great.dispatch(action3 as Action)
 
-  t.is(ret1.status, 'ok', ret1.error)
+  assert.equal(ret1.status, 'ok', ret1.error)
   const data1 = ret1.data as TypedData[]
-  t.is(data1.length, 2)
-  t.is(data1[0].id, 'ent1')
-  t.is(data1[1].id, 'ent2')
-  t.is(ret2.status, 'ok', ret2.error)
+  assert.equal(data1.length, 2)
+  assert.equal(data1[0].id, 'ent1')
+  assert.equal(data1[1].id, 'ent2')
+  assert.equal(ret2.status, 'ok', ret2.error)
   const data2 = ret2.data as TypedData[]
-  t.is(data2.length, 1)
-  t.is(data2[0].id, 'ent3')
-  t.is(ret3.status, 'ok', ret3.error)
+  assert.equal(data2.length, 1)
+  assert.equal(data2[0].id, 'ent3')
+  assert.equal(ret3.status, 'ok', ret3.error)
   const data3 = ret3.data as TypedData[]
-  t.is(data3.length, 2)
-  t.is(data3[0].id, 'ent1')
-  t.is(data3[1].id, 'ent2')
+  assert.equal(data3.length, 2)
+  assert.equal(data3[0].id, 'ent1')
+  assert.equal(data3[1].id, 'ent2')
 
   nock.restore()
 })

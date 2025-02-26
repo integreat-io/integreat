@@ -6,9 +6,7 @@ import type { Action, Response, TypedData, Ident } from '../../types.js'
 import type Schema from '../../schema/Schema.js'
 import type { Access } from '../../schema/types.js'
 
-export interface AuthorizeDataFn {
-  (action: Action, allowRaw?: boolean): Action
-}
+export type AuthorizeDataFn = (action: Action, allowRaw?: boolean) => Action
 
 const isStringOrArray = (value: unknown): value is string | string[] =>
   typeof value === 'string' || Array.isArray(value)

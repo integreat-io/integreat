@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import mapTransform from 'map-transform'
 import Schema from '../schema/Schema.js'
 import Service from '../service/Service.js'
@@ -29,70 +30,70 @@ const entries = new Service(
 
 // Tests
 
-test('should return service from type', (t) => {
+test('should return service from type', () => {
   const services = { entries }
 
   const ret = getService(schemas, services)('entry')
 
-  t.is(ret, entries)
+  assert.equal(ret, entries)
 })
 
-test('should return service from first type that matches', (t) => {
+test('should return service from first type that matches', () => {
   const services = { entries }
 
   const ret = getService(schemas, services)(['unknown', 'entry'])
 
-  t.is(ret, entries)
+  assert.equal(ret, entries)
 })
 
-test('should return service from service id', (t) => {
+test('should return service from service id', () => {
   const services = { entries }
 
   const ret = getService(schemas, services)('entry', 'entries')
 
-  t.is(ret, entries)
+  assert.equal(ret, entries)
 })
 
-test('should return undefined when type not found', (t) => {
+test('should return undefined when type not found', () => {
   const services = {}
 
-  t.notThrows(() => {
+  assert.doesNotThrow(() => {
     const ret = getService(schemas, services)('unknown')
 
-    t.is(ret, undefined)
+    assert.equal(ret, undefined)
   })
 })
 
-test('should return undefined when service not found', (t) => {
+test('should return undefined when service not found', () => {
   const services = {}
 
-  t.notThrows(() => {
+  assert.doesNotThrow(() => {
     const ret = getService(schemas, services)('entry', 'unknown')
 
-    t.is(ret, undefined)
+    assert.equal(ret, undefined)
   })
 })
 
-test('should return undefined when service not found, regardless of type', (t) => {
+test('should return undefined when service not found, regardless of type', () => {
   const services = { entries }
 
-  t.notThrows(() => {
+  assert.doesNotThrow(() => {
     const ret = getService(schemas, services)('entry', 'unknown')
 
-    t.is(ret, undefined)
+    assert.equal(ret, undefined)
   })
 })
 
-test('should return undefined when no schemas and no serviceId', (t) => {
+test('should return undefined when no schemas and no serviceId', () => {
   const services = { entries }
 
   const ret = getService(undefined, services)('entry')
 
-  t.is(ret, undefined)
+  assert.equal(ret, undefined)
 })
 
-test('should return undefined when no services', (t) => {
+test('should return undefined when no services', () => {
   const ret = getService(schemas)('entry')
 
-  t.is(ret, undefined)
+  assert.equal(ret, undefined)
 })

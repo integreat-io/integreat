@@ -1,19 +1,20 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 
 import boolean from './boolean.js'
 
 // Tests
 
-test('should transform values to boolean', (t) => {
-  t.true(boolean(true))
-  t.false(boolean(false))
-  t.true(boolean('true'))
-  t.false(boolean('false'))
-  t.true(boolean(1))
-  t.false(boolean(0))
+test('should transform values to boolean', () => {
+  assert.equal(boolean(true), true)
+  assert.equal(boolean(false), false)
+  assert.equal(boolean('true'), true)
+  assert.equal(boolean('false'), false)
+  assert.equal(boolean(1), true)
+  assert.equal(boolean(0), false)
 })
 
-test('should not touch null and undefined', (t) => {
-  t.is(boolean(null), null)
-  t.is(boolean(undefined), undefined)
+test('should not touch null and undefined', () => {
+  assert.equal(boolean(null), null)
+  assert.equal(boolean(undefined), undefined)
 })

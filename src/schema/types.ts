@@ -44,6 +44,8 @@ export interface SchemaDef {
   internal?: boolean
 }
 
-export interface CastFn {
-  (data: unknown, isRev?: boolean, noDefaults?: boolean): unknown
-}
+export type CastFn = (
+  data: unknown,
+  isRev?: boolean,
+  noDefaults?: boolean,
+) => unknown
