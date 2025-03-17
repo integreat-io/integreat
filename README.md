@@ -2096,69 +2096,79 @@ used as the response from the job or step.
 
 ### Job and step conditions
 
-By default, if a step in a flow fails, no more steps are run, and the entire job
-will fail with the response from the failed step. You may however provide your
-own conditions for when a step should be run and when a step should be regarded
-as having failed.
+By default, if a step in a flow fails, no more steps are run, and the entire
+job will fail with the response from the failed step. You may, however,
+provide your own conditions for when a step should be run and when a step
+should be regarded as having failed.
 
-`preconditions` on a step must be an array of condition objects, that must all
-pass in order for the step to be run. A condition object must have a `condition`
-property with an array of mutation pipelines, that must all return truthy for
-the condition to be regarded as passed. Each pipeline is given the same object
-as is given to `premutation` with action and responses from previous steps, but
-without the action to be dispatched. See
+`preconditions` may be set to an array of condition objects, that must all
+pass in order for the step to be run. Each condition object must have a
+`condition` property with an array of mutation pipelines, and all these
+pipelines must return truthy for the condition to be regarded as passed. Each
+pipeline is given the same object that is given to `premutation` with action
+and responses from previous steps, but without the action for this step. See
 [the section on mutating jobs](#job-and-step-mutations) for more on this.
 
 The condition object may also have a `failResponse` property with a response
 object that will be used as the response from the step if the condition fails.
 
 Finally, the `condition` object may have a `break` property set to `true`, to
-signal that the entire job should fail if the condition fails. If `break` is not
-set, the step will just be skipped and the job flow continues.
+signal that the entire job should fail if the condition fails. If `break` is not set, the step will just be skipped and the job flow continues.
 
-Note that a step has a default pre-condition, that will make it fail and stop
-the flow if the previous step failed. By specifying your own `preconditions`,
-you override this, and only your conditions will be used. This is not always
-what you want, as setting preconditions does not necessarily mean that you want
-to disregard errors from the previous step. By setting the
-`failOnErrorInPostconditions` flag to `true` (on the `flags` object in the
-defintions given to `Integreat.create()`), this default condition will be set
-in the `postconditions` instead, so that you may override it there. This way,
-you may set pre-conditions on a step, whithout overriding the fail-on-error
-behavior of the step before.
+> [!NOTE]
+> The default behavior of breaking when a step returns an error, is implemented
+> as a default pre-condition, so if you set your own `preconditions`, you
+> will also have to handle breaking on error.
+>
+> This is not very intuitive, so we have introduced a
+> `failOnErrorInPostconditions` flag that will change this to what will be the
+> default in the next major version. [See more below.](#conditions-and-the-failOnErrorInPostconditions-flag)
 
 `postconditions` is also an array of condition objects, but this is used to
 decide if the step should be regarded as having failed after its action or flow
 has run. The condition pipelines are passed the same object as `postmutation`,
 but _after_ `postmutation` has been applied. Just as for `preconditions`, the
 `break` property is `false` by default, so to stop the entire job, set it to
-`true` (but see note on `breakByDefault` above). An error will usually cause
-the job to fail even with `break: false`, but the breaking may be handled by the
-`preconditions` on the next step, as describe above.
-
-> [!NOTE]
-> By setting the feature flag `failOnErrorInPostconditions` (or the depricated
-> alias `failByDefault`) to `true` (on the `flags` object in the defintions
-> given to `Integreat.create()`), `break` will be `true` by default for
-> postconditions, and you must set it to `false` to make the flow continue. This
-> will be the default behavior in the next major version of Integreat, so it's
-> a good idea to set the flag to `true` already now. Note that postconditions
-> will never break by default, regardless of this flag.
+`true`. An error will usually cause the job to fail even with `break: false`,
+but the breaking may be handled by the `preconditions` on the next step, as
+describe above.
 
 Post-conditions specify what is required for a step to be succeessful, and
-sometimes you may require a certain error as success, e.g. when you're checking
-a cache and will only continue if a value is not cached, requiring a `notfound`
-response status. The condition pipeline for this should be straight
-forward, but as you cannot specify the response that will be used when the
-condition _passes_, you may wonder what happens with the error response.
-Integreat will set the status of a passing response to `ok` if it was an error,
-and any `error` property will be changed to a `warning`. Besides from that, the
-response will be unchanged.
+sometimes you consider a certain error to be an indication of success. An
+example may be when you're checking a cache and will only continue if a value
+is _not_ cached, meaning a `notfound` response status is a success in this
+case. The condition pipeline for this should be straight forward, but as you
+cannot specify the response that will be used when the condition _passes_, you
+may wonder what happens with the error response. When an error response causes
+a post-condition to pass, Integreat will set the status of the response to
+`ok` and any `error` property will be changed to a `warning` property. Apart from that, the response will be unchanged.
 
 Jobs may have `preconditions` too, and it will work in the same way as for a
 step, determining whether a job will run of not. `break` will have no effect
 for a condition on a job. Jobs may not have `postconditions`, but you can
 mutate the response with `postmutation` and accomplish the same.
+
+#### Conditions and the `failOnErrorInPostconditions` flag
+
+The way `preconditions` controls whether the previous step will break on error,
+is not very intuitive, so we have introduced a feature flag to change this
+behavior. The flag is called `failOnErrorInPostconditions`, and is set on the
+`flags` object in the definitions given to `Integreat.create()`). In the next
+major version of Integreat, this will be the default behavior, so it may
+be a good idea to start using it now.
+
+When the flag is set to `true`, the default break on error behavior is set in
+`postconditions` instead. This means that you may set your own `preconditions`
+and still have the previous step break on error, the way you probably would
+expect it to work. If you set your own `postconditions`, on the other hand,
+you need to take care of how an error response from that step is handled, but
+that is often why you would set your own `postconditions` anyway.
+
+Also, `break` will be `true` by default for `postconditions` with this flag,
+and you need to set it to `break: false` if you have a post-condition and you
+don't want it to stop the entire flow.
+
+For `preconditions`, the `break` flag is `false` by default in all cases.
 
 ### Dispatching several actions by iterating over an array
 
