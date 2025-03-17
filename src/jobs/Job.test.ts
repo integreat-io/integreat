@@ -200,7 +200,12 @@ test('should run a simple flow with one action', async () => {
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action1' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      jobId: 'action1',
+      stepId: 'getEntry',
+    },
   }
   const expected = {
     status: 'ok',
@@ -263,7 +268,12 @@ test('should run two actions in sequence', async () => {
       id: 'ent1',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action2' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      jobId: 'action2',
+      stepId: 'setEntry',
+    },
   }
   const expectedAction2 = {
     type: 'SET',
@@ -271,7 +281,12 @@ test('should run two actions in sequence', async () => {
       type: 'date',
       id: 'updatedAt',
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action2' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      jobId: 'action2',
+      stepId: 'setDate',
+    },
   }
   const expected = { status: 'ok' } // Won't return data unless specified
 
@@ -520,7 +535,12 @@ test('should run two actions in parallel', async () => {
       type: 'entry',
       id: 'ent1',
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      jobId: 'action3',
+      stepId: 'getEntry',
+    },
   }
   const expectedAction2 = {
     type: 'GET',
@@ -528,7 +548,12 @@ test('should run two actions in parallel', async () => {
       type: 'date',
       id: 'updatedAt',
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      jobId: 'action3',
+      stepId: 'getDate',
+    },
   }
   const expectedAction3 = {
     type: 'SET',
@@ -536,7 +561,12 @@ test('should run two actions in parallel', async () => {
       type: 'entry',
       data: { id: 'ent1', $type: 'entry' },
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      jobId: 'action3',
+      stepId: 'setEntry',
+    },
   }
   const expectedAction4 = {
     type: 'SET',
@@ -544,7 +574,12 @@ test('should run two actions in parallel', async () => {
       type: 'date',
       data: { id: 'date1', $type: 'date' },
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      jobId: 'action3',
+      stepId: 'setDate',
+    },
   }
   const expected = { status: 'ok', data: { id: 'ent1', $type: 'entry' } }
 
@@ -613,7 +648,12 @@ test('should run one action in "parallel"', async () => {
       type: 'entry',
       id: 'ent1',
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      jobId: 'action3',
+      stepId: 'getEntry',
+    },
   }
   const expectedAction2 = {
     type: 'SET',
@@ -621,7 +661,12 @@ test('should run one action in "parallel"', async () => {
       type: 'entry',
       data: { id: 'ent1', $type: 'entry' },
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action3' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      jobId: 'action3',
+      stepId: 'setEntry',
+    },
   }
   const expected = { status: 'ok', data: { id: 'ent1', $type: 'entry' } }
 
@@ -2916,7 +2961,7 @@ test('should have the original action available on each step in a flow', async (
       id: 'updatedAt',
       date,
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action9' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action9', stepId: 'setDate' },
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -3133,7 +3178,7 @@ test('should mutate action with result from previous action', async () => {
         { id: 'ent2', $type: 'entry', section: 'sports' },
       ],
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action3' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action3', stepId: 'setEntries' },
   }
   const expected = { status: 'ok' } // Won't return data unless specified
 
@@ -3195,7 +3240,7 @@ test('should mutate action with payload from original action', async () => {
         { id: 'ent2', $type: 'entry', section: 'sports' },
       ],
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action3' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action3', stepId: 'setEntries' },
   }
   const expected = { status: 'ok' } // Won't return data unless specified
 
@@ -3288,7 +3333,7 @@ test('should mutate action with result from previous and parallel actions', asyn
       type: 'entry',
       since: new Date('2022-06-14T18:43:11Z'),
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action3' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action3', stepId: 'getEntries' },
   }
   const expectedAction4 = {
     type: 'SET',
@@ -3302,7 +3347,7 @@ test('should mutate action with result from previous and parallel actions', asyn
       user: 'John F.',
       entriesSince: new Date('2022-06-14T18:43:11Z'),
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action3' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action3', stepId: 'setEntries' },
   }
   const expected = { status: 'ok' } // Won't return data unless specified
 
@@ -3356,7 +3401,7 @@ test('should mutate action with data from the original action', async () => {
         { id: 'ent5', $type: 'entry' },
       ],
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action5' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action5', stepId: 'setData' },
   }
 
   const job = new Job(jobDef, mapTransform, mapOptions)
@@ -3403,7 +3448,7 @@ test('should mutate with transformers and pipelines', async () => {
   const expectedAction = {
     type: 'GET',
     payload: { type: 'entry', until: nowDate, user: 'johnf' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action1' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action1', stepId: 'getEntry' },
   }
   const expected = { status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] }
 
@@ -3690,7 +3735,12 @@ test('should mutate action on a job into several actions based on iterate pipeli
       data: { id: 'ent1', include: true },
       key: 'ent1',
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action14', gid },
+    meta: {
+      ident: { id: 'johnf' },
+      jobId: 'action14',
+      stepId: 'action14_0',
+      gid,
+    },
   }
   const expectedAction1 = {
     type: 'SET',
@@ -3699,7 +3749,12 @@ test('should mutate action on a job into several actions based on iterate pipeli
       data: { id: 'ent3', include: true },
       key: 'ent3',
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action14', gid },
+    meta: {
+      ident: { id: 'johnf' },
+      jobId: 'action14',
+      stepId: 'action14_1',
+      gid,
+    },
   }
   const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
@@ -3757,7 +3812,7 @@ test('should mutate action in a step into several actions based on iterate pipel
       data: { id: 'ent1', include: true },
       key: 'ent1',
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11', stepId: 'setItem_0' },
   }
   const expectedAction1 = {
     type: 'SET',
@@ -3766,7 +3821,7 @@ test('should mutate action in a step into several actions based on iterate pipel
       data: { id: 'ent3', include: true },
       key: 'ent3',
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11', stepId: 'setItem_1' },
   }
   const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
@@ -3800,17 +3855,17 @@ test('should mutate top level action into several actions based on iterate path'
   const expectedAction0 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent1' }, key: 'ent1' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action13' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action13', stepId: 'action13_0' },
   }
   const expectedAction1 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent2' }, key: 'ent2' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action13' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action13', stepId: 'action13_1' },
   }
   const expectedAction2 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent3' }, key: 'ent3' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action13' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action13', stepId: 'action13_2' },
   }
   const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 
@@ -3827,7 +3882,7 @@ test('should mutate top level action into several actions based on iterate path'
 test('should combine response data from several actions based on iterate path', async () => {
   const dispatch = sinon
     .stub()
-    .resolves({ rstatus: 'ok', data: ['ent1', 'ent2', 'ent3'] })
+    .resolves({ status: 'ok', data: ['ent1', 'ent2', 'ent3'] })
     .onCall(1)
     .resolves({ status: 'ok', data: { id: 'ent1' } })
     .onCall(2)
@@ -3865,22 +3920,22 @@ test('should combine response data from several actions based on iterate path', 
   const expectedAction0 = {
     type: 'GET',
     payload: { type: 'entry' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action12', stepId: 'getIds' },
   }
   const expectedAction1 = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent1' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action12', stepId: 'getItems_0' },
   }
   const expectedAction2 = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent2' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action12', stepId: 'getItems_1' },
   }
   const expectedAction3 = {
     type: 'GET',
     payload: { type: 'entry', id: 'ent3' },
-    meta: { ident: { id: 'johnf' }, jobId: 'action12' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action12', stepId: 'getItems_2' },
   }
   const expected = {
     status: 'ok',
@@ -3932,7 +3987,7 @@ test('should mutate action into several actions based on iterate path in paralle
   const expectedAction0 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent1' }, flag: true },
-    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11', stepId: 'setItem_0' },
   }
   const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
 

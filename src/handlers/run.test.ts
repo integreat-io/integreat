@@ -157,6 +157,7 @@ test('should run flow', async () => {
       cid: '23456',
       gid: '12345',
       jobId: 'action2',
+      stepId: 'setEntry',
     },
   }
   const expectedAction2 = {
@@ -170,6 +171,7 @@ test('should run flow', async () => {
       cid: '23456',
       gid: '12345',
       jobId: 'action2',
+      stepId: 'setDate',
     },
   }
   const expected = { status: 'ok' } // Won't return data unless specified
@@ -288,7 +290,7 @@ test('should run flow with mutations and iteration', async () => {
       data: { id: 'ent1', include: true },
       key: 'ent1',
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11', stepId: 'setItem_0' },
   }
   const expectedAction1 = {
     type: 'SET',
@@ -297,7 +299,7 @@ test('should run flow with mutations and iteration', async () => {
       data: { id: 'ent3', include: true },
       key: 'ent3',
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11', stepId: 'setItem_1' },
   }
   const expectedData = [{ id: 'ent3', title: 'Entry 3' }]
 

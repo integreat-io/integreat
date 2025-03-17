@@ -457,10 +457,17 @@ export default class Step {
     return Object.fromEntries(
       (
         await Promise.all(
-          actions.map((action) =>
+          actions.map((action, index) =>
             limit(async () =>
               runOneAction(
-                await mutateAction(action, this.#premutator, actionResponses),
+                await mutateAction(
+                  setMetaOnAction(action, {
+                    ...action.meta,
+                    stepId: `${this.id}_${index}`,
+                  }),
+                  this.#premutator,
+                  actionResponses,
+                ),
                 dispatch,
               ),
             ),
@@ -499,7 +506,13 @@ export default class Step {
     const responseAction = iterateResponses
       ? generateIterateResponse(action, iterateResponses)
       : await runOneAction(
-          await mutateAction(action, this.#premutator, actionResponses),
+          await mutateAction(
+            this.#isJob
+              ? action
+              : setMetaOnAction(action, { ...meta, stepId: this.id }), // Set step id if this is not a job
+            this.#premutator,
+            actionResponses,
+          ),
           dispatch,
         )
 
@@ -537,7 +550,9 @@ export default class Step {
 
     // TODO: Actually run all parallel steps, even if one fails
     const arrayOfResponses = await Promise.all(
-      this.#subSteps.map((step) => step.run(meta, actionResponses, dispatch)),
+      this.#subSteps.map((step) =>
+        step.run({ ...meta, stepId: step.id }, actionResponses, dispatch),
+      ),
     )
     const doBreak = arrayOfResponses.some(
       (response) => response[breakSymbol], // eslint-disable-line security/detect-object-injection

@@ -92,7 +92,14 @@ test('should run action step', async () => {
     },
   }
 
-  const step = new Step(stepDef, mapTransform, mapOptions)
+  const step = new Step(
+    stepDef,
+    mapTransform,
+    mapOptions,
+    undefined,
+    undefined,
+    true, // Is job
+  )
   const ret = await step.run(meta, { action }, dispatch)
 
   assert.deepEqual(ret, expected)
@@ -144,6 +151,7 @@ test('should run several action steps', async () => {
       project: 'test',
       cid: '23456',
       jobId: 'action1',
+      stepId: 'getEntry',
     },
   }
   const expectedAction1 = {
@@ -154,6 +162,7 @@ test('should run several action steps', async () => {
       project: 'test',
       cid: '23456',
       jobId: 'action1',
+      stepId: 'getDate',
     },
   }
   const expected = {
@@ -233,7 +242,7 @@ test('should return error from failing parallel steps', async () => {
     setEntry: {
       ...stepDef[0].action,
       response: { status: 'timeout', error: 'Too slow', origin: 'setEntry' },
-      meta,
+      meta: { ...meta, stepId: 'setEntry' },
     },
     setDate: {
       ...stepDef[1].action,
@@ -241,7 +250,7 @@ test('should return error from failing parallel steps', async () => {
         status: 'ok',
         data: [{ id: 'ent1', $type: 'entry' }],
       },
-      meta,
+      meta: { ...meta, stepId: 'setDate' },
     },
     [breakSymbol]: false,
   }
@@ -251,6 +260,7 @@ test('should return error from failing parallel steps', async () => {
   assert.deepEqual(ret, expected)
   assert.equal(dispatch.callCount, 2)
 })
+
 test('should return override origin with step id', async () => {
   const dispatch = sinon
     .stub()
@@ -300,7 +310,7 @@ test('should return override origin with step id', async () => {
         error: 'Too slow',
         origin: 'setEntry:handler:SET',
       },
-      meta,
+      meta: { ...meta, stepId: 'setEntry' },
     },
     setDate: {
       ...stepDef[1].action,
@@ -308,7 +318,7 @@ test('should return override origin with step id', async () => {
         status: 'ok',
         data: [{ id: 'ent1', $type: 'entry' }],
       },
-      meta,
+      meta: { ...meta, stepId: 'setDate' },
     },
     [breakSymbol]: false,
   }
@@ -361,7 +371,7 @@ test('should handle rejection when running steps', async () => {
     setEntry: {
       ...stepDef[0].action,
       response: { status: 'error', error: 'Failure!', origin: 'setEntry' },
-      meta,
+      meta: { ...meta, stepId: 'setEntry' },
     },
     setDate: {
       ...stepDef[1].action,
@@ -369,7 +379,7 @@ test('should handle rejection when running steps', async () => {
         status: 'ok',
         data: [{ id: 'ent1', $type: 'entry' }],
       },
-      meta,
+      meta: { ...meta, stepId: 'setDate' },
     },
     [breakSymbol]: false,
   }
@@ -522,7 +532,14 @@ test('should return data from simple action based on postmutation', async () => 
     },
   }
 
-  const step = new Step(stepDef, mapTransform, mapOptions)
+  const step = new Step(
+    stepDef,
+    mapTransform,
+    mapOptions,
+    undefined,
+    undefined,
+    true, // Is job
+  )
   const ret = await step.run(meta, { action }, dispatch)
 
   assert.deepEqual(ret, expected)
@@ -554,7 +571,14 @@ test('should not use depricated "magic" from responseMutation for postmutation',
     },
   }
 
-  const step = new Step(stepDef, mapTransform, mapOptions)
+  const step = new Step(
+    stepDef,
+    mapTransform,
+    mapOptions,
+    undefined,
+    undefined,
+    true, // Is job
+  )
   const ret = await step.run(meta, { action }, dispatch)
 
   assert.deepEqual(ret, expected)
@@ -580,7 +604,14 @@ test('should return data from simple action based on responseMutation', async ()
     },
   }
 
-  const step = new Step(stepDef, mapTransform, mapOptions)
+  const step = new Step(
+    stepDef,
+    mapTransform,
+    mapOptions,
+    undefined,
+    undefined,
+    true, // Is job
+  )
   const ret = await step.run(meta, { action }, dispatch)
 
   assert.deepEqual(ret, expected)
@@ -612,7 +643,14 @@ test('should mutate simple action', async () => {
     },
   }
 
-  const step = new Step(stepDef, mapTransform, mapOptions)
+  const step = new Step(
+    stepDef,
+    mapTransform,
+    mapOptions,
+    undefined,
+    undefined,
+    true, // Is job
+  )
   const ret = await step.run(meta, { action }, dispatch)
 
   assert.equal(dispatch.callCount, 1)
@@ -645,7 +683,14 @@ test('should mutate simple action without "magic"', async () => {
     },
   }
 
-  const step = new Step(stepDef, mapTransform, mapOptions)
+  const step = new Step(
+    stepDef,
+    mapTransform,
+    mapOptions,
+    undefined,
+    undefined,
+    true, // Is job
+  )
   const ret = await step.run(meta, { action }, dispatch)
 
   assert.equal(dispatch.callCount, 1)
@@ -653,7 +698,7 @@ test('should mutate simple action without "magic"', async () => {
   assert.deepEqual(ret, expected)
 })
 
-test('should mutate simple action with depricated `muation` property', async () => {
+test('should mutate simple action with depricated `mutation` property', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
@@ -678,7 +723,14 @@ test('should mutate simple action with depricated `muation` property', async () 
     },
   }
 
-  const step = new Step(stepDef, mapTransform, mapOptions)
+  const step = new Step(
+    stepDef,
+    mapTransform,
+    mapOptions,
+    undefined,
+    undefined,
+    true, // Is job
+  )
   const ret = await step.run(meta, { action }, dispatch)
 
   assert.equal(dispatch.callCount, 1)
@@ -726,7 +778,7 @@ test('should mutate action into several actions based on iterate pipeline', asyn
       data: { id: 'ent1', include: true },
       key: 'ent1',
     },
-    meta,
+    meta: { ...meta, stepId: 'setItem_0' },
   }
   const expectedAction1 = {
     type: 'SET',
@@ -735,7 +787,7 @@ test('should mutate action into several actions based on iterate pipeline', asyn
       data: { id: 'ent3', include: true },
       key: 'ent3',
     },
-    meta,
+    meta: { ...meta, stepId: 'setItem_1' },
   }
   const expected = {
     setItem: {
@@ -829,17 +881,17 @@ test('should mutate action into several actions based on iterate path', async ()
   const expectedAction0 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent1' }, key: 'ent1' },
-    meta,
+    meta: { ...meta, stepId: 'setItem_0' },
   }
   const expectedAction1 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent2' }, key: 'ent2' },
-    meta,
+    meta: { ...meta, stepId: 'setItem_1' },
   }
   const expectedAction2 = {
     type: 'SET',
     payload: { type: 'entry', data: { id: 'ent3' }, key: 'ent3' },
-    meta,
+    meta: { ...meta, stepId: 'setItem_2' },
   }
   const expected = {
     setItem: {
