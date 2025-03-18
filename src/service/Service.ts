@@ -16,7 +16,7 @@ import Connection from './Connection.js'
 import { lookupById, lookupByIds } from '../utils/indexUtils.js'
 import * as authorizeData from './utils/authData.js'
 import authorizeAction, { isAuthorizedAction } from './utils/authAction.js'
-import { compose } from '../dispatch.js'
+import { composeMiddleware } from '../utils/composeMiddleware.js'
 import type { TransformDefinition } from 'map-transform/types.js'
 import type Schema from '../schema/Schema.js'
 import type Auth from './Auth.js'
@@ -24,15 +24,20 @@ import type {
   Action,
   Response,
   Dispatch,
+  HandlerDispatch,
   Middleware,
   Transporter,
   Adapter,
   Authenticator,
   MapOptions,
+  EmitFn,
+  MapTransform,
+  Meta,
 } from '../types.js'
 import type {
   EndpointDef,
   ServiceDef,
+  IdentConfig,
   TransporterOptions,
   PreparedOptions,
   AuthObject,
@@ -47,9 +52,11 @@ export interface Resources {
   authenticators?: Record<string, Authenticator>
   auths?: Record<string, Auth>
   schemas: Map<string, Schema>
+  mapTransform: MapTransform
   mapOptions?: MapOptions
   middleware?: Middleware[]
-  emit?: (eventType: string, ...args: unknown[]) => void
+  identConfig?: IdentConfig
+  emit?: EmitFn
 }
 
 const areWeMissingAdapters = (
@@ -65,6 +72,30 @@ const createEndpointAdapterError = (endpoint: EndpointDef, serviceId: string) =>
     endpoint.id ? `Endpoint '${endpoint.id}'` : 'An endpoint'
   } on service '${serviceId}' references one or more unknown adapters`
 
+const shouldSetTargetService = (action: Action, flag: boolean) =>
+  flag && action.meta?.options?.doSetTargetService !== false
+
+const setTargetService = (action: Action, targetService: string) => ({
+  ...action,
+  payload: { ...action.payload, targetService },
+})
+
+const removeSetTargetServiceFlagFromOptions = ({
+  doSetTargetService,
+  ...options
+}: TransporterOptions) => options
+
+const removeSetTargetServiceFlag = (action: Action) =>
+  typeof action.meta?.options?.doSetTargetService === 'boolean'
+    ? {
+        ...action,
+        meta: {
+          ...action.meta,
+          options: removeSetTargetServiceFlagFromOptions(action.meta.options),
+        },
+      }
+    : action
+
 function setUpEndpoint(
   serviceId: string,
   adapters: Record<string, Adapter>,
@@ -73,6 +104,7 @@ function setUpEndpoint(
   serviceOutgoingAuth: Auth | undefined,
   serviceIncomingAuth: Auth[] | undefined,
   serviceOptions: PreparedOptions,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   mutation: TransformDefinition | undefined,
   serviceAdapters: Adapter[],
@@ -94,6 +126,7 @@ function setUpEndpoint(
       endpointDef,
       serviceId,
       options,
+      mapTransform,
       mapOptions,
       mutation,
       serviceAdapters,
@@ -104,12 +137,22 @@ function setUpEndpoint(
   }
 }
 
+const preserveMetaProps = (
+  action: Action,
+  { id, cid, gid, ident }: Meta = {},
+) => ({
+  ...action,
+  meta: { id, cid, gid, ident, ...action.meta },
+})
+
 /**
  * Create a service with the given id and transporter.
  */
 export default class Service {
   id: string
   meta?: string
+
+  isListening: boolean
 
   #schemas: Map<string, Schema>
   #options: TransporterOptions
@@ -118,11 +161,14 @@ export default class Service {
 
   #outgoingAuth?: Auth
   #incomingAuth?: Auth[]
+  #shouldCompleteIdent: boolean
   #connection: Connection | null
 
   #authorizeDataFromService
   #authorizeDataToService
   #middleware: Middleware
+
+  #emit: EmitFn
 
   constructor(
     {
@@ -141,8 +187,10 @@ export default class Service {
       authenticators = {},
       auths,
       schemas,
+      mapTransform,
       mapOptions = {},
       middleware = [],
+      identConfig,
       emit = () => undefined, // Provide a fallback for tests
     }: Resources,
   ) {
@@ -152,6 +200,8 @@ export default class Service {
 
     this.id = serviceId
     this.meta = meta
+    this.#emit = emit
+    this.isListening = false
 
     this.#schemas = schemas
 
@@ -167,6 +217,7 @@ export default class Service {
     const incomingAuthResolver = resolveIncomingAuth(authenticators, auths)
     this.#outgoingAuth = outgoingAuthResolver(auth)
     this.#incomingAuth = incomingAuthResolver(auth)
+    this.#shouldCompleteIdent = identConfig?.completeIdent ?? false
 
     this.#authorizeDataFromService = authorizeData.fromService(schemas)
     this.#authorizeDataToService = authorizeData.toService(schemas)
@@ -187,6 +238,7 @@ export default class Service {
         this.#outgoingAuth,
         this.#incomingAuth,
         serviceOptions,
+        mapTransform,
         mapOptions,
         mutation,
         serviceAdapters,
@@ -194,7 +246,7 @@ export default class Service {
     )
 
     this.#middleware =
-      middleware.length > 0 ? compose(...middleware) : (fn) => fn
+      middleware.length > 0 ? composeMiddleware(...middleware) : (fn) => fn
 
     this.#connection = new Connection(
       this.#transporter,
@@ -227,7 +279,11 @@ export default class Service {
    * returned instead of the action being sent to the service. The response
    * should be run through the response mutation, though.
    */
-  async preflightAction(action: Action, endpoint: Endpoint): Promise<Action> {
+  async preflightAction(
+    action: Action,
+    endpoint: Endpoint,
+    dispatch: HandlerDispatch,
+  ): Promise<Action> {
     const outgoingAuth = endpoint.outgoingAuth
     let preparedAction = authorizeAction(this.#schemas, !!outgoingAuth)(action)
     if (preparedAction.response?.status) {
@@ -240,7 +296,7 @@ export default class Service {
     }
 
     if (endpoint.options?.transporter.authInData && outgoingAuth) {
-      await outgoingAuth.authenticate(preparedAction)
+      await outgoingAuth.authenticate(preparedAction, dispatch)
       preparedAction = outgoingAuth.applyToAction(
         preparedAction,
         this.#transporter,
@@ -260,7 +316,7 @@ export default class Service {
     const castFn = getCastFn(this.#schemas, action.payload.type)
     const actionWithOptions = setOptionsOnAction(action, endpoint)
     const castedAction = castPayload(actionWithOptions, endpoint, castFn)
-    const authorizedAction = await this.#authorizeDataToService(
+    const authorizedAction = this.#authorizeDataToService(
       castedAction,
       endpoint.allowRawRequest,
     )
@@ -291,7 +347,10 @@ export default class Service {
   ): Promise<Action> {
     let mutated: Action
     try {
-      mutated = await endpoint.mutate(action, false /* isRev */)
+      mutated = preserveMetaProps(
+        await endpoint.mutate(action, false /* isRev */),
+        action.meta,
+      )
     } catch (error) {
       return setErrorOnAction(
         action,
@@ -384,7 +443,12 @@ export default class Service {
    * The given action is sent to the service via the relevant transporter,
    * and the response from the service is returned.
    */
-  async send(action: Action, endpoint: Endpoint | null): Promise<Response> {
+  async send(
+    action: Action,
+    endpoint: Endpoint | null,
+    dispatch: HandlerDispatch,
+    doSetTargetService = true,
+  ): Promise<Response> {
     // Do nothing if the action response already has a status
     if (action.response?.status) {
       return action.response
@@ -408,12 +472,18 @@ export default class Service {
     // When an authentication is defined: Authenticate and apply result to action
     const outgoingAuth = endpoint?.outgoingAuth
     if (outgoingAuth && !action.meta?.auth) {
-      await outgoingAuth.authenticate(action)
+      await outgoingAuth.authenticate(action, dispatch)
       action = outgoingAuth.applyToAction(action, this.#transporter)
       if (action.response?.status) {
         return setOrigin(action.response, `service:${this.id}`, true)
       }
     }
+
+    // Set target service on action, unless we're told not to
+    if (shouldSetTargetService(action, doSetTargetService)) {
+      action = setTargetService(action, this.id)
+    }
+    action = removeSetTargetServiceFlag(action)
 
     return setOrigin(
       await this.#middleware(
@@ -460,7 +530,10 @@ export default class Service {
       )
     }
 
-    if (this.#outgoingAuth && !(await this.#outgoingAuth.authenticate(null))) {
+    if (
+      this.#outgoingAuth &&
+      !(await this.#outgoingAuth.authenticate(null, dispatch))
+    ) {
       debug('Could not authenticate')
       return setOrigin(
         this.#outgoingAuth.getResponseFromAuth(),
@@ -482,11 +555,50 @@ export default class Service {
     }
 
     debug('Calling transporter listen() ...')
-    return this.#transporter.listen(
+    const listenResponse = await this.#transporter.listen(
       dispatchIncoming(dispatch, this.#middleware, this.id),
       this.#connection.object,
-      authenticateCallback(this, this.#incomingAuth),
+      authenticateCallback(
+        this,
+        dispatch,
+        this.#shouldCompleteIdent,
+        this.#incomingAuth,
+      ),
+      this.#emit,
     )
+
+    this.isListening = listenResponse.status === 'ok'
+    return listenResponse
+  }
+
+  /**
+   * Will stop listening to the transporter.
+   */
+  async stopListening(): Promise<Response> {
+    debug(`Stop listening to service '${this.id}'`)
+
+    if (typeof this.#transporter.stopListening === 'function') {
+      if (this.#connection) {
+        this.#transporter.stopListening(this.#connection.object)
+        this.isListening = false
+        debug('Stopped')
+        return { status: 'ok' }
+      } else {
+        debug('No connection to stop listening to')
+        return createErrorResponse(
+          `Service '${this.id}' does not have an open connection`,
+          `service:${this.id}`,
+          'noaction',
+        )
+      }
+    } else {
+      debug(`Service '${this.id}' has no \`stopListening()\` method`)
+      return createErrorResponse(
+        `Service '${this.id}' only allows stopping listening by closing the connection`,
+        `service:${this.id}`,
+        'noaction',
+      )
+    }
   }
 
   /**
@@ -498,11 +610,12 @@ export default class Service {
     if (this.#connection) {
       await this.#transporter.disconnect(this.#connection.object)
       this.#connection = null
-      debug(`Closed`)
+      debug('Closed')
     } else {
       debug('No connection to disconnect')
     }
 
+    this.isListening = false
     return { status: 'ok' }
   }
 }

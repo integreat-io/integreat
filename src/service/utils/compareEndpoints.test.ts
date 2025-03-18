@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 
 import compareEndpoints from './compareEndpoints.js'
 
@@ -102,325 +103,325 @@ const endpointId = {
 
 // Tests
 
-test('should compare based on action', (t) => {
+test('should compare based on action', () => {
   const higher = compareEndpoints(endpointGet, endpointCatchAll)
   const equal = compareEndpoints(endpointGet, endpointPut)
   const lower = compareEndpoints(endpointCatchAll, endpointPut)
 
-  t.true(higher < 0)
-  t.is(equal, 0)
-  t.true(lower > 0)
+  assert.equal(higher < 0, true)
+  assert.equal(equal, 0)
+  assert.equal(lower > 0, true)
 })
 
-test('should compare based on scope', (t) => {
+test('should compare based on scope', () => {
   const higher = compareEndpoints(endpointMember, endpointCatchAll)
   const equal = compareEndpoints(endpointMember, endpointCollection)
   const lower = compareEndpoints(endpointCatchAll, endpointCollection)
 
-  t.true(higher < 0)
-  t.is(equal, 0)
-  t.true(lower > 0)
+  assert.equal(higher < 0, true)
+  assert.equal(equal, 0)
+  assert.equal(lower > 0, true)
 })
 
-test('should compare based on type', (t) => {
+test('should compare based on type', () => {
   const higher = compareEndpoints(endpointEntry, endpointCatchAll)
   const equal = compareEndpoints(endpointEntry, endpointUser)
   const lower = compareEndpoints(endpointCatchAll, endpointUser)
 
-  t.true(higher < 0)
-  t.is(equal, 0)
-  t.true(lower > 0)
+  assert.equal(higher < 0, true)
+  assert.equal(equal, 0)
+  assert.equal(lower > 0, true)
 })
 
-test('should sort in the order type, scope, action, and id', (t) => {
+test('should sort in the order type, scope, action, and id', () => {
   const scopeVsType = compareEndpoints(endpointMember, endpointEntry)
   const actionVsType = compareEndpoints(endpointGet, endpointEntry)
   const actionVsScope = compareEndpoints(endpointGet, endpointMember)
   const idVsAction = compareEndpoints(endpointId, endpointGet)
 
-  t.true(scopeVsType > 0)
-  t.true(actionVsType > 0)
-  t.true(actionVsScope > 0)
-  t.true(idVsAction < 0)
+  assert.equal(scopeVsType > 0, true)
+  assert.equal(actionVsType > 0, true)
+  assert.equal(actionVsScope > 0, true)
+  assert.equal(idVsAction < 0, true)
 })
 
-test('should sort specificity higher than id', (t) => {
+test('should sort specificity higher than id', () => {
   const idVsSpecificity = compareEndpoints(endpointId, endpointGetWithParam)
   const idVsCatchAll = compareEndpoints(endpointId, endpointCatchAll)
 
-  t.true(idVsSpecificity > 0)
-  t.true(idVsCatchAll < 0)
+  assert.equal(idVsSpecificity > 0, true)
+  assert.equal(idVsCatchAll < 0, true)
 })
 
-test('should compare based on specificity', (t) => {
+test('should compare based on specificity', () => {
   const scopeVsAll = compareEndpoints(endpointMember, endpointUser)
   const scopeActionVsAll = compareEndpoints(
     endpointGetMember,
-    endpointGetEntryMember
+    endpointGetEntryMember,
   )
   const scopeActionVsType = compareEndpoints(endpointGetMember, endpointEntry)
 
-  t.true(scopeVsAll > 0)
-  t.true(scopeActionVsAll > 0)
-  t.true(scopeActionVsType > 0)
+  assert.equal(scopeVsAll > 0, true)
+  assert.equal(scopeActionVsAll > 0, true)
+  assert.equal(scopeActionVsType > 0, true)
 })
 
-test('should sort type before type array', (t) => {
+test('should sort type before type array', () => {
   const higher = compareEndpoints(endpointUser, endpointUserAndEntry)
   const equal = compareEndpoints(endpointUserAndEntry, endpointEntryAndItem)
   const lower = compareEndpoints(endpointEntryAndItem, endpointUser)
 
-  t.true(higher < 0)
-  t.is(equal, 0)
-  t.true(lower > 0)
+  assert.equal(higher < 0, true)
+  assert.equal(equal, 0)
+  assert.equal(lower > 0, true)
 })
 
-test('should sort scope before scope array', (t) => {
+test('should sort scope before scope array', () => {
   const higher = compareEndpoints(endpointMember, endpointMemberAndCollection)
   const equal = compareEndpoints(
     endpointMemberAndCollection,
-    endpointMemberAndCollection
+    endpointMemberAndCollection,
   )
   const lower = compareEndpoints(
     endpointMemberAndCollection,
-    endpointCollection
+    endpointCollection,
   )
 
-  t.true(higher < 0)
-  t.is(equal, 0)
-  t.true(lower > 0)
+  assert.equal(higher < 0, true)
+  assert.equal(equal, 0)
+  assert.equal(lower > 0, true)
 })
 
-test('should sort action before action array', (t) => {
+test('should sort action before action array', () => {
   const higher = compareEndpoints(endpointGet, endpointPostAndDelete)
   const equal = compareEndpoints(endpointPostAndDelete, endpointPostAndPut)
   const lower = compareEndpoints(endpointPostAndPut, endpointPut)
 
-  t.true(higher < 0)
-  t.is(equal, 0)
-  t.true(lower > 0)
+  assert.equal(higher < 0, true)
+  assert.equal(equal, 0)
+  assert.equal(lower > 0, true)
 })
 
-test('should sort array with fewer actions before more', (t) => {
+test('should sort array with fewer actions before more', () => {
   const twoVsThree = compareEndpoints(
     endpointPostAndDelete,
-    endpointPostPutAndDelete
+    endpointPostPutAndDelete,
   )
 
-  t.true(twoVsThree < 0)
+  assert.equal(twoVsThree < 0, true)
 })
 
-test('should sort more params before fewer', (t) => {
+test('should sort more params before fewer', () => {
   const higher = compareEndpoints(
     endpointServiceAuthorParams,
-    endpointAuthorParam
+    endpointAuthorParam,
   )
   const equal = compareEndpoints(endpointServiceParam, endpointAuthorParam)
   const lower = compareEndpoints(
     endpointServiceParam,
-    endpointServiceAuthorParams
+    endpointServiceAuthorParams,
   )
 
-  t.true(higher < 0)
-  t.is(equal, 0)
-  t.true(lower > 0)
+  assert.equal(higher < 0, true)
+  assert.equal(equal, 0)
+  assert.equal(lower > 0, true)
 })
 
-test('should sort params after type', (t) => {
+test('should sort params after type', () => {
   const paramVsType = compareEndpoints(endpointServiceParam, endpointEntry)
   const paramVsScope = compareEndpoints(endpointServiceParam, endpointMember)
   const paramVsAction = compareEndpoints(endpointServiceParam, endpointPut)
 
-  t.true(paramVsType > 0)
-  t.true(paramVsScope < 0)
-  t.true(paramVsAction < 0)
+  assert.equal(paramVsType > 0, true)
+  assert.equal(paramVsScope < 0, true)
+  assert.equal(paramVsAction < 0, true)
 })
 
-test('should sort with params before without', (t) => {
+test('should sort with params before without', () => {
   const typeWithVsWithout = compareEndpoints(
     endpointEntryWithParam,
-    endpointEntry
+    endpointEntry,
   )
   const scopeWithVsWithout = compareEndpoints(
     endpointMemberWithParam,
-    endpointMember
+    endpointMember,
   )
   const actionWithVsWithout = compareEndpoints(
     endpointGetWithParam,
-    endpointGet
+    endpointGet,
   )
 
-  t.true(typeWithVsWithout < 0)
-  t.true(scopeWithVsWithout < 0)
-  t.true(actionWithVsWithout < 0)
+  assert.equal(typeWithVsWithout < 0, true)
+  assert.equal(scopeWithVsWithout < 0, true)
+  assert.equal(actionWithVsWithout < 0, true)
 })
 
-test('should sort required params before optional', (t) => {
+test('should sort required params before optional', () => {
   const requiredVsOptional = compareEndpoints(
     endpointServiceParamOptional,
-    endpointAuthorParam
+    endpointAuthorParam,
   )
 
-  t.true(requiredVsOptional > 0)
+  assert.equal(requiredVsOptional > 0, true)
 })
 
-test('should sort more filters before fewer', (t) => {
+test('should sort more filters before fewer', () => {
   const higher = compareEndpoints(
     endpointEntryWithTwoFilters,
-    endpointEntryWithFilter
+    endpointEntryWithFilter,
   )
   const equal = compareEndpoints(
     endpointEntryWithFilter,
-    endpointUserWithFilter
+    endpointUserWithFilter,
   )
   const lower = compareEndpoints(
     endpointUserWithFilter,
-    endpointEntryWithTwoFilters
+    endpointEntryWithTwoFilters,
   )
 
-  t.true(higher < 0)
-  t.is(equal, 0)
-  t.true(lower > 0)
+  assert.equal(higher < 0, true)
+  assert.equal(equal, 0)
+  assert.equal(lower > 0, true)
 })
 
-test('should sort filters after params', (t) => {
+test('should sort filters after params', () => {
   const filterVsType = compareEndpoints(endpointOneFilter, endpointEntry)
   const filterVsParam = compareEndpoints(
     endpointOneFilter,
-    endpointServiceParam
+    endpointServiceParam,
   )
   const filterVsScope = compareEndpoints(endpointOneFilter, endpointMember)
   const filterVsAction = compareEndpoints(endpointOneFilter, endpointPut)
 
-  t.true(filterVsType > 0)
-  t.true(filterVsParam > 0)
-  t.true(filterVsScope < 0)
-  t.true(filterVsAction < 0)
+  assert.equal(filterVsType > 0, true)
+  assert.equal(filterVsParam > 0, true)
+  assert.equal(filterVsScope < 0, true)
+  assert.equal(filterVsAction < 0, true)
 })
 
-test('should sort with filters before without', (t) => {
+test('should sort with filters before without', () => {
   const typeWithVsWithout = compareEndpoints(
     endpointEntryWithFilter,
-    endpointEntry
+    endpointEntry,
   )
   const paramWithVsWithout = compareEndpoints(
     endpointServiceParamWithFilter,
-    endpointServiceParam
+    endpointServiceParam,
   )
   const scopeWithVsWithout = compareEndpoints(
     endpointMemberWithFilter,
-    endpointMember
+    endpointMember,
   )
   const actionWithVsWithout = compareEndpoints(
     endpointGetWithFilter,
-    endpointGet
+    endpointGet,
   )
 
-  t.true(typeWithVsWithout < 0)
-  t.true(paramWithVsWithout < 0)
-  t.true(scopeWithVsWithout < 0)
-  t.true(actionWithVsWithout < 0)
+  assert.equal(typeWithVsWithout < 0, true)
+  assert.equal(paramWithVsWithout < 0, true)
+  assert.equal(scopeWithVsWithout < 0, true)
+  assert.equal(actionWithVsWithout < 0, true)
 })
 
-test('should sort more conditions before fewer', (t) => {
+test('should sort more conditions before fewer', () => {
   const higher = compareEndpoints(
     endpointEntryWithTwoConditions,
-    endpointEntryWithCondition
+    endpointEntryWithCondition,
   )
   const equal = compareEndpoints(
     endpointEntryWithCondition,
-    endpointUserWithCondition
+    endpointUserWithCondition,
   )
   const lower = compareEndpoints(
     endpointUserWithCondition,
-    endpointEntryWithTwoConditions
+    endpointEntryWithTwoConditions,
   )
 
-  t.true(higher < 0)
-  t.is(equal, 0)
-  t.true(lower > 0)
+  assert.equal(higher < 0, true)
+  assert.equal(equal, 0)
+  assert.equal(lower > 0, true)
 })
 
-test('should sort conditions after params', (t) => {
+test('should sort conditions after params', () => {
   const filterVsType = compareEndpoints(endpointOneCondition, endpointEntry)
   const filterVsParam = compareEndpoints(
     endpointOneCondition,
-    endpointServiceParam
+    endpointServiceParam,
   )
   const filterVsScope = compareEndpoints(endpointOneCondition, endpointMember)
   const filterVsAction = compareEndpoints(endpointOneCondition, endpointPut)
 
-  t.true(filterVsType > 0)
-  t.true(filterVsParam > 0)
-  t.true(filterVsScope < 0)
-  t.true(filterVsAction < 0)
+  assert.equal(filterVsType > 0, true)
+  assert.equal(filterVsParam > 0, true)
+  assert.equal(filterVsScope < 0, true)
+  assert.equal(filterVsAction < 0, true)
 })
 
-test('should sort with conditions before without', (t) => {
+test('should sort with conditions before without', () => {
   const typeWithVsWithout = compareEndpoints(
     endpointEntryWithCondition,
-    endpointEntry
+    endpointEntry,
   )
   const paramWithVsWithout = compareEndpoints(
     endpointServiceParamWithCondition,
-    endpointServiceParam
+    endpointServiceParam,
   )
   const scopeWithVsWithout = compareEndpoints(
     endpointMemberWithCondition,
-    endpointMember
+    endpointMember,
   )
   const actionWithVsWithout = compareEndpoints(
     endpointGetWithCondition,
-    endpointGet
+    endpointGet,
   )
 
-  t.true(typeWithVsWithout < 0)
-  t.true(paramWithVsWithout < 0)
-  t.true(scopeWithVsWithout < 0)
-  t.true(actionWithVsWithout < 0)
+  assert.equal(typeWithVsWithout < 0, true)
+  assert.equal(paramWithVsWithout < 0, true)
+  assert.equal(scopeWithVsWithout < 0, true)
+  assert.equal(actionWithVsWithout < 0, true)
 })
 
-test('should sort conditions before filters', (t) => {
+test('should sort conditions before filters', () => {
   const two = compareEndpoints(
     endpointEntryWithTwoConditions,
-    endpointEntryWithTwoFilters
+    endpointEntryWithTwoFilters,
   )
   const one = compareEndpoints(
     endpointEntryWithFilter,
-    endpointEntryWithCondition
+    endpointEntryWithCondition,
   )
   const moreFilters = compareEndpoints(
     endpointEntryWithCondition,
-    endpointEntryWithTwoFilters
+    endpointEntryWithTwoFilters,
   )
 
-  t.true(two < 0)
-  t.true(one > 0)
-  t.true(moreFilters < 0)
+  assert.equal(two < 0, true)
+  assert.equal(one > 0, true)
+  assert.equal(moreFilters < 0, true)
 })
 
-test('should sort incoming first', (t) => {
+test('should sort incoming first', () => {
   const incomingVsAction = compareEndpoints(
     endpointGetWithIncoming,
-    endpointGet
+    endpointGet,
   )
   const incomingVsActions = compareEndpoints(
     endpointGetWithIncoming,
-    endpointPostAndDelete
+    endpointPostAndDelete,
   )
   const incomingVsScope = compareEndpoints(
     endpointGetWithIncoming,
-    endpointMember
+    endpointMember,
   )
   const incomingVsType = compareEndpoints(
     endpointGetWithIncoming,
-    endpointEntry
+    endpointEntry,
   )
   const incomingVsId = compareEndpoints(endpointGetWithIncoming, endpointId)
 
-  t.true(incomingVsAction < 0)
-  t.true(incomingVsActions < 0)
-  t.true(incomingVsScope < 0)
-  t.true(incomingVsType < 0)
-  t.true(incomingVsId < 0)
+  assert.equal(incomingVsAction < 0, true)
+  assert.equal(incomingVsActions < 0, true)
+  assert.equal(incomingVsScope < 0, true)
+  assert.equal(incomingVsType < 0, true)
+  assert.equal(incomingVsId < 0, true)
 })

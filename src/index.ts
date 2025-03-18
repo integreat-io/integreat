@@ -7,13 +7,13 @@ export * as authenticators from './authenticators/index.js'
 export * as middleware from './middleware/index.js'
 export { createAction } from './utils/action.js'
 export const transformers = {} // We don't have any built-in transformers right now, but we might in the future
-export { IdentType } from './types.js'
 
 export type {
   Transformer,
   AsyncTransformer,
   TransformDefinition,
 } from 'map-transform/types.js'
+export { IdentType } from './types.js'
 export type {
   Action,
   Payload,

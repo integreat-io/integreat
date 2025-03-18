@@ -1,7 +1,6 @@
 /* eslint-disable security/detect-object-injection */
-import mapTransform, { transform } from 'map-transform'
 import compareEndpoints from './utils/compareEndpoints.js'
-import isMatch from './utils/matchEnpoints.js'
+import isEndpointMatch from './utils/isEndpointMatch.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
 import { ensureArray } from '../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../utils/is.js'
@@ -15,7 +14,13 @@ import type {
   AsyncDataMapperWithOptions,
 } from 'map-transform/types.js'
 import type Auth from './Auth.js'
-import type { Action, Response, Adapter, MapOptions } from '../types.js'
+import type {
+  Action,
+  Response,
+  Adapter,
+  MapOptions,
+  MapTransform,
+} from '../types.js'
 import type {
   EndpointDef,
   ServiceOptions,
@@ -23,9 +28,10 @@ import type {
   PreparedOptions,
 } from './types.js'
 
-export interface PrepareOptions {
-  (options: ServiceOptions, serviceId: string): ServiceOptions
-}
+export type PrepareOptions = (
+  options: ServiceOptions,
+  serviceId: string,
+) => ServiceOptions
 
 const prepareMatch = ({ scope, ...match }: MatchObject) =>
   scope === 'all' || !scope ? match : { scope, ...match }
@@ -74,6 +80,7 @@ function prepareActionMutation(
   endpointMutation: TransformDefinition | undefined,
   serviceAdapterTransformer: AsyncDataMapperWithOptions[],
   endpointAdapterTransformer: AsyncDataMapperWithOptions[],
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
 ) {
   // Prepare service and endpoint mutations as separate mutate functions that
@@ -91,15 +98,20 @@ function prepareActionMutation(
     mapOptions,
   )
 
+  // TODO: Consider rewriting without the `{ $transform }` operations
   // Prepare the pipeline, with service adapters, service mutation, endpoint
   // adapters and endpoint mutation – in that order. Note that we run the
   // mutations with a transformer that makes sure the result is a valid action
   // and that the status and error are set correctly.
   const pipeline = [
-    ...serviceAdapterTransformer.map((transformer) => transform(transformer)),
-    transform(runMutationAndPopulateAction(serviceMutator)),
-    ...endpointAdapterTransformer.map((transformer) => transform(transformer)),
-    transform(runMutationAndPopulateAction(endpointMutator)),
+    ...serviceAdapterTransformer.map((transformer) => ({
+      $transform: transformer,
+    })),
+    { $transform: runMutationAndPopulateAction(serviceMutator) },
+    ...endpointAdapterTransformer.map((transformer) => ({
+      $transform: transformer,
+    })),
+    { $transform: runMutationAndPopulateAction(endpointMutator) },
   ]
   return mapTransform(pipeline, mapOptions)
 }
@@ -126,6 +138,7 @@ export default class Endpoint {
     endpointDef: EndpointDef,
     serviceId: string,
     options: PreparedOptions,
+    mapTransform: MapTransform,
     mapOptions: MapOptions,
     serviceMutation?: TransformDefinition,
     serviceAdapters: Adapter[] = [],
@@ -141,16 +154,21 @@ export default class Endpoint {
     this.allowRawResponse = endpointDef.allowRawResponse // Don't set a default
     this.castWithoutDefaults = endpointDef.castWithoutDefaults ?? false
     this.match = endpointDef.match
-    this.#checkIfMatch = isMatch(endpointDef, mapOptions)
+    this.#checkIfMatch = isEndpointMatch(endpointDef, mapTransform, mapOptions)
     this.options = options
 
-    this.#validator = prepareValidator(endpointDef.validate, mapOptions)
+    this.#validator = prepareValidator(
+      endpointDef.validate,
+      mapTransform,
+      mapOptions,
+    )
 
     this.#mutateAction = prepareActionMutation(
       serviceMutation,
       endpointDef.mutation || endpointDef.mutate,
       serviceAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
       endpointAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
+      mapTransform,
       mapOptions,
     )
 

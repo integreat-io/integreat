@@ -1,16 +1,17 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import tokenAuth from '../../authenticators/token.js'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
 import entriesData from '../helpers/data/entries.js'
-import type { Connection, Action } from '../../types.js'
+import type { Connection, Action, Transporter } from '../../types.js'
 
 import Integreat from '../../index.js'
 
 // Tests
 
-test('should connect to service and reuse connection', async (t) => {
+test('should connect to service and reuse connection', async () => {
   let count = 1
   const connect = async (
     _options: Record<string, unknown>,
@@ -27,10 +28,10 @@ test('should connect to service and reuse connection', async (t) => {
     transporters: {
       ...resources.transporters,
       http: {
-        ...resources.transporters!.http,
+        ...resources.transporters?.http,
         connect,
         send,
-      },
+      } as Transporter,
     },
     authenticators: { token: tokenAuth },
   }
@@ -44,7 +45,7 @@ test('should connect to service and reuse connection', async (t) => {
   await great.dispatch(action)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(sendSpy.callCount, 2)
-  t.deepEqual(sendSpy.args[1][1], { status: 'ok', value: 'Call 1' })
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(sendSpy.callCount, 2)
+  assert.deepEqual(sendSpy.args[1][1], { status: 'ok', value: 'Call 1' })
 })

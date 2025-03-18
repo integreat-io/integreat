@@ -11,7 +11,7 @@ function serviceIdFromSchema(schemas: Map<string, Schema>, type?: string) {
  */
 export default function getService(
   schemas?: Map<string, Schema>,
-  services?: Record<string, Service>
+  services?: Record<string, Service>,
 ): (types?: string | string[], serviceId?: string) => Service | undefined {
   if (!services) {
     return () => undefined

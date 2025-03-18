@@ -7,9 +7,7 @@ import type { Condition, ConditionFailObject } from '../types.js'
 const Ajv = ajv.default
 const validator = new Ajv()
 
-interface DataMapper {
-  (data: unknown, state?: unknown): unknown
-}
+type DataMapper = (data: unknown, state?: unknown) => unknown
 
 type FilterAndMessage = [DataMapper, () => ConditionFailObject]
 

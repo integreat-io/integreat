@@ -1,5 +1,7 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
+import mapTransform from 'map-transform'
 import integreatTransformers from 'integreat-transformers'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import Job from '../jobs/Job.js'
@@ -21,13 +23,13 @@ const mapOptions = {
 
 const createJobsMap = (jobDef: JobDef, mo = mapOptions) => {
   const jobs = new Map()
-  jobs.set(jobDef.id, new Job(jobDef, mo))
+  jobs.set(jobDef.id, new Job(jobDef, mapTransform, mo))
   return jobs
 }
 
 // Tests
 
-test('should run a simple action', async (t) => {
+test('should run a simple action', async () => {
   const dispatch = sinon.stub().resolves({
     status: 'ok',
     data: [{ id: 'ent1', $type: 'entry' }],
@@ -55,6 +57,7 @@ test('should run a simple action', async (t) => {
       ident: { id: 'johnf' },
       project: 'test',
       cid: '23456',
+      gid: '12345', // The id of the `RUN` action should be used as `gid` for all following actions
       jobId: 'action1',
     },
   }
@@ -68,13 +71,46 @@ test('should run a simple action', async (t) => {
     dispatch,
   })
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], expectedAction)
-  t.deepEqual(ret, expected)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0], expectedAction)
+  assert.deepEqual(ret, expected)
 })
 
-test('should run flow', async (t) => {
+test('should override gid from original action', async () => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+    data: [{ id: 'ent1', $type: 'entry' }],
+  })
+  const jobs = createJobsMap({
+    id: 'action1',
+    action: { type: 'GET', payload: { type: 'entry', id: 'ent1' } },
+  })
+  const action = {
+    type: 'RUN',
+    payload: {
+      jobId: 'action1',
+    },
+    meta: {
+      ident: { id: 'johnf' },
+      id: '12345',
+      cid: '23456',
+      gid: '12340', // Override this
+      project: 'test',
+    },
+  }
+
+  const ret = await run(jobs)(action, {
+    ...handlerResources,
+    dispatch,
+  })
+
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0].meta.gid, '12345')
+})
+
+test('should run flow', async () => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobs = createJobsMap({
     id: 'action2',
@@ -116,7 +152,13 @@ test('should run flow', async (t) => {
       id: 'ent1',
       data: [{ id: 'ent1', $type: 'entry' }],
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action2' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      gid: '12345',
+      jobId: 'action2',
+      stepId: 'setEntry',
+    },
   }
   const expectedAction2 = {
     type: 'SET',
@@ -124,7 +166,13 @@ test('should run flow', async (t) => {
       type: 'date',
       id: 'updatedAt',
     },
-    meta: { ident: { id: 'johnf' }, cid: '23456', jobId: 'action2' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '23456',
+      gid: '12345',
+      jobId: 'action2',
+      stepId: 'setDate',
+    },
   }
   const expected = { status: 'ok' } // Won't return data unless specified
 
@@ -133,14 +181,14 @@ test('should run flow', async (t) => {
     dispatch,
   })
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expectedAction1)
-  t.deepEqual(dispatch.args[1][0], expectedAction2)
-  t.deepEqual(ret, expected)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(dispatch.callCount, 2)
+  assert.deepEqual(dispatch.args[0][0], expectedAction1)
+  assert.deepEqual(dispatch.args[1][0], expectedAction2)
+  assert.deepEqual(ret, expected)
 })
 
-test('should handle failure in flow', async (t) => {
+test('should handle failure in flow', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok' })
@@ -191,16 +239,13 @@ test('should handle failure in flow', async (t) => {
     },
   ]
 
-  t.is(dispatch.callCount, 1) // Should break after first step
-  t.is(ret.status, 'error', ret.error)
-  t.is(
-    ret.error,
-    "Could not finish job 'action2', the following steps failed: 'setEntry' (timeout: Too slow)",
-  )
-  t.deepEqual(ret.responses, expectedErrorResponses)
+  assert.equal(dispatch.callCount, 1) // Should break after first step
+  assert.equal(ret.status, 'timeout', ret.error)
+  assert.equal(ret.error, 'Too slow')
+  assert.deepEqual(ret.responses, expectedErrorResponses)
 })
 
-test('should run flow with mutations and iteration', async (t) => {
+test('should run flow with mutations and iteration', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [] })
@@ -245,7 +290,7 @@ test('should run flow with mutations and iteration', async (t) => {
       data: { id: 'ent1', include: true },
       key: 'ent1',
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11', stepId: 'setItem_0' },
   }
   const expectedAction1 = {
     type: 'SET',
@@ -254,23 +299,24 @@ test('should run flow with mutations and iteration', async (t) => {
       data: { id: 'ent3', include: true },
       key: 'ent3',
     },
-    meta: { ident: { id: 'johnf' }, jobId: 'action11' },
+    meta: { ident: { id: 'johnf' }, jobId: 'action11', stepId: 'setItem_1' },
   }
-  const expected = { status: 'ok', data: [{ id: 'ent3', title: 'Entry 3' }] }
+  const expectedData = [{ id: 'ent3', title: 'Entry 3' }]
 
   const ret = await run(jobs)(action, {
     ...handlerResources,
     dispatch,
   })
 
-  t.is(dispatch.callCount, 2)
-  t.deepEqual(dispatch.args[0][0], expectedAction0)
-  t.deepEqual(dispatch.args[1][0], expectedAction1)
-  t.deepEqual(ret, expected)
-  t.is(ret.status, 'ok', ret.error)
+  assert.equal(dispatch.callCount, 2)
+  assert.deepEqual(dispatch.args[0][0], expectedAction0)
+  assert.deepEqual(dispatch.args[1][0], expectedAction1)
+  assert.equal(ret.status, 'ok')
+  assert.deepEqual(ret.data, expectedData)
+  assert.equal(ret.status, 'ok', ret.error)
 })
 
-test('should return noaction when job has an empty flow', async (t) => {
+test('should return noaction when job has an empty flow', async () => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobs = createJobsMap({
     id: 'action1',
@@ -294,11 +340,11 @@ test('should return noaction when job has an empty flow', async (t) => {
     dispatch,
   })
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 0)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 0)
 })
 
-test('should return notfound for unknown job', async (t) => {
+test('should return notfound for unknown job', async () => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const jobs = createJobsMap({
     id: 'action1',
@@ -322,11 +368,11 @@ test('should return notfound for unknown job', async (t) => {
     dispatch,
   })
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 0)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 0)
 })
 
-test('should return error when job has no action or flow', async (t) => {
+test('should return error when job has no action or flow', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: [{ id: 'ent1', $type: 'entry' }] })
@@ -351,11 +397,11 @@ test('should return error when job has no action or flow', async (t) => {
     dispatch,
   })
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 0)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 0)
 })
 
-test('should return error from a sub-flow started with RUN and make it available in mutations on action.response', async (t) => {
+test('should return error from a sub-flow started with RUN and make it available in mutations on action.response', async () => {
   const jobs = createJobsMap({
     id: 'action9',
     flow: [
@@ -409,6 +455,7 @@ test('should return error from a sub-flow started with RUN and make it available
           },
         ],
       },
+      mapTransform,
       mapOptions,
     ),
   )
@@ -426,8 +473,7 @@ test('should return error from a sub-flow started with RUN and make it available
   }
   const expected = {
     status: 'error',
-    error:
-      "Could not finish job 'action9', the following steps failed: 'job:action10:step:setEntries' (error: Need at least one data item)",
+    error: 'Need at least one data item',
     responses: [
       {
         status: 'error',
@@ -435,12 +481,12 @@ test('should return error from a sub-flow started with RUN and make it available
         origin: 'job:action9:step:job:action10:step:setEntries',
       },
     ],
-    origin: 'job:action9',
+    origin: 'job:action9:step:job:action10:step:setEntries',
   }
 
   const ret = await runFn(action, { ...handlerResources, dispatch })
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 2)
-  // t.deepEqual(dispatch.args[1][0], {})
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 2)
+  // assert.deepEqual(dispatch.args[1][0], {})
 })

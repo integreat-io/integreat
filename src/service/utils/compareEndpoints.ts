@@ -6,7 +6,7 @@ const hasParams = ({ params }: MatchObject, required: boolean) =>
   Number(
     !!params &&
       Object.values(params).filter((isRequired) => isRequired === required)
-        .length
+        .length,
   )
 const hasFilters = ({ filters }: MatchObject) =>
   Number(!!filters && Object.keys(filters).length)
@@ -14,7 +14,10 @@ const hasFilters = ({ filters }: MatchObject) =>
 const hasConditions = ({ conditions }: MatchObject) =>
   Number(!!conditions && conditions.length)
 
-export default (a: EndpointDef, b: EndpointDef): number => {
+export default function compareEndpoints(
+  a: EndpointDef,
+  b: EndpointDef,
+): number {
   const matchA = a.match || {}
   const matchB = b.match || {}
 

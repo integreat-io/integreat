@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
@@ -36,35 +37,37 @@ const defs = {
   },
 }
 
-test.after.always(() => {
-  nock.restore()
-})
+test('defaultAndConst', async (t) => {
+  t.after(() => {
+    nock.restore()
+  })
 
-// Tests
+  // Tests
 
-test('should transform entry', async (t) => {
-  nock('http://some.api')
-    .get('/entries')
-    .reply(200, { data: [entry1, entryNoHeadline] })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry' },
-    meta: { ident: { id: 'johnf' } },
-  }
+  await t.test('should transform entry', async () => {
+    nock('http://some.api')
+      .get('/entries')
+      .reply(200, { data: [entry1, entryNoHeadline] })
+    const action = {
+      type: 'GET',
+      payload: { type: 'entry' },
+      meta: { ident: { id: 'johnf' } },
+    }
 
-  const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
+    const great = Integreat.create(defs, resources)
+    const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  const data = ret.data as TypedData[]
-  t.is(data.length, 2)
-  const item0 = data[0]
-  t.is(item0.id, 'ent1')
-  t.is(item0.title, 'Entry 1')
-  t.is((item0.author as TypedData).id, 'admin')
-  t.is((item0.author as TypedData).$ref, 'user')
-  const item1 = data[1]
-  t.is(item1.id, 'ent2')
-  t.is(item1.title, 'No title')
-  t.is((item1.author as TypedData).id, 'admin')
+    assert.equal(ret.status, 'ok', ret.error)
+    const data = ret.data as TypedData[]
+    assert.equal(data.length, 2)
+    const item0 = data[0]
+    assert.equal(item0.id, 'ent1')
+    assert.equal(item0.title, 'Entry 1')
+    assert.equal((item0.author as TypedData).id, 'admin')
+    assert.equal((item0.author as TypedData).$ref, 'user')
+    const item1 = data[1]
+    assert.equal(item1.id, 'ent2')
+    assert.equal(item1.title, 'No title')
+    assert.equal((item1.author as TypedData).id, 'admin')
+  })
 })

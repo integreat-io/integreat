@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import completeIdent from '../../middleware/completeIdent.js'
 import defs from '../helpers/defs/index.js'
@@ -10,7 +11,7 @@ import Integreat from '../../index.js'
 
 // Tests
 
-test('should get with ident token', async (t) => {
+test('should get with ident token', async () => {
   const middleware = [completeIdent]
   nock('http://some.api')
     .get('/users')
@@ -27,8 +28,8 @@ test('should get with ident token', async (t) => {
   const great = Integreat.create(defs, resources, middleware)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.is((ret.data as TypedData).id, 'johnf')
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal((ret.data as TypedData).id, 'johnf')
 
   nock.restore()
 })

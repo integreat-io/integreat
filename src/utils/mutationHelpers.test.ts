@@ -1,11 +1,12 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import type { Action } from '../types.js'
 
 import { populateActionAfterMutation } from './mutationHelpers.js'
 
 // Tests -- populateActionAfterMutation
 
-test('should return mutated action when all parts are replaced', (t) => {
+test('should return mutated action when all parts are replaced', () => {
   const data = { users: [{ id: 'johnf', type: 'user', name: 'John F.' }] }
   const action = {
     type: 'GET',
@@ -73,10 +74,10 @@ test('should return mutated action when all parts are replaced', (t) => {
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should keep the untouched parts from the original action', (t) => {
+test('should keep the untouched parts from the original action', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -114,10 +115,10 @@ test('should keep the untouched parts from the original action', (t) => {
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should set status to original status when not set in mutated action', (t) => {
+test('should set status to original status when not set in mutated action', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -153,10 +154,10 @@ test('should set status to original status when not set in mutated action', (t) 
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should set status to null on response when not set and no original status', (t) => {
+test('should set status to null on response when not set and no original status', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -191,10 +192,10 @@ test('should set status to null on response when not set and no original status'
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should join array of error strings to one string', (t) => {
+test('should join array of error strings to one string', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -234,13 +235,13 @@ test('should join array of error strings to one string', (t) => {
 
   const ret = populateActionAfterMutation(
     action,
-    mappedAction as unknown as Action
+    mappedAction as unknown as Action,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should treat empty error array as no error message', (t) => {
+test('should treat empty error array as no error message', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -275,13 +276,13 @@ test('should treat empty error array as no error message', (t) => {
 
   const ret = populateActionAfterMutation(
     action,
-    mappedAction as unknown as Action
+    mappedAction as unknown as Action,
   )
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should set status to error when error string is present', (t) => {
+test('should set status to error when error string is present', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -317,10 +318,10 @@ test('should set status to error when error string is present', (t) => {
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should use original error status when error string is present', (t) => {
+test('should use original error status when error string is present', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -356,10 +357,10 @@ test('should use original error status when error string is present', (t) => {
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should set error status when error string is present and original status was ok', (t) => {
+test('should set error status when error string is present and original status was ok', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -395,10 +396,10 @@ test('should set error status when error string is present and original status w
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should set error status when error string is present and mutated status is ok', (t) => {
+test('should set error status when error string is present and mutated status is ok', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -435,10 +436,10 @@ test('should set error status when error string is present and mutated status is
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should disregard mutated error when it is an empty string', (t) => {
+test('should disregard mutated error when it is an empty string', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -473,10 +474,10 @@ test('should disregard mutated error when it is an empty string', (t) => {
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not set response when not present', (t) => {
+test('should not set response when not present', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -512,10 +513,10 @@ test('should not set response when not present', (t) => {
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not set empty response object', (t) => {
+test('should not set empty response object', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -543,10 +544,10 @@ test('should not set empty response object', (t) => {
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should return action when no mutated action', (t) => {
+test('should return action when no mutated action', () => {
   const action = {
     type: 'SET',
     payload: {
@@ -562,5 +563,5 @@ test('should return action when no mutated action', (t) => {
 
   const ret = populateActionAfterMutation(action, mappedAction)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })

@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import mapAny from 'map-any'
 import definitions from '../helpers/defs/index.js'
@@ -36,91 +37,93 @@ const resourcesWithTrans = {
   },
 }
 
-test.after.always(() => {
-  nock.restore()
-})
+test('mutateAndTransform', async (t) => {
+  t.after(() => {
+    nock.restore()
+  })
 
-// Tests
+  // Tests
 
-test('should transform entry', async (t) => {
-  nock('http://some.api').get('/entries/ent1').reply(200, { data: entry1 })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry', id: 'ent1' },
-  }
-  const mapping = [
-    {
-      $iterate: true,
-      id: 'key',
-      title: ['headline', { $transform: 'upperCase' }],
-      text: 'body',
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt',
-      author: 'authorId',
-      sections: 'sections[]',
-    },
-    { $transform: 'addSectionsToText' },
-    { $cast: 'entry' },
-  ]
-  const defs = {
-    ...definitions,
-    mutations: {
-      ...definitions.mutations,
-      'entries-entry': mapping,
-    },
-  }
+  await t.test('should transform entry', async () => {
+    nock('http://some.api').get('/entries/ent1').reply(200, { data: entry1 })
+    const action = {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent1' },
+    }
+    const mapping = [
+      {
+        $iterate: true,
+        id: 'key',
+        title: ['headline', { $transform: 'upperCase' }],
+        text: 'body',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt',
+        author: 'authorId',
+        sections: 'sections[]',
+      },
+      { $transform: 'addSectionsToText' },
+      { $cast: 'entry' },
+    ]
+    const defs = {
+      ...definitions,
+      mutations: {
+        ...definitions.mutations,
+        'entries-entry': mapping,
+      },
+    }
 
-  const great = Integreat.create(defs, resourcesWithTrans)
-  const ret = await great.dispatch(action)
+    const great = Integreat.create(defs, resourcesWithTrans)
+    const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  const item = ret.data as TypedData
-  t.is(item.id, 'ent1')
-  t.is(item.title, 'ENTRY 1')
-  t.is(item.text, 'The text of entry 1 - news|sports')
-})
+    assert.equal(ret.status, 'ok', ret.error)
+    const item = ret.data as TypedData
+    assert.equal(item.id, 'ent1')
+    assert.equal(item.title, 'ENTRY 1')
+    assert.equal(item.text, 'The text of entry 1 - news|sports')
+  })
 
-test('should transform array of entries', async (t) => {
-  nock('http://some.api')
-    .get('/entries')
-    .reply(200, { data: [entry1, entry2] })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry' },
-  }
-  const mapping = [
-    {
-      $iterate: true,
-      id: 'key',
-      title: ['headline', { $transform: 'upperCase' }],
-      text: 'body',
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt',
-      author: 'authorId',
-      sections: 'sections[]',
-    },
-    { $transform: 'addSectionsToText' },
-    { $cast: 'entry' },
-  ]
-  const defs = {
-    ...definitions,
-    mutations: {
-      ...definitions.mutations,
-      'entries-entry': mapping,
-    },
-  }
+  await t.test('should transform array of entries', async () => {
+    nock('http://some.api')
+      .get('/entries')
+      .reply(200, { data: [entry1, entry2] })
+    const action = {
+      type: 'GET',
+      payload: { type: 'entry' },
+    }
+    const mapping = [
+      {
+        $iterate: true,
+        id: 'key',
+        title: ['headline', { $transform: 'upperCase' }],
+        text: 'body',
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt',
+        author: 'authorId',
+        sections: 'sections[]',
+      },
+      { $transform: 'addSectionsToText' },
+      { $cast: 'entry' },
+    ]
+    const defs = {
+      ...definitions,
+      mutations: {
+        ...definitions.mutations,
+        'entries-entry': mapping,
+      },
+    }
 
-  const great = Integreat.create(defs, resourcesWithTrans)
-  const ret = await great.dispatch(action)
+    const great = Integreat.create(defs, resourcesWithTrans)
+    const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.true(Array.isArray(ret.data))
-  const data = ret.data as TypedData[]
-  t.is(data.length, 2)
-  t.is(data[0].id, 'ent1')
-  t.is(data[0].title, 'ENTRY 1')
-  t.is(data[0].text, 'The text of entry 1 - news|sports')
-  t.is(data[1].id, 'ent2')
-  t.is(data[1].title, 'ENTRY 2')
-  t.is(data[1].text, 'The text of entry 2 - ')
+    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(Array.isArray(ret.data), true)
+    const data = ret.data as TypedData[]
+    assert.equal(data.length, 2)
+    assert.equal(data[0].id, 'ent1')
+    assert.equal(data[0].title, 'ENTRY 1')
+    assert.equal(data[0].text, 'The text of entry 1 - news|sports')
+    assert.equal(data[1].id, 'ent2')
+    assert.equal(data[1].title, 'ENTRY 2')
+    assert.equal(data[1].text, 'The text of entry 2 - ')
+  })
 })

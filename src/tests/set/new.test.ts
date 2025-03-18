@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import completeIdent from '../../middleware/completeIdent.js'
 import defs from '../helpers/defs/index.js'
@@ -40,90 +41,95 @@ const entriesArr = [
   },
 ]
 
-test.after.always(() => {
-  nock.restore()
-})
+test('set new', async (t) => {
+  t.after(() => {
+    nock.restore()
+  })
 
-// Tests
+  // Tests
 
-test('should set new entry (getting role from identity)', async (t) => {
-  const middleware = [completeIdent]
-  const putData = {
-    key: 'ent1',
-    headline: 'Entry 1',
-    originalTitle: 'Entry 1',
-    body: 'The text of entry 1',
-    createdAt: createdAt.toISOString(),
-    updatedAt: updatedAt.toISOString(),
-    authorId: 'johnf',
-    sections: [{ id: 'news' }, { id: 'sports' }],
-    props: [],
-  }
-  nock('http://some.api')
-    .get('/users/johnf')
-    .reply(200, { data: { ...johnfData } })
-    .put('/entries/ent1', putData)
-    .reply(201, { data: { key: 'ent1', ok: true } })
-  const action = {
-    type: 'SET',
-    payload: { type: 'entry', data: entry1Item },
-    meta: { ident: { id: 'johnf' } },
-  }
+  await t.test(
+    'should set new entry (getting role from identity)',
+    async () => {
+      const middleware = [completeIdent]
+      const putData = {
+        key: 'ent1',
+        headline: 'Entry 1',
+        originalTitle: 'Entry 1',
+        body: 'The text of entry 1',
+        createdAt: createdAt.toISOString(),
+        updatedAt: updatedAt.toISOString(),
+        authorId: 'johnf',
+        sections: [{ id: 'news' }, { id: 'sports' }],
+        props: [],
+      }
+      nock('http://some.api')
+        .get('/users/johnf')
+        .reply(200, { data: { ...johnfData } })
+        .put('/entries/ent1', putData)
+        .reply(201, { data: { key: 'ent1', ok: true } })
+      const action = {
+        type: 'SET',
+        payload: { type: 'entry', data: entry1Item },
+        meta: { ident: { id: 'johnf' } },
+      }
 
-  const great = Integreat.create(defs, resources, middleware)
-  const ret = await great.dispatch(action)
+      const great = Integreat.create(defs, resources, middleware)
+      const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  const data = ret.data as TypedData
-  t.false(Array.isArray(data))
-  t.is(data.id, 'ent1')
-  t.is(data.title, 'An entry') // Default value, as it is not provided in the response data
-})
-
-test('should set new entries', async (t) => {
-  nock('http://some.api', {
-    reqheaders: {
-      'content-type': 'application/json',
-      'x-correlation-id': '12345',
+      assert.equal(ret.status, 'ok', ret.error)
+      const data = ret.data as TypedData
+      assert.equal(Array.isArray(data), false)
+      assert.equal(data.id, 'ent1')
+      assert.equal(data.title, 'An entry') // Default value, as it is not provided in the response data
     },
-  })
-    .post('/entries')
-    .reply(201, {
-      data: [
-        { key: 'real1', ok: true },
-        { key: 'real2', ok: true },
-      ],
+  )
+
+  await t.test('should set new entries', async () => {
+    nock('http://some.api', {
+      reqheaders: {
+        'content-type': 'application/json',
+        'x-correlation-id': '12345',
+      },
     })
-  const action = {
-    type: 'SET',
-    payload: { type: 'entry', data: entriesArr },
-    meta: { ident: { id: 'johnf', roles: ['editor'] }, cid: '12345' },
-  }
+      .post('/entries')
+      .reply(201, {
+        data: [
+          { key: 'real1', ok: true },
+          { key: 'real2', ok: true },
+        ],
+      })
+    const action = {
+      type: 'SET',
+      payload: { type: 'entry', data: entriesArr },
+      meta: { ident: { id: 'johnf', roles: ['editor'] }, cid: '12345' },
+    }
 
-  const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
+    const great = Integreat.create(defs, resources)
+    const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  const data = ret.data as TypedData[]
-  t.is(data.length, 2)
-  t.is(data[0].id, 'real1')
-  t.is(data[1].id, 'real2')
-})
-
-test('should use outgoing middleware', async (t) => {
-  const failMiddleware = () => async (action: Action) => ({
-    ...action.response,
-    status: 'badresponse',
+    assert.equal(ret.status, 'ok', ret.error)
+    const data = ret.data as TypedData[]
+    assert.equal(data.length, 2)
+    assert.equal(data[0].id, 'real1')
+    assert.equal(data[1].id, 'real2')
   })
-  const outgoingMiddleware = [failMiddleware]
-  const action = {
-    type: 'SET',
-    payload: { type: 'entry', data: entriesArr },
-    meta: { ident: { id: 'johnf', roles: ['editor'] } },
-  }
 
-  const great = Integreat.create(defs, resources, [], outgoingMiddleware)
-  const ret = await great.dispatch(action)
+  await t.test('should use outgoing middleware', async () => {
+    const failMiddleware = () => async (action: Action) => ({
+      ...action.response,
+      status: 'badresponse',
+    })
+    const outgoingMiddleware = [failMiddleware]
+    const action = {
+      type: 'SET',
+      payload: { type: 'entry', data: entriesArr },
+      meta: { ident: { id: 'johnf', roles: ['editor'] } },
+    }
 
-  t.is(ret.status, 'badresponse', ret.error)
+    const great = Integreat.create(defs, resources, [], outgoingMiddleware)
+    const ret = await great.dispatch(action)
+
+    assert.equal(ret.status, 'badresponse', ret.error)
+  })
 })

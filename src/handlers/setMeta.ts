@@ -11,7 +11,7 @@ const debug = debugLib('great')
  */
 export default async function setMeta(
   action: Action,
-  resources: ActionHandlerResources
+  resources: ActionHandlerResources,
 ): Promise<Response> {
   const {
     payload: {
@@ -21,7 +21,6 @@ export default async function setMeta(
       targetService: serviceId,
       endpoint: endpointId,
     },
-    meta: { ident } = {},
   } = action
   const metaId = generateMetaId(serviceId, type, metaKey as string | undefined)
   const { getService } = resources
@@ -31,7 +30,7 @@ export default async function setMeta(
     debug(`SET_META: Service '${serviceId}' doesn't exist`)
     return createErrorResponse(
       `Service '${serviceId}' doesn't exist`,
-      'handler:SET_META'
+      'handler:SET_META',
     )
   }
 
@@ -41,12 +40,12 @@ export default async function setMeta(
   const metaService = getService(metaType)
   if (!metaService) {
     debug(
-      `SET_META: Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`
+      `SET_META: Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
     )
     return createErrorResponse(
       `Service '${service.id}' doesn't support metadata (setting was '${service.meta}')`,
       'handler:SET_META',
-      'noaction'
+      'noaction',
     )
   }
 
@@ -58,10 +57,11 @@ export default async function setMeta(
     meta,
     service.id,
     metaService.id,
-    endpointDebug
+    endpointDebug,
   )
 
   const setAction = {
+    ...action,
     type: 'SET',
     payload: {
       id: metaId,
@@ -74,7 +74,6 @@ export default async function setMeta(
       keys: Object.keys(meta as Record<string, unknown>),
       endpoint: endpointId,
     },
-    meta: { ident },
   }
   return await setHandler(setAction, resources)
 }

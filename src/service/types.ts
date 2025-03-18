@@ -18,11 +18,11 @@ export interface IdentConfigProps {
 export interface IdentConfig {
   type: string
   props?: IdentConfigProps
+  mapping?: Record<string, string | null>
+  completeIdent?: boolean
 }
 
-export interface ActionMapper {
-  (action: Action): Action
-}
+export type ActionMapper = (action: Action) => Action
 
 export type AuthOptions = Record<string, unknown>
 
@@ -30,6 +30,7 @@ export interface Authentication extends Record<string, unknown> {
   status: string
   error?: string
   authKey?: string
+  expire?: number
 }
 
 export interface AuthDef {
@@ -47,6 +48,7 @@ export interface AuthObject {
 }
 
 export interface TransporterOptions extends Record<string, unknown> {
+  doSetTargetService?: boolean
   incoming?: Record<string, unknown>
 }
 

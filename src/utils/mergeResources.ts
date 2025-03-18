@@ -11,6 +11,6 @@ export default function mergeResources(...resources: Resources[]): Resources {
       },
       transformers: { ...resources.transformers, ...resource.transformers },
     }),
-    {}
+    {},
   )
 }

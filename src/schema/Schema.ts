@@ -23,7 +23,7 @@ const expandFields = (vals: ShapeDef): Shape =>
   Object.entries(vals).reduce(
     (newVals, [key, def]) =>
       def ? { ...newVals, [key]: expandField(def) } : newVals,
-    {}
+    {},
   )
 
 const expandAccess = (access?: string | AccessDef): AccessDef | undefined =>
@@ -41,7 +41,10 @@ export default class Schema {
   access?: AccessDef
   castFn: CastFn
 
-  constructor(def: SchemaDef, schemas: Map<string, Schema> = new Map()) {
+  constructor(
+    def: SchemaDef,
+    schemas: Map<string, Schema> = new Map<string, Schema>(),
+  ) {
     this.id = def.id
     this.plural = def.plural || `${def.id}s`
     this.service = def.service

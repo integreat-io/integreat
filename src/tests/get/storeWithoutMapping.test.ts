@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
@@ -15,13 +16,9 @@ const defs = {
   },
 }
 
-test.after.always(() => {
-  nock.restore()
-})
-
 // Tests
 
-test('should get one entry from service', async (t) => {
+test('should get one entry from service', async () => {
   const createdAt = '2017-11-18T18:43:01Z'
   const updatedAt = '2017-11-24T07:11:43Z'
   nock('http://some.api')
@@ -54,6 +51,8 @@ test('should get one entry from service', async (t) => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expected)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.deepEqual(ret.data, expected)
+
+  nock.restore()
 })

@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import Schema from '../schema/Schema.js'
 
 import createMapOptions from './createMapOptions.js'
@@ -34,14 +35,14 @@ const dictionaries = {
 
 // Tests
 
-test('should return default nonvalues', (t) => {
+test('should return default nonvalues', () => {
   const expected = [undefined, null, '']
   const ret = createMapOptions(new Map(), mutations, transformers)
 
-  t.deepEqual(ret.nonvalues, expected)
+  assert.deepEqual(ret.nonvalues, expected)
 })
 
-test('should return provided nonvalues', (t) => {
+test('should return provided nonvalues', () => {
   const nonvalues = [undefined, null]
   const expected = [undefined, null]
   const ret = createMapOptions(
@@ -52,27 +53,27 @@ test('should return provided nonvalues', (t) => {
     nonvalues,
   )
 
-  t.deepEqual(ret.nonvalues, expected)
+  assert.deepEqual(ret.nonvalues, expected)
 })
 
-test('should return map options with pipelines from mutations', (t) => {
+test('should return map options with pipelines from mutations', () => {
   const expected = mutations
   const ret = createMapOptions(new Map(), mutations, transformers)
 
-  t.deepEqual(ret.pipelines, expected)
+  assert.deepEqual(ret.pipelines, expected)
 })
 
-test('should include transformers', (t) => {
+test('should include transformers', () => {
   const ret = createMapOptions(schemas, mutations, transformers)
 
   const trans = ret.transformers || {}
-  t.is(typeof trans.string, 'function')
-  t.is(typeof trans[Symbol.for('cast_entry')], 'function')
-  t.is(typeof trans[Symbol.for('cast_user')], 'function')
+  assert.equal(typeof trans.string, 'function')
+  assert.equal(typeof trans[Symbol.for('cast_entry')], 'function')
+  assert.equal(typeof trans[Symbol.for('cast_user')], 'function')
 })
 
-test('should include dictionaries', (t) => {
+test('should include dictionaries', () => {
   const ret = createMapOptions(schemas, mutations, transformers, dictionaries)
 
-  t.is(ret.dictionaries, dictionaries)
+  assert.equal(ret.dictionaries, dictionaries)
 })

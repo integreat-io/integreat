@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
@@ -21,13 +22,9 @@ const entry1FromService = {
   body: 'Text from entry 1',
 }
 
-test.after.always(() => {
-  nock.restore()
-})
-
 // Tests
 
-test('should mutate response and merge with request data', async (t) => {
+test('should mutate response and merge with request data', async () => {
   nock('http://some.api')
     .put('/entries/ent1')
     .reply(201, { ok: true, content: { items: entry1FromService } })
@@ -61,10 +58,12 @@ test('should mutate response and merge with request data', async (t) => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok', ret.error)
   const data = ret.data as TypedData
-  t.is(data.$type, 'entry')
-  t.is(data.id, 'ent1')
-  t.is(data.title, 'Entry 1')
-  t.is(data.text, 'Text from entry 1')
+  assert.equal(data.$type, 'entry')
+  assert.equal(data.id, 'ent1')
+  assert.equal(data.title, 'Entry 1')
+  assert.equal(data.text, 'Text from entry 1')
+
+  nock.restore()
 })

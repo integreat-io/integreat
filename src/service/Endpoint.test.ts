@@ -1,5 +1,6 @@
-import test from 'ava'
-import sinon from 'sinon'
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import mapTransform from 'map-transform'
 import jsonAdapter from 'integreat-adapter-json'
 import jsonTransformer from 'integreat-adapter-json/transformer.js'
 import uriTransformer from 'integreat-adapter-uri/transformer.js'
@@ -174,7 +175,7 @@ const mockAdapter: Adapter = {
 
 // Tests -- props
 
-test('should set id, allowRawRequest, allowRawResponse, and castWithoutDefaults on endpoint', (t) => {
+test('should set id, allowRawRequest, allowRawResponse, and castWithoutDefaults on endpoint', () => {
   const endpointDef = {
     id: 'endpoint1',
     allowRawRequest: true,
@@ -182,15 +183,15 @@ test('should set id, allowRawRequest, allowRawResponse, and castWithoutDefaults 
     castWithoutDefaults: true,
   }
 
-  const ret = new Endpoint(endpointDef, serviceId, options, {})
+  const ret = new Endpoint(endpointDef, serviceId, options, mapTransform, {})
 
-  t.is(ret.id, 'endpoint1')
-  t.true(ret.allowRawRequest)
-  t.true(ret.allowRawResponse)
-  t.true(ret.castWithoutDefaults)
+  assert.equal(ret.id, 'endpoint1')
+  assert.equal(ret.allowRawRequest, true)
+  assert.equal(ret.allowRawResponse, true)
+  assert.equal(ret.castWithoutDefaults, true)
 })
 
-test('should expose given outgoing and incoming auth', (t) => {
+test('should expose given outgoing and incoming auth', () => {
   const endpointDef = {
     id: 'endpoint1',
     allowRawRequest: true,
@@ -204,6 +205,7 @@ test('should expose given outgoing and incoming auth', (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     {},
     undefined,
     undefined,
@@ -212,25 +214,25 @@ test('should expose given outgoing and incoming auth', (t) => {
     incomingAuth,
   )
 
-  t.is(ret.outgoingAuth, outgoingAuth)
-  t.is(ret.incomingAuth, incomingAuth)
-  t.is(ret.id, 'endpoint1')
+  assert.equal(ret.outgoingAuth, outgoingAuth)
+  assert.equal(ret.incomingAuth, incomingAuth)
+  assert.equal(ret.id, 'endpoint1')
 })
 
-test('should set match on endpoint', (t) => {
+test('should set match on endpoint', () => {
   const endpointDef = {
     id: 'endpoint1',
     match: { scope: 'member' },
   }
 
-  const ret = new Endpoint(endpointDef, serviceId, options, {})
+  const ret = new Endpoint(endpointDef, serviceId, options, mapTransform, {})
 
-  t.deepEqual(ret.match, { scope: 'member' })
+  assert.deepEqual(ret.match, { scope: 'member' })
 })
 
 // Tests -- isMatch
 
-test('should return true when endpoint is a match to an action with conditions', async (t) => {
+test('should return true when endpoint is a match to an action with conditions', async () => {
   const endpointDef = {
     match: {
       conditions: [
@@ -246,12 +248,18 @@ test('should return true when endpoint is a match to an action with conditions',
       data: { draft: false },
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
-  t.true(await endpoint.isMatch(action))
+  assert.equal(await endpoint.isMatch(action), true)
 })
 
-test('should return false when endpoint is not a match to an action with conditions', async (t) => {
+test('should return false when endpoint is not a match to an action with conditions', async () => {
   const endpointDef = {
     match: {
       conditions: [
@@ -266,12 +274,18 @@ test('should return false when endpoint is not a match to an action with conditi
       type: 'entry',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
-  t.false(await endpoint.isMatch(action))
+  assert.equal(await endpoint.isMatch(action), false)
 })
 
-test('should return true when endpoint is a match to an action with filter', async (t) => {
+test('should return true when endpoint is a match to an action with filter', async () => {
   const endpointDef = {
     match: { filters: { 'payload.data.draft': { const: false } } },
     options: {},
@@ -283,12 +297,18 @@ test('should return true when endpoint is a match to an action with filter', asy
       data: { draft: false },
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
-  t.true(await endpoint.isMatch(action))
+  assert.equal(await endpoint.isMatch(action), true)
 })
 
-test('should return false when no match to action', async (t) => {
+test('should return false when no match to action', async () => {
   const endpointDef = {
     match: { scope: 'member' },
     options: {},
@@ -299,14 +319,20 @@ test('should return false when no match to action', async (t) => {
       type: 'entry',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
-  t.false(await endpoint.isMatch(action))
+  assert.equal(await endpoint.isMatch(action), false)
 })
 
 // Tests -- validateAction
 
-test('should return null when no validation', async (t) => {
+test('should return null when no validation', async () => {
   const endpointDef = {
     options: {},
   }
@@ -316,14 +342,20 @@ test('should return null when no validation', async (t) => {
       type: 'entry',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.validateAction(action)
 
-  t.is(ret, null)
+  assert.equal(ret, null)
 })
 
-test('should return null when validate is empty array', async (t) => {
+test('should return null when validate is empty array', async () => {
   const endpointDef = {
     validate: [],
     options: {},
@@ -334,14 +366,20 @@ test('should return null when validate is empty array', async (t) => {
       type: 'entry',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.validateAction(action)
 
-  t.is(ret, null)
+  assert.equal(ret, null)
 })
 
-test('should return null when validation passes', async (t) => {
+test('should return null when validation passes', async () => {
   const endpointDef = {
     validate: [{ condition: 'payload.id' }],
     options: {},
@@ -353,14 +391,20 @@ test('should return null when validation passes', async (t) => {
       id: 'ent1',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.validateAction(action)
 
-  t.is(ret, null)
+  assert.equal(ret, null)
 })
 
-test('should return null when validation with several conditions passes', async (t) => {
+test('should return null when validation with several conditions passes', async () => {
   const endpointDef = {
     validate: [{ condition: 'payload.id' }, { condition: 'payload.type' }],
     options: {},
@@ -372,14 +416,20 @@ test('should return null when validation with several conditions passes', async 
       id: 'ent1',
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.validateAction(action)
 
-  t.is(ret, null)
+  assert.equal(ret, null)
 })
 
-test('should return badrequest response when validation fails', async (t) => {
+test('should return badrequest response when validation fails', async () => {
   const endpointDef = {
     validate: [{ condition: 'payload.id' }],
     options: {},
@@ -391,7 +441,13 @@ test('should return badrequest response when validation fails', async (t) => {
       // No id
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const expectedResponse = {
     status: 'badrequest',
     error: 'Did not satisfy condition',
@@ -400,10 +456,10 @@ test('should return badrequest response when validation fails', async (t) => {
 
   const ret = await endpoint.validateAction(action)
 
-  t.deepEqual(ret, expectedResponse)
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('should return badrequest response when one of several conditions fails', async (t) => {
+test('should return badrequest response when one of several conditions fails', async () => {
   const endpointDef = {
     validate: [{ condition: 'payload.type' }, { condition: 'payload.id' }],
     options: {},
@@ -415,7 +471,13 @@ test('should return badrequest response when one of several conditions fails', a
       // No id
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const expectedResponse = {
     status: 'badrequest',
     error: 'Did not satisfy condition',
@@ -424,10 +486,10 @@ test('should return badrequest response when one of several conditions fails', a
 
   const ret = await endpoint.validateAction(action)
 
-  t.deepEqual(ret, expectedResponse)
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('should return failResponse when provided', async (t) => {
+test('should return failResponse when provided', async () => {
   const endpointDef = {
     validate: [
       {
@@ -444,7 +506,13 @@ test('should return failResponse when provided', async (t) => {
       // No id
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const expectedResponse = {
     status: 'error',
     error: 'This is no good',
@@ -453,10 +521,10 @@ test('should return failResponse when provided', async (t) => {
 
   const ret = await endpoint.validateAction(action)
 
-  t.deepEqual(ret, expectedResponse)
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('should return response from several failed failResponse', async (t) => {
+test('should return response from several failed failResponse', async () => {
   const endpointDef = {
     validate: [
       {
@@ -477,7 +545,13 @@ test('should return response from several failed failResponse', async (t) => {
       // No id
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const expectedResponse = {
     status: 'error',
     error: '[error] This is no good | [notfound] Something is gone',
@@ -486,10 +560,10 @@ test('should return response from several failed failResponse', async (t) => {
 
   const ret = await endpoint.validateAction(action)
 
-  t.deepEqual(ret, expectedResponse)
+  assert.deepEqual(ret, expectedResponse)
 })
 
-test('should treat failResponse as error message when provided as a string', async (t) => {
+test('should treat failResponse as error message when provided as a string', async () => {
   const endpointDef = {
     validate: [
       {
@@ -506,7 +580,13 @@ test('should treat failResponse as error message when provided as a string', asy
       // No id
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const expectedResponse = {
     status: 'badrequest',
     error: 'This is no good',
@@ -515,12 +595,12 @@ test('should treat failResponse as error message when provided as a string', asy
 
   const ret = await endpoint.validateAction(action)
 
-  t.deepEqual(ret, expectedResponse)
+  assert.deepEqual(ret, expectedResponse)
 })
 
 // Tests -- mutate response
 
-test('should mutate response from service with endpoint mutation', async (t) => {
+test('should mutate response from service with endpoint mutation', async () => {
   const endpointDef = {
     mutation: {
       response: {
@@ -530,33 +610,32 @@ test('should mutate response from service with endpoint mutation', async (t) => 
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const theTime = new Date()
-  const expected = {
-    ...actionWithResponse,
-    response: {
-      ...actionWithResponse.response,
-      data: [
-        {
-          $type: 'entry',
-          id: 'ent1',
-          title: 'Entry 1',
-          published: false,
-          createdAt: theTime,
-          updatedAt: theTime,
-        },
-      ],
-    },
-  }
-  const clock = sinon.useFakeTimers(theTime)
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
+  const before = Date.now()
   const ret = await endpoint.mutate(actionWithResponse, false)
+  const after = Date.now()
 
-  clock.restore()
-  t.deepEqual(ret, expected)
+  const data = (ret.response?.data as Record<string, unknown>[])[0]
+  assert.equal(data.id, 'ent1')
+  assert.equal(data.$type, 'entry')
+  assert.equal(data.title, 'Entry 1')
+  assert.equal(data.published, false)
+  assert.equal((data.createdAt as Date).getTime() >= before, true)
+  assert.equal((data.createdAt as Date).getTime() <= after, true)
+  assert.equal(
+    (data.createdAt as Date).getTime(),
+    (data.updatedAt as Date).getTime(),
+  )
 })
 
-test('should treat `mutate` as an alias of endpoint mutation', async (t) => {
+test('should treat `mutate` as an alias of endpoint mutation', async () => {
   const endpointDef = {
     mutate: {
       response: {
@@ -566,20 +645,26 @@ test('should treat `mutate` as an alias of endpoint mutation', async (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.mutate(actionWithResponse, false)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(ret.response?.status, 'ok', ret.response?.error)
   const data = ret.response?.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'ent1')
-  t.is(data[0].$type, 'entry')
-  t.is(data[0].title, 'Entry 1')
-  t.is(data[0].published, false)
+  assert.equal(data.length, 1)
+  assert.equal(data[0].id, 'ent1')
+  assert.equal(data[0].$type, 'entry')
+  assert.equal(data[0].title, 'Entry 1')
+  assert.equal(data[0].published, false)
 })
 
-test('should run prepareOptions() on options before giving them to adapter', async (t) => {
+test('should run prepareOptions() on options before giving them to adapter', async () => {
   const prepareOptions = (options: ServiceOptions, serviceId: string) => ({
     ...options,
     serviceId,
@@ -609,6 +694,7 @@ test('should run prepareOptions() on options before giving them to adapter', asy
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -616,10 +702,10 @@ test('should run prepareOptions() on options before giving them to adapter', asy
 
   const ret = await endpoint.mutate(actionWithResponse, false)
 
-  t.deepEqual(ret.response?.params, expectedParams)
+  assert.deepEqual(ret.response?.params, expectedParams)
 })
 
-test('should provide prepareOptions() with empty object when no adapter options', async (t) => {
+test('should provide prepareOptions() with empty object when no adapter options', async () => {
   const prepareOptions = (options: ServiceOptions, _serviceId: string) =>
     options
   const normalize = (action: Action, options: Record<string, unknown>) => ({
@@ -643,6 +729,7 @@ test('should provide prepareOptions() with empty object when no adapter options'
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -650,10 +737,10 @@ test('should provide prepareOptions() with empty object when no adapter options'
 
   const ret = await endpoint.mutate(actionWithResponse, false)
 
-  t.deepEqual(ret.response?.params, {})
+  assert.deepEqual(ret.response?.params, {})
 })
 
-test('should mutate action props from response', async (t) => {
+test('should mutate action props from response', async () => {
   const endpointDef = {
     mutation: {
       response: [
@@ -688,17 +775,23 @@ test('should mutate action props from response', async (t) => {
   }
   const expectedPaging = { next: { offset: 'page2', type: 'entry' } }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithProps, false)
 
-  t.is(ret.response?.status, 'badrequest')
-  t.is(ret.response?.error, 'Not valid')
-  t.is((ret.response?.data as TypedData[]).length, 1)
-  t.deepEqual(ret.response?.paging, expectedPaging)
-  t.is(ret.response?.params?.id, '7839')
+  assert.equal(ret.response?.status, 'badrequest')
+  assert.equal(ret.response?.error, 'Not valid')
+  assert.equal((ret.response?.data as TypedData[]).length, 1)
+  assert.deepEqual(ret.response?.paging, expectedPaging)
+  assert.equal(ret.response?.params?.id, '7839')
 })
 
-test('should mutate response from service with service and endpoint mutations', async (t) => {
+test('should mutate response from service with service and endpoint mutations', async () => {
   const serviceMutation = [
     {
       response: {
@@ -737,19 +830,20 @@ test('should mutate response from service with service and endpoint mutations', 
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     serviceMutation,
   )
   const ret = await endpoint.mutate(actionWithProps, false)
 
   const data = ret.response?.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'ent1')
-  t.is(ret.response?.status, 'badrequest')
-  t.is(ret.response?.error, 'Too much')
+  assert.equal(data.length, 1)
+  assert.equal(data[0].id, 'ent1')
+  assert.equal(ret.response?.status, 'badrequest')
+  assert.equal(ret.response?.error, 'Too much')
 })
 
-test('should mutate response from service with service mutation only', async (t) => {
+test('should mutate response from service with service mutation only', async () => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
@@ -771,18 +865,19 @@ test('should mutate response from service with service mutation only', async (t)
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     serviceMutation,
   )
   const ret = await endpoint.mutate(actionWithProps, false)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(ret.response?.status, 'ok', ret.response?.error)
   const data = ret.response?.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'ent1')
+  assert.equal(data.length, 1)
+  assert.equal(data[0].id, 'ent1')
 })
 
-test('should mutate response from service with service adapter', async (t) => {
+test('should mutate response from service with service adapter', async () => {
   const endpointDef = {
     mutation: {
       response: {
@@ -804,6 +899,7 @@ test('should mutate response from service with service adapter', async (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -811,15 +907,16 @@ test('should mutate response from service with service adapter', async (t) => {
 
   const ret = await endpoint.mutate(actionWithJSON, false)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.true(Array.isArray(ret.response?.data), 'Should be an array')
-  t.true(
+  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(Array.isArray(ret.response?.data), true, 'Should be an array')
+  assert.equal(
     isObject((ret.response?.data as TypedData[])[0]),
+    true,
     'Should be an object',
   )
 })
 
-test('should mutate response from service with both service and endpoint adapters', async (t) => {
+test('should mutate response from service with both service and endpoint adapters', async () => {
   const endpointDef = {
     mutation: {
       response: {
@@ -842,6 +939,7 @@ test('should mutate response from service with both service and endpoint adapter
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     serviceAdapters,
@@ -850,12 +948,12 @@ test('should mutate response from service with both service and endpoint adapter
 
   const ret = await endpoint.mutate(actionWithJSON, false)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.true(Array.isArray(ret.response?.data), 'Should be an array')
-  t.is((ret.response?.data as TypedData[]).length, 2) // Mock adapter duplicates the array
+  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(Array.isArray(ret.response?.data), true, 'Should be an array')
+  assert.equal((ret.response?.data as TypedData[]).length, 2) // Mock adapter duplicates the array
 })
 
-test('should run service mutation _before_ endpoint adapters', async (t) => {
+test('should run service mutation _before_ endpoint adapters', async () => {
   const endpointDef = {
     mutation: {
       response: {
@@ -882,6 +980,7 @@ test('should run service mutation _before_ endpoint adapters', async (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     serviceMutation,
     serviceAdapters,
@@ -890,15 +989,15 @@ test('should run service mutation _before_ endpoint adapters', async (t) => {
 
   const ret = await endpoint.mutate(actionWithJSON, false)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.true(Array.isArray(ret.response?.data), 'Should be an array')
+  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(Array.isArray(ret.response?.data), true, 'Should be an array')
   const data = ret.response?.data as TypedData[]
-  t.is(data.length, 2) // Mock adapter duplicates the array
-  t.is(data[0].title, 'Replaced title')
-  t.is(data[1].title, 'Replaced title') // Will be 'Entry 1' if service mutation is run _after_ endpoint adapters
+  assert.equal(data.length, 2) // Mock adapter duplicates the array
+  assert.equal(data[0].title, 'Replaced title')
+  assert.equal(data[1].title, 'Replaced title') // Will be 'Entry 1' if service mutation is run _after_ endpoint adapters
 })
 
-test('should mutate response from service with service adapter and no mutation pipeline', async (t) => {
+test('should mutate response from service with service adapter and no mutation pipeline', async () => {
   const endpointDef = {
     allowRawResponse: true,
     options: { uri: 'http://some.api/1.0' },
@@ -915,6 +1014,7 @@ test('should mutate response from service with service adapter and no mutation p
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -929,11 +1029,11 @@ test('should mutate response from service with service adapter and no mutation p
 
   const ret = await endpoint.mutate(actionWithJSON, false)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.deepEqual(ret.response?.data, expectedData)
+  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.deepEqual(ret.response?.data, expectedData)
 })
 
-test('should return error when no action', async (t) => {
+test('should return error when no action', async () => {
   const endpointDef = {
     mutation: {
       response: {
@@ -943,16 +1043,23 @@ test('should return error when no action', async (t) => {
     },
     options: { uri: 'http://some.api/1.0' },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
+  const expectedError = {
+    name: 'Error',
+    message: 'Endpoint mutation was run without action',
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const error = await t.throwsAsync(endpoint.mutate(undefined as any, false))
-
-  t.true(error instanceof Error)
-  t.is(error?.message, 'Endpoint mutation was run without action')
+  await assert.rejects(endpoint.mutate(undefined as any, false), expectedError)
 })
 
-test('should mutate response to service (incoming) with service adapter', async (t) => {
+test('should mutate response to service (incoming) with service adapter', async () => {
   const endpointDef = {
     mutation: {
       $direction: 'rev',
@@ -969,6 +1076,7 @@ test('should mutate response to service (incoming) with service adapter', async 
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -979,11 +1087,11 @@ test('should mutate response to service (incoming) with service adapter', async 
 
   const ret = await endpoint.mutate(actionWithResponse, isRev)
 
-  t.is(ret.response?.status, 'ok', ret.response?.error)
-  t.is(ret.response?.data, expectedData)
+  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(ret.response?.data, expectedData)
 })
 
-test('should throw when mutations are applying unknown pipeline/mutation', async (t) => {
+test('should throw when mutations are applying unknown pipeline/mutation', async () => {
   const serviceMutation = [
     {
       response: {
@@ -1004,23 +1112,26 @@ test('should throw when mutations are applying unknown pipeline/mutation', async
     },
     options: { uri: 'http://some.api/1.0' },
   }
+  const expectedError = {
+    name: 'Error',
+    message: "Failed to apply pipeline 'unknown'. Unknown pipeline",
+  }
 
-  const error = t.throws(
+  assert.throws(
     () =>
       new Endpoint(
         endpointDef,
         serviceId,
         options,
+        mapTransform,
         mapOptions,
         serviceMutation,
       ),
+    expectedError,
   )
-
-  t.true(error instanceof Error)
-  t.is(error?.message, "Failed to apply pipeline 'unknown'. Unknown pipeline")
 })
 
-test('should keep action props not mapped from response', async (t) => {
+test('should keep action props not mapped from response', async () => {
   const endpointDef = {
     mutation: {
       response: [
@@ -1047,15 +1158,21 @@ test('should keep action props not mapped from response', async (t) => {
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithProps, false)
 
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, 'Not valid')
-  t.is((ret.response?.data as TypedData[]).length, 1)
+  assert.equal(ret.response?.status, 'error')
+  assert.equal(ret.response?.error, 'Not valid')
+  assert.equal((ret.response?.data as TypedData[]).length, 1)
 })
 
-test('should set status to error for response with an error', async (t) => {
+test('should set status to error for response with an error', async () => {
   const endpointDef = {
     mutation: {
       response: [
@@ -1079,14 +1196,20 @@ test('should set status to error for response with an error', async (t) => {
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithProps, false)
 
-  t.is(ret.response?.status, 'error')
-  t.is(ret.response?.error, 'Not valid')
+  assert.equal(ret.response?.status, 'error')
+  assert.equal(ret.response?.error, 'Not valid')
 })
 
-test('should mutate to undefined from response when unknown path', async (t) => {
+test('should mutate to undefined from response when unknown path', async () => {
   const endpointDef = {
     mutation: {
       response: 'response',
@@ -1102,13 +1225,19 @@ test('should mutate to undefined from response when unknown path', async (t) => 
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithResponse, false)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should mutate to empty array from service when unknown path and expecting array', async (t) => {
+test('should mutate to empty array from service when unknown path and expecting array', async () => {
   const endpointDef = {
     mutation: {
       response: 'response',
@@ -1124,25 +1253,37 @@ test('should mutate to empty array from service when unknown path and expecting 
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithResponse, false)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not mutate from service when no mutation pipeline', async (t) => {
+test('should not mutate from service when no mutation pipeline', async () => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = actionWithResponse
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(actionWithResponse, false)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not mutate response from service when direction is rev', async (t) => {
+test('should not mutate response from service when direction is rev', async () => {
   const endpointDef = {
     mutation: {
       $direction: 'rev',
@@ -1152,16 +1293,22 @@ test('should not mutate response from service when direction is rev', async (t) 
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = actionWithResponse
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.mutate(actionWithResponse, false)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- mutate request
 
-test('should mutate request with endpoint mutation', async (t) => {
+test('should mutate request with endpoint mutation', async () => {
   const endpointDef = {
     mutation: {
       payload: 'payload',
@@ -1186,13 +1333,19 @@ test('should mutate request with endpoint mutation', async (t) => {
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(action, true)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should mutate request with service mutation', async (t) => {
+test('should mutate request with service mutation', async () => {
   const serviceMutation = [
     {
       $direction: 'rev',
@@ -1273,15 +1426,16 @@ test('should mutate request with service mutation', async (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     serviceMutation,
   )
   const ret = await endpoint.mutate(actionWithOptions, true)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should mutate request with root array path', async (t) => {
+test('should mutate request with root array path', async () => {
   const endpointDef = {
     mutation: {
       $flip: true,
@@ -1303,25 +1457,37 @@ test('should mutate request with root array path', async (t) => {
     },
   }
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(action, true)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not mutate to service when no mutation pipeline', async (t) => {
+test('should not mutate to service when no mutation pipeline', async () => {
   const endpointDef = {
     options: { uri: 'http://some.api/1.0' },
   }
   const expected = action
 
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const ret = await endpoint.mutate(action, true)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not mutate request with mutation when direction is set to fwd', async (t) => {
+test('should not mutate request with mutation when direction is set to fwd', async () => {
   const endpointDef = {
     mutation: {
       $direction: 'fwd',
@@ -1337,14 +1503,20 @@ test('should not mutate request with mutation when direction is set to fwd', asy
       data: undefined,
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
 
   const ret = await endpoint.mutate(actionWithoutRequestData, true)
 
-  t.is(ret.payload.data, undefined)
+  assert.equal(ret.payload.data, undefined)
 })
 
-test('should mutate request from service (incoming)', async (t) => {
+test('should mutate request from service (incoming)', async () => {
   const endpointDef = {
     mutation: {
       payload: 'payload',
@@ -1362,19 +1534,25 @@ test('should mutate request from service (incoming)', async (t) => {
       },
     },
   }
-  const endpoint = new Endpoint(endpointDef, serviceId, options, mapOptions)
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
   const isRev = false
 
   const ret = await endpoint.mutate(incomingAction, isRev)
 
   const data = ret.payload.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'ent1')
-  t.is(data[0].$type, 'entry')
-  t.is(data[0].title, 'Entry 1')
+  assert.equal(data.length, 1)
+  assert.equal(data[0].id, 'ent1')
+  assert.equal(data[0].$type, 'entry')
+  assert.equal(data[0].title, 'Entry 1')
 })
 
-test('should mutate request with adapter', async (t) => {
+test('should mutate request with adapter', async () => {
   const endpointDef = {
     mutation: {
       payload: 'payload',
@@ -1405,6 +1583,7 @@ test('should mutate request with adapter', async (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -1412,10 +1591,10 @@ test('should mutate request with adapter', async (t) => {
 
   const ret = await endpoint.mutate(action, true)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should mutate request with several adapters', async (t) => {
+test('should mutate request with several adapters', async () => {
   const endpointDef = {
     mutation: {
       payload: 'payload',
@@ -1445,6 +1624,7 @@ test('should mutate request with several adapters', async (t) => {
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -1452,10 +1632,10 @@ test('should mutate request with several adapters', async (t) => {
 
   const ret = await endpoint.mutate(action, true)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should mutate request from service (incoming) with adapter', async (t) => {
+test('should mutate request from service (incoming) with adapter', async () => {
   const endpointDef = {
     mutation: {
       payload: 'payload',
@@ -1478,6 +1658,7 @@ test('should mutate request from service (incoming) with adapter', async (t) => 
     endpointDef,
     serviceId,
     options,
+    mapTransform,
     mapOptions,
     undefined,
     adapters,
@@ -1487,15 +1668,15 @@ test('should mutate request from service (incoming) with adapter', async (t) => 
   const ret = await endpoint.mutate(incomingAction, isRev)
 
   const data = ret.payload.data as TypedData[]
-  t.is(data.length, 1)
-  t.is(data[0].id, 'ent1')
-  t.is(data[0].$type, 'entry')
-  t.is(data[0].title, 'Entry 1')
+  assert.equal(data.length, 1)
+  assert.equal(data[0].id, 'ent1')
+  assert.equal(data[0].$type, 'entry')
+  assert.equal(data[0].title, 'Entry 1')
 })
 
 // Tests -- sortAndPrepare
 
-test('should return endpoints defs in right order', (t) => {
+test('should return endpoints defs in right order', () => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -1512,10 +1693,10 @@ test('should return endpoints defs in right order', (t) => {
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs)
 
-  t.deepEqual(endpoints, expected)
+  assert.deepEqual(endpoints, expected)
 })
 
-test('should treat scope: all as no scope', (t) => {
+test('should treat scope: all as no scope', () => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -1539,12 +1720,12 @@ test('should treat scope: all as no scope', (t) => {
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs)
 
-  t.deepEqual(endpoints, expected)
+  assert.deepEqual(endpoints, expected)
 })
 
 // Tests -- findMatchingEndpoint
 
-test('should find matching endpoint', async (t) => {
+test('should find matching endpoint', async () => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -1566,15 +1747,14 @@ test('should find matching endpoint', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
+    (defs) => new Endpoint(defs, serviceId, options, mapTransform, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
-  t.truthy(mapping)
-  t.is((mapping as Endpoint).id, 'endpoint2')
+  assert.equal((mapping as Endpoint).id, 'endpoint2')
 })
 
-test('should match by id', async (t) => {
+test('should match by id', async () => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -1597,15 +1777,14 @@ test('should match by id', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
+    (defs) => new Endpoint(defs, serviceId, options, mapTransform, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
-  t.truthy(mapping)
-  t.is((mapping as Endpoint).id, 'endpoint2')
+  assert.equal((mapping as Endpoint).id, 'endpoint2')
 })
 
-test('should match scope all', async (t) => {
+test('should match scope all', async () => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -1626,15 +1805,14 @@ test('should match scope all', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
+    (defs) => new Endpoint(defs, serviceId, options, mapTransform, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
-  t.truthy(mapping)
-  t.is((mapping as Endpoint).id, 'endpoint1')
+  assert.equal((mapping as Endpoint).id, 'endpoint1')
 })
 
-test('should treat scope all as no scope', async (t) => {
+test('should treat scope all as no scope', async () => {
   const endpointDefs = [
     {
       id: 'endpoint1',
@@ -1656,10 +1834,9 @@ test('should treat scope all as no scope', async (t) => {
   }
 
   const endpoints = Endpoint.sortAndPrepare(endpointDefs).map(
-    (defs) => new Endpoint(defs, serviceId, options, mapOptions),
+    (defs) => new Endpoint(defs, serviceId, options, mapTransform, mapOptions),
   )
   const mapping = await Endpoint.findMatchingEndpoint(endpoints, action)
 
-  t.truthy(mapping)
-  t.is((mapping as Endpoint).id, 'endpoint2')
+  assert.equal((mapping as Endpoint).id, 'endpoint2')
 })

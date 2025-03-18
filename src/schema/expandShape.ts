@@ -5,15 +5,15 @@ const expandField = (val: ShapeDef | FieldDefinition | string | undefined) =>
   typeof val === 'string'
     ? { $type: val }
     : isShape(val)
-    ? expandFields(val)
-    : val
+      ? expandFields(val)
+      : val
 
 function expandFields(shapeDef: ShapeDef): Shape {
   return Object.fromEntries(
     Object.entries(shapeDef).map(
       ([key, def]) => (def ? [key, expandField(def)] : []),
-      {}
-    )
+      {},
+    ),
   )
 }
 

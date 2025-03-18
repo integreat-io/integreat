@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
@@ -21,7 +22,7 @@ const bettyItem = {
 // Tests
 
 // Waiting for authentication to service and a solution on how to treat return from SET
-test('should refuse to set entries where ident has no access', async (t) => {
+test('should refuse to set entries where ident has no access', async () => {
   nock('http://some.api').post('/users').reply(201, { ok: true })
   const action = {
     type: 'SET',
@@ -32,10 +33,10 @@ test('should refuse to set entries where ident has no access', async (t) => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok', ret.error)
   const data = ret.data
-  t.false(Array.isArray(data))
-  t.is(data, undefined)
+  assert.equal(Array.isArray(data), false)
+  assert.equal(data, undefined)
 
   nock.restore()
 })

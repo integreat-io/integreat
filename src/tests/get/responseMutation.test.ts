@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import definitions from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
@@ -44,126 +45,128 @@ const defsWithMutation = (
   ],
 })
 
-test.after.always(() => {
-  nock.restore()
-})
+test('responseMutation', async (t) => {
+  t.after(() => {
+    nock.restore()
+  })
 
-// Tests
+  // Tests
 
-test('should mutate with endpoint mutation', async (t) => {
-  nock('http://some.api')
-    .get('/entries/ent1')
-    .reply(200, {
-      responseContent: { articles: [entry1] },
-      responseValue: 'ok',
-    })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry', id: 'ent1' },
-  }
-  const defs = defsWithMutation(mutation)
+  await t.test('should mutate with endpoint mutation', async () => {
+    nock('http://some.api')
+      .get('/entries/ent1')
+      .reply(200, {
+        responseContent: { articles: [entry1] },
+        responseValue: 'ok',
+      })
+    const action = {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent1' },
+    }
+    const defs = defsWithMutation(mutation)
 
-  const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
+    const great = Integreat.create(defs, resources)
+    const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  const data = ret.data as TypedData[]
-  t.true(Array.isArray(data))
-  t.is(data.length, 1)
-  const item = data[0]
-  t.is(item.id, 'ent1')
-  t.is(item.title, 'Entry 1')
-})
+    assert.equal(ret.status, 'ok', ret.error)
+    const data = ret.data as TypedData[]
+    assert.equal(Array.isArray(data), true)
+    assert.equal(data.length, 1)
+    const item = data[0]
+    assert.equal(item.id, 'ent1')
+    assert.equal(item.title, 'Entry 1')
+  })
 
-test('should mutate with service mutation', async (t) => {
-  nock('http://some.api')
-    .get('/entries/ent1')
-    .reply(200, {
-      articles: [entry1],
-      result: 'queued',
-    })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry', id: 'ent1' },
-  }
-  const mutation = {
-    $direction: 'fwd',
-    response: 'response',
-    'response.data': ['response.data', { $apply: 'entries-entry' }],
-  }
-  const serviceMutation = {
-    $direction: 'fwd',
-    response: {
-      '.': 'response',
-      status: 'response.data.result',
-      data: 'response.data.articles',
-    },
-  }
-  const defs = defsWithMutation(mutation, serviceMutation)
+  await t.test('should mutate with service mutation', async () => {
+    nock('http://some.api')
+      .get('/entries/ent1')
+      .reply(200, {
+        articles: [entry1],
+        result: 'queued',
+      })
+    const action = {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent1' },
+    }
+    const mutation = {
+      $direction: 'fwd',
+      response: 'response',
+      'response.data': ['response.data', { $apply: 'entries-entry' }],
+    }
+    const serviceMutation = {
+      $direction: 'fwd',
+      response: {
+        '.': 'response',
+        status: 'response.data.result',
+        data: 'response.data.articles',
+      },
+    }
+    const defs = defsWithMutation(mutation, serviceMutation)
 
-  const great = Integreat.create(defs, resources)
-  const ret = (await great.dispatch(action)) as Response<TypedData[]>
+    const great = Integreat.create(defs, resources)
+    const ret = (await great.dispatch(action)) as Response<TypedData[]>
 
-  t.is(ret.status, 'queued', ret.error)
-  t.is(ret.data?.length, 1)
-  t.is(ret.data![0].id, 'ent1')
-})
+    assert.equal(ret.status, 'queued', ret.error)
+    assert.equal(ret.data?.length, 1)
+    assert.equal(ret.data[0].id, 'ent1')
+  })
 
-test('should use status code mapped from data', async (t) => {
-  nock('http://some.api')
-    .get('/entries/ent2')
-    .reply(200, {
-      responseContent: { articles: [entry1] },
-      responseValue: 'error',
-      responseMessage: 'Oh no!',
-    })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry', id: 'ent2' },
-  }
-  const defs = defsWithMutation(mutation)
+  await t.test('should use status code mapped from data', async () => {
+    nock('http://some.api')
+      .get('/entries/ent2')
+      .reply(200, {
+        responseContent: { articles: [entry1] },
+        responseValue: 'error',
+        responseMessage: 'Oh no!',
+      })
+    const action = {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent2' },
+    }
+    const defs = defsWithMutation(mutation)
 
-  const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
+    const great = Integreat.create(defs, resources)
+    const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'error')
-  t.is(ret.error, 'Oh no!')
-})
+    assert.equal(ret.status, 'error')
+    assert.equal(ret.error, 'Oh no!')
+  })
 
-test('should transform at paths within the data', async (t) => {
-  nock('http://some.api')
-    .get('/entries/ent3')
-    .reply(200, {
-      responseContent: JSON.stringify({ articles: [entry1, entry2] }),
-    })
-  const action = {
-    type: 'GET',
-    payload: { type: 'entry', id: 'ent3' },
-  }
-  const mutation = {
-    $direction: 'fwd',
-    $modify: '.',
-    response: {
-      $modify: 'response',
-      'data[]': [
-        'response.data.responseContent',
-        { $transform: 'json' },
-        'articles[]',
-        { $apply: 'entries-entry' },
-      ],
-    },
-  }
-  const defs = defsWithMutation(mutation)
+  await t.test('should transform at paths within the data', async () => {
+    nock('http://some.api')
+      .get('/entries/ent3')
+      .reply(200, {
+        responseContent: JSON.stringify({ articles: [entry1, entry2] }),
+      })
+    const action = {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent3' },
+    }
+    const mutation = {
+      $direction: 'fwd',
+      $modify: '.',
+      response: {
+        $modify: 'response',
+        'data[]': [
+          'response.data.responseContent',
+          { $transform: 'json' },
+          'articles[]',
+          { $apply: 'entries-entry' },
+        ],
+      },
+    }
+    const defs = defsWithMutation(mutation)
 
-  const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
+    const great = Integreat.create(defs, resources)
+    const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  const data = ret.data as TypedData[]
-  t.true(Array.isArray(data))
-  t.is(data.length, 2)
-  t.is(data[0].id, 'ent1')
-  t.is(data[0].title, 'Entry 1')
-  t.is(data[1].id, 'ent2')
-  t.is(data[1].title, 'Entry 2')
+    assert.equal(ret.status, 'ok', ret.error)
+    const data = ret.data as TypedData[]
+    assert.equal(Array.isArray(data), true)
+    assert.equal(data.length, 2)
+    assert.equal(data[0].id, 'ent1')
+    assert.equal(data[0].title, 'Entry 1')
+    assert.equal(data[1].id, 'ent2')
+    assert.equal(data[1].title, 'Entry 2')
+  })
 })

@@ -1,3 +1,4 @@
+import { createMetaForSubAction } from '../utils/action.js'
 import { createErrorResponse, setOrigin } from '../utils/response.js'
 import { isObject, isTypedData } from '../utils/is.js'
 import type {
@@ -8,20 +9,20 @@ import type {
   ActionHandlerResources,
 } from '../types.js'
 
+const ORIGIN = 'handler:GET_ALL'
+
 const extractLastId = (data: unknown, field = 'id') =>
   Array.isArray(data) && isObject(data[data.length - 1])
     ? // eslint-disable-next-line security/detect-object-injection
       data[data.length - 1] && data[data.length - 1][field]
     : undefined
 
-const cleanMeta = ({ id, ...meta }: Meta = {}) => meta
-
 const createAction = (
   page: number,
   { pageAfterField, ...payload }: Payload,
   paging?: Payload,
   data?: unknown,
-  meta?: Meta
+  meta?: Meta,
 ) =>
   paging
     ? { type: 'GET', payload: paging, meta }
@@ -33,7 +34,7 @@ const createAction = (
           pageOffset: (page - 1) * (payload.pageSize as number),
           pageAfter: extractLastId(
             data,
-            typeof pageAfterField === 'string' ? pageAfterField : undefined
+            typeof pageAfterField === 'string' ? pageAfterField : undefined,
           ),
         },
         meta,
@@ -67,16 +68,16 @@ const createNextPaging = (payload: Payload, paging?: Payload) =>
  */
 export default async function getAll(
   action: Action,
-  { dispatch }: ActionHandlerResources
+  { dispatch }: ActionHandlerResources,
 ): Promise<Response> {
   const { pageSize, noLoopCheck = false } = action.payload
 
   if (typeof pageSize !== 'number') {
-    return await dispatch({
-      type: 'GET',
-      payload: action.payload,
-      meta: action.meta,
-    })
+    return createErrorResponse(
+      'GET_ALL requires a pageSize',
+      ORIGIN,
+      'badrequest',
+    )
   }
 
   const data: unknown[] = []
@@ -86,11 +87,17 @@ export default async function getAll(
   let prevFirstId: string | null | undefined = null
   do {
     const response = await dispatch(
-      createAction(page++, action.payload, paging, data, cleanMeta(action.meta))
+      createAction(
+        page++,
+        action.payload,
+        paging,
+        data,
+        createMetaForSubAction(action.meta),
+      ),
     )
     if (response?.status !== 'ok') {
       // Stop and return errors right away
-      return setOrigin(response, 'handler:GET_ALL')
+      return setOrigin(response, ORIGIN)
     }
 
     // Extract paging for next action
@@ -105,7 +112,7 @@ export default async function getAll(
         if (typeof firstId === 'string' && firstId === prevFirstId) {
           return createErrorResponse(
             'GET_ALL detected a possible infinite loop',
-            'handler:GET_ALL'
+            ORIGIN,
           )
         }
         prevFirstId = firstId

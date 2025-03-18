@@ -1,8 +1,20 @@
 import debugLib from 'debug'
-import { isErrorResponse, isNotNullOrUndefined, isDuplicate } from './is.js'
+import {
+  isOkStatus,
+  isErrorResponse,
+  isNotNullOrUndefined,
+  isDuplicate,
+} from './is.js'
 import type { Response } from '../types.js'
 
 const debug = debugLib('great')
+
+const extractErrorMessage = (error: unknown) =>
+  error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+      ? error
+      : undefined
 
 /**
  * Create an error response.
@@ -13,14 +25,12 @@ export function createErrorResponse(
   status = 'error',
   reason?: string,
 ): Response {
+  const message = extractErrorMessage(error)
   return {
     status,
-    error:
-      error instanceof Error
-        ? error.message
-        : typeof error === 'string'
-          ? error
-          : 'Unknown error',
+    ...(isOkStatus(status)
+      ? { warning: message }
+      : { error: message ?? 'Unknown error' }),
     ...(reason ? { reason } : {}),
     ...(origin ? { origin } : {}),
   }
@@ -48,7 +58,7 @@ function getCombinedErrors(responses: Response[]) {
     .filter((response) => response.error || isErrorResponse(response))
     .map((response) => `[${response.status}] ${response.error}`)
     .filter(isDuplicate)
-  return errors.length === 1 ? responses[0].error : errors.join(' | ')
+  return errors.join(' | ') // Note: When we have only one error, we might want to return it without the [status] prefix, but it's ok for now.
 }
 
 const getCombinedWarnings = (responses: Response[]) =>

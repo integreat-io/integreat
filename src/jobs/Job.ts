@@ -1,11 +1,14 @@
 import { nanoid } from 'nanoid'
 import Schedule from './Schedule.js'
 import Step, {
+  createPreconditionsValidator,
+  statusFromResponses,
   getPrevStepId,
   getLastJobWithResponse,
   prepareMutation,
   mutateResponse,
   breakSymbol,
+  Validator,
 } from './Step.js'
 import { isObject, isOkResponse, isErrorResponse } from '../utils/is.js'
 import { setResponseOnAction } from '../utils/action.js'
@@ -16,32 +19,69 @@ import type {
   Response,
   Meta,
   HandlerDispatch,
+  MapTransform,
   MapOptions,
   SetProgress,
 } from '../types.js'
-import type { JobDef, JobStepDef } from './types.js'
+import type { JobDef, JobStepDef, JobDefWithFlow } from './types.js'
 
-const isJobStep = (job: unknown): job is JobStepDef =>
+const isActionJob = (job: unknown): job is JobStepDef =>
   isObject(job) && isObject(job.action)
 
-const generateSubMeta = ({ ident, project, cid }: Meta, jobId: string) => ({
+const isFlowJob = (job: unknown): job is JobDefWithFlow =>
+  isObject(job) && Array.isArray(job.flow)
+
+const generateSubMeta = (
+  { ident, project, cid }: Meta,
+  jobId: string,
+  gid?: string,
+) => ({
   ident,
   jobId,
   ...(project ? { project } : {}),
   ...(cid ? { cid } : {}),
+  ...(gid ? { gid } : {}),
 })
 
+const messageFromResponse = (response: Response) =>
+  response.error || response.warning || 'Unknown error'
+
 const messageFromStep = (isFlow: boolean) => (response: Response) => {
-  const message = response.error || response.warning || 'Unknown error'
   return isErrorResponse(response) || response.warning
     ? isFlow
-      ? `'${response.origin}' (${response.status}: ${message})`
-      : `[${response.status}] ${message}`
+      ? `- '${response.origin}': ${messageFromResponse(response)} (${response.status})`
+      : `- ${messageFromResponse(response)} (${response.status})`
     : undefined
+}
+
+function generateJobMessage(
+  responses: Response[],
+  jobId: string,
+  isFlow: boolean,
+  isOk: boolean,
+) {
+  if (responses.length > 1) {
+    const stepMessage = responses
+      .map(messageFromStep(isFlow))
+      .filter(Boolean)
+      .join('\n')
+    return isOk
+      ? `Message from steps:\n${stepMessage}`
+      : isFlow
+        ? `Steps failed:\n${stepMessage}`
+        : `Could not finish job '${jobId}': ${stepMessage}`
+  } else {
+    return !isOk || responses[0].warning
+      ? messageFromResponse(responses[0])
+      : undefined
+  }
 }
 
 const removeOriginAndWarning = ({ origin, warning, ...response }: Response) =>
   response
+
+const setOriginOnResponses = (responses: Response[], jobId: string) =>
+  responses.map((response) => setOrigin(response, `job:${jobId}:step`, true))
 
 function setMessageAndOrigin(
   response: Response,
@@ -49,28 +89,42 @@ function setMessageAndOrigin(
   isFlow: boolean,
 ): Response {
   const responses = response.responses || [response]
-  const stepMessages = responses
-    .map(messageFromStep(isFlow))
-    .filter(Boolean)
-    .join(', ')
-  return isOkResponse(response)
-    ? {
-        ...removeOriginAndWarning(response),
-        ...(stepMessages
-          ? { warning: `Message from steps: ${stepMessages}` }
-          : {}),
-      }
-    : {
-        ...removeOriginAndWarning(response),
-        status: isOkResponse(response) ? 'ok' : 'error',
-        error: isFlow
-          ? `Could not finish job '${jobId}', the following steps failed: ${stepMessages}`
-          : `Could not finish job '${jobId}': ${stepMessages}`,
-        responses: responses.map((response) =>
-          setOrigin(response, `job:${jobId}:step`, true),
-        ),
-        origin: `job:${jobId}`,
-      }
+  const isOk = isOkResponse(response)
+  const bareResponse = removeOriginAndWarning(response)
+
+  if (isOk) {
+    // We have an ok response
+    const warningResponses = responses.filter((resp) => resp.warning)
+    const jobWarning =
+      warningResponses.length > 0
+        ? generateJobMessage(warningResponses, jobId, isFlow, isOk)
+        : undefined
+    return {
+      ...bareResponse,
+      ...(jobWarning ? { warning: jobWarning } : {}),
+      ...(response.responses
+        ? { responses: setOriginOnResponses(response.responses, jobId) }
+        : {}),
+    }
+  } else {
+    // We have an error response
+    const errorResponses = responses.filter(isErrorResponse)
+    const jobError =
+      errorResponses.length > 0
+        ? generateJobMessage(errorResponses, jobId, isFlow, isOk)
+        : undefined
+    const origin =
+      errorResponses.length === 1
+        ? `job:${jobId}:step:${errorResponses[0].origin}`
+        : `job:${jobId}`
+    return {
+      ...bareResponse,
+      status: statusFromResponses(responses),
+      error: jobError,
+      origin,
+      responses: setOriginOnResponses(responses, jobId),
+    }
+  }
 }
 
 function getResponse(
@@ -90,11 +144,6 @@ function getResponse(
 const getId = (jobDef: JobDef) =>
   typeof jobDef.id === 'string' && jobDef.id ? jobDef.id : nanoid()
 
-const removePostmutationAndSetId = (
-  { postmutation, responseMutation, ...job }: JobStepDef,
-  id: string,
-) => ({ ...job, id })
-
 const calculateProgress = (index: number, stepsCount: number) =>
   (index + 1) / (stepsCount + 1)
 
@@ -102,41 +151,68 @@ export default class Job {
   id: string
   schedule?: Schedule
   #steps: Step[] = []
+  #validatePreconditions: Validator = async () => [null, false]
   #postmutator?: DataMapper<InitialState>
   #isFlow = false
 
-  constructor(jobDef: JobDef, mapOptions: MapOptions, breakByDefault = false) {
+  constructor(
+    jobDef: JobDef,
+    mapTransform: MapTransform,
+    mapOptions: MapOptions,
+    failOnErrorInPostconditions = false,
+  ) {
     this.id = getId(jobDef)
 
-    if (Array.isArray(jobDef.flow)) {
+    if (isFlowJob(jobDef)) {
       this.#isFlow = true
       this.#steps = jobDef.flow
         .filter(
           (step): step is JobStepDef | JobStepDef[] =>
-            Array.isArray(step) || isJobStep(step),
+            Array.isArray(step) || isActionJob(step),
         )
         .map(
           (stepDef, index, steps) =>
             new Step(
               stepDef,
+              mapTransform,
               mapOptions,
-              breakByDefault,
+              failOnErrorInPostconditions,
               getPrevStepId(index, steps),
             ),
         )
-    } else if (isJobStep(jobDef)) {
+
+      // We only set the preconditions and the postmutator when we have a flow.
+      this.#validatePreconditions = createPreconditionsValidator(
+        jobDef.preconditions,
+        undefined,
+        mapTransform,
+        mapOptions,
+        failOnErrorInPostconditions,
+        undefined,
+      )
+      const postmutation = jobDef.postmutation || jobDef.responseMutation
+      this.#postmutator = postmutation
+        ? prepareMutation(
+            postmutation,
+            mapTransform,
+            mapOptions,
+            !!jobDef.responseMutation,
+          ) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
+        : undefined
+    } else if (isActionJob(jobDef)) {
       this.#steps = [
         new Step(
-          removePostmutationAndSetId(jobDef, this.id),
+          jobDef,
+          mapTransform,
           mapOptions,
-          breakByDefault,
+          failOnErrorInPostconditions,
+          undefined,
+          true, // Signal that this is a job (not a step in a flow)
         ),
-      ] // We'll run the post mutation here when this is a job with an action only
+      ]
+      // We don't set the postmutator here for action jobs, as it is
+      // handled in the job step instead.
     }
-    const postmutation = jobDef.postmutation || jobDef.responseMutation
-    this.#postmutator = postmutation
-      ? prepareMutation(postmutation, mapOptions, !!jobDef.responseMutation) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
-      : undefined
 
     if (jobDef.cron && this.#steps.length > 0) {
       this.schedule = new Schedule(jobDef)
@@ -147,6 +223,7 @@ export default class Job {
     action: Action,
     dispatch: HandlerDispatch,
     setProgress: SetProgress,
+    gid?: string,
   ): Promise<Response> {
     if (this.#steps.length === 0) {
       return {
@@ -157,30 +234,35 @@ export default class Job {
     }
 
     let actionResponses: Record<string, Action> = { action } // Include the incoming action in previous responses, to allow mutating from it
-    const meta = generateSubMeta(action.meta || {}, this.id)
 
-    for (const [index, step] of this.#steps.entries()) {
-      const { [breakSymbol]: doBreak, ...responses } = await step.run(
-        meta,
-        actionResponses,
-        dispatch,
-      )
-      setProgress(calculateProgress(index, this.#steps.length))
-      actionResponses = { ...actionResponses, ...responses }
-      if (doBreak) {
-        break
+    const [preconditionsResponse] =
+      await this.#validatePreconditions(actionResponses)
+
+    if (!preconditionsResponse) {
+      const meta = generateSubMeta(action.meta || {}, this.id, gid)
+      for (const [index, step] of this.#steps.entries()) {
+        const { [breakSymbol]: doBreak, ...responses } = await step.run(
+          meta,
+          actionResponses,
+          dispatch,
+        )
+        setProgress(calculateProgress(index, this.#steps.length))
+        actionResponses = { ...actionResponses, ...responses }
+        if (doBreak) {
+          break
+        }
       }
     }
 
-    const response = getResponse(
-      this.id,
-      this.#steps,
-      actionResponses,
-      this.#isFlow,
-    )
-    actionResponses = { ...actionResponses, action: { ...action, response } }
+    const response =
+      preconditionsResponse ??
+      getResponse(this.id, this.#steps, actionResponses, this.#isFlow)
 
     if (this.#postmutator) {
+      // Note that only a job with a flow will have postmutator. For
+      // a job with an action, the post mutation is passed on to the
+      // step logic.
+      actionResponses = { ...actionResponses, action: { ...action, response } }
       const { response: mutatedResponse } = await mutateResponse(
         setResponseOnAction(action, response),
         actionResponses,

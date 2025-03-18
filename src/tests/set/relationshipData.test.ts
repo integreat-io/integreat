@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import defsBase from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
@@ -50,13 +51,9 @@ const entry1Item = {
   sections: [],
 }
 
-test.after.always(() => {
-  nock.restore()
-})
-
 // Tests
 
-test('should send item with sub schema to service', async (t) => {
+test('should send item with sub schema to service', async () => {
   const putData = {
     key: 'ent1',
     headline: 'Entry 1',
@@ -74,5 +71,7 @@ test('should send item with sub schema to service', async (t) => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok', ret.error)
+
+  nock.restore()
 })

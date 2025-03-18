@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import nock from 'nock'
 import defs from '../helpers/defs/index.js'
 import resources from '../helpers/resources/index.js'
@@ -13,69 +14,74 @@ import Integreat from '../../index.js'
 const createdAt = '2017-11-18T18:43:01Z'
 const updatedAt = '2017-11-24T07:11:43Z'
 
-test.after.always(() => {
-  nock.restore()
-})
+test('raw', async (t) => {
+  t.after(() => {
+    nock.restore()
+  })
 
-// Tests
+  // Tests
 
-test('should get raw response from service for root', async (t) => {
-  nock('http://some.api')
-    .get('/entries/ent1')
-    .reply(200, { data: { ...ent1Data, createdAt, updatedAt } })
-  const action = {
-    type: 'GET',
-    payload: {
-      id: 'ent1',
-      targetService: 'entries', // Find service by `targetService`
-      rawForRoot: true,
-    }, // Flag to trigger raw endpoint
-    meta: { ident: { id: 'root', type: IdentType.Root } },
-  }
-  const expected = { ...ent1Data, createdAt, updatedAt }
+  await t.test('should get raw response from service for root', async () => {
+    nock('http://some.api')
+      .get('/entries/ent1')
+      .reply(200, { data: { ...ent1Data, createdAt, updatedAt } })
+    const action = {
+      type: 'GET',
+      payload: {
+        id: 'ent1',
+        targetService: 'entries', // Find service by `targetService`
+        rawForRoot: true,
+      }, // Flag to trigger raw endpoint
+      meta: { ident: { id: 'root', type: IdentType.Root } },
+    }
+    const expected = { ...ent1Data, createdAt, updatedAt }
 
-  const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
+    const great = Integreat.create(defs, resources)
+    const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expected)
-})
+    assert.equal(ret.status, 'ok', ret.error)
+    assert.deepEqual(ret.data, expected)
+  })
 
-test('should get raw response from service for user', async (t) => {
-  nock('http://some.api')
-    .get('/entries/ent2')
-    .reply(200, { data: { ...ent2Data, createdAt, updatedAt } })
-  const action = {
-    type: 'GET',
-    payload: {
-      id: 'ent2',
-      service: 'entries', // Find service by alias `service`
-      rawForAll: true,
-    }, // Flag to trigger raw endpoint
-    meta: { ident: { id: 'johnf' } },
-  }
-  const expected = { ...ent2Data, createdAt, updatedAt }
+  await t.test('should get raw response from service for user', async () => {
+    nock('http://some.api')
+      .get('/entries/ent2')
+      .reply(200, { data: { ...ent2Data, createdAt, updatedAt } })
+    const action = {
+      type: 'GET',
+      payload: {
+        id: 'ent2',
+        service: 'entries', // Find service by alias `service`
+        rawForAll: true,
+      }, // Flag to trigger raw endpoint
+      meta: { ident: { id: 'johnf' } },
+    }
+    const expected = { ...ent2Data, createdAt, updatedAt }
 
-  const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
+    const great = Integreat.create(defs, resources)
+    const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'ok', ret.error)
-  t.deepEqual(ret.data, expected)
-})
+    assert.equal(ret.status, 'ok', ret.error)
+    assert.deepEqual(ret.data, expected)
+  })
 
-test('should return error when user tries to get raw response', async (t) => {
-  nock('http://some.api')
-    .get('/entries/ent3')
-    .reply(200, { data: { ...ent2Data, createdAt, updatedAt } })
-  const action = {
-    type: 'GET',
-    payload: { id: 'ent3', service: 'entries', rawForRoot: true }, // Flag to trigger raw endpoint
-    meta: { ident: { id: 'johnf' } },
-  }
+  await t.test(
+    'should return error when user tries to get raw response',
+    async () => {
+      nock('http://some.api')
+        .get('/entries/ent3')
+        .reply(200, { data: { ...ent2Data, createdAt, updatedAt } })
+      const action = {
+        type: 'GET',
+        payload: { id: 'ent3', service: 'entries', rawForRoot: true }, // Flag to trigger raw endpoint
+        meta: { ident: { id: 'johnf' } },
+      }
 
-  const great = Integreat.create(defs, resources)
-  const ret = await great.dispatch(action)
+      const great = Integreat.create(defs, resources)
+      const ret = await great.dispatch(action)
 
-  t.is(ret.status, 'noaccess', ret.error)
-  t.deepEqual(ret.data, undefined)
+      assert.equal(ret.status, 'noaccess', ret.error)
+      assert.deepEqual(ret.data, undefined)
+    },
+  )
 })

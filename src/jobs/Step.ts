@@ -1,7 +1,6 @@
-import mapTransform from 'map-transform'
 import pLimit from 'p-limit'
-import { ensureArray } from '../utils/array.js'
-import { isObject, isOkResponse } from '../utils/is.js'
+import { ensureArray, unwrapArrayOfOne } from '../utils/array.js'
+import { isObject, isOkResponse, isOkStatus } from '../utils/is.js'
 import xor from '../utils/xor.js'
 import {
   setDataOnActionPayload,
@@ -26,6 +25,7 @@ import type {
   Meta,
   HandlerDispatch,
   Condition,
+  MapTransform,
   MapOptions,
   ValidateObject,
 } from '../types.js'
@@ -35,13 +35,20 @@ export const breakSymbol = Symbol('break')
 
 type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType[number]
 
-interface Validator {
-  (actionResponses: Record<string, Action>): Promise<[Response | null, boolean]>
-}
+export type Validator = (
+  actionResponses: Record<string, Action>,
+) => Promise<[Response | null, boolean]>
 
 export interface ResponsesObject extends Record<string, Action> {
   [breakSymbol]?: boolean
 }
+
+export const statusFromResponses = (responses: Response[]) =>
+  responses.reduce(
+    (status: string | undefined, response) =>
+      status === response.status || !status ? response.status : 'error',
+    undefined,
+  )
 
 const adjustPrevalidationResponse = ({
   break: _,
@@ -51,7 +58,7 @@ const adjustPrevalidationResponse = ({
   message
     ? isOkResponse(response)
       ? { ...response, warning: message }
-      : { ...response, error: message }
+      : { ...(response as Response), error: message }
     : response
 
 const setOkStatusOnErrorResponse = ({
@@ -65,14 +72,21 @@ const setOkStatusOnErrorResponse = ({
 })
 
 const ensureOkResponse = (response?: Response): Response =>
-  isOkResponse(response) ? response! : setOkStatusOnErrorResponse(response)
+  isOkResponse(response) ? response : setOkStatusOnErrorResponse(response)
+
+const removeError = ({ error, ...response }: Response) => response
+
+const adjustNoActionResponse = (response: Response) =>
+  response.status === 'noaction' && response.error
+    ? removeError({ ...response, warning: response.error })
+    : response
 
 const adjustValidationResponse = (
   responses: Response[],
   response: Response | undefined,
 ) =>
   responses.length > 0
-    ? combineResponses(responses) // One or more conditions failed, so we'll return the combined response
+    ? combineResponses(responses.map(adjustNoActionResponse)) // One or more conditions failed, so we'll return the combined response
     : response
       ? ensureOkResponse(response) // Always return an ok response when we have a response (only happens for postconditions)
       : null
@@ -116,16 +130,19 @@ function createConditionsValidator(
     | ValidateObject[]
     | Record<string, Condition | undefined>
     | undefined,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   isPreconditions: boolean,
-  breakByDefault: boolean,
+  failOnErrorInPostconditions: boolean,
   prevStepId?: string,
 ): Validator {
+  const breakByDefault = !isPreconditions && failOnErrorInPostconditions // Break by default in postconditions when failing on errors are handled there
   if (Array.isArray(conditions)) {
     // Validate condition pipelines
     const defaultFailStatus = isPreconditions ? 'noaction' : 'error'
     const validator = prepareValidator(
       conditions,
+      mapTransform,
       mapOptions,
       defaultFailStatus,
       breakByDefault,
@@ -149,11 +166,14 @@ function createConditionsValidator(
         ? [adjustPrevalidationResponse(combineResponses(responses)), doBreak] // We only return the first error here
         : [null, false]
     }
-  } else if (xor(isPreconditions, breakByDefault)) {
-    // We're using xor to check for not `isPreconditions` when `breakByDefault` is `true`
-    // We have no conditions, so we'll just check if this or the previous step was ok (the former when `breakByDefault` is `true`)
+  } else if (xor(isPreconditions, failOnErrorInPostconditions)) {
+    // We're using xor to check for not `isPreconditions` when
+    // `failOnErrorInPostconditions` is `true`. We have no conditions, so we'll
+    // just check if this step was ok (when `failOnErrorInPostconditions` is
+    // `true`) or the previous step was ok (when `failOnErrorInPostconditions`
+    // is `false`).
     return async function validatePrevWasOk(actionResponses) {
-      const response = breakByDefault
+      const response = failOnErrorInPostconditions
         ? getThisResponse(actionResponses)
         : getPreviousResponse(actionResponses, prevStepId)
       return response && !isOkResponse(response)
@@ -168,36 +188,40 @@ function createConditionsValidator(
   }
 }
 
-function createPreconditionsValidator(
+export function createPreconditionsValidator(
   preconditions: ValidateObject[] | undefined,
   validationFilters: Record<string, Condition | undefined> | undefined,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
-  breakByDefault: boolean,
+  failOnErrorInPostconditions: boolean,
   prevStepId?: string,
 ): Validator {
   const conditions = preconditions || validationFilters
   return createConditionsValidator(
     conditions,
+    mapTransform,
     mapOptions,
     true,
-    breakByDefault,
+    failOnErrorInPostconditions,
     prevStepId,
   )
 }
 
 function createPostconditionsValidator(
   conditions: ValidateObject[] | undefined,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
-  breakByDefault: boolean,
+  failOnErrorInPostconditions: boolean,
 ): Validator {
   if (Array.isArray(conditions)) {
     conditions = conditions.map(putMutationInPipelineForCondition)
   }
   return createConditionsValidator(
     conditions,
+    mapTransform,
     mapOptions,
     false,
-    breakByDefault,
+    failOnErrorInPostconditions,
   )
 }
 
@@ -242,6 +266,7 @@ export async function mutateResponse(
   responses: Record<string, Action>,
   origin: string,
   postmutator?: DataMapper<InitialState>,
+  prefixOrigin = false,
 ): Promise<Action> {
   const { response: mutatedResponse } = await mutateAction(
     action,
@@ -254,7 +279,7 @@ export async function mutateResponse(
       setResponseOnAction(action, setResponseStatus(mutatedResponse)),
     ),
     origin,
-    true, // Prefix any existing origin
+    prefixOrigin,
   )
 }
 
@@ -263,13 +288,17 @@ function responseFromSteps(
 ): Action | undefined {
   const errorResponses = Object.values(actionResponses)
     .map(({ response }) => response)
-    .filter((response): response is Response => !isOkResponse(response))
+    .filter(
+      (response): response is Response =>
+        !isOkResponse(response) || !!response?.warning,
+    )
   if (errorResponses.length === 0) {
     return { response: { status: 'ok' } } as Action // Allow an action with only a response here
   } else {
+    const status = statusFromResponses(errorResponses)
     return {
       response: {
-        status: 'error',
+        status: isOkStatus(status) ? 'ok' : status,
         responses: errorResponses,
       },
     } as Action // Allow an action with only a response here
@@ -300,11 +329,16 @@ function generateIterateResponse(action: Action, responses: ResponsesObject) {
 
 export const prepareMutation = (
   pipeline: TransformObject | Pipeline,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   useMagic = false,
 ) => mapTransform(putMutationInPipeline(pipeline, useMagic), mapOptions)
 
-function getIterateMutator(step: JobStepDef, mapOptions: MapOptions) {
+function getIterateMutator(
+  step: JobStepDef,
+  mapTransform: MapTransform,
+  mapOptions: MapOptions,
+) {
   const pipeline = step.iterate || step.iteratePath
   if (pipeline) {
     return mapTransform(pipeline, mapOptions)
@@ -344,49 +378,62 @@ export default class Step {
   #postmutator?: DataMapper<InitialState>
   #iterateMutator?: DataMapper<InitialState>
   #iterateConcurrency?: number
+  #isJob: boolean
 
   constructor(
     stepDef: JobStepDef | JobStepDef[],
+    mapTransform: MapTransform,
     mapOptions: MapOptions,
-    breakByDefault = false,
+    failOnErrorInPostconditions = false,
     prevStepId?: string,
+    isJob = false, // Signal that this is a job, not a step in a flow
   ) {
-    if (Array.isArray(stepDef)) {
-      this.id = stepDef.map((step) => step.id).join(':')
-      this.#subSteps = stepDef.map(
+    this.#isJob = isJob
+    const def = unwrapArrayOfOne(stepDef)
+    if (Array.isArray(def)) {
+      this.id = def.map((step) => step.id).join(':')
+      this.#subSteps = def.map(
         (step, index, steps) =>
           new Step(
             step,
+            mapTransform,
             mapOptions,
-            breakByDefault,
+            failOnErrorInPostconditions,
             getPrevStepId(index, steps),
           ),
       )
     } else {
-      this.id = stepDef.id
+      this.id = def.id
       this.#validatePreconditions = createPreconditionsValidator(
-        stepDef.preconditions,
-        stepDef.conditions,
+        def.preconditions,
+        def.conditions,
+        mapTransform,
         mapOptions,
-        breakByDefault,
+        failOnErrorInPostconditions,
         prevStepId,
       )
       this.#validatePostconditions = createPostconditionsValidator(
-        stepDef.postconditions,
+        def.postconditions,
+        mapTransform,
         mapOptions,
-        breakByDefault,
+        failOnErrorInPostconditions,
       )
-      this.#action = stepDef.action
-      const premutation = stepDef.premutation || stepDef.mutation
-      const postmutation = stepDef.postmutation || stepDef.responseMutation
+      this.#action = def.action
+      const premutation = def.premutation || def.mutation
+      const postmutation = def.postmutation || def.responseMutation
       this.#premutator = premutation
-        ? prepareMutation(premutation, mapOptions, !!stepDef.mutation) // Set a flag for `mutation`, to signal that we want to use the obsolete "magic"
+        ? prepareMutation(premutation, mapTransform, mapOptions, !!def.mutation) // Set a flag for `mutation`, to signal that we want to use the obsolete "magic"
         : undefined
       this.#postmutator = postmutation
-        ? prepareMutation(postmutation, mapOptions, !!stepDef.responseMutation) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
+        ? prepareMutation(
+            postmutation,
+            mapTransform,
+            mapOptions,
+            !!def.responseMutation,
+          ) // Set a flag for `responseMutation`, to signal that we want to use the obsolete "magic"
         : undefined
-      this.#iterateMutator = getIterateMutator(stepDef, mapOptions)
-      this.#iterateConcurrency = stepDef.iterateConcurrency
+      this.#iterateMutator = getIterateMutator(def, mapTransform, mapOptions)
+      this.#iterateConcurrency = def.iterateConcurrency
     }
   }
 
@@ -410,10 +457,17 @@ export default class Step {
     return Object.fromEntries(
       (
         await Promise.all(
-          actions.map((action) =>
+          actions.map((action, index) =>
             limit(async () =>
               runOneAction(
-                await mutateAction(action, this.#premutator, actionResponses),
+                await mutateAction(
+                  setMetaOnAction(action, {
+                    ...action.meta,
+                    stepId: `${this.id}_${index}`,
+                  }),
+                  this.#premutator,
+                  actionResponses,
+                ),
                 dispatch,
               ),
             ),
@@ -440,26 +494,44 @@ export default class Step {
     const action = setMetaOnAction(this.#action, meta)
 
     // Run the action for every item in the array return by the iterate mutator.
-    const responses = await this.runIteration(actionResponses, dispatch, meta)
+    const iterateResponses = await this.runIteration(
+      actionResponses,
+      dispatch,
+      meta,
+    )
 
     // If we got any responses, combine them into one response. Otherwise
     // just run the action, as no responses means there were no iterate mutator,
     // so nothing has been run yet.
-    const responseAction = responses
-      ? generateIterateResponse(action, responses)
+    const responseAction = iterateResponses
+      ? generateIterateResponse(action, iterateResponses)
       : await runOneAction(
-          await mutateAction(action, this.#premutator, actionResponses),
+          await mutateAction(
+            this.#isJob
+              ? action
+              : setMetaOnAction(action, { ...meta, stepId: this.id }), // Set step id if this is not a job
+            this.#premutator,
+            actionResponses,
+          ),
           dispatch,
         )
 
+    // If this is a job (not a step in a flow), this will be the response from
+    // the job, and we set it here as the response to the original action, to
+    // make it available in post mutation.
+    if (this.#isJob) {
+      actionResponses.action.response = responseAction.response
+    }
+
     // Mutate the response and return together with any individual responses
     return {
-      ...responses,
+      ...iterateResponses,
       [this.id]: await mutateResponse(
         responseAction,
-        actionResponses,
+        { ...actionResponses, ...iterateResponses }, // Provide iterate responses to mutation
         this.id,
         this.#postmutator,
+        true,
       ),
     }
   }
@@ -478,7 +550,9 @@ export default class Step {
 
     // TODO: Actually run all parallel steps, even if one fails
     const arrayOfResponses = await Promise.all(
-      this.#subSteps.map((step) => step.run(meta, actionResponses, dispatch)),
+      this.#subSteps.map((step) =>
+        step.run({ ...meta, stepId: step.id }, actionResponses, dispatch),
+      ),
     )
     const doBreak = arrayOfResponses.some(
       (response) => response[breakSymbol], // eslint-disable-line security/detect-object-injection

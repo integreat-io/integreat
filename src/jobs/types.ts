@@ -5,8 +5,7 @@ import type {
 } from 'map-transform/types.js'
 import { Action, Condition, ValidateObject } from '../types.js'
 
-export interface JobStepDef {
-  id: string
+export interface JobBase {
   conditions?: Record<string, Condition | undefined>
   preconditions?: ValidateObject[]
   premutation?: TransformObject | Pipeline
@@ -14,19 +13,24 @@ export interface JobStepDef {
   iterate?: TransformDefinition
   iteratePath?: string
   iterateConcurrency?: number
-  action: Action
   postmutation?: TransformObject | Pipeline
   postconditions?: ValidateObject[]
   responseMutation?: TransformObject | Pipeline
-  // postconditions?: ValidateObject[]
 }
 
-export interface JobDef {
+export interface JobStepDef extends JobBase {
+  id: string
+  action: Action
+}
+
+export interface JobDef extends JobBase {
   id?: string
   action?: Action
   flow?: (JobStepDef | JobStepDef[])[]
   cron?: string
   tz?: string
-  postmutation?: TransformObject | Pipeline
-  responseMutation?: TransformObject | Pipeline
+}
+
+export interface JobDefWithFlow extends JobDef {
+  flow: NonNullable<JobDef['flow']>
 }

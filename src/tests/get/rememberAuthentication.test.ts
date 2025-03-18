@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
 import nock from 'nock'
 import tokenAuth from '../../authenticators/token.js'
@@ -13,7 +14,7 @@ import Integreat from '../../index.js'
 
 // Tests
 
-test('should not authenticate twice', async (t) => {
+test('should not authenticate twice', async () => {
   nock('http://some.api', {
     reqheaders: {
       authorization: 'Bearer t0k3n',
@@ -52,9 +53,9 @@ test('should not authenticate twice', async (t) => {
   await great.dispatch(action)
   const ret = await great.dispatch(action)
 
-  t.is(authSpy.callCount, 1)
-  t.is(ret.status, 'ok', ret.error)
-  t.is((ret.data as TypedData[]).length, 3)
+  assert.equal(authSpy.callCount, 1)
+  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal((ret.data as TypedData[]).length, 3)
 
   nock.restore()
 })

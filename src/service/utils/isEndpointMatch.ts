@@ -1,13 +1,27 @@
-import mapTransform from 'map-transform'
 import validateFilters from '../../utils/validateFilters.js'
 import { arrayIncludes } from '../../utils/array.js'
-import type { TransformDefinition } from 'map-transform/types.js'
-import type { Action, MapOptions, Params } from '../../types.js'
+import type {
+  DataMapper,
+  InitialState,
+  TransformDefinition,
+} from 'map-transform/types.js'
 import type { EndpointDef } from '../types.js'
+import type { Action, MapOptions, Params, MapTransform } from '../../types.js'
+
+const validateConditions = (validators: DataMapper<InitialState>[]) =>
+  async function validateConditions(action: Action) {
+    for (const validator of validators) {
+      if (!(await validator(action, { rev: false }))) {
+        return false
+      }
+    }
+    return true
+  }
 
 function createConditionsValidator(
   conditions: TransformDefinition[] | undefined,
   mapOptions: MapOptions,
+  mapTransform: MapTransform,
 ): (action: Action) => Promise<boolean> {
   if (!conditions) {
     return async () => true
@@ -16,14 +30,8 @@ function createConditionsValidator(
   const validators = conditions.map((condition) =>
     mapTransform(condition, mapOptions),
   )
-  return async function validateConditions(action) {
-    for (const validator of validators) {
-      if (!(await validator(action, { rev: false }))) {
-        return false
-      }
-    }
-    return true
-  }
+
+  return validateConditions(validators)
 }
 
 const matchValue = (match?: string | string[], value?: string | string[]) =>
@@ -75,8 +83,9 @@ const matchIncoming = (
  * scope, which should match before action, but the order here is taken care of
  * by the required sorting.
  */
-export default function isMatch(
+export default function isEndpointMatch(
   endpoint: EndpointDef,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
 ): (action: Action, isIncoming?: boolean) => Promise<boolean> {
   const match = endpoint.match || {}
@@ -84,6 +93,7 @@ export default function isMatch(
   const matchConditions = createConditionsValidator(
     match.conditions,
     mapOptions,
+    mapTransform,
   )
 
   return async (action, isIncoming = false) =>

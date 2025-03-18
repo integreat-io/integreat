@@ -5,6 +5,8 @@ import type {
   AsyncTransformer,
   TransformDefinition,
   Options,
+  DataMapper,
+  InitialState,
 } from 'map-transform/types.js'
 import type {
   ServiceDef,
@@ -17,6 +19,13 @@ import type {
 import type Service from './service/Service.js'
 import type { SchemaDef } from './schema/types.js'
 import type { JobDef } from './jobs/types.js'
+
+export type MapTransform = (
+  def: TransformDefinition,
+  options?: Options,
+) => DataMapper<InitialState>
+
+export type EmitFn = (eventType: string, ...args: unknown[]) => void
 
 export type MapOptions = Options
 
@@ -52,21 +61,18 @@ export interface Condition extends Record<string, unknown> {
   onFail?: ConditionFailObject | string
 }
 
-export interface DataFunction {
-  (): unknown
-}
+export type DataFunction = () => unknown
 
-export interface TransformFunction<
+export type TransformFunction<
   T extends Record<string, unknown> = Record<string, unknown>,
   U = unknown,
-> {
-  (operands: T): (value: unknown) => U
-}
+> = (operands: T) => (value: unknown) => U
 
 export enum IdentType {
   Root = 'ROOT',
   Anon = 'ANON',
   Scheduler = 'SCHED',
+  System = 'SYST',
   Custom = 'CUST',
 }
 
@@ -111,6 +117,7 @@ export interface Payload<T = unknown> extends Record<string, unknown> {
 export interface Meta extends Record<string, unknown> {
   id?: string
   cid?: string
+  gid?: string
   ident?: Ident
   dispatchedAt?: number
   queue?: boolean | number
@@ -145,18 +152,16 @@ export interface Action<P extends Payload = Payload, ResponseData = unknown> {
   meta?: Meta
 }
 
-export interface Dispatch<T = unknown> {
-  (action: Action | null): PProgress<Response<T>>
-}
+export type Dispatch<T = unknown> = (
+  action: Action | null,
+) => PProgress<Response<T>>
 
 // Dispatch without PProgress
-export interface HandlerDispatch<T = unknown> {
-  (action: Action): Promise<Response<T>>
-}
+export type HandlerDispatch<T = unknown> = (
+  action: Action,
+) => Promise<Response<T>>
 
-export interface Middleware {
-  (next: HandlerDispatch): HandlerDispatch
-}
+export type Middleware = (next: HandlerDispatch) => HandlerDispatch
 
 export interface Connection extends Record<string, unknown> {
   status: string
@@ -172,8 +177,10 @@ export interface Authenticator<
     action: Action | null,
   ) => string | undefined
   authenticate: (
-    options: AuthOptions | null,
+    options: U | null,
     action: Action | null,
+    dispatch: HandlerDispatch,
+    authentication: T | null,
   ) => Promise<T>
   isAuthenticated: (
     authentication: T | null,
@@ -182,17 +189,20 @@ export interface Authenticator<
   ) => boolean
   validate?: (
     authentication: T | null,
-    options: AuthOptions | null,
+    options: U | null,
     action: Action | null,
+    dispatch: HandlerDispatch,
   ) => Promise<Response>
-  authentication: {
-    [asFunction: string]: (authentication: T | null) => Record<string, unknown>
-  }
+  authentication: Record<
+    string,
+    (authentication: T | null) => Record<string, unknown>
+  >
 }
 
-export interface AuthenticateExternal {
-  (authentication: Authentication, action?: Action | null): Promise<Response>
-}
+export type AuthenticateExternal = (
+  authentication: Authentication,
+  action?: Action | null,
+) => Promise<Response>
 
 export interface Transporter {
   defaultAuthAsMethod?: string | null // Preferred alias of `authentication`
@@ -205,7 +215,7 @@ export interface Transporter {
     options: TransporterOptions,
     authentication: Record<string, unknown> | null,
     connection: Connection | null,
-    emit: (eventType: string, ...args: unknown[]) => void,
+    emit: EmitFn,
   ) => Promise<Connection | null>
   send: (action: Action, connection: Connection | null) => Promise<Response>
   shouldListen?: (options: TransporterOptions) => boolean
@@ -213,7 +223,9 @@ export interface Transporter {
     dispatch: Dispatch,
     connection: Connection | null,
     authenticate: AuthenticateExternal,
+    emit: EmitFn,
   ) => Promise<Response>
+  stopListening?: (connection: Connection | null) => Promise<Response>
   disconnect: (connection: Connection | null) => Promise<void>
 }
 
@@ -233,13 +245,12 @@ export interface Adapter {
   ) => Promise<Action>
 }
 
-export interface GetService {
-  (type?: string | string[], serviceId?: string): Service | undefined
-}
+export type GetService = (
+  type?: string | string[],
+  serviceId?: string,
+) => Service | undefined
 
-export interface SetProgress {
-  (progress: number): void
-}
+export type SetProgress = (progress: number) => void
 
 export interface HandlerOptions {
   identConfig?: IdentConfig
@@ -253,11 +264,13 @@ export interface ActionHandlerResources {
   options: HandlerOptions
 }
 
-export interface ActionHandler<T = unknown> {
-  (action: Action, resources: ActionHandlerResources): Promise<Response<T>>
-}
+export type ActionHandler<T = unknown> = (
+  action: Action,
+  resources: ActionHandlerResources,
+) => Promise<Response<T>>
 
-export interface DefintionFlags {
+export interface DefinitionFlags {
+  failOnErrorInPostconditions?: boolean
   breakByDefault?: boolean
 }
 
@@ -272,7 +285,7 @@ export interface Definitions {
   queueService?: string
   dictionaries?: Dictionaries
   jobs?: JobDef[]
-  flags?: DefintionFlags
+  flags?: DefinitionFlags
 }
 
 export interface Resources {
@@ -281,4 +294,5 @@ export interface Resources {
   handlers?: Record<string, ActionHandler>
   authenticators?: Record<string, Authenticator>
   transformers?: Record<string, Transformer | AsyncTransformer>
+  mapTransform?: MapTransform
 }

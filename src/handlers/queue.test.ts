@@ -1,5 +1,7 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import sinon from 'sinon'
+import mapTransform from 'map-transform'
 import Service from '../service/Service.js'
 import { isAuthorizedAction } from '../service/utils/authAction.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
@@ -40,7 +42,7 @@ const action = {
 
 // Tests
 
-test('should send action to queue', async (t) => {
+test('should send action to queue', async () => {
   const send = sinon.stub().resolves({ status: 'ok' })
   const options = { queueService: 'queue' }
   const queueTransporter = { ...baseTransporter, send }
@@ -49,7 +51,7 @@ test('should send action to queue', async (t) => {
       ...queueDefs,
       transporter: queueTransporter,
     },
-    { schemas, mapOptions }
+    { schemas, mapTransform, mapOptions },
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
@@ -59,19 +61,19 @@ test('should send action to queue', async (t) => {
   const ret = await queue(action, { ...handlerResources, getService, options })
   const after = Date.now()
 
-  t.deepEqual(ret, expected)
-  t.is(send.callCount, 1)
+  assert.deepEqual(ret, expected)
+  assert.equal(send.callCount, 1)
   const queuedAction = send.args[0][0]
-  t.is(queuedAction.type, 'SET')
-  t.deepEqual(queuedAction.payload, action.payload)
-  t.deepEqual(queuedAction.meta.ident, { id: 'johnf' })
-  t.true(isAuthorizedAction(queuedAction))
-  t.is(typeof queuedAction.meta?.queuedAt, 'number')
-  t.true((queuedAction.meta?.queuedAt as number) >= before)
-  t.true((queuedAction.meta?.queuedAt as number) <= after)
+  assert.equal(queuedAction.type, 'SET')
+  assert.deepEqual(queuedAction.payload, action.payload)
+  assert.deepEqual(queuedAction.meta.ident, { id: 'johnf' })
+  assert.equal(isAuthorizedAction(queuedAction), true)
+  assert.equal(typeof queuedAction.meta?.queuedAt, 'number')
+  assert.equal((queuedAction.meta?.queuedAt as number) >= before, true)
+  assert.equal((queuedAction.meta?.queuedAt as number) <= after, true)
 })
 
-test('should override present queuedAt', async (t) => {
+test('should override present queuedAt', async () => {
   const send = sinon.stub().resolves({ status: 'ok' })
   const options = { queueService: 'queue' }
   const queueTransporter = { ...baseTransporter, send }
@@ -80,7 +82,7 @@ test('should override present queuedAt', async (t) => {
       ...queueDefs,
       transporter: queueTransporter,
     },
-    { schemas, mapOptions }
+    { schemas, mapTransform, mapOptions },
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
@@ -100,14 +102,14 @@ test('should override present queuedAt', async (t) => {
   })
   const after = Date.now()
 
-  t.is(send.callCount, 1)
+  assert.equal(send.callCount, 1)
   const queuedAction = send.args[0][0]
-  t.is(typeof queuedAction.meta?.queuedAt, 'number')
-  t.true((queuedAction.meta?.queuedAt as number) >= before)
-  t.true((queuedAction.meta?.queuedAt as number) <= after)
+  assert.equal(typeof queuedAction.meta?.queuedAt, 'number')
+  assert.equal((queuedAction.meta?.queuedAt as number) >= before, true)
+  assert.equal((queuedAction.meta?.queuedAt as number) <= after, true)
 })
 
-test('should return error from queue', async (t) => {
+test('should return error from queue', async () => {
   const send = async () => ({ status: 'timeout', error: 'Queue busy' })
   const options = { queueService: 'queue' }
   const queueTransporter = { ...baseTransporter, send }
@@ -116,7 +118,7 @@ test('should return error from queue', async (t) => {
       ...queueDefs,
       transporter: queueTransporter,
     },
-    { schemas, mapOptions }
+    { schemas, mapTransform, mapOptions },
   )
   const getService = (_type?: string | string[], service?: string) =>
     service === 'queue' ? queueService : undefined
@@ -128,17 +130,17 @@ test('should return error from queue', async (t) => {
 
   const ret = await queue(action, { ...handlerResources, getService, options })
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should return error when queue does not respond status', async (t) => {
+test('should return error when queue does not respond status', async () => {
   const options = { queueService: 'queue' }
   const queueService = new Service(
     {
       ...queueDefs,
       transporter: baseTransporter,
     },
-    { schemas, mapOptions }
+    { schemas, mapTransform, mapOptions },
   )
   sinon.stub(queueService, 'send').resolves({}) // Intentionally no status
   const getService = (_type?: string | string[], service?: string) =>
@@ -151,14 +153,17 @@ test('should return error when queue does not respond status', async (t) => {
 
   const ret = await queue(action, { ...handlerResources, getService, options })
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should dispatch action when queue service is unknown', async (t) => {
+test('should return error when queue service is unknown', async () => {
   const dispatch = sinon.stub().resolves({ status: 'ok' })
   const options = { queueService: 'unknown' }
   const getService = (_type?: string | string[], _service?: string) => undefined
-  const expected = { status: 'ok' }
+  const expected = {
+    status: 'error',
+    error: "Could not queue to unknown service 'unknown'",
+  }
 
   const ret = await queue(action, {
     ...handlerResources,
@@ -167,7 +172,6 @@ test('should dispatch action when queue service is unknown', async (t) => {
     options,
   })
 
-  t.deepEqual(ret, expected)
-  t.is(dispatch.callCount, 1)
-  t.deepEqual(dispatch.args[0][0], action)
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 0)
 })

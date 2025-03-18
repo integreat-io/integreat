@@ -1,4 +1,5 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import type { ActionHandler, Transporter, Authenticator } from '../types.js'
 
 import mergeResources from './mergeResources.js'
@@ -27,25 +28,25 @@ const external2 = {
 
 // Tests
 
-test('should return empty object', (t) => {
+test('should return empty object', () => {
   const ret = mergeResources()
 
-  t.deepEqual(ret, {})
+  assert.deepEqual(ret, {})
 })
 
-test('should return provided resource object', (t) => {
+test('should return provided resource object', () => {
   const ret = mergeResources(external1)
 
-  t.is(ret.transporters?.mockTransporter, mockTransporter)
-  t.is(ret.transformers?.mockTransformer, mockTransformer)
+  assert.equal(ret.transporters?.mockTransporter, mockTransporter)
+  assert.equal(ret.transformers?.mockTransformer, mockTransformer)
 })
 
-test('should merge several resource objects', (t) => {
+test('should merge several resource objects', () => {
   const ret = mergeResources(external1, external2)
 
-  t.is(ret.transporters?.mockTransporter, mockTransporter)
-  t.is(ret.handlers?.mockHandler, mockHandler)
-  t.is(ret.authenticators?.mockAuth, mockAuth2)
-  t.is(ret.transformers?.mockTransformer, mockTransformer)
-  t.is(ret.transporters?.unrealTransporter, unrealTransporter)
+  assert.equal(ret.transporters?.mockTransporter, mockTransporter)
+  assert.equal(ret.handlers?.mockHandler, mockHandler)
+  assert.equal(ret.authenticators?.mockAuth, mockAuth2)
+  assert.equal(ret.transformers?.mockTransformer, mockTransformer)
+  assert.equal(ret.transporters?.unrealTransporter, unrealTransporter)
 })

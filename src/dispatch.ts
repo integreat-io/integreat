@@ -1,14 +1,17 @@
-import { nanoid } from 'nanoid'
 import pProgress from 'p-progress'
 import debugLib from 'debug'
 import { QUEUE_SYMBOL } from './handlers/index.js'
 import setupGetService from './utils/getService.js'
 import {
+  removeQueueFlag,
   setErrorOnAction,
   setResponseOnAction,
   setOptionsOnAction,
+  setActionIds,
 } from './utils/action.js'
 import { createErrorResponse, setOrigin } from './utils/response.js'
+import { completeIdentOnAction } from './utils/completeIdent.js'
+import { composeMiddleware } from './utils/composeMiddleware.js'
 import type {
   Dispatch,
   HandlerDispatch,
@@ -20,6 +23,7 @@ import type {
   ActionHandlerResources,
   GetService,
   HandlerOptions,
+  EmitFn,
 } from './types.js'
 import type Service from './service/Service.js'
 import type Schema from './schema/Schema.js'
@@ -33,55 +37,39 @@ export interface Resources {
   services: Record<string, Service>
   middleware?: Middleware[]
   options: HandlerOptions
+  actionIds: Set<string>
+  emit: EmitFn
 }
 
-export const compose = (...fns: Middleware[]): Middleware =>
-  fns.reduce(
-    (f, g) =>
-      (...args) =>
-        f(g(...args)),
-  )
-
-// Uses `queue` flag from mutated action if it is set, otherwise uses falls
-// back to `queue` flag from original action. Also requires that a queue service
-// is configured.
-const shouldQueue = (mutatedAction: Action, options: HandlerOptions) =>
-  !!options.queueService && mutatedAction.meta?.queue
+const shouldCompleteIdent = (action: Action, options: HandlerOptions) =>
+  options.identConfig?.completeIdent && action.type !== 'GET_IDENT'
 
 function getActionHandlerFromType(
   type: string | symbol | undefined,
   handlers: Record<string | symbol, ActionHandler>,
 ) {
-  if (type) {
-    // eslint-disable-next-line security/detect-object-injection
-    const handler = handlers[type]
-    if (typeof handler === 'function') {
-      return handler
-    }
+  const handler = type ? handlers[type] : undefined // eslint-disable-line security/detect-object-injection
+  if (typeof handler === 'function') {
+    return handler
+  } else {
+    return undefined
   }
-  return undefined
 }
 
 /**
  * Rename `service` to `targetService` and set id and cid if not already set.
- *
- * Note: We're also removing `meta.authorized`.This is really not needed
- * anymore, as we're using a symbol for marking actions as authorized. We're
- * still keeping it for now for good measures.
+ * We're also removing `meta.auth`
  */
 function cleanUpActionAndSetIds({
   payload: { service, ...payload },
   meta: { auth, ...meta } = {},
   ...action
-}: Action) {
-  const id = meta?.id || nanoid()
-  const cid = meta?.cid || id
-
-  return {
+}: Action): Action {
+  return setActionIds({
     ...action,
     payload: { ...(service && { targetService: service }), ...payload },
-    meta: { ...meta, id, cid, dispatchedAt: Date.now() },
-  }
+    meta: { ...meta, dispatchedAt: Date.now() },
+  })
 }
 
 const cleanUpResponseAndSetAccessAndOrigin = (
@@ -94,11 +82,6 @@ const cleanUpResponseAndSetAccessAndOrigin = (
     ? { origin: response.origin || 'dispatch' }
     : {}),
 })
-
-const removeQueueFlag = ({
-  meta: { queue, ...meta } = {},
-  ...action
-}: Action) => ({ ...action, meta })
 
 const adjustActionAfterIncomingMutation = (
   { payload: { sourceService, ...payload } = {}, ...action }: Action,
@@ -195,6 +178,46 @@ async function handleAction(
   )
 }
 
+function prepareActionForQueue(
+  action: Action,
+  options: HandlerOptions,
+): [Action, boolean] {
+  if (action.meta?.queue) {
+    if (options.queueService) {
+      return [action, true]
+    } else {
+      return [removeQueueFlag(action), false]
+    }
+  } else {
+    return [action, false]
+  }
+}
+
+/**
+ * Extract the action id and add it to the list of running actions.
+ */
+function addActionId(actionIds: Set<string>, action: Action) {
+  const actionId = action.meta?.id as string // We know this is a string
+  actionIds.add(actionId) // Add action id to list of running actions
+  return actionId
+}
+
+/**
+ * Remove the given action id from the list of running actions. If this was the
+ * last action in the list, emit a `done` event.
+ */
+function removeActionId(
+  actionIds: Set<string>,
+  actionId: string,
+  emit: EmitFn,
+) {
+  actionIds.delete(actionId) // Remove action id from list of running actions
+  if (actionIds.size === 0) {
+    // Emit 'done' event when we have cleared the list of running actions
+    emit('done')
+  }
+}
+
 /**
  * Setup and return dispatch function. The dispatch function will pass an action
  * through the middleware before sending it to the relevant action handler. When
@@ -208,12 +231,14 @@ export default function createDispatch({
   services = {},
   middleware = [],
   options,
+  actionIds,
+  emit,
 }: Resources): Dispatch {
   // Prepare resources for the dispatch function
   const getService = setupGetService(schemas, services)
   const middlewareFn =
     middleware.length > 0
-      ? compose(...middleware)
+      ? composeMiddleware(...middleware)
       : (next: HandlerDispatch) => async (action: Action) => next(action)
 
   // Create dispatch function
@@ -228,42 +253,46 @@ export default function createDispatch({
         }
       }
 
-      let response
+      // Clean up action and set id
+      let cleanedUpAction = cleanUpActionAndSetIds(originalAction)
+      const actionId = addActionId(actionIds, cleanedUpAction)
+
+      if (shouldCompleteIdent(cleanedUpAction, options)) {
+        cleanedUpAction = await completeIdentOnAction(cleanedUpAction, dispatch) // Complete ident on action if configured to
+      }
+
       const {
         action,
         service: incomingService,
         endpoint: incomingEndpoint,
-      } = await mutateIncomingAction(
-        cleanUpActionAndSetIds(originalAction),
-        getService,
-      )
+      } = await mutateIncomingAction(cleanedUpAction, getService)
 
+      let response
       if (action.response?.status) {
         // Stop here if the mutation set a response
         response = action.response
       } else {
-        const resources = { dispatch, getService, options, setProgress }
-
         try {
-          if (shouldQueue(action, options)) {
-            // Use queue handler if queue flag is set and there is a queue
-            // service. Bypass middleware
-            response = await handleAction(
-              QUEUE_SYMBOL,
+          // We'll queue if there is a queue service and the action has the
+          // queue flag. If we're not queueing, any queue flag will be removed
+          // from the action
+          const [nextAction, doQueue] = prepareActionForQueue(action, options)
+
+          // Prepare a next function that will pass the action on to the
+          // relevant handler.
+          const next = async (action: Action) =>
+            handleAction(
+              doQueue ? QUEUE_SYMBOL : action.type,
               action,
-              resources,
+              { dispatch, getService, options, setProgress },
               handlers,
             )
-          } else {
-            // Send action through middleware before sending to the relevant
-            // handler
-            const next = async (action: Action) =>
-              handleAction(action.type, action, resources, handlers)
-            response = setOrigin(
-              await middlewareFn(next)(removeQueueFlag(action)),
-              'middleware:dispatch',
-            )
-          }
+          // Pass the action through the middleware, before invoking the next
+          // function.
+          response = setOrigin(
+            await middlewareFn(next)(nextAction),
+            'middleware:dispatch',
+          )
         } catch (err) {
           response = createErrorResponse(
             `Error thrown in dispatch: ${
@@ -274,7 +303,7 @@ export default function createDispatch({
         }
       }
 
-      return cleanUpResponseAndSetAccessAndOrigin(
+      const cleanedUpResponse = cleanUpResponseAndSetAccessAndOrigin(
         await mutateIncomingResponse(
           setResponseOnAction(action, response),
           incomingService,
@@ -282,6 +311,10 @@ export default function createDispatch({
         ),
         action.meta?.ident,
       )
+
+      removeActionId(actionIds, actionId, emit)
+
+      return cleanedUpResponse
     })
 
   return dispatch

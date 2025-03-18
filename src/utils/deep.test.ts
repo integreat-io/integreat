@@ -1,35 +1,36 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 import { TypedData } from '../types.js'
 
 import { deepClone, deepMerge, deepMergeItems } from './deep.js'
 
 // Tests -- deepClone
 
-test('should clone object', (t) => {
+test('should clone object', () => {
   const obj: TypedData = { id: 'ent1', $type: 'entry' }
 
   const ret = deepClone(obj)
 
-  t.deepEqual(ret, obj)
+  assert.deepEqual(ret, obj)
   ret.changed = true
-  t.falsy(obj.changed)
+  assert.equal(!!obj.changed, false)
 })
 
-test('should deep clone object', (t) => {
+test('should deep clone object', () => {
   const obj: TypedData[] = [
     { id: 'ent1', $type: 'entry', meta: { section: ['news', 'sports'] } },
   ]
 
   const ret = deepClone(obj)
 
-  t.deepEqual(ret, obj)
+  assert.deepEqual(ret, obj)
   ;(ret[0].meta as Record<string, unknown>).changed = true
-  t.falsy((obj[0].meta as Record<string, unknown>).changed)
+  assert.equal(!!(obj[0].meta as Record<string, unknown>).changed, false)
 })
 
 // Tests -- deepMerge
 
-test('should deep merge objects', (t) => {
+test('should deep merge objects', () => {
   const obj1 = {
     id: 'ent1',
     $type: 'entry',
@@ -52,10 +53,10 @@ test('should deep merge objects', (t) => {
 
   const ret = deepMerge(obj1, obj2)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should deep merge and prioritize the second object', (t) => {
+test('should deep merge and prioritize the second object', () => {
   const obj1 = {
     id: 'ent1',
     $type: 'entry',
@@ -79,10 +80,10 @@ test('should deep merge and prioritize the second object', (t) => {
 
   const ret = deepMerge(obj1, obj2)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should not merge arrays', (t) => {
+test('should not merge arrays', () => {
   const obj1 = {
     id: 'ent1',
     section: ['news', 'sports'],
@@ -100,12 +101,12 @@ test('should not merge arrays', (t) => {
 
   const ret = deepMerge(obj1, obj2)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- deepMergeItems
 
-test('should deep merge items of an array in the same positions', (t) => {
+test('should deep merge items of an array in the same positions', () => {
   const arr1 = [
     { id: 'ent1', $type: 'entry', title: 'Entry 1' },
     { id: 'ent2', $type: 'entry', title: 'Entry 2' },
@@ -121,10 +122,10 @@ test('should deep merge items of an array in the same positions', (t) => {
 
   const ret = deepMergeItems(arr1, arr2)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should deep merge two objects not in arrays', (t) => {
+test('should deep merge two objects not in arrays', () => {
   const obj1 = { id: 'ent1', $type: 'entry', title: 'Entry 1', author: 'johnf' }
   const obj2 = { id: 'ent1', $type: 'entry', title: 'Entry 1 - changed' }
   const expected = {
@@ -136,18 +137,19 @@ test('should deep merge two objects not in arrays', (t) => {
 
   const ret = deepMergeItems(obj1, obj2)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should throw when only one is an array', (t) => {
+test('should throw when only one is an array', () => {
   const arr1 = [
     { id: 'ent1', $type: 'entry', title: 'Entry 1' },
     { id: 'ent2', $type: 'entry', title: 'Entry 2' },
   ]
   const arr2 = { id: 'ent1', $type: 'entry', title: 'Entry 1 - changed' }
+  const expectedErrors = {
+    name: 'Error',
+    message: 'Cannot merge array with non-array',
+  }
 
-  const error = t.throws(() => deepMergeItems(arr1, arr2))
-
-  t.true(error instanceof Error)
-  t.is(error?.message, 'Cannot merge array with non-array')
+  assert.throws(() => deepMergeItems(arr1, arr2), expectedErrors)
 })

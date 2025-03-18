@@ -1,4 +1,6 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import type { Definitions } from '../types.js'
 
 import mergeDefinitions from './mergeDefinitions.js'
 
@@ -105,8 +107,9 @@ const job2 = {
 
 // Tests
 
-test('should merge three definitions', (t) => {
+test('should merge three definitions', () => {
   const def1 = {
+    id: 'dontUse',
     auths: [entriesAuth],
     schemas: [entrySchema],
     services: [entriesService],
@@ -118,6 +121,7 @@ test('should merge three definitions', (t) => {
     },
   }
   const def2 = {
+    id: 'correctId',
     services: [queueService],
     queueService: 'queue',
     jobs: [],
@@ -135,6 +139,7 @@ test('should merge three definitions', (t) => {
     },
   }
   const expected = {
+    id: 'correctId',
     auths: [entriesAuth, usersAuth],
     schemas: [entrySchema, userSchema],
     services: [entriesService, queueService, usersService],
@@ -149,9 +154,99 @@ test('should merge three definitions', (t) => {
       type: 'user',
       props: { tokens: 'secrets' },
     },
+    flags: {},
   }
 
   const ret = mergeDefinitions(def1, def2, def3)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
+})
+
+test('should merge flags so that true trumps all else', () => {
+  const def1 = {
+    auths: [entriesAuth],
+    schemas: [entrySchema],
+    services: [entriesService],
+    mutations: { 'entries-entry': entryMutation },
+    dictionaries: { currencies },
+    jobs: [job1],
+    identConfig: {
+      type: 'unknown',
+    },
+    flags: {
+      failOnErrorInPostconditions: true,
+    },
+  }
+  const def2 = {
+    services: [queueService],
+    queueService: 'queue',
+    jobs: [],
+    flags: {
+      failOnErrorInPostconditions: false,
+    },
+  }
+  const expectedFlags = {
+    failOnErrorInPostconditions: true,
+  }
+
+  const ret = mergeDefinitions(def1, def2)
+
+  assert.deepEqual(ret.flags, expectedFlags)
+})
+
+test('should merge breakByDefault as failOnErrorInPostconditions', () => {
+  const def1 = {
+    auths: [entriesAuth],
+    schemas: [entrySchema],
+    services: [entriesService],
+    mutations: { 'entries-entry': entryMutation },
+    dictionaries: { currencies },
+    jobs: [job1],
+    identConfig: {
+      type: 'unknown',
+    },
+    flags: {
+      breakByDefault: true,
+    },
+  }
+  const def2 = {
+    services: [queueService],
+    queueService: 'queue',
+    jobs: [],
+    flags: {
+      failOnErrorInPostconditions: false,
+    },
+  }
+  const expectedFlags = {
+    failOnErrorInPostconditions: true,
+  }
+
+  const ret = mergeDefinitions(def1, def2)
+
+  assert.deepEqual(ret.flags, expectedFlags)
+})
+
+test('should disregard empty definition', () => {
+  const def1 = {
+    auths: [entriesAuth],
+    schemas: [entrySchema],
+    services: [entriesService],
+    mutations: { 'entries-entry': entryMutation },
+    dictionaries: { currencies },
+    jobs: [job1],
+    identConfig: {
+      type: 'unknown',
+    },
+  }
+  const def2 = undefined
+  const expected = {
+    ...def1,
+    id: undefined,
+    queueService: undefined,
+    flags: {},
+  }
+
+  const ret = mergeDefinitions(def1, def2 as unknown as Partial<Definitions>)
+
+  assert.deepEqual(ret, expected)
 })

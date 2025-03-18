@@ -1,4 +1,5 @@
 import EventEmitter from 'node:events'
+import defaultMapTransform from 'map-transform'
 import Auth from './service/Auth.js'
 import builtinHandlers from './handlers/index.js'
 import runFn from './handlers/run.js'
@@ -9,6 +10,7 @@ import createMapOptions from './utils/createMapOptions.js'
 import { lookupById } from './utils/indexUtils.js'
 import createDispatch from './dispatch.js'
 import listen from './listen.js'
+import stopListening from './stopListening.js'
 import close from './close.js'
 import { indexById } from './utils/indexUtils.js'
 import Job from './jobs/Job.js'
@@ -24,8 +26,10 @@ import type {
   Authenticator,
   MapOptions,
   ActionHandler,
+  EmitFn,
+  MapTransform,
 } from './types.js'
-import type { AuthDef } from './service/types.js'
+import type { AuthDef, ServiceDef } from './service/types.js'
 import type { SchemaDef } from './schema/types.js'
 import type { JobDef } from './jobs/types.js'
 
@@ -86,13 +90,19 @@ const createAuthObjects = (
 
 function prepareJobs(
   jobDefs: JobDef[],
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
-  breakByDefault: boolean,
+  failOnErrorInPostconditions: boolean,
 ) {
   const jobs = new Map<string, Job>()
   ensureArray(jobDefs).forEach((jobDef) => {
-    const job = new Job(jobDef, mapOptions, breakByDefault)
-    jobs.set(job.id, new Job(jobDef, mapOptions))
+    const job = new Job(
+      jobDef,
+      mapTransform,
+      mapOptions,
+      failOnErrorInPostconditions,
+    )
+    jobs.set(job.id, job)
   })
   return jobs
 }
@@ -111,13 +121,17 @@ const handlerOptionsFromDefs = (defs: Definitions) => ({
   queueService: defs.queueService,
 })
 
+const hasService = (services: ServiceDef[], id: string) =>
+  services.some((service) => service.id === id)
+
 function createServices(
   defs: Definitions,
   resources: Resources,
   schemas: Map<string, Schema>,
+  mapTransform: MapTransform,
   mapOptions: MapOptions,
   middlewareForService: Middleware[],
-  emit: (eventName: string | symbol, ...args: unknown[]) => boolean,
+  emit: EmitFn,
 ) {
   const authenticators = setIdOnAuthenticators(resources.authenticators || {})
   const auths = createAuthObjects(defs.auths || [], authenticators)
@@ -131,6 +145,7 @@ function createServices(
           authenticators: authenticators,
           auths,
           schemas,
+          mapTransform,
           mapOptions,
           middleware: middlewareForService,
           emit,
@@ -145,8 +160,10 @@ function setupServicesAndDispatch(
   schemas: Map<string, Schema>,
   middlewareForDispatch: Middleware[],
   middlewareForService: Middleware[],
-  emit: (eventName: string | symbol, ...args: unknown[]) => boolean,
+  emit: EmitFn,
+  dispatchedActionId: Set<string>,
 ) {
+  const mapTransformFn = resources.mapTransform ?? defaultMapTransform // Use provided mapTransform or fall back to ours
   const mapOptions = createMapOptions(
     schemas,
     defs.mutations,
@@ -158,19 +175,30 @@ function setupServicesAndDispatch(
     defs,
     resources,
     schemas,
+    mapTransformFn,
     mapOptions,
     middlewareForService,
     emit,
   )
 
-  const breakByDefault = defs.flags?.breakByDefault ?? false
-  const jobs = prepareJobs(defs.jobs || [], mapOptions, breakByDefault)
+  const failOnErrorInPostconditions =
+    defs.flags?.failOnErrorInPostconditions ??
+    defs.flags?.breakByDefault ?? // Depricated alias of `failOnErrorInPostcondition``
+    false
+  const jobs = prepareJobs(
+    defs.jobs || [],
+    mapTransformFn,
+    mapOptions,
+    failOnErrorInPostconditions,
+  )
   const dispatch = createDispatch({
     schemas,
     services,
     handlers: combineHandlers(resources.handlers || {}, jobs),
     middleware: middlewareForDispatch,
     options: handlerOptionsFromDefs(defs),
+    actionIds: dispatchedActionId,
+    emit,
   })
   const dispatchScheduled = createDispatchScheduled(
     dispatch,
@@ -189,6 +217,7 @@ export default class Instance extends EventEmitter {
 
   dispatch: Dispatch
   dispatchScheduled: (from: Date, to: Date) => Promise<Action[]>
+  #dispatchedActionId: Set<string>
 
   constructor(
     defs: Definitions,
@@ -199,8 +228,13 @@ export default class Instance extends EventEmitter {
     super()
 
     if (!Array.isArray(defs.services) || !Array.isArray(defs.schemas)) {
+      throw new TypeError('Please provide at least one service and one schema')
+    } else if (
+      typeof defs.queueService === 'string' &&
+      !hasService(defs.services, defs.queueService)
+    ) {
       throw new TypeError(
-        'Please provide Integreat with at least services and schemas',
+        `Please make sure the provided queue service id '${defs.queueService}' is among the services in your setup`,
       )
     }
 
@@ -208,6 +242,7 @@ export default class Instance extends EventEmitter {
     this.identType = defs.identConfig?.type
     this.queueService = defs.queueService
     this.schemas = prepareSchemas(defs.schemas)
+    this.#dispatchedActionId = new Set<string>()
 
     const { services, dispatch, dispatchScheduled } = setupServicesAndDispatch(
       defs,
@@ -216,6 +251,7 @@ export default class Instance extends EventEmitter {
       middlewareForDispatch,
       middlewareForService,
       this.emit.bind(this),
+      this.#dispatchedActionId,
     )
 
     this.services = services
@@ -223,8 +259,16 @@ export default class Instance extends EventEmitter {
     this.dispatchScheduled = dispatchScheduled
   }
 
+  get dispatchedCount() {
+    return this.#dispatchedActionId.size
+  }
+
   async listen(): Promise<Response> {
     return listen(Object.values(this.services), this.dispatch)
+  }
+
+  async stopListening(): Promise<Response> {
+    return stopListening(Object.values(this.services))
   }
 
   async close(): Promise<Response> {

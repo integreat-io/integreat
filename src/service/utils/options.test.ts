@@ -1,19 +1,20 @@
-import test from 'ava'
+import test from 'node:test'
+import assert from 'node:assert/strict'
 
 import { prepareOptions, mergeOptions } from './options.js'
 
 // Tests -- prepareOptions
 
-test('should move top-level options into transporter options', (t) => {
+test('should move top-level options into transporter options', () => {
   const options = { uri: 'https://api.test/v1' }
   const expected = { transporter: { uri: 'https://api.test/v1' } }
 
   const ret = prepareOptions(options)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should move top-level incoming options into transporter incoming options', (t) => {
+test('should move top-level incoming options into transporter incoming options', () => {
   const options = {
     uri: 'https://api.test/v1',
     port: 3000,
@@ -29,10 +30,10 @@ test('should move top-level incoming options into transporter incoming options',
 
   const ret = prepareOptions(options)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should merge top-level incoming options into transporter incoming options', (t) => {
+test('should merge top-level incoming options into transporter incoming options', () => {
   const options = {
     uri: 'https://api.test/v1',
     port: 3000,
@@ -49,10 +50,10 @@ test('should merge top-level incoming options into transporter incoming options'
 
   const ret = prepareOptions(options)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should merge top-level options and transporter options', (t) => {
+test('should merge top-level options and transporter options', () => {
   const options = {
     uri: 'https://api.test/v1',
     transporter: { method: 'POST' },
@@ -63,10 +64,10 @@ test('should merge top-level options and transporter options', (t) => {
 
   const ret = prepareOptions(options)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should keep most specific options on conflict', (t) => {
+test('should keep most specific options on conflict', () => {
   const options = {
     uri: 'https://api.test/v1',
     method: 'GET',
@@ -92,10 +93,10 @@ test('should keep most specific options on conflict', (t) => {
 
   const ret = prepareOptions(options)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should also merge top-level options with adapter options', (t) => {
+test('should also merge top-level options with adapter options', () => {
   const options = {
     uri: 'https://api.test/v1',
     adapters: {
@@ -116,12 +117,12 @@ test('should also merge top-level options with adapter options', (t) => {
 
   const ret = prepareOptions(options)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
 // Tests -- mergeOptions
 
-test('should merge transporter options on two option objects', (t) => {
+test('should merge transporter options on two option objects', () => {
   const options1 = {
     transporter: {
       method: 'POST',
@@ -145,10 +146,10 @@ test('should merge transporter options on two option objects', (t) => {
 
   const ret = mergeOptions(options1, options2)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should merge adapter options on two options objects', (t) => {
+test('should merge adapter options on two options objects', () => {
   const options1 = {
     transporter: {
       method: 'POST',
@@ -191,10 +192,10 @@ test('should merge adapter options on two options objects', (t) => {
 
   const ret = mergeOptions(options1, options2)
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
 })
 
-test('should deep clone objects', (t) => {
+test('should deep clone objects', () => {
   const options1 = {
     transporter: {
       method: 'POST',
@@ -236,11 +237,14 @@ test('should deep clone objects', (t) => {
   const auth = (ret.transporter.incoming as Record<string, unknown>)
     .auth as Record<string, unknown>
 
-  t.deepEqual(ret, expected)
+  assert.deepEqual(ret, expected)
   queryParams.archived = false
   namespaces.s = 'http://soap.something'
   auth.username = 'kathyt'
-  t.true(options2.transporter.queryParams.archived) // Should not have changed
-  t.falsy((options1.adapters.xml.namespaces as Record<string, unknown>).s) // Should not have been set
-  t.is(options1.transporter.incoming.auth.username, 'johnf') // Should not have changed
+  assert.equal(options2.transporter.queryParams.archived, true) // Should not have changed
+  assert.equal(
+    !!(options1.adapters.xml.namespaces as Record<string, unknown>).s,
+    false,
+  ) // Should not have been set
+  assert.equal(options1.transporter.incoming.auth.username, 'johnf') // Should not have changed
 })

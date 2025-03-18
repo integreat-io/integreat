@@ -4,9 +4,9 @@ const createCastOperation = ({ $cast, ...props }: Record<string, unknown>) => ({
 })
 
 export default function modifyOperationObject(
-  operation: Record<string, unknown>
+  operation: Record<string, unknown>,
 ): Record<string, unknown> {
-  if (operation.hasOwnProperty('$cast')) {
+  if (Object.prototype.hasOwnProperty.call(operation, '$cast')) {
     return createCastOperation(operation)
   }
 
