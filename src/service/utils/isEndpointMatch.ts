@@ -1,8 +1,22 @@
 import validateFilters from '../../utils/validateFilters.js'
 import { arrayIncludes } from '../../utils/array.js'
-import type { TransformDefinition } from 'map-transform/types.js'
+import type {
+  DataMapper,
+  InitialState,
+  TransformDefinition,
+} from 'map-transform/types.js'
 import type { EndpointDef } from '../types.js'
 import type { Action, MapOptions, Params, MapTransform } from '../../types.js'
+
+const validateConditions = (validators: DataMapper<InitialState>[]) =>
+  async function validateConditions(action: Action) {
+    for (const validator of validators) {
+      if (!(await validator(action, { rev: false }))) {
+        return false
+      }
+    }
+    return true
+  }
 
 function createConditionsValidator(
   conditions: TransformDefinition[] | undefined,
@@ -16,14 +30,8 @@ function createConditionsValidator(
   const validators = conditions.map((condition) =>
     mapTransform(condition, mapOptions),
   )
-  return async function validateConditions(action) {
-    for (const validator of validators) {
-      if (!(await validator(action, { rev: false }))) {
-        return false
-      }
-    }
-    return true
-  }
+
+  return validateConditions(validators)
 }
 
 const matchValue = (match?: string | string[], value?: string | string[]) =>

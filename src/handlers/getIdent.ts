@@ -60,56 +60,40 @@ const wrapOk = (action: Action, data: unknown, ident: Ident): Response => ({
   access: { ident },
 })
 
-const setPropOnIdent = (data: TypedData) =>
-  function setPropOnIdent(
-    props: Record<string, unknown>,
-    [key, path]: [string, unknown],
-    _index: number,
-  ) {
-    if (typeof path === 'string') {
-      const value = getField(data, path)
-      if (value !== undefined) {
-        return { ...props, [key]: value }
-      }
-    }
-    return props
-  }
+const extractIdentPropsFromData = (
+  mapping: Record<string, string | undefined | null>,
+  data: TypedData,
+) =>
+  Object.fromEntries(
+    Object.entries(mapping)
+      .map(([key, path]) => [key, getField(data, path)]) // Get key/value tupples
+      .filter(([_, value]) => !!value), // Remove the ones that didn't yield a value
+  )
 
 const prepareResponse = (
   action: Action,
   response: Response,
   params: IdentParams,
-  mapping: Record<string, unknown>,
+  mapping: Record<string, string | undefined | null>,
 ): Response => {
   const data = getFirstIfArray(response.data)
 
   if (response.status === 'ok' && isTypedData(data)) {
-    const identProps = Object.entries(mapping).reduce<Record<string, unknown>>(
-      setPropOnIdent(data),
-      {},
-    )
-    return wrapOk(action, data, {
-      id: undefined, // Always include id. Will be overridden if it is present in `identProps`
-      ...identProps,
+    const ident = {
+      id: undefined, // Always include the id prop. Will be overridden if it is present in `identProps`
+      ...extractIdentPropsFromData(mapping, data),
       isCompleted: true, // Set `isCompleted` so we don't try to complete again
-    })
-  } else if (
-    typeof response.status === 'string' &&
-    ['ok', 'notfound'].includes(response.status) // When we get 'ok' here, it's because the data was not typed data'
-  ) {
+    }
+    return wrapOk(action, data, ident)
+  } else {
+    const notFound =
+      response.status && ['ok', 'notfound'].includes(response.status) // When we get 'ok' here, it's because the data was not typed data
     return createErrorResponse(
-      `Could not find ident with params ${util.inspect(params)}. [notfound] ${
+      `Could not get ident with params ${util.inspect(params)}. [${notFound ? 'notfound' : response.status}] ${
         response.error || 'Did not return the expected data'
       }`,
       'handler:GET_IDENT',
-      'notfound',
-    )
-  } else {
-    return createErrorResponse(
-      `Could not get ident with params ${util.inspect(params)}. [${response.status}] ${
-        response.error
-      }`,
-      'handler:GET_IDENT',
+      notFound ? 'notfound' : undefined,
     )
   }
 }

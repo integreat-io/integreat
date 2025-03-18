@@ -16,7 +16,7 @@ import Connection from './Connection.js'
 import { lookupById, lookupByIds } from '../utils/indexUtils.js'
 import * as authorizeData from './utils/authData.js'
 import authorizeAction, { isAuthorizedAction } from './utils/authAction.js'
-import { compose } from '../dispatch.js'
+import { composeMiddleware } from '../utils/composeMiddleware.js'
 import type { TransformDefinition } from 'map-transform/types.js'
 import type Schema from '../schema/Schema.js'
 import type Auth from './Auth.js'
@@ -246,7 +246,7 @@ export default class Service {
     )
 
     this.#middleware =
-      middleware.length > 0 ? compose(...middleware) : (fn) => fn
+      middleware.length > 0 ? composeMiddleware(...middleware) : (fn) => fn
 
     this.#connection = new Connection(
       this.#transporter,

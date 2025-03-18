@@ -251,7 +251,7 @@ test('getIdent handler', async (t) => {
     const expected = {
       status: 'notfound',
       error:
-        "Could not find ident with params { id: 'unknown' }. [notfound] Could not find the url users/unknown",
+        "Could not get ident with params { id: 'unknown' }. [notfound] Could not find the url users/unknown",
       origin: 'handler:GET_IDENT',
     }
 
@@ -270,7 +270,7 @@ test('getIdent handler', async (t) => {
     const expected = {
       status: 'notfound',
       error:
-        "Could not find ident with params { id: 'unknown' }. [notfound] Did not return the expected data",
+        "Could not get ident with params { id: 'unknown' }. [notfound] Did not return the expected data",
       origin: 'handler:GET_IDENT',
     }
 

@@ -10,6 +10,7 @@ import type {
   Params,
   ActionHandlerResources,
 } from '../types.js'
+import { createMetaForSubAction } from '../utils/action.js'
 import { setOrigin, createErrorResponse } from '../utils/response.js'
 import { isTypedData, isNotNullOrUndefined } from '../utils/is.js'
 import { ensureArray } from '../utils/array.js'
@@ -58,11 +59,6 @@ interface MetaData {
     lastSyncedAt?: Date
   }
 }
-
-const prepareMetaForSubActions = ({ id, ...meta }: Meta = {}): Meta => ({
-  ...meta,
-  gid: id,
-})
 
 const createGetMetaAction = (
   targetService: string,
@@ -505,7 +501,7 @@ export default async function syncHandler(
       doQueueSet = true,
     },
   } = action
-  const meta = prepareMetaForSubActions(action.meta)
+  const meta = createMetaForSubAction(action.meta)
 
   let fromParams, toParams
   try {

@@ -3,6 +3,7 @@ import debugLib from 'debug'
 import { QUEUE_SYMBOL } from './handlers/index.js'
 import setupGetService from './utils/getService.js'
 import {
+  removeQueueFlag,
   setErrorOnAction,
   setResponseOnAction,
   setOptionsOnAction,
@@ -10,6 +11,7 @@ import {
 } from './utils/action.js'
 import { createErrorResponse, setOrigin } from './utils/response.js'
 import { completeIdentOnAction } from './utils/completeIdent.js'
+import { composeMiddleware } from './utils/composeMiddleware.js'
 import type {
   Dispatch,
   HandlerDispatch,
@@ -39,13 +41,6 @@ export interface Resources {
   emit: EmitFn
 }
 
-export const compose = (...fns: Middleware[]): Middleware =>
-  fns.reduce(
-    (f, g) =>
-      (...args) =>
-        f(g(...args)),
-  )
-
 const shouldCompleteIdent = (action: Action, options: HandlerOptions) =>
   options.identConfig?.completeIdent && action.type !== 'GET_IDENT'
 
@@ -53,14 +48,12 @@ function getActionHandlerFromType(
   type: string | symbol | undefined,
   handlers: Record<string | symbol, ActionHandler>,
 ) {
-  if (type) {
-    // eslint-disable-next-line security/detect-object-injection
-    const handler = handlers[type]
-    if (typeof handler === 'function') {
-      return handler
-    }
+  const handler = type ? handlers[type] : undefined // eslint-disable-line security/detect-object-injection
+  if (typeof handler === 'function') {
+    return handler
+  } else {
+    return undefined
   }
-  return undefined
 }
 
 /**
@@ -89,11 +82,6 @@ const cleanUpResponseAndSetAccessAndOrigin = (
     ? { origin: response.origin || 'dispatch' }
     : {}),
 })
-
-const removeQueueFlag = ({
-  meta: { queue, ...meta } = {},
-  ...action
-}: Action) => ({ ...action, meta })
 
 const adjustActionAfterIncomingMutation = (
   { payload: { sourceService, ...payload } = {}, ...action }: Action,
@@ -225,7 +213,7 @@ export default function createDispatch({
   const getService = setupGetService(schemas, services)
   const middlewareFn =
     middleware.length > 0
-      ? compose(...middleware)
+      ? composeMiddleware(...middleware)
       : (next: HandlerDispatch) => async (action: Action) => next(action)
 
   // Create dispatch function

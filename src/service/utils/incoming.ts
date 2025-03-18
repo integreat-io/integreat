@@ -108,6 +108,14 @@ async function runAuths(
   return response || { status: 'noaccess', error: 'No authentication was run' }
 }
 
+async function getAuthsFromAction(service: Service, action?: Action | null) {
+  if (!action) {
+    return undefined
+  }
+  const endpoint = await service.endpointFromAction(action, true)
+  return endpoint?.incomingAuth
+}
+
 // Passed to the transporter.listen() method. Transporters will call this to
 // get the ident to used when dispatching incoming actions.
 export const authenticateCallback = (
@@ -120,17 +128,8 @@ export const authenticateCallback = (
     authentication: Authentication,
     action?: Action | null,
   ) {
-    const endpoint = action
-      ? await service.endpointFromAction(action, true)
-      : undefined
-    const auths = endpoint?.incomingAuth || incomingAuth
-    if (auths === undefined) {
-      return createErrorResponse(
-        `Could not authenticate. Service '${service.id}' has no incoming authenticator`,
-        `auth:service:${service.id}`,
-        'noaction',
-      )
-    } else {
+    const auths = (await getAuthsFromAction(service, action)) || incomingAuth
+    if (auths) {
       let response = await runAuths(
         auths,
         authentication,
@@ -144,6 +143,12 @@ export const authenticateCallback = (
         markIdentAsKnown(response),
         `auth:service:${service.id}`,
         true,
+      )
+    } else {
+      return createErrorResponse(
+        `Could not authenticate. Service '${service.id}' has no incoming authenticator`,
+        `auth:service:${service.id}`,
+        'noaction',
       )
     }
   }

@@ -9,6 +9,13 @@ import type { Response } from '../types.js'
 
 const debug = debugLib('great')
 
+const extractErrorMessage = (error: unknown) =>
+  error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+      ? error
+      : undefined
+
 /**
  * Create an error response.
  */
@@ -18,12 +25,7 @@ export function createErrorResponse(
   status = 'error',
   reason?: string,
 ): Response {
-  const message =
-    error instanceof Error
-      ? error.message
-      : typeof error === 'string'
-        ? error
-        : undefined
+  const message = extractErrorMessage(error)
   return {
     status,
     ...(isOkStatus(status)

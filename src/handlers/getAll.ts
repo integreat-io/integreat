@@ -1,3 +1,4 @@
+import { createMetaForSubAction } from '../utils/action.js'
 import { createErrorResponse, setOrigin } from '../utils/response.js'
 import { isObject, isTypedData } from '../utils/is.js'
 import type {
@@ -15,11 +16,6 @@ const extractLastId = (data: unknown, field = 'id') =>
     ? // eslint-disable-next-line security/detect-object-injection
       data[data.length - 1] && data[data.length - 1][field]
     : undefined
-
-const prepareMetaForSubActions = ({ id, ...meta }: Meta = {}): Meta => ({
-  ...meta,
-  gid: id,
-})
 
 const createAction = (
   page: number,
@@ -96,7 +92,7 @@ export default async function getAll(
         action.payload,
         paging,
         data,
-        prepareMetaForSubActions(action.meta),
+        createMetaForSubAction(action.meta),
       ),
     )
     if (response?.status !== 'ok') {
