@@ -125,6 +125,8 @@ export interface Meta extends Record<string, unknown> {
   cache?: boolean
   auth?: Record<string, unknown> | null
   options?: TransporterOptions
+  jobId?: string
+  stepId?: string
 }
 
 export interface Access {
