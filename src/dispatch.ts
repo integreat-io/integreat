@@ -194,6 +194,31 @@ function prepareActionForQueue(
 }
 
 /**
+ * Extract the action id and add it to the list of running actions.
+ */
+function addActionId(actionIds: Set<string>, action: Action) {
+  const actionId = action.meta?.id as string // We know this is a string
+  actionIds.add(actionId) // Add action id to list of running actions
+  return actionId
+}
+
+/**
+ * Remove the given action id from the list of running actions. If this was the
+ * last action in the list, emit a `done` event.
+ */
+function removeActionId(
+  actionIds: Set<string>,
+  actionId: string,
+  emit: EmitFn,
+) {
+  actionIds.delete(actionId) // Remove action id from list of running actions
+  if (actionIds.size === 0) {
+    // Emit 'done' event when we have cleared the list of running actions
+    emit('done')
+  }
+}
+
+/**
  * Setup and return dispatch function. The dispatch function will pass an action
  * through the middleware before sending it to the relevant action handler. When
  * an action has a specified `sourceService`, any action data will be mapped as
@@ -230,8 +255,7 @@ export default function createDispatch({
 
       // Clean up action and set id
       let cleanedUpAction = cleanUpActionAndSetIds(originalAction)
-      const actionId = cleanedUpAction.meta?.id as string // This is a string
-      actionIds.add(actionId) // Add action id to list of running actions
+      const actionId = addActionId(actionIds, cleanedUpAction)
 
       if (shouldCompleteIdent(cleanedUpAction, options)) {
         cleanedUpAction = await completeIdentOnAction(cleanedUpAction, dispatch) // Complete ident on action if configured to
@@ -287,11 +311,9 @@ export default function createDispatch({
         ),
         action.meta?.ident,
       )
-      actionIds.delete(actionId) // Remove action id from list of running actions
-      if (actionIds.size === 0) {
-        // Emit 'done' event when we have cleared the list of running actions
-        emit('done')
-      }
+
+      removeActionId(actionIds, actionId, emit)
+
       return cleanedUpResponse
     })
 

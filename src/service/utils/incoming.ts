@@ -116,6 +116,26 @@ async function getAuthsFromAction(service: Service, action?: Action | null) {
   return endpoint?.incomingAuth
 }
 
+async function runAuthsAndCompleteIdent(
+  dispatch: Dispatch,
+  authentication: Authentication,
+  shouldCompleteIdent: boolean,
+  auths: Auth[],
+  action?: Action | null,
+) {
+  const response = await runAuths(
+    auths,
+    authentication,
+    action || null,
+    dispatch,
+  )
+  if (shouldCompleteIdent) {
+    return await completeIdent(response.access?.ident, dispatch)
+  } else {
+    return response
+  }
+}
+
 // Passed to the transporter.listen() method. Transporters will call this to
 // get the ident to used when dispatching incoming actions.
 export const authenticateCallback = (
@@ -130,15 +150,13 @@ export const authenticateCallback = (
   ) {
     const auths = (await getAuthsFromAction(service, action)) || incomingAuth
     if (auths) {
-      let response = await runAuths(
-        auths,
-        authentication,
-        action || null,
+      const response = await runAuthsAndCompleteIdent(
         dispatch,
+        authentication,
+        shouldCompleteIdent,
+        auths,
+        action,
       )
-      if (shouldCompleteIdent) {
-        response = await completeIdent(response.access?.ident, dispatch)
-      }
       return setOrigin(
         markIdentAsKnown(response),
         `auth:service:${service.id}`,

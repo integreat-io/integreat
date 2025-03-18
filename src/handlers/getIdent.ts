@@ -70,6 +70,25 @@ const extractIdentPropsFromData = (
       .filter(([_, value]) => !!value), // Remove the ones that didn't yield a value
   )
 
+function prepareErrorResponse(response: Response, params: IdentParams) {
+  const errorMessage = `Could not get ident with params ${util.inspect(params)}`
+  if (response.status && ['ok', 'notfound'].includes(response.status)) {
+    // The ident was not found or the action returned no data
+    return createErrorResponse(
+      `${errorMessage}. [notfound] ${
+        response.error || 'Did not return the expected data'
+      }`,
+      'handler:GET_IDENT',
+      'notfound',
+    )
+  } else {
+    return createErrorResponse(
+      `${errorMessage}. [${response.status}] ${response.error}`,
+      'handler:GET_IDENT',
+    )
+  }
+}
+
 const prepareResponse = (
   action: Action,
   response: Response,
@@ -86,15 +105,7 @@ const prepareResponse = (
     }
     return wrapOk(action, data, ident)
   } else {
-    const notFound =
-      response.status && ['ok', 'notfound'].includes(response.status) // When we get 'ok' here, it's because the data was not typed data
-    return createErrorResponse(
-      `Could not get ident with params ${util.inspect(params)}. [${notFound ? 'notfound' : response.status}] ${
-        response.error || 'Did not return the expected data'
-      }`,
-      'handler:GET_IDENT',
-      notFound ? 'notfound' : undefined,
-    )
+    return prepareErrorResponse(response, params)
   }
 }
 
