@@ -396,8 +396,11 @@ async function retrieveDataFromOneService(
   // Fetch data from service
   const response = await dispatch(createGetAction(params, meta))
 
-  // Throw is not successfull
-  if (response.status !== 'ok') {
+  if (response.status === 'noaction') {
+    // Treat `noaction` as no data
+    return []
+  } else if (response.status !== 'ok') {
+    // Throw when not successfull
     throw new Error(response.error)
   }
 

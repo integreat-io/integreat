@@ -118,6 +118,31 @@ test('should not SET with no data', async () => {
   assert.equal(dispatch.args[0][0].type, 'GET')
 })
 
+test('should treat noaction response as no data', async () => {
+  const action = {
+    type: 'SYNC',
+    payload: { type: 'entry', from: 'entries', to: 'store' },
+    meta: { ident, project: 'project1' },
+  }
+  const dispatch = sinon.spy(
+    setupDispatch({
+      GET: { status: 'noaction', error: 'No data to fetch' },
+      SET: { status: 'ok' },
+    }),
+  )
+  const expected = {
+    status: 'noaction',
+    warning: 'SYNC: No data to set',
+    origin: 'handler:SYNC',
+  }
+
+  const ret = await sync(action, { ...handlerResources, dispatch })
+
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
+  assert.equal(dispatch.args[0][0].type, 'GET')
+})
+
 test('should SET with no data when alwaysSet is true', async () => {
   const action = {
     type: 'SYNC',
