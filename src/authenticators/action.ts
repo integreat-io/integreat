@@ -5,14 +5,45 @@ import {
   type Action,
   type Authenticator,
   type Payload,
+  type Meta,
 } from '../types.js'
 import type { Authentication, AuthOptions } from '../service/types.js'
 
 export interface ActionAuthOptions extends AuthOptions {
   action?: string
   payload?: Payload
+  meta?: Omit<
+    Meta,
+    | 'id'
+    | 'cid'
+    | 'gid'
+    | 'ident'
+    | 'dispatchedAt'
+    | 'queue'
+    | 'queuedAt'
+    | 'auth'
+    | 'options'
+    | 'jobId'
+    | 'stepId'
+  >
   expireIn?: number | string
 }
+
+// Remove all "illegal" props from options meta
+const metaFromOptions = ({
+  id,
+  cid,
+  gid,
+  ident,
+  dispatchedAt,
+  queue,
+  queuedAt,
+  auth,
+  options,
+  jobId,
+  stepId,
+  ...meta
+}: Meta = {}) => meta
 
 const metaFromAction = ({
   meta: { ident, cid, id, queue, ...meta } = {},
@@ -23,16 +54,19 @@ const metaFromAction = ({
 })
 
 const createActionFromOptions = (
-  option: ActionAuthOptions | null,
+  options: ActionAuthOptions | null,
   action: Action | null,
 ) =>
-  option
+  options
     ? {
-        type: option.action,
-        payload: option.payload,
-        meta: action
-          ? metaFromAction(action)
-          : { ident: { id: 'anonymous', type: IdentType.Anon } },
+        type: options.action,
+        payload: options.payload,
+        meta: {
+          ...metaFromOptions(options.meta),
+          ...(action
+            ? metaFromAction(action)
+            : { ident: { id: 'anonymous', type: IdentType.Anon } }),
+        },
       }
     : null
 

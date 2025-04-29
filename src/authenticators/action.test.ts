@@ -50,7 +50,98 @@ test('authenticate should dispatch action and return response data as authentica
   assert.deepEqual(dispatch.args[0][0], expectedAuthAction)
 })
 
-test('authenticate should dispatch with anonymous when no action is proviced', async () => {
+test('authenticate should honor meta in options', async () => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+    data: { auth: { token: 't0k3n' }, expire: 1715959020000 },
+  })
+  const options = {
+    action: 'GET',
+    payload: { type: 'session' },
+    meta: { noLogging: true },
+  }
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent1' },
+    meta: {
+      ident: { id: 'johnf' },
+      id: '10005',
+      cid: '10001',
+      project: 'proj1',
+    },
+  }
+  const expected = {
+    status: 'granted',
+    auth: { token: 't0k3n' },
+    expire: 1715959020000,
+  }
+  const expectedAuthAction = {
+    type: 'GET',
+    payload: { type: 'session' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '10001',
+      project: 'proj1',
+      noLogging: true,
+    },
+  }
+
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
+
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0], expectedAuthAction)
+})
+
+test('authenticate should remove certain props from meta in options', async () => {
+  const dispatch = sinon.stub().resolves({
+    status: 'ok',
+    data: { auth: { token: 't0k3n' }, expire: 1715959020000 },
+  })
+  const options = {
+    action: 'GET',
+    payload: { type: 'session' },
+    meta: {
+      noLogging: true,
+      queue: true,
+      id: 'myid',
+      auth: { secret: 'h4ck1n6' },
+    },
+  }
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry', id: 'ent1' },
+    meta: {
+      ident: { id: 'johnf' },
+      id: '10005',
+      cid: '10001',
+      project: 'proj1',
+    },
+  }
+  const expected = {
+    status: 'granted',
+    auth: { token: 't0k3n' },
+    expire: 1715959020000,
+  }
+  const expectedAuthAction = {
+    type: 'GET',
+    payload: { type: 'session' },
+    meta: {
+      ident: { id: 'johnf' },
+      cid: '10001',
+      project: 'proj1',
+      noLogging: true,
+    },
+  }
+
+  const ret = await authenticator.authenticate(options, action, dispatch, null)
+
+  assert.deepEqual(ret, expected)
+  assert.equal(dispatch.callCount, 1)
+  assert.deepEqual(dispatch.args[0][0], expectedAuthAction)
+})
+
+test('authenticate should dispatch with anonymous when no action is provided', async () => {
   const dispatch = sinon
     .stub()
     .resolves({ status: 'ok', data: { auth: { token: 't0k3n' } } })
