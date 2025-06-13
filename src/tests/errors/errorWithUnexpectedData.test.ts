@@ -29,7 +29,7 @@ test('errorWithUnexpectedData', async (t) => {
       const ret = await great.dispatch(action)
 
       assert.equal(ret.status, 'error', ret.error)
-      assert.equal(ret.error, 'Server returned 504 for entries')
+      assert.equal(ret.error, 'Server returned 504 for http://some.api/entries')
       assert.deepEqual(ret.data, []) // Data will be empty array, as we're mutating to array and casting
     },
   )

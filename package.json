@@ -42,8 +42,8 @@
   },
   "dependencies": {
     "ajv": "^8.17.1",
-    "cron-parser": "^5.1.1",
-    "debug": "^4.4.0",
+    "cron-parser": "^5.3.0",
+    "debug": "^4.4.1",
     "deepmerge-ts": "^7.1.5",
     "map-any": "^1.0.0",
     "map-transform": "^1.5.3",
@@ -57,14 +57,13 @@
   "devDependencies": {
     "@integreat/ts-dev-setup": "^8.1.2",
     "@types/debug": "^4.1.12",
-    "@types/luxon": "^3.6.2",
-    "@types/node": "^22.15.3",
+    "@types/node": "^24.0.1",
     "@types/sinon": "^17.0.4",
     "integreat-adapter-json": "^1.0.2",
     "integreat-adapter-uri": "^1.0.0",
-    "integreat-transformers": "^1.5.0",
-    "integreat-transporter-http": "^1.4.0",
-    "nock": "^14.0.4",
-    "sinon": "^20.0.0"
+    "integreat-transformers": "^1.6.1",
+    "integreat-transporter-http": "^1.5.0",
+    "nock": "^14.0.5",
+    "sinon": "^21.0.0"
   }
 }

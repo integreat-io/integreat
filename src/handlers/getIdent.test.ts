@@ -251,7 +251,7 @@ test('getIdent handler', async (t) => {
     const expected = {
       status: 'notfound',
       error:
-        "Could not get ident with params { id: 'unknown' }. [notfound] Could not find the url users/unknown",
+        "Could not get ident with params { id: 'unknown' }. [notfound] Could not find the url http://some.api/users/unknown",
       origin: 'handler:GET_IDENT',
     }
 
@@ -587,7 +587,7 @@ test('getIdent handler', async (t) => {
     const expected = {
       status: 'error',
       error:
-        "Could not get ident with params { id: 'unknown' }. [error] Server returned 500 for users/unknown",
+        "Could not get ident with params { id: 'unknown' }. [error] Server returned 500 for http://some.api/users/unknown",
       origin: 'handler:GET_IDENT',
     }
 
