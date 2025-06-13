@@ -371,9 +371,10 @@ export default class Service {
    * Mutate response. Will mutate action and authorize data – in that order.
    */
   async mutateResponse(action: Action, endpoint: Endpoint): Promise<Response> {
+    const actionWithOptions = setOptionsOnAction(action, endpoint)
     let mutated
     try {
-      mutated = await endpoint.mutate(action, false /* isRev */)
+      mutated = await endpoint.mutate(actionWithOptions, false /* isRev */)
     } catch (error) {
       return {
         ...action.response,

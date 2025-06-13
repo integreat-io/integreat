@@ -169,4 +169,46 @@ test('responseMutation', async (t) => {
     assert.equal(data[1].id, 'ent2')
     assert.equal(data[1].title, 'Entry 2')
   })
+
+  await t.test('should have access to meta options from service', async () => {
+    nock('http://some.api').get('/entries/ent4').reply(200, entry1)
+    const action = {
+      type: 'GET',
+      payload: { type: 'entry', id: 'ent4' },
+    }
+    const mutation = {
+      $direction: 'fwd',
+      $modify: true,
+      response: {
+        $modify: 'response',
+        'data[]': {
+          id: { $value: 'ent0' },
+          title: '^^.meta.options.defaultTitle',
+        },
+      },
+    }
+    const defs = defsWithMutation(mutation)
+    const defsWithOptions = {
+      ...defs,
+      services: [
+        {
+          ...defs.services[0],
+          options: {
+            ...defs.services[0].options,
+            defaultTitle: 'No title',
+          },
+        },
+      ],
+    }
+
+    const great = Integreat.create(defsWithOptions, resources)
+    const ret = await great.dispatch(action)
+
+    assert.equal(ret.status, 'ok', ret.error)
+    const data = ret.data as TypedData[]
+    assert.equal(Array.isArray(data), true)
+    assert.equal(data.length, 1)
+    assert.equal(data[0].id, 'ent0')
+    assert.equal(data[0].title, 'No title')
+  })
 })
