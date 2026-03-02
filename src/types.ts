@@ -121,7 +121,7 @@ export interface Meta extends Record<string, unknown> {
   ident?: Ident
   dispatchedAt?: number
   queue?: boolean | number
-  queuedAt?: number
+  queuedAt?: number | Date
   cache?: boolean
   auth?: Record<string, unknown> | null
   options?: TransporterOptions
