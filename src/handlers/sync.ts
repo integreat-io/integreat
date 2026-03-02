@@ -415,9 +415,9 @@ const msFromDelta = (delta: string) =>
   delta === 'now'
     ? 0
     : delta[0] === '+'
-      ? ms(delta.slice(1))
+      ? ms(delta.slice(1) as ms.StringValue) // `ms` will return `undefined` if the format is not correct
       : delta[0] === '-'
-        ? ms(delta)
+        ? ms(delta as ms.StringValue) // `ms` will return `undefined` if the format is not correct
         : undefined
 
 function generateUntilDate(date: unknown) {

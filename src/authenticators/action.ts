@@ -75,7 +75,8 @@ function calculateExpire(expire: unknown, expireIn?: number | string) {
     return expire
   }
   if (typeof expireIn === 'string') {
-    expireIn = ms(expireIn)
+    const expireMs = ms(expireIn as ms.StringValue) // Force type, as `ms` will return `undefined` when not valid
+    return typeof expireMs === 'number' ? Date.now() + expireMs : undefined
   }
   if (typeof expireIn === 'number') {
     return Date.now() + expireIn
