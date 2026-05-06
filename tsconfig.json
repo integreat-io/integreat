@@ -19,11 +19,9 @@
     "skipLibCheck": true,
     "removeComments": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": {
-      "*": ["node_modules/*"]
-    },
-    "outDir": "./dist"
+    "types": ["node"],
+    "rootDir": "./src",
+    "outDir": "./dist",
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
 }
