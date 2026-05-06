@@ -4,6 +4,7 @@ import jsonTransformer from 'integreat-adapter-json/transformer.js'
 import uriAdapter from 'integreat-adapter-uri'
 import uriTransformer from 'integreat-adapter-uri/transformer.js'
 import { Resources, TypedData, Action } from '../../../types.js'
+import type { AsyncTransformer } from 'map-transform/types.js'
 
 const isoDate = () => () => (date: unknown) =>
   date instanceof Date ? date.toISOString() : undefined
@@ -23,7 +24,7 @@ const resources: Resources = {
     isoDate,
     shouldHaveAuthor,
     json: jsonTransformer,
-    uri: uriTransformer,
+    uri: uriTransformer as AsyncTransformer,
   },
 }
 

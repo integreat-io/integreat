@@ -3,13 +3,14 @@ import assert from 'node:assert/strict'
 import mapTransform from 'map-transform'
 import integreatTransformers from 'integreat-transformers'
 import type { ValidateObject } from '../types.js'
+import type { Transformer } from 'map-transform/types.js'
 
 import prepareValidator from './validation.js'
 
 // Setup
 
 const mapOptions = {
-  transformers: { size: integreatTransformers.size },
+  transformers: { size: integreatTransformers.size as Transformer },
 }
 
 // Tests

@@ -9,6 +9,7 @@ import Schema from '../schema/Schema.js'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { ValidateObject } from '../types.js'
+import type { Transformer, AsyncTransformer } from 'map-transform/types.js'
 
 import update from './update.js'
 
@@ -161,7 +162,11 @@ const setupService = (
     {
       schemas,
       mapTransform,
-      mapOptions: createMapOptions(schemas, pipelines, transformers),
+      mapOptions: createMapOptions(
+        schemas,
+        pipelines,
+        transformers as Record<string, Transformer | AsyncTransformer>,
+      ),
     },
   )
 

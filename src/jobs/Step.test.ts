@@ -4,6 +4,7 @@ import sinon from 'sinon'
 import { setTimeout } from 'node:timers/promises'
 import mapTransform from 'map-transform'
 import integreatTransformers from 'integreat-transformers'
+import type { Transformer } from 'map-transform/types.js'
 
 import Step, { breakSymbol } from './Step.js'
 
@@ -25,7 +26,7 @@ function countConcurrency(
 }
 
 const mapOptions = {
-  transformers: { size: integreatTransformers.size },
+  transformers: { size: integreatTransformers.size as Transformer },
 }
 
 const action = {

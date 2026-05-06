@@ -46,7 +46,7 @@
     "debug": "^4.4.3",
     "deepmerge-ts": "^7.1.5",
     "map-any": "^1.0.0",
-    "map-transform": "^1.6.0-rc.4",
+    "map-transform": "1.5.4",
     "ms": "^2.1.3",
     "nanoid": "^5.1.11",
     "p-limit": "^7.3.0",

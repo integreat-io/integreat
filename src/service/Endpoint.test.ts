@@ -11,6 +11,7 @@ import { isAction, isObject } from '../utils/is.js'
 import createMapOptions from '../utils/createMapOptions.js'
 import type { Action, TypedData, Adapter } from '../types.js'
 import type { ServiceOptions } from './types.js'
+import type { AsyncTransformer } from 'map-transform/types.js'
 
 import Endpoint from './Endpoint.js'
 
@@ -93,7 +94,7 @@ const allTransformers = {
   shouldHaveToken,
   alwaysOk,
   json: jsonTransformer,
-  uri: uriTransformer,
+  uri: uriTransformer as AsyncTransformer,
 }
 
 const mapOptions = createMapOptions(schemas, pipelines, allTransformers)

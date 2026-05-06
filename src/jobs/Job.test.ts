@@ -5,6 +5,7 @@ import mapTransform from 'map-transform'
 import Schedule from './Schedule.js'
 import integreatTransformers from 'integreat-transformers'
 import uriTransformer from 'integreat-adapter-uri/transformer.js'
+import type { Transformer, AsyncTransformer } from 'map-transform/types.js'
 
 import Job from './Job.js'
 
@@ -14,8 +15,8 @@ const action = { type: 'GET', payload: { type: 'entry', id: 'ent1' } }
 
 const mapOptions = {
   transformers: {
-    size: integreatTransformers.size,
-    uri: uriTransformer,
+    size: integreatTransformers.size as Transformer,
+    uri: uriTransformer as AsyncTransformer,
   },
 }
 
