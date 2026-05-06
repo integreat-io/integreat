@@ -37,14 +37,14 @@ jobs:
         if: ${{ inputs.is-pre-release == true && inputs.version-range != 'major' && inputs.version-range != 'minor' && inputs.version-range != 'patch' && inputs.version-range != 'rc' }}
         run: echo "Input Semantic Version Type must be one of major, minor, patch and rc for pre release. Exiting." && exit 1
       - name: Git Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
       - name: Git Config
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
           git config push.autoSetupRemote "true"
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: 24.x
           cache: 'npm'
