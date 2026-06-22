@@ -187,7 +187,7 @@ test('delete handler', async (t) => {
 
     const ret = await deleteFn(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -281,7 +281,7 @@ test('delete handler', async (t) => {
 
     const ret = await deleteFn(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -370,7 +370,7 @@ test('delete handler', async (t) => {
 
       const ret = await deleteFn(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.equal(scope.isDone(), true)
     },
   )
@@ -481,7 +481,7 @@ test('delete handler', async (t) => {
 
     const ret = await deleteFn(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'noaccess', ret.error) // We'll get this status when authorization is run before validation
+    assert.equal(ret.status, 'noaccess') // We'll get this status when authorization is run before validation
   })
 
   await t.test(

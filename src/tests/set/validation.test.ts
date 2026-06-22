@@ -54,7 +54,7 @@ test('set validation', async (t) => {
       const great = Integreat.create(defs, resources)
       const ret = await great.dispatch(action)
 
-      assert.equal(ret.status, 'badrequest', ret.error)
+      assert.equal(ret.status, 'badrequest')
       assert.equal(ret.error, 'Error from validator')
       assert.equal(scope.isDone(), false) // Should not send anything to service
     },
@@ -77,7 +77,7 @@ test('set validation', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(typeof ret.error, 'undefined')
     assert.equal(scope.isDone(), true)
   })

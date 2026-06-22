@@ -38,7 +38,7 @@ test('should refuse request to set entry with no ident', async () => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'noaccess', ret.error)
+  assert.equal(ret.status, 'noaccess')
   assert.equal(typeof ret.error, 'string')
 
   nock.restore()

@@ -18,7 +18,7 @@ test('should get error object for unknown entry', async () => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'notfound', ret.error)
+  assert.equal(ret.status, 'notfound')
   assert.equal(ret.data, undefined)
   assert.equal(typeof ret.error, 'string')
 

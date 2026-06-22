@@ -28,7 +28,7 @@ test('all', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data as TypedData[]
     assert.equal(Array.isArray(data), true)
     assert.equal(data?.length, 3)
@@ -58,7 +58,7 @@ test('all', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data as TypedData[]
     assert.equal(Array.isArray(data), true)
     assert.equal(data?.length, 3)

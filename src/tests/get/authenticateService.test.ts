@@ -60,7 +60,7 @@ test('authenticateService', async (t) => {
       const great = Integreat.create(defsWithAuth, resourcesWithAuth)
       const ret = await great.dispatch(action)
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.equal((ret.data as TypedData[]).length, 3)
     },
   )
@@ -105,7 +105,7 @@ test('authenticateService', async (t) => {
       const great = Integreat.create(defsWithAuth, resourcesWithAuth)
       const ret = await great.dispatch(action)
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
     },
   )
 })

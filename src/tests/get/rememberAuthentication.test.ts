@@ -54,7 +54,7 @@ test('should not authenticate twice', async () => {
   const ret = await great.dispatch(action)
 
   assert.equal(authSpy.callCount, 1)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 3)
 
   nock.restore()

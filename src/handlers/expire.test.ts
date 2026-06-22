@@ -41,7 +41,7 @@ test('expire handler', async (t) => {
 
     const ret = await expire(action, { ...handlerResources, dispatch })
 
-    assert.equal(ret.status, 'noaction', ret.error)
+    assert.equal(ret.status, 'noaction')
     assert.equal(dispatch.callCount, 1) // We're not deleting because there's no data
     assert.deepEqual(dispatch.args[0][0], expected)
   })
@@ -119,7 +119,7 @@ test('expire handler', async (t) => {
 
     const ret = await expire(action, { ...handlerResources, dispatch })
 
-    assert.equal(ret.status, 'noaction', ret.error)
+    assert.equal(ret.status, 'noaction')
     assert.equal(dispatch.callCount, 1) // We're not deleting because there's no data
     assert.deepEqual(dispatch.args[0][0], expected)
   })
@@ -226,7 +226,7 @@ test('expire handler', async (t) => {
 
     const ret = await expire(action, { ...handlerResources, dispatch })
 
-    assert.equal(ret.status, 'queued', ret.error)
+    assert.equal(ret.status, 'queued')
     assert.equal(dispatch.callCount, 2)
     assert.deepEqual(dispatch.args[1][0], expectedDeleteAction)
   })

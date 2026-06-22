@@ -49,7 +49,7 @@ test('should get all pages', async () => {
   assert.equal(dispatch.args[1][0].payload.pageSize, 2)
   assert.equal(dispatch.args[2][0].payload.page, 3)
   assert.equal(dispatch.args[2][0].payload.pageSize, 2)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 5)
 })
 
@@ -74,7 +74,7 @@ test('should get all pages when last is empty', async () => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   assert.equal(dispatch.callCount, 3)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 4)
 })
 
@@ -97,7 +97,7 @@ test('should get one page with max number of items', async () => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   assert.equal(dispatch.callCount, 2)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 2)
 })
 
@@ -135,7 +135,7 @@ test('should get all pages using offset', async () => {
   assert.equal(dispatch.args[2][0].payload.pageOffset, 4)
   assert.equal(dispatch.args[2][0].payload.page, 3)
   assert.equal(dispatch.args[2][0].payload.pageSize, 2)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 5)
 })
 
@@ -166,7 +166,7 @@ test('should get all pages starting from an offset', async () => {
   assert.equal(dispatch.args[1][0].payload.pageOffset, 4)
   assert.equal(dispatch.args[1][0].payload.page, 3)
   assert.equal(dispatch.args[1][0].payload.pageSize, 2)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 3)
 })
 
@@ -198,7 +198,7 @@ test('should get all pages starting from an uneven offset', async () => {
   assert.equal(dispatch.args[0][0].payload.pageSize, 2)
   assert.equal(dispatch.args[1][0].payload.page, 3)
   assert.equal(dispatch.args[1][0].payload.pageOffset, 5)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 4)
 })
 
@@ -228,7 +228,7 @@ test('should get all pages using pageAfter', async () => {
   assert.equal(dispatch.args[0][0].payload.pageAfter, undefined)
   assert.equal(dispatch.args[1][0].payload.pageAfter, 'ev1')
   assert.equal(dispatch.args[2][0].payload.pageAfter, 'ev3')
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 5)
 })
 
@@ -265,7 +265,7 @@ test('should get all pages using pageAfter with id from another field', async ()
   assert.equal(dispatch.args[0][0].payload.pageAfter, undefined)
   assert.equal(dispatch.args[1][0].payload.pageAfter, 'ev1')
   assert.equal(dispatch.args[2][0].payload.pageAfter, 'ev3')
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 5)
 })
 
@@ -316,7 +316,7 @@ test('should get all pages using paging in response', async () => {
     pageSize: 2,
     pageId: 't0k3n2',
   })
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 5)
 })
 
@@ -356,7 +356,7 @@ test('should get all pages using paging when last page is full', async () => {
     pageSize: 2,
     pageId: 't0k3n1',
   })
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 4)
 })
 
@@ -393,7 +393,7 @@ test('should get all pages using partial paging', async () => {
     pageSize: 2,
     pageId: 't0k3n1',
   })
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
 })
 
 test('should require at least one non-undefined prop for next paging', async () => {
@@ -424,7 +424,7 @@ test('should require at least one non-undefined prop for next paging', async () 
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   assert.equal(dispatch.callCount, 2)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
 })
 
 test('should handle one complete page with next null', async () => {
@@ -449,7 +449,7 @@ test('should handle one complete page with next null', async () => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   assert.equal(dispatch.callCount, 1)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
 })
 
 test('should use original cid for all sub actions, use id as gid, and remove id', async () => {
@@ -484,7 +484,7 @@ test('should use original cid for all sub actions, use id as gid, and remove id'
   assert.equal(dispatch.args[2][0].meta?.id, undefined)
   assert.equal(dispatch.args[2][0].meta?.cid, '23456')
   assert.equal(dispatch.args[2][0].meta?.gid, '12345')
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 5)
 })
 
@@ -511,7 +511,7 @@ test('should override gid of the original action', async () => {
 
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.equal(dispatch.args[0][0].meta?.gid, '12345')
 })
@@ -563,7 +563,7 @@ test('should not look for loop when noLoopCheck is true', async () => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   assert.equal(dispatch.callCount, 3)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData[]).length, 4)
 })
 
@@ -608,7 +608,7 @@ test('should treat null data as no data', async () => {
   const ret = await getAll(action, { ...handlerResources, dispatch })
 
   assert.equal(dispatch.callCount, 1)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.deepEqual(ret.data, [])
 })
 

@@ -62,7 +62,7 @@ test('one', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.data, expected)
     assert.equal((ret.data as TypedData).createdAt instanceof Date, true)
   })
@@ -89,7 +89,7 @@ test('one', async (t) => {
       const great = Integreat.create(defs, resources)
       const ret = await great.dispatch(action)
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       const approver = (ret.data as TypedData).approvedBy as TypedData
       assert.equal(approver.$type, 'user')
       assert.equal(approver.id, 'johnf')
@@ -108,7 +108,7 @@ test('one', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'notfound', ret.error)
+    assert.equal(ret.status, 'notfound')
     assert.equal(ret.data, undefined)
   })
 
@@ -143,7 +143,7 @@ test('one', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.data, expected)
   })
 
@@ -173,7 +173,7 @@ test('one', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.headers, expected)
   })
 
@@ -220,7 +220,7 @@ test('one', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.data, expected)
   })
 })

@@ -46,7 +46,7 @@ test('set raw', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data as TypedData[]
     assert.equal(Array.isArray(data), true)
     assert.equal(data[0].id, 'ent1')
@@ -66,7 +66,7 @@ test('set raw', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data as TypedData[]
     assert.equal(Array.isArray(data), true)
     assert.equal(data[0].id, 'ent2')
@@ -88,7 +88,7 @@ test('set raw', async (t) => {
       const great = Integreat.create(defs, resources)
       const ret = await great.dispatch(action)
 
-      assert.equal(ret.status, 'noaccess', ret.error)
+      assert.equal(ret.status, 'noaccess')
       assert.deepEqual(ret.data, [])
     },
   )

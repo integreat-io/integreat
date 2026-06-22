@@ -75,7 +75,7 @@ test('mutateAndTransform', async (t) => {
     const great = Integreat.create(defs, resourcesWithTrans)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const item = ret.data as TypedData
     assert.equal(item.id, 'ent1')
     assert.equal(item.title, 'ENTRY 1')
@@ -115,7 +115,7 @@ test('mutateAndTransform', async (t) => {
     const great = Integreat.create(defs, resourcesWithTrans)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(Array.isArray(ret.data), true)
     const data = ret.data as TypedData[]
     assert.equal(data.length, 2)

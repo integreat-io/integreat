@@ -46,18 +46,18 @@ test('should get first and second page of entries from service', async () => {
   const action3 = { ...action1, payload: ret2.paging?.prev }
   const ret3 = await great.dispatch(action3 as Action)
 
-  assert.equal(ret1.status, 'ok', ret1.error)
+  assert.equal(ret1.status, 'ok')
   assert.deepEqual(ret1.paging, expectedPaging1)
   const data1 = ret1.data as TypedData[]
   assert.equal(data1.length, 2)
   assert.equal(data1[0].id, 'ent1')
   assert.equal(data1[1].id, 'ent2')
   assert.deepEqual(ret2.paging, expectedPaging2)
-  assert.equal(ret2.status, 'ok', ret2.error)
+  assert.equal(ret2.status, 'ok')
   const data2 = ret2.data as TypedData[]
   assert.equal(data2.length, 1)
   assert.equal(data2[0].id, 'ent3')
-  assert.equal(ret3.status, 'ok', ret3.error)
+  assert.equal(ret3.status, 'ok')
   assert.deepEqual(ret3.paging, expectedPaging1)
   const data3 = ret3.data as TypedData[]
   assert.equal(data3.length, 2)

@@ -58,7 +58,7 @@ test('should mutate response and merge with request data', async () => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   const data = ret.data as TypedData
   assert.equal(data.$type, 'entry')
   assert.equal(data.id, 'ent1')

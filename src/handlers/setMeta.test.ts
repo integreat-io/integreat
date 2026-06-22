@@ -87,7 +87,7 @@ test('setMeta handler', async (t) => {
 
     const ret = await setMeta(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -121,7 +121,7 @@ test('setMeta handler', async (t) => {
 
     const ret = await setMeta(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -151,7 +151,7 @@ test('setMeta handler', async (t) => {
 
     const ret = await setMeta(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -188,7 +188,7 @@ test('setMeta handler', async (t) => {
 
       const ret = await setMeta(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.equal(scope.isDone(), true)
     },
   )
@@ -220,7 +220,7 @@ test('setMeta handler', async (t) => {
 
     const ret = await setMeta(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -293,7 +293,7 @@ test('setMeta handler', async (t) => {
 
     const ret = await setMeta(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 

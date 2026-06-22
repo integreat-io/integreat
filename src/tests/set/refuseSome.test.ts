@@ -33,7 +33,7 @@ test('should refuse to set entries where ident has no access', async () => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   const data = ret.data
   assert.equal(Array.isArray(data), false)
   assert.equal(data, undefined)

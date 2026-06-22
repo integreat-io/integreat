@@ -34,7 +34,7 @@ test('noAccess', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'noaccess', ret.error)
+    assert.equal(ret.status, 'noaccess')
     assert.equal(ret.error, "Authentication was refused for type 'user'")
     assert.equal(ret.reason, 'NO_IDENT')
     assert.equal(ret.origin, 'auth:action')
@@ -62,7 +62,7 @@ test('noAccess', async (t) => {
       const great = Integreat.create(defsWithoutAccessMethod, resources)
       const ret = await great.dispatch(action)
 
-      assert.equal(ret.status, 'noaccess', ret.error)
+      assert.equal(ret.status, 'noaccess')
       assert.equal(ret.error, "Authentication was refused for type 'user'")
       assert.equal(ret.reason, 'ACCESS_METHOD_REQUIRED')
       assert.equal(ret.origin, 'auth:action')
@@ -91,7 +91,7 @@ test('noAccess', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.access, expectedAccess)
     const data = ret.data as TypedData[]
     assert.equal(data.length, 1)

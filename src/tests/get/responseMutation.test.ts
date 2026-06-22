@@ -68,7 +68,7 @@ test('responseMutation', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data as TypedData[]
     assert.equal(Array.isArray(data), true)
     assert.equal(data.length, 1)
@@ -106,7 +106,7 @@ test('responseMutation', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = (await great.dispatch(action)) as Response<TypedData[]>
 
-    assert.equal(ret.status, 'queued', ret.error)
+    assert.equal(ret.status, 'queued')
     assert.equal(ret.data?.length, 1)
     assert.equal(ret.data[0].id, 'ent1')
   })
@@ -160,7 +160,7 @@ test('responseMutation', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data as TypedData[]
     assert.equal(Array.isArray(data), true)
     assert.equal(data.length, 2)
@@ -204,7 +204,7 @@ test('responseMutation', async (t) => {
     const great = Integreat.create(defsWithOptions, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data as TypedData[]
     assert.equal(Array.isArray(data), true)
     assert.equal(data.length, 1)

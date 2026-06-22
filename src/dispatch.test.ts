@@ -500,7 +500,7 @@ test('should map payload property service to targetService', async () => {
 
   const ret = await dispatch({ ...resources, handlers })(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.deepEqual(ret.data, [{ id: 'ent1', type: 'entry' }])
 })
 
@@ -694,7 +694,7 @@ test('should complete ident', async () => {
     handlers,
   })(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(getIdentHandler.callCount, 1)
   assert.equal(getHandler.callCount, 1)
   const dispatchedAction = getHandler.args[0][0]
@@ -732,7 +732,7 @@ test('should not complete an already completed ident', async () => {
     handlers,
   })(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(getIdentHandler.callCount, 0)
   assert.equal(getHandler.callCount, 1)
   const dispatchedAction = getHandler.args[0][0]
@@ -764,7 +764,7 @@ test('should pass on error response from complete ident', async () => {
     handlers,
   })(action)
 
-  assert.equal(ret.status, 'noaccess', ret.error)
+  assert.equal(ret.status, 'noaccess')
 })
 
 test('should support progress reporting', async () => {

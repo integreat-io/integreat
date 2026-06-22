@@ -168,7 +168,7 @@ test('should SET with no data when alwaysSet is true', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.equal(dispatch.args[0][0].type, 'GET')
   assert.deepEqual(dispatch.args[1][0], expected1)
@@ -212,7 +212,7 @@ test('should split in several SET actions when item count is higher than maxPerS
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 3)
   assert.deepEqual(dispatch.args[1][0], expected1)
   assert.deepEqual(dispatch.args[2][0], expected2)
@@ -265,7 +265,7 @@ test('should split in several SET actions with individual items when setMember i
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 4)
   assert.deepEqual(dispatch.args[1][0], expected1)
   assert.deepEqual(dispatch.args[2][0], expected2)
@@ -310,7 +310,7 @@ test('should use params from from and to', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[0][0], expected0)
   assert.deepEqual(dispatch.args[1][0], expected1)
@@ -345,7 +345,7 @@ test('should override action types', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[0][0], expected0)
   assert.deepEqual(dispatch.args[1][0], expected1)
@@ -394,7 +394,7 @@ test('should set page params on payload', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.deepEqual(dispatch.args[0][0], expected)
   assert.equal(dispatch.callCount, 2)
 })
@@ -424,7 +424,7 @@ test('should not queue SET when doQueueSet is false', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[1][0], expected1)
 })
@@ -471,7 +471,7 @@ test('should get from several source services', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 3)
   assert.deepEqual(dispatch.args[0][0], expected0)
   assert.deepEqual(dispatch.args[1][0], expected1)
@@ -503,7 +503,7 @@ test('should remove untyped data', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[0][0], expected0)
   assert.deepEqual(dispatch.args[1][0], expected1)
@@ -525,7 +525,7 @@ test('should report progress', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch, setProgress })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(setProgress.callCount, 5)
   assert.equal(setProgress.args[0][0], 0)
   assert.equal(setProgress.args[1][0], 0.1)
@@ -586,7 +586,7 @@ test('should pass on updatedAfter and updatedUntil, and set updatedSince and upd
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[0][0], expected0)
   assert.deepEqual(dispatch.args[1][0], expected1)
@@ -642,7 +642,7 @@ test('should pass on updatedSince and updatedBefore, and set updatedAfter and up
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[0][0], expected0)
   assert.deepEqual(dispatch.args[1][0], expected1)
@@ -698,7 +698,7 @@ test('should cast string values in updatedAfter and updatedUntil to Date', async
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[0][0], expected0)
   assert.deepEqual(dispatch.args[1][0], expected1)
@@ -754,7 +754,7 @@ test('should cast string values in updatedSince and updatedBefore to Date', asyn
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[0][0], expected0)
   assert.deepEqual(dispatch.args[1][0], expected1)
@@ -794,7 +794,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = updated', asy
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 4)
   assert.deepEqual(dispatch.args[0][0], expectedAction0)
   assert.deepEqual(
@@ -848,7 +848,7 @@ test('should use metaKey when fetching lastSyncedAt', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.deepEqual(dispatch.args[0][0], expectedAction0)
 })
 
@@ -877,7 +877,7 @@ test('should not use lastSyncedAt meta when updatedAfter is provided', async () 
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 3)
   assert.equal(dispatch.args[0][0].type, 'GET')
   assert.deepEqual(
@@ -917,7 +917,7 @@ test('should use lastSyncedAt meta from several services', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 7)
   assert.deepEqual(dispatch.args[0][0].type, 'GET_META')
   assert.deepEqual(dispatch.args[0][0].payload.type, 'entry')
@@ -1000,7 +1000,7 @@ test('should filter away data updated before updatedAfter or after updatedUntil'
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.equal(Array.isArray(dispatch.args[1][0].payload.data), true)
   const setData = dispatch.args[1][0].payload.data as TypedData[]
@@ -1037,7 +1037,7 @@ test('should filter away data with different lastSyncedAt for each service', asy
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 7)
   assert.equal(Array.isArray(dispatch.args[4][0].payload.data), true)
   const setData = dispatch.args[4][0].payload.data as TypedData[]
@@ -1076,7 +1076,7 @@ test('should not filter away data when filterData is false', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 7)
   assert.equal(Array.isArray(dispatch.args[4][0].payload.data), true)
   const setData = dispatch.args[4][0].payload.data as TypedData[]
@@ -1114,7 +1114,7 @@ test('should treat no updatedAfter as open-ended', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.equal((dispatch.args[1][0].payload.data as unknown[]).length, 3)
 })
@@ -1153,7 +1153,7 @@ test('should set updatedUntil to now', async () => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   const setUpdatedUntil = dispatch.args[1][0].payload.updatedUntil
   assert.equal(setUpdatedUntil instanceof Date, true)
@@ -1186,7 +1186,7 @@ test('should set updatedUntil with positive delta', async () => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   const setUpdatedUntil = dispatch.args[1][0].payload.updatedUntil
   assert.equal(setUpdatedUntil instanceof Date, true)
@@ -1218,7 +1218,7 @@ test('should set updatedUntil with negative delta', async () => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   const setUpdatedUntil = dispatch.args[1][0].payload.updatedUntil
   assert.equal(setUpdatedUntil instanceof Date, true)
@@ -1272,7 +1272,7 @@ test('should set lastSyncedAt meta to updatedUntil', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 7)
   assert.deepEqual(dispatch.args[5][0], expected5)
   assert.deepEqual(dispatch.args[6][0], expected6)
@@ -1305,7 +1305,7 @@ test('should set lastSyncedAt meta to now when no updatedUntil', async () => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 7)
   const lastSyncedAt1 = (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt
   assert.equal(lastSyncedAt1 && lastSyncedAt1.getTime() >= before, true)
@@ -1350,7 +1350,7 @@ test('should set lastSyncedAt meta to last updatedAt from data of each service',
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 7)
   assert.deepEqual(
     (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt,
@@ -1406,7 +1406,7 @@ test('should set lastSyncedAt to now when date is in the future', async () => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 7)
   const updatedAt = (dispatch.args[5][0].payload.meta as Meta)
     .lastSyncedAt as Date
@@ -1461,7 +1461,7 @@ test('should use metaKey when setting lastSyncedAt', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 7)
   assert.deepEqual(dispatch.args[5][0], expected5)
   assert.deepEqual(dispatch.args[6][0], expected6)
@@ -1493,7 +1493,7 @@ test('should not get or set lastSyncedAt meta when service id is missing', async
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
 })
 
@@ -1531,7 +1531,7 @@ test('should use lastSyncedAt meta as updatedAfter when retrieve = created', asy
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 4)
   assert.deepEqual(dispatch.args[0][0], expectedAction0)
   assert.deepEqual(
@@ -1610,7 +1610,7 @@ test('should set lastSyncedAt for created', async () => {
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 7)
   assert.deepEqual(dispatch.args[4][0], expected4)
   assert.deepEqual(dispatch.args[5][0], expected5)
@@ -1641,7 +1641,7 @@ test('should set createdUntil with delta', async () => {
   const ret = await sync(action, { ...handlerResources, dispatch })
 
   const after = Date.now()
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   const setCreatedUntil = dispatch.args[1][0].payload.createdUntil
   assert.equal(setCreatedUntil instanceof Date, true)
@@ -1684,7 +1684,7 @@ test('should set lastSyncedAt meta to last createdAt from data of each service',
 
   const ret = await sync(action, { ...handlerResources, dispatch })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 7)
   assert.deepEqual(
     (dispatch.args[5][0].payload.meta as Meta).lastSyncedAt,

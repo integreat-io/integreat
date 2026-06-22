@@ -224,7 +224,7 @@ test('get handler', async (t) => {
 
     const ret = await get(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal((ret.data as TypedData).id, 'ent1')
   })
 
@@ -256,7 +256,7 @@ test('get handler', async (t) => {
 
       const ret = await get(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.equal(Array.isArray(ret.data), true)
       const data = ret.data as TypedData[]
       assert.equal(data.length, 2)
@@ -293,7 +293,7 @@ test('get handler', async (t) => {
 
       const ret = await get(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.equal(Array.isArray(ret.data), true)
       const data = ret.data as (TypedData | undefined)[]
       assert.equal(data.length, 3)
@@ -422,7 +422,7 @@ test('get handler', async (t) => {
 
       const ret = await get(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.equal((ret.data as TypedData).id, 'ent1')
     },
   )
@@ -489,7 +489,7 @@ test('get handler', async (t) => {
 
     const ret = await get(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal((ret.data as TypedData[])[0].id, 'ent1')
   })
 
@@ -670,7 +670,7 @@ test('get handler', async (t) => {
 
     const ret = await get(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'noaccess', ret.error) // We'll get this status when authorization is run before validation
+    assert.equal(ret.status, 'noaccess') // We'll get this status when authorization is run before validation
   })
 
   await t.test(
@@ -756,7 +756,7 @@ test('get handler', async (t) => {
 
     const ret = await get(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data
     assert.deepEqual(data, expectedData)
   })

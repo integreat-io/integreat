@@ -72,7 +72,7 @@ test('should send action to queue', async () => {
   const ret = await great.dispatch(action)
   const after = Date.now()
 
-  assert.equal(ret.status, 'queued', ret.error)
+  assert.equal(ret.status, 'queued')
   assert.equal(send.callCount, 1)
   const queuedAction = send.args[0][0]
   assert.equal(queuedAction.type, 'SET')
@@ -109,7 +109,7 @@ test('should send action to queue when queue flag is set in incoming request mut
   const great = Integreat.create(defsWithQueue, resourcesWithQueue)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'queued', ret.error)
+  assert.equal(ret.status, 'queued')
   assert.equal(send.callCount, 1)
 })
 
@@ -123,5 +123,5 @@ test('should dispatch action as normal when queue service is unknown', async () 
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'noaccess', ret.error) // `noaccess` means we have reached the `entries` service
+  assert.equal(ret.status, 'noaccess') // `noaccess` means we have reached the `entries` service
 })

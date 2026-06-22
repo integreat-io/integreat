@@ -656,7 +656,7 @@ test('should treat `mutate` as an alias of endpoint mutation', async () => {
 
   const ret = await endpoint.mutate(actionWithResponse, false)
 
-  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(ret.response?.status, 'ok')
   const data = ret.response?.data as TypedData[]
   assert.equal(data.length, 1)
   assert.equal(data[0].id, 'ent1')
@@ -872,7 +872,7 @@ test('should mutate response from service with service mutation only', async () 
   )
   const ret = await endpoint.mutate(actionWithProps, false)
 
-  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(ret.response?.status, 'ok')
   const data = ret.response?.data as TypedData[]
   assert.equal(data.length, 1)
   assert.equal(data[0].id, 'ent1')
@@ -908,7 +908,7 @@ test('should mutate response from service with service adapter', async () => {
 
   const ret = await endpoint.mutate(actionWithJSON, false)
 
-  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(ret.response?.status, 'ok')
   assert.equal(Array.isArray(ret.response?.data), true, 'Should be an array')
   assert.equal(
     isObject((ret.response?.data as TypedData[])[0]),
@@ -949,7 +949,7 @@ test('should mutate response from service with both service and endpoint adapter
 
   const ret = await endpoint.mutate(actionWithJSON, false)
 
-  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(ret.response?.status, 'ok')
   assert.equal(Array.isArray(ret.response?.data), true, 'Should be an array')
   assert.equal((ret.response?.data as TypedData[]).length, 2) // Mock adapter duplicates the array
 })
@@ -990,7 +990,7 @@ test('should run service mutation _before_ endpoint adapters', async () => {
 
   const ret = await endpoint.mutate(actionWithJSON, false)
 
-  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(ret.response?.status, 'ok')
   assert.equal(Array.isArray(ret.response?.data), true, 'Should be an array')
   const data = ret.response?.data as TypedData[]
   assert.equal(data.length, 2) // Mock adapter duplicates the array
@@ -1030,7 +1030,7 @@ test('should mutate response from service with service adapter and no mutation p
 
   const ret = await endpoint.mutate(actionWithJSON, false)
 
-  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(ret.response?.status, 'ok')
   assert.deepEqual(ret.response?.data, expectedData)
 })
 
@@ -1088,7 +1088,7 @@ test('should mutate response to service (incoming) with service adapter', async 
 
   const ret = await endpoint.mutate(actionWithResponse, isRev)
 
-  assert.equal(ret.response?.status, 'ok', ret.response?.error)
+  assert.equal(ret.response?.status, 'ok')
   assert.equal(ret.response?.data, expectedData)
 })
 

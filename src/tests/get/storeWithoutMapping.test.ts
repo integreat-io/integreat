@@ -51,7 +51,7 @@ test('should get one entry from service', async () => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.deepEqual(ret.data, expected)
 
   nock.restore()

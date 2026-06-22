@@ -77,7 +77,7 @@ test('set new', async (t) => {
       const great = Integreat.create(defs, resources, middleware)
       const ret = await great.dispatch(action)
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       const data = ret.data as TypedData
       assert.equal(Array.isArray(data), false)
       assert.equal(data.id, 'ent1')
@@ -108,7 +108,7 @@ test('set new', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data as TypedData[]
     assert.equal(data.length, 2)
     assert.equal(data[0].id, 'real1')
@@ -130,6 +130,6 @@ test('set new', async (t) => {
     const great = Integreat.create(defs, resources, [], outgoingMiddleware)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'badresponse', ret.error)
+    assert.equal(ret.status, 'badresponse')
   })
 })

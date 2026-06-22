@@ -203,7 +203,7 @@ test('update handler', async (t) => {
 
     const ret = await update(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
     assert.equal(scope.isDone(), true)
   })
@@ -243,7 +243,7 @@ test('update handler', async (t) => {
 
       const ret = await update(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
       assert.equal(scope.isDone(), true)
     },
@@ -287,7 +287,7 @@ test('update handler', async (t) => {
 
       const ret = await update(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
       assert.equal(scope.isDone(), true)
     },
@@ -314,7 +314,7 @@ test('update handler', async (t) => {
 
       const ret = await update(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
       assert.equal(Array.isArray(ret.data), true)
       assert.equal((ret.data as unknown[]).length, 2)
@@ -359,7 +359,7 @@ test('update handler', async (t) => {
 
     const ret = await update(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
     assert.deepEqual(ret.data, expectedData)
     assert.equal(scope.isDone(), true)
@@ -519,7 +519,7 @@ test('update handler', async (t) => {
 
       const ret = await update(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
       assert.equal(scope.isDone(), true)
     },
@@ -591,7 +591,7 @@ test('update handler', async (t) => {
 
       const ret = await update(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
       assert.equal(scope.isDone(), true)
     },
@@ -637,7 +637,7 @@ test('update handler', async (t) => {
 
     const ret = await update(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
     assert.equal(scope.isDone(), true)
   })
@@ -708,7 +708,7 @@ test('update handler', async (t) => {
 
       const ret = await update(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
       assert.equal(scope.isDone(), true)
     },
@@ -759,7 +759,7 @@ test('update handler', async (t) => {
 
       const ret = await update(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
       assert.equal(scope.isDone(), true)
     },
@@ -792,7 +792,7 @@ test('update handler', async (t) => {
 
       const ret = await update(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'error', ret.error)
+      assert.equal(ret.status, 'error')
       assert.equal(ret.error, 'Cannot merge array with non-array')
       assert.equal(scope.isDone(), true)
     },
@@ -818,7 +818,7 @@ test('update handler', async (t) => {
 
     const ret = await update(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'notfound', ret.error)
+    assert.equal(ret.status, 'notfound')
     assert.equal(
       ret.error,
       'UPDATE failed: Could not find the url http://api56.test/database/get/ent1',
@@ -851,7 +851,7 @@ test('update handler', async (t) => {
 
     const ret = await update(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'timeout', ret.error)
+    assert.equal(ret.status, 'timeout')
     assert.equal(
       ret.error,
       'UPDATE failed: Server returned 408 for http://api57.test/database/update/ent1',

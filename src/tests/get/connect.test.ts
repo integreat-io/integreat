@@ -45,7 +45,7 @@ test('should connect to service and reuse connection', async () => {
   await great.dispatch(action)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(sendSpy.callCount, 2)
   assert.deepEqual(sendSpy.args[1][1], { status: 'ok', value: 'Call 1' })
 })

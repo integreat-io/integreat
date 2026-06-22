@@ -838,7 +838,7 @@ test('preflightAction should make auth available to mutations when authInData is
     dispatch,
   )
 
-  assert.equal(ret.response?.status, undefined, ret.response?.error)
+  assert.equal(ret.response?.status, undefined)
   assert.deepEqual(ret.meta?.auth, expectedAuth)
   assert.equal(ret.type, 'GET')
   assert.deepEqual(ret.payload, action.payload)
@@ -879,7 +879,7 @@ test('preflightAction should use auth from endpoint when available', async () =>
     dispatch,
   )
 
-  assert.equal(ret.response?.status, undefined, ret.response?.error)
+  assert.equal(ret.response?.status, undefined)
   assert.deepEqual(ret.meta?.auth, expectedAuth)
   assert.equal(ret.type, 'GET')
   assert.deepEqual(ret.payload, action.payload)
@@ -917,7 +917,7 @@ test('preflightAction should respond with error when authInData is true and auth
     dispatch,
   )
 
-  assert.equal(ret.response?.status, 'noaccess', ret.response?.error)
+  assert.equal(ret.response?.status, 'noaccess')
   assert.equal(
     ret.response?.error,
     "Authentication attempt for auth 'refusing' was refused.",
@@ -1276,7 +1276,7 @@ test('send should provide auth, options, and targetService', async () => {
 
   const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(send.callCount, 1)
   assert.deepEqual(send.args[0][0], expected)
 })
@@ -1341,7 +1341,7 @@ test('send should not set targetService when doSetTargetService is false', async
     doSetTargetService,
   )
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(send.callCount, 1)
   assert.deepEqual(send.args[0][0], expected)
 })
@@ -1401,7 +1401,7 @@ test('send should not set targetService when doSetTargetService is false in meta
 
   const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(send.callCount, 1)
   assert.deepEqual(send.args[0][0], expected)
 })
@@ -1465,7 +1465,7 @@ test('send should not authorize when action has already got meta.auth', async ()
 
   const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(send.callCount, 1)
   assert.deepEqual(send.args[0][0], expected)
 })
@@ -1531,7 +1531,7 @@ test('send should connect before sending request', async () => {
 
   const ret = await service.send(action, endpoint as Endpoint, dispatch)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(send.callCount, 1)
   assert.deepEqual(send.args[0][1], expected)
 })
@@ -2549,7 +2549,7 @@ test('mutateIncomingResponse should mutate and authorize data in response to inc
 
   const ret = await service.mutateIncomingResponse(action, endpoint as Endpoint)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   const accounts = (ret.data as TypedData).accounts as TypedData[]
   assert.equal(accounts.length, 1)
   assert.equal(accounts[0].id, 'johnf')
@@ -2999,7 +2999,7 @@ test('mutateIncomingRequest should mutate and authorize data coming from service
 
   const ret = await service.mutateIncomingRequest(action, endpoint as Endpoint)
 
-  assert.equal(ret.response?.status, undefined, ret.response?.error)
+  assert.equal(ret.response?.status, undefined)
   const data = ret.payload.data as TypedData[]
   assert.equal(data.length, 1)
   assert.equal(data[0].id, 'johnf')
@@ -3070,7 +3070,7 @@ test('mutateIncomingRequest should mutate and use type from mutated action to ca
 
   const ret = await service.mutateIncomingRequest(action, endpoint as Endpoint)
 
-  assert.equal(ret.response?.status, undefined, ret.response?.error)
+  assert.equal(ret.response?.status, undefined)
   const data = ret.payload.data as TypedData[]
   assert.equal(data.length, 1)
   assert.equal(data[0].id, 'johnf')
@@ -3121,7 +3121,7 @@ test('mutateIncomingRequest should not use defaults when castWithoutDefaults is 
 
   const ret = await service.mutateIncomingRequest(action, endpoint as Endpoint)
 
-  assert.equal(ret.response?.status, undefined, ret.response?.error)
+  assert.equal(ret.response?.status, undefined)
   const data = ret.payload.data as TypedData[]
   assert.equal(data[0].id, null)
   assert.equal(data[0].title, 'Entry 1')
@@ -3577,7 +3577,7 @@ test('should support progress reporting', async () => {
   p.onProgress(progressStub)
   const ret = await p
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(progressStub.callCount, 2)
   assert.equal(progressStub.args[0][0], 0.5)
   assert.equal(progressStub.args[1][0], 1)
@@ -4016,7 +4016,7 @@ test('listen should remove incoming auth on meta', async () => {
 
   const ret = await service.listen(dispatchStub)
 
-  assert.deepEqual(ret.status, 'ok', ret.error)
+  assert.deepEqual(ret.status, 'ok')
   assert.equal(dispatchStub.callCount, 1)
   const dispatchedAction = dispatchStub.args[0][0]
   assert.equal(dispatchedAction.meta?.auth, undefined)

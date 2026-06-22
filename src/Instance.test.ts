@@ -258,7 +258,7 @@ test('should use adapters', async () => {
   )
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   const data = ret.data as TypedData[]
   assert.equal(data.length, 1)
   assert.equal(data[0].id, 'ent1')
@@ -313,7 +313,7 @@ test('should set adapter id', async () => {
   )
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(ret.params?.setByPrepare, true)
 })
 
@@ -361,7 +361,7 @@ test('should call middleware', async () => {
   )
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(otherAction.callCount, 1) // If other action handler was called, middleware changed action
 })
 
@@ -400,7 +400,7 @@ test('should mutate data', async () => {
   )
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   const data = ret.data as Record<string, unknown>[]
   assert.equal(data.length, 1)
   const item = data[0]
@@ -446,7 +446,7 @@ test('should use provided nonvalues', async () => {
   )
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   const item = (ret.data as Record<string, unknown>[])[0]
   assert.equal(item.id, 'ent1')
   assert.equal(item.text, '')
@@ -482,7 +482,7 @@ test('should provided map-transform', async () => {
   )
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(ret.data, undefined) // When we get `undefined`, we know nothing was transformed, i.e. our map-transform mock was used
 })
 
@@ -592,7 +592,7 @@ test('should set up RUN handler with jobs', async () => {
   )
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(handler.callCount, 1)
   const dispatchedAction = handler.args[0][0]
   assert.equal(dispatchedAction.type, 'TEST')
@@ -648,7 +648,7 @@ test('should use auth', async () => {
   )
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'noaccess', ret.error)
+  assert.equal(ret.status, 'noaccess')
 })
 
 test('should set id on authenticators', async () => {
@@ -700,7 +700,7 @@ test('should set id on authenticators', async () => {
   )
   const ret = await great.services.entries.listen(dispatchMock)
 
-  assert.equal(ret.status, 'autherror', ret.error)
+  assert.equal(ret.status, 'autherror')
   assert.equal(
     ret.error,
     "Could not authenticate. Authenticator 'mock' doesn't support validation", // The fact that we get `'mock'` here means that the authenticator id was set

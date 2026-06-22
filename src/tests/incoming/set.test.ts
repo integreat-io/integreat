@@ -79,7 +79,7 @@ test('should mutate incoming action data and response data', async () => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(send.callCount, 1)
   const sentAction = send.args[0][0]
   assert.equal(sentAction.type, 'SET')

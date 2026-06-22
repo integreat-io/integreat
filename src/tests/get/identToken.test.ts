@@ -28,7 +28,7 @@ test('should get with ident token', async () => {
   const great = Integreat.create(defs, resources, middleware)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal((ret.data as TypedData).id, 'johnf')
 
   nock.restore()

@@ -62,7 +62,7 @@ test('should use incoming endpoint over non-incoming', async () => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(send.callCount, 1)
   const sentAction = send.args[0][0]
   assert.equal(sentAction.type, 'GET')
@@ -100,7 +100,7 @@ test('should use non-incoming endpoint over incoming', async () => {
   const great = Integreat.create(defs, resourcesWithSend)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(typeof ret.data, 'object')
   assert.equal((ret.data as TypedData).$type, 'entry')
   assert.equal((ret.data as TypedData).id, 'ent1')

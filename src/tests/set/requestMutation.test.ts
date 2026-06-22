@@ -90,7 +90,7 @@ test('set requestMutation', async (t) => {
     const great = Integreat.create(defs, resources)
     const ret = await great.dispatch(action)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
   })
 
   await t.test(
@@ -152,7 +152,7 @@ test('set requestMutation', async (t) => {
       const great = Integreat.create(defs, resources)
       const ret = await great.dispatch(action)
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
     },
   )
 })

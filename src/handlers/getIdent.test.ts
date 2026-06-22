@@ -52,7 +52,7 @@ test('getIdent handler', async (t) => {
 
     const ret = await getIdent(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.access, expected)
     assert.equal((ret.data as TypedData).id, 'johnf')
     assert.equal(dispatch.callCount, 1)
@@ -84,7 +84,7 @@ test('getIdent handler', async (t) => {
 
     const ret = await getIdent(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.access, expected)
     assert.equal((ret.data as TypedData).id, 'johnf')
     assert.equal(dispatch.callCount, 1)
@@ -109,7 +109,7 @@ test('getIdent handler', async (t) => {
 
     const ret = await getIdent(action, handlerResources)
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.access?.ident, expectedIdent)
     assert.equal((ret.data as TypedData).id, 'johnf')
   })
@@ -129,7 +129,7 @@ test('getIdent handler', async (t) => {
 
       const ret = await getIdent(action, handlerResources)
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.access?.ident, expectedIdent)
       assert.equal((ret.data as TypedData).id, 'johnf')
     },
@@ -153,7 +153,7 @@ test('getIdent handler', async (t) => {
 
     const ret = await getIdent(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.access, expected)
     assert.equal((ret.data as TypedData).id, 'lucyk')
     assert.equal(dispatch.callCount, 0)
@@ -180,7 +180,7 @@ test('getIdent handler', async (t) => {
 
     const ret = await getIdent(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal((ret.data as TypedData).id, 'johnf')
     assert.equal(dispatch.callCount, 1)
     const dispatchedAction = dispatch.args[0][0]
@@ -311,7 +311,7 @@ test('getIdent handler', async (t) => {
       options,
     })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.access?.ident, expectedIdent)
   })
 
@@ -355,7 +355,7 @@ test('getIdent handler', async (t) => {
       options,
     })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.access, expected)
     assert.equal((ret.data as TypedData).id, 'johnf')
     assert.equal(dispatch.callCount, 1)
@@ -413,7 +413,7 @@ test('getIdent handler', async (t) => {
       options,
     })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.access, expected)
     assert.equal((ret.data as TypedData).id, 'johnf')
     assert.equal(dispatch.callCount, 1)
@@ -463,7 +463,7 @@ test('getIdent handler', async (t) => {
         options,
       })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.access, expected)
       assert.equal((ret.data as TypedData).id, 'johnf')
       assert.equal(dispatch.callCount, 1)
@@ -509,7 +509,7 @@ test('getIdent handler', async (t) => {
         options,
       })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.access?.ident, expectedIdent)
     },
   )
@@ -544,7 +544,7 @@ test('getIdent handler', async (t) => {
         options,
       })
 
-      assert.equal(ret.status, 'badrequest', ret.error)
+      assert.equal(ret.status, 'badrequest')
       assert.equal(
         ret.error,
         "GET_IDENT: The request has an ident with 'withToken', but no tokens key is set in `identConfig`",

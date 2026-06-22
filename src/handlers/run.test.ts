@@ -72,7 +72,7 @@ test('should run a simple action', async () => {
     dispatch,
   })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.deepEqual(dispatch.args[0][0], expectedAction)
   assert.deepEqual(ret, expected)
@@ -106,7 +106,7 @@ test('should override gid from original action', async () => {
     dispatch,
   })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.deepEqual(dispatch.args[0][0].meta.gid, '12345')
 })
@@ -182,7 +182,7 @@ test('should run flow', async () => {
     dispatch,
   })
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[0][0], expectedAction1)
   assert.deepEqual(dispatch.args[1][0], expectedAction2)
@@ -241,7 +241,7 @@ test('should handle failure in flow', async () => {
   ]
 
   assert.equal(dispatch.callCount, 1) // Should break after first step
-  assert.equal(ret.status, 'timeout', ret.error)
+  assert.equal(ret.status, 'timeout')
   assert.equal(ret.error, 'Too slow')
   assert.deepEqual(ret.responses, expectedErrorResponses)
 })
@@ -314,7 +314,7 @@ test('should run flow with mutations and iteration', async () => {
   assert.deepEqual(dispatch.args[1][0], expectedAction1)
   assert.equal(ret.status, 'ok')
   assert.deepEqual(ret.data, expectedData)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
 })
 
 test('should return noaction when job has an empty flow', async () => {

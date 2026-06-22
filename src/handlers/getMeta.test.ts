@@ -137,7 +137,7 @@ test('getMeta handler', async (t) => {
 
     const ret = await getMeta(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.data, expected)
   })
 
@@ -166,7 +166,7 @@ test('getMeta handler', async (t) => {
 
     const ret = await getMeta(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.data, expected)
   })
 
@@ -295,7 +295,7 @@ test('getMeta handler', async (t) => {
 
       const ret = await getMeta(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.data, expected)
     },
   )
@@ -358,7 +358,7 @@ test('getMeta handler', async (t) => {
 
       const ret = await getMeta(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.deepEqual(ret.data, expectedData)
     },
   )
@@ -429,7 +429,7 @@ test('getMeta handler', async (t) => {
 
     const ret = await getMeta(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.data, expected)
   })
 

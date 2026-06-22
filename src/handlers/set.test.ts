@@ -148,7 +148,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.deepEqual(ret.headers, { 'content-type': 'application/json' })
     assert.equal(Array.isArray(ret.data), true)
     assert.equal((ret.data as unknown[]).length, 2)
@@ -175,7 +175,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -199,7 +199,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -253,7 +253,7 @@ test('set handler', async (t) => {
 
       const ret = await set(action, { ...handlerResources, getService })
 
-      assert.equal(ret.status, 'ok', ret.error)
+      assert.equal(ret.status, 'ok')
       assert.equal(scope.isDone(), true)
     },
   )
@@ -279,7 +279,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -301,7 +301,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -323,7 +323,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -392,7 +392,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'noaccess', ret.error) // We'll get this status when authorization is run before validation
+    assert.equal(ret.status, 'noaccess') // We'll get this status when authorization is run before validation
   })
 
   await t.test('should return error when service fails', async () => {
@@ -512,7 +512,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 
@@ -535,7 +535,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(ret.data, undefined)
   })
 
@@ -564,7 +564,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data as TypedData[]
     assert.equal(Array.isArray(data), true)
     assert.equal(data.length, 1)
@@ -596,7 +596,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     const data = ret.data as TypedData
     assert.equal(Array.isArray(data), false)
     assert.equal(data.$type, 'account')
@@ -621,7 +621,7 @@ test('set handler', async (t) => {
 
     const ret = await set(action, { ...handlerResources, getService })
 
-    assert.equal(ret.status, 'ok', ret.error)
+    assert.equal(ret.status, 'ok')
     assert.equal(scope.isDone(), true)
   })
 

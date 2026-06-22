@@ -75,7 +75,7 @@ test('should get all entries from service', async () => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   const data = ret.data as TypedData[]
   assert.equal(data.length, 1)
   assert.equal(data[0].id, 'ent1')

@@ -127,7 +127,7 @@ test('should run a simple action', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.deepEqual(dispatch.args[0][0], expectedAction)
   assert.deepEqual(ret, expected)
@@ -216,7 +216,7 @@ test('should run a simple flow with one action', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.deepEqual(dispatch.args[0][0], expectedAction)
   assert.deepEqual(ret, expected)
@@ -294,7 +294,7 @@ test('should run two actions in sequence', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[0][0], expectedAction1)
   assert.deepEqual(dispatch.args[1][0], expectedAction2)
@@ -404,7 +404,7 @@ test('should continue when action is queued', async () => {
   const ret = await job.run(action, dispatch, setProgress)
 
   assert.equal(dispatch.callCount, 2)
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(ret.error, undefined)
 })
 
@@ -452,7 +452,7 @@ test('should not treat noaction as error', async () => {
   const ret = await job.run(action, dispatch, setProgress)
 
   assert.equal(dispatch.callCount, 2) // Both actions should run
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
 })
 
 test('should run two actions in parallel', async () => {
@@ -976,7 +976,7 @@ test('should not treat noaction as error in parallel actions', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
 })
 
@@ -1024,7 +1024,7 @@ test('should report progress when running steps', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(setProgress.callCount, 2)
   assert.equal(setProgress.args[0][0], 1 / 3)
   assert.equal(setProgress.args[1][0], 2 / 3)
@@ -1415,7 +1415,7 @@ test('should run second action when its preconditions are fulfilled', async () =
   const ret = await job.run(action, dispatch, setProgress)
 
   assert.equal(dispatch.callCount, 2) // Both steps run
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
 })
 
 test('should return warnings from parallel steps', async () => {
@@ -1537,7 +1537,7 @@ test('should support truthy condition results', async () => {
   const ret = await job.run(action, dispatch, setProgress)
 
   assert.equal(dispatch.callCount, 2) // Both steps run
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
 })
 
 test('should validate preconditions in parallel actions', async () => {
@@ -2661,7 +2661,7 @@ test('should return data from simple action based on responseMutation', async ()
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.deepEqual(ret.data, expected)
   assert.equal(dispatch.callCount, 1)
 })
@@ -2751,7 +2751,7 @@ test('should return data based on mutation from original action', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.deepEqual(ret.data, expected)
 })
 
@@ -3085,7 +3085,7 @@ test('should mutate simple action', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.deepEqual(dispatch.args[0][0], expectedAction)
   assert.deepEqual(ret, expected)
@@ -3121,7 +3121,7 @@ test('should mutate simple action with depricated mutation prop', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.deepEqual(dispatch.args[0][0], expectedAction)
   assert.deepEqual(ret, expected)
@@ -3186,7 +3186,7 @@ test('should mutate action with result from previous action', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 2)
   assert.deepEqual(dispatch.args[1][0], expectedAction2)
   assert.deepEqual(ret, expected)
@@ -3248,7 +3248,7 @@ test('should mutate action with payload from original action', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.deepEqual(dispatch.args[0][0], expectedAction)
   assert.deepEqual(ret, expected)
@@ -3355,7 +3355,7 @@ test('should mutate action with result from previous and parallel actions', asyn
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 4)
   assert.deepEqual(dispatch.args[2][0], expectedAction2)
   assert.deepEqual(dispatch.args[3][0], expectedAction4)
@@ -3408,7 +3408,7 @@ test('should mutate action with data from the original action', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.deepEqual(dispatch.args[0][0], expectedAction)
 })
@@ -3456,7 +3456,7 @@ test('should mutate with transformers and pipelines', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.deepEqual(dispatch.args[0][0], expectedAction)
   assert.deepEqual(ret, expected)
@@ -3490,7 +3490,7 @@ test('should mutate simple action with pipeline', async () => {
   const job = new Job(jobDef, mapTransform, mapOptions)
   const ret = await job.run(action, dispatch, setProgress)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.equal(dispatch.callCount, 1)
   assert.deepEqual(dispatch.args[0][0], expectedAction)
   assert.deepEqual(ret, expected)

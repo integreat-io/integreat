@@ -39,7 +39,7 @@ test('should mutate incoming action data to error status and mutate response', a
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'badrequest', ret.error)
+  assert.equal(ret.status, 'badrequest')
   assert.deepEqual(ret.data, expectedResponseData)
   assert.equal(send.callCount, 0)
 })
@@ -59,6 +59,6 @@ test('should mutate incoming action data to ok status', async () => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
   assert.deepEqual(ret.data, expected)
 })

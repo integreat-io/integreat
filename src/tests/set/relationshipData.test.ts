@@ -71,7 +71,7 @@ test('should send item with sub schema to service', async () => {
   const great = Integreat.create(defs, resources)
   const ret = await great.dispatch(action)
 
-  assert.equal(ret.status, 'ok', ret.error)
+  assert.equal(ret.status, 'ok')
 
   nock.restore()
 })
