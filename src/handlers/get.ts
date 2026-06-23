@@ -21,7 +21,10 @@ const debug = debugLib('great')
 const isErrorResponse = (response: Response) =>
   isObject(response) &&
   response.status !== 'ok' &&
-  response.status !== 'notfound'
+  response.status !== 'notfound' &&
+  response.status !== 'noaction'
+
+const hasId = ({ payload: { id } }: Action) => !!id
 
 const getIdFromAction = ({ payload: { id } }: Action) =>
   Array.isArray(id) && id.length === 1 ? id[0] : id
@@ -77,16 +80,30 @@ async function runAsIndividualActions(
   const actions = (action.payload.id as string[]).map((individualId) =>
     setIdOnActionPayload(action, individualId),
   )
-  const endpoint = await service.endpointFromAction(actions[0])
+
+  // We can't get by id without an id, so any nullish or empty ids are skipped.
+  // They'll simply yield `null` in the resulting data array. When no id is left
+  // to dispatch, we return a `null` for every id.
+  const representativeAction = actions.find(hasId)
+  if (!representativeAction) {
+    return combineIndividualResponses(
+      action,
+      actions.map(() => ({ status: 'noaction', data: null })),
+    )
+  }
+
+  const endpoint = await service.endpointFromAction(representativeAction)
   if (!endpoint) {
     return createNoEndpointError(action, service.id)
   }
 
   const responses = await Promise.all(
     actions.map((individualAction) =>
-      pLimit(1)(() =>
-        mutateAndSend(service, endpoint, individualAction, dispatch),
-      ),
+      hasId(individualAction)
+        ? pLimit(1)(() =>
+            mutateAndSend(service, endpoint, individualAction, dispatch),
+          )
+        : { status: 'noaction', data: null },
     ),
   )
 

@@ -304,6 +304,109 @@ test('get handler', async (t) => {
     },
   )
 
+  await t.test(
+    'should skip nullish and empty ids and not route to collection endpoint',
+    async () => {
+      const memberScope = nock('http://api14.test')
+        .get('/entries/ent3')
+        .reply(200, { id: 'ent3', type: 'entry' })
+      const collectionScope = nock('http://api14.test')
+        .get('/entries')
+        .reply(200, [{ id: 'ent1', type: 'entry' }])
+      const action = {
+        type: 'GET',
+        payload: {
+          // `null` is not a valid id per the types, but can reach the handler at
+          // runtime (e.g. from casting). A `null` first id is exactly the bug
+          // we're guarding against here.
+          id: [null, '', 'ent3'] as string[],
+          type: 'entry',
+          source: 'thenews',
+          targetService: 'entries',
+        },
+        meta: { ident: { id: 'johnf' } },
+      }
+      const svc = new Service(
+        {
+          id: 'entries',
+          ...jsonServiceDef,
+          endpoints: [
+            {
+              match: { scope: 'collection' },
+              mutation: {
+                $direction: 'from',
+                response: {
+                  $modify: 'response',
+                  data: ['response.data', { $apply: 'entry' }],
+                },
+              },
+              options: { uri: 'http://api14.test/entries' },
+            },
+            {
+              match: { scope: 'member' },
+              mutation: {
+                $direction: 'from',
+                response: {
+                  $modify: 'response',
+                  data: ['response.data', { $apply: 'entry' }],
+                },
+              },
+              options: { uri: 'http://api14.test/entries/{payload.id}' },
+            },
+          ],
+        },
+        { schemas, mapTransform, mapOptions },
+      )
+      const getService = (_type?: string | string[], service?: string) =>
+        service === 'entries' ? svc : undefined
+
+      const ret = await get(action, { ...handlerResources, getService })
+
+      assert.equal(ret.status, 'ok')
+      const data = ret.data as (TypedData | null)[]
+      assert.equal(data.length, 3)
+      assert.equal(data[0], null)
+      assert.equal(data[1], null)
+      assert.equal(data[2]?.id, 'ent3')
+      assert.equal(memberScope.isDone(), true)
+      assert.equal(collectionScope.isDone(), false)
+    },
+  )
+
+  await t.test(
+    'should return array of nulls when all ids are nullish',
+    async () => {
+      const httpScope = nock('http://api15.test')
+        .get(/.*/)
+        .reply(200, [{ id: 'ent1', type: 'entry' }])
+      const action = {
+        type: 'GET',
+        payload: {
+          // Intentionally invalid per the types -- see the test above.
+          id: [null, null] as unknown as string[],
+          type: 'entry',
+          source: 'thenews',
+          targetService: 'entries',
+        },
+        meta: { ident: { id: 'johnf' } },
+      }
+      const svc = setupService('http://api15.test/entries/{payload.id}', {
+        scope: 'member',
+      })
+      const getService = (_type?: string | string[], service?: string) =>
+        service === 'entries' ? svc : undefined
+      const expected = {
+        status: 'ok',
+        data: [null, null],
+      }
+
+      const ret = await get(action, { ...handlerResources, getService })
+
+      assert.deepEqual(ret, expected)
+      assert.equal(httpScope.isDone(), false)
+    },
+  )
+
   await t.test('should pass on ident when getting from id array', async () => {
     const action = {
       type: 'GET',
