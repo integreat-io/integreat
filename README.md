@@ -1402,6 +1402,9 @@ codes:
 
 - `ok`: Everything is well, data is returned as expected
 - `queued`: The action has been queued. This is regarded as a success status
+- `pending`: May be used in cases where we need to signal that an action is
+  still running or haven't started yet. This is mostly useful for loggers that
+  needs to log progress.
 - `noaction`: The action did nothing, e.g. when a `SYNC` action has no data to
   sync
 - `notfound`: Tried to get or modify a resource that does not exist
