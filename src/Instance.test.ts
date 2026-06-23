@@ -164,7 +164,11 @@ test('should dispatch with resources', async () => {
   const handler = sinon.stub().resolves({ status: 'ok' })
   const handlers = { TEST: handler }
   const identConfig = { type: 'account' }
-  const expectedOptions = { identConfig, queueService: 'queue' }
+  const expectedOptions = {
+    identConfig,
+    queueService: 'queue',
+    disableQueuing: undefined,
+  }
 
   const great = new Instance(
     { services, schemas, mutations, identConfig, queueService: 'queue' },

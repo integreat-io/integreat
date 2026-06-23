@@ -257,6 +257,7 @@ export type SetProgress = (progress: number) => void
 export interface HandlerOptions {
   identConfig?: IdentConfig
   queueService?: string
+  disableQueuing?: boolean
 }
 
 export interface ActionHandlerResources {
@@ -285,6 +286,7 @@ export interface Definitions {
   identConfig?: IdentConfig
   nonvalues?: unknown[]
   queueService?: string
+  disableQueuing?: boolean
   dictionaries?: Dictionaries
   jobs?: JobDef[]
   flags?: DefinitionFlags

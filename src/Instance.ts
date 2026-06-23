@@ -119,6 +119,7 @@ const combineHandlers = (
 const handlerOptionsFromDefs = (defs: Definitions) => ({
   identConfig: defs.identConfig,
   queueService: defs.queueService,
+  disableQueuing: defs.disableQueuing,
 })
 
 const hasService = (services: ServiceDef[], id: string) =>

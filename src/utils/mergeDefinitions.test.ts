@@ -124,6 +124,7 @@ test('should merge three definitions', () => {
     id: 'correctId',
     services: [queueService],
     queueService: 'queue',
+    disableQueuing: true,
     jobs: [],
   }
   const def3 = {
@@ -145,6 +146,7 @@ test('should merge three definitions', () => {
     services: [entriesService, queueService, usersService],
     mutations: { 'entries-entry': entryMutation },
     queueService: 'queue',
+    disableQueuing: true,
     dictionaries: {
       currencies,
       roles,
@@ -160,6 +162,23 @@ test('should merge three definitions', () => {
   const ret = mergeDefinitions(def1, def2, def3)
 
   assert.deepEqual(ret, expected)
+})
+
+test('should let a later disableQueuing override an earlier one', () => {
+  const def1 = {
+    schemas: [entrySchema],
+    services: [entriesService],
+    disableQueuing: true,
+  }
+  const def2 = {
+    services: [queueService],
+    disableQueuing: false,
+  }
+  const expected = false
+
+  const ret = mergeDefinitions(def1, def2)
+
+  assert.equal(ret.disableQueuing, expected)
 })
 
 test('should merge flags so that true trumps all else', () => {
@@ -243,6 +262,7 @@ test('should disregard empty definition', () => {
     ...def1,
     id: undefined,
     queueService: undefined,
+    disableQueuing: undefined,
     flags: {},
   }
 

@@ -182,7 +182,7 @@ function prepareActionForQueue(
   action: Action,
   options: HandlerOptions,
 ): [Action, boolean] {
-  if (action.meta?.queue) {
+  if (action.meta?.queue && !options.disableQueuing) {
     if (options.queueService) {
       return [action, true]
     } else {

@@ -253,6 +253,35 @@ test('should not route to queue handler when queue service is configured with an
   assert.equal(setHandler.callCount, 0)
 })
 
+test('should not route to queue handler when queuing is disabled and keep queue flag on action', async () => {
+  const options = { queueService: 'queue', disableQueuing: true }
+  const action = {
+    type: 'SET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+    meta: { ident: { id: 'johnf' }, queue: true },
+  }
+  const setHandler = sinon
+    .stub()
+    .resolves({ status: 'ok', data: [{ id: 'ent1', type: 'entry' }] })
+  const queueHandler = sinon.stub().resolves({ status: 'queued' })
+  const handlers = {
+    SET: setHandler,
+    [QUEUE_SYMBOL]: queueHandler,
+  }
+
+  const ret = await dispatch({ ...resources, options, handlers })(action)
+
+  assert.equal(ret.status, 'ok')
+  assert.equal(queueHandler.callCount, 0)
+  assert.equal(setHandler.callCount, 1)
+  const handlerAction = setHandler.args[0][0]
+  assert.equal(handlerAction.meta?.queue, true)
+})
+
 test('should set dispatchedAt meta', async () => {
   const action = {
     type: 'GET',

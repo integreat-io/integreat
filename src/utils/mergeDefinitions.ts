@@ -44,6 +44,7 @@ const mergeDefs = (
   jobs: mergeArrays(defs.jobs, def.jobs),
   identConfig: def.identConfig || defs.identConfig,
   queueService: def.queueService || defs.queueService,
+  disableQueuing: def.disableQueuing ?? defs.disableQueuing,
   flags: mergeFlags(defs.flags || {}, def.flags),
 })
 

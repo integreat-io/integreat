@@ -5,10 +5,9 @@ An integration layer written in TypeScript.
 [![npm Version](https://img.shields.io/npm/v/integreat.svg)](https://www.npmjs.com/package/integreat)
 [![Maintainability](https://api.codeclimate.com/v1/badges/a5bd9841a47ff9f74577/maintainability)](https://codeclimate.com/github/integreat-io/integreat/maintainability)
 
-The basic idea of Integreat is to make it easy to define how to send data to
-and receive data from a set of [**services**](#services), and expose them
-through a well defined interface, abstracting away the specifics of each
-service.
+The basic idea of Integreat is to make it easy to define how to send data to and
+receive data from a set of [**services**](#services), and expose them through a
+well defined interface, abstracting away the specifics of each service.
 
 There are a few concepts that makes this possible:
 
@@ -18,8 +17,8 @@ There are a few concepts that makes this possible:
   deal with familiar JavasScript objects, arrays, and primitive data types,
   regardless of what the service expects.
 - [**Mutation pipelines**](#mutations) let you define how the data coming from
-  or going to a service should be transformed. This includes changing the
-  overal structure, renaming properties, transforming and filtering values with
+  or going to a service should be transformed. This includes changing the overal
+  structure, renaming properties, transforming and filtering values with
   transformer functions, etc. You may also provide your own transformer
   functions.
 - [**Schemas**](#schemas) serve as a common normalization of data between
@@ -28,9 +27,9 @@ There are a few concepts that makes this possible:
   may send it to any service where you have set up the right mutations for this
   schema, again abstracting away all service details.
 
-All configuration is done through basic JSON-friendly structures, and you
-define your services with different endpoints, mutation pipelines,
-authentication schemes, etc.
+All configuration is done through basic JSON-friendly structures, and you define
+your services with different endpoints, mutation pipelines, authentication
+schemes, etc.
 
 Your configuration is spun up as an Integreat instance. To send and retrieve
 data, you dispatch [**actions**](#actions) to your instance and get
@@ -81,7 +80,8 @@ though, depends on how you define your services.
 Requires node v18.
 
 Note: This package is native [ESM](https://nodejs.org/api/esm.html). See this
-guide on how to [convert to or use ESM packages](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
+guide on how to
+[convert to or use ESM packages](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
 
 Install from npm:
 
@@ -101,9 +101,8 @@ usefulness of Integreat, but it shows you the simplest setup possible.
 
 Here, we fetch cat facts from the API endpoint
 'https://cat-fact.herokuapp.com/facts', which returns data in JSON and requires
-no authentication. The returned list of facts are mutated and cast to the
-`fact` schema. We only fetch data _from_ the service, and no data is sent _to_
-it.
+no authentication. The returned list of facts are mutated and cast to the `fact`
+schema. We only fetch data _from_ the service, and no data is sent _to_ it.
 
 ```javascript
 import Integreat from 'integreat'
@@ -188,8 +187,8 @@ The `response` object will look like this:
 
 # Integreat concepts
 
-As mentioned in the introduction, the building blocks of Integreat are
-services, transporters and adapters, mutation pipelines, and schemas.
+As mentioned in the introduction, the building blocks of Integreat are services,
+transporters and adapters, mutation pipelines, and schemas.
 
 ## Services
 
@@ -197,28 +196,27 @@ A service is the API, database, FTP server, queue, etc. that you want to get
 data from and/or set data to. We pass on a set of service definitions to
 Integreat, specifying what transporter, adapters, authentication schemas it
 requires, in adition to defining the different endpoints available on the
-service, how they should be called, and how data should be mutated in each
-case.
+service, how they should be called, and how data should be mutated in each case.
 
 We'll get back to the details of all of this in turn, but first we want to
 highlight how central the concept of a service is to Integreat. Basically, in
 Integreat "everything is a service". A simple REST/JSON API is a service, a
 database is a service, and everything external you want to communicate with are
-services. Want to set up a queue to handle actions one by one? That's a
-service. Want to cache data in a memory store? That's a service. Want to
-schedule actions to run on intervals? That's a service to. By simply defining
-services and their specifics, you may set up a variety of different types of
-configurations with the same few building blocks. This is very powerful as
-soon as you get into the right mindset.
+services. Want to set up a queue to handle actions one by one? That's a service.
+Want to cache data in a memory store? That's a service. Want to schedule actions
+to run on intervals? That's a service to. By simply defining services and their
+specifics, you may set up a variety of different types of configurations with
+the same few building blocks. This is very powerful as soon as you get into the
+right mindset.
 
-Services are configured by service definitions, and tells Integreat how to
-fetch data from a service, how to mutate this data to schemas, and how to send
-data back to the service.
+Services are configured by service definitions, and tells Integreat how to fetch
+data from a service, how to mutate this data to schemas, and how to send data
+back to the service.
 
 The service definition object includes the transporter id, adapter ids, any
 authentication method, the endpoints for fetching from and sending to the
-service, mutations that data to all endpoints will pass through, and options
-for transporters, adapters, etc.
+service, mutations that data to all endpoints will pass through, and options for
+transporters, adapters, etc.
 
 ```javascript
 {
@@ -245,17 +243,16 @@ pipeline for a service.
 
 The `auth` property should normally be set to the id of an
 [auth definition](#service-authentication), if the service requires
-authentication. In cases where the service is authenticated by other means,
-e.g. by including username and password in the uri, set the `auth` property to
-`true` to signal that this is an authenticated service. For services accepting
-incoming actions, `auth` should be set to an object with
+authentication. In cases where the service is authenticated by other means, e.g.
+by including username and password in the uri, set the `auth` property to `true`
+to signal that this is an authenticated service. For services accepting incoming
+actions, `auth` should be set to an object with
 `{ outgoing: <auth id | true>, incoming: <auth id | true>}`. To accept several
 incoming actions, provide an array of `<auth id | true>`, and they will be run
 from first to last until one of them returns an ident or an error other than
 `noaccess`.
 
-> [!NOTE]
-> When connecting to a service for listening, the `outgoing` auth is
+> [!NOTE] When connecting to a service for listening, the `outgoing` auth is
 > used. `incoming` is only used for validating the actions being dispatched
 > "back" from the service.
 
@@ -267,8 +264,8 @@ merged with the `options` object on the endpoint. See
 
 A service will have at least one endpoint, but often there will be several.
 Endpoints are the definitions of the different ways Integreat may interact with
-a service. You decide how you want to set up the endpoints and what is the
-right "endpoint design" for a service, but there might be one endpoint for each
+a service. You decide how you want to set up the endpoints and what is the right
+"endpoint design" for a service, but there might be one endpoint for each
 operation that can be done with a type of data.
 
 For example, let's say you have a simple REST API with blog articles and
@@ -287,11 +284,10 @@ one, creating, updating, and the same all over for users. Instead of urls and
 http verbs, as for REST, these endpoints will address different databases and
 different database operations (through the transporter).
 
-> [!NOTE]
-> This is not to say that Integreat requires you to set up endpoints
-> exactly as described in these examples, it might be that you would like to
-> set up an endpoint that handles many of these cases. The intention here is
-> just to give you an understanding of what an endpoint is in Integreat.
+> [!NOTE] This is not to say that Integreat requires you to set up endpoints
+> exactly as described in these examples, it might be that you would like to set
+> up an endpoint that handles many of these cases. The intention here is just to
+> give you an understanding of what an endpoint is in Integreat.
 
 When you dispatch an action, Integreat will figure out what service and what
 endpoint to send the action to. The target service is often specified in the
@@ -301,14 +297,13 @@ property, will be used.
 
 The `targetService` property will be set on the the action payload when it is
 sent to the transporter, before it goes through the middleware. There are two
-exceptions to this, however. `targetService` will not be set for a queued
-action (and it will not be removed if it is already set), and it will not be
-set for actions where the `meta.options.doSetTargetService` flag is set to
-`false`.
+exceptions to this, however. `targetService` will not be set for a queued action
+(and it will not be removed if it is already set), and it will not be set for
+actions where the `meta.options.doSetTargetService` flag is set to `false`.
 
-The matching to an endpoint is done by finding the endpoint whose `match`
-object matches the action with most accuracy. The rules of the endpoint
-matching is describe in more details [below](#match-properties).
+The matching to an endpoint is done by finding the endpoint whose `match` object
+matches the action with most accuracy. The rules of the endpoint matching is
+describe in more details [below](#match-properties).
 
 Here's the format of an endpoint definition:
 
@@ -345,27 +340,26 @@ response coming back. This might be what you need, but often you'll want to
 specify a few things:
 
 - `id`: The endpoint may have an id, which you may use to specify that you want
-  an action to go to this particular id. However, most of the time you'll set
-  up the `match` object so that Integreat will decide what endpoint to use for
-  the action you dispatch.
+  an action to go to this particular id. However, most of the time you'll set up
+  the `match` object so that Integreat will decide what endpoint to use for the
+  action you dispatch.
 - `match`: The match object is used to decide the right endpoint for an action.
   More one this in the [Match properties](#match-properties) section.
 - `validate`: This is an array of condition that have to be met in order for
-  Integreat to proceed with the endpoint. The `condition` is a mutation
-  pipeline that should return a truthy value for the validation to pass. Any
-  falsy value will cause the validation to fail. If `validate` is missing or
-  an empty array, no validation will be done. This may sound similar to `match
-  `, but `validate` is only processed after a match is found, and if the
-  validation fails, no other endpoint is considered. On a failing validation,
-  the `failResponse` is returned as the response from this action, or a
-  `badrequest` response if no `failResponse` is provided. There's also a
-  shorthand, where you set `failResponse` to a string, which will be the
-  `error` message of the `badrequest` response. The response is passed through
-  the mutation pipeline.
+  Integreat to proceed with the endpoint. The `condition` is a mutation pipeline
+  that should return a truthy value for the validation to pass. Any falsy value
+  will cause the validation to fail. If `validate` is missing or an empty array,
+  no validation will be done. This may sound similar to `match `, but `validate`
+  is only processed after a match is found, and if the validation fails, no
+  other endpoint is considered. On a failing validation, the `failResponse` is
+  returned as the response from this action, or a `badrequest` response if no
+  `failResponse` is provided. There's also a shorthand, where you set
+  `failResponse` to a string, which will be the `error` message of the
+  `badrequest` response. The response is passed through the mutation pipeline.
 - `mutate`: A mutation pipeline for the endpoint. The pipeline is run for both
   actions going to a service and the response coming back, so keep this in mind
-  when you set up this pipeline. See [Mutation pipelines](#mutations)
-  for more on how to define the mutation. `mutation` is an alias for `mutate`.
+  when you set up this pipeline. See [Mutation pipelines](#mutations) for more
+  on how to define the mutation. `mutation` is an alias for `mutate`.
 - `adapters`: An array of adapter ids that will be appended to the array of
   adapters set on the service.
 - `auth`: Auth config that will override the `auth` config on the service. See
@@ -383,10 +377,10 @@ specify a few things:
   data is not typed. The default is `false`, expcept for incoming endpoints
   (endpoints where `match` object has `incoming: true`) where the default value
   is `true`.
-- `castWithoutDefaults`: Set to `true` when you don't want to set default
-  values on casted data. This also means no `id` will be generated and no
-  `createdAt` or `updatedAt` will be set – when any of these are missing in
-  the data. Default is `false`.
+- `castWithoutDefaults`: Set to `true` when you don't want to set default values
+  on casted data. This also means no `id` will be generated and no `createdAt`
+  or `updatedAt` will be set – when any of these are missing in the data.
+  Default is `false`.
 - `options`: This object is merged with the `options` object on the service
   definition, and provide options for transporters and adapters. See
   [the `options` object](#options-object) for more on this.
@@ -396,8 +390,8 @@ specify a few things:
 An endpoint may specify none or more of the following match properties:
 
 - `type`: When set, the endpoint will only be used for actions with the
-  specified schema type (the schema's id). `type` may also be an array of
-  types, matching any one of the schemas in the list.
+  specified schema type (the schema's id). `type` may also be an array of types,
+  matching any one of the schemas in the list.
 - `scope`: May be `member`, `members`, `collection`, or `all`, to specify that
   the endpoint should be used to request one item (member) by id, several items
   by ids (members), or an entire collection of items. Setting this to `member`
@@ -409,32 +403,28 @@ An endpoint may specify none or more of the following match properties:
   match. `action` may also be a list of action types, matching any of these.
 - `params`: This object should list all params that this endpoint supports. A
   param in this context is any property on the action payload except `type`,
-  `id`, or `data`. Use the param name as key on this object and set the value
-  to `true` if it is required, and `false` if it is optional. When matching
-  endpoints, an action will only match if it has all the required params, and
-  in case several match, the endpoint with more specified params will be
-  preferred.
-- `incoming`: If this is `true`, it will only match incoming actions, if
-  `false` only outgoing, and if not set, it will match both.
-- `conditions`: An array of mutation pipelines that will be run on the action
-  to see if it's a fit for this endpoint. If all pipelines return a truthy
-  value, the endpoint is chosen (given that the other match properties also
-  match). We rely on JavaScript definition of 'truthy' here, so any value that
-  is not `false`, `null`, `undefined`, `0`, `NaN`, or `''` will be considered
-  truthy.
+  `id`, or `data`. Use the param name as key on this object and set the value to
+  `true` if it is required, and `false` if it is optional. When matching
+  endpoints, an action will only match if it has all the required params, and in
+  case several match, the endpoint with more specified params will be preferred.
+- `incoming`: If this is `true`, it will only match incoming actions, if `false`
+  only outgoing, and if not set, it will match both.
+- `conditions`: An array of mutation pipelines that will be run on the action to
+  see if it's a fit for this endpoint. If all pipelines return a truthy value,
+  the endpoint is chosen (given that the other match properties also match). We
+  rely on JavaScript definition of 'truthy' here, so any value that is not
+  `false`, `null`, `undefined`, `0`, `NaN`, or `''` will be considered truthy.
 
-> [!NOTE]
-> There used to be a `filters` property on the endpoint match object. It is
-> still supported, but it's deprecated and will be removed in v1.1. Please use
-> `conditions` instead.
+> [!NOTE] There used to be a `filters` property on the endpoint match object. It
+> is still supported, but it's deprecated and will be removed in v1.1. Please
+> use `conditions` instead.
 
-> [!NOTE]
-> Editor's note: Describe what incoming actions are, and give more details on
-> filters.
+> [!NOTE] Editor's note: Describe what incoming actions are, and give more
+> details on filters.
 
-There might be cases where several endpoints match an action, and in these
-cases the endpoint with the highest level of specificity will be used. E.g.,
-for a `GET` action asking for resources of type `entry`, an endpoint with both
+There might be cases where several endpoints match an action, and in these cases
+the endpoint with the highest level of specificity will be used. E.g., for a
+`GET` action asking for resources of type `entry`, an endpoint with both
 `action: 'GET'` and `type: 'entry'` is picked over an endpoint matching all
 `GET` actions regardless of type. For `params` and `filters` this is decided by
 the highest number of properties on these objects.
@@ -505,8 +495,8 @@ Example of an `options` object set on the service definition:
 ```
 
 Any properties set directly on the `options` object or on a `transporter`
-property, are treated as options for the transporter. If there are properties
-on both the `options` and a `transporter` object, they will be merged, with the
+property, are treated as options for the transporter. If there are properties on
+both the `options` and a `transporter` object, they will be merged, with the
 `transporter` object having priority if conflicts. This is a shallow merge, so
 objects used in the options will not be merged.
 
@@ -525,9 +515,9 @@ for clarity, but both will work.
 Adapter options may be given in an `adapters` object, where each adapter may
 have its own options, set with the id of the adapter as a key. In the example
 above, the `xml` adapter will be given the `namespaces` object. A requirement
-for this, is that the adapter actually have an id. Adapters provided directly
-on service definition may not have an id, but all adapters that are referenced
-by an id, will also be given options set on that id, which is the common behavior.
+for this, is that the adapter actually have an id. Adapters provided directly on
+service definition may not have an id, but all adapters that are referenced by
+an id, will also be given options set on that id, which is the common behavior.
 
 Finally, when all this sorting have been done on options from both the service
 definition and an endpoint, the two options structures are merged before being
@@ -608,12 +598,11 @@ Integreat supports getting and setting metadata for a service. The most common
 use of this is to keep track of when data of a certain type was last synced.
 
 Some services may have support for storing their own metadata, but usually you
-set up a dedicated service for storing other services' metadata. A few
-different pieces goes into setting up a meta store:
+set up a dedicated service for storing other services' metadata. A few different
+pieces goes into setting up a meta store:
 
 - A meta schema with the fields available as metadata
-- A service for storing metadata, with an endpoint suporting the metadata
-  schema
+- A service for storing metadata, with an endpoint suporting the metadata schema
 - Possible a metadata mutation for the metadata service
 
 When all of this is set up, you activate the metadata on the service the
@@ -657,13 +646,13 @@ Integreat has transporters for some common cases, and more may come:
 - [MQTT](https://github.com/integreat-io/integreat-transporter-mqtt)
 - [Redis](https://github.com/integreat-io/integreat-transporter-redis)
 
-You may write your own transporters if your case is not covered by any of
-these. Documentation on developing transporters are coming.
+You may write your own transporters if your case is not covered by any of these.
+Documentation on developing transporters are coming.
 
 Integreat will handle the transporters based on you configurations, but there
 are some specifics to each transporter, like HTTP needing an `uri` option or
-MongoDb needing a `collection` option. See the documentation of each
-transporter for more.
+MongoDb needing a `collection` option. See the documentation of each transporter
+for more.
 
 ## Adapters
 
@@ -703,10 +692,10 @@ with the service or a third-party service, like with OAuth2.
 When [setting up a service](#services), you may provide it with an auth id that
 refers to a [service authentication definition](#service-authentication), that
 again refers to an authenticator by id. The service auth definition also holds
-options for the authenticator, so when assigning an auth id to a service,
-you're assigning it an authenticator with those specific options. Another
-service may use the same authenticator, but with different options, and you
-would set this up with a different service authentication definition.
+options for the authenticator, so when assigning an auth id to a service, you're
+assigning it an authenticator with those specific options. Another service may
+use the same authenticator, but with different options, and you would set this
+up with a different service authentication definition.
 
 Authentication for outgoing actions are done when sending the action. When
 authenticated, an auth object is retrieved with the auth-as method specified on
@@ -714,11 +703,11 @@ the transporter (e.g. `asHttpHeaders` for the http transporter), or on the
 `overrideAuthAsMethod` in [auth options](#service-authentication) if set. The
 auth object is passed to the transporter on the action `meta.auth` prop. It is
 applied just before sending it, though, so it will be available to service
-middleware, but not to the mutation pipeline. This is done to expose
-credentials in as few places as possible. If you however _want_ to have the
-auth object in mutations, set `authInData` to `true` on the service or
-endpoint options, and authentication will be done in the `preflightAction`
-step instead, making it available on `meta.auth` throughout the entire mutation pipeline.
+middleware, but not to the mutation pipeline. This is done to expose credentials
+in as few places as possible. If you however _want_ to have the auth object in
+mutations, set `authInData` to `true` on the service or endpoint options, and
+authentication will be done in the `preflightAction` step instead, making it
+available on `meta.auth` throughout the entire mutation pipeline.
 
 For incoming actions, authentication is done when a listening action calls the
 `authenticate()` callback. The `validate()` method on the authenticator is used
@@ -727,30 +716,29 @@ here, which will provide the transporter with an authorized ident.
 Available authenticators:
 
 - `action`: Will dispatch an action and use the response data to create an
-  authentication. The `options` should have the action type as `action`, and
-  the entire payload as `payload`. The response data should have an `auth`
-  object, that will be used directly, and an optional `expire` that is a
-  timestamp on which the auth will expire, in milleseconds since Epoc
-  (1970-01-01). If no `expire` is returned, the `expireIn` option will be used
-  if present. It is given as milliseconds before the auth should expire, or a
-  `ms` string like `'1h'`.
+  authentication. The `options` should have the action type as `action`, and the
+  entire payload as `payload`. The response data should have an `auth` object,
+  that will be used directly, and an optional `expire` that is a timestamp on
+  which the auth will expire, in milleseconds since Epoc (1970-01-01). If no
+  `expire` is returned, the `expireIn` option will be used if present. It is
+  given as milliseconds before the auth should expire, or a `ms` string like
+  `'1h'`.
 - `http`: Supports http native authentications, like `Basic` and `Bearer`. It's
   included with the
   [HTTP transporter](https://github.com/integreat-io/integreat-transporter-http).
 - `ident`: Will always grant access and `validate()` will return an ident with
   the id provided in `identId` on the `options` object, or `'anonymous'` if no
   `identId` is provided. This is built into Integreat.
-- `options`: Will pass on the options as authentication, so whatever you
-  provide here is the authentication. What options to provide, then, is
-  depending on what the relevant transporter requires. For outgoing actions,
-  the options are provided as is. Incoming action are validated agains the
-  values given in the options (the keys may be dot notation paths in this
-  case, and `identId` is excluded). An ident with the `identId` from the
-  options as `id`, is returned if the action matches. This is built into
-  Integreat.
-- `token`: A simple way of authenticating with a given token. For HTTP
-  requests, the token will be provided as a `Authorization` header, and a
-  configurable prefix like `Basic` or `Bearer`. This is built into Integreat.
+- `options`: Will pass on the options as authentication, so whatever you provide
+  here is the authentication. What options to provide, then, is depending on
+  what the relevant transporter requires. For outgoing actions, the options are
+  provided as is. Incoming action are validated agains the values given in the
+  options (the keys may be dot notation paths in this case, and `identId` is
+  excluded). An ident with the `identId` from the options as `id`, is returned
+  if the action matches. This is built into Integreat.
+- `token`: A simple way of authenticating with a given token. For HTTP requests,
+  the token will be provided as a `Authorization` header, and a configurable
+  prefix like `Basic` or `Bearer`. This is built into Integreat.
 - [`jwt`](https://github.com/integreat-io/integreat-authenticator-jwt): Will
   generate and encode a JavaScript Web Token (JWT) based on the options.
 - [`oauth2`](https://github.com/integreat-io/integreat-authenticator-oauth2):
@@ -759,23 +747,23 @@ Available authenticators:
 
 ## Mutations
 
-Both on the service and on endpoints, you define mutation pipelines. The
-service mutation is run before the endpoint mutation for data coming from a
-service, and in the oposite order when going to a service.
+Both on the service and on endpoints, you define mutation pipelines. The service
+mutation is run before the endpoint mutation for data coming from a service, and
+in the oposite order when going to a service.
 
-A nice - but sometimes complicated - thing about mutations, is that they are
-run in both directions. They are by default defined for mutating data coming
-_from_ a service, and will be run in reverse for data going _to_ a service. In
-some cases this reversing of the pipeline will work as expected without
-modifications -- you define the mutation pipeline for data coming _from_ the
-service, and the reversed pipeline works _to_ as well. But many times you need
-to make adjustments and sometimes you'll have to have separate steps based on
-the direction. We'll get into more details in the following.
+A nice - but sometimes complicated - thing about mutations, is that they are run
+in both directions. They are by default defined for mutating data coming _from_
+a service, and will be run in reverse for data going _to_ a service. In some
+cases this reversing of the pipeline will work as expected without modifications
+-- you define the mutation pipeline for data coming _from_ the service, and the
+reversed pipeline works _to_ as well. But many times you need to make
+adjustments and sometimes you'll have to have separate steps based on the
+direction. We'll get into more details in the following.
 
-A mutation pipeline consists of one or more steps that the data will go
-through, before coming out on the other in the desired shape. It helps
-picturing this as an actual pipeline. After each step, data will be in a
-different shape, and this is the input to the next step.
+A mutation pipeline consists of one or more steps that the data will go through,
+before coming out on the other in the desired shape. It helps picturing this as
+an actual pipeline. After each step, data will be in a different shape, and this
+is the input to the next step.
 
 You define a pipeline in Integreat with an array, although for a pipeline with
 only one step, you may skip the array for simplicity.
@@ -784,18 +772,18 @@ Each step may be one of the following:
 
 - [**A dot notation path**](#dot-notation-paths), e.g. `path.to.data`. The data
   at that path will be extracted, and will be provided as the data to the next
-  step in the pipeline. When going in reverse, the data will be set on that
-  path instead.
+  step in the pipeline. When going in reverse, the data will be set on that path
+  instead.
 - **A mutation object** is an object that basically describes the object you
   want as a result, where the keys are dot notation paths and the values are
   mutation pipelines. Each pipeline on the mutation object will be run on the
   data, and then set on the path, resulting in an object that will be passed on
   to the next step. Setting `$iterate: true` on the object will cause it to
   iterate over items in an array, otherwise it will be applied to the array.
-  Setting `$modify: true` will cause any properties on an object in the
-  pipeline not set in the mutation, to be included, much like the spread in
-  JavaScript. Setting `$modify` to a path works the same, but you will spread
-  from the object at the path (`$modify: true` is equal to `$modify: '.'`).
+  Setting `$modify: true` will cause any properties on an object in the pipeline
+  not set in the mutation, to be included, much like the spread in JavaScript.
+  Setting `$modify` to a path works the same, but you will spread from the
+  object at the path (`$modify: true` is equal to `$modify: '.'`).
 - **A transform object** letting you run a transformer function on the data,
   e.g. `{ $transform: 'number' }` to transform the value into a number, or
   `undefined` if not possible.
@@ -854,8 +842,8 @@ return `[{ id: 'john' }]`. Arrays count as one level, so after
 A double carret `^^` takes you to the top -- the root -- so after
 `content.articles[0].id`, `^^.content.authors` returns `[{ id: 'john' }]`.
 
-Carret notations -- parents and roots -- does not currently work in reverse,
-but they might in a future version.
+Carret notations -- parents and roots -- does not currently work in reverse, but
+they might in a future version.
 
 ### Non-values
 
@@ -885,16 +873,16 @@ configure how data from A will be mutated to a schema, and then have data in
 that schema will be mutated and sent to B.
 
 This is a useful abstraction, and if you ever need to change one side, you can
-do so without involving the other side. If you need to switch out service B
-with service C, you can do so without involving the configuration of service
-A, or you can send data to both B and C, using the same setup for service A.
+do so without involving the other side. If you need to switch out service B with
+service C, you can do so without involving the configuration of service A, or
+you can send data to both B and C, using the same setup for service A.
 
 To be clear, you can setup flows without schemas in Integreat, but then you may
 loose this flexibility and maintainability.
 
-A schema describe the data you expected to get out of Integreat, or send
-through it. You basically define the fields and their types, and may then cast
-data to that shape. Note that data on an action for a specified type, will be
+A schema describe the data you expected to get out of Integreat, or send through
+it. You basically define the fields and their types, and may then cast data to
+that shape. Note that data on an action for a specified type, will be
 automatically cast to that type.
 
 ```javascript
@@ -924,13 +912,12 @@ automatically cast to that type.
   `plural: 'entries'`. This is not used by Integreat right now, but it may be
   used in the future for error messages, generating APIs from schemas, etc.
 - `service`: You may specify a default service for the schema when it makes
-  sense. This allows you to dispatch an action for a type without specifying
-  the target service, e.g. `{ type: 'GET', payload: { type: 'article' } }`,
-  and have Integreat use the default service. This is a way of hiding
-  configuration details from the code dispatching the actions, and you may
-  also change the default service without changing the dispatching code if
-  need be. You may always override this by specifying a `service` on the
-  action payload.
+  sense. This allows you to dispatch an action for a type without specifying the
+  target service, e.g. `{ type: 'GET', payload: { type: 'article' } }`, and have
+  Integreat use the default service. This is a way of hiding configuration
+  details from the code dispatching the actions, and you may also change the
+  default service without changing the dispatching code if need be. You may
+  always override this by specifying a `service` on the action payload.
 - `shape`: This is where you define all the fields, see
   [the section below](#the-shape-of-a-schema).
 - `generateId`: Set this to `true` to generate a unique id for the `id` field
@@ -941,15 +928,15 @@ automatically cast to that type.
   of data cast to a schema will then be controlled by the rules you set here.
   See [Access rules](#access-rules) below for details on these rules. Note that
   `access` is optional, but when you get data from a service where any form of
-  authentication is used to access the data, you will not be able to do
-  anything with the data unless you cast it to a schema with `access` set up
-  (or specifically says that you allow raw data from that endpoint).
+  authentication is used to access the data, you will not be able to do anything
+  with the data unless you cast it to a schema with `access` set up (or
+  specifically says that you allow raw data from that endpoint).
 
 ### The shape of a schema
 
-The shape is defined by an object where each key is the id of a field, which
-may contain only alphanumeric characters, and may not start with a digit. A
-schema cannot have the same id as a primitive type (see list below).
+The shape is defined by an object where each key is the id of a field, which may
+contain only alphanumeric characters, and may not start with a digit. A schema
+cannot have the same id as a primitive type (see list below).
 
 The values on this object define the types of the fields and a few other
 optional features:
@@ -965,10 +952,9 @@ optional features:
 The `$type` prop sets the type of the field. The available primitive types, are
 `string`, `integer`, `float` (or `number`), `boolean`, and `date`. A field may
 also have another schema as its type, in which case the id of the schema is set
-in `$type`. An example can be an
-`article` schema with an `author` field of type `user`, referring to a schema
-with id `user`. When casting the `article`, data on the `author` prop will be
-cast with the `user` schema.
+in `$type`. An example can be an `article` schema with an `author` field of type
+`user`, referring to a schema with id `user`. When casting the `article`, data
+on the `author` prop will be cast with the `user` schema.
 
 The `default` value will be used when the field is `undefined`, `null`, or not
 preset in data object being cast to this schema. If `default` is set to a
@@ -976,9 +962,9 @@ function, the function will be run with no argument, and the returned value is
 used as the default value. When no `default` is given, `undefined` is used.
 
 The `const` value override any value you provide to the field. It may be useful
-if you want a field to always have a fixed value. Just as for `default`, you
-may set it to a function, in which case the function will be run without
-arguments and the returned value will be used.
+if you want a field to always have a fixed value. Just as for `default`, you may
+set it to a function, in which case the function will be run without arguments
+and the returned value will be used.
 
 If both `const` and `default` are set, `const` will be used.
 
@@ -1032,20 +1018,20 @@ When data is cast to a schema, the data will be in the following format:
   universally unique id will be generated for you.
 - `$type`: Set to the id of the schema by Integreat. This is a signal that the
   data has been cast.
-- `createdAt`: This is not mandatory, but has special meaning. When a schema
-  has a `createdAt` field, but the date is not set in the data, it will be set
-  to the same as `updatedAt` (if provided) or to the current date/time.
-- `updatedAt`: Just as `createdAt`, this is not mandatory. When a schema has
-  an `updatedAt` field, and the date is not set in the data, it will be set to
-  the same as `createdAt` (if provided) or the current date/time.
+- `createdAt`: This is not mandatory, but has special meaning. When a schema has
+  a `createdAt` field, but the date is not set in the data, it will be set to
+  the same as `updatedAt` (if provided) or to the current date/time.
+- `updatedAt`: Just as `createdAt`, this is not mandatory. When a schema has an
+  `updatedAt` field, and the date is not set in the data, it will be set to the
+  same as `createdAt` (if provided) or the current date/time.
 - `<key>`: Then follows the values of all the fields specified in the schema.
   Any value not provided in the data will be set to their default value, unless
   `castWithoutDefaults` is set to `true` in
   [the endpoint definition](#endpoints). When casting a value results in
   `undefined`, it will not be included on the returned object. Fields that has
   the `id` of other schemas as their type, will be objects. If only the id is
-  provided in the data, the `{ id: <string>, $ref: <schema id> }` format will
-  be used, with `$ref` being the id of the field type schema. When more data is
+  provided in the data, the `{ id: <string>, $ref: <schema id> }` format will be
+  used, with `$ref` being the id of the field type schema. When more data is
   provided, Integreat will cast it to the target schema and provide the entire
   data object, or array of objects, with the relevant `$type`.
 
@@ -1054,11 +1040,10 @@ When data is cast to a schema, the data will be in the following format:
 Set the `access` property on a schema to enforce permission checking. This
 applies to any service that provides data in this schema.
 
-The simplest access rule is `auth`, which means that anyone can do anything
-with the data of this schema, as long as they are authenticated. Being
-authenticated, in this context, means that the dispatched action has an
-`ident` in the `meta` object. See [the section on idents](#idents) for more on
-this.
+The simplest access rule is `auth`, which means that anyone can do anything with
+the data of this schema, as long as they are authenticated. Being authenticated,
+in this context, means that the dispatched action has an `ident` in the `meta`
+object. See [the section on idents](#idents) for more on this.
 
 Example of a schema with an access rule:
 
@@ -1072,11 +1057,10 @@ Example of a schema with an access rule:
 }
 ```
 
-To signal that the schema really has no need for authorization, use `all`.
-This is not the same as not setting the `auth` prop, as `all` will override
-Integreat's principle of not letting authorized data out of Integreat without
-an access rule. `all` allows anybody to access the data, even the
-unauthenticated.
+To signal that the schema really has no need for authorization, use `all`. This
+is not the same as not setting the `auth` prop, as `all` will override
+Integreat's principle of not letting authorized data out of Integreat without an
+access rule. `all` allows anybody to access the data, even the unauthenticated.
 
 On the other end of the spectrum, `none` will allow no one to access data cast
 to this schema, no matter who they are.
@@ -1093,16 +1077,16 @@ The following access rule props are available:
   above, where we provided this string instead of a access rule object.
 - `role`: Authorize only idents with this `role`. May also be an array.
 - `ident`: Authorize only idents with this precise `id`. May also be an array.
-- `roleFromField`: Same as `role`, except the role is gotten from a field in
-  the schema. When authorizing data cast to this schema, the value of the role
-  field needs to be identical to (one of) the role(s) of the ident.
+- `roleFromField`: Same as `role`, except the role is gotten from a field in the
+  schema. When authorizing data cast to this schema, the value of the role field
+  needs to be identical to (one of) the role(s) of the ident.
 - `identFromField` - The same as `roleFromField`, but for an ident id.
 
-In addition, you may override the general access rules of a schema with
-specific rules for a type of action, by setting an `action` object with access
-rules for action types. Here's an example of an access definition for allowing
-all authorized idents to `GET` data in a certain shema, requiring the role
-`admin` for `SET`s, and disallowing all other actions with the general rule
+In addition, you may override the general access rules of a schema with specific
+rules for a type of action, by setting an `action` object with access rules for
+action types. Here's an example of an access definition for allowing all
+authorized idents to `GET` data in a certain shema, requiring the role `admin`
+for `SET`s, and disallowing all other actions with the general rule
 `allow: 'none'`:
 
 ```javascript
@@ -1122,12 +1106,12 @@ all authorized idents to `GET` data in a certain shema, requiring the role
 ```
 
 Note that these action specific rules only applies to actions being sent to a
-service. Some actions will never reach a service, but will instead trigger
-other actions, and access will be granted or rejected only for the actions
-that are about to be sent to a service. E.g. when you dispatch a `SYNC`
-action, it starts off by dispatching one or more `GET` actions. The `SYNC`
-action is not subjected to any access rules, but the `GET` actions are, and so
-the `SYNC` will fail if one of the `GET` is rejected.
+service. Some actions will never reach a service, but will instead trigger other
+actions, and access will be granted or rejected only for the actions that are
+about to be sent to a service. E.g. when you dispatch a `SYNC` action, it starts
+off by dispatching one or more `GET` actions. The `SYNC` action is not subjected
+to any access rules, but the `GET` actions are, and so the `SYNC` will fail if
+one of the `GET` is rejected.
 
 Another example, intended for authorizing only the ident matching a user:
 
@@ -1142,8 +1126,8 @@ Another example, intended for authorizing only the ident matching a user:
 ```
 
 Here, only actions where the ident id is the same as the id of the user data,
-will be allowed. This means that authenticated users (idents) may only
-only access their own user data.
+will be allowed. This means that authenticated users (idents) may only only
+access their own user data.
 
 ## Actions
 
@@ -1163,13 +1147,14 @@ An action looks like this:
 }
 ```
 
-- `type`: This is the id of one [of the action handlers](#available-action-handlers)
-  that comes with Integreat, e.g. `GET`. When you dispatch an action, it is
-  handed off to this handler (after some inital preperation). You may write
-  your own action handlers as well.
-- `payload`: Holds parameters and [data](#typed-data) for this action. There
-  are some reserved [payload properties](#payload-properties), and the rest
-  will be made available to you in the mutation pipeline.
+- `type`: This is the id of one
+  [of the action handlers](#available-action-handlers) that comes with
+  Integreat, e.g. `GET`. When you dispatch an action, it is handed off to this
+  handler (after some inital preperation). You may write your own action
+  handlers as well.
+- `payload`: Holds parameters and [data](#typed-data) for this action. There are
+  some reserved [payload properties](#payload-properties), and the rest will be
+  made available to you in the mutation pipeline.
 - `meta`: Holds information about the action that does not belong in the
   payload, like the ident of the user dispatching, action id, etc. There are
   some reserved [meta properties](#meta-properties), but you may add your own
@@ -1178,42 +1163,41 @@ An action looks like this:
 When an action is dispatched, it returns a [response object](#action-response)
 with status, data, error message, etc.
 
-Note that in a mutation pipeline, action handler, or middleware, the
-response object is provided as a fourth property on the action. You will most
-likely meet this at least when setting up mutations.
+Note that in a mutation pipeline, action handler, or middleware, the response
+object is provided as a fourth property on the action. You will most likely meet
+this at least when setting up mutations.
 
 Integreat will keep track of how many actions have been dispatched and are
 currently being process. The Instance object (`great` in
 [the example](#basic-example) at the beginning of this README) has a
 `dispatchedCount` property that gives you the number dispatched actions waiting
-to be completed. Every time all dispatched are completed, a `done` event will
-be emitted.
+to be completed. Every time all dispatched are completed, a `done` event will be
+emitted.
 
 ### Payload properties
 
 The payload is, together with the action `type`, a description to Integreat and
 the service of what to do. A design principle of Integreat has been to have as
 little specifics in these payload, so actions may be discpatched to service
-without knowing how the service works. This is not always possible, at least
-not yet, but it's a good principle to follow, also when you configure services
-and plan what props need to be sent in the action payload.
+without knowing how the service works. This is not always possible, at least not
+yet, but it's a good principle to follow, also when you configure services and
+plan what props need to be sent in the action payload.
 
 You may set any properties on the payload, and they will be be available to you
-in the service endpoint match and in the service mutations. Some properties
-have special meanings, though, and you should avoid using them for anything
-else:
+in the service endpoint match and in the service mutations. Some properties have
+special meanings, though, and you should avoid using them for anything else:
 
 - `type`: The type of the data the action sends and/or receives. This refers to
-  the `id` of a schema, and you will usually want to set this. Data provided
-  in the payload `data` and response `data` will be cast to this schema. If
-  you're dealing with several types in one action, you may set an array of
-  types, but will have to cast the data in the mutation yourself. Integreat
-  will validate that the data you send and receive is indeed of that type, and
-  will give you an auth error if not. (See
+  the `id` of a schema, and you will usually want to set this. Data provided in
+  the payload `data` and response `data` will be cast to this schema. If you're
+  dealing with several types in one action, you may set an array of types, but
+  will have to cast the data in the mutation yourself. Integreat will validate
+  that the data you send and receive is indeed of that type, and will give you
+  an auth error if not. (See
   [`allowRawRequest` and `allowRawResponse` on endpoints](#endpoints) for an
   exception.)
-- `id`: You provide an id when you want to address a specific data item,
-  usually when you want to fetch one data item with an action like
+- `id`: You provide an id when you want to address a specific data item, usually
+  when you want to fetch one data item with an action like
   `{ type: 'GET', payload: { type: 'article', id: '12345' } }`. You may also
   supply an array of ids to fetch several data items by id. When setting data,
   the id will instead be specified in the `data` when appropriate.
@@ -1226,11 +1210,11 @@ else:
 - `targetService`: An alias of `service`.
 - `sourceService`: When data comes from a different service and has not been
   mutated and cast yet, the `sourceService` property will tell Integreat to run
-  the data through the source service configuration before passing the action
-  on to an action handler. An example may be data coming in through an API,
-  where the API is configured as a service in Integreat. Note that this
-  property is usually set by transporters in their `listen()` methods, but you
-  may also set it directly on the action when it makes sense.
+  the data through the source service configuration before passing the action on
+  to an action handler. An example may be data coming in through an API, where
+  the API is configured as a service in Integreat. Note that this property is
+  usually set by transporters in their `listen()` methods, but you may also set
+  it directly on the action when it makes sense.
 - `endpoint`: Set this to the `id` of a service endpoint when you want to
   override the endpoint match rules of Integreat. This should only be used when
   it is really necessary. Normally, you should instead design the match
@@ -1249,13 +1233,13 @@ page at a time, the following properties may be supported:
   of items specified in `pageSize`. If you ask for 500 items, the first action
   should have `pageOffset: 0` (or not specified), the next action
   `pageOffset: 500`, then `pageOffset: 1000`, and so on.
-- `page`: The index of the page to fetch. Unlike most other indexes, this
-  starts with `1` being the first page. The effect is the same as
-  `pageOffset`, it's just a different way of specifying it. `page: 1` is the
-  same as `pageOffset: 0`, and `page: 2` is the same as `pageOffset: 500`,
-  given a `pageSize: 500`. Integreat will actually calculate both before
-  sending it to the transporter, as different types of services support
-  different types of pagination.
+- `page`: The index of the page to fetch. Unlike most other indexes, this starts
+  with `1` being the first page. The effect is the same as `pageOffset`, it's
+  just a different way of specifying it. `page: 1` is the same as
+  `pageOffset: 0`, and `page: 2` is the same as `pageOffset: 500`, given a
+  `pageSize: 500`. Integreat will actually calculate both before sending it to
+  the transporter, as different types of services support different types of
+  pagination.
 - `pageAfter`: As an alternative to specifying the number of items to skip, you
   may ask for the items after the item with the id you provide as `pageAfter`.
   If the last item of the first page is `'12345'`, you may set
@@ -1269,15 +1253,14 @@ page at a time, the following properties may be supported:
   that this id may hold internal logic from the transporter, but you should
   never rely on this logic and simply use it as an id.
 
-> [!IMPORTANT]
-> Pagination has to be supported by the service and your
-> service configuration, and sometimes also the transporter. Integreat prepares
-> and passes on these pagination properties, but if the service disregards
-> them, there is little Integreat can do – except limiting the number of items
+> [!IMPORTANT] Pagination has to be supported by the service and your service
+> configuration, and sometimes also the transporter. Integreat prepares and
+> passes on these pagination properties, but if the service disregards them,
+> there is little Integreat can do – except limiting the number of items
 > returned. It's up to you to figure out how to configure pagination for a
 > service, but youshould use these pagination properties to support it, to make
-> this predictable. It also lets you use actions such as `GET_ALL`, that
-> support pagination.
+> this predictable. It also lets you use actions such as `GET_ALL`, that support
+> pagination.
 
 Finally, there are some properties that has no special meaning to Integreat
 itself, but that may be set on incoming actions from transporters. These should
@@ -1302,16 +1285,16 @@ ideally be used in the same way or avoided:
 
 ### Meta properties
 
-The action meta object is for information about an action that does not
-directly define the action itself. The difference may be subtle in some cases,
-but the general rule is a piece of information affects how the action is run,
-it should be in the payload. E.g. the type of items to fetch is in the
-payload, while the time the action was dispatched would go in the meta.
+The action meta object is for information about an action that does not directly
+define the action itself. The difference may be subtle in some cases, but the
+general rule is a piece of information affects how the action is run, it should
+be in the payload. E.g. the type of items to fetch is in the payload, while the
+time the action was dispatched would go in the meta.
 
-This rule does not always hold, e.g. for information on the user dispatching
-the action in `ident` on the meta object. Different idents may result in
-different data being returned from the service, but still the action to
-perform is the same, so it makes sense to have the ident in the meta object.
+This rule does not always hold, e.g. for information on the user dispatching the
+action in `ident` on the meta object. Different idents may result in different
+data being returned from the service, but still the action to perform is the
+same, so it makes sense to have the ident in the meta object.
 
 You may set your own meta properties, but in most cases you'll probably rather
 set payload properties.
@@ -1319,43 +1302,41 @@ set payload properties.
 Current meta properties reserved by Integreat:
 
 - `ident`: The ident to authorize the action with. May hold an `id`, `roles`,
-  `tokens`, and a few other options. See
-  [the section on idents](#idents).
+  `tokens`, and a few other options. See [the section on idents](#idents).
 - `id`: The id of the action itself. You may set this yourself or let Integreat
   generate a universally unique id for you. Useful for logging and may be used
   by queues.
 - `cid`: Correlation id. When dispatching an action without `meta.cid`,
   Integreat will set it to the same as the `meta.id`. All actions that are then
-  dispatched as a consequence of that action (e.g. a `SYNC` or `GET_META`),
-  will have the same `cid`. The `cid` may then be used to group actions
-  belonging together, e.g. when displaying logs. The dispatching code set the
-  `cid` on an action, e.g. to correlate an action and the actions it
-  dispatches, with other operations outside Integreat.
-- `gid`: Group id. This has some of the same purpose as `cid`, as it may be
-  used to group actions that belong together, but `gid` is not always set, and
-  will be used for smaller groups of actions than `cid`. Right now, `RUN`,
-  `SYNC`, and `GET_ALL` will use the `id` of the original action as `gid` for
-  all actions they dispatched.
+  dispatched as a consequence of that action (e.g. a `SYNC` or `GET_META`), will
+  have the same `cid`. The `cid` may then be used to group actions belonging
+  together, e.g. when displaying logs. The dispatching code set the `cid` on an
+  action, e.g. to correlate an action and the actions it dispatches, with other
+  operations outside Integreat.
+- `gid`: Group id. This has some of the same purpose as `cid`, as it may be used
+  to group actions that belong together, but `gid` is not always set, and will
+  be used for smaller groups of actions than `cid`. Right now, `RUN`, `SYNC`,
+  and `GET_ALL` will use the `id` of the original action as `gid` for all
+  actions they dispatched.
 - `dispatchedAt`: Timestamp for when the action was dispatched (set by
   Integreat).
-- `queue`: Signals to Integreat that an action may be queued. Set to `true`
-  when you want the action to be queued, but executed as soon as possible. Set
-  to a UNIX timestamp (number) to schedule for a later time. If no queue is
-  set up, the action will be dispatched right away. More on this under
+- `queue`: Signals to Integreat that an action may be queued. Set to `true` when
+  you want the action to be queued, but executed as soon as possible. Set to a
+  UNIX timestamp (number) to schedule for a later time. If no queue is set up,
+  the action will be dispatched right away. More on this under
   [the section on queues](#queues).
 - `queuedAt`: Timestamp for when the action was pushed to the queue (set by
   Integreat).
-- `options`: Used for passing the processed service endpoint options object to
-  a transporter. The `options` object is available through mutations, so that
-  you may modify it futher before it goes to the transporter. Note that only
-  the transporter options are provided here, not the adapter options.
+- `options`: Used for passing the processed service endpoint options object to a
+  transporter. The `options` object is available through mutations, so that you
+  may modify it futher before it goes to the transporter. Note that only the
+  transporter options are provided here, not the adapter options.
 - `authorized`: An internal flag signaling that the action has been authorized.
   Will be removed from any dispatched actions.
 
 ### Action response
 
-When you dispatch an action, you will get a response object back in this
-format:
+When you dispatch an action, you will get a response object back in this format:
 
 ```javascript
 {
@@ -1389,17 +1370,16 @@ format:
   this property will hold a code for where the error originated. The goal is to
   set it as close to the actual origin as possible. See
   [list of origin codes](#origin-codes) below.
-- `access`: An object holding the `ident` that was actually being used. This
-  may be different than the `meta.ident` on the action, as the ident may also
-  be mutated or completed with roles etc. along the way.
+- `access`: An object holding the `ident` that was actually being used. This may
+  be different than the `meta.ident` on the action, as the ident may also be
+  mutated or completed with roles etc. along the way.
 - `paging`: For services and transporters that support
   [pagination](#pagination), this object will hold information about how to get
   the next or previous page, in a `next` or `prev` object. These objects are
-  essentially the payloads you need to dispatch (with the same action `type`
-  and meta), to get the next or previous page. If there is no next or previous
-  page, the corresponding prop will not be set on the `paging` object. When
-  pagination is not relevant or used, the `paging` object may be missing
-  completely.
+  essentially the payloads you need to dispatch (with the same action `type` and
+  meta), to get the next or previous page. If there is no next or previous page,
+  the corresponding prop will not be set on the `paging` object. When pagination
+  is not relevant or used, the `paging` object may be missing completely.
 - `params`: Integreat never sets this, but you may set it in your mutations to
   provide parameters from a service that does not belong in the `data`.
 - `headers`: Integreat never sets this, but you may set it in your mutations to
@@ -1409,8 +1389,7 @@ format:
   `SYNC` or `RUN`. The action handlers _may_ then provide an array of all the
   sub-response objects here.
 
-> [!NOTE]
-> Editor's note: Is it correct that queues return the id in the data?
+> [!NOTE] Editor's note: Is it correct that queues return the id in the data?
 
 When the status is `queued`, the id of the queued action may found in
 `response.data.id`. This is the id assigned by the queue, and not necessarily
@@ -1418,8 +1397,8 @@ the same as `action.meta.id`.
 
 ### Status codes
 
-The `status` property on the action response will be one of the following
-status codes:
+The `status` property on the action response will be one of the following status
+codes:
 
 - `ok`: Everything is well, data is returned as expected
 - `queued`: The action has been queued. This is regarded as a success status
@@ -1427,8 +1406,8 @@ status codes:
   sync
 - `notfound`: Tried to get or modify a resource that does not exist
 - `timeout`: The attempt to perform the action timed out
-- `toomany`: Too many actions/requests were sent. This is normally used for
-  rate limiting errors from a service.
+- `toomany`: Too many actions/requests were sent. This is normally used for rate
+  limiting errors from a service.
 - `autherror`: An authentication request failed
 - `noaccess`: Authentication is required or the provided auth is not enough
 - `badrequest`: Request data is not as expected
@@ -1437,8 +1416,8 @@ status codes:
 
 ### Origin codes
 
-The `origin` property is not exclusively defined, but these are some of the
-more common codes:
+The `origin` property is not exclusively defined, but these are some of the more
+common codes:
 
 - `service:<service id>`: The error originated in service. There may also be
   third level of detail here, if the service sets an origin code of its own.
@@ -1451,16 +1430,16 @@ more common codes:
 - `mutate:request`: The error was set in a request mutation pipeline.
 - `mutate:response`: The error was set in a response mutation pipeline.
 - `auth:action`: The error occured while attempting to authorize the action.
-- `auth:data`: The error occured while attempting to authorize data in an
-  action payload or a response.
+- `auth:data`: The error occured while attempting to authorize data in an action
+  payload or a response.
 - `auth:service:<service id>`: The error occured while attempting to authorize
   the service with the given id.
 - `auth:service:<service id>:<authenticator id>`: The error occured while
   attempting to authorize the service with the given id, through the given
   authenticator.
-- `handler:<handler id>`: The error occurred with the handler with the given
-  id, e.g. `'handler:GET'`. This means the error did happen in the service or
-  the mutation pipelines, but in the internal workings of then handler.
+- `handler:<handler id>`: The error occurred with the handler with the given id,
+  e.g. `'handler:GET'`. This means the error did happen in the service or the
+  mutation pipelines, but in the internal workings of then handler.
 - `validate:service:<service id>:endpoint:<endpoint id>`: Validation of an
   action against an endpoint failed. Note that not all endpoints has an id, in
   which case that part of the origin code is left out.
@@ -1486,26 +1465,26 @@ Example ident:
 }
 ```
 
-- `id`: A unique string identifying the ident. The actual value is irrelevant
-  to Integreat, as long as it is a string with A-Z, a-z, 0-9, \_, and -, and
-  it's unique within one Integreat configuration. This means that mapped
-  values from services may be used as ident ids, as long as they are unique
-  among these services.
-- `tokens`: A list of values that may identify this ident in other services.
-  For example, an api that uses GitHub OAuth to identify its users, may provide
-  the `'github|23456'` token in the example above, which will be replaced with
-  this ident when it enters Integreat.
+- `id`: A unique string identifying the ident. The actual value is irrelevant to
+  Integreat, as long as it is a string with A-Z, a-z, 0-9, \_, and -, and it's
+  unique within one Integreat configuration. This means that mapped values from
+  services may be used as ident ids, as long as they are unique among these
+  services.
+- `tokens`: A list of values that may identify this ident in other services. For
+  example, an api that uses GitHub OAuth to identify its users, may provide the
+  `'github|23456'` token in the example above, which will be replaced with this
+  ident when it enters Integreat.
 - `roles`: A list of roles or permissions given to this ident. The roles are
   custom defined per setup, and may be mapped to roles from other systems. When
-  setting the auth rules for a schema, you specify required rules so that to
-  get data cast in this schema, an ident with e.g. the role `admin` must be
+  setting the auth rules for a schema, you specify required rules so that to get
+  data cast in this schema, an ident with e.g. the role `admin` must be
   provided.
 - `type`: An optional string to signal when this ident is `'ROOT'`, `'SCHED'`,
-  `'SYST'`, or `'ANON'`. This is used internally by Integreat, but in some
-  cases you may want to set this yourself. Make sure, however, that you don't
-  let third-parties set `'ROOT'`. Make sure to also set the id, typically to
-  `'root'` or `'anonymous'`. Not setting any `type` is the same as setting it
-  to `'CUST'`, which is the default.
+  `'SYST'`, or `'ANON'`. This is used internally by Integreat, but in some cases
+  you may want to set this yourself. Make sure, however, that you don't let
+  third-parties set `'ROOT'`. Make sure to also set the id, typically to
+  `'root'` or `'anonymous'`. Not setting any `type` is the same as setting it to
+  `'CUST'`, which is the default.
 - `isCompleted`: A flag to signal that an ident has already been completed, so
   that it won't be completed again. Used by the `completeIdent` middleware. You
   should normally not need to set this yourself.
@@ -1514,10 +1493,10 @@ The ident may also hold other custom properties, defined in the
 `identConfig.mapping` in the definitions passed when created a new Integreat
 instance. See description under [Idents](#idents).
 
-Actions are authenticated by setting an ident on the `meta.ident` property.
-It's up to the code dispatching an action to get hold of the properties of an
-ident in a secure way. Once Integreat receives an ident through a dispatch, it
-will assume this is accurate information and uphold its part of the security
+Actions are authenticated by setting an ident on the `meta.ident` property. It's
+up to the code dispatching an action to get hold of the properties of an ident
+in a secure way. Once Integreat receives an ident through a dispatch, it will
+assume this is accurate information and uphold its part of the security
 agreement and only return data and execute actions that the ident have
 permissions for.
 
@@ -1552,13 +1531,12 @@ is fetched, if it exists:
 }
 ```
 
-See [the section on payload properties](#payload-properties) for more
-properties that may be used with the `GET` action.
+See [the section on payload properties](#payload-properties) for more properties
+that may be used with the `GET` action.
 
 #### `GET_ALL`
 
-Will run as many `GET` actions as needed to the get all available pages of
-data.
+Will run as many `GET` actions as needed to the get all available pages of data.
 
 The action ...
 
@@ -1596,8 +1574,8 @@ response if one is not set.
 
 Send data to a service. The data to send is provided in the payload `data`
 property. Recomended practice is to provide the data as
-[typed data](#typed-data), i.e. data objects cast to a schema, and let
-mutations on the service endpoint modify it to the format the service expects.
+[typed data](#typed-data), i.e. data objects cast to a schema, and let mutations
+on the service endpoint modify it to the format the service expects.
 
 Any data coming back from the service, will be provided on `response.data` and
 may be mutated through service endpoint mutations, just as for [`GET`](#get)
@@ -1622,32 +1600,31 @@ Example `SET` action:
 
 Update data on a service. The idea is that while `SET` is used for setting data
 to a service – with no regard to what is actually set in the service already,
-`UPDATE` is used for updating data, possibly not overwriting all properties.
-If `UPDATE` provides data with only a few properties, the expectation is that
-only these properties will be updated in the service. The `UPDATE` action is
-also expected to fail when the item being updated does not exist, unlike `SET`,
-that will usually create it.
+`UPDATE` is used for updating data, possibly not overwriting all properties. If
+`UPDATE` provides data with only a few properties, the expectation is that only
+these properties will be updated in the service. The `UPDATE` action is also
+expected to fail when the item being updated does not exist, unlike `SET`, that
+will usually create it.
 
 Note that the actual behavior is up to how you set up the service and what the
 service itself supports, but the `UPDATE` action will provide you with a way of
 doing this.
 
-An `UPDATE` action may be handled in one of two ways, where the first is just
-to run it against a service endpoint, much like a `SET` action (except it will
+An `UPDATE` action may be handled in one of two ways, where the first is just to
+run it against a service endpoint, much like a `SET` action (except it will
 match different endpoints). Data provided in the payload `data` is mutated and
-sent to the service according to the endpoint configuration, and any data
-coming back, will be provided on `response.data` and mutated.
+sent to the service according to the endpoint configuration, and any data coming
+back, will be provided on `response.data` and mutated.
 
 What makes `UPDATE` different from `SET`, though, is the second way we may
 handle `UPDATE` actions. Whenever there is no maching `UPDATE` endpoint,
-Integreat will run the action as a `GET` and then a `SET`, to mimick and
-update. The `GET` action will have the same `payload` and `meta` as the
-original action. The same goes for the `SET` action, but the `payload.data`
-will be the data returned from `GET` merged with the data on the original
-`UPDATE` action. This will be a deep merge, prioritizing properties from the
-`UPDATE` action, but any `createdAt` date in the data from `GET` will be kept.
-If there's an `updatedAt` in the merged data, it will be overriden by the
-current time.
+Integreat will run the action as a `GET` and then a `SET`, to mimick and update.
+The `GET` action will have the same `payload` and `meta` as the original action.
+The same goes for the `SET` action, but the `payload.data` will be the data
+returned from `GET` merged with the data on the original `UPDATE` action. This
+will be a deep merge, prioritizing properties from the `UPDATE` action, but any
+`createdAt` date in the data from `GET` will be kept. If there's an `updatedAt`
+in the merged data, it will be overriden by the current time.
 
 A requirement for this approach to work as expected, is that the data is casted
 to the same schema, but that should normally be the case when you use
@@ -1674,9 +1651,9 @@ Example `UPDATE` action:
 #### `DELETE` / `DEL`
 
 Delete one or more items from a service. Set the data for the items to delete,
-in the payload `data` property as an array of [typed data](#typed-data).
-In most cases, you only need to provide the `id` and the `$type`, but the way
-you set up the service may require more properties.
+in the payload `data` property as an array of [typed data](#typed-data). In most
+cases, you only need to provide the `id` and the `$type`, but the way you set up
+the service may require more properties.
 
 Any data coming back from the service, will be provided on `response.data` and
 may be mutated through service endpoint mutations, just as for [`GET`](#get)
@@ -1714,8 +1691,7 @@ You may also `DELETE` one item like this:
 #### `GET_META`
 
 Get metadata for a service. See
-[the section on metadata](#configuring-service-metadata) for how to set this
-up.
+[the section on metadata](#configuring-service-metadata) for how to set this up.
 
 The `data` of the response from this aciton contains the `service` (the service
 id) and `meta` object with the metadata set as properties.
@@ -1803,8 +1779,8 @@ See [the section on jobs](#jobs) for more on how to configure jobs.
 
 The `SYNC` action will `GET` items from one service and `SET` them on another.
 There are different options for how to retrieve items, ranging from a crude
-retrieval of all items on every sync, to a more fine grained approach where
-only items that have been updated or created since last sync, will be synced.
+retrieval of all items on every sync, to a more fine grained approach where only
+items that have been updated or created since last sync, will be synced.
 
 The simplest action definition would look like this, where all items would be
 retrieved from the service and set on the target:
@@ -1826,31 +1802,30 @@ dispatch a `SET_META` action to update the `lastSyncedAt` date on the service.
 The `SET` actions to update the target service is added to the queue if one is
 configured.
 
-To retrieve only new items, change the `retrieve` property to `updated`. In
-this case, the action will dispatch `GET_META` to get the `lastSyncedAt` from
-the `from` service, and get only newer items, by passing it the `updatedAfter`
-param. The action will also filter out older items, in case the service does
-not support `updatedAfter`.
+To retrieve only new items, change the `retrieve` property to `updated`. In this
+case, the action will dispatch `GET_META` to get the `lastSyncedAt` from the
+`from` service, and get only newer items, by passing it the `updatedAfter`
+param. The action will also filter out older items, in case the service does not
+support `updatedAfter`.
 
 By setting `retrieve` to `created`, you accomplish the same, but with
 `createdAfter`.
 
-If you need to include more params in the actions to get from the `from`
-service or set to the `to` service, you may provide a params object for the
-`from` or `to` props, with the service id set as a `service` param. You may
-also provide different action types than `GET` and `SET`, by setting the
-`action` prop on the `from` or `to` objects respectively.
+If you need to include more params in the actions to get from the `from` service
+or set to the `to` service, you may provide a params object for the `from` or
+`to` props, with the service id set as a `service` param. You may also provide
+different action types than `GET` and `SET`, by setting the `action` prop on the
+`from` or `to` objects respectively.
 
 By default, `SYNC` will send every item gotten from the `from` service to the
 `to` service. You can split an array of items into several sets, by setting the
-`maxPerSet` on the payload object, to a max number of items per set. If you
-need to have one set per individual item, you may set `setMember` to `true` on
-the payload object. (This is almost the same as setting `maxPerSet` to `1`,
-except it won't be wrapped in an array.)
+`maxPerSet` on the payload object, to a max number of items per set. If you need
+to have one set per individual item, you may set `setMember` to `true` on the
+payload object. (This is almost the same as setting `maxPerSet` to `1`, except
+it won't be wrapped in an array.)
 
-> [!NOTE]
-> There are more options than these, and the documentation will be updated to
-> include them later.
+> [!NOTE] There are more options than these, and the documentation will be
+> updated to include them later.
 
 #### `EXPIRE`
 
@@ -1889,22 +1864,21 @@ Here's an example of an `EXPIRE` action that will dispatch a `DELETE` directly:
 }
 ```
 
-The `GET` action (or the `DELETE` action when `deleteWithParams` is `true`)
-will have a `timestamp` property with the current time as microseconds since
-epoc (Januar 1, 1970 UTC), and `isodate` as the current time in the extended
-ISO 8601 format(`YYYY-MM-DDThh:mm:ss.sssZ`).
+The `GET` action (or the `DELETE` action when `deleteWithParams` is `true`) will
+have a `timestamp` property with the current time as microseconds since epoc
+(Januar 1, 1970 UTC), and `isodate` as the current time in the extended ISO 8601
+format(`YYYY-MM-DDThh:mm:ss.sssZ`).
 
 To have `timestamp` and `isodate` be a time in the future instead, set
 `msFromNow` to a positive number of milliseconds. This will be added to the
-current time. To have a time in the past, use a negative number for
-`msFromNow`.
+current time. To have a time in the past, use a negative number for `msFromNow`.
 
 #### `SERVICE`
 
 A `SERVICE` action will be sent directly to the specified service without any
 intervention by Integreat. This allows for running specialized actions on the
-service that goes beyond what Integreat supports. It's up to each transporter
-to support such actions, describe what they'll do, and define their payload
+service that goes beyond what Integreat supports. It's up to each transporter to
+support such actions, describe what they'll do, and define their payload
 properties.
 
 An example of an action that will tell a
@@ -1933,29 +1907,28 @@ Action handler signature:
 async function (action, { dispatch, getService, setProgress, options }) { ... }
 ```
 
-- `action`: This is the dispatched action after it has been modified a bit
-  by the `dispatch()` method and possible after running an incoming mutation on
-  it. The modifications include cleaning up alias fields (e.g. `service` will
-  be set as `targetService`), removing sensitive or forbidden fields, and
-  setting a few default or internal fields (like the `dispatchedAt` meta).
+- `action`: This is the dispatched action after it has been modified a bit by
+  the `dispatch()` method and possible after running an incoming mutation on it.
+  The modifications include cleaning up alias fields (e.g. `service` will be set
+  as `targetService`), removing sensitive or forbidden fields, and setting a few
+  default or internal fields (like the `dispatchedAt` meta).
 - `dispatch`: From the handler, you may dispatch your own sub actions to the
-  provided `dispatch()` method. Note that this is an "internal dispatch
-  method", so it will return an action with the `response` object on it,
-  instead of just the `response` object. It's good practice to set the `cid`
-  meta prop for the actions you dispatch, to the `cid` meta prop on the
-  `action` you're handling. You should also use the same `ident` unless you
-  have very good reasons to do otherwise, to make sure you don't create
-  security holes.
+  provided `dispatch()` method. Note that this is an "internal dispatch method",
+  so it will return an action with the `response` object on it, instead of just
+  the `response` object. It's good practice to set the `cid` meta prop for the
+  actions you dispatch, to the `cid` meta prop on the `action` you're handling.
+  You should also use the same `ident` unless you have very good reasons to do
+  otherwise, to make sure you don't create security holes.
 - `getService`: This is a convenience method that will return the relevant
-  service object when you provide it with a type and optional a service id.
-  With a service id, you'll get the service with that id, with only the type,
-  you'll get the default service for that type. E.g.: `getService('article')`.
+  service object when you provide it with a type and optional a service id. With
+  a service id, you'll get the service with that id, with only the type, you'll
+  get the default service for that type. E.g.: `getService('article')`.
 - `setProgress`: For long running tasks, you may want to set the progress along
   the way. Progress is specified as a number between `0` and `1`, e.g.
-  `setProgress(.5)` to signal that you're halfway through. When the your
-  handler is finished, the progress will automatically be set to `1`. This may
-  be used by queue implementations etc., to give progress feedback to users
-  and to know the action has not gone stale.
+  `setProgress(.5)` to signal that you're halfway through. When the your handler
+  is finished, the progress will automatically be set to `1`. This may be used
+  by queue implementations etc., to give progress feedback to users and to know
+  the action has not gone stale.
 - `options`: This is an object with a few settings: `queueService` is the id of
   the service set up as the default queue, and `identConfig` is the config
   object used for mapping ident schemas to ids, roles, and tokens (see
@@ -2059,11 +2032,11 @@ const flowJob = {
 ```
 
 Several things are going on here: First, we have a flow with two actions. We
-imagine here that we are going to fetch an entry with an id that is found in
-the `store` service, and use the `otherId` retrieved from that service to get
-the entry from `otherService`. The two steps in `flow` look a lot like a job,
-and in one way they are the same, with some differences, that we will get back
-to. They are run sequentally in the order they appear in the `flow` array.
+imagine here that we are going to fetch an entry with an id that is found in the
+`store` service, and use the `otherId` retrieved from that service to get the
+entry from `otherService`. The two steps in `flow` look a lot like a job, and in
+one way they are the same, with some differences, that we will get back to. They
+are run sequentally in the order they appear in the `flow` array.
 
 Secondly, we have a `premutation` on each step. This is given the `action` and
 may mutate it before it is dispatched. As for endpoint mutations, the top level
@@ -2071,22 +2044,22 @@ has `$modify: true` as default, but we need to modify the sub-objects we
 include, when that is what we want. In the first step, we set the payload `id`
 to the `id` provided in the action that called this job. This job is passed to
 mutations on jobs and steps under the name `'action'`, and we prepend it with
-the root path (`^^`) as it is found on the top level of the data structure
-we're mutating.
+the root path (`^^`) as it is found on the top level of the data structure we're
+mutating.
 
 The second step is similar, but here we set the payload `id` to the `otherId`
-found in the response data of the first step. The action and the response from
-a step is available to all following steps by the id of the step, in this case
+found in the response data of the first step. The action and the response from a
+step is available to all following steps by the id of the step, in this case
 `'getFromStore'`. We have to prepend with the root path (`^^`) here as well.
-When we say the action and response is available, we find it as an action
-object with any response on a `response` property.
+When we say the action and response is available, we find it as an action object
+with any response on a `response` property.
 
 With the action
 `{ type: 'RUN', payload: { jobId: 'getEntryFromOtherService', id: '12345' } }`,
-the first step will dispatch a `GET` for the id `12345`. If that action
-succeeds with the data `{ id: '12345', otherId: '67890' }`, the second step
-will dispatch a `GET` for the id `67890`. The response from the last action is
-returned by default.
+the first step will dispatch a `GET` for the id `12345`. If that action succeeds
+with the data `{ id: '12345', otherId: '67890' }`, the second step will dispatch
+a `GET` for the id `67890`. The response from the last action is returned by
+default.
 
 If any job step fails, the entire job will fail and the error will be returned,
 unless you set up any `preconditions`, `postconditions`, or `postmutations` to
@@ -2095,9 +2068,9 @@ alter this default behavior. More on that in the following sections.
 ### Job and step mutations
 
 Jobs and job steps provide two mechanisms for mutations: `premutation` and
-`postmutation`. They work in a similar way, but `premutation` is used to
-mutate the action of a job or a job step _before_ it is dispatched, and
-`postmutations` is used to mutate the response from a job or a step.
+`postmutation`. They work in a similar way, but `premutation` is used to mutate
+the action of a job or a job step _before_ it is dispatched, and `postmutations`
+is used to mutate the response from a job or a step.
 
 Note that `premutation` will not have an effect on a job with a `flow`, but
 `postmutation` may be used with the response from a flow.
@@ -2118,34 +2091,34 @@ used as the response from the job or step.
 
 ### Job and step conditions
 
-By default, if a step in a flow fails, no more steps are run, and the entire
-job will fail with the response from the failed step. You may, however,
-provide your own conditions for when a step should be run and when a step
-should be regarded as having failed.
+By default, if a step in a flow fails, no more steps are run, and the entire job
+will fail with the response from the failed step. You may, however, provide your
+own conditions for when a step should be run and when a step should be regarded
+as having failed.
 
-`preconditions` may be set to an array of condition objects, that must all
-pass in order for the step to be run. Each condition object must have a
-`condition` property with an array of mutation pipelines, and all these
-pipelines must return truthy for the condition to be regarded as passed. Each
-pipeline is given the same object that is given to `premutation` with action
-and responses from previous steps, but without the action for this step. See
+`preconditions` may be set to an array of condition objects, that must all pass
+in order for the step to be run. Each condition object must have a `condition`
+property with an array of mutation pipelines, and all these pipelines must
+return truthy for the condition to be regarded as passed. Each pipeline is given
+the same object that is given to `premutation` with action and responses from
+previous steps, but without the action for this step. See
 [the section on mutating jobs](#job-and-step-mutations) for more on this.
 
 The condition object may also have a `failResponse` property with a response
 object that will be used as the response from the step if the condition fails.
 
 Finally, the `condition` object may have a `break` property set to `true`, to
-signal that the entire job should fail if the condition fails. If `break` is
-not set, the step will just be skipped and the job flow continues.
+signal that the entire job should fail if the condition fails. If `break` is not
+set, the step will just be skipped and the job flow continues.
 
-> [!NOTE]
-> The default behavior of breaking when a step returns an error, is implemented
-> as a default pre-condition, so if you set your own `preconditions`, you
-> will also have to handle breaking on error.
+> [!NOTE] The default behavior of breaking when a step returns an error, is
+> implemented as a default pre-condition, so if you set your own
+> `preconditions`, you will also have to handle breaking on error.
 >
 > This is not very intuitive, so we have introduced a
 > `failOnErrorInPostconditions` flag that will change this to what will be the
-> default in the next major version. [See more below.](#conditions-and-the-failOnErrorInPostconditions-flag)
+> default in the next major version.
+> [See more below.](#conditions-and-the-failOnErrorInPostconditions-flag)
 
 `postconditions` is also an array of condition objects, but this is used to
 decide if the step should be regarded as having failed after its action or flow
@@ -2158,19 +2131,19 @@ describe above.
 
 Post-conditions specify what is required for a step to be succeessful, and
 sometimes you consider a certain error to be an indication of success. An
-example may be when you're checking a cache and will only continue if a value
-is _not_ cached, meaning a `notfound` response status is a success in this
-case. The condition pipeline for this should be straight forward, but as you
-cannot specify the response that will be used when the condition _passes_, you
-may wonder what happens with the error response. When an error response causes
-a post-condition to pass, Integreat will set the status of the response to
-`ok` and any `error` property will be changed to a `warning` property. Apart
-from that, the response will be unchanged.
+example may be when you're checking a cache and will only continue if a value is
+_not_ cached, meaning a `notfound` response status is a success in this case.
+The condition pipeline for this should be straight forward, but as you cannot
+specify the response that will be used when the condition _passes_, you may
+wonder what happens with the error response. When an error response causes a
+post-condition to pass, Integreat will set the status of the response to `ok`
+and any `error` property will be changed to a `warning` property. Apart from
+that, the response will be unchanged.
 
 Jobs may have `preconditions` too, and it will work in the same way as for a
-step, determining whether a job will run of not. `break` will have no effect
-for a condition on a job. Jobs may not have `postconditions`, but you can
-mutate the response with `postmutation` and accomplish the same.
+step, determining whether a job will run of not. `break` will have no effect for
+a condition on a job. Jobs may not have `postconditions`, but you can mutate the
+response with `postmutation` and accomplish the same.
 
 #### Conditions and the `failOnErrorInPostconditions` flag
 
@@ -2178,38 +2151,36 @@ The way `preconditions` controls whether the previous step will break on error,
 is not very intuitive, so we have introduced a feature flag to change this
 behavior. The flag is called `failOnErrorInPostconditions`, and is set on the
 `flags` object in the definitions given to `Integreat.create()`). In the next
-major version of Integreat, this will be the default behavior, so it may
-be a good idea to start using it now.
+major version of Integreat, this will be the default behavior, so it may be a
+good idea to start using it now.
 
 When the flag is set to `true`, the default break on error behavior is set in
 `postconditions` instead. This means that you may set your own `preconditions`
 and still have the previous step break on error, the way you probably would
-expect it to work. If you set your own `postconditions`, on the other hand,
-you need to take care of how an error response from that step is handled, but
-that is often why you would set your own `postconditions` anyway.
+expect it to work. If you set your own `postconditions`, on the other hand, you
+need to take care of how an error response from that step is handled, but that
+is often why you would set your own `postconditions` anyway.
 
-Also, `break` will be `true` by default for `postconditions` with this flag,
-and you need to set it to `break: false` if you have a post-condition and you
-don't want it to stop the entire flow.
+Also, `break` will be `true` by default for `postconditions` with this flag, and
+you need to set it to `break: false` if you have a post-condition and you don't
+want it to stop the entire flow.
 
 For `preconditions`, the `break` flag is `false` by default in all cases.
 
 ### Dispatching several actions by iterating over an array
 
 Sometimes you will want to dispatch several actions based on a data array, e.g.
-when you have an array of data items, but the relevant endpoint only accepts
-one data item. This may be done with `iterate`, which is a special mutation
-that is must return an array, and the job action will be dispatched once for
-every item in this array. The item will be set as payload `data`.
-`premutation` may be used to modify the action before it is dispatched as
-usual, but note that the mutation is applied to every single action, after the
-`iterate`, so to speak.
+when you have an array of data items, but the relevant endpoint only accepts one
+data item. This may be done with `iterate`, which is a special mutation that is
+must return an array, and the job action will be dispatched once for every item
+in this array. The item will be set as payload `data`. `premutation` may be used
+to modify the action before it is dispatched as usual, but note that the
+mutation is applied to every single action, after the `iterate`, so to speak.
 
 This applies to both a job with an action and a step with an action in a flow.
 
 The responses of each action are combined and set as a `response` object on the
-step action (before the iteration), making an iterated step just like any
-other.
+step action (before the iteration), making an iterated step just like any other.
 
 When all actions are successful, the response will have status `ok`, and the
 response `data` will be an array of the data from each response in the order
@@ -2256,23 +2227,31 @@ const great = Integreat.create(
 ```
 
 To queue an action instead of dispatching it right away, you set `queue: true`
-on the `meta` object. If everything is set up correctly, Integreat will push
-the action to the queue. When the action is later pulled from the queue, it
-will be dispatched again, but without the `queue` property.
+on the `meta` object. If everything is set up correctly, Integreat will push the
+action to the queue. When the action is later pulled from the queue, it will be
+dispatched again, but without the `queue` property.
 
-You may also set the meta `queue` property to a Unix timestamp, and if the
-queue transporter supports it, it will be run at this time instead of being
-processed as soon as it is next in line in the queue.
+You may also set the meta `queue` property to a Unix timestamp, and if the queue
+transporter supports it, it will be run at this time instead of being processed
+as soon as it is next in line in the queue.
 
 When a queue is not set up, a dispatched action with `queue: true` will just be
-run right away as a normal action.
+run right away as a normal action. In this case, the `queue` property is removed
+from the action before it is dispatched.
+
+If you want to handle queuing yourself, outside of Integreat, you may set
+`disableQueuing: true` on the definition object (at the same level as
+`queueService`). Integreat will then never push any action to a queue, and –
+unlike when no queue is set up – it will leave the `queue` property untouched on
+the action. This lets your own middleware or service detect `queue` and route
+the action to your queue implementation. When `disableQueuing` is `true`, it
+takes precedence over `queueService`.
 
 You may also use queues directly, by dispatching to it as a server and getting
 incoming actions from its `listen()` method. In that case, it's just as any
 other service with no need for any special handling.
 
-> [!NOTE]
-> Queueing actions are actually done through an action handler, but this
+> [!NOTE] Queueing actions are actually done through an action handler, but this
 > handler is not available from outside Integreat.
 
 ## Middleware
@@ -2292,8 +2271,8 @@ Integreat supports middleware, and there are two different middleware
   _before_ it is mutated, giving you access to the data as it comes from the
   service.
 
-To set up a logger of what we recieve from and send to a service, you'll use
-the second middleware "pipeline", while a logger of dispatched actions would be
+To set up a logger of what we recieve from and send to a service, you'll use the
+second middleware "pipeline", while a logger of dispatched actions would be
 placed in the first.
 
 When actions pass through middleware, they may modifiy the actions as
@@ -2327,8 +2306,8 @@ information held somewhere else, e.g. in a database, you need to configure a
 user schema and set up a service to fetch this information.
 
 Integreat uses schemas and services to store idents. In the definition object
-passed to `Integreat.create()`, you may provide an `identConfig` property with
-a definition object looking something like this:
+passed to `Integreat.create()`, you may provide an `identConfig` property with a
+definition object looking something like this:
 
 ```javascript
 const great = Integreat.create(
@@ -2352,11 +2331,10 @@ const great = Integreat.create(
 - `type`: This is the id of the schema used for getting ident data. This schema
   needs to have a `service` specified.
 - `props`: You may provide alternative field names for the `id`, `roles`, and
-  `tokens` for an ident in the schema specified on `type`. When the prop and
-  the field has the same name, it may be omitted, though it doesn't hurt to
-  specify it anyway for clarity. For setups that don't need `roles` and/or
-  `tokens`, you may set these to `null`. Omitting them will result in the
-  default field names.
+  `tokens` for an ident in the schema specified on `type`. When the prop and the
+  field has the same name, it may be omitted, though it doesn't hurt to specify
+  it anyway for clarity. For setups that don't need `roles` and/or `tokens`, you
+  may set these to `null`. Omitting them will result in the default field names.
 - `mapping`: When `id`, `roles`, or `tokens` is found on other paths in the
   returned user data than the field names set in `props` (or by default), you
   may set additional mapping here, to specify at what dot notation path to find
@@ -2368,8 +2346,8 @@ const great = Integreat.create(
 
 Note that in the example above, the `id` of the data will be used as the ident
 `id`. When the id is not suited for this, you will need another field on the
-schema that may act as the ident id. In cases where you need to transform the
-id from the data in some way, this must be set up as a separate field and the
+schema that may act as the ident id. In cases where you need to transform the id
+from the data in some way, this must be set up as a separate field and the
 mutation will dictate how to transform it. In most cases, the `id` will do,
 though.
 
@@ -2387,8 +2365,8 @@ actions like this:
 }
 ```
 
-In this case, `user` is the schema mapped to idents, and the `tokens`
-property on the ident is mapped to the `tokens` field on the schema.
+In this case, `user` is the schema mapped to idents, and the `tokens` property
+on the ident is mapped to the `tokens` field on the schema.
 
 To make Integreat complete idents on actions with the persisted data, set it up
 with the `completeIdent` middleware:
@@ -2400,21 +2378,19 @@ const great = Integreat.create(defs, resources, [
 ```
 
 This middleware will intercept any action with `meta.ident` and replace it with
-the ident item loaded from the designated schema. If the ident has an `id`,
-the ident with this id is loaded, otherwise a `withToken` is used to load the
-ident with the specified token. If no ident is found, the original ident is
-kept.
+the ident item loaded from the designated schema. If the ident has an `id`, the
+ident with this id is loaded, otherwise a `withToken` is used to load the ident
+with the specified token. If no ident is found, the original ident is kept.
 
-> [!NOTE]
-> You may now alternatively set `identConfig.completeIdent` to `true` to have
-> Integreat complete idents on dispatch and from the authentication callback
-> used on incoming actions.
+> [!NOTE] You may now alternatively set `identConfig.completeIdent` to `true` to
+> have Integreat complete idents on dispatch and from the authentication
+> callback used on incoming actions.
 
 ### Writing middleware
 
-You may write middleware to intercept dispatched actions. This may be useful
-for logging, debugging, and situations where you need to make adjustments to
-certain actions.
+You may write middleware to intercept dispatched actions. This may be useful for
+logging, debugging, and situations where you need to make adjustments to certain
+actions.
 
 A middleware is a function that accepts a `next()` function as only argument,
 and returns an async function that will be called with the action on dispatch.
