@@ -1,5 +1,14 @@
 {
   "semi": false,
   "singleQuote": true,
-  "jsxSingleQuote": true
+  "jsxSingleQuote": true,
+  "overrides": [
+    {
+      "files": "*.md",
+      "options": {
+        "proseWrap": "always",
+        "printWidth": 80
+      }
+    }
+  ]
 }
