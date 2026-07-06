@@ -57,7 +57,7 @@
     "@integreat/ts-dev-setup": "^9.0.0",
     "@types/debug": "^4.1.13",
     "@types/node": "^26.0.0",
-    "@types/sinon": "^21.0.1",
+    "@types/sinon": "^22.0.0",
     "integreat-adapter-json": "^1.0.4",
     "integreat-adapter-uri": "^1.0.1",
     "integreat-transformers": "^1.9.0",
