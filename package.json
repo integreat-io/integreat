@@ -20,6 +20,7 @@
   "scripts": {
     "test": "node --import tsx --test --enable-source-maps --test-reporter node-test-reporter 'src/**/*.test.ts'",
     "test:legacy": "node --import tsx --no-deprecation --test --enable-source-maps src/*.test.ts src/**/*.test.ts",
+    "test:memory": "node --expose-gc --import tsx --test --test-isolation=none --enable-source-maps 'src/tests/memory/*.memory.ts'",
     "test:watch": "npm run dev",
     "dev": "node --import tsx --test --enable-source-maps --test-reporter node-test-reporter --watch 'src/**/*.test.ts' || exit 0",
     "build": "tsc",

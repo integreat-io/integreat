@@ -88,6 +88,7 @@ const pipelines = {
   entry: entryMapping,
   entry2: entryMapping2,
   entry3: entryMapping3,
+  entryWrapped: [{ $apply: 'entry' }], // A pipeline applying another pipeline
 }
 
 const allTransformers = {
@@ -1305,6 +1306,53 @@ test('should not mutate response from service when direction is rev', async () =
   const ret = await endpoint.mutate(actionWithResponse, false)
 
   assert.deepEqual(ret, expected)
+})
+
+test('should mutate with the same pipeline from several endpoints sharing map options', async () => {
+  const createEndpointDef = (pipelineId: string) => ({
+    mutation: {
+      response: {
+        $modify: 'response',
+        data: ['response.data.content.data', { $apply: pipelineId }],
+      },
+    },
+    options: { uri: 'http://some.api/1.0' },
+  })
+  const endpointDirect = new Endpoint(
+    createEndpointDef('entry'),
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
+  const endpointWrapped = new Endpoint(
+    createEndpointDef('entryWrapped'),
+    serviceId,
+    options,
+    mapTransform,
+    mapOptions,
+  )
+  const expected = [{ id: 'ent1', title: 'Entry 1', $type: 'entry' }]
+
+  const retWrappedBefore = await endpointWrapped.mutate(
+    actionWithResponse,
+    false,
+  )
+  const retDirect = await endpointDirect.mutate(actionWithResponse, false)
+  const retWrappedAfter = await endpointWrapped.mutate(
+    actionWithResponse,
+    false,
+  )
+
+  const pickFields = (response: Action['response']) =>
+    (response?.data as TypedData[]).map(({ id, title, $type }) => ({
+      id,
+      title,
+      $type,
+    }))
+  assert.deepEqual(pickFields(retWrappedBefore.response), expected)
+  assert.deepEqual(pickFields(retDirect.response), expected)
+  assert.deepEqual(pickFields(retWrappedAfter.response), expected)
 })
 
 // Tests -- mutate request
