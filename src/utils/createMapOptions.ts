@@ -1,3 +1,4 @@
+import { prepareOptions } from 'map-transform'
 import modifyOperationObject from './modifyOperationObject.js'
 import type {
   TransformDefinition,
@@ -28,8 +29,11 @@ export default function createMapOptions(
   dictionaries?: Dictionaries,
   nonvalues: unknown[] = [undefined, null, ''],
 ): MapOptions {
-  return {
-    pipelines: { ...mutations }, // TODO: We create a new object here, because MapTransform mutates it. Should really be fixed in MapTransform
+  // We let MapTransform prepare the options, so that every mutation created
+  // with these options share the same prepared pipelines. Without this, each
+  // mutation would prepare its own copy of every pipeline it applies.
+  return prepareOptions({
+    pipelines: { ...mutations }, // Copy, to not hand the given object over to MapTransform
     transformers: {
       ...transformers,
       ...transformersFromSchemas(schemas),
@@ -39,5 +43,5 @@ export default function createMapOptions(
     revAlias: 'to',
     nonvalues,
     modifyOperationObject,
-  }
+  })
 }

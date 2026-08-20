@@ -6,7 +6,6 @@ import integreatTransformers from 'integreat-transformers'
 import handlerResources from '../tests/helpers/handlerResources.js'
 import Job from '../jobs/Job.js'
 import type { JobDef } from '../jobs/types.js'
-import type { Transformer } from 'map-transform/types.js'
 
 import run from './run.js'
 
@@ -19,7 +18,7 @@ const defaultResources = {
 }
 
 const mapOptions = {
-  transformers: { size: integreatTransformers.size as Transformer },
+  transformers: { size: integreatTransformers.size },
 }
 
 const createJobsMap = (jobDef: JobDef, mo = mapOptions) => {
