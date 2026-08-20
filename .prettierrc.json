@@ -4,6 +4,10 @@
   "jsxSingleQuote": true,
   "overrides": [
     {
+      "files": ["tsconfig.json", "tsconfig.*.json", "jsconfig.json"],
+      "options": { "parser": "jsonc" }
+    },
+    {
       "files": "*.md",
       "options": {
         "proseWrap": "always",

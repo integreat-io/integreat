@@ -55,7 +55,7 @@
     "rfdc": "^1.4.1"
   },
   "devDependencies": {
-    "@integreat/ts-dev-setup": "^9.0.1",
+    "@integreat/ts-dev-setup": "^10.0.0",
     "@types/debug": "^4.1.13",
     "@types/node": "^26.2.0",
     "@types/sinon": "^22.0.0",

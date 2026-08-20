@@ -1,17 +1,17 @@
 name: Publish Package to NPM
 on:
   release:
-    types: [published]
+    types: [ published ]
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       # Setup .npmrc file to publish to npm
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -20,8 +20,8 @@ jobs:
       - name: Publish release
         run: npm publish
         # if: github.ref == 'refs/heads/main'
-      # - name: Publish next
-      #   run: npm publish --tag next
-      #   if: github.ref == 'refs/heads/next'
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # - name: Publish next
+        #   run: npm publish --tag next
+        #   if: github.ref == 'refs/heads/next'
+        #   env:
+        #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
