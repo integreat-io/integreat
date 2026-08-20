@@ -110,3 +110,12 @@ routed to a handler based on the given action type.
 - Keep unit tests with the file that's being tested.
 - When I ask you to update tests, do it without updating the implementation. I
   want to see the tests failing before I ask you to update the implementation.
+- `npm run verify` runs lint, type check and the test suite. It does not run the
+  memory tests.
+- The memory tests live in `src/tests/memory/` with a `.memory.ts` suffix, which
+  keeps them out of the default test run, and are run with
+  `npm run test:memory`. Run them when upgrading map-transform, or when changing
+  how map options or mutations are prepared. They print the numbers they
+  measure, so they may be compared across versions.
+- Don't write tests that inspect the internals of map-transform. Assert on what
+  our own code does with it, not on how it keeps track of prepared pipelines.

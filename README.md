@@ -72,6 +72,7 @@ though, depends on how you define your services.
    9. [Queues](#queues)
    10. [Middleware](#middleware)
 3. [Debugging](#debugging)
+4. [Development](#development)
 
 # Usage
 
@@ -2419,3 +2420,19 @@ Run Integreat with env variable `DEBUG=great`, to receive debug messages.
 
 Some sub modules sends debug messages with the `integreat:` prefix, so use
 `DEBUG=great,integreat:*` to catch these as well.
+
+# Development
+
+Run `npm run verify` to lint, check types and run the test suite. This is what
+CI runs, and it covers everything except the memory tests.
+
+The memory tests are run separately, with `npm run test:memory`. They are kept
+out of the default test run because they measure heap usage against thresholds,
+which is too sensitive to run on every push, and because they need Node to be
+started with `--expose-gc`. They cover two things: that dispatching to an
+instance repeatedly does not grow the heap, and that the memory an instance
+retains does not grow steeply with the number of endpoints.
+
+Run the memory tests when upgrading map-transform, or when changing how map
+options or mutations are prepared. The tests print the numbers they measure, so
+they may be compared across versions.
