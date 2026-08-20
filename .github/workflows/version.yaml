@@ -23,6 +23,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
     steps:
       - name: Validate Git Ref Type is branch
         if: ${{ github.ref_type != 'branch' }}
@@ -31,15 +36,19 @@ jobs:
         if: ${{ inputs.is-pre-release == false && github.ref != 'refs/heads/main' }}
         run: echo "Non Pre Release is only allowed on main branch. Exiting." && exit 1
       - name: Validate Input Semantic Version Type for None Pre Release
-        if: ${{ inputs.is-pre-release == false && inputs.version-range != 'major' &&
+        if:
+          ${{ inputs.is-pre-release == false && inputs.version-range != 'major' &&
           inputs.version-range != 'minor' && inputs.version-range != 'patch' }}
-        run: echo "Input Semantic Version Type must be one of major, minor and patch for
+        run:
+          echo "Input Semantic Version Type must be one of major, minor and patch for
           non pre release. Exiting." && exit 1
       - name: Validate Input Semantic Version Type for Pre Release
-        if: ${{ inputs.is-pre-release == true && inputs.version-range != 'major' &&
+        if:
+          ${{ inputs.is-pre-release == true && inputs.version-range != 'major' &&
           inputs.version-range != 'minor' && inputs.version-range != 'patch' &&
           inputs.version-range != 'rc' }}
-        run: echo "Input Semantic Version Type must be one of major, minor, patch and rc
+        run:
+          echo "Input Semantic Version Type must be one of major, minor, patch and rc
           for pre release. Exiting." && exit 1
       - name: Git Checkout
         uses: actions/checkout@v7

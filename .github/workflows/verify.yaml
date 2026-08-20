@@ -6,7 +6,10 @@ on:
       - main
       - next
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   verify:
@@ -15,7 +18,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [ 22.x, 24.x ]
+        node-version: [22.x, 24.x]
 
     steps:
       - uses: actions/checkout@v7
@@ -29,12 +32,12 @@ jobs:
       - run: npm test
 
   verify_legacy:
-    name: Lint and test
+    name: Lint and test – legacy
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [ 18.19, 20.x ]
+        node-version: [18.19, 20.x]
 
     steps:
       - uses: actions/checkout@v7
