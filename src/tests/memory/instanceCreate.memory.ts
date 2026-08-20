@@ -65,9 +65,9 @@ async function heapRetainedByInstance(endpointCount: number) {
 
 const fewEndpoints = 10
 const manyEndpoints = 100
-// On map-transform 1.5.4 this is around 10 KiB per endpoint. It was around
-// 64 KiB on the reverted 1.6.0-rc.4, and around 18 KiB on 1.6.0-rc.5 before
-// `prepareOptions` was taken into use.
+// This is around 13 KiB per endpoint on map-transform 1.6.0-rc.6, and was the
+// same on 1.5.4. It was around 67 KiB on the reverted 1.6.0-rc.4, and 22 KiB on
+// 1.6.0-rc.5 before `prepareOptions` was taken into use.
 const maxPerEndpoint = 35 * 1024
 
 // Tests
