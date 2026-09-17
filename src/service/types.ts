@@ -1,4 +1,4 @@
-import type { TransformDefinition } from 'map-transform/types.js'
+import type { TransformDefinition } from 'map-transform/typesNext.js'
 import type {
   Action,
   Transporter,

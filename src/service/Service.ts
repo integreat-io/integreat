@@ -17,7 +17,7 @@ import { lookupById, lookupByIds } from '../utils/indexUtils.js'
 import * as authorizeData from './utils/authData.js'
 import authorizeAction, { isAuthorizedAction } from './utils/authAction.js'
 import { composeMiddleware } from '../utils/composeMiddleware.js'
-import type { TransformDefinition } from 'map-transform/types.js'
+import type { TransformDefinition } from 'map-transform/typesNext.js'
 import type Schema from '../schema/Schema.js'
 import type Auth from './Auth.js'
 import type {

@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import mapTransform from 'map-transform'
+import { mapTransformAsync } from 'map-transform/next'
 import jsonAdapter from 'integreat-adapter-json'
 import jsonTransformer from 'integreat-adapter-json/transformer.js'
 import uriTransformer from 'integreat-adapter-uri/transformer.js'
@@ -996,6 +997,53 @@ test('should run service mutation _before_ endpoint adapters', async () => {
   assert.equal(data.length, 2) // Mock adapter duplicates the array
   assert.equal(data[0].title, 'Replaced title')
   assert.equal(data[1].title, 'Replaced title') // Will be 'Entry 1' if service mutation is run _after_ endpoint adapters
+})
+
+test('should mutate response from service with adapters and mutations using the next version of map-transform', async () => {
+  const endpointDef = {
+    mutation: {
+      response: {
+        $modify: 'response',
+        data: ['response.data.content.data', { $apply: 'entry' }],
+      },
+    },
+    options: { uri: 'http://some.api/1.0' },
+  }
+  const actionWithJSON = {
+    ...actionWithResponse,
+    response: {
+      ...actionWithResponse.response,
+      data: JSON.stringify(actionWithResponse.response.data),
+    },
+  }
+  const serviceAdapters = [jsonAdapter]
+  const endpointAdapters = [mockAdapter]
+  const serviceMutation = {
+    '.': '.',
+    'response.data.content.data.items[0].header': { $value: 'Replaced title' },
+  }
+  const endpoint = new Endpoint(
+    endpointDef,
+    serviceId,
+    options,
+    mapTransformAsync,
+    mapOptions,
+    serviceMutation,
+    serviceAdapters,
+    endpointAdapters,
+  )
+
+  const ret = await endpoint.mutate(actionWithJSON, false)
+
+  assert.equal(ret.response?.status, 'ok')
+  assert.deepEqual(ret.payload, actionWithJSON.payload)
+  assert.deepEqual(ret.meta, actionWithJSON.meta)
+  const data = ret.response?.data as TypedData[]
+  assert.equal(data.length, 2) // Mock adapter duplicates the array
+  assert.equal(data[0].id, 'ent1')
+  assert.equal(data[0].$type, 'entry')
+  assert.equal(data[0].title, 'Replaced title')
+  assert.equal(data[1].title, 'Replaced title')
 })
 
 test('should mutate response from service with service adapter and no mutation pipeline', async () => {

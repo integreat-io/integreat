@@ -1,10 +1,7 @@
 import validateFilters from '../../utils/validateFilters.js'
 import { arrayIncludes } from '../../utils/array.js'
-import type {
-  DataMapper,
-  InitialState,
-  TransformDefinition,
-} from 'map-transform/types.js'
+import type { DataMapper, InitialState } from 'map-transform/types.js'
+import type { TransformDefinition } from 'map-transform/typesNext.js'
 import type { EndpointDef } from '../types.js'
 import type { Action, MapOptions, Params, MapTransform } from '../../types.js'
 

@@ -1,21 +1,24 @@
+import { Action, Condition, ValidateObject } from '../types.js'
 import type {
   TransformDefinition,
-  TransformObject,
-  Pipeline,
-} from 'map-transform/types.js'
-import { Action, Condition, ValidateObject } from '../types.js'
+  MutationObject,
+} from 'map-transform/typesNext.js'
+
+// MapTransform does not export the `Pipeline` type from `typesNext.js`, so we
+// extract it from `TransformDefinition`.
+export type Pipeline = Extract<TransformDefinition, unknown[]>
 
 export interface JobBase {
   conditions?: Record<string, Condition | undefined>
   preconditions?: ValidateObject[]
-  premutation?: TransformObject | Pipeline
-  mutation?: TransformObject | Pipeline
+  premutation?: MutationObject | Pipeline
+  mutation?: MutationObject | Pipeline
   iterate?: TransformDefinition
   iteratePath?: string
   iterateConcurrency?: number
-  postmutation?: TransformObject | Pipeline
+  postmutation?: MutationObject | Pipeline
   postconditions?: ValidateObject[]
-  responseMutation?: TransformObject | Pipeline
+  responseMutation?: MutationObject | Pipeline
 }
 
 export interface JobStepDef extends JobBase {

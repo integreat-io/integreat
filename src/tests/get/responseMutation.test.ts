@@ -6,7 +6,7 @@ import resources from '../helpers/resources/index.js'
 import entriesService from '../helpers/defs/services/entries.js'
 import entry1 from '../helpers/data/entry1.js'
 import entry2 from '../helpers/data/entry2.js'
-import type { TransformDefinition } from 'map-transform/types.js'
+import type { TransformDefinition } from 'map-transform/typesNext.js'
 import type { TypedData, Response } from '../../types.js'
 
 import Integreat from '../../index.js'

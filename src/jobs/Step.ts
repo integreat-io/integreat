@@ -13,12 +13,8 @@ import { combineResponses, setOrigin } from '../utils/response.js'
 import validateFilters from '../utils/validateFilters.js'
 import prepareValidator from '../utils/validation.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
-import type {
-  TransformObject,
-  Pipeline,
-  DataMapper,
-  InitialState,
-} from 'map-transform/types.js'
+import type { DataMapper, InitialState } from 'map-transform/types.js'
+import type { MutationObject } from 'map-transform/typesNext.js'
 import type {
   Action,
   Response,
@@ -29,7 +25,7 @@ import type {
   MapOptions,
   ValidateObject,
 } from '../types.js'
-import type { JobStepDef } from './types.js'
+import type { JobStepDef, Pipeline } from './types.js'
 
 export const breakSymbol = Symbol('break')
 
@@ -97,7 +93,7 @@ const addModify = (mutation: ArrayElement<Pipeline>) =>
 // Insert `'$action'` as the first step in a pipeline to get the action we're
 // mutating from.
 const putMutationInPipeline = (
-  mutation: TransformObject | Pipeline,
+  mutation: MutationObject | Pipeline,
   useMagic: boolean,
 ) =>
   Array.isArray(mutation)
@@ -127,9 +123,7 @@ const getPreviousResponse = (
 
 function createConditionsValidator(
   conditions:
-    | ValidateObject[]
-    | Record<string, Condition | undefined>
-    | undefined,
+    ValidateObject[] | Record<string, Condition | undefined> | undefined,
   mapTransform: MapTransform,
   mapOptions: MapOptions,
   isPreconditions: boolean,
@@ -328,7 +322,7 @@ function generateIterateResponse(action: Action, responses: ResponsesObject) {
 }
 
 export const prepareMutation = (
-  pipeline: TransformObject | Pipeline,
+  pipeline: MutationObject | Pipeline,
   mapTransform: MapTransform,
   mapOptions: MapOptions,
   useMagic = false,

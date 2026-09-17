@@ -3,11 +3,12 @@ import type {
   Dictionaries,
   Transformer,
   AsyncTransformer,
+} from 'map-transform/types.js'
+import type {
   TransformDefinition,
   Options,
-  DataMapper,
   InitialState,
-} from 'map-transform/types.js'
+} from 'map-transform/typesNext.js'
 import type {
   ServiceDef,
   AuthDef,
@@ -23,7 +24,7 @@ import type { JobDef } from './jobs/types.js'
 export type MapTransform = (
   def: TransformDefinition,
   options?: Options,
-) => DataMapper<InitialState>
+) => (data: unknown, state?: InitialState) => Promise<unknown>
 
 export type EmitFn = (eventType: string, ...args: unknown[]) => void
 

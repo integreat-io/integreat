@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import mapTransform from 'map-transform'
 import Schema from '../../schema/Schema.js'
 import createMapOptions from '../../utils/createMapOptions.js'
-import type { TransformDefinition } from 'map-transform/types.js'
+import type { TransformDefinition } from 'map-transform/typesNext.js'
 
 // Setup
 
