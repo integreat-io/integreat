@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid'
 import Schedule from './Schedule.js'
 import Step, {
   createPreconditionsValidator,
@@ -13,6 +12,7 @@ import Step, {
 import { isObject, isOkResponse, isErrorResponse } from '../utils/is.js'
 import { setResponseOnAction } from '../utils/action.js'
 import { setOrigin } from '../utils/response.js'
+import defaultGenerateUnique from '../utils/generateUnique.js'
 import type { DataMapper, InitialState } from 'map-transform/types.js'
 import type {
   Action,
@@ -22,6 +22,7 @@ import type {
   MapTransform,
   MapOptions,
   SetProgress,
+  GenerateUnique,
 } from '../types.js'
 import type { JobDef, JobStepDef, JobDefWithFlow } from './types.js'
 
@@ -141,8 +142,12 @@ function getResponse(
   }
 }
 
-const getId = (jobDef: JobDef) =>
-  typeof jobDef.id === 'string' && jobDef.id ? jobDef.id : nanoid()
+/**
+ * Gets the id from the job or generates one.
+ * TODO: Make `Job.id` required in Integreat v2 and drop the id generation.
+ */
+const getId = (jobDef: JobDef, generateUnique: GenerateUnique) =>
+  typeof jobDef.id === 'string' && jobDef.id ? jobDef.id : generateUnique()
 
 const calculateProgress = (index: number, stepsCount: number) =>
   (index + 1) / (stepsCount + 1)
@@ -160,8 +165,9 @@ export default class Job {
     mapTransform: MapTransform,
     mapOptions: MapOptions,
     failOnErrorInPostconditions = false,
+    generateUnique: GenerateUnique = defaultGenerateUnique,
   ) {
-    this.id = getId(jobDef)
+    this.id = getId(jobDef, generateUnique)
 
     if (isFlowJob(jobDef)) {
       this.#isFlow = true

@@ -393,6 +393,33 @@ test('should set id and cid in meta when not already set', async () => {
   assert.equal(calledAction.meta?.cid, calledAction.meta?.id)
 })
 
+test('should use generateUnique from resources for id and cid', async () => {
+  const generateUnique = sinon.stub().returns('unique1')
+  const action = {
+    type: 'GET',
+    payload: {
+      id: 'ent1',
+      type: 'entry',
+      targetService: 'entries',
+    },
+  }
+  const handlers = {
+    GET: async (_action: Action) => ({
+      status: 'ok',
+      data: [{ id: 'ent1', type: 'entry' }],
+    }),
+  }
+  const getSpy = sinon.spy(handlers, 'GET')
+
+  const ret = await dispatch({ ...resources, handlers, generateUnique })(action)
+
+  assert.equal(ret.status, 'ok')
+  assert.equal(getSpy.callCount, 1)
+  const calledAction = getSpy.args[0][0] as Action
+  assert.equal(calledAction.meta?.id, 'unique1')
+  assert.equal(calledAction.meta?.cid, 'unique1')
+})
+
 test('should not touch id and cid from action', async () => {
   const action = {
     type: 'GET',

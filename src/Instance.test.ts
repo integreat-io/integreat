@@ -181,6 +181,51 @@ test('should dispatch with resources', async () => {
   assert.deepEqual(resource.options, expectedOptions)
 })
 
+test('should dispatch with id from generateUnique in resources', async () => {
+  const generateUnique = sinon.stub().returns('unique1')
+  const action = { type: 'TEST', payload: {} }
+  const handler = sinon.stub().resolves({ status: 'ok' })
+  const handlers = { TEST: handler }
+
+  const great = new Instance(
+    { services, schemas, mutations },
+    { ...resourcesWithTransformer, handlers, generateUnique },
+  )
+  await great.dispatch(action)
+
+  assert.equal(handler.callCount, 1)
+  const dispatchedAction = handler.args[0][0]
+  assert.equal(dispatchedAction.meta.id, 'unique1')
+  assert.equal(dispatchedAction.meta.cid, 'unique1')
+})
+
+test('should set up job without an id with id from generateUnique', async () => {
+  const generateUnique = sinon.stub().returns('job1')
+  const handler = sinon.stub().resolves({ status: 'ok' })
+  const handlers = { TEST: handler }
+  const jobs = [
+    {
+      // No id
+      action: { type: 'TEST', payload: {} },
+    },
+  ]
+  const action = {
+    type: 'RUN',
+    payload: { jobId: 'job1' },
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '23456' },
+  }
+
+  const great = new Instance(
+    { services, schemas, mutations, jobs },
+    { ...resourcesWithTransformer, handlers, generateUnique },
+  )
+  const ret = await great.dispatch(action)
+
+  assert.equal(ret.status, 'ok')
+  assert.equal(handler.callCount, 1)
+  assert.equal(handler.args[0][0].type, 'TEST')
+})
+
 test('should expose dispatched actions count', async () => {
   const action = { type: 'TEST', payload: {} }
   const handler = async function testHandler() {

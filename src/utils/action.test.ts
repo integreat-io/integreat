@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import sinon from 'sinon'
 
 import {
   createAction,
@@ -446,4 +447,36 @@ test('should not overwrite id and cid', () => {
 
   assert.deepEqual(ret, expected)
   assert.equal(ret, action) // Should not touch action at all when id and cid are set
+})
+
+test('should use provided generateUnique for id and cid', () => {
+  const generateUnique = sinon.stub().returns('unique1')
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' } },
+  }
+  const expected = {
+    ...action,
+    meta: { ident: { id: 'johnf' }, id: 'unique1', cid: 'unique1' },
+  }
+
+  const ret = setActionIds(action, generateUnique)
+
+  assert.deepEqual(ret, expected)
+  assert.equal(generateUnique.callCount, 1)
+})
+
+test('should not call generateUnique when id and cid are already set', () => {
+  const generateUnique = sinon.stub().returns('unique1')
+  const action = {
+    type: 'GET',
+    payload: { type: 'entry' },
+    meta: { ident: { id: 'johnf' }, id: '12345', cid: '123456' },
+  }
+
+  const ret = setActionIds(action, generateUnique)
+
+  assert.deepEqual(ret, action)
+  assert.equal(generateUnique.callCount, 0)
 })

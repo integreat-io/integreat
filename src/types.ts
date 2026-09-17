@@ -28,6 +28,8 @@ export type MapTransform = (
 
 export type EmitFn = (eventType: string, ...args: unknown[]) => void
 
+export type GenerateUnique = () => string
+
 export type MapOptions = Options
 
 export interface Reference {
@@ -300,4 +302,5 @@ export interface Resources {
   authenticators?: Record<string, Authenticator>
   transformers?: Record<string, Transformer | AsyncTransformer>
   mapTransform?: MapTransform
+  generateUnique?: GenerateUnique
 }

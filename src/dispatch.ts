@@ -12,6 +12,7 @@ import {
 import { createErrorResponse, setOrigin } from './utils/response.js'
 import { completeIdentOnAction } from './utils/completeIdent.js'
 import { composeMiddleware } from './utils/composeMiddleware.js'
+import defaultGenerateUnique from './utils/generateUnique.js'
 import type {
   Dispatch,
   HandlerDispatch,
@@ -24,6 +25,7 @@ import type {
   GetService,
   HandlerOptions,
   EmitFn,
+  GenerateUnique,
 } from './types.js'
 import type Service from './service/Service.js'
 import type Schema from './schema/Schema.js'
@@ -39,6 +41,7 @@ export interface Resources {
   options: HandlerOptions
   actionIds: Set<string>
   emit: EmitFn
+  generateUnique?: GenerateUnique
 }
 
 const shouldCompleteIdent = (action: Action, options: HandlerOptions) =>
@@ -60,16 +63,22 @@ function getActionHandlerFromType(
  * Rename `service` to `targetService` and set id and cid if not already set.
  * We're also removing `meta.auth`
  */
-function cleanUpActionAndSetIds({
-  payload: { service, ...payload },
-  meta: { auth, ...meta } = {},
-  ...action
-}: Action): Action {
-  return setActionIds({
-    ...action,
-    payload: { ...(service && { targetService: service }), ...payload },
-    meta: { ...meta, dispatchedAt: Date.now() },
-  })
+function cleanUpActionAndSetIds(
+  {
+    payload: { service, ...payload },
+    meta: { auth, ...meta } = {},
+    ...action
+  }: Action,
+  generateUnique: GenerateUnique,
+): Action {
+  return setActionIds(
+    {
+      ...action,
+      payload: { ...(service && { targetService: service }), ...payload },
+      meta: { ...meta, dispatchedAt: Date.now() },
+    },
+    generateUnique,
+  )
 }
 
 const cleanUpResponseAndSetAccessAndOrigin = (
@@ -233,6 +242,7 @@ export default function createDispatch({
   options,
   actionIds,
   emit,
+  generateUnique = defaultGenerateUnique,
 }: Resources): Dispatch {
   // Prepare resources for the dispatch function
   const getService = setupGetService(schemas, services)
@@ -254,7 +264,10 @@ export default function createDispatch({
       }
 
       // Clean up action and set id
-      let cleanedUpAction = cleanUpActionAndSetIds(originalAction)
+      let cleanedUpAction = cleanUpActionAndSetIds(
+        originalAction,
+        generateUnique,
+      )
       const actionId = addActionId(actionIds, cleanedUpAction)
 
       if (shouldCompleteIdent(cleanedUpAction, options)) {

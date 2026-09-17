@@ -33,6 +33,7 @@ import type {
   EmitFn,
   MapTransform,
   Meta,
+  GenerateUnique,
 } from '../types.js'
 import type {
   EndpointDef,
@@ -57,6 +58,7 @@ export interface Resources {
   middleware?: Middleware[]
   identConfig?: IdentConfig
   emit?: EmitFn
+  generateUnique?: GenerateUnique
 }
 
 const areWeMissingAdapters = (
@@ -167,6 +169,7 @@ export default class Service {
   #authorizeDataFromService
   #authorizeDataToService
   #middleware: Middleware
+  #generateUnique?: GenerateUnique
 
   #emit: EmitFn
 
@@ -192,6 +195,7 @@ export default class Service {
       middleware = [],
       identConfig,
       emit = () => undefined, // Provide a fallback for tests
+      generateUnique,
     }: Resources,
   ) {
     if (typeof serviceId !== 'string' || serviceId === '') {
@@ -247,6 +251,7 @@ export default class Service {
 
     this.#middleware =
       middleware.length > 0 ? composeMiddleware(...middleware) : (fn) => fn
+    this.#generateUnique = generateUnique
 
     this.#connection = new Connection(
       this.#transporter,
@@ -557,7 +562,12 @@ export default class Service {
 
     debug('Calling transporter listen() ...')
     const listenResponse = await this.#transporter.listen(
-      dispatchIncoming(dispatch, this.#middleware, this.id),
+      dispatchIncoming(
+        dispatch,
+        this.#middleware,
+        this.id,
+        this.#generateUnique,
+      ),
       this.#connection.object,
       authenticateCallback(
         this,

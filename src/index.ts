@@ -31,6 +31,7 @@ export type {
   HandlerDispatch,
   SetProgress,
   Authenticator,
+  GenerateUnique,
 } from './types.js'
 export type {
   Authentication,

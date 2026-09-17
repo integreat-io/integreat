@@ -3467,6 +3467,32 @@ test('listen should set sourceService, id, and cid', async () => {
   assert.deepEqual(ret, expectedResponse)
 })
 
+test('listen should use generateUnique for id and cid', async () => {
+  const generateUnique = sinon.stub().returns('unique1')
+  const dispatchStub = sinon.stub().callsFake(dispatch)
+  const action = {
+    type: 'SET',
+    payload: { data: [] },
+  }
+  const service = new Service(
+    {
+      id: 'entries',
+      auth: { outgoing: 'granting', incoming: 'validating' },
+      transporter: 'http',
+      options: { incoming: { port: 8080 } },
+      endpoints: [{ options: { uri: 'http://some.api/1.0' } }],
+    },
+    { ...mockResources({}, action), generateUnique },
+  )
+
+  await service.listen(dispatchStub)
+
+  assert.equal(dispatchStub.callCount, 1)
+  const dispatchedAction = dispatchStub.args[0][0]
+  assert.equal(dispatchedAction.meta.id, 'unique1')
+  assert.equal(dispatchedAction.meta.cid, 'unique1')
+})
+
 test('listen should set sourceService before middleware', async () => {
   const sourceServiceMiddleware = () => async (action: Action) => ({
     status: 'ok',

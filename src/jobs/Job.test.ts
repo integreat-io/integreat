@@ -73,6 +73,32 @@ test('should generate a job id when none is given', () => {
   assert.equal(ret.id.length, 21)
 })
 
+test('should use generateUnique to generate a job id when none is given', () => {
+  const generateUnique = sinon.stub().returns('unique1')
+  const jobDef = {
+    // No id
+    action,
+  }
+
+  const ret = new Job(jobDef, mapTransform, mapOptions, false, generateUnique)
+
+  assert.equal(ret.id, 'unique1')
+  assert.equal(generateUnique.callCount, 1)
+})
+
+test('should not call generateUnique when job def has an id', () => {
+  const generateUnique = sinon.stub().returns('unique1')
+  const jobDef = {
+    id: 'action1',
+    action,
+  }
+
+  const ret = new Job(jobDef, mapTransform, mapOptions, false, generateUnique)
+
+  assert.equal(ret.id, 'action1')
+  assert.equal(generateUnique.callCount, 0)
+})
+
 test('should create Schedule when no id is given', () => {
   const jobDef = {
     // No id

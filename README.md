@@ -60,6 +60,7 @@ though, depends on how you define your services.
 1. [Usage](#usage)
    1. [Install](#install)
    2. [Basic example](#basic-example)
+   3. [Generating unique ids](#generating-unique-ids)
 2. [Integreat concepts](#integreat-concepts)
    1. [Services](#services)
    2. [Transporters](#transporters)
@@ -185,6 +186,29 @@ The `response` object will look like this:
   ]
 }
 ```
+
+## Generating unique ids
+
+Integreat generates unique ids for a few internal purposes, and uses
+[`nanoid`](https://github.com/ai/nanoid) for this by default. If you'd rather
+use another algorithm, provide a `generateUnique` function on the resources
+object passed to `Integreat.create()`:
+
+```javascript
+const great = Integreat.create(
+  { schemas, services },
+  { transporters, adapters, generateUnique: crypto.randomUUID },
+)
+```
+
+The function signature is `() => string` – it is called with no arguments and
+must return the id synchronously.
+
+`generateUnique` is used for the `id` and `cid` of actions that are dispatched
+without them, and for the id of a job that is defined without an `id`. Note that
+it is _not_ used for the ids generated for data items by a schema with
+`generateId: true` – those are ids sent to a service, not internal ids, and will
+always be generated with `nanoid`.
 
 # Integreat concepts
 

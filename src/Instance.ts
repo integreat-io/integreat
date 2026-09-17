@@ -15,6 +15,7 @@ import close from './close.js'
 import { indexById } from './utils/indexUtils.js'
 import Job from './jobs/Job.js'
 import createDispatchScheduled from './dispatchScheduled.js'
+import defaultGenerateUnique from './utils/generateUnique.js'
 import type {
   Definitions,
   Resources,
@@ -28,6 +29,7 @@ import type {
   ActionHandler,
   EmitFn,
   MapTransform,
+  GenerateUnique,
 } from './types.js'
 import type { AuthDef, ServiceDef } from './service/types.js'
 import type { SchemaDef } from './schema/types.js'
@@ -93,6 +95,7 @@ function prepareJobs(
   mapTransform: MapTransform,
   mapOptions: MapOptions,
   failOnErrorInPostconditions: boolean,
+  generateUnique: GenerateUnique,
 ) {
   const jobs = new Map<string, Job>()
   ensureArray(jobDefs).forEach((jobDef) => {
@@ -101,6 +104,7 @@ function prepareJobs(
       mapTransform,
       mapOptions,
       failOnErrorInPostconditions,
+      generateUnique,
     )
     jobs.set(job.id, job)
   })
@@ -133,6 +137,7 @@ function createServices(
   mapOptions: MapOptions,
   middlewareForService: Middleware[],
   emit: EmitFn,
+  generateUnique: GenerateUnique,
 ) {
   const authenticators = setIdOnAuthenticators(resources.authenticators || {})
   const auths = createAuthObjects(defs.auths || [], authenticators)
@@ -150,6 +155,7 @@ function createServices(
           mapOptions,
           middleware: middlewareForService,
           emit,
+          generateUnique,
         }),
     )
     .reduce(indexById, {} as Record<string, Service>)
@@ -165,6 +171,7 @@ function setupServicesAndDispatch(
   dispatchedActionId: Set<string>,
 ) {
   const mapTransformFn = resources.mapTransform ?? defaultMapTransform // Use provided mapTransform or fall back to ours
+  const generateUnique = resources.generateUnique ?? defaultGenerateUnique // Use provided generator of unique ids or fall back to ours
   const mapOptions = createMapOptions(
     schemas,
     defs.mutations,
@@ -180,6 +187,7 @@ function setupServicesAndDispatch(
     mapOptions,
     middlewareForService,
     emit,
+    generateUnique,
   )
 
   const failOnErrorInPostconditions =
@@ -191,6 +199,7 @@ function setupServicesAndDispatch(
     mapTransformFn,
     mapOptions,
     failOnErrorInPostconditions,
+    generateUnique,
   )
   const dispatch = createDispatch({
     schemas,
@@ -200,6 +209,7 @@ function setupServicesAndDispatch(
     options: handlerOptionsFromDefs(defs),
     actionIds: dispatchedActionId,
     emit,
+    generateUnique,
   })
   const dispatchScheduled = createDispatchScheduled(
     dispatch,

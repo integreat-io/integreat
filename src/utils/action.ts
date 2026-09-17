@@ -1,6 +1,13 @@
-import { nanoid } from 'nanoid'
 import { createErrorResponse, setOrigin } from './response.js'
-import type { Action, Payload, Meta, Response } from '../types.js'
+import defaultGenerateUnique from './generateUnique.js'
+
+import type {
+  Action,
+  Payload,
+  Meta,
+  Response,
+  GenerateUnique,
+} from '../types.js'
 import type Endpoint from '../service/Endpoint.js'
 
 /**
@@ -108,11 +115,15 @@ const hasIdAndCid = (action: Action) => action.meta?.id && action.meta.cid
 
 /**
  * Set `id` and `cid` on action if it is not already set. When `id` is set, but
- * no `cid`, the `id` is used for `cid`.
+ * no `cid`, the `id` is used for `cid`. Ids are generated with the given
+ * `generateUnique` function, falling back to the default one.
  */
-export function setActionIds(action: Action) {
+export function setActionIds(
+  action: Action,
+  generateUnique: GenerateUnique = defaultGenerateUnique,
+) {
   if (!hasIdAndCid(action)) {
-    const id = action.meta?.id ?? nanoid()
+    const id = action.meta?.id ?? generateUnique()
     const cid = action.meta?.cid ?? id
     return { ...action, meta: { ...action.meta, id, cid } }
   }

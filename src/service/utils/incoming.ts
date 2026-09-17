@@ -4,6 +4,7 @@ import { setErrorOnAction, setActionIds } from '../../utils/action.js'
 import { createErrorResponse, setOrigin } from '../../utils/response.js'
 import { isObject } from '../../utils/is.js'
 import { completeIdent } from '../../utils/completeIdent.js'
+import defaultGenerateUnique from '../../utils/generateUnique.js'
 import type { Authentication } from '../types.js'
 import type {
   Action,
@@ -11,6 +12,7 @@ import type {
   Ident,
   Dispatch,
   Middleware,
+  GenerateUnique,
 } from '../../types.js'
 import type Service from '../Service.js'
 
@@ -177,12 +179,16 @@ export function dispatchIncoming(
   dispatch: Dispatch,
   middleware: Middleware,
   serviceId: string,
+  generateUnique: GenerateUnique = defaultGenerateUnique,
 ) {
   return (action: Action | null) =>
     pProgress<Response>(async (setProgress) => {
       if (action) {
         const authorizedAction = await authorizeIncoming(
-          setServiceIdAsSourceServiceOnAction(setActionIds(action), serviceId),
+          setServiceIdAsSourceServiceOnAction(
+            setActionIds(action, generateUnique),
+            serviceId,
+          ),
           serviceId,
         )
         const response = await middleware(
