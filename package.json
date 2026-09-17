@@ -60,7 +60,7 @@
     "@types/node": "^26.6.1",
     "@types/sinon": "^22.0.0",
     "integreat-adapter-json": "^1.0.4",
-    "integreat-adapter-uri": "^1.0.1",
+    "integreat-adapter-uri": "^1.0.2",
     "integreat-transformers": "^1.10.0",
     "integreat-transporter-http": "^1.5.0",
     "nock": "^14.0.17",
