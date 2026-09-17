@@ -6,13 +6,8 @@ import { ensureArray } from '../utils/array.js'
 import { isNotNullOrUndefined, isObject } from '../utils/is.js'
 import { combineResponses, setOrigin } from '../utils/response.js'
 import prepareValidator, { ResponsesAndBreak } from '../utils/validation.js'
-import type {
-  TransformDefinition,
-  DataMapper,
-  InitialState,
-  State,
-  AsyncDataMapperWithOptions,
-} from 'map-transform/types.js'
+import type { DataMapper, InitialState } from 'map-transform/types.js'
+import type { TransformDefinition } from 'map-transform/typesNext.js'
 import type Auth from './Auth.js'
 import type {
   Action,
@@ -41,79 +36,90 @@ const prepareEndpoint = ({ match, ...endpoint }: EndpointDef) => ({
   ...endpoint,
 })
 
-// Create a transformer that runs a mutation and populates the resulting action
-// with properties from the original action and makes sure the status and error
-// are correct.
-function runMutationAndPopulateAction(mutator: DataMapper) {
-  return () => async (action: unknown, state: State) => {
-    const mutatedAction = (await mutator(action, state)) as Action
-    return populateActionAfterMutation(action as Action, mutatedAction)
+type MutationStep = (action: Action, rev: boolean) => Promise<unknown>
+
+// Create a step that runs a mutation and populates the resulting action with
+// properties from the original action and makes sure the status and error are
+// correct.
+const createActionMutationStep =
+  (mutator: DataMapper<InitialState>): MutationStep =>
+  async (action, rev) => {
+    const mutatedAction = (await mutator(action, { rev })) as Action
+    return populateActionAfterMutation(action, mutatedAction)
   }
-}
 
 const setModifyFlag = (def?: TransformDefinition) =>
   isObject(def) ? { ...def, $modify: true } : def
 
-const transformerFromAdapter = (
+const createStepFromAdapter = (
   serviceId: string,
   options: Record<string, Record<string, unknown>> = {},
 ) =>
-  function createAdapterTransformer(
-    adapter: Adapter,
-  ): AsyncDataMapperWithOptions {
+  function createAdapterTransformer(adapter: Adapter): MutationStep {
     const adapterId = adapter.id
     const preparedOptions =
       typeof adapterId === 'string'
         ? adapter.prepareOptions(options[adapterId] || {}, serviceId)
         : {}
 
-    // Return the transformer. It will call the adapter's `serialize()` method
-    // in reverse direction and `normalize()` when going forward.
-    return () => async (action, state) =>
-      state.rev
-        ? await adapter.serialize(action as Action, preparedOptions)
-        : await adapter.normalize(action as Action, preparedOptions)
+    // Return the step. It will call the adapter's `serialize()` method in
+    // reverse direction and `normalize()` when going forward.
+    return async (action, rev) =>
+      rev
+        ? await adapter.serialize(action, preparedOptions)
+        : await adapter.normalize(action, preparedOptions)
   }
 
+const createMapTransform = (
+  mutation: TransformDefinition | undefined,
+  mapTransform: MapTransform,
+  mapOptions: MapOptions,
+) =>
+  mapTransform(
+    ensureArray(mutation).map(setModifyFlag).filter(isNotNullOrUndefined),
+    mapOptions,
+  )
+
+const runSteps =
+  (steps: MutationStep[]) => async (action: unknown, state?: InitialState) => {
+    const rev = state?.rev ?? false
+    const orderedSteps = rev ? [...steps].reverse() : steps
+    let result = action
+    for (const step of orderedSteps) {
+      result = await step(result as Action, rev)
+    }
+    return result
+  }
+
+/**
+ * Create a mutation pipeline for mutating an action with this endpoint. Note
+ * that we use a custom pipeline here, instead of a full MapTransform pipeline,
+ * as it's easier in this case. We use MapTransform in the mutation steps.
+ */
 function prepareActionMutation(
   serviceMutation: TransformDefinition | undefined,
   endpointMutation: TransformDefinition | undefined,
-  serviceAdapterTransformer: AsyncDataMapperWithOptions[],
-  endpointAdapterTransformer: AsyncDataMapperWithOptions[],
+  serviceAdapters: Adapter[],
+  endpointAdapters: Adapter[],
   mapTransform: MapTransform,
   mapOptions: MapOptions,
-) {
-  // Prepare service and endpoint mutations as separate mutate functions that
-  // can be run as a transformer in the pipeline.
-  const serviceMutator = mapTransform(
-    ensureArray(serviceMutation)
-      .map(setModifyFlag)
-      .filter(isNotNullOrUndefined),
-    mapOptions,
-  )
-  const endpointMutator = mapTransform(
-    ensureArray(endpointMutation)
-      .map(setModifyFlag)
-      .filter(isNotNullOrUndefined),
-    mapOptions,
-  )
-
-  // TODO: Consider rewriting without the `{ $transform }` operations
-  // Prepare the pipeline, with service adapters, service mutation, endpoint
-  // adapters and endpoint mutation – in that order. Note that we run the
-  // mutations with a transformer that makes sure the result is a valid action
-  // and that the status and error are set correctly.
-  const pipeline = [
-    ...serviceAdapterTransformer.map((transformer) => ({
-      $transform: transformer,
-    })),
-    { $transform: runMutationAndPopulateAction(serviceMutator) },
-    ...endpointAdapterTransformer.map((transformer) => ({
-      $transform: transformer,
-    })),
-    { $transform: runMutationAndPopulateAction(endpointMutator) },
-  ]
-  return mapTransform(pipeline, mapOptions)
+  serviceId: string,
+  adapters?: Record<string, Record<string, unknown>> | undefined,
+): DataMapper<InitialState> {
+  // Run service adapters, service mutation, endpoint adapters and endpoint
+  // mutation – in that order, or in reverse order when `rev` is true. Note
+  // that we run the mutations with a step that makes sure the result is a
+  // valid action and that the status and error are set correctly.
+  return runSteps([
+    ...serviceAdapters.map(createStepFromAdapter(serviceId, adapters)),
+    createActionMutationStep(
+      createMapTransform(serviceMutation, mapTransform, mapOptions),
+    ),
+    ...endpointAdapters.map(createStepFromAdapter(serviceId, adapters)),
+    createActionMutationStep(
+      createMapTransform(endpointMutation, mapTransform, mapOptions),
+    ),
+  ])
 }
 
 /**
@@ -166,10 +172,12 @@ export default class Endpoint {
     this.#mutateAction = prepareActionMutation(
       serviceMutation,
       endpointDef.mutation || endpointDef.mutate,
-      serviceAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
-      endpointAdapters.map(transformerFromAdapter(serviceId, options.adapters)),
+      serviceAdapters,
+      endpointAdapters,
       mapTransform,
       mapOptions,
+      serviceId,
+      options.adapters,
     )
 
     this.outgoingAuth = outgoingAuth

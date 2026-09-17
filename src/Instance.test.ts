@@ -456,8 +456,8 @@ test('should use provided nonvalues', async () => {
   assert.equal(item.text, '')
 })
 
-test('should provided map-transform', async () => {
-  const mockMapTransform = () => async (data: unknown) => data // Don't transform anything
+test('should use provided map-transform', async () => {
+  const mockMapTransform = sinon.stub().returns(async (data: unknown) => data) // Don't transform anything
   const resourcesWithMapTransform = {
     ...resourcesWithTransformer,
     transporters: {
@@ -487,7 +487,7 @@ test('should provided map-transform', async () => {
   const ret = await great.dispatch(action)
 
   assert.equal(ret.status, 'ok')
-  assert.equal(ret.data, undefined) // When we get `undefined`, we know nothing was transformed, i.e. our map-transform mock was used
+  assert.equal(mockMapTransform.called, true)
 })
 
 test('should dispatch scheduled', async () => {
