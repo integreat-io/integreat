@@ -43,6 +43,7 @@ const mergeDefs = (
   dictionaries: { ...defs.dictionaries, ...def.dictionaries },
   jobs: mergeArrays(defs.jobs, def.jobs),
   identConfig: def.identConfig || defs.identConfig,
+  nonvalues: def.nonvalues ?? defs.nonvalues,
   queueService: def.queueService || defs.queueService,
   disableQueuing: def.disableQueuing ?? defs.disableQueuing,
   flags: mergeFlags(defs.flags || {}, def.flags),
@@ -60,6 +61,7 @@ export default function mergeDefinitions(
     dictionaries: {},
     jobs: [],
     identConfig: undefined,
+    nonvalues: undefined,
     queueService: undefined,
     flags: {},
   })

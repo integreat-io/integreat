@@ -156,6 +156,7 @@ test('should merge three definitions', () => {
       type: 'user',
       props: { tokens: 'secrets' },
     },
+    nonvalues: undefined,
     flags: {},
   }
 
@@ -261,6 +262,7 @@ test('should disregard empty definition', () => {
   const expected = {
     ...def1,
     id: undefined,
+    nonvalues: undefined,
     queueService: undefined,
     disableQueuing: undefined,
     flags: {},
@@ -269,4 +271,37 @@ test('should disregard empty definition', () => {
   const ret = mergeDefinitions(def1, def2 as unknown as Partial<Definitions>)
 
   assert.deepEqual(ret, expected)
+})
+
+test('should let a later nonvalues override an earlier one', () => {
+  const def1 = {
+    schemas: [entrySchema],
+    services: [entriesService],
+    nonvalues: [undefined, null, ''],
+  }
+  const def2 = {
+    services: [queueService],
+    nonvalues: [undefined, null],
+  }
+  const expected = [undefined, null]
+
+  const ret = mergeDefinitions(def1, def2)
+
+  assert.deepEqual(ret.nonvalues, expected)
+})
+
+test('should keep nonvalues from an earlier definition when a later has none', () => {
+  const def1 = {
+    schemas: [entrySchema],
+    services: [entriesService],
+    nonvalues: [undefined, null],
+  }
+  const def2 = {
+    services: [queueService],
+  }
+  const expected = [undefined, null]
+
+  const ret = mergeDefinitions(def1, def2)
+
+  assert.deepEqual(ret.nonvalues, expected)
 })

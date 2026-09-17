@@ -16,6 +16,8 @@ import {
   Transporter,
 } from './types.js'
 
+import mergeResources from './utils/mergeResources.js'
+
 import Instance from './Instance.js'
 
 // Setup
@@ -313,6 +315,26 @@ test('should use adapters', async () => {
   assert.equal(data[0].id, 'ent1')
   assert.equal(data[0].title, 'Entry 1!')
   assert.equal(data[0].$type, 'entry')
+})
+
+test('should use adapters provided through mergeResources', () => {
+  const servicesWithJson = [
+    {
+      ...services[0],
+      adapters: ['json'], // Lookup with id
+    },
+  ]
+  const mergedResources = mergeResources(
+    { adapters: { json: jsonAdapter } },
+    resourcesWithTransformer,
+  )
+
+  const great = new Instance(
+    { services: servicesWithJson, schemas, mutations },
+    mergedResources,
+  )
+
+  assert.ok(great.services.entries) // Would have thrown on unknown adapter
 })
 
 test('should set adapter id', async () => {
