@@ -14,7 +14,7 @@ import validateFilters from '../utils/validateFilters.js'
 import prepareValidator from '../utils/validation.js'
 import { populateActionAfterMutation } from '../utils/mutationHelpers.js'
 import type { DataMapper, InitialState } from 'map-transform/types.js'
-import type { MutationObject } from 'map-transform/typesNext.js'
+import type { MutationObject, Pipeline } from 'map-transform/typesNext.js'
 import type {
   Action,
   Response,
@@ -25,7 +25,7 @@ import type {
   MapOptions,
   ValidateObject,
 } from '../types.js'
-import type { JobStepDef, Pipeline } from './types.js'
+import type { JobStepDef } from './types.js'
 
 export const breakSymbol = Symbol('break')
 
